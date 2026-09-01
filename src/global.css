@@ -1,0 +1,24 @@
+/*
+  Nur für die Web-Version. Auf iOS und Android wird diese Datei ignoriert.
+
+  Das Problem: Handy-Browser rechnen `100vh` gegen den Bildschirm OHNE Adressleiste.
+  Die Leiste liegt dann über den untersten Pixeln der Seite. Ein Scroll-Bereich, der
+  genau `100vh` hoch ist, hält sich deshalb für "am Ende", während sein letztes Stück
+  unsichtbar unter der Browser-Leiste steckt — man kommt nicht ganz nach unten.
+
+  `100dvh` (dynamic viewport height) rechnet mit dem TATSÄCHLICH sichtbaren Bereich
+  und wächst mit, wenn die Adressleiste beim Scrollen verschwindet.
+*/
+html,
+body,
+#root {
+  height: 100%;
+}
+
+@supports (height: 100dvh) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
+}
