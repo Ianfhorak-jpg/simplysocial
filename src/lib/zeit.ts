@@ -147,3 +147,23 @@ export function zeitpunkt(tage: number, minuten: number, jetzt: Date = new Date(
   d.setHours(Math.floor(minuten / 60), minuten % 60, 0, 0);
   return d.toISOString();
 }
+
+/**
+ * Auf die nächste halbe Stunde aufrunden: 17:07 → 17:30, 17:31 → 18:00, 17:30 bleibt.
+ *
+ * Steht hier und nicht im Erstellen-Screen, weil zwei Stellen dieselbe Rundung
+ * brauchen: der Vorschlag beim Posten und die Fake-Daten in `data/mock.ts`. Aus dem
+ * Screen in `mock.ts` zu greifen verbietet harte Regel 2 — also wandert die Regel
+ * dorthin, wo beide sie holen dürfen.
+ *
+ * Warum überhaupt gerundet wird: „Treffen wir uns um 18:07" schreibt niemand. Eine
+ * Voreinstellung, die auf die Minute genau ist, sieht nach Maschine aus und wird
+ * deshalb angefasst — obwohl sie stimmt.
+ */
+export function naechsteHalbeStunde(d: Date): Date {
+  const gerundet = new Date(d);
+  gerundet.setSeconds(0, 0);
+  const rest = gerundet.getMinutes() % 30;
+  if (rest !== 0) gerundet.setMinutes(gerundet.getMinutes() + (30 - rest));
+  return gerundet;
+}

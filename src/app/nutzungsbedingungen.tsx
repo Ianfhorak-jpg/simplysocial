@@ -1,8 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 
-import { SsBack, SsCard, SsScreen, SsText } from '@/components/ui';
+import { SsBack, SsCard, SsIconText, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
-import { colors, danger, radius, spacing } from '@/theme';
+import { colors, danger, spacing } from '@/theme';
 
 /**
  * Nutzungsbedingungen.
@@ -78,9 +78,9 @@ export default function NutzungsbedingungenScreen() {
         </SsText>
 
         <SsCard style={styles.luecke}>
-          <SsText variant="bodyStrong" color={danger.onSoft}>
-            ⚠️ Dieser Teil fehlt noch — mit Absicht
-          </SsText>
+          <SsIconText icon="warnung" variant="bodyStrong" color={danger.onSoft}>
+            Dieser Teil fehlt noch — mit Absicht
+          </SsIconText>
           <SsText variant="body">
             Was hier stehen muss, kann niemand aus dem Team schreiben. {BRAND.name} bringt
             Fremde zusammen, und die Gründer sind selbst noch minderjährig. Diese Punkte

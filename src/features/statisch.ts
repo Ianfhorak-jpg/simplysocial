@@ -62,3 +62,16 @@ export function userIds(): IdParam[] {
 export function chatIds(): IdParam[] {
   return getState().chatThreads.map((thread) => ({ id: thread.id }));
 }
+
+/**
+ * Alle Gruppen-Adressen — `/gruppe/g1` und die anderen zwei. Phase 17.
+ *
+ * `/gruppe/neu` ist KEINE davon: Das ist eine eigene Datei (`app/gruppe/neu.tsx`)
+ * und damit eine statische Route, die Expo Router beim Bauen von selbst erzeugt.
+ * Statische Routen gewinnen gegen `[id]`, deshalb landet `/gruppe/neu` auch zur
+ * Laufzeit nie in diesem Screen — solange keine Gruppe die ID `neu` bekommt.
+ * `neueId('g')` vergibt `g_neu1`, `g_neu2` …, also passiert das nicht.
+ */
+export function gruppeIds(): IdParam[] {
+  return getState().groups.map((gruppe) => ({ id: gruppe.id }));
+}

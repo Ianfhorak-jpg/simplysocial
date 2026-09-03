@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { SsText } from '@/components/ui';
+import { SsButton, SsIcon, SsText } from '@/components/ui';
 import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
 
 /**
@@ -30,18 +30,30 @@ import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
  * liefern damit beide „nichts" — identisch, kein Mismatch —, und der Balken kommt
  * einen Wimpernschlag später dazu.
  *
- * ── Warum er den Inhalt SCHIEBT und nicht überdeckt ───────────────────────────
- * Erst lag er als Ebene über der App. Im Browser getestet war sofort zu sehen, warum
- * das falsch ist: Verdeckt waren die Wortmarke, der „Posten"-Knopf und der Umschalter
- * „Alle / Wem ich folge" — also genau das, was man beim Herzeigen als Erstes sieht.
- * Ein Hinweis, der erklären soll, was die App ist, darf nicht die App verdecken.
- * Jetzt sitzt er im Fluss ganz oben; beim Wegklicken rutscht alles hoch.
+ * ── Warum er UNTEN liegt und überdeckt (Ian, 2026-09-02) ──────────────────────
+ * Er hat drei Fassungen erlebt, und die Begründung hat sich dabei zweimal gedreht —
+ * deshalb steht sie hier ganz:
+ *   1. Als Ebene über der App OBEN. Falsch: Verdeckt waren Wortmarke, „Posten" und
+ *      der Umschalter — genau das, was man beim Herzeigen zuerst sieht.
+ *   2. Im Fluss ganz oben, den Inhalt nach unten schiebend. Technisch sauber, aber
+ *      Ians Urteil am Handy: **„oben ist es schwieriger zu verstehen."** Ein Kasten,
+ *      der oben mitläuft, liest sich wie eine Kopfzeile der App — also wie etwas, das
+ *      dazugehört, statt wie eine Ansage über sie.
+ *   3. Jetzt: eine Leiste UNTEN über der App, wie eine Cookie-Abfrage, mit einem
+ *      richtigen Knopf statt einem ✕. Das Muster kennt jeder, und es sagt von selbst,
+ *      dass es etwas Vorübergehendes ist, das man wegdrückt.
  *
- * ── Warum `insets.top` hier und nicht doppelt ─────────────────────────────────
- * Auf Web ist der obere Sicherheitsabstand 0 — Expo setzt im erzeugten HTML kein
- * `viewport-fit=cover`, also liefert `env(safe-area-inset-top)` nichts. Für Phase 8
- * (Browser) ist das exakt. Beim ersten nativen Build kommt der Abstand des Screens
- * darunter dazu; dann gehört er entweder hier weg oder dort. Nachschauen, nicht raten.
+ * Der Einwand aus Fassung 1 gilt weiter — er wird nur anders beantwortet: Verdeckt ist
+ * jetzt die Tab-Leiste, und die ist als einzige Stelle verkraftbar, weil man sie
+ * ohnehin erst braucht, nachdem man den Feed gesehen hat. **Wer das wieder umbaut,
+ * liest zuerst diese Liste**, sonst landet er bei einer der zwei Fassungen, die schon
+ * durchgefallen sind.
+ *
+ * ── Warum `insets.bottom` und nicht `insets.top` ──────────────────────────────
+ * Seit die Leiste unten sitzt, zählt der untere Sicherheitsabstand: die Streifen-Geste
+ * am iPhone und die Navigationsleiste auf Android. Seit `app/+html.tsx` steht auch
+ * `viewport-fit=cover` im HTML — vorher lieferte `env(safe-area-inset-*)` im Browser
+ * gar nichts, und der Abstand war immer 0.
  *
  * ── Warum `sessionStorage` und nicht `localStorage` ───────────────────────────
  * `localStorage` würde den Balken für immer verstecken. Das ist zu viel: Wer den
@@ -87,38 +99,46 @@ export function PrototypHinweis() {
   if (!sichtbar) return null;
 
   return (
-    <View style={[styles.huelle, { paddingTop: insets.top + spacing.sm }]}>
+    <View style={[styles.huelle, { paddingBottom: insets.bottom + spacing.sm }]}>
       <View style={styles.kasten}>
-        <View style={styles.zeile}>
-          <SsText variant="label">🧪 Prototyp</SsText>
-          <Pressable
-            onPress={() => {
-              merken();
-              setSichtbar(false);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Hinweis schließen"
-            hitSlop={spacing.md}
-            style={styles.schliessen}
-          >
-            <SsText variant="label" color={colors.inkSoft}>
-              ✕
-            </SsText>
-          </Pressable>
+        {/* Seit Phase 14 ein gezeichnetes Icon statt 🧪. Der Grund, aus dem der
+            Kommentar hier ueberhaupt stand, ist damit weg: Emojis brachten je nach
+            Geraet ihre eigene Breite mit und klebten mal am Wort, mal nicht. Ein
+            Icon ist ueberall gleich breit, der Abstand kommt aus `gap`. Der Titel
+            ist einzeilig, deshalb ist `center` hier richtig; bei zwei Zeilen saesse
+            das Icon an der zweiten (ACTA-Falle aus Phase 12). */}
+        <View style={styles.titelZeile}>
+          <SsIcon name="kolben" size={16} color={colors.ink} />
+          <SsText variant="label">Das hier ist ein Prototyp</SsText>
         </View>
         <SsText variant="caption" color={colors.inkSoft}>
           Alle Namen, Posts und Chats sind erfunden. Es gibt keinen Login — du bist
           gerade Ian. Neuladen setzt alles zurück.
         </SsText>
+        <SsButton
+          label="Verstanden"
+          block
+          onPress={() => {
+            merken();
+            setSichtbar(false);
+          }}
+          style={styles.knopf}
+        />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Ausgeschriebene Kanten statt `absoluteFill`: Das ist eine registrierte Style-ID
+  // und lässt sich nicht mit eigenen Werten mischen (ACTA-Falle, siehe CLAUDE.md).
+  // `top` bleibt frei — die Leiste ist nur so hoch, wie ihr Inhalt braucht.
   huelle: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
     alignItems: 'center',
   },
   kasten: {
@@ -130,7 +150,13 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     padding: spacing.lg,
     gap: spacing.xs,
+    // Der Schatten trägt hier Bedeutung und ist keine Zier: Die Leiste liegt ÜBER der
+    // App und muss sich von ihr abheben, sonst liest man sie als Teil des Feeds. Es
+    // ist die einzige Stelle mit Schatten — überall sonst genügt die Grundfläche.
+    boxShadow: '0 -6px 24px rgba(23, 25, 28, 0.14)',
   },
-  zeile: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  schliessen: { cursor: 'pointer' },
+  // `sm` und nicht `xs`: Mit 4 px gemessen klebte das Emoji optisch am Wort — eine
+  // Emoji-Glyphe bringt rechts kaum eigenen Weißraum mit, anders als ein Buchstabe.
+  titelZeile: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  knopf: { marginTop: spacing.sm },
 });

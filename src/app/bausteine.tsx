@@ -8,13 +8,20 @@ import {
   SsButton,
   SsCard,
   SsChip,
+  SsIcon,
+  SsIconText,
   SsInput,
   SsScreen,
+  SsScrollReihe,
   SsSegment,
   SsText,
 } from '@/components/ui';
 import { CATEGORIES } from '@/config/categories';
 import { CATEGORY_ORDER, categoryColors, colors, radius, spacing } from '@/theme';
+import { ICONS, type IconName } from '@/theme/icons';
+
+/** Alle Icons, in der Reihenfolge, in der sie in `theme/icons.ts` stehen. */
+const ICON_NAMEN = Object.keys(ICONS) as IconName[];
 
 /**
  * Der Werkstatt-Screen: zeigt jeden Baustein in jedem Zustand.
@@ -29,6 +36,7 @@ import { CATEGORY_ORDER, categoryColors, colors, radius, spacing } from '@/theme
 export default function BausteineScreen() {
   const [text, setText] = useState('');
   const [kaputt, setKaputt] = useState('25:99');
+  const [suche, setSuche] = useState('Tennis');
   const [wahl, setWahl] = useState<'links' | 'rechts'>('links');
 
   return (
@@ -43,7 +51,7 @@ export default function BausteineScreen() {
       <Abschnitt titel="Buttons" hinweis="Der harte Rand unten verschwindet beim Drücken.">
         <View style={styles.reihe}>
           <SsButton label="Bin dabei" />
-          <SsButton label="Posten" icon="✏️" />
+          <SsButton label="Posten" icon="stift" />
           <SsButton label="Abbrechen" variant="ghost" />
         </View>
         <View style={styles.reihe}>
@@ -79,6 +87,21 @@ export default function BausteineScreen() {
         </View>
       </Abschnitt>
 
+      <Abschnitt
+        titel="Waagrechte Reihe"
+        hinweis="Die Kante rechts steht nur, wenn wirklich etwas abgeschnitten ist — oben passt alles hinein, unten nicht.">
+        <SsScrollReihe contentContainerStyle={styles.scrollReihe}>
+          <SsChip label="Alle" selected />
+          <SsChip category="sport" />
+        </SsScrollReihe>
+        <SsScrollReihe contentContainerStyle={styles.scrollReihe}>
+          <SsChip label="Alle" selected />
+          {CATEGORY_ORDER.map((k) => (
+            <SsChip key={k} category={k} />
+          ))}
+        </SsScrollReihe>
+      </Abschnitt>
+
       <Abschnitt titel="Eingabefelder" hinweis="Der Rahmen wird beim Tippen dunkel — auf iOS gibt es sonst keine Rückmeldung.">
         <SsInput
           label="Titel"
@@ -102,6 +125,17 @@ export default function BausteineScreen() {
           value={text}
           onChangeText={setText}
           multiline
+        />
+        {/* Phase 15: dasselbe Feld als Suchfeld. Das X steht nur da, solange etwas
+            drinsteht — hier sieht man beide Zustände, indem man tippt und löscht. */}
+        <SsInput
+          label="Suchfeld"
+          hint="Icon links, X rechts"
+          placeholder="Suchen — Tennis, lernen, Kaffee …"
+          icon="lupe"
+          value={suche}
+          onChangeText={setSuche}
+          onClear={() => setSuche('')}
         />
       </Abschnitt>
 
@@ -137,14 +171,44 @@ export default function BausteineScreen() {
         </SsCard>
       </Abschnitt>
 
-      <Abschnitt titel="Profilbilder" hinweis="Die Farbe kommt aus der Nutzer-ID, bleibt also immer gleich.">
+      <Abschnitt
+        titel="Der Icon-Satz"
+        hinweis="Alle Icons in einer Größe und einer Strichstärke. Wenn eines hier aus der Reihe fällt, fällt es überall auf.">
+        <View style={styles.iconGitter}>
+          {ICON_NAMEN.map((name) => (
+            <View key={name} style={styles.iconFeld}>
+              <SsIcon name={name} size={26} />
+              <SsText variant="caption" color={colors.inkSoft} numberOfLines={1}>
+                {name}
+              </SsText>
+            </View>
+          ))}
+        </View>
+      </Abschnitt>
+
+      <Abschnitt
+        titel="Icons in drei Größen"
+        hinweis="Der Strich wird bei kleinen Icons kräftiger und bei großen zarter — sonst franst er unten aus und wird oben plump.">
         <View style={styles.reiheMitte}>
-          <SsAvatar emoji="🎧" seed="u_ian" size="lg" />
-          <SsAvatar emoji="🌿" seed="u_lea" size="md" />
-          <SsAvatar emoji="⚡" seed="u_tobi" size="md" />
-          <SsAvatar emoji="🎨" seed="u_mira" size="sm" />
-          <SsAvatar emoji="🏀" seed="u_flo" size="sm" />
-          <SsAvatar emoji="📚" seed="u_sara" size="sm" />
+          <SsIcon name="fahne" size={14} />
+          <SsIcon name="fahne" size={20} />
+          <SsIcon name="fahne" size={30} />
+          <SsIcon name="fahne" size={44} />
+        </View>
+        <SsIconText icon="schloss">Icon neben Text, einzeilig</SsIconText>
+        <SsIconText icon="warnung" variant="bodyStrong">
+          {'Und mehrzeilig: Das Icon bleibt an der ERSTEN Zeile stehen und rutscht nicht in die Mitte des Blocks — das war die Falle aus Phase 12.'}
+        </SsIconText>
+      </Abschnitt>
+
+      <Abschnitt titel="Profilbilder" hinweis="Initialen auf der Farbe, die aus der Nutzer-ID kommt — derselbe Mensch also immer gleich.">
+        <View style={styles.reiheMitte}>
+          <SsAvatar name="Ian" seed="u_ian" size="lg" />
+          <SsAvatar name="Lea" seed="u_lea" size="md" />
+          <SsAvatar name="Tobias" seed="u_tobi" size="md" />
+          <SsAvatar name="Mira" seed="u_mira" size="sm" />
+          <SsAvatar name="Florian" seed="u_flo" size="sm" />
+          <SsAvatar name="Sara" seed="u_sara" size="sm" />
         </View>
       </Abschnitt>
 
@@ -154,7 +218,7 @@ export default function BausteineScreen() {
           return (
             <View key={k} style={styles.farbzeile}>
               <View style={styles.farbname}>
-                <SsText variant="label">{CATEGORIES[k].emoji}</SsText>
+                <SsIcon name={CATEGORIES[k].icon} size={17} color={p.onSoft} />
                 <SsText variant="label" color={p.onSoft} style={styles.farbnameText}>
                   {CATEGORIES[k].label}
                 </SsText>
@@ -211,8 +275,13 @@ const styles = StyleSheet.create({
   abschnitt: { gap: spacing.xs },
   abschnittTitel: { letterSpacing: 1.2, fontSize: 12 },
   abschnittInhalt: { gap: spacing.md, marginTop: spacing.sm },
+  iconGitter: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  // Feste Breite, damit die Namen darunter ein Raster bilden statt zu treppen.
+  iconFeld: { width: 88, alignItems: 'center', gap: spacing.xs },
   reihe: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, alignItems: 'flex-start' },
   reiheMitte: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, alignItems: 'center' },
+  // Fuer SsScrollReihe: die Pillen liegen in EINER Zeile, kein Umbruch.
+  scrollReihe: { gap: spacing.sm, paddingRight: spacing.lg },
   farbzeile: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   farbname: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   farbnameText: { fontSize: 14 },

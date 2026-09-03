@@ -1,9 +1,11 @@
 import { Tabs } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, type ColorValue } from 'react-native';
 
-import { SsText } from '@/components/ui';
+import { SsIcon } from '@/components/ui';
+import { useOffeneGruppenAnfragen } from '@/features/groups/hooks';
 import { useOffeneAnfragen } from '@/features/requests/hooks';
 import { colors, spacing, status, type } from '@/theme';
+import type { IconName } from '@/theme/icons';
 
 /**
  * Die vier Tabs: Start · Anfragen · Chats · Profil.
@@ -25,6 +27,12 @@ import { colors, spacing, status, type } from '@/theme';
  */
 export default function TabsLayout() {
   const offene = useOffeneAnfragen();
+  // Seit Phase 17 zählt die Zahl BEIDE Sorten. Zwei getrennte Zahlen an einem Tab
+  // gibt es nicht, und zwei Tabs wären genau die zweite Mechanik, die Ians
+  // Entscheidung 2 vermeiden wollte. Addiert wird hier, einmal — die Haken bleiben
+  // getrennt, damit niemand die zwei Listen wieder auseinandernehmen muss.
+  const offeneGruppen = useOffeneGruppenAnfragen();
+  const wartend = offene.length + offeneGruppen.length;
 
   return (
     <Tabs
@@ -36,32 +44,40 @@ export default function TabsLayout() {
         tabBarLabelStyle: styles.beschriftung,
         tabBarItemStyle: styles.eintrag,
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Start', tabBarIcon: symbol('🏠') }} />
+      <Tabs.Screen name="index" options={{ title: 'Start', tabBarIcon: symbol('haus') }} />
       <Tabs.Screen
         name="requests"
         options={{
           title: 'Anfragen',
-          tabBarIcon: symbol('🙋'),
+          tabBarIcon: symbol('hand'),
           // Die Zahl macht sichtbar, dass jemand wartet — das ist der Punkt, an dem
           // die App etwas von einem will, und der Grund, sie wieder aufzumachen.
-          tabBarBadge: offene.length > 0 ? offene.length : undefined,
+          tabBarBadge: wartend > 0 ? wartend : undefined,
           tabBarBadgeStyle: styles.zahl,
         }}
       />
-      <Tabs.Screen name="chats" options={{ title: 'Chats', tabBarIcon: symbol('💬') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profil', tabBarIcon: symbol('👤') }} />
+      <Tabs.Screen name="chats" options={{ title: 'Chats', tabBarIcon: symbol('sprechblase') }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profil', tabBarIcon: symbol('person') }} />
     </Tabs>
   );
 }
 
 /**
- * Emoji statt Icon-Schriftart — dieselbe Entscheidung wie bei den Kategorien.
- * Emoji nehmen keine Farbe an, deshalb macht die Deckkraft den Unterschied zwischen
- * ausgewählt und nicht: das aktive Symbol steht voll da, die anderen treten zurück.
+ * Ein Icon aus `theme/icons.ts` — seit Phase 14, davor ein Emoji.
+ *
+ * Der Unterschied ist an dieser Stelle größer, als er klingt: Ein Emoji nimmt keine
+ * Farbe an, deshalb musste die DECKKRAFT den aktiven Tab markieren („voll da" gegen
+ * „zurückgetreten"). Ein halbdurchsichtiges Symbol ist aber etwas anderes als ein
+ * graues — es sieht deaktiviert aus, nicht bloß unausgewählt. Jetzt steht dort eine
+ * echte zweite Farbe, und zwar dieselbe, die die Beschriftung darunter schon immer
+ * hatte (`tabBarActiveTintColor` / `…Inactive…` im `screenOptions` oben).
  */
-function symbol(emoji: string) {
-  return ({ focused }: { focused: boolean }) => (
-    <SsText style={[styles.symbol, !focused && styles.symbolAus]}>{emoji}</SsText>
+function symbol(name: IconName) {
+  // `color` kommt als `ColorValue` — das ist auf Web und iOS immer ein String, kann
+  // laut Typ aber auch ein undurchsichtiger Plattform-Wert sein. Der Zweig kostet
+  // nichts und erspart ein `as string`, das beim nächsten RN-Update still bricht.
+  return ({ color }: { color: ColorValue }) => (
+    <SsIcon name={name} size={22} color={typeof color === 'string' ? color : colors.inkSoft} />
   );
 }
 
@@ -74,7 +90,5 @@ const styles = StyleSheet.create({
   },
   eintrag: { paddingVertical: spacing.xs },
   beschriftung: { ...type.caption, fontWeight: '700' },
-  symbol: { fontSize: 20, lineHeight: 24 },
-  symbolAus: { opacity: 0.45 },
   zahl: { backgroundColor: status.danger, color: colors.surface, fontSize: 11, fontWeight: '700' },
 });

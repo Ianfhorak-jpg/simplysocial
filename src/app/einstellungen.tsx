@@ -1,7 +1,7 @@
 import { router, type Href } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { SsAvatar, SsBack, SsButton, SsCard, SsScreen, SsText } from '@/components/ui';
+import { SsAvatar, SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { entblocken, useBlockierte } from '@/features/safety/hooks';
 import { colors, danger, radius, spacing } from '@/theme';
@@ -57,7 +57,7 @@ export default function EinstellungenScreen() {
           blockierte.map((person) => (
             <SsCard key={person.id}>
               <View style={styles.person}>
-                <SsAvatar emoji={person.avatar} seed={person.id} size="md" />
+                <SsAvatar name={person.displayName} seed={person.id} photoUrl={person.photoUrl} size="md" />
                 <View style={styles.personText}>
                   <SsText variant="bodyStrong" numberOfLines={1}>
                     {person.displayName}
@@ -80,7 +80,7 @@ export default function EinstellungenScreen() {
           Rechtliches
         </SsText>
         <Zeile
-          icon="📄"
+          icon="blatt"
           label="Nutzungsbedingungen"
           hinweis="Was hier gilt und ab welchem Alter"
           href="/nutzungsbedingungen"
@@ -92,7 +92,7 @@ export default function EinstellungenScreen() {
           Dein Konto
         </SsText>
         <Zeile
-          icon="🗑️"
+          icon="muell"
           label="Account löschen"
           hinweis="Dein Profil, deine Posts und deine Chats"
           href="/account-loeschen"
@@ -105,7 +105,7 @@ export default function EinstellungenScreen() {
           Für die Entwicklung
         </SsText>
         <Zeile
-          icon="🧱"
+          icon="bausteine"
           label="Bausteine anschauen"
           hinweis="Alle Elemente der App nebeneinander"
           href="/bausteine"
@@ -123,7 +123,7 @@ export default function EinstellungenScreen() {
  * Eine Zeile, die woanders hinführt.
  *
  * Das Winkelzeichen rechts ist dasselbe wie auf der Verfasser-Karte im Post-Detail —
- * in dieser App heißt „›" immer: hier geht es weiter. `rot` färbt nur den Text, nicht
+ * in dieser App heisst der Chevron immer: hier geht es weiter. `rot` färbt nur den Text, nicht
  * die Fläche; dieselbe Haltung wie bei `SsButton variant="danger"` (Begründung im Kopf
  * von `SsButton.tsx`): Die unfreundliche Aktion soll erkennbar sein, ohne der lauteste
  * Punkt auf dem Bildschirm zu werden.
@@ -155,9 +155,7 @@ function Zeile({
           {hinweis}
         </SsText>
       </View>
-      <SsText variant="heading" color={colors.inkSoft}>
-        ›
-      </SsText>
+      <SsIcon name="chevronRechts" size={18} color={colors.inkSoft} />
     </Pressable>
   );
 }

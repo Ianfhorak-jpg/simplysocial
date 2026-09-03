@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { SsBack, SsButton, SsCard, SsScreen, SsText } from '@/components/ui';
+import { SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { useMeineSpuren } from '@/features/safety/hooks';
 import { useCurrentUser } from '@/features/social/hooks';
@@ -41,7 +41,9 @@ export default function AccountLoeschenScreen() {
   if (schritt === 'fertig') {
     return (
       <SsScreen contentStyle={styles.endeSeite}>
-        <SsText style={styles.endeEmoji}>👋</SsText>
+        {/* Ein durchgestrichener Kreis: Der Screen sagt, hier waere Schluss — die
+            einzige Stelle der App, an der das Icon ein Ende meint und keinen Weg. */}
+        <SsIcon name="kreuzKreis" size={52} color={colors.inkSoft} />
         <SsText variant="heading" center>
           Hier wäre Schluss
         </SsText>
@@ -104,7 +106,7 @@ export default function AccountLoeschenScreen() {
           <SsButton
             variant="danger"
             label="Account löschen"
-            icon="🗑️"
+            icon="muell"
             block
             size="lg"
             onPress={() => setSchritt('sicher')}
@@ -179,5 +181,4 @@ const styles = StyleSheet.create({
   warnung: { backgroundColor: danger.soft, borderColor: danger.base },
 
   endeSeite: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  endeEmoji: { fontSize: 48, lineHeight: 58 },
 });

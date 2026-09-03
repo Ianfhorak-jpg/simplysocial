@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { SsAvatar, SsBack, SsCard, SsScreen, SsText } from './ui';
+import { SsAvatar, SsBack, SsCard, SsIcon, SsIconText, SsScreen, SsText } from './ui';
 
 import {
   useCurrentUser,
@@ -75,7 +75,7 @@ function PersonZeile({ person, folgeIch }: { person: User; folgeIch: boolean }) 
   return (
     <SsCard onPress={() => router.push({ pathname: '/user/[id]', params: { id: person.id } })}>
       <View style={styles.zeile}>
-        <SsAvatar emoji={person.avatar} seed={person.id} size="md" />
+        <SsAvatar name={person.displayName} seed={person.id} photoUrl={person.photoUrl} size="md" />
 
         <View style={styles.text}>
           <SsText variant="bodyStrong" numberOfLines={1}>
@@ -91,9 +91,7 @@ function PersonZeile({ person, folgeIch }: { person: User; folgeIch: boolean }) 
             Du
           </SsText>
         ) : folgeIch ? (
-          <SsText variant="caption" color={colors.inkSoft}>
-            ✓ Du folgst
-          </SsText>
+          <SsIconText icon="haken">Du folgst</SsIconText>
         ) : null}
       </View>
     </SsCard>
@@ -103,7 +101,7 @@ function PersonZeile({ person, folgeIch }: { person: User; folgeIch: boolean }) 
 function NichtGefunden() {
   return (
     <SsScreen contentStyle={styles.fehlerSeite}>
-      <SsText style={styles.fehlerEmoji}>🤷</SsText>
+      <SsIcon name="frage" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
         Diese Person gibt es nicht
       </SsText>
@@ -124,5 +122,4 @@ const styles = StyleSheet.create({
   text: { flex: 1, minWidth: 0, gap: 2 },
 
   fehlerSeite: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  fehlerEmoji: { fontSize: 48, lineHeight: 58 },
 });

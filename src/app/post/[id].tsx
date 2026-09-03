@@ -2,7 +2,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsInput, SsScreen, SsText } from '@/components/ui';
+import { useSichtText } from '@/components/SichtMarke';
+import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsIcon, SsInput, SsScreen, SsText } from '@/components/ui';
+import { AGE_LABELS } from '@/config/alter';
 import { LEVEL_LABELS } from '@/config/categories';
 import { useChatZuPost } from '@/features/chat/hooks';
 import { freiePlaetze, istOffen, usePost } from '@/features/posts/hooks';
@@ -11,8 +13,10 @@ import { useIstBlockiert, useMeineMeldung } from '@/features/safety/hooks';
 import { useCurrentUser } from '@/features/social/hooks';
 import { postIds } from '@/features/statisch';
 import { useSlice } from '@/features/store';
+import { ortText } from '@/lib/bezirk';
 import { startOderSeit, vergangen } from '@/lib/zeit';
 import { categoryColors, colors, radius, spacing } from '@/theme';
+import type { IconName } from '@/theme/icons';
 
 /**
  * Welche Adressen beim Bauen entstehen — siehe `features/statisch.ts`.
@@ -53,6 +57,12 @@ export default function PostDetailScreen() {
   const blockiert = useIstBlockiert(eintrag?.author.id);
   const meldung = useMeineMeldung('post', id);
   const [nachricht, setNachricht] = useState('');
+  // Vor dem frühen Ausstieg weiter unten: Haken laufen immer, nie bedingt.
+  const sichtText = useSichtText(
+    eintrag?.post.visibility,
+    eintrag?.author.displayName ?? '',
+    eintrag?.post.authorId === ich.id,
+  );
 
   // Erst NACH allen Haken aussteigen — React verlangt, dass in jedem Durchlauf
   // dieselben Haken in derselben Reihenfolge aufgerufen werden.
@@ -82,16 +92,14 @@ export default function PostDetailScreen() {
           es weitergeht; ohne das sieht die Karte aus wie die Infokarte darunter. */}
       <SsCard onPress={() => router.push({ pathname: '/user/[id]', params: { id: author.id } })}>
         <View style={styles.person}>
-          <SsAvatar emoji={author.avatar} seed={author.id} size="md" />
+          <SsAvatar name={author.displayName} seed={author.id} photoUrl={author.photoUrl} size="md" />
           <View style={styles.personText}>
             <SsText variant="bodyStrong">{author.displayName}</SsText>
             <SsText variant="caption" color={colors.inkSoft}>
               {author.handle} · {author.district} Wien
             </SsText>
           </View>
-          <SsText variant="heading" color={colors.inkSoft}>
-            ›
-          </SsText>
+          <SsIcon name="chevronRechts" size={18} color={colors.inkSoft} />
         </View>
         {author.bio ? (
           <SsText variant="caption" color={colors.inkSoft}>
@@ -101,31 +109,41 @@ export default function PostDetailScreen() {
       </SsCard>
 
       <SsCard>
-        <Zeile icon="🕒" label="Wann" wert={startOderSeit(post.startsAt)} />
+        <Zeile icon="uhr" label="Wann" wert={startOderSeit(post.startsAt)} />
         <Trenner />
-        <Zeile icon="📍" label="Wo" wert={`${post.district} Wien`} />
+        <Zeile icon="pin" label="Wo" wert={ortText(post.district)} />
         <Trenner />
         <Zeile
-          icon="🚩"
+          icon="fahne"
           label="Treffpunkt"
           wert={post.meetingPoint ?? 'Machen wir im Chat aus'}
           leise={!post.meetingPoint}
         />
         <Trenner />
-        <Zeile icon="🎯" label="Können" wert={LEVEL_LABELS[post.level]} />
+        <Zeile icon="ziel" label="Können" wert={LEVEL_LABELS[post.level]} />
+        {/* Nur, wenn der Verfasser wirklich eingeschränkt hat. Eine Zeile „Für wen:
+            Für alle" wäre an jedem zweiten Post eine Zeile, die nichts sagt — und
+            genau dadurch übersieht man sie dort, wo sie etwas sagt. Dieselbe Regel
+            wie bei „Sichtbar für" weiter unten. */}
+        {post.ageGroup !== 'egal' ? (
+          <>
+            <Trenner />
+            <Zeile icon="person" label="Für wen" wert={AGE_LABELS[post.ageGroup]} />
+          </>
+        ) : null}
         <Trenner />
         <Zeile
-          icon="👥"
+          icon="personen"
           label="Plätze"
           wert={frei > 0 ? `${frei} von ${post.spotsTotal} frei` : `Alle ${post.spotsTotal} vergeben`}
         />
-        {post.visibility === 'followers' ? (
+        {sichtText ? (
           <>
             <Trenner />
             <Zeile
-              icon="🔒"
+              icon={post.visibility.kind === 'group' ? 'personen' : 'schloss'}
               label="Sichtbar für"
-              wert={istMeiner ? 'Nur deine Follower' : `Nur wer ${author.displayName} folgt`}
+              wert={sichtText}
             />
           </>
         ) : null}
@@ -154,13 +172,13 @@ export default function PostDetailScreen() {
           // die ANDERE Seite blockiert hat, verrät ein „Du und Lea…" genau das, was
           // ein Block verbergen soll. Derselbe Satz für beide Richtungen.
           <Hinweis
-            emoji="🚫"
+            icon="verboten"
             titel="Hier geht nichts"
             text="Zwischen dir und dem Verfasser dieses Posts steht eine Blockierung. Blockierungen, die du selbst gesetzt hast, findest du in den Einstellungen."
           />
         ) : istMeiner ? (
           <Hinweis
-            emoji="✍️"
+            icon="stift"
             titel="Das ist dein Post"
             text={
               anfragenAufDiesen.length === 0
@@ -176,7 +194,7 @@ export default function PostDetailScreen() {
             {meineAnfrage.status === 'accepted' ? (
               <>
                 <Hinweis
-                  emoji="🎉"
+                  icon="funken"
                   titel="Ihr seid verabredet"
                   text={`${author.displayName} hat bestätigt. Alles Weitere macht ihr im Chat aus.`}
                 />
@@ -188,7 +206,7 @@ export default function PostDetailScreen() {
                     variant="category"
                     category={post.category}
                     label="Zum Chat"
-                    icon="💬"
+                    icon="sprechblase"
                     block
                     onPress={() => router.push({ pathname: '/chat/[id]', params: { id: chat.id } })}
                   />
@@ -196,13 +214,13 @@ export default function PostDetailScreen() {
               </>
             ) : meineAnfrage.status === 'declined' ? (
               <Hinweis
-                emoji="🙁"
+                icon="kreuzKreis"
                 titel="Diesmal nicht"
                 text={`${author.displayName} hat abgesagt. Im Feed ist bestimmt was anderes.`}
               />
             ) : (
               <Hinweis
-                emoji="✅"
+                icon="hakenKreis"
                 titel="Anfrage geschickt"
                 text={`${author.displayName} muss noch bestätigen. Sobald das passiert, geht der Chat auf.`}
               />
@@ -234,7 +252,7 @@ export default function PostDetailScreen() {
             />
             <SsButton
               label="Bin dabei"
-              icon="🙌"
+              icon="hand"
               block
               size="lg"
               onPress={() => anfrageSenden(post.id, nachricht)}
@@ -255,7 +273,7 @@ export default function PostDetailScreen() {
         <SsButton
           variant="ghost"
           label={meldung ? 'Gemeldet' : 'Post melden'}
-          icon="🚩"
+          icon="fahne"
           disabled={Boolean(meldung)}
           style={styles.melden}
           onPress={() => router.push({ pathname: '/melden', params: { art: 'post', id: post.id } })}
@@ -271,7 +289,7 @@ function Zeile({
   wert,
   leise,
 }: {
-  icon: string;
+  icon: IconName;
   label: string;
   wert: string;
   /** Für Werte, die kein echter Inhalt sind, sondern deren Fehlen erklären. */
@@ -279,7 +297,13 @@ function Zeile({
 }) {
   return (
     <View style={styles.zeile}>
-      <SsText style={styles.zeileIcon}>{icon}</SsText>
+      {/* Die feste Breite in `zeileIcon` stammt aus der Emoji-Zeit: Emojis sind je
+          nach Gerät verschieden breit, deshalb brauchten sie eine Spalte. Gezeichnete
+          Icons sind alle exakt gleich breit — die Spalte bleibt trotzdem, sie hält
+          jetzt die Beschriftungen darunter in einer Flucht. */}
+      <View style={styles.zeileIcon}>
+        <SsIcon name={icon} size={19} color={colors.inkSoft} />
+      </View>
       <View style={styles.zeileText}>
         <SsText variant="caption" color={colors.inkSoft}>
           {label}
@@ -296,10 +320,12 @@ function Trenner() {
   return <View style={styles.trenner} />;
 }
 
-function Hinweis({ emoji, titel, text }: { emoji: string; titel: string; text: string }) {
+function Hinweis({ icon, titel, text }: { icon: IconName; titel: string; text: string }) {
   return (
     <View style={styles.hinweis}>
-      <SsText style={styles.hinweisEmoji}>{emoji}</SsText>
+      <View style={styles.hinweisIcon}>
+        <SsIcon name={icon} size={24} color={colors.ink} />
+      </View>
       <View style={styles.hinweisText}>
         <SsText variant="bodyStrong">{titel}</SsText>
         <SsText variant="caption" color={colors.inkSoft}>
@@ -313,7 +339,7 @@ function Hinweis({ emoji, titel, text }: { emoji: string; titel: string; text: s
 function NichtGefunden() {
   return (
     <SsScreen contentStyle={styles.fehlerSeite}>
-      <SsText style={styles.fehlerEmoji}>🤷</SsText>
+      <SsIcon name="frage" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
         Diesen Post gibt es nicht mehr
       </SsText>
@@ -334,7 +360,7 @@ const styles = StyleSheet.create({
   personText: { flex: 1, gap: 2 },
 
   zeile: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  zeileIcon: { fontSize: 17, lineHeight: 21, width: 22, textAlign: 'center' },
+  zeileIcon: { width: 22, alignItems: 'center' },
   zeileText: { flex: 1, gap: 1 },
   trenner: { height: 1, backgroundColor: colors.line, marginVertical: spacing.xs },
 
@@ -351,10 +377,11 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     borderRadius: radius.lg,
   },
-  hinweisEmoji: { fontSize: 22, lineHeight: 27 },
+  // Auf die Mitte der ersten Zeile, nicht des ganzen Blocks — sonst rutscht das
+  // Icon bei dreizeiligen Hinweisen in die Mitte (ACTA-Falle aus Phase 12).
+  hinweisIcon: { marginTop: 1 },
   hinweisText: { flex: 1, gap: spacing.xs },
   echo: { marginTop: -spacing.xs },
 
   fehlerSeite: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  fehlerEmoji: { fontSize: 48, lineHeight: 58 },
 });

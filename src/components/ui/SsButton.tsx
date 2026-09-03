@@ -1,8 +1,10 @@
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
 
 import { accent, categoryColors, colors, danger, DEPTH, radius, spacing } from '@/theme';
+import type { IconName } from '@/theme/icons';
 import type { ActivityCategory } from '@/types/models';
 
 export type SsButtonVariant = 'primary' | 'category' | 'ghost' | 'danger';
@@ -11,8 +13,12 @@ interface SsButtonBase {
   label: string;
   onPress?: () => void;
   disabled?: boolean;
-  /** Emoji links vom Text. Im Prototyp der Ersatz für Icons. */
-  icon?: string;
+  /**
+   * Icon links vom Text — ein Name aus `theme/icons.ts`, seit Phase 14 kein Emoji
+   * mehr. Der Typ ist bewusst eng: Als `string` war jede vergessene Ersetzung
+   * unsichtbar, als Union zeigt `tsc` sie.
+   */
+  icon?: IconName;
   /** Über die volle Breite. Für den Hauptbutton am Seitenende. */
   block?: boolean;
   size?: 'md' | 'lg';
@@ -112,14 +118,10 @@ export function SsButton({
               ? { borderBottomWidth: randGedrueckt, marginTop: randRuhe - randGedrueckt }
               : { borderBottomWidth: randRuhe, marginTop: 0 },
           ]}>
-          {/* Das Emoji wächst mit der Größe mit. Sonst steht auf dem großen Button
-              ein 15px-Symbol neben 17px-Text — und weil eine Emoji-Glyphe breiter
-              zeichnet als ihre Box, klebt sie dann am Wort. */}
-          {icon ? (
-            <SsText variant="label" color={textColor} style={size === 'lg' && styles.labelLg}>
-              {icon}
-            </SsText>
-          ) : null}
+          {/* Das Icon wächst mit der Größe mit und nimmt die Textfarbe an — das ist
+              der Unterschied zum Emoji davor, das immer bunt blieb und deshalb auf
+              einem farbigen Knopf wie ein Aufkleber saß. */}
+          {icon ? <SsIcon name={icon} size={size === 'lg' ? 20 : 17} color={textColor} /> : null}
           <SsText variant="label" color={textColor} numberOfLines={1} style={size === 'lg' && styles.labelLg}>
             {label}
           </SsText>

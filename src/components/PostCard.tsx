@@ -1,11 +1,14 @@
 import { StyleSheet, View } from 'react-native';
 
-import { SsAvatar, SsCard, SsChip, SsText } from './ui';
+import { SichtMarke } from './SichtMarke';
+import { SsAvatar, SsCard, SsChip, SsIconText, SsText } from './ui';
 
+import { alterAmPost } from '@/config/alter';
 import { freiePlaetze, istOffen, type FeedEintrag } from '@/features/posts/hooks';
 import { useMeineAnfrage } from '@/features/requests/hooks';
+import { ortText } from '@/lib/bezirk';
 import { startOderSeit } from '@/lib/zeit';
-import { colors, spacing } from '@/theme';
+import { categoryColors, colors, spacing } from '@/theme';
 
 /**
  * Eine Zeile im Feed.
@@ -43,17 +46,21 @@ export function PostCard({
     <SsCard category={post.category} onPress={onPress} style={!offen && styles.geschlossen}>
       <View style={styles.kopf}>
         <SsChip category={post.category} />
-        {post.visibility === 'followers' ? (
-          <SsText variant="caption" color={colors.inkSoft}>
-            🔒 Nur Follower
-          </SsText>
-        ) : null}
+        {/* Seit Phase 17 drei Stufen statt zwei — welche hier steht, entscheidet
+            `SichtMarke`, weil der Gruppenname aus der Gruppe kommt und nicht aus
+            dem Post. */}
+        <SichtMarke visibility={post.visibility} />
       </View>
 
       <SsText variant="heading">{post.title}</SsText>
 
+      {/* Zeit, Ort und — seit Phase 15 — für wen. Die Altersgruppe steht hier in der
+          ruhigen Zeile und nicht als eigene Pille: Sie ist eine Angabe wie der Ort,
+          keine Auszeichnung. Und `alterAmPost` gibt `null` zurück, solange der Post
+          für alle offen ist — das ist der Normalfall, und der braucht kein Wort. */}
       <SsText variant="caption" color={colors.inkSoft}>
-        {startOderSeit(post.startsAt)}   ·   {post.district} Wien
+        {startOderSeit(post.startsAt)}   ·   {ortText(post.district)}
+        {alterAmPost(post.ageGroup) ? `   ·   ${alterAmPost(post.ageGroup)}` : ''}
       </SsText>
 
       {post.note ? (
@@ -64,18 +71,23 @@ export function PostCard({
 
       <View style={styles.fuss}>
         <View style={styles.person}>
-          <SsAvatar emoji={author.avatar} seed={author.id} size="sm" />
+          <SsAvatar name={author.displayName} seed={author.id} photoUrl={author.photoUrl} size="sm" />
           <SsText variant="caption" color={colors.ink} numberOfLines={1} style={styles.name}>
             {author.displayName}
           </SsText>
         </View>
 
         {meineAnfrage ? (
-          <SsText
-            variant="caption"
-            color={meineAnfrage.status === 'accepted' ? colors.ink : colors.inkSoft}>
-            {meineAnfrage.status === 'accepted' ? '🎉 Du bist dabei' : '✓ Angefragt'}
-          </SsText>
+          // Bestätigt bekommt die Kategoriefarbe, angefragt bleibt grau: Der Unterschied
+          // zwischen „läuft" und „wartet" ist der wichtigste auf der Karte, und Farbe
+          // sieht man im Vorbeiscrollen, ein anderes Wort nicht.
+          meineAnfrage.status === 'accepted' ? (
+            <SsIconText icon="funken" color={colors.ink} iconColor={categoryColors[post.category].onSoft}>
+              Du bist dabei
+            </SsIconText>
+          ) : (
+            <SsIconText icon="haken">Angefragt</SsIconText>
+          )
         ) : (
           <SsText variant="caption" color={offen ? colors.ink : colors.inkSoft}>
             {plaetzeText(frei, offen)}

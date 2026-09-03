@@ -1,15 +1,70 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
+import { AntwortLeiste } from '@/components/AntwortLeiste';
 import { PostCard } from '@/components/PostCard';
-import { SsButton, SsChip, SsScreen, SsSegment, SsText } from '@/components/ui';
+import { WischStapel, anleitungGesehen, anleitungMerken } from '@/components/WischStapel';
+import {
+  SsButton,
+  SsChip,
+  SsIcon,
+  SsInput,
+  SsScreen,
+  SsScrollReihe,
+  SsSegment,
+  SsText,
+} from '@/components/ui';
+import { AGE_FILTER_LABELS, AGE_ORDER } from '@/config/alter';
 import { BRAND } from '@/config/brand';
-import { useFeed, type KategorieFilter } from '@/features/posts/hooks';
-import { CATEGORY_ORDER, categoryColors, colors, spacing } from '@/theme';
+import { WANN_LABELS, WANN_ORDER } from '@/features/posts/filter';
+import {
+  FILTER_LEER,
+  aktiveFilter,
+  useBezirkeImFeed,
+  useFeed,
+  useStapel,
+  wegwischen,
+  wischRueckgaengig,
+  type FeedEintrag,
+  type FeedFilter,
+} from '@/features/posts/hooks';
+import {
+  RUECKGAENGIG_MS,
+  WISCH_WIRKUNG,
+  grussVorschlag,
+  type WischRichtung,
+} from '@/features/posts/wisch';
+import { anfrageSenden } from '@/features/requests/hooks';
+import { CATEGORY_ORDER, categoryColors, colors, radius, spacing } from '@/theme';
 
 /**
  * Der Feed — der erste Screen der App und der einzige, den man täglich sieht.
+ *
+ * ── Seit Phase 11: zwei Ansichten, ein Bildschirm ─────────────────────────────
+ * Der **Stapel** steht vorn (Ians Entscheidung vom 2026-09-01), die **Liste** ist
+ * dieselbe wie vorher. Was NICHT passiert ist: die Liste abzuschaffen. Sie ist das
+ * Auffangnetz für den leeren Dienstag — ist der Stapel durch, steht hier keine leere
+ * Fläche, sondern alles noch einmal in Ruhe. Die ganze Begründung steht in
+ * `features/posts/wisch.ts` und in PLAN.md, Abschnitt 1.
+ *
+ * Deshalb ist es auch kein zweiter Tab und keine zweite Adresse: **Es sind dieselben
+ * Daten mit denselben Filtern**, nur anders angeordnet. Alle sechs Filter gelten in
+ * beiden Ansichten und überleben das Umschalten — wer filtert und dann die Ansicht
+ * wechselt, würde einen zurückgesetzten Filter für einen Fehler halten.
+ *
+ * ── Seit Phase 15: sechs Filter statt zwei ────────────────────────────────────
+ * Leopolds Rückmeldung vom 2026-09-02 war „man kann nicht so genau filtern, was ein
+ * Problem wird, wenn es viele Anfragen gibt". Dazugekommen sind **Suche, Bezirk,
+ * Wann und Altersgruppe**; was sie bedeuten, steht in `features/posts/filter.ts`,
+ * dieser Screen zeigt nur Pillen.
+ *
+ * Sichtbar bleiben davon nur zwei Dinge: die **Suchzeile** (ein Suchfeld, das man
+ * erst aufklappen muss, wird nicht benutzt) und die **Kategorien** (der
+ * meistbenutzte Filter, und die sechs Farben sind das Gesicht der App). Der Rest
+ * liegt hinter dem Filter-Knopf — mit der Zahl daneben, denn ein zugeklappter
+ * Filter, den man nicht mehr sieht, ist der schnellste Weg zu einem Feed, den
+ * jemand für kaputt hält.
  *
  * ── Warum FlatList und nicht `<SsScreen scroll>` mit einem `.map()` ───────────
  * Bei 14 Fake-Posts wäre beides gleich. Aber die FlatList zeichnet nur, was gerade
@@ -21,21 +76,108 @@ import { CATEGORY_ORDER, categoryColors, colors, spacing } from '@/theme';
  * ── Warum Kopf und Filter stehen bleiben ──────────────────────────────────────
  * Sie könnten mitscrollen (`ListHeaderComponent`). Aber wer filtert, will das
  * Ergebnis sehen und sofort weiterfiltern — ein Filter, den man erst wieder
- * hochscrollen muss, wird nicht benutzt.
+ * hochscrollen muss, wird nicht benutzt. Im Stapel gilt dasselbe doppelt: dort
+ * scrollt gar nichts.
  */
+
+type Ansicht = 'stapel' | 'liste';
+
 export default function FeedScreen() {
-  const [kategorie, setKategorie] = useState<KategorieFilter>('alle');
-  const [nurGefolgte, setNurGefolgte] = useState(false);
+  const [ansicht, setAnsicht] = useState<Ansicht>('stapel');
 
-  // Ohne useMemo wäre `filter` bei jedem Rendern ein neues Objekt und die
-  // Sortierung im Feed liefe jedes Mal neu, obwohl sich nichts geändert hat.
-  const filter = useMemo(() => ({ kategorie, nurGefolgte }), [kategorie, nurGefolgte]);
+  // Seit Phase 15 EIN Objekt statt sechs Einzelwerte. Der Nebeneffekt ist der
+  // eigentliche Grund: `useState` gibt dasselbe Objekt zurück, solange niemand es
+  // ändert — der Feed rechnet also nur neu, wenn wirklich jemand gefiltert hat.
+  // (Vorher stand hier ein `useMemo`, das genau das von Hand nachgebaut hat.)
+  const [filter, setFilter] = useState<FeedFilter>(FILTER_LEER);
+  const setzen = <K extends keyof FeedFilter>(feld: K, wert: FeedFilter[K]) =>
+    setFilter((alt) => ({ ...alt, [feld]: wert }));
+
   const eintraege = useFeed(filter);
+  const stapel = useStapel(filter);
+  const bezirke = useBezirkeImFeed(filter);
 
-  const filterAktiv = kategorie !== 'alle' || nurGefolgte;
+  /** Ist der Filterbereich aufgeklappt? Zu beim Aufschlagen — wie beim Posten. */
+  const [filterOffen, setFilterOffen] = useState(false);
+  const anzahlFilter = aktiveFilter(filter);
+  const filterAktiv = anzahlFilter > 0;
+  const zuruecksetzen = () => setFilter(FILTER_LEER);
+
+  // Beim allerersten Öffnen liegt die Anleitungskarte oben. Erst im Effekt gesetzt
+  // und nicht schon beim ersten Rendern — sonst stünde sie im vorgerenderten HTML
+  // und React fände beim Hydrieren einen Unterschied (dieselbe Überlegung wie bei
+  // `PrototypHinweis`, Phase 8).
+  const [anleitung, setAnleitung] = useState(false);
+  useEffect(() => {
+    if (!anleitungGesehen()) setAnleitung(true);
+  }, []);
+
+  // Die Karte, für die gerade die Antwort-Leiste offen ist. Sie ist so lange NICHT
+  // im Stapel: „Abbrechen legt die Karte zurück" heißt, dass sie erst mit dem
+  // Schicken wirklich weg ist. Weil sie dabei aus- und wieder einhängt, kommt sie
+  // dann auch wieder mit einem sauberen Zustand zurück.
+  const [antwortAuf, setAntwortAuf] = useState<FeedEintrag | null>(null);
+  const karten = useMemo(
+    () => (antwortAuf ? stapel.filter((e) => e.post.id !== antwortAuf.post.id) : stapel),
+    [stapel, antwortAuf],
+  );
+
+  const [rueckgaengig, setRueckgaengig] = useState<FeedEintrag | null>(null);
+  const uhr = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => (uhr.current ? clearTimeout(uhr.current) : undefined), []);
+
+  function fristStarten(eintrag: FeedEintrag) {
+    if (uhr.current) clearTimeout(uhr.current);
+    setRueckgaengig(eintrag);
+    uhr.current = setTimeout(() => setRueckgaengig(null), RUECKGAENGIG_MS);
+  }
+
+  function fristBeenden() {
+    if (uhr.current) clearTimeout(uhr.current);
+    setRueckgaengig(null);
+  }
+
+  /**
+   * Ein Wisch ist durch. Was er bedeutet, steht NICHT hier, sondern in
+   * `features/posts/wisch.ts` — dieser Screen führt nur aus, was dort entschieden
+   * ist. Deshalb die Abfragen auf `WISCH_WIRKUNG`: Ändert Ian die Regel, ändert
+   * sich das Verhalten mit, ohne dass jemand diesen Screen anfassen muss.
+   */
+  function gewischt(eintrag: FeedEintrag, richtung: WischRichtung) {
+    if (richtung === 'links') {
+      wegwischen(eintrag.post.id);
+      if (RUECKGAENGIG_MS > 0) fristStarten(eintrag);
+      return;
+    }
+
+    if (WISCH_WIRKUNG.rechts === 'sofort') {
+      anfrageSenden(eintrag.post.id, grussVorschlag(eintrag.author.displayName));
+      return;
+    }
+    if (WISCH_WIRKUNG.rechts === 'detail') {
+      router.push({ pathname: '/post/[id]', params: { id: eintrag.post.id } });
+      return;
+    }
+    setAntwortAuf(eintrag);
+  }
+
+  function anfrageAbschicken(text: string) {
+    if (!antwortAuf) return;
+    anfrageSenden(antwortAuf.post.id, text);
+    // Erst danach schließen: Der Post fällt durch die Anfrage von selbst aus dem
+    // Stapel (Regel in `wisch.ts`), also muss ihn hier niemand zusätzlich
+    // wegräumen. Zwei Stellen, die dasselbe entfernen, wären eine zu viel.
+    setAntwortAuf(null);
+  }
+
+  const stapelLeer = karten.length === 0 && !anleitung;
 
   return (
-    <SsScreen tabScreen contentStyle={styles.seite}>
+    // `keyboard` steht hier wegen der Antwort-Leiste: Sie klebt am unteren Rand, und
+    // auf iOS läge sie sonst unter der Tastatur. Fest gesetzt und nicht umgeschaltet
+    // — ein Wechsel würde den ganzen Inhalt neu einhängen und mitten in der
+    // Wischbewegung den Stapel zurücksetzen.
+    <SsScreen tabScreen keyboard contentStyle={styles.seite}>
       <View style={styles.kopf}>
         <View style={styles.marke}>
           <SsText variant="title">
@@ -51,82 +193,415 @@ export default function FeedScreen() {
         {/* Der Weg zum Posten steht im Kopf und nicht als schwebender Knopf über der
             Liste: ein schwebender Knopf verdeckt immer genau die Karte, die man
             gerade lesen will — und unten ist schon die Tab-Leiste. */}
-        <SsButton label="Posten" icon="✏️" onPress={() => router.push('/create')} />
+        <SsButton label="Posten" icon="stift" onPress={() => router.push('/create')} />
       </View>
 
-      <Umschalter nurGefolgte={nurGefolgte} setzen={setNurGefolgte} />
+      {/* Die Zeile verdient ihre Höhe zweimal: links der Umschalter, rechts die
+          Zahl. Gerade im Stapel ist "wie viel kommt noch" die Frage, die man sich
+          nach der zweiten Karte stellt — ohne Antwort fühlt sich jeder Stapel
+          unendlich oder gleich zu Ende an. */}
+      <View style={styles.ansichtZeile}>
+        <SsSegment<Ansicht>
+          value={ansicht}
+          onChange={setAnsicht}
+          style={styles.ansicht}
+          options={[
+            { wert: 'stapel', label: 'Stapel' },
+            { wert: 'liste', label: 'Liste' },
+          ]}
+        />
+        <SsText variant="caption" color={colors.inkSoft}>
+          {ansicht === 'stapel' ? kartenZahl(karten.length) : postZahl(eintraege.length)}
+        </SsText>
+      </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.chipZeile}
-        contentContainerStyle={styles.chipInhalt}>
+      <View style={styles.sucheZeile}>
+        <SsInput
+          value={filter.suche}
+          onChangeText={(t) => setzen('suche', t)}
+          onClear={() => setzen('suche', '')}
+          placeholder="Suchen — Tennis, lernen, Kaffee …"
+          icon="lupe"
+          style={styles.sucheFeld}
+        />
+        <FilterKnopf
+          offen={filterOffen}
+          anzahl={anzahlFilter}
+          umschalten={() => setFilterOffen((o) => !o)}
+        />
+      </View>
+
+      {filterOffen ? (
+        <FilterBereich
+          filter={filter}
+          setzen={setzen}
+          bezirke={bezirke}
+          aktiv={filterAktiv}
+          zuruecksetzen={zuruecksetzen}
+        />
+      ) : null}
+
+      {/* Die Kategorien bleiben IMMER sichtbar und wandern nicht mit in den
+          Filterbereich. Sie sind der meistbenutzte Filter, und sie sind das
+          Erkennungszeichen der App — sechs Farben, die sonst nirgends vorkommen.
+          Eingeklappt wäre der Feed eine Liste ohne Gesicht. */}
+      <SsScrollReihe style={styles.chipZeile} contentContainerStyle={styles.chipInhalt}>
         <SsChip
           label="Alle"
-          selected={kategorie === 'alle'}
-          onPress={() => setKategorie('alle')}
+          selected={filter.kategorie === 'alle'}
+          onPress={() => setzen('kategorie', 'alle')}
         />
         {CATEGORY_ORDER.map((k) => (
           <SsChip
             key={k}
             category={k}
-            selected={kategorie === k}
-            onPress={() => setKategorie(kategorie === k ? 'alle' : k)}
+            selected={filter.kategorie === k}
+            onPress={() => setzen('kategorie', filter.kategorie === k ? 'alle' : k)}
           />
         ))}
-      </ScrollView>
+      </SsScrollReihe>
 
-      <FlatList
-        data={eintraege}
-        keyExtractor={(e) => e.post.id}
-        renderItem={({ item }) => (
-          <PostCard
-            eintrag={item}
-            onPress={() => router.push({ pathname: '/post/[id]', params: { id: item.post.id } })}
+      {ansicht === 'liste' ? (
+        <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
+      ) : stapelLeer ? (
+        // Ians Regel, Phase 11: Am Ende des Stapels steht keine leere Fläche,
+        // sondern die Liste des schon Gesehenen.
+        <>
+          <StapelDurch filterAktiv={filterAktiv} zurListe={() => setAnsicht('liste')} />
+          <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
+        </>
+      ) : (
+        <View style={styles.stapelBereich}>
+          <WischStapel
+            eintraege={karten}
+            anleitung={anleitung}
+            onAnleitungWeg={() => {
+              anleitungMerken();
+              setAnleitung(false);
+            }}
+            onWeg={gewischt}
+            onAntippen={(e) =>
+              router.push({ pathname: '/post/[id]', params: { id: e.post.id } })
+            }
+            fussnote={
+              rueckgaengig ? (
+                <Rueckgaengig
+                  eintrag={rueckgaengig}
+                  onZurueck={() => {
+                    wischRueckgaengig(rueckgaengig.post.id);
+                    fristBeenden();
+                  }}
+                />
+              ) : undefined
+            }
           />
-        )}
-        ItemSeparatorComponent={() => <View style={styles.luecke} />}
-        style={styles.listeAussen}
-        contentContainerStyle={styles.liste}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={<LeererFeed filterAktiv={filterAktiv} zuruecksetzen={() => {
-          setKategorie('alle');
-          setNurGefolgte(false);
-        }} />}
-      />
+        </View>
+      )}
+
+      {antwortAuf ? (
+        <AntwortLeiste
+          eintrag={antwortAuf}
+          onAbbrechen={() => setAntwortAuf(null)}
+          onSenden={anfrageAbschicken}
+        />
+      ) : null}
     </SsScreen>
   );
 }
 
-/**
- * "Alle" gegen "Wem ich folge".
- *
- * Bewusst als geteilte Fläche (`SsSegment`) und nicht als zwei Pillen wie die
- * Kategorien darunter: zwei Chip-Reihen übereinander sähen aus wie eine lange
- * Filterliste, und "Alle" stünde zweimal da — einmal für Leute, einmal für
- * Kategorien. Die geteilte Fläche sagt von selbst "entweder-oder".
- *
- * Zur Beschriftung: In PLAN.md heißt der Filter "Nur Follower". Wörtlich genommen
- * wären das die Leute, die MIR folgen — nützlich ist aber die andere Richtung: die
- * Leute, denen ICH folge. Deshalb steht hier "Wem ich folge".
- */
-function Umschalter({
-  nurGefolgte,
-  setzen,
+/** "Noch 7 Karten" · "Noch 1 Karte" · "Durch". Einzahl und Mehrzahl an einer Stelle. */
+function kartenZahl(anzahl: number): string {
+  if (anzahl === 0) return 'Durch';
+  return anzahl === 1 ? 'Noch 1 Karte' : `Noch ${anzahl} Karten`;
+}
+
+function postZahl(anzahl: number): string {
+  return anzahl === 1 ? '1 Post' : `${anzahl} Posts`;
+}
+
+/** Die Liste — bis Phase 11 der ganze Screen, jetzt eine von zwei Ansichten. */
+function FeedListe({
+  eintraege,
+  filterAktiv,
+  zuruecksetzen,
 }: {
-  nurGefolgte: boolean;
-  setzen: (wert: boolean) => void;
+  eintraege: FeedEintrag[];
+  filterAktiv: boolean;
+  zuruecksetzen: () => void;
 }) {
   return (
-    <SsSegment<boolean>
-      value={nurGefolgte}
-      onChange={setzen}
-      style={styles.umschalter}
-      options={[
-        { wert: false, label: 'Alle' },
-        { wert: true, label: 'Wem ich folge' },
-      ]}
+    <FlatList
+      data={eintraege}
+      keyExtractor={(e) => e.post.id}
+      renderItem={({ item }) => (
+        <PostCard
+          eintrag={item}
+          onPress={() => router.push({ pathname: '/post/[id]', params: { id: item.post.id } })}
+        />
+      )}
+      ItemSeparatorComponent={() => <View style={styles.luecke} />}
+      style={styles.listeAussen}
+      contentContainerStyle={styles.liste}
+      showsVerticalScrollIndicator={false}
+      ListEmptyComponent={<LeererFeed filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />}
     />
+  );
+}
+
+/**
+ * Das Ende des Stapels — und zwar als Überschrift über der Liste, nicht als
+ * eigener Bildschirm.
+ *
+ * Genau hier entscheidet sich, ob die App an einem stillen Dienstag tot wirkt. Ein
+ * leerer Wischstapel mit einem Achselzucken wäre das Ende des Besuchs. Ein Satz,
+ * der sagt, dass man durch ist, und darunter alles noch einmal — das ist derselbe
+ * Bildschirm mit einer Aufgabe mehr.
+ */
+function StapelDurch({
+  filterAktiv,
+  zurListe,
+}: {
+  filterAktiv: boolean;
+  zurListe: () => void;
+}) {
+  return (
+    <View style={styles.durch}>
+      <View style={styles.durchText}>
+        <SsText variant="heading">
+          {filterAktiv ? 'Hier ist der Stapel durch' : 'Das war alles für heute'}
+        </SsText>
+        <SsText variant="caption" color={colors.inkSoft}>
+          {filterAktiv
+            ? 'Mit einem anderen Filter liegen vielleicht noch Karten da.'
+            : 'Alles, was du gesehen hast, steht unten weiter in der Liste.'}
+        </SsText>
+      </View>
+      {/* `alignSelf` muss sein: SsButton setzt für schmale Knöpfe selbst
+          'flex-start' und schlägt damit das 'alignItems: center' hier. */}
+      <SsButton
+        label="Posten"
+        icon="stift"
+        style={styles.durchKnopf}
+        onPress={() => router.push('/create')}
+      />
+      {/* Der Umschalter oben sagt weiter „Stapel", während unten eine Liste steht —
+          das stimmt (der Stapel ist durch, die Liste fängt ihn auf), sieht aber
+          erklärungsbedürftig aus. Diese Zeile ist die Erklärung und der Weg in
+          einem. „Ganze Liste ansehen" stand hier zuerst und war falsch: Die Liste
+          steht ja schon da, es wechselt nur die Ansicht. */}
+      <Pressable onPress={zurListe} accessibilityRole="button" style={styles.durchLink}>
+        <SsText variant="caption" color={categoryColors.creative.base}>
+          Zur Listenansicht wechseln
+        </SsText>
+      </Pressable>
+    </View>
+  );
+}
+
+/**
+ * „Rückgängig" — mein Vorschlag, den Ian streichen kann (`wisch.ts`, Kopf).
+ *
+ * Ein Fehlwisch ist die häufigste Beschwerde bei Wisch-Oberflächen, und hier kostet
+ * er keine Kleinigkeit, sondern eine mögliche Verabredung. Der Titel steht mit
+ * dabei, weil „Weggewischt · Rückgängig" allein die Frage offenlässt, WAS man
+ * gerade zurückholt — nach zwei schnellen Wischern weiß man das nicht mehr.
+ */
+function Rueckgaengig({ eintrag, onZurueck }: { eintrag: FeedEintrag; onZurueck: () => void }) {
+  return (
+    <View style={styles.rueck}>
+      <SsText variant="caption" color={colors.bg} numberOfLines={1} style={styles.rueckText}>
+        „{eintrag.post.title}" weggewischt
+      </SsText>
+      <Pressable
+        onPress={onZurueck}
+        accessibilityRole="button"
+        hitSlop={spacing.sm}
+        style={styles.rueckKnopf}>
+        <SsText variant="label" color={colors.bg}>
+          Rückgängig
+        </SsText>
+      </Pressable>
+    </View>
+  );
+}
+
+/**
+ * Der Knopf, der den Filterbereich auf- und zuklappt — mit der Zahl daneben.
+ *
+ * ── Warum die Zahl das Wichtigste an diesem Knopf ist ────────────────────────
+ * Ein zugeklappter Filterbereich hat genau ein Problem: Man sieht nicht mehr, was
+ * eingestellt ist. Wer gestern „1220" gewählt hat und heute einen leeren Feed
+ * vorfindet, sucht den Fehler bei der App, nicht bei sich. Die Zahl ist die
+ * Antwort darauf — und deshalb wechselt der Knopf zusätzlich die Farbe, sobald
+ * etwas aktiv ist: Man sieht es im Vorbeischauen, ohne zu lesen.
+ *
+ * Kein `SsButton`, weil der eine feste Höhe und den harten Rand unten hat — neben
+ * einem Eingabefeld säße er entweder zu hoch oder zu tief. Dies hier ist eine
+ * Pille in Feldhöhe, wie sie sonst nur `SsChip` baut; `SsChip` selbst kann kein
+ * Icon neben freiem Text tragen.
+ */
+function FilterKnopf({
+  offen,
+  anzahl,
+  umschalten,
+}: {
+  offen: boolean;
+  anzahl: number;
+  umschalten: () => void;
+}) {
+  const hervor = anzahl > 0;
+  return (
+    <Pressable
+      onPress={umschalten}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: offen }}
+      accessibilityLabel={anzahl > 0 ? `Filter, ${anzahl} aktiv` : 'Filter'}
+      style={({ pressed }) => [
+        styles.filterKnopf,
+        hervor && styles.filterKnopfAktiv,
+        pressed && styles.filterKnopfGedrueckt,
+      ]}>
+      <SsIcon name="regler" size={18} color={hervor ? colors.bg : colors.ink} />
+      <SsText variant="label" color={hervor ? colors.bg : colors.ink}>
+        {anzahl > 0 ? `Filter · ${anzahl}` : 'Filter'}
+      </SsText>
+    </Pressable>
+  );
+}
+
+/**
+ * Der aufgeklappte Filterbereich — Phase 15.
+ *
+ * ── Warum überhaupt zugeklappt ───────────────────────────────────────────────
+ * Vier Filterreihen offen hinzustellen wäre die halbe Bildschirmhöhe, und der
+ * Wischstapel darunter hätte keine mehr. Dasselbe Muster wie beim Posten
+ * („Mehr einstellen", Phase 12): Der häufige Fall braucht nichts davon, und wer
+ * etwas sucht, klappt einmal auf.
+ *
+ * ── Was NICHT zuklappt ───────────────────────────────────────────────────────
+ * Suche und Kategorien. Die Suche ist Leopolds direkteste Antwort („man kann nicht
+ * genau genug filtern") — ein Suchfeld, das man erst suchen muss, wird nicht
+ * benutzt. Und die Kategorien sind das Gesicht der App.
+ *
+ * ── Warum sich beim Filtern nichts schließt ──────────────────────────────────
+ * Man stellt selten nur eines ein. Die Rückmeldung kommt stattdessen von der Zahl
+ * über dem Bereich („Noch 5 Karten") — sie ändert sich bei jedem Tipp, und man
+ * sieht sofort, ob der Filter zu eng ist, ohne etwas zuzuklappen.
+ */
+function FilterBereich({
+  filter,
+  setzen,
+  bezirke,
+  aktiv,
+  zuruecksetzen,
+}: {
+  filter: FeedFilter;
+  setzen: <K extends keyof FeedFilter>(feld: K, wert: FeedFilter[K]) => void;
+  bezirke: string[];
+  aktiv: boolean;
+  zuruecksetzen: () => void;
+}) {
+  return (
+    <View style={styles.filterBereich}>
+      {/* „Wem ich folge" stand bis Phase 15 oben im Kopf. Es ist aber ein Filter wie
+          jeder andere, und mit sechs Stück an drei verschiedenen Orten sähe niemand
+          mehr, was gerade eingestellt ist. Zur Beschriftung: In PLAN.md heißt es
+          „Nur Follower" — wörtlich wären das die Leute, die MIR folgen. Nützlich ist
+          die andere Richtung, deshalb „Wem ich folge". */}
+      <SsSegment<boolean>
+        value={filter.nurGefolgte}
+        onChange={(wert) => setzen('nurGefolgte', wert)}
+        options={[
+          { wert: false, label: 'Alle' },
+          { wert: true, label: 'Wem ich folge' },
+        ]}
+      />
+
+      <FilterGruppe titel="Wann">
+        {WANN_ORDER.map((w) => (
+          <SsChip
+            key={w}
+            label={WANN_LABELS[w]}
+            selected={filter.wann === w}
+            onPress={() => setzen('wann', w)}
+          />
+        ))}
+      </FilterGruppe>
+
+      {/* Nur die Bezirke, in denen gerade wirklich etwas los ist (`useBezirkeImFeed`).
+          Eine Reihe mit allen 23 wäre zu 20 Teilen eine Sackgasse. */}
+      <FilterGruppe
+        titel="Bezirk"
+        hinweis={bezirke.length === 0 ? 'gerade nichts mit Bezirk' : undefined}>
+        <SsChip
+          label="Überall"
+          selected={filter.bezirk === null}
+          onPress={() => setzen('bezirk', null)}
+        />
+        {bezirke.map((b) => (
+          <SsChip
+            key={b}
+            label={b}
+            selected={filter.bezirk === b}
+            onPress={() => setzen('bezirk', filter.bezirk === b ? null : b)}
+          />
+        ))}
+      </FilterGruppe>
+
+      <FilterGruppe titel="Für wen">
+        {AGE_ORDER.map((a) => (
+          <SsChip
+            key={a}
+            label={AGE_FILTER_LABELS[a]}
+            selected={filter.alter === a}
+            onPress={() => setzen('alter', a)}
+          />
+        ))}
+      </FilterGruppe>
+
+      {aktiv ? (
+        <Pressable onPress={zuruecksetzen} accessibilityRole="button" style={styles.filterZuruecksetzen}>
+          <SsText variant="label" color={categoryColors.creative.base}>
+            Alle Filter zurücksetzen
+          </SsText>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * Eine beschriftete Reihe im Filterbereich.
+ *
+ * Die Pillen liegen in `SsScrollReihe` und nicht in einem umbrechenden `View`
+ * (harte Regel 19): Die Bezirksreihe wird bei einem lebhaften Tag lang, und eine
+ * Reihe, die umbricht, schiebt in dem Moment den ganzen Stapel aus dem Bild. Eine
+ * Reihe, die scrollt, bleibt gleich hoch — und die weiche Kante rechts steht nur
+ * dann, wenn wirklich etwas abgeschnitten ist.
+ */
+function FilterGruppe({
+  titel,
+  hinweis,
+  children,
+}: {
+  titel: string;
+  hinweis?: string;
+  children: ReactNode;
+}) {
+  return (
+    <View style={styles.filterGruppe}>
+      <View style={styles.filterKopf}>
+        <SsText variant="label" color={colors.inkSoft}>
+          {titel}
+        </SsText>
+        {hinweis ? (
+          <SsText variant="caption" color={colors.inkSoft}>
+            {hinweis}
+          </SsText>
+        ) : null}
+      </View>
+      <SsScrollReihe contentContainerStyle={styles.filterPillen}>{children}</SsScrollReihe>
+    </View>
   );
 }
 
@@ -148,7 +623,7 @@ function LeererFeed({
   if (filterAktiv) {
     return (
       <View style={styles.leer}>
-        <SsText style={styles.leerEmoji}>🔍</SsText>
+        <SsIcon name="lupe" size={46} color={colors.inkSoft} />
         <SsText variant="heading" center>
           Dazu ist gerade nichts da
         </SsText>
@@ -166,7 +641,7 @@ function LeererFeed({
 
   return (
     <View style={styles.leer}>
-      <SsText style={styles.leerEmoji}>🌱</SsText>
+      <SsIcon name="spross" size={46} color={colors.inkSoft} />
       <SsText variant="heading" center>
         Noch nichts los in deinem Feed
       </SsText>
@@ -177,7 +652,7 @@ function LeererFeed({
           einzige Ort, an dem der ganze Bildschirm nichts Besseres zu tun hat. */}
       <SsButton
         label="Etwas posten"
-        icon="✏️"
+        icon="stift"
         size="lg"
         style={styles.leerKnopf}
         onPress={() => router.push('/create')}
@@ -199,21 +674,91 @@ const styles = StyleSheet.create({
   },
   marke: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
 
-  umschalter: { marginHorizontal: spacing.lg },
+  // Die Mindestbreite ist keine Kosmetik, sondern die Reparatur einer Falle:
+  // `flex: 1` heißt in React Native `flexBasis: 0` (im Browser wäre es `auto`). Die
+  // beiden Hälften von `SsSegment` melden damit Breite null an. Als einziges Kind
+  // einer Spalte wird das Segment trotzdem auf volle Breite gestreckt — in dieser
+  // ZEILE hier gibt es nichts, was es streckt, und es fiel auf seine Polsterung
+  // zusammen: aus „Stapel" wurde „Sta…". 78 px je Hälfte reichen für die
+  // 15-px-Beschriftung.
+  ansicht: { minWidth: 168 },
 
-  // Der negative Rand hebt die Seitenabstände auf, das Innenmaß bringt sie zurück:
-  // dadurch scrollen die Pillen von Kante zu Kante, stehen aber bündig unter dem Rest.
+  ansichtZeile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+
+  // ── Phase 15: Suche und Filter ──────────────────────────────────────────
+  sucheZeile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  // `minWidth: 0` ist hier Pflicht und nicht Vorsicht: Ohne das schrumpft ein
+  // `flex: 1`-Kind im Browser nicht unter seine Eigenbreite (`min-width: auto`),
+  // und der lange Platzhaltertext schiebt den Filter-Knopf aus dem Bild.
+  sucheFeld: { flex: 1, minWidth: 0 },
+
+  filterKnopf: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    // Dieselbe Höhe wie ein `SsInput`: 12 oben und unten plus 20 Zeilenhöhe.
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+    cursor: 'pointer',
+  },
+  filterKnopfAktiv: { backgroundColor: colors.ink, borderColor: colors.ink },
+  filterKnopfGedrueckt: { opacity: 0.7 },
+
+  filterBereich: {
+    gap: spacing.md,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  filterGruppe: { gap: spacing.sm },
+  filterKopf: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.sm },
+  filterPillen: { gap: spacing.sm },
+  filterZuruecksetzen: { alignSelf: 'flex-start', cursor: 'pointer' },
+
+  // Die Reihe geht von Kante zu Kante (damit die Pillen unter dem Rand
+  // hindurchscrollen), das Innenmaß unten setzt die erste Pille bündig unter den
+  // Rest. KEIN negativer Rand mehr: Der stammte aus Phase 2, als `SsScreen` noch
+  // seine eigenen 16 px Seitenrand hatte. Seit `seite: { paddingHorizontal: 0 }`
+  // gab es nichts mehr aufzuheben — er zog die Reihe 16 px ÜBER die Kante hinaus,
+  // und das Innenmaß schob die erste Pille dadurch exakt auf x = 0. Genau das hat
+  // Ian am Handy gesehen: „Alle" klebte am Bildschirmrand.
   //
-  // `flexShrink: 0` ist hier nicht Kosmetik, sondern notwendig: ein ScrollView bringt
-  // von sich aus `flexGrow: 1, flexShrink: 1` mit. Neben der FlatList, die den ganzen
-  // Rest des Screens beansprucht, wurde die Pillenreihe dadurch auf Höhe 0
-  // zusammengedrückt — im DOM war sie da, zu sehen war ein Strich.
-  chipZeile: { flexGrow: 0, flexShrink: 0, marginHorizontal: -spacing.lg },
+  // `flexGrow/flexShrink: 0` stehen jetzt in `SsScrollReihe` selbst — es war nie
+  // eine Eigenschaft dieses Screens, sondern eine jeder waagrechten Reihe neben
+  // einer Liste.
+  chipZeile: {},
   chipInhalt: {
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
+
+  // Der Stapel bekommt seinen Seitenabstand von hier und nicht von der Kartenfläche
+  // darin: Die Karten liegen absolut übereinander, und wo Yoga bei absoluten Kindern
+  // die Polsterung des Elternteils anrechnet, macht der Browser es anders herum.
+  // Ein Rand außen ist auf beiden Plattformen derselbe.
+  stapelBereich: { flex: 1, paddingHorizontal: spacing.lg },
 
   listeAussen: { flex: 1 },
   // `flexGrow: 1` am Inhalt, damit der leere Zustand die volle Höhe bekommt und
@@ -221,8 +766,30 @@ const styles = StyleSheet.create({
   liste: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, flexGrow: 1 },
   luecke: { height: spacing.md },
 
+  durch: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  durchText: { alignItems: 'center', gap: spacing.xs },
+  durchKnopf: { alignSelf: 'center' },
+  durchLink: { cursor: 'pointer' },
+
+  rueck: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.ink,
+    borderRadius: radius.pill,
+  },
+  rueckText: { flexShrink: 1 },
+  rueckKnopf: { cursor: 'pointer' },
+
   leer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingBottom: spacing.xxxl },
-  leerEmoji: { fontSize: 44, lineHeight: 53 },
   leerLink: { marginTop: spacing.sm, cursor: 'pointer' },
   // SsButton setzt für schmale Knöpfe selbst 'flex-start' und schlägt damit das
   // 'alignItems: center' des leeren Zustands.

@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
-import { SsText } from './SsText';
+import { SsIconText } from './SsIconText';
 
 import { zurueckOderFeed } from '@/lib/navigation';
 import { colors, spacing } from '@/theme';
@@ -24,9 +24,9 @@ export function SsBack({ label = 'Zurück', style }: { label?: string; style?: S
       onPress={zurueckOderFeed}
       accessibilityRole="button"
       style={({ pressed }) => [styles.knopf, pressed && styles.gedrueckt, style]}>
-      <SsText variant="label" color={colors.inkSoft}>
-        ← {label}
-      </SsText>
+      <SsIconText icon="pfeilLinks" variant="label" color={colors.inkSoft}>
+        {label}
+      </SsIconText>
     </Pressable>
   );
 }

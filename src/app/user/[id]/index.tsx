@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Profil } from '@/components/Profil';
-import { SsAvatar, SsBack, SsButton, SsCard, SsScreen, SsText } from '@/components/ui';
+import { SsAvatar, SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
+import { schreibHuerdeText } from '@/features/chat/direkt';
+import { direktChatOeffnen, useDarfSchreiben } from '@/features/chat/hooks';
 import { blockFolgen } from '@/features/safety/block';
 import { blockieren, entblocken, useHabeIchBlockiert, useMeineMeldung } from '@/features/safety/hooks';
 import { entfolgen, folgen, useFolgeIch, useUser } from '@/features/social/hooks';
@@ -51,6 +53,7 @@ export default function UserProfileScreen() {
   const person = useUser(id);
   const folgeIch = useFolgeIch(id);
   const habeIchBlockiert = useHabeIchBlockiert(id);
+  const darfSchreiben = useDarfSchreiben(id);
   const meldung = useMeineMeldung('user', id);
   const [fragt, setFragt] = useState(false);
 
@@ -75,23 +78,53 @@ export default function UserProfileScreen() {
               // wegzuklicken, ohne sie zu lesen.
               <SsButton
                 label="Du folgst"
-                icon="✓"
+                icon="haken"
                 variant="ghost"
                 block
                 onPress={() => entfolgen(person.id)}
               />
             ) : (
               <>
-                {/* Bewusst ohne Emoji: „➕" ist ein graues Glyph und nimmt keine Farbe
-                    an — auf der dunklen Fläche des Hauptknopfes wird daraus ein
-                    schmutziger Fleck. Dasselbe Problem wie bei den Tab-Symbolen, nur
-                    umgekehrt. Der Text allein ist eindeutig. */}
-                <SsButton label="Folgen" block onPress={() => folgen(person.id)} />
+                {/* Der Grund, warum hier bis Phase 14 KEIN Symbol stand, ist weg:
+                    Das Plus war als Zeichen „➕" ein graues Glyph, das auf der
+                    dunklen Knopffläche zum schmutzigen Fleck wurde. Gezeichnet
+                    nimmt es die Textfarbe an — dasselbe Weiß wie die Beschriftung.
+                    Und es steht dem Haken gegenüber, der beim Entfolgen dasteht:
+                    zwei Zustände, zwei Zeichen, statt einem und keinem. */}
+                <SsButton label="Folgen" icon="plus" block onPress={() => folgen(person.id)} />
                 <SsText variant="caption" color={colors.inkSoft} center>
                   Dann steht {person.displayName} im Feed unter „Wem ich folge" — und du siehst
                   Posts, die nur für Follower sind.
                 </SsText>
               </>
+            )}
+
+            {/* Phase 16 — Direktnachrichten. Ians Regel steht in `chat/direkt.ts`:
+                Der Knopf erscheint erst, wenn beide einander folgen.
+
+                Und wenn nicht, steht hier trotzdem etwas. Ein Knopf, der einfach
+                fehlt, sieht aus wie eine App, die die Funktion nicht hat — genau der
+                Eindruck, den Leopold am 2026-09-02 hatte („man kann nicht einfach so
+                Leuten schreiben"). Der Satz sagt stattdessen, was fehlt, und er kommt
+                aus der Regeldatei: Ändert Ian die Regel, ändert sich der Satz mit. */}
+            {darfSchreiben ? (
+              <SsButton
+                label="Nachricht"
+                icon="sprechblase"
+                block
+                onPress={() => {
+                  // `direktChatOeffnen` prüft die Regel selbst und gibt `undefined`
+                  // zurück, wenn sie nicht gilt — dann passiert nichts. Der Knopf
+                  // steht dann ohnehin nicht da; die Prüfung ist die Sperre, nicht
+                  // der Knopf (Begründung in `chat/hooks.ts`).
+                  const threadId = direktChatOeffnen(person.id);
+                  if (threadId) router.push({ pathname: '/chat/[id]', params: { id: threadId } });
+                }}
+              />
+            ) : (
+              <SsText variant="caption" color={colors.inkSoft} center>
+                {schreibHuerdeText(person.displayName)}
+              </SsText>
             )}
           </View>
         }
@@ -133,7 +166,7 @@ export default function UserProfileScreen() {
                   <SsButton
                     variant="ghost"
                     label={meldung ? 'Gemeldet' : 'Melden'}
-                    icon="🚩"
+                    icon="fahne"
                     disabled={Boolean(meldung)}
                     style={styles.halb}
                     onPress={() =>
@@ -146,7 +179,7 @@ export default function UserProfileScreen() {
                   <SsButton
                     variant="danger"
                     label="Blockieren"
-                    icon="🚫"
+                    icon="verboten"
                     style={styles.halb}
                     onPress={() => setFragt(true)}
                   />
@@ -184,7 +217,7 @@ function BlockiertesProfil({ person }: { person: User }) {
           {/* Ohne Emoji-Avatar: Das Gesicht ist das Persönlichste an der Karte, und
               hier ist ausdrücklich nichts Persönliches mehr zu sehen. Der graue Kreis
               sagt dasselbe wie der Rest der Seite. */}
-          <SsAvatar emoji="🚫" seed={person.id} size="lg" />
+          <SsAvatar icon="verboten" seed={person.id} size="lg" />
           <View style={styles.kopfText}>
             <SsText variant="title" numberOfLines={1}>
               {person.displayName}
@@ -220,7 +253,7 @@ function BlockiertesProfil({ person }: { person: User }) {
 function NichtGefunden() {
   return (
     <SsScreen contentStyle={styles.fehlerSeite}>
-      <SsText style={styles.fehlerEmoji}>🤷</SsText>
+      <SsIcon name="frage" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
         Diese Person gibt es nicht
       </SsText>
@@ -249,5 +282,4 @@ const styles = StyleSheet.create({
   kopfText: { flex: 1, minWidth: 0, gap: 2 },
 
   fehlerSeite: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  fehlerEmoji: { fontSize: 48, lineHeight: 58 },
 });

@@ -1,13 +1,14 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { SsAvatar, SsButton, SsCard, SsChip, SsKonfetti, SsScreen, SsText } from '@/components/ui';
+import { SsAvatar, SsButton, SsCard, SsChip, SsIcon, SsIconText, SsKonfetti, SsScreen, SsText } from '@/components/ui';
 import { useChatZuPost } from '@/features/chat/hooks';
 import { usePost } from '@/features/posts/hooks';
 import { useCurrentUser, useUser } from '@/features/social/hooks';
+import { ortText } from '@/lib/bezirk';
 import { zurueckOderFeed } from '@/lib/navigation';
 import { startOderSeit } from '@/lib/zeit';
-import { colors, spacing } from '@/theme';
+import { categoryColors, colors, spacing } from '@/theme';
 
 /**
  * Der Match-Moment — der emotionale Höhepunkt der App (PLAN.md, Abschnitt 1).
@@ -40,9 +41,12 @@ export default function MatchScreen() {
     <View style={styles.wurzel}>
       <SsScreen scroll contentStyle={styles.seite}>
         <View style={styles.gesichter}>
-          <SsAvatar emoji={ich.avatar} seed={ich.id} size="lg" />
-          <SsText style={styles.haende}>🤝</SsText>
-          <SsAvatar emoji={gast.avatar} seed={gast.id} size="lg" />
+          <SsAvatar name={ich.displayName} seed={ich.id} photoUrl={ich.photoUrl} size="lg" />
+          {/* Zwischen den beiden Avataren, in der Kategoriefarbe des Posts: Auf dem
+              einen Screen, der ein Ergebnis feiert, soll das Zeichen dazwischen nicht
+              grau sein. */}
+          <SsIcon name="treffen" size={30} color={categoryColors[post.category].base} />
+          <SsAvatar name={gast.displayName} seed={gast.id} photoUrl={gast.photoUrl} size="lg" />
         </View>
 
         <SsText variant="display" center>
@@ -57,11 +61,11 @@ export default function MatchScreen() {
           <SsChip category={post.category} />
           <SsText variant="heading">{post.title}</SsText>
           <SsText variant="caption" color={colors.inkSoft}>
-            {startOderSeit(post.startsAt)}   ·   {post.district} Wien
+            {startOderSeit(post.startsAt)}   ·   {ortText(post.district)}
           </SsText>
-          <SsText variant="caption" color={colors.inkSoft}>
-            {post.meetingPoint ? `🚩 ${post.meetingPoint}` : '🚩 Treffpunkt macht ihr im Chat aus'}
-          </SsText>
+          <SsIconText icon="fahne">
+            {post.meetingPoint ?? 'Treffpunkt macht ihr im Chat aus'}
+          </SsIconText>
         </SsCard>
 
         <View style={styles.aktion}>
@@ -74,7 +78,7 @@ export default function MatchScreen() {
               variant="category"
               category={post.category}
               label="Zum Chat"
-              icon="💬"
+              icon="sprechblase"
               block
               size="lg"
               onPress={() =>
@@ -85,7 +89,7 @@ export default function MatchScreen() {
           <SsButton
             variant={chat ? 'ghost' : 'primary'}
             label="Alles klar"
-            icon="👍"
+            icon="daumen"
             block
             size="lg"
             onPress={zurueckOderFeed}
@@ -110,7 +114,7 @@ export default function MatchScreen() {
 function NichtsZuFeiern() {
   return (
     <SsScreen contentStyle={styles.fehlerSeite}>
-      <SsText style={styles.fehlerEmoji}>🎊</SsText>
+      <SsIcon name="funken" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
         Hier gibt es gerade nichts zu feiern
       </SsText>
@@ -127,11 +131,9 @@ const styles = StyleSheet.create({
   seite: { flexGrow: 1, justifyContent: 'center', gap: spacing.lg, paddingVertical: spacing.xl },
 
   gesichter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  haende: { fontSize: 26, lineHeight: 32 },
 
   karte: { marginTop: spacing.sm },
   aktion: { gap: spacing.md, marginTop: spacing.sm },
 
   fehlerSeite: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  fehlerEmoji: { fontSize: 48, lineHeight: 58 },
 });

@@ -60,6 +60,24 @@ import type { Post } from '@/types/models';
  * bewusst verworfen; die Freundschaftsfunktion ist der Social-Layer aus Phase 6, nicht
  * das Postfach.
  *
+ * ── Seit Phase 16: die Regel gilt nur noch für AKTIVITÄTS-Chats ──────────────
+ * Ians Entscheidung vom 2026-09-02 (PLAN.md, Abschnitt 6.15): **Ein Direktchat läuft
+ * NICHT ab.** Er bleibt, bis ihn jemand löscht.
+ *
+ * Das ist keine Ausnahme, sondern dieselbe Überlegung noch einmal angewandt. Alles
+ * hier oben misst an EINEM Bezugspunkt: dem Treffen. „Vorbei" heißt „das Treffen war",
+ * die Woche Nachklang heißt „danach noch kurz erreichbar". Ein Direktchat hat dieses
+ * Treffen nicht — es gibt nichts, wonach er vorbei sein könnte. Ein Gespräch, das von
+ * selbst verschwindet, während man auf Antwort wartet, fühlt sich kaputt an.
+ *
+ * **Technisch ist genau das die Stelle, an der Phase 16 hätte brechen können:**
+ * `nachklangEnde(post)` braucht einen Post. Ohne Fallunterscheidung wäre der erste
+ * Direktchat ein Absturz gewesen. Deshalb nimmt `chatZustand` seit Phase 16 einen
+ * OPTIONALEN Post — und die Funktionen darunter (`nachAblauf`, `nachklangEnde`,
+ * `nachklangTageUebrig`) bleiben bewusst bei einem PFLICHT-Post: Sie beantworten
+ * Fragen, die es ohne Treffen nicht gibt. Wer sie ohne Post aufruft, hat einen
+ * Denkfehler, und der Typecheck sagt es ihm.
+ *
  * ── Woran "vorbei" gemessen wird ──────────────────────────────────────────────
  * An `ablaufVon(post)`, also an Ians Lebensdauer-Regel, und NICHT an der Startzeit.
  * Sonst wäre der Chat um 17:05 schon "vorbei", während man noch auf dem Weg zum
@@ -137,8 +155,14 @@ export function nachklangTageUebrig(post: Post, jetzt: Date): number {
  *
  * Die Reihenfolge der Prüfungen ist die Regel selbst — läuft, dann klingt nach, dann
  * ist Schluss.
+ *
+ * **Ohne Post ist es ein Direktchat, und der bleibt** (Ians Entscheidung, Phase 16).
+ * Die Prüfung steht ganz oben und nicht als `?.`-Kette darunter: So liest man in der
+ * ersten Zeile, dass es zwei Sorten Chats mit zwei Regeln gibt, statt es aus drei
+ * Fragezeichen zu erschließen.
  */
-export function chatZustand(post: Post, jetzt: Date): ChatZustand {
+export function chatZustand(post: Post | undefined, jetzt: Date): ChatZustand {
+  if (!post) return 'aktiv';
   if (!nachAblauf(post, jetzt)) return 'aktiv';
   if (istVorbei(nachklangEnde(post), jetzt)) return 'weg';
   return 'vorbei';

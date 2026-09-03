@@ -2,15 +2,16 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
-import { SsBack, SsButton, SsChip, SsInput, SsScreen, SsText } from '@/components/ui';
+import { SsAvatar, SsBack, SsButton, SsChip, SsIcon, SsIconText, SsInput, SsScreen, SsText } from '@/components/ui';
 import { useIstBlockiert } from '@/features/safety/hooks';
 import { nachrichtSenden, useChat } from '@/features/chat/hooks';
 import { nachklangTageUebrig } from '@/features/chat/lifecycle';
 import { chatIds } from '@/features/statisch';
 import { CURRENT_USER_ID } from '@/features/store';
+import { ortText } from '@/lib/bezirk';
 import { startOderSeit, tagText, uhrzeit } from '@/lib/zeit';
-import { categoryColors, colors, radius, spacing, type CategoryPalette } from '@/theme';
-import type { Message, Post } from '@/types/models';
+import { accent, categoryColors, colors, radius, spacing, type CategoryPalette } from '@/theme';
+import type { Message, Post, User } from '@/types/models';
 
 /**
  * Welche Adressen beim Bauen entstehen — siehe `features/statisch.ts`.
@@ -24,12 +25,21 @@ export function generateStaticParams(): Array<{ id: string }> {
 /**
  * Ein Chat.
  *
- * ── Warum oben immer der Post steht ───────────────────────────────────────────
- * Ein Chat gehört in dieser App IMMER zu einer Verabredung — er entsteht gar nicht
- * anders (`features/chat/logic.ts`). Die Kopfzeile macht das sichtbar und beantwortet
- * nebenbei die Fragen, die im Chat sonst als Erstes gestellt werden: wann, wo, welcher
- * Treffpunkt. Sie ist antippbar, weil "wie viele Plätze waren das nochmal" im Post
- * steht und nicht im Gespräch.
+ * ── Warum oben eine Kopfzeile steht, und was in ihr ───────────────────────────
+ * Bei einem AKTIVITÄTS-Chat steht dort der Post. Die Kopfzeile beantwortet damit die
+ * Fragen, die im Chat sonst als Erstes gestellt werden: wann, wo, welcher Treffpunkt.
+ * Sie ist antippbar, weil "wie viele Plätze waren das nochmal" im Post steht und
+ * nicht im Gespräch.
+ *
+ * Seit Phase 16 gibt es die zweite Sorte: einen DIREKTCHAT ohne Aktivität
+ * (`features/chat/direkt.ts`, Ians Regel — nur bei gegenseitigem Folgen). Dort steht
+ * stattdessen die Person, und der Tipp führt aufs Profil. Die Kopfzeile bleibt also
+ * dieselbe Idee — „woran hängt dieses Gespräch" —, sie hat nur zwei Antworten.
+ *
+ * Was hier bewusst NICHT passiert ist, ist ein erfundener Ersatz-Post für den
+ * Direktchat. Er hätte diesen Screen unverändert gelassen und dafür durch jede Farbe,
+ * jede Karte und jede Ablaufregel der App still falsche Antworten getragen
+ * (`ChatEintrag.post` in `chat/hooks.ts`).
  *
  * ── Warum dieser Screen NICHT `SsScreen scroll` benutzt ───────────────────────
  * Harte Regel 4 sagt: Screens mit Eingabefeldern bekommen `scroll keyboard`. Für ein
@@ -58,7 +68,12 @@ export default function ChatScreen() {
 
   const { eintrag } = verlauf;
   const { post, gegenueber, thread } = eintrag;
-  const palette = categoryColors[post.category];
+  // Ein Direktchat hat keine Kategorie und bekommt deshalb `accent`, die Grundfarbe
+  // der App. Das ist keine Ersatzfarbe für eine fehlende, sondern die richtige: Die
+  // Kategoriefarbe steht im Chat für „worum geht es"; hier geht es um niemanden
+  // außer die zwei Leute. `accent` ist wie jede Kategoriepalette aufgebaut
+  // (`theme/colors.ts`), deshalb braucht keine Stelle darunter einen Sonderfall.
+  const palette = post ? categoryColors[post.category] : accent;
 
   const senden = () => {
     if (!entwurf.trim()) return;
@@ -71,10 +86,14 @@ export default function ChatScreen() {
     <SsScreen keyboard contentStyle={styles.seite}>
       <View style={styles.kopf}>
         <SsBack />
-        <PostKopf post={post} name={gegenueber.displayName} />
+        {post ? (
+          <PostKopf post={post} name={gegenueber.displayName} />
+        ) : (
+          <PersonKopf person={gegenueber} />
+        )}
       </View>
 
-      {eintrag.zustand === 'vorbei' ? (
+      {post && eintrag.zustand === 'vorbei' ? (
         <SsText variant="caption" center color={colors.inkSoft} style={styles.vorbei}>
           Dieses Treffen ist vorbei. Der Chat verschwindet {ablaufText(post, new Date())}.
         </SsText>
@@ -98,7 +117,7 @@ export default function ChatScreen() {
         // Wichtigste, und niemand liest einen Verlauf von oben nach unten durch.
         // `animated: false`, damit es beim Öffnen nicht sichtbar hinunterfährt.
         onContentSizeChange={() => listeRef.current?.scrollToEnd({ animated: false })}
-        ListEmptyComponent={<NochStill name={gegenueber.displayName} />}
+        ListEmptyComponent={<NochStill name={gegenueber.displayName} direkt={!post} />}
       />
 
       {/* Phase 7: Steht eine Blockierung dazwischen, verschwindet das Eingabefeld und
@@ -113,9 +132,9 @@ export default function ChatScreen() {
           ist schon ihr Ergebnis. */}
       {blockiert ? (
         <View style={styles.gesperrt}>
-          <SsText variant="bodyStrong" center>
-            🚫 Hier kann niemand mehr schreiben
-          </SsText>
+          <SsIconText icon="verboten" variant="bodyStrong" color={colors.ink} center>
+            Hier kann niemand mehr schreiben
+          </SsIconText>
           <SsText variant="caption" center color={colors.inkSoft}>
             Zwischen euch steht eine Blockierung. Was ihr geschrieben habt, bleibt
             lesbar.
@@ -131,13 +150,21 @@ export default function ChatScreen() {
             onSubmitEditing={senden}
             style={styles.feld}
           />
-          <SsButton
-            variant="category"
-            category={post.category}
-            label="Senden"
-            disabled={!entwurf.trim()}
-            onPress={senden}
-          />
+          {/* Zwei Zweige statt zusammengebauter Props: `SsButton` erlaubt eine
+              Kategorie NUR bei `variant="category"` und verlangt sie dort (der
+              Union-Typ im Baustein). Genau deshalb kann es keinen kategoriefarbigen
+              Knopf ohne Farbe geben — den Preis von zwei Zeilen zahlt man gern. */}
+          {post ? (
+            <SsButton
+              variant="category"
+              category={post.category}
+              label="Senden"
+              disabled={!entwurf.trim()}
+              onPress={senden}
+            />
+          ) : (
+            <SsButton label="Senden" disabled={!entwurf.trim()} onPress={senden} />
+          )}
         </View>
       )}
     </SsScreen>
@@ -166,10 +193,45 @@ function PostKopf({ post, name }: { post: Post; name: string }) {
       <SsText variant="heading" numberOfLines={1}>
         {post.title}
       </SsText>
-      <SsText variant="caption" color={colors.inkSoft} numberOfLines={1}>
-        {startOderSeit(post.startsAt)}   ·   {post.district} Wien   ·{' '}
-        {post.meetingPoint ? `🚩 ${post.meetingPoint}` : '🚩 Treffpunkt noch offen'}
-      </SsText>
+      {/* Die Fahne steht als einziges Icon in dieser Zeile — sie trennt die feste
+          Angabe (wann, wo) vom Treffpunkt, der sich noch ändern kann. */}
+      <SsIconText icon="fahne" numberOfLines={1}>
+        {`${startOderSeit(post.startsAt)}   ·   ${ortText(post.district)}   ·   ${
+          post.meetingPoint ?? 'Treffpunkt noch offen'
+        }`}
+      </SsIconText>
+    </Pressable>
+  );
+}
+
+/**
+ * Die Kopfzeile eines DIREKTCHATS: mit wem rede ich hier.
+ *
+ * Gebaut wie `PostKopf` — flach, dieselbe Trennlinie, antippbar. Der Weg dahinter ist
+ * ein anderer: Beim Aktivitäts-Chat führt er zum Post („wie viele Plätze waren das
+ * nochmal"), hier zum Profil. Das ist in einem Direktchat die einzige Frage, die man
+ * an etwas anderes als das Gespräch hat: wer ist das eigentlich.
+ *
+ * Der Avatar steht hier und nicht im Post-Kopf, und das ist Absicht: Bei einer
+ * Aktivität ist der Gegenüber eine Nebenangabe („mit Lea"), bei einer Direktnachricht
+ * ist er der ganze Inhalt der Zeile.
+ */
+function PersonKopf({ person }: { person: User }) {
+  return (
+    <Pressable
+      onPress={() => router.push({ pathname: '/user/[id]', params: { id: person.id } })}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.postKopf, styles.personKopf, pressed && styles.gedrueckt]}>
+      <SsAvatar name={person.displayName} seed={person.id} photoUrl={person.photoUrl} size="md" />
+      <View style={styles.personText}>
+        <SsText variant="heading" numberOfLines={1}>
+          {person.displayName}
+        </SsText>
+        <SsText variant="caption" color={colors.inkSoft} numberOfLines={1}>
+          {`${person.handle}   ·   ${person.district} Wien`}
+        </SsText>
+      </View>
+      <SsIcon name="chevronRechts" size={20} color={colors.inkSoft} />
     </Pressable>
   );
 }
@@ -225,11 +287,35 @@ function TagTrenner({ text }: { text: string }) {
   );
 }
 
-/** Ein frisch bestätigtes Treffen, in dem noch niemand geschrieben hat. */
-function NochStill({ name }: { name: string }) {
+/**
+ * Ein Chat, in dem noch nichts steht — und die zwei Gründe dafür sind verschieden.
+ *
+ * Bei einem Aktivitäts-Chat ist der leere Zustand eine MELDUNG: „ihr seid verabredet
+ * und keiner hat sich gemeldet" — deshalb steht der Chat in der Liste auch ganz oben
+ * (Ians Regel in `chat/sort.ts`). Bei einem Direktchat ist er das Gegenteil: Er steht
+ * in gar keiner Liste (`ENTSTEHUNG` in `chat/direkt.ts`), weil eine Absicht keine
+ * Nachricht ist. Denselben Satz über beide zu schreiben würde einen der beiden Fälle
+ * falsch beschreiben.
+ */
+function NochStill({ name, direkt }: { name: string; direkt: boolean }) {
+  if (direkt) {
+    return (
+      <View style={styles.still}>
+        <SsIcon name="sprechblase" size={42} color={colors.inkSoft} />
+        <SsText variant="heading" center>
+          Schreib {name}
+        </SsText>
+        <SsText variant="body" center color={colors.inkSoft}>
+          Noch steht hier nichts. Erst mit deiner ersten Nachricht sieht {name}, dass es
+          diesen Chat gibt.
+        </SsText>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.still}>
-      <SsText style={styles.stillEmoji}>🤝</SsText>
+      <SsIcon name="treffen" size={42} color={colors.inkSoft} />
       <SsText variant="heading" center>
         Ihr seid verabredet
       </SsText>
@@ -247,7 +333,7 @@ function NochStill({ name }: { name: string }) {
 function KeinChat() {
   return (
     <SsScreen contentStyle={styles.fehlerSeite}>
-      <SsText style={styles.fehlerEmoji}>💬</SsText>
+      <SsIcon name="sprechblase" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
         Diesen Chat gibt es nicht
       </SsText>
@@ -318,6 +404,12 @@ const styles = StyleSheet.create({
     cursor: 'pointer',
   },
   postZeile: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  // Der Personen-Kopf ist eine Reihe statt einer Spalte — sonst stünde der Avatar
+  // über dem Namen und die Kopfzeile wäre doppelt so hoch wie beim Aktivitäts-Chat.
+  personKopf: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  // `minWidth: 0` wie überall, wo ein `flex: 1`-Block neben etwas Festem steht:
+  // sonst schiebt ein langer Name das Chevron aus der Zeile.
+  personText: { flex: 1, minWidth: 0, gap: 2 },
   gedrueckt: { opacity: 0.6 },
   vorbei: { paddingTop: spacing.sm },
 
@@ -350,7 +442,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
   },
-  stillEmoji: { fontSize: 40, lineHeight: 48 },
 
   eingabe: {
     flexDirection: 'row',
@@ -379,5 +470,4 @@ const styles = StyleSheet.create({
   },
 
   fehlerSeite: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  fehlerEmoji: { fontSize: 48, lineHeight: 58 },
 });

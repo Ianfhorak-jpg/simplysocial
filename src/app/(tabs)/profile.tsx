@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Profil } from '@/components/Profil';
 import { SsButton, SsScreen, SsText } from '@/components/ui';
+import { useMeineGruppen } from '@/features/groups/hooks';
 import { useCurrentUser } from '@/features/social/hooks';
 import { colors, spacing } from '@/theme';
 
@@ -30,6 +31,7 @@ import { colors, spacing } from '@/theme';
  */
 export default function ProfileScreen() {
   const ich = useCurrentUser();
+  const meineGruppen = useMeineGruppen();
 
   return (
     <SsScreen tabScreen scroll contentStyle={styles.seite}>
@@ -39,9 +41,26 @@ export default function ProfileScreen() {
         person={ich}
         fuss={
           <View style={styles.fuss}>
+            {/* Der Weg zu den Gruppen liegt hier und nicht in der Tab-Leiste (die
+                Begründung steht im Kopf von `app/gruppen.tsx`). Die Zeile darunter
+                sagt, was einen erwartet — ohne sie ist „Gruppen" ein Knopf, hinter
+                dem alles Mögliche sein könnte. */}
+            <SsButton
+              label="Deine Gruppen"
+              icon="personen"
+              variant="ghost"
+              block
+              onPress={() => router.push('/gruppen')}
+            />
+            <SsText variant="caption" color={colors.inkSoft} center>
+              {meineGruppen.length === 0
+                ? `Noch in keiner. Für eine Gruppe kannst du gezielt posten.`
+                : meineGruppen.map((g) => g.name).join(' · ')}
+            </SsText>
+
             <SsButton
               label="Einstellungen"
-              icon="⚙️"
+              icon="regler"
               variant="ghost"
               block
               onPress={() => router.push('/einstellungen')}

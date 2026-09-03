@@ -3,13 +3,24 @@ import { useSyncExternalStore } from 'react';
 import {
   CURRENT_USER_ID,
   chatThreads as mockChats,
+  groupRequests as mockGroupRequests,
+  groups as mockGroups,
   joinRequests as mockRequests,
   messages as mockMessages,
   posts as mockPosts,
   reports as mockReports,
   users as mockUsers,
 } from '@/data/mock';
-import type { ChatThread, JoinRequest, Message, Post, Report, User } from '@/types/models';
+import type {
+  ChatThread,
+  Group,
+  GroupRequest,
+  JoinRequest,
+  Message,
+  Post,
+  Report,
+  User,
+} from '@/types/models';
 
 /**
  * Der Zustand des Prototyps — die EINZIGE Datei, die `@/data/mock` importiert.
@@ -41,6 +52,20 @@ export interface AppState {
   chatThreads: ChatThread[];
   messages: Message[];
   reports: Report[];
+  /** Phase 17. Mitgliedschaften stehen IN der Gruppe, nicht am Nutzer. */
+  groups: Group[];
+  groupRequests: GroupRequest[];
+  /**
+   * Post-IDs, die ich im Wischstapel nach links geschoben habe (Phase 11).
+   *
+   * Die einzige Liste hier ohne Gegenstück in `mock.ts`, und das ist richtig so:
+   * Weggewischtes ist nichts, was die Welt vorher schon wusste — es entsteht erst
+   * beim Benutzen. Sie startet deshalb leer, und Neuladen bringt alle Karten zurück.
+   * Das ist Ians Regel `'sitzung'` aus `posts/wisch.ts`, nicht eine Sparmaßnahme:
+   * mit echtem Backend wird daraus eine Sammlung am Nutzer, und nur diese Datei
+   * ändert sich.
+   */
+  weggewischt: string[];
 }
 
 let state: AppState = {
@@ -50,6 +75,9 @@ let state: AppState = {
   chatThreads: mockChats,
   messages: mockMessages,
   reports: mockReports,
+  groups: mockGroups,
+  groupRequests: mockGroupRequests,
+  weggewischt: [],
 };
 
 const zuhoerer = new Set<() => void>();

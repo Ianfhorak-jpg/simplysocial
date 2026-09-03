@@ -3,8 +3,9 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { PostCard } from './PostCard';
-import { SsAvatar, SsCard, SsChip, SsText } from './ui';
+import { SsAvatar, SsCard, SsChip, SsIconText, SsText } from './ui';
 
+import { AGE_LABELS } from '@/config/alter';
 import { useProfilPosts } from '@/features/posts/hooks';
 import { CURRENT_USER_ID } from '@/features/store';
 import { colors, radius, spacing } from '@/theme';
@@ -50,13 +51,18 @@ export function Profil({
     <>
       <SsCard>
         <View style={styles.kopf}>
-          <SsAvatar emoji={person.avatar} seed={person.id} size="lg" />
+          <SsAvatar name={person.displayName} seed={person.id} photoUrl={person.photoUrl} size="lg" />
           <View style={styles.kopfText}>
             <SsText variant="title" numberOfLines={1}>
               {person.displayName}
             </SsText>
+            {/* Handle, Bezirk und seit Phase 15 die Altersgruppe — Darias Frage
+                („Foto von der Person oder halt Altersgruppe") wird hier beantwortet,
+                gleich neben dem Avatar. Der Bezirk einer PERSON ist Pflicht und wird
+                deshalb direkt geschrieben; nur ein Post darf ohne auskommen (harte
+                Regel 20). */}
             <SsText variant="caption" color={colors.inkSoft}>
-              {person.handle} · {person.district} Wien
+              {person.handle} · {person.district} Wien · {AGE_LABELS[person.ageGroup]}
             </SsText>
           </View>
         </View>
@@ -123,11 +129,21 @@ export function Profil({
         {/* Die Zahl ist der ehrlichste Grund zu folgen, den die App geben kann: Sie
             sagt, dass da etwas ist, ohne zu verraten, was. Steht auch (und gerade
             dann) da, wenn die Liste darüber leer ist. */}
-        {verborgen > 0 ? (
-          <SsText variant="caption" color={colors.inkSoft}>
-            🔒 {verborgen === 1 ? '1 Post ist' : `${verborgen} Posts sind`} nur für Follower
-            sichtbar.
-          </SsText>
+        {verborgen.follower > 0 ? (
+          <SsIconText icon="schloss">
+            {`${postText(verborgen.follower)} nur für Follower sichtbar.`}
+          </SsIconText>
+        ) : null}
+
+        {/* Seit Phase 17 eine zweite Zeile statt einer größeren Zahl. Ein
+            Gruppen-Post unter „nur für Follower" wäre eine falsche Auskunft — sie
+            legt nahe, dass Folgen hilft, und das tut es hier nicht. WELCHE Gruppe
+            es ist, steht bewusst nicht da: Das gehört zu dem, was eine
+            geschlossene Gruppe zurückhält. */}
+        {verborgen.gruppe > 0 ? (
+          <SsIconText icon="personen">
+            {`${postText(verborgen.gruppe)} nur für eine Gruppe sichtbar.`}
+          </SsIconText>
         ) : null}
       </View>
 
@@ -158,6 +174,11 @@ function Zahl({ wert, wort, onPress }: { wert: number; wort: string; onPress: ()
       </SsText>
     </Pressable>
   );
+}
+
+/** „1 Post ist" / „3 Posts sind" — Einzahl und Mehrzahl an einer Stelle. */
+function postText(anzahl: number): string {
+  return anzahl === 1 ? '1 Post ist' : `${anzahl} Posts sind`;
 }
 
 const styles = StyleSheet.create({

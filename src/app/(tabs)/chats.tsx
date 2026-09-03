@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 
-import { SsAvatar, SsButton, SsCard, SsScreen, SsText } from '@/components/ui';
+import { SsAvatar, SsButton, SsCard, SsIcon, SsIconText, SsScreen, SsText } from '@/components/ui';
 import { CATEGORIES } from '@/config/categories';
 import { useChatListe, type ChatEintrag } from '@/features/chat/hooks';
 import { NACHKLANG_TAGE } from '@/features/chat/lifecycle';
@@ -29,6 +29,22 @@ import { colors, spacing } from '@/theme';
  * Unter "Vorbei" steht ein Satz, der sagt, dass die Chats dort ablaufen. Etwas, das von
  * selbst verschwindet, muss das vorher ankündigen — sonst ist es eines Tages weg und
  * sieht aus wie ein Fehler.
+ *
+ * ── Seit Phase 16 stehen hier zwei SORTEN Chats, aber nicht in zwei Gruppen ───
+ * Direktnachrichten (`features/chat/direkt.ts`) haben keine Aktivität. Die
+ * naheliegende Antwort wäre eine dritte Gruppe „Nachrichten" gewesen — sie ist
+ * verworfen, und der Grund ist Ians Sortierregel:
+ *
+ * `chat/sort.ts` beantwortet die Frage, die man an diese Liste hat („wo muss ich
+ * hin?"), über die ganze Liste hinweg. Eine Gruppe je Sorte würde diese Antwort
+ * zerschneiden: Eine Direktnachricht von vor zwei Minuten stünde unter einem
+ * Aktivitäts-Chat von gestern, nur weil sie aus einer anderen Quelle kommt. Warum
+ * ein Chat entstanden ist, interessiert beim Suchen niemanden.
+ *
+ * Gruppiert wird deshalb weiter nach ZUSTAND (aktiv/vorbei — das ist Ians Regel),
+ * und die SORTE erkennt man an der Zeile selbst: Ein Aktivitäts-Chat trägt den
+ * Farbstreifen seiner Kategorie und eine Zeile, die sagt, worum es geht. Ein
+ * Direktchat hat beides nicht, weil es beides nicht gibt.
  */
 /**
  * Eine Gruppe in der Liste.
@@ -54,8 +70,12 @@ export default function ChatsScreen() {
 
     const gruppen: ChatGruppe[] = [];
     // Die Überschrift erscheint nur, wenn es etwas zu unterscheiden gibt. Über einer
-    // einzigen Gruppe wäre "Verabredet" ein Wort, das keine Frage beantwortet.
-    if (aktiv.length > 0) gruppen.push({ titel: vorbei.length > 0 ? 'Verabredet' : null, data: aktiv });
+    // einzigen Gruppe wäre sie ein Wort, das keine Frage beantwortet.
+    //
+    // „Aktuell" und nicht mehr „Verabredet": Seit Phase 16 stehen hier auch
+    // Direktnachrichten, und die sind keine Verabredung. Eine Überschrift, die für
+    // die Hälfte ihrer Zeilen nicht stimmt, ist schlimmer als keine.
+    if (aktiv.length > 0) gruppen.push({ titel: vorbei.length > 0 ? 'Aktuell' : null, data: aktiv });
     if (vorbei.length > 0) {
       gruppen.push({
         titel: 'Vorbei',
@@ -119,10 +139,14 @@ function ChatZeile({ eintrag }: { eintrag: ChatEintrag }) {
 
   return (
     <SsCard
-      category={post.category}
+      // Ohne Post kein Streifen — und bewusst auch keine graue Ersatzfarbe. Ein
+      // Direktchat HAT keine Kategorie; ihm eine zu geben wäre dieselbe Notlüge wie
+      // ein Platzhalter-Post (siehe `ChatEintrag.post` in `chat/hooks.ts`). Dass die
+      // Karte 6 px schmaler einrückt, ist kein Fehler, sondern die Auskunft.
+      category={post?.category}
       onPress={() => router.push({ pathname: '/chat/[id]', params: { id: thread.id } })}>
       <View style={styles.zeile}>
-        <SsAvatar emoji={gegenueber.avatar} seed={gegenueber.id} size="md" />
+        <SsAvatar name={gegenueber.displayName} seed={gegenueber.id} photoUrl={gegenueber.photoUrl} size="md" />
 
         <View style={styles.text}>
           <View style={styles.namensZeile}>
@@ -134,9 +158,24 @@ function ChatZeile({ eintrag }: { eintrag: ChatEintrag }) {
             </SsText>
           </View>
 
-          <SsText variant="caption" color={colors.inkSoft} numberOfLines={1}>
-            {CATEGORIES[post.category].emoji} {post.title} · {startOderSeit(post.startsAt)}
-          </SsText>
+          {/* Das Kategorie-Icon steht hier statt einer zweiten Pille: In einer Liste
+              von Chats ist die Kategorie eine Nebenangabe, keine Überschrift.
+
+              Bei einem Direktchat steht an derselben Stelle der Handle mit dem
+              Personen-Icon. Die Zeile ganz wegzulassen wäre die Alternative gewesen —
+              dann hätten die Zeilen zwei verschiedene Höhen, und eine Liste, in der
+              die Karten unterschiedlich hoch sind, liest sich unruhig. Der Handle ist
+              außerdem nicht bloß Füllung: Bei zwei Leuten mit demselben Vornamen ist
+              er das Einzige, was sie in dieser Liste unterscheidet. */}
+          {post ? (
+            <SsIconText icon={CATEGORIES[post.category].icon}>
+              {`${post.title} · ${startOderSeit(post.startsAt)}`}
+            </SsIconText>
+          ) : (
+            <SsIconText icon="person" color={colors.inkSoft}>
+              {gegenueber.handle}
+            </SsIconText>
+          )}
 
           {letzte ? (
             <SsText variant="body" numberOfLines={1} color={colors.ink}>
@@ -163,15 +202,16 @@ function ChatZeile({ eintrag }: { eintrag: ChatEintrag }) {
 function NochKeinChat() {
   return (
     <View style={styles.leer}>
-      <SsText style={styles.leerEmoji}>💬</SsText>
+      <SsIcon name="sprechblase" size={46} color={colors.inkSoft} />
       <SsText variant="heading" center>
         Noch kein Chat
       </SsText>
       <SsText variant="body" center color={colors.inkSoft}>
-        Chats entstehen hier nicht durch Anschreiben. Sobald jemand deine Anfrage bestätigt —
-        oder du eine bestätigst — steht der Chat dazu hier.
+        Sobald jemand deine Anfrage bestätigt — oder du eine bestätigst — steht der Chat
+        dazu hier. Und wenn ihr einander folgt, kannst du direkt schreiben: der Knopf
+        dafür steht auf dem Profil.
       </SsText>
-      <SsButton label="Zum Feed" icon="🏠" style={styles.leerKnopf} onPress={() => router.push('/')} />
+      <SsButton label="Zum Feed" icon="haus" style={styles.leerKnopf} onPress={() => router.push('/')} />
     </View>
   );
 }
@@ -199,6 +239,5 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingBottom: spacing.xxxl,
   },
-  leerEmoji: { fontSize: 44, lineHeight: 53 },
   leerKnopf: { marginTop: spacing.md, alignSelf: 'center' },
 });

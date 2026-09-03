@@ -2,12 +2,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsInput, SsScreen, SsText } from '@/components/ui';
+import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsIcon, SsInput, SsScreen, SsText } from '@/components/ui';
 import { MELDE_GRUENDE, MELDE_TITEL, type MeldeGrund } from '@/config/melden';
 import { usePost } from '@/features/posts/hooks';
 import { melden, useHabeIchBlockiert, useMeineMeldung } from '@/features/safety/hooks';
 import { useUser } from '@/features/social/hooks';
 import { CURRENT_USER_ID } from '@/features/store';
+import { ortText } from '@/lib/bezirk';
 import { colors, danger, radius, spacing } from '@/theme';
 import type { ReportReason, ReportTarget } from '@/types/models';
 
@@ -74,12 +75,12 @@ export default function MeldenScreen() {
             <SsChip category={eintrag.post.category} />
             <SsText variant="bodyStrong">{eintrag.post.title}</SsText>
             <SsText variant="caption" color={colors.inkSoft}>
-              von {eintrag.author.displayName} · {eintrag.post.district} Wien
+              von {eintrag.author.displayName} · {ortText(eintrag.post.district)}
             </SsText>
           </>
         ) : person ? (
           <View style={styles.person}>
-            <SsAvatar emoji={person.avatar} seed={person.id} size="md" />
+            <SsAvatar name={person.displayName} seed={person.id} photoUrl={person.photoUrl} size="md" />
             <View style={styles.personText}>
               <SsText variant="bodyStrong">{person.displayName}</SsText>
               <SsText variant="caption" color={colors.inkSoft}>
@@ -129,7 +130,7 @@ export default function MeldenScreen() {
           <SsButton
             variant="danger"
             label="Melden"
-            icon="🚩"
+            icon="fahne"
             block
             size="lg"
             disabled={grund === null}
@@ -186,11 +187,7 @@ function GrundZeile({
         </SsText>
       </View>
       <View style={[styles.kreis, gewaehlt && styles.kreisGewaehlt]}>
-        {gewaehlt ? (
-          <SsText variant="caption" color={colors.surface}>
-            ✓
-          </SsText>
-        ) : null}
+        {gewaehlt ? <SsIcon name="haken" size={13} color={colors.surface} /> : null}
       </View>
     </Pressable>
   );
@@ -217,7 +214,9 @@ function Danke({
   return (
     <View style={styles.block}>
       <View style={styles.danke}>
-        <SsText style={styles.dankeEmoji}>{erneut ? '📄' : '✅'}</SsText>
+        <View style={styles.dankeIcon}>
+          <SsIcon name={erneut ? 'blatt' : 'hakenKreis'} size={24} color={colors.ink} />
+        </View>
         <View style={styles.dankeText}>
           <SsText variant="bodyStrong">
             {erneut ? 'Das hast du schon gemeldet' : 'Danke, das ist angekommen'}
@@ -241,7 +240,7 @@ function Danke({
           <SsButton
             variant="danger"
             label="Person blockieren"
-            icon="🚫"
+            icon="verboten"
             block
             onPress={() => router.replace({ pathname: '/user/[id]', params: { id: personId } })}
           />
@@ -256,7 +255,7 @@ function Danke({
 function NichtGefunden({ eigenes }: { eigenes?: boolean }) {
   return (
     <SsScreen contentStyle={styles.fehlerSeite}>
-      <SsText style={styles.fehlerEmoji}>{eigenes ? '🙃' : '🤷'}</SsText>
+      <SsIcon name="frage" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
         {eigenes ? 'Das ist von dir' : 'Das gibt es nicht'}
       </SsText>
@@ -314,9 +313,9 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     borderRadius: radius.lg,
   },
-  dankeEmoji: { fontSize: 22, lineHeight: 27 },
+  // Mitte der ERSTEN Zeile, nicht des Blocks — ACTA-Falle aus Phase 12.
+  dankeIcon: { marginTop: 1 },
   dankeText: { flex: 1, gap: spacing.xs },
 
   fehlerSeite: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  fehlerEmoji: { fontSize: 48, lineHeight: 58 },
 });

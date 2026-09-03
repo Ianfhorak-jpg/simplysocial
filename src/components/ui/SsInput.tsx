@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Pressable,
   StyleSheet,
   TextInput,
   View,
@@ -9,9 +10,11 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
 
 import { colors, radius, spacing, status, type } from '@/theme';
+import type { IconName } from '@/theme/icons';
 
 export interface SsInputProps {
   value: string;
@@ -26,6 +29,23 @@ export interface SsInputProps {
   keyboardType?: KeyboardTypeOptions;
   /** Fester Text rechts im Feld, z. B. "Wien" hinter dem Bezirk. */
   suffix?: string;
+  /**
+   * Ein Zeichen links IM Feld — bisher nur die Lupe der Feed-Suche (Phase 15).
+   *
+   * Warum am Baustein und nicht im Screen daneben gebaut: Ein Icon neben dem
+   * Rahmen sähe aus wie eine Beschriftung, eines im Rahmen sagt „das hier ist ein
+   * Suchfeld". Der Unterschied ist der Rahmen, und der gehört dem Baustein.
+   */
+  icon?: IconName;
+  /**
+   * Ein X rechts, das das Feld leert. Nur sichtbar, wenn etwas drinsteht.
+   *
+   * Ein Suchfeld ohne diesen Knopf ist auf dem Handy eine Falle: Um drei Buchstaben
+   * loszuwerden, muss man das Feld treffen, den Cursor ans Ende setzen und dreimal
+   * löschen — währenddessen zeigt der Feed die ganze Zeit ein gefiltertes Ergebnis,
+   * das man nicht mehr will.
+   */
+  onClear?: () => void;
   /** Rot umrandet, Text darunter. Leer lassen heißt: alles in Ordnung. */
   error?: string;
   /**
@@ -70,6 +90,8 @@ export function SsInput({
   maxLength,
   keyboardType,
   suffix,
+  icon,
+  onClear,
   error,
   onSubmitEditing,
   autoFocus,
@@ -94,6 +116,7 @@ export function SsInput({
       ) : null}
 
       <View style={[styles.feld, { borderColor: rahmen }, multiline && styles.feldHoch]}>
+        {icon ? <SsIcon name={icon} size={18} color={colors.inkSoft} /> : null}
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -115,6 +138,19 @@ export function SsInput({
           <SsText variant="body" color={colors.inkSoft}>
             {suffix}
           </SsText>
+        ) : null}
+        {/* Der Knopf steht nur da, wenn es etwas zu löschen gibt. Ein X neben einem
+            leeren Feld wäre ein Knopf, der nichts tut — und beim Tippen wandert
+            sonst der Cursor, weil das Feld in dem Moment schmaler wird. */}
+        {onClear && value !== '' ? (
+          <Pressable
+            onPress={onClear}
+            accessibilityRole="button"
+            accessibilityLabel="Eingabe löschen"
+            hitSlop={spacing.sm}
+            style={styles.loeschen}>
+            <SsIcon name="kreuz" size={16} color={colors.inkSoft} />
+          </Pressable>
         ) : null}
       </View>
 
@@ -167,4 +203,5 @@ const styles = StyleSheet.create({
     outlineWidth: 0,
   },
   eingabeHoch: { minHeight: 76, textAlignVertical: 'top' },
+  loeschen: { cursor: 'pointer' },
 });

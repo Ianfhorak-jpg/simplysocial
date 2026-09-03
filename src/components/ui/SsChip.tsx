@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
 
 import { CATEGORIES } from '@/config/categories';
@@ -14,7 +15,7 @@ interface SsChipBase {
 }
 
 /**
- * Entweder eine Kategorie (Label, Emoji und Farbe kommen dann automatisch) oder
+ * Entweder eine Kategorie (Label, Icon und Farbe kommen dann automatisch) oder
  * eine freie Beschriftung wie "1220" oder "Alle". Beides gleichzeitig ergibt keinen
  * Sinn, deshalb schließt der Typ es aus.
  */
@@ -45,7 +46,10 @@ export function SsChip({ category, label, selected, onPress, style }: SsChipProp
 
   const inhalt = (
     <View style={[styles.chip, flaeche, style]}>
-      {meta ? <SsText variant="caption">{meta.emoji}</SsText> : null}
+      {/* Das Icon in der TEXTFARBE, nicht in `base`: Auf der hellen Pille ist das
+          `onSoft` und damit dieselbe abgedunkelte Variante wie die Schrift daneben —
+          sonst wäre das Sport-Gelb auf seinem eigenen Hellton wieder unlesbar. */}
+      {meta ? <SsIcon name={meta.icon} size={15} color={textFarbe} /> : null}
       <SsText variant="caption" color={textFarbe} numberOfLines={1} style={styles.text}>
         {meta ? meta.label : label}
       </SsText>
