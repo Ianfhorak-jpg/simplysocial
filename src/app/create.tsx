@@ -1,6 +1,12 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type ScrollView,
+} from 'react-native';
 
 import { PostCard } from '@/components/PostCard';
 import {
@@ -164,6 +170,61 @@ const BEZIRK_FREIWILLIG = true;
 const VERSTECKTER_FEHLER: 'aufklappen' | 'reparieren' | 'nur melden' = 'aufklappen';
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  UND WAS BEI EINEM SICHTBAREN FELD PASSIERT, DAS MAN TROTZDEM NICHT SIEHT
+ *  Ians Entscheidung 15, 2026-09-03.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * `VERSTECKTER_FEHLER` darüber setzt Sichtbarkeit mit *aufgeklappt* gleich. Genau
+ * dort war eine Lücke: Bei offenem „Mehr einstellen" ist dieser Screen rund 2000 px
+ * hoch, das Fenster eines Handys 667. Wer unten auf „Posten" tippt und den Titel
+ * vergessen hat, liest „Es fehlt noch was — die roten Stellen" — und auf dem ganzen
+ * Bildschirm ist nichts rot. Nachgemessen am 2026-09-03 auf 375 × 667: Die rote
+ * Zeile stand bei y = −752, also mehr als eine volle Bildschirmhöhe darüber.
+ *
+ * Ians Entscheidung: **beides** — der Screen springt zur ersten roten Stelle, UND
+ * der Satz unten sagt, um welches Feld es geht. Verworfen:
+ *   • nur benennen, nichts bewegt sich — passt zwar zu seinem Urteil vom selben Tag
+ *     („was nur eine Weile da ist, überdeckt, es schiebt nicht"), lässt einen aber
+ *     bei zwei Fehlern trotzdem 2000 px absuchen.
+ *   • nur hinscrollen — der Satz bliebe „die roten Stellen"; er stimmt dann zwar,
+ *     sagt aber immer noch nicht, was fehlt, wenn man zurückscrollt.
+ *
+ * **Der Haken, den er kennt:** Die App bewegt den Bildschirm, ohne dass man es
+ * gesagt hat — dieselbe Sorte, die er am selben Tag beim Filter verworfen hat. Der
+ * Unterschied ist der Auslöser: Dort wechselte die Ansicht beim Tippen in ein
+ * Filterfeld, hier hat man gerade selbst auf „Posten" gedrückt und bekommt die
+ * Antwort darauf.
+ *
+ * Beide Hälften werden gebraucht, weil sie an verschiedenen Orten gelesen werden:
+ * Nach dem Sprung steht der Satz unten außerhalb des Bildes — dort trägt die rote
+ * Zeile am Feld. Scrollt man zurück zum Knopf, trägt der Satz.
+ */
+const FEHLER_ANTWORT: 'springen-und-benennen' | 'nur-benennen' | 'nur-springen' =
+  'springen-und-benennen';
+
+/** Wie weit über der roten Stelle der Sprung endet — sonst klebt sie an der Kante. */
+const SPRUNG_LUFT = 24;
+
+/** Die fünf Felder, die rot werden können — in der Reihenfolge, in der sie dastehen. */
+type Feldname = 'kategorie' | 'titel' | 'bezirk' | 'zeit' | 'sicht';
+
+/**
+ * Wie ein Feld im Satz über dem Knopf heisst.
+ *
+ * Dativ samt Präposition statt bloßem Namen („beim Titel", nicht „Titel"), weil daraus
+ * bei zwei Fehlern ohne Sonderfall ein ganzer Satz wird: „Schau noch mal beim Titel und
+ * bei der Uhrzeit."
+ */
+const FELD_IM_SATZ: Record<Feldname, string> = {
+  kategorie: 'bei der Kategorie',
+  titel: 'beim Titel',
+  bezirk: 'beim Bezirk',
+  zeit: 'bei der Uhrzeit',
+  sicht: 'bei der Gruppe',
+};
+
+/**
  * Das Symbol vor „Mehr einstellen“. Ians Wahl vom 2026-09-02: die drei Striche.
  *
  * Seit Phase 14 gezeichnet statt als Zeichen ☰ gesetzt — dieselbe Form, aber jetzt
@@ -245,7 +306,7 @@ export default function CreateScreen() {
   const startsAt = minuten === null ? null : zeitpunkt(tagVersatz, minuten);
   const laeuftAb = startsAt === null ? null : ablaufZeitpunkt(startsAt, sichtdauer);
 
-  const fehler = {
+  const fehler: Record<Feldname, string> = {
     kategorie: kategorie ? '' : 'Wähle aus, worum es geht.',
     titel: titelSauber.length >= 3 ? '' : 'Ein paar Wörter, damit man weiß, was los ist.',
     bezirk: bezirkFehler(bezirk),
@@ -257,11 +318,66 @@ export default function CreateScreen() {
   /** Die Felder, die seit Phase 12 hinter „Mehr einstellen" liegen können. */
   const versteckterFehler = fehler.bezirk !== '' || fehler.zeit !== '' || fehler.sicht !== '';
 
+  /**
+   * Die erste rote Stelle von oben — `null`, wenn alles stimmt.
+   *
+   * `Object.keys` hält die Schreibreihenfolge von `fehler` ein, und die ist absichtlich
+   * die Reihenfolge auf dem Bildschirm. Wer ein Feld dazwischenschiebt, sortiert damit
+   * auch, wohin gesprungen wird — deshalb steht es hier und nicht in einer zweiten
+   * Liste, die man nachziehen müsste.
+   */
+  const ersterFehler =
+    (Object.keys(fehler) as (keyof typeof fehler)[]).find((f) => fehler[f] !== '') ?? null;
+
   // Die Zeit meldet sich sofort, der Rest erst nach dem Versuch: Tag und Uhrzeit hat
   // man gerade selbst eingestellt und sieht sie in der Vorschau stehen. Ein Termin,
   // der schon vorbei ist, muss genau dort auffallen und nicht erst am Ende.
   const zeigen = (feld: keyof typeof fehler) =>
     geprueft || feld === 'zeit' ? fehler[feld] : '';
+
+  /**
+   * Wo jedes rot werdende Feld liegt — gefüllt von `onLayout`, nicht gerechnet.
+   *
+   * `imMehr` merkt sich, ob die Zahl relativ zum aufklappbaren Bereich gilt: `onLayout`
+   * meldet immer relativ zum ELTERN-Element, und drei der fünf Felder liegen in
+   * `mehrBereich` statt direkt im Scroll-Inhalt. Addiert wird erst beim Springen, weil
+   * `mehrBereich` seine eigene Position womöglich später meldet als seine Kinder.
+   */
+  const positionen = useRef<Partial<Record<keyof typeof fehler, { y: number; imMehr: boolean }>>>(
+    {},
+  );
+  const mehrBereichY = useRef(0);
+  const scrollRef = useRef<ScrollView | null>(null);
+  /** Wohin gesprungen werden soll, sobald das Bild steht. */
+  const [sprungZiel, setSprungZiel] = useState<keyof typeof fehler | null>(null);
+
+  // Bewusst KEINE Fabrik (`merkePosition(feld)` gibt einen Handler zurück): Die würde
+  // beim Rendern aufgerufen, und `react-hooks/refs` verbietet Ref-Zugriffe an dieser
+  // Stelle zu Recht. So steht der Aufruf in einem `onLayout`-Handler, wo er hingehört.
+  function merkePosition(feld: Feldname, imMehr: boolean, e: LayoutChangeEvent) {
+    positionen.current[feld] = { y: e.nativeEvent.layout.y, imMehr };
+  }
+
+  useEffect(() => {
+    if (!sprungZiel) return;
+    // Zwei Bilder abwarten, nicht eines: Wurde „Mehr einstellen" im selben Klick
+    // aufgeklappt, hat `onLayout` seine neuen Zahlen noch nicht gemeldet — auf Web
+    // kommt die Meldung über einen ResizeObserver und damit erst nach dem Zeichnen.
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const stelle = positionen.current[sprungZiel];
+        if (stelle) {
+          const versatz = stelle.imMehr ? mehrBereichY.current : 0;
+          scrollRef.current?.scrollTo({
+            y: Math.max(0, stelle.y + versatz - SPRUNG_LUFT),
+            animated: true,
+          });
+        }
+        setSprungZiel(null);
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [sprungZiel]);
 
   function absenden() {
     setGeprueft(true);
@@ -271,6 +387,8 @@ export default function CreateScreen() {
       // wäre ein Fingerzeig ins Leere.
       if (versteckterFehler && VERSTECKTER_FEHLER === 'aufklappen') setMehr(true);
       if (versteckterFehler && VERSTECKTER_FEHLER === 'reparieren') zurueckAufStandard();
+      // Siehe `FEHLER_ANTWORT` oben, Ians Entscheidung 15.
+      if (ersterFehler && FEHLER_ANTWORT !== 'nur-benennen') setSprungZiel(ersterFehler);
       return;
     }
     if (!kategorie || !startsAt || !sichtbarkeit) return;
@@ -305,7 +423,7 @@ export default function CreateScreen() {
   }
 
   return (
-    <SsScreen scroll keyboard contentStyle={styles.seite}>
+    <SsScreen scroll keyboard scrollRef={scrollRef} contentStyle={styles.seite}>
       <SsBack />
 
       <SsText variant="title">Was hast du vor?</SsText>
@@ -345,66 +463,84 @@ export default function CreateScreen() {
         }
       />
 
-      <Feld titel="Worum geht es?" fehler={zeigen('kategorie')}>
-        <View style={styles.pillen}>
-          {CATEGORY_ORDER.map((k) => (
-            <SsChip
-              key={k}
-              category={k}
-              selected={kategorie === k}
-              onPress={() => setKategorie(k)}
-            />
-          ))}
-        </View>
-      </Feld>
+      {/* Die nackten `View`s um die fünf rot werdenden Felder sind Anker, kein Layout:
+          `onLayout` meldet die y-Position, und ohne sie wüsste `absenden()` nicht,
+          wohin es springen soll (`FEHLER_ANTWORT`). Sie bekommen absichtlich KEIN
+          `style` — der Abstand kommt weiter vom `gap` des Scroll-Inhalts. */}
+      <View onLayout={(e) => merkePosition('kategorie', false, e)}>
+        <Feld titel="Worum geht es?" fehler={zeigen('kategorie')}>
+          <View style={styles.pillen}>
+            {CATEGORY_ORDER.map((k) => (
+              <SsChip
+                key={k}
+                category={k}
+                selected={kategorie === k}
+                onPress={() => setKategorie(k)}
+              />
+            ))}
+          </View>
+        </Feld>
+      </View>
 
-      <SsInput
-        label="Titel"
-        placeholder="Tennis spielen"
-        value={titel}
-        onChangeText={setTitel}
-        maxLength={60}
-        error={zeigen('titel')}
-      />
+      <View onLayout={(e) => merkePosition('titel', false, e)}>
+        <SsInput
+          label="Titel"
+          placeholder="Tennis spielen"
+          value={titel}
+          onChangeText={setTitel}
+          maxLength={60}
+          error={zeigen('titel')}
+        />
+      </View>
 
       <MehrEinstellen offen={mehr} umschalten={() => setMehr((o) => !o)} />
 
       {mehr ? (
-        <View style={styles.mehrBereich}>
-          <Feld titel="Wann?">
-            <View style={styles.pillen}>
-              {Array.from({ length: TAGE_VORAUS }, (_, i) => (
-                <SsChip
-                  key={i}
-                  label={tagText(zeitpunkt(i, 12 * 60))}
-                  selected={tagVersatz === i}
-                  onPress={() => setTagVersatz(i)}
-                />
-              ))}
-            </View>
-            <SsInput
-              value={zeitRoh}
-              onChangeText={setZeitRoh}
-              placeholder="18:30"
-              keyboardType="numbers-and-punctuation"
-              maxLength={5}
-              suffix="Uhr"
-              error={zeigen('zeit')}
-              style={styles.zeitFeld}
-            />
-          </Feld>
+        <View
+          style={styles.mehrBereich}
+          onLayout={(e) => {
+            mehrBereichY.current = e.nativeEvent.layout.y;
+          }}>
+          <View onLayout={(e) => merkePosition('zeit', true, e)}>
+            <Feld titel="Wann?">
+              <View style={styles.pillen}>
+                {Array.from({ length: TAGE_VORAUS }, (_, i) => (
+                  <SsChip
+                    key={i}
+                    label={tagText(zeitpunkt(i, 12 * 60))}
+                    selected={tagVersatz === i}
+                    onPress={() => setTagVersatz(i)}
+                  />
+                ))}
+              </View>
+              <SsInput
+                value={zeitRoh}
+                onChangeText={setZeitRoh}
+                placeholder="18:30"
+                keyboardType="numbers-and-punctuation"
+                maxLength={5}
+                suffix="Uhr"
+                error={zeigen('zeit')}
+                style={styles.zeitFeld}
+              />
+            </Feld>
+          </View>
 
-          <SsInput
-            label="Bezirk"
-            hint={BEZIRK_FREIWILLIG ? 'freiwillig — leer heißt „irgendwo in Wien“' : 'nur die Postleitzahl'}
-            value={bezirk}
-            onChangeText={setBezirk}
-            placeholder="1070"
-            keyboardType="number-pad"
-            maxLength={4}
-            suffix="Wien"
-            error={zeigen('bezirk')}
-          />
+          <View onLayout={(e) => merkePosition('bezirk', true, e)}>
+            <SsInput
+              label="Bezirk"
+              hint={
+                BEZIRK_FREIWILLIG ? 'freiwillig — leer heißt „irgendwo in Wien“' : 'nur die Postleitzahl'
+              }
+              value={bezirk}
+              onChangeText={setBezirk}
+              placeholder="1070"
+              keyboardType="number-pad"
+              maxLength={4}
+              suffix="Wien"
+              error={zeigen('bezirk')}
+            />
+          </View>
 
           <Feld titel="Wie viele können mitkommen?" hinweis="du selbst zählst nicht mit">
             <Zaehler wert={plaetze} setzen={setPlaetze} />
@@ -468,6 +604,7 @@ export default function CreateScreen() {
               Gruppe ist — eine Auswahl, die zu nichts führt, ist keine Auswahl,
               sondern eine Sackgasse (dieselbe Überlegung wie bei den Bezirks-Pillen
               im Feed, die nur zeigen, wo wirklich etwas los ist). */}
+          <View onLayout={(e) => merkePosition('sicht', true, e)}>
           <Feld titel="Wer soll es sehen?" fehler={zeigen('sicht')}>
             <SsSegment<VisibilityKind>
               value={sichtArt}
@@ -519,6 +656,7 @@ export default function CreateScreen() {
               </SsText>
             ) : null}
           </Feld>
+          </View>
 
           <Feld
             titel="Wie lange sichtbar?"
@@ -543,7 +681,7 @@ export default function CreateScreen() {
       <View style={styles.abschluss}>
         {geprueft && !allesOk ? (
           <SsText variant="caption" color={status.danger} center>
-            Es fehlt noch was — die roten Stellen.
+            {fehlerSatz(fehler)}
           </SsText>
         ) : null}
         <SsButton label="Posten" icon="stift" block size="lg" onPress={absenden} />
@@ -726,6 +864,27 @@ function zeitVorschlag(jetzt: Date = new Date()): { tage: number; minuten: numbe
  * solange man nicht auf „Posten" gedrückt hat (das erledigt `zeigen` oben); alles
  * andere meldet sich sofort.
  */
+/**
+ * Der Satz über dem Posten-Knopf — die zweite Hälfte von `FEHLER_ANTWORT`.
+ *
+ * ── Warum „Schau noch mal" und nicht „Es fehlt noch" ──────────────────────────
+ * Zwei der fünf Meldungen betreffen ein Feld, das AUSGEFÜLLT und trotzdem falsch ist
+ * („Das ist schon vorbei.", „Ein Wiener Bezirk zwischen 1010 und 1230."). „Es fehlt
+ * noch der Bezirk" wäre dort schlicht unwahr — und ein Satz, der neben der Sache
+ * liegt, schickt einen an die falsche Stelle.
+ *
+ * Ab drei Fehlern bleibt der alte, allgemeine Satz stehen: Drei aneinandergereihte
+ * Präpositionalphrasen lesen sich schlechter als das, worauf sie zeigen — und nach
+ * dem Sprung steht man ohnehin schon bei der ersten.
+ */
+function fehlerSatz(fehler: Record<Feldname, string>): string {
+  const allgemein = 'Es fehlt noch was — die roten Stellen.';
+  if (FEHLER_ANTWORT === 'nur-springen') return allgemein;
+  const offen = (Object.keys(fehler) as Feldname[]).filter((f) => fehler[f] !== '');
+  if (offen.length === 0 || offen.length > 2) return allgemein;
+  return `Schau noch mal ${offen.map((f) => FELD_IM_SATZ[f]).join(' und ')}.`;
+}
+
 function zeitFehler(roh: string, startsAt: string | null): string {
   if (roh.trim() === '') return 'Wann geht es los?';
   if (startsAt === null) return 'Eine Uhrzeit wie 18:30.';

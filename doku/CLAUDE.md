@@ -46,6 +46,29 @@ Feedback gebaut.** Das Nächste ist deshalb keine Phase, sondern eine Frage an M
 die drei sollen die neue Fassung ansehen. Erst danach kommt das Große — Backend,
 EAS-Build, App Store.
 
+🐞 **Der Durchgang war noch nicht fertig — zu Ende geklickt kamen zwei weitere
+Fehler heraus (2026-09-03).** Abgedeckt waren Stapel, Filter, Gruppen und Chat-Liste;
+NICHT abgedeckt war ausgerechnet der Kernablauf (posten → Bin dabei → bestätigen →
+Chat) und die Direktnachrichten — also die Wege, die die drei als Erstes gehen.
+Nachgeholt auf 375 × 667 und 360 × 600, beide Fehler behoben und hochgeladen:
+1. **Der rote Hinweis zeigte aus dem Bild hinaus.** Bei offenem „Mehr einstellen" ist
+   der Erstellen-Screen 1991 px hoch, das Fenster 667. Wer unten „Posten" tippt und den
+   Titel vergessen hat, las „Es fehlt noch was — die roten Stellen" — und nichts war
+   rot: Die Zeile stand bei **y = −752**. `VERSTECKTER_FEHLER` behandelt genau diesen
+   Fall, aber nur für *zugeklappte* Felder — der Code setzt sichtbar mit **aufgeklappt**
+   gleich statt mit **im Bild**. **Ians fünfzehnte Entscheidung: beides — hinspringen
+   UND das Feld benennen** (`FEHLER_ANTWORT`). Der Satz heisst jetzt „Schau noch mal
+   beim Titel." und nicht „Es fehlt noch der Titel": Zwei der fünf Meldungen betreffen
+   ein Feld, das ausgefüllt und trotzdem falsch ist.
+2. **Zwei Leer-Zustände übereinander.** Sucht man nach einem Wort, das in keinem Post
+   vorkommt, standen „Hier ist der Stapel durch" und „Dazu ist gerade nichts da"
+   untereinander und widersprachen einander; der Ausweg („Filter zurücksetzen") lag auf
+   360 × 600 halb hinter der Tab-Leiste. `StapelDurch` ist eine **Überschrift über
+   einer Liste** und verspricht sie im Text — leert ein Filter beide, ist sie eine
+   Überschrift über nichts. Behoben mit `listeHatWas`. **Das trifft auch den stillen
+   Dienstag**: ohne Post stand bisher „Das war alles für heute" über einer leeren
+   Fläche, jetzt steht dort „Noch nichts los in deinem Feed" mit „Etwas posten".
+
 🐞 **Beim Durchklicken der Live-Fassung in Handybreite (2026-09-03) kam noch ein
 zweiter echter Fehler heraus: Das Filterfeld schob den Wischstapel kaputt.** Klappte
 man im Stapel „Filter" auf, nahm das Feld dem Stapel rund 250 px — und weil die Karten
@@ -542,6 +565,24 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    etwas hineinhängt, prüft es auf **360 × 600**, nicht nur auf 390 × 844 — und fragt
    `document.elementFromPoint`, ob die Knöpfe wirklich noch getroffen werden.
 
+37. **„Aufgeklappt" ist nicht „sichtbar", und ein roter Hinweis muss auf etwas zeigen,
+   das im Bild ist.** Der Erstellen-Screen ist mit offenem „Mehr einstellen" rund
+   2000 px hoch; ein Handy zeigt 667. Wer eine Fehlermeldung baut, die auf eine andere
+   Stelle verweist, sorgt dafür, dass man dort auch hinkommt — im Erstellen-Screen
+   springt der Screen hin UND der Satz benennt das Feld (`FEHLER_ANTWORT`, Ians
+   Entscheidung 15). Die y-Positionen kommen aus `onLayout`-Ankern, nicht aus
+   gerechneten Höhen; die drei Felder in `mehrBereich` bekommen dessen y **beim Lesen**
+   dazu, nicht beim Merken. Und der Sprung wartet **zwei** `requestAnimationFrame`:
+   Auf Web meldet `onLayout` über einen ResizeObserver, also erst nach dem Zeichnen.
+38. **`StapelDurch` ist eine ÜBERSCHRIFT über einer Liste, kein Leer-Zustand.** Sein
+   Text verspricht sie („Alles, was du gesehen hast, steht unten weiter in der Liste").
+   Deshalb erscheint er nur, wenn `listeHatWas` — sonst stünde er über nichts, und
+   `LeererFeed` sagt darunter dasselbe noch einmal, nur mit dem Ausweg, den die
+   Überschrift nicht hat. **Der Unterschied trägt eine Bedeutung:** „Stapel leer"
+   heisst durchgewischt (die Liste ist voll, sie nimmt nichts weg), „Liste leer" heisst
+   es gibt wirklich nichts — ein zu enger Filter oder der stille Dienstag aus
+   Abschnitt 8. Zwei verschiedene Sachverhalte, zwei verschiedene Antworten.
+
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
 - **Große Display-Fonts clippen auf iOS.** `lineHeight ≈ 1.2 × fontSize` setzen, sonst
@@ -717,6 +758,25 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   behauptete das Gegenteil („bekommt sie vom `flex: 1`") und stand seit Phase 11 da.
 - **Ob ein Knopf verdeckt ist, sagt `document.elementFromPoint`**, nicht das Auge und
   nicht die Geometrie des Textknotens darin. (2026-09-03)
+- **Ein Screen weiss nicht, was im Bild ist.** (2026-09-03) `VERSTECKTER_FEHLER`
+  behandelt genau den Fall „rote Stelle nicht sichtbar" — setzt sichtbar aber mit
+  *aufgeklappt* gleich. Ein aufgeklapptes Feld kann trotzdem 752 px weit weg sein.
+  Wer „ist das zu sehen?" beantworten will, braucht eine Position und eine
+  Fensterhöhe, kein `useState` über offen/zu.
+- **Zwei Bausteine, die einzeln stimmen, geben zusammen zwei Antworten auf dieselbe
+  Frage.** (2026-09-03) `StapelDurch` ist als Überschrift über einer Liste gebaut,
+  `LeererFeed` als das Einzige auf dem Schirm. Leert ein Filter beide, stehen sie
+  übereinander und widersprechen einander. Keiner kennt den anderen, und die
+  Zusammensetzung hat die Frage nie gestellt.
+- **`onLayout` misst relativ zum ELTERN-Element und meldet auf Web erst nach dem
+  Zeichnen.** (2026-09-03) Beides zusammen heisst: verschachtelte Positionen erst beim
+  LESEN addieren (der Elternteil meldet womöglich später als seine Kinder), und nach
+  einem Einblenden zwei `requestAnimationFrame` warten. Ein einzelnes reicht am Mac
+  und auf einem langsameren Gerät nicht.
+- **Eine Fabrik-Funktion, die ein Ref anfasst, ist ein Lint-Fehler.** (2026-09-03)
+  `merkePosition(feld)` gab einen Handler zurück — die Fabrik wird aber beim RENDERN
+  aufgerufen, und `react-hooks/refs` verbietet das zu Recht. Der Ausweg ist eine
+  gewöhnliche Funktion, aufgerufen aus dem `onLayout`-Handler heraus.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

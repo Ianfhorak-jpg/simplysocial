@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -32,6 +32,17 @@ export interface SsScreenProps {
    * `behavior="padding"` würde dort nur unten Luft einfügen, die niemand braucht.
    */
   keyboard?: boolean;
+  /**
+   * Griff auf den Scroll-Bereich — nur zusammen mit `scroll` sinnvoll.
+   *
+   * Gibt es, weil ein Screen manchmal selbst irgendwohin scrollen muss und der
+   * Scroll-Bereich hier drin liegt: `create.tsx` springt nach einem misslungenen
+   * „Posten" zur ersten roten Stelle (Ians Entscheidung 15). Bewusst ein Ref und
+   * keine `scrollZu()`-Prop: Wer scrollen will, braucht auch `scrollToEnd` oder
+   * `flashScrollIndicators`, und jede davon einzeln durchzureichen wäre eine
+   * Nachbildung von `ScrollView` in diesem Baustein.
+   */
+  scrollRef?: RefObject<ScrollView | null>;
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
 }
@@ -49,7 +60,15 @@ export interface SsScreenProps {
  * klebt, ist am Handy kaum zu treffen — und wenn die Browser-Leiste ein Stück
  * überlappt, gar nicht mehr.
  */
-export function SsScreen({ children, tabScreen, scroll, keyboard, style, contentStyle }: SsScreenProps) {
+export function SsScreen({
+  children,
+  tabScreen,
+  scroll,
+  keyboard,
+  scrollRef,
+  style,
+  contentStyle,
+}: SsScreenProps) {
   const insets = useSafeAreaInsets();
 
   // Beim Scrollen übernimmt der Inhalt den unteren Abstand selbst (siehe oben).
@@ -69,6 +88,7 @@ export function SsScreen({ children, tabScreen, scroll, keyboard, style, content
     <SafeAreaView style={[styles.safe, style]} edges={kanten}>
       <Tastatur an={keyboard}>
         <ScrollView
+          ref={scrollRef}
           style={styles.scroll}
           contentContainerStyle={[
             styles.content,

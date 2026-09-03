@@ -174,6 +174,16 @@ export default function FeedScreen() {
   // Liegt der Stapel wirklich da? Nur dann ist der Platz senkrecht fest — die Liste
   // und der durchgeschaute Stapel scrollen beide.
   const stapelSichtbar = ansicht === 'stapel' && !stapelLeer;
+  /**
+   * Zwei verschiedene Sorten „leer", und der Unterschied trägt eine Überschrift.
+   *
+   * `stapelLeer` heisst „durchgewischt" — die Liste darunter ist trotzdem voll,
+   * denn der Stapel nimmt weg, was man schon gesehen hat (`wisch.ts`), die Liste
+   * nicht. `!listeHatWas` heisst dagegen „es gibt wirklich nichts": ein zu enger
+   * Filter, oder der stille Dienstag aus Abschnitt 8. Nur im ersten Fall darf
+   * `StapelDurch` erscheinen.
+   */
+  const listeHatWas = eintraege.length > 0;
 
   /**
    * Das Filterfeld wird EINMAL gebaut und an zwei Stellen eingehängt.
@@ -292,8 +302,20 @@ export default function FeedScreen() {
       ) : stapelLeer ? (
         // Ians Regel, Phase 11: Am Ende des Stapels steht keine leere Fläche,
         // sondern die Liste des schon Gesehenen.
+        //
+        // `listeHatWas` ist die Bedingung dafür, dass dieser Satz überhaupt stimmt.
+        // StapelDurch ist eine ÜBERSCHRIFT über einer Liste — es sagt „unten steht
+        // alles weiter" bzw. „mit einem anderen Filter liegen noch Karten da". Ist
+        // die Liste darunter auch leer, zeigt der Screen zwei Leer-Zustände
+        // übereinander, die einander widersprechen: Die Überschrift verspricht eine
+        // Liste, die es nicht gibt, und darunter sagt `LeererFeed` dasselbe noch
+        // einmal — mit dem Ausweg, den die Überschrift nicht hat. Gefunden am
+        // 2026-09-03 beim Durchklicken auf 360 × 600, Suche nach einem Wort, das
+        // in keinem Post vorkommt.
         <>
-          <StapelDurch filterAktiv={filterAktiv} zurListe={() => setAnsicht('liste')} />
+          {listeHatWas ? (
+            <StapelDurch filterAktiv={filterAktiv} zurListe={() => setAnsicht('liste')} />
+          ) : null}
           <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
         </>
       ) : (

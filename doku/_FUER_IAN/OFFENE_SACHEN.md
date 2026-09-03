@@ -3,7 +3,7 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 03.09.2026 (nach Phase 17 und zwei behobenen Fehlern)
+> Stand: 03.09.2026 (nach Phase 17 und vier behobenen Fehlern)
 
 ---
 
@@ -223,6 +223,26 @@ Solange ihr 200 Leute seid: gratis. Wenn es wächst, kommen laufende Kosten (Dat
 Speicher, Push-Nachrichten). Kein Thema für jetzt — nur damit es dich nicht überrascht.
 
 ## ✅ Erledigt
+
+- [x] **Zwei weitere Fehler beim Zuendeklicken gefunden und behoben** (03.09.2026) —
+  der Durchgang vom Morgen war nicht fertig: Stapel, Filter und Gruppen hatte ich
+  angeschaut, den **Kernablauf** (posten → Bin dabei → bestätigen → Chat) und die
+  **Direktnachrichten** noch nicht — also genau das, was die drei als Erstes anklicken
+  werden. Nachgeholt, und dabei kam heraus:
+  1. **Beim Posten zeigte der rote Hinweis ins Leere.** Wenn „Mehr einstellen" offen
+     war und du den Titel vergessen hattest, stand unten „Es fehlt noch was — die roten
+     Stellen" — und auf dem ganzen Bildschirm war nichts rot. Die rote Stelle lag mehr
+     als eine Bildschirmhöhe weiter oben. **Du hast entschieden: beides** — der
+     Bildschirm springt jetzt hin, UND der Satz sagt, welches Feld es ist („Schau noch
+     mal beim Titel."). *Das ist deine fünfzehnte Entscheidung.*
+  2. **Bei einer Suche ohne Treffer standen zwei Meldungen übereinander**, die fast
+     dasselbe sagten („Hier ist der Stapel durch" und „Dazu ist gerade nichts da") —
+     und auf einem kleinen Handy rutschte der Knopf „Filter zurücksetzen" halb hinter
+     die Leiste unten. Jetzt steht dort **eine** Meldung, die mit dem Ausweg.
+     *Nebeneffekt, der wichtiger ist als der Fehler:* Wenn wirklich einmal gar nichts
+     los ist in Wien, stand dort bisher „Das war alles für heute" über einer leeren
+     Fläche. Jetzt steht dort „Noch nichts los in deinem Feed" mit dem Knopf „Etwas
+     posten" — genau der Moment, den wir beim Kaltstart (Punkt 6) fürchten.
 
 - [x] **Zwei Fehler am Handy gefunden und behoben** (03.09.2026) — den ersten hast du
   selbst gemeldet: Die Karteikarten lagen schief und der Stempel „Weg" war dauerhaft da.

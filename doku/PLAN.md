@@ -1588,6 +1588,111 @@ Gruppen-Detailseite und die Verlassen-Rückfrage samt dem in Phase 17 korrigiert
 Filterreihen scrollen auch **geschachtelt** im senkrechten Blatt · React #418 in der
 Konsole ist die bekannte, dokumentierte Hydration-Warnung.
 
+### Nachtrag 2026-09-03 (3) — der Durchgang zu Ende geklickt ✅
+
+**Der Durchgang vom Morgen war nicht fertig.** Abgedeckt waren Stapel, Filter,
+Gruppen und Chat-Liste; **nicht** abgedeckt war ausgerechnet der Kernablauf — posten,
+„Bin dabei", bestätigen, Chat — und die Direktnachrichten. Also genau die Wege, die
+die drei Mitgründer als Erstes gehen werden. Nachgeholt auf **375 × 667 und
+360 × 600**, auf der Live-Fassung. Zwei echte Fehler, beide von derselben Bauart wie
+die zwei am Morgen: **im Code ist jede Zeile für sich richtig, falsch wird erst die
+Zusammensetzung.**
+
+#### Fund 1 — der rote Hinweis zeigte aus dem Bild hinaus
+
+Bei offenem „Mehr einstellen" ist der Erstellen-Screen **1991 px** hoch, das Fenster
+eines iPhone SE **667**. Wer unten auf „Posten" tippt und den Titel vergessen hat, las
+„Es fehlt noch was — die roten Stellen" — und auf dem ganzen Bildschirm war nichts rot.
+
+Gemessen auf 375 × 667, im Moment des Tippens:
+
+| Was | Wert |
+|---|---|
+| Scrollposition | 1294 von 1991 |
+| Sichtfenster | 667 px |
+| Rote Zeile „Ein paar Wörter, damit man weiß, was los ist." | **y = −752** |
+
+Also mehr als eine volle Bildschirmhöhe über der Kante. **Warum es durchgerutscht ist:**
+`VERSTECKTER_FEHLER` (Abschnitt 6, Punkt 9) behandelt genau diesen Fall — aber nur für
+*zugeklappte* Felder. Der Code setzt Sichtbarkeit mit **aufgeklappt** gleich statt mit
+**im Bild**, und der Fall „aufgeklappt, aber 752 px weiter oben" fällt zwischen beide.
+
+Behoben nach Ians Entscheidung 15 (Abschnitt 6, Punkt 23): Der Screen springt zur
+ersten roten Stelle, **und** der Satz benennt das Feld. Drei Sachen daran sind wichtiger
+als der Sprung:
+
+1. **Die Reihenfolge, in der `fehler` geschrieben ist, IST die Sprungreihenfolge.**
+   `Object.keys` hält die Schreibreihenfolge ein, und die entspricht dem Bildschirm —
+   deshalb steht keine zweite Liste daneben, die jemand nachziehen müsste.
+2. **`SsScreen` hat jetzt ein `scrollRef`.** Der Scroll-Bereich liegt im Baustein, also
+   muss der Griff darauf von dort kommen. Bewusst ein Ref und keine `scrollZu()`-Prop:
+   Wer scrollen will, braucht irgendwann auch `scrollToEnd` — und dann baut man
+   `ScrollView` im Baustein nach.
+3. **Der Satz heißt „Schau noch mal beim Titel", nicht „Es fehlt noch der Titel".**
+   Zwei der fünf Meldungen betreffen ein Feld, das ausgefüllt und trotzdem falsch ist
+   („Das ist schon vorbei.", „Ein Wiener Bezirk zwischen 1010 und 1230."). „Es fehlt"
+   wäre dort schlicht unwahr. Ab drei Fehlern bleibt der alte allgemeine Satz.
+
+Nachgemessen nach dem Fix, beide Fälle:
+
+| Fall | Scroll vorher | Scroll nachher | Feld danach bei | Satz |
+|---|---|---|---|---|
+| offenes Formular, Titel leer | 1210 | 434 | y = **+53** | „Schau noch mal beim Titel." |
+| **zugeklappt**, Bezirk „9999" | 0 | 792 | y = **+53** | „Schau noch mal beim Bezirk." |
+
+Der zweite ist der heikle: Das Feld existiert im DOM noch gar nicht, wenn man tippt —
+`VERSTECKTER_FEHLER` klappt erst auf. Deshalb wartet der Sprung **zwei** Bilder
+(`requestAnimationFrame` doppelt): Auf Web meldet `onLayout` über einen ResizeObserver
+und damit erst nach dem Zeichnen. Ein einzelnes Bild hätte am Mac funktioniert und auf
+einem langsameren Gerät nicht — die Sorte Fehler, die man nie wieder findet.
+
+#### Fund 2 — zwei Leer-Zustände übereinander
+
+Sucht man im Feed nach einem Wort, das in keinem Post vorkommt, standen **zwei**
+Leer-Zustände untereinander, die einander widersprachen:
+
+- „**Hier ist der Stapel durch**" — *Mit einem anderen Filter liegen vielleicht noch
+  Karten da.* + Posten + „Zur Listenansicht wechseln"
+- „**Dazu ist gerade nichts da**" — *Mit einem anderen Filter findest du vielleicht
+  mehr.* + „Filter zurücksetzen"
+
+Der zweite lief auf 360 × 600 unten aus dem Bild; der Ausweg („Filter zurücksetzen")
+lag zur Hälfte hinter der Tab-Leiste.
+
+**Die Ursache ist eine stille Annahme, kein Tippfehler.** `StapelDurch` ist als
+**Überschrift über einer Liste** gebaut — sein eigener Kommentar sagt das ausdrücklich,
+und sein Text verspricht sie („Alles, was du gesehen hast, steht unten weiter in der
+Liste"). Das stimmt fast immer, weil der Stapel wegnimmt, was man gesehen hat, und die
+Liste nicht. Nur wenn ein Filter beide leert, ist die Überschrift eine Überschrift über
+nichts — und `LeererFeed` sagt dasselbe darunter noch einmal, mit dem Ausweg, den die
+Überschrift nicht hat.
+
+Behoben mit `listeHatWas`: `StapelDurch` erscheint nur, wenn darunter wirklich eine
+Liste steht. **Das trifft auch den wichtigsten leeren Zustand der App** — den stillen
+Dienstag aus Abschnitt 8. Ohne Filter und ohne einen einzigen Post stand bisher „Das
+war alles für heute" über einer leeren Fläche; jetzt steht dort „Noch nichts los in
+deinem Feed" mit dem Knopf „Etwas posten". Genau das, was Abschnitt 9b als den echten
+Haken der App benennt.
+
+Beide Zweige nachgeprüft: durchgewischt → Überschrift **plus** volle Liste; wirklich
+leer → **ein** Leer-Zustand mit dem Ausweg, vollständig im Bild.
+
+#### Was dabei sonst geprüft wurde — alles in Ordnung
+
+Erstellen-Screen mit Gruppen-Sichtbarkeit (die Vorschau zeigt „Nur Marswiese Tennis") ·
+Post-Detail mit „Sichtbar für" · Anfragen-Tab mit **gemischten** Aktivitäts- und
+Gruppen-Anfragen (eigener Kopf je Gruppe, „Aufnehmen" statt „Bestätigen") ·
+Match-Screen mit zwei verschieden gefärbten Kreisen (der Phase-14-Fix hält) · Chat aus
+dem Match · Direktchat mit Mira (kein Post-Kopf, richtig) · die Schreib-Hürde bei
+Florian (Satz statt Knopf) · die Antwort-Leiste auf 360 × 600 (Vollbild-Blatt, alles
+erreichbar) · „Doch nicht" legt die Karte zurück (Zähler 7 → 8) · Gruppe gründen ·
+kein seitliches Überquellen auf /gruppen und /profile · die Tab-Leiste ist per
+`elementFromPoint` überall getroffen.
+
+**Der zugeklappte Erstellen-Screen sieht nach dem Umbau pixelgleich aus.** Die fünf
+`View`s um die rot werdenden Felder sind reine Anker für `onLayout` und bekommen
+absichtlich kein `style` — der Abstand kommt weiter vom `gap` des Scroll-Inhalts.
+
 ---
 
 ## 6. Ian schreibt selbst
@@ -2001,6 +2106,51 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
     Gründer allein, gibt es keinen Nachfolger — dann löst sich die Gruppe auf, nach
     derselben Regel.
 
+22. ✅ **Was das Filterfeld im Wischstapel tut** (`app/(tabs)/index.tsx` ·
+    `WischStapel.blatt`) — **entschieden am 2026-09-03: es legt sich drüber, es
+    schiebt nicht.** *(Ians vierzehnte Entscheidung — die ganze Geschichte samt
+    Messwerten steht als „Nachtrag 2026-09-03 (2)" am Ende von Abschnitt 5; hier
+    steht sie, damit die Liste vollständig ist.)*
+
+    *Verworfen:* **beim Filtern automatisch auf die Liste springen** (die App
+    wechselt die Ansicht, ohne dass man es gesagt hat) und **ein eigener
+    Filter-Bildschirm** (am meisten Platz, aber Abschnitt 9b sagt schon jetzt, dass
+    17 Routen zu viele sind).
+
+    **Den Haken kennt er:** Beim Filtern sieht man die Karte nicht. Getragen wird
+    das vom Zähler „Noch 8 Karten" oben, der beim Tippen live mitzählt.
+
+23. ✅ **Was passiert, wenn die rote Stelle außerhalb des Bildschirms liegt**
+    (`src/app/create.tsx`, `FEHLER_ANTWORT`) — **entschieden am 2026-09-03: beides —
+    hinspringen UND das Feld benennen.** *(Ians fünfzehnte Entscheidung.)*
+
+    Die Frage stand in keinem Plan und kam beim Durchklicken heraus. `VERSTECKTER_FEHLER`
+    (Punkt 9) setzt Sichtbarkeit mit *aufgeklappt* gleich — und genau dort war eine
+    Lücke: Bei offenem „Mehr einstellen" ist der Erstellen-Screen rund 2000 px hoch,
+    das Fenster eines Handys 667. Wer unten auf „Posten" tippt und den Titel vergessen
+    hat, las „Es fehlt noch was — die roten Stellen", und auf dem ganzen Bildschirm
+    war nichts rot. **Nachgemessen auf 375 × 667: die rote Zeile stand bei y = −752.**
+
+    Ians Antwort war **beides**: Der Screen springt zur ersten roten Stelle, und der
+    Satz unten sagt, um welches Feld es geht („Schau noch mal beim Titel.").
+
+    *Verworfen:* **nur benennen** (passt zwar zu seinem Urteil vom selben Tag —
+    „was nur eine Weile da ist, überdeckt, es schiebt nicht" —, lässt einen bei zwei
+    Fehlern aber trotzdem 2000 px absuchen) und **nur hinspringen** (der Satz bliebe
+    „die roten Stellen"; er stimmt dann, sagt aber immer noch nicht, was fehlt, wenn
+    man zum Knopf zurückscrollt).
+
+    **Den Haken kennt er:** Die App bewegt den Bildschirm, ohne dass man es gesagt
+    hat — dieselbe Sorte, die er am selben Tag beim Filter verworfen hat (Punkt 22).
+    Der Unterschied ist der Auslöser: Dort wechselte die Ansicht beim Tippen in ein
+    Filterfeld, hier hat man gerade selbst auf „Posten" gedrückt und bekommt die
+    Antwort darauf.
+
+    **Warum beide Hälften gebraucht werden:** Sie werden an verschiedenen Orten
+    gelesen. Nach dem Sprung steht der Satz unten außerhalb des Bildes — dort trägt
+    die rote Zeile am Feld. Scrollt man zum Knopf zurück, trägt der Satz. Die
+    Korrektur wäre ein Wort: `FEHLER_ANTWORT`. **Nicht ohne Rückfrage.**
+
 ---
 
 ## 7. Bewusst NICHT im Prototyp
@@ -2123,6 +2273,15 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > Web-Export). Behoben über `NOTBREITE`, hochgeladen und live geprüft — die ganze
 > Geschichte steht als „Nachtrag 2026-09-03" am Ende von Abschnitt 5. **Wer eine neue
 > Größe misst und in einen `inputRange` steckt, sichert sie gegen null ab.**
+
+> ⚠️ **Und zuerst lesen, wenn am Erstellen-Screen oder am leeren Feed etwas geändert
+> wird:** Am 2026-09-03 sind beim Zuendeklicken des Durchgangs zwei weitere Fehler
+> herausgekommen — der rote Hinweis zeigte aus dem Bild hinaus (y = −752), und bei
+> leerem Filter standen zwei Leer-Zustände übereinander. Beide behoben, hochgeladen,
+> live geprüft; die Geschichte steht als „Nachtrag 2026-09-03 (3)" am Ende von
+> Abschnitt 5. **Die Lehre daraus in einem Satz: Ein Screen weiss nicht, was im Bild
+> ist — „aufgeklappt" ist nicht dasselbe wie „sichtbar", und „Stapel leer" ist nicht
+> dasselbe wie „es gibt nichts".**
 
 **Alles aus dem Feedback der Mitgründer ist gebaut — Phase 14 bis 17 sind fertig.**
 Das Nächste ist deshalb keine Phase, sondern eine Frage an Menschen:
@@ -2297,6 +2456,8 @@ einseitig folgen, einander nicht schreiben können, auch wenn beide wollten
 | `features/groups/gruppe.ts` | Was wird aus meinen Posts beim Austritt? | ✅ **sie bleiben stehen** *(Phase 17)* |
 | `features/groups/gruppe.ts` | Kann der Gründer gehen? | ✅ **ja — die Leitung geht weiter** *(Phase 17)* |
 | `app/(tabs)/index.tsx` · `WischStapel` | Was tut das Filterfeld im Stapel? | ✅ **es legt sich drüber**, es schiebt nicht *(2026-09-03)* |
+| `app/create.tsx` | Was, wenn die rote Stelle aus dem Bild fällt? | ✅ **hinspringen UND benennen** *(2026-09-03)* |
+| `app/(tabs)/index.tsx` | Was steht da, wenn Stapel UND Liste leer sind? | ✅ **ein** Leer-Zustand, der mit dem Ausweg *(2026-09-03)* |
 
 **Diese Regeln sind Ians, nicht Claudes.** In allen Dateien stehen die
 verworfenen Möglichkeiten samt Begründung weiter im Kopfkommentar — als Gedächtnis,
@@ -2527,6 +2688,33 @@ Der Plan ist abgearbeitet. Diese Liste ist ein Vorrat, keine Reihenfolge.
   sonst zeigt die erste Zehntelsekunde alte Termine.
 
 ### Fallen, die bisher Zeit gekostet haben
+
+- **Ein Screen weiss nicht, was im Bild ist.** (2026-09-03) `VERSTECKTER_FEHLER` im
+  Erstellen-Screen behandelt genau den Fall „rote Stelle nicht sichtbar" — aber es
+  setzt sichtbar mit **aufgeklappt** gleich. Bei 1991 px Inhalt in einem 667-px-Fenster
+  ist ein aufgeklapptes Feld trotzdem 752 px weit weg. **Wer „ist das zu sehen?"
+  beantworten will, braucht eine Position und eine Fensterhöhe — kein `useState`
+  über offen/zu.**
+- **Zwei Bausteine, die einzeln stimmen, ergeben zusammen zwei Antworten auf dieselbe
+  Frage.** (2026-09-03) `StapelDurch` ist als Überschrift ÜBER einer Liste gebaut und
+  verspricht sie im Text; `LeererFeed` ist gebaut, als wäre es allein auf dem Schirm.
+  Leert ein Filter beide, stehen sie übereinander und widersprechen einander. Keiner
+  der beiden kennt den anderen — und der Kommentar an der Zusammensetzung hat die
+  Frage nie gestellt. **Dieselbe Bauart wie die zwei Stilwerte aus Phase 12.**
+- **`onLayout` meldet auf Web über einen ResizeObserver — also erst NACH dem
+  Zeichnen.** (2026-09-03) Wer im selben Klick etwas einblendet und dann dorthin
+  scrollen will, hat die neue Position noch nicht. Ein `requestAnimationFrame` reicht
+  am Mac und auf einem langsameren Gerät nicht; zwei geschachtelte schon. Am
+  Schreibtisch ist der Unterschied unsichtbar.
+- **`onLayout` misst relativ zum ELTERN-Element, nicht zum Scroll-Inhalt.** (2026-09-03)
+  Drei der fünf Felder im Erstellen-Screen liegen in `mehrBereich`. Deren y-Werte
+  brauchen dessen eigenes y dazu — und zwar **beim Lesen**, nicht beim Merken: Der
+  Elternteil meldet seine Position womöglich später als seine Kinder.
+- **Eine Fabrik-Funktion, die ein Ref anfasst, ist ein Lint-Fehler.** (2026-09-03)
+  `merkePosition(feld)` gab einen Handler zurück — aufgerufen wird die Fabrik aber
+  beim RENDERN, und `react-hooks/refs` verbietet das zu Recht. Der Ausweg ist keine
+  Ausnahme, sondern die andere Form: eine gewöhnliche Funktion, aufgerufen aus einem
+  `onLayout`-Handler heraus.
 
 - **Ein `flex: 1`-Kasten mit absolut positionierten Kindern hat keine Mindesthöhe.**
   (2026-09-03) Der Kommentar daneben sagte es schon falsch: „braucht die Fläche selbst
