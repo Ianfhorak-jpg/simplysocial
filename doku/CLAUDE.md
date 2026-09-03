@@ -60,7 +60,15 @@ Nachgeholt auf 375 × 667 und 360 × 600, beide Fehler behoben und hochgeladen:
    UND das Feld benennen** (`FEHLER_ANTWORT`). Der Satz heisst jetzt „Schau noch mal
    beim Titel." und nicht „Es fehlt noch der Titel": Zwei der fünf Meldungen betreffen
    ein Feld, das ausgefüllt und trotzdem falsch ist.
-2. **Eine Entwickler-Notiz stand im Nutzungsbedingungen-Screen.** Im roten Kasten
+2. **Der Einstellungen-Screen zeigte die Icon-NAMEN statt der Icons** — „bl att",
+   „m ue ll", „ba us tei ne", umgebrochen in einer 22 px schmalen Spalte. **Ian hat es
+   gemeldet.** Ein Rest aus der Emoji-Zeit: Die lokale Komponente `Zeile` rendert
+   `<SsText>{icon}</SsText>` — richtig, solange dort „📄" stand. Phase 14 hat den WERT
+   auf `"blatt"` umgestellt, nicht den ZEICHNER. Überlebt hat es, weil `Zeile` eine
+   **eigene** Prop `icon: string` hatte: Damit war „blatt" gültig, und der Compiler hat
+   die Stelle nicht auf die Arbeitsliste gesetzt. **Ein Union-Typ schützt nur die Props,
+   die ihn tragen.** Behoben, und der Mülleimer ist jetzt rot wie sein Text.
+3. **Eine Entwickler-Notiz stand im Nutzungsbedingungen-Screen.** Im roten Kasten
    stand als letzte Zeile „Steht auch in `_FUER_IAN/OFFENE_SACHEN.md`." — Backticks als
    Zeichen mitgerendert, und ein privater Arbeitsordner auf einer öffentlich abrufbaren
    Adresse (harte Regel 12), ausgerechnet auf dem Screen, der seriös wirken soll.
@@ -68,7 +76,7 @@ Nachgeholt auf 375 × 667 und 360 × 600, beide Fehler behoben und hochgeladen:
    vollständig:** `/einstellungen`, `/nutzungsbedingungen`, `/account-loeschen`,
    `/melden`, die Follower-Listen und `/post/[id]` sind auf 360 × 600 nachgeprüft —
    kein Überquellen, kein verdeckter Knopf.
-3. **Zwei Leer-Zustände übereinander.** Sucht man nach einem Wort, das in keinem Post
+4. **Zwei Leer-Zustände übereinander.** Sucht man nach einem Wort, das in keinem Post
    vorkommt, standen „Hier ist der Stapel durch" und „Dazu ist gerade nichts da"
    untereinander und widersprachen einander; der Ausweg („Filter zurücksetzen") lag auf
    360 × 600 halb hinter der Tab-Leiste. `StapelDurch` ist eine **Überschrift über
@@ -471,7 +479,10 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    (nie beides von Hand nebeneinanderstellen: Der Baustein bringt den Versatz mit, der
    das Icon auf die Mitte der ERSTEN Zeile schiebt statt in die Mitte des Blocks).
    `IconName` ist eine Whitelist — ein Emoji oder ein Vertipper ist ein Typfehler, kein
-   leeres Loch im Screen. **Ausgenommen ist, was ein Mensch selbst tippt**: Leas
+   leeres Loch im Screen. **Das gilt aber nur für Props, die `IconName` auch tragen:**
+   Eine lokale Komponente mit `icon: string` ist ein Loch im Netz, und genau so hat der
+   Einstellungen-Screen bis 2026-09-03 die NAMEN als Text angezeigt. Wer eine Komponente
+   baut, die ein Icon durchreicht, tippt die Prop `IconName` — nie `string`. **Ausgenommen ist, was ein Mensch selbst tippt**: Leas
    „Cool, freut mich! 🎾" in `data/mock.ts` bleibt. Ein Emoji, das die App VORSCHLÄGT,
    ist dagegen Oberfläche — deshalb ist das 🙌 aus `grussVorschlag()` weg.
 24. **`SsIcon` zeichnet auf Web und nirgends sonst.** Auf iOS/Android steht ein
@@ -766,6 +777,22 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   behauptete das Gegenteil („bekommt sie vom `flex: 1`") und stand seit Phase 11 da.
 - **Ob ein Knopf verdeckt ist, sagt `document.elementFromPoint`**, nicht das Auge und
   nicht die Geometrie des Textknotens darin. (2026-09-03)
+- **Ein Union-Typ schützt nur die Props, die ihn tragen.** (2026-09-03) Phase 14 war
+  vollständig, WEIL `SsButton.icon` vorher von `string` auf `IconName` verengt wurde —
+  danach hat `tsc` die Arbeitsliste geschrieben. Die lokale `Zeile` in
+  `einstellungen.tsx` hatte ihre eigene Prop, und die blieb `string`: „blatt" war
+  gültig, die Stelle stand auf keiner Liste, und der Screen zeigte monatelang die Namen
+  als Text. **Beim nächsten Massen-Umbau nicht nur die Bausteine verengen, sondern auch
+  die lokalen Komponenten, die deren Werte durchreichen.**
+- **Geometrie prüfen ist nicht hinschauen.** (2026-09-03) Auf `/einstellungen` lief das
+  Raster (Überquellen, `elementFromPoint`) sauber durch — und der Screen war trotzdem
+  kaputt. Schlimmer: Der Beweis stand in der eigenen Ausgabe („txt": „muellAccount
+  löschen…"), im Feld daneben. **Wer misst, liest den ganzen Datensatz, nicht nur die
+  Spalte, wegen der er gemessen hat — und macht von jedem Screen einen Screenshot.**
+- **Die Prüfung auf durchgerutschte Icon-Namen ist eine TEXT-Prüfung.** (2026-09-03)
+  `document.body.innerText` über alle Routen gegen die Namensliste aus `theme/icons.ts`.
+  Zwei richtige Treffer sind zu erwarten: „treffen" als deutsches Wort in einem Chat,
+  und `/bausteine`, das die Namen absichtlich zeigt.
 - **`elementFromPoint` sagt, ob etwas getroffen wird — nicht, ob das richtig ist.**
   (2026-09-03) Auf `/einstellungen` meldete die Prüfung zwei verdeckte Knöpfe. Oben lag
   der **Prototyp-Hinweis**, und der SOLL überdecken (Regel 22, Ians Entscheidung); sein

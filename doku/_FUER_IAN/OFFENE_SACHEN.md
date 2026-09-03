@@ -3,7 +3,7 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 03.09.2026 (nach Phase 17 und fünf behobenen Fehlern — Durchgang vollständig)
+> Stand: 03.09.2026 (nach Phase 17 und sechs behobenen Fehlern — Durchgang vollständig)
 
 ---
 
@@ -239,13 +239,28 @@ Speicher, Push-Nachrichten). Kein Thema für jetzt — nur damit es dich nicht �
      als eine Bildschirmhöhe weiter oben. **Du hast entschieden: beides** — der
      Bildschirm springt jetzt hin, UND der Satz sagt, welches Feld es ist („Schau noch
      mal beim Titel."). *Das ist deine fünfzehnte Entscheidung.*
-  2. **Im Screen „Nutzungsbedingungen" stand eine Notiz an dich** — „Steht auch in
+  2. **Du hast selbst einen gefunden: In den Einstellungen standen die NAMEN der
+     Symbole statt der Symbole** — „bl att", „m ue ll", „ba us tei ne", in eine schmale
+     Spalte gequetscht. Das war ein Rest aus der Zeit vor Phase 14: Dort stand früher
+     ein Emoji, und die Zeile war gebaut, um ein Emoji als Text hinzuschreiben. Beim
+     grossen Umbau habe ich den Wert getauscht („📄" wurde zu „blatt"), aber nicht die
+     Art, wie er gezeichnet wird. **Warum es niemandem aufgefallen ist:** Der
+     Typ-Prüfer hätte es gefunden — aber genau diese eine Zeile war als „irgendein
+     Text" angemeldet und nicht als „ein Symbol aus der Liste". Ist behoben, und der
+     Mülleimer ist jetzt rot wie seine Beschriftung.
+
+     *Und ehrlich dazu:* Ich hatte diesen Screen zwei Stunden vorher geprüft — aber nur
+     ausgemessen, nie angeschaut. In meinen eigenen Messwerten stand „muellAccount
+     löschen" wörtlich drin, und ich habe darüber hinweggelesen. Es gibt jetzt eine
+     Prüfung, die alle 19 Bildschirme nach durchgerutschten Symbol-Namen absucht.
+
+  3. **Im Screen „Nutzungsbedingungen" stand eine Notiz an dich** — „Steht auch in
      `_FUER_IAN/OFFENE_SACHEN.md`.", mitten in dem roten Kasten, den jeder liest, der
      dem Link folgt. Das ist dein privater Arbeitsordner; auf einer Adresse, die du
      weiterschickst, hat er nichts verloren — und ausgerechnet dieser Screen soll
      seriös wirken. Weg. (Der Kasten selbst bleibt natürlich: Der Rechtstext fehlt
      weiter sichtbar, das ist Punkt 1 oben.)
-  3. **Bei einer Suche ohne Treffer standen zwei Meldungen übereinander**, die fast
+  4. **Bei einer Suche ohne Treffer standen zwei Meldungen übereinander**, die fast
      dasselbe sagten („Hier ist der Stapel durch" und „Dazu ist gerade nichts da") —
      und auf einem kleinen Handy rutschte der Knopf „Filter zurücksetzen" halb hinter
      die Leiste unten. Jetzt steht dort **eine** Meldung, die mit dem Ausweg.

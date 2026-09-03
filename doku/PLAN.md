@@ -1696,6 +1696,46 @@ Entfernt; der Zeiger auf die Datei stand ohnehin schon im Dateikopf, wo er hinge
 Screen enthält jetzt null Backticks und kein `_FUER_IAN` — alle übrigen Treffer im Code
 stehen in Kommentaren, nicht in gerendertem Text.
 
+#### Fund 4 — der Einstellungen-Screen zeigte die Icon-NAMEN als Text
+
+**Ian hat ihn gemeldet, mit einem Screenshot.** Auf `/einstellungen` stand links neben
+jeder Zeile nicht das Symbol, sondern sein Name — umgebrochen in einer 22 px schmalen
+Spalte, also „bl / att", „m / ue / ll", „ba / us / tei / ne".
+
+**Ein Rest aus der Emoji-Zeit, und er hat aus genau einem Grund überlebt.** Die lokale
+Komponente `Zeile` in `einstellungen.tsx` rendert das Symbol seit jeher als
+`<SsText>{icon}</SsText>` — richtig, solange `icon` ein Emoji war („📄"). Phase 14 hat
+den **Wert** auf `"blatt"` umgestellt, aber nicht den **Zeichner**. Der Chevron zwei
+Zeilen tiefer war schon `<SsIcon>`; es war diese eine Stelle.
+
+> **Und das ist die Umkehrung der Phase-14-Lehre, nicht ihr Gegenbeispiel.** Dort steht:
+> „Der ganze Umbau von ~100 Emojis war nur deshalb vollständig, weil `SsButton.icon` von
+> `string` auf `IconName` umgestellt wurde, BEVOR die Ersetzung anfing." Genau das ist
+> hier nicht passiert: `Zeile` hatte eine **eigene** Prop, und die blieb `icon: string`.
+> Damit war `"blatt"` ein gültiger Wert, `tsc` hatte keinen Grund sich zu melden, und die
+> Stelle fiel aus der Arbeitsliste heraus, die der Compiler geschrieben hat.
+> **Ein Union-Typ schützt nur die Props, die ihn tragen** — eine lokale Komponente mit
+> `string` ist ein Loch im Netz.
+
+Behoben: `icon: IconName`, `<SsIcon name={icon} size={20} …>`, und die Farbe folgt dem
+`rot`-Zustand — der Mülleimer ist jetzt rot wie sein Text, was ein Emoji nie konnte.
+
+**Die Prüfung, die so etwas findet, gibt es jetzt** und sie ist eine andere als die
+bisherigen: keine Geometrie, sondern Text. Über **19 Routen** wurde
+`document.body.innerText` gegen die Liste der 42 Icon-Namen aus `theme/icons.ts`
+geprüft. Ergebnis nach dem Fix: zwei Treffer, beide richtig — „treffen" in einem echten
+Chatsatz („Passt, dann treffen wir uns direkt am Platz.") und `/bausteine`, die
+Werkstatt, die die Namen absichtlich zeigt.
+
+> **Der unangenehme Teil:** Der Beweis stand schon in meinen eigenen Messdaten. Beim
+> Durchgang über `/einstellungen` gab die Knopf-Prüfung `"txt": "muellAccount
+> löschenDein Pro…"` und `"txt": "blattNutzungsbedingungen…"` aus — der Icon-Name klebte
+> im `textContent`, sichtbar in der Ausgabe. Ich habe auf das Feld geschaut, das ich
+> suchte (verdeckt: ja/nein), und den Rest der Zeile überlesen. **Wer misst, liest den
+> ganzen Datensatz, nicht nur die Spalte, wegen der er gemessen hat.** Und: Ein
+> Screenshot hätte es sofort gezeigt — auf diesem Screen wurde nur gerechnet, nie
+> hingeschaut.
+
 #### Die restlichen Screens in Handybreite — alle sauber
 
 Damit ist der Gang vollständig. Nachgeholt am 2026-09-03 auf **360 × 600**, live:

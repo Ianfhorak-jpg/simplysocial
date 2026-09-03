@@ -5,6 +5,7 @@ import { SsAvatar, SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/
 import { BRAND } from '@/config/brand';
 import { entblocken, useBlockierte } from '@/features/safety/hooks';
 import { colors, danger, radius, spacing } from '@/theme';
+import type { IconName } from '@/theme/icons';
 
 /**
  * Einstellungen — der Ort für alles, was kein Screen für sich ist.
@@ -135,7 +136,11 @@ function Zeile({
   href,
   rot,
 }: {
-  icon: string;
+  // `IconName` und NICHT `string` — genau daran ist diese Zeile in Phase 14
+  // vorbeigerutscht. Solange hier `string` stand, war „blatt" ein gültiger Wert,
+  // und `tsc` hatte keinen Grund, sich zu melden. Siehe den Kommentar bei `SsIcon`
+  // unten.
+  icon: IconName;
   label: string;
   hinweis: string;
   href: Href;
@@ -146,7 +151,14 @@ function Zeile({
       onPress={() => router.push(href)}
       accessibilityRole="button"
       style={({ pressed }) => [styles.zeile, pressed && styles.zeileGedrueckt]}>
-      <SsText style={styles.zeileIcon}>{icon}</SsText>
+      {/* Hier stand `<SsText>{icon}</SsText>` — richtig, solange `icon` ein Emoji war
+          („📄"), und ab Phase 14 falsch: Der Wert wurde auf den NAMEN umgestellt, der
+          Zeichner nicht. Auf dem Screen stand dann „bl att" untereinander in einer
+          22 px breiten Spalte. Der Chevron zwei Zeilen tiefer war schon richtig — es
+          war genau diese eine Stelle, und nur, weil die Prop `string` blieb. */}
+      <View style={styles.zeileIcon}>
+        <SsIcon name={icon} size={20} color={rot ? danger.onSoft : colors.ink} />
+      </View>
       <View style={styles.zeileText}>
         <SsText variant="bodyStrong" color={rot ? danger.onSoft : colors.ink}>
           {label}
@@ -179,7 +191,9 @@ const styles = StyleSheet.create({
     cursor: 'pointer',
   },
   zeileGedrueckt: { backgroundColor: colors.bg },
-  zeileIcon: { fontSize: 17, lineHeight: 21, width: 22, textAlign: 'center' },
+  // Feste Breite, damit die Textspalte aller Zeilen auf derselben Kante steht — die
+  // Icons sind zwar alle 20 px, aber die Breite gehoert der Spalte, nicht dem Bild.
+  zeileIcon: { width: 22, alignItems: 'center' },
   zeileText: { flex: 1, minWidth: 0, gap: 1 },
 
   fuss: { marginTop: spacing.md },
