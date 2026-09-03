@@ -38,4 +38,4 @@ done
 # _FUER_IAN: nur Text. Ergebnisse (Videos, PDFs) gehören nicht ins Repo.
 find "$OBEN/_FUER_IAN" -maxdepth 1 -name '*.md' -exec cp {} "$ZIEL/_FUER_IAN/" \;
 
-echo "→ Doku kopiert nach doku/ ($(find "$ZIEL" -name '*.md' | wc -l | tr -d ' ') Dateien)"
+echo "→ Doku aufgefrischt: doku/ ($(find "$ZIEL" -name '*.md' | wc -l | tr -d ' ') Dateien, davon LIESMICH.md eigen)"
