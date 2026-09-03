@@ -171,6 +171,36 @@ export default function FeedScreen() {
   }
 
   const stapelLeer = karten.length === 0 && !anleitung;
+  // Liegt der Stapel wirklich da? Nur dann ist der Platz senkrecht fest — die Liste
+  // und der durchgeschaute Stapel scrollen beide.
+  const stapelSichtbar = ansicht === 'stapel' && !stapelLeer;
+
+  /**
+   * Das Filterfeld wird EINMAL gebaut und an zwei Stellen eingehängt.
+   *
+   * ── Warum es im Stapel über den Karten liegt und sie nicht wegschiebt ────────
+   * Ians Entscheidung vom 2026-09-03, und sie behebt einen echten Fehler: Die Liste
+   * scrollt, der Stapel nicht. Ein Feld, das den Stapel wegschiebt, nimmt ihm Platz,
+   * den es nicht gibt — die Karten liegen absolut und schrumpfen dabei NICHT mit,
+   * sie quellen nach oben über die Kategorien und nach unten über die Knöpfe. Am
+   * Handy war der Alters-Filter dadurch hinter der Karte nicht mehr erreichbar.
+   *
+   * Dasselbe Muster wie beim Prototyp-Hinweis (harte Regel 22): Was nur eine Weile
+   * da ist, überdeckt — es schiebt nicht.
+   *
+   * Der Zähler oben („Noch 8 Karten“) steht ÜBER dem Feld und zählt beim Tippen mit.
+   * Er ist der Grund, warum Überdecken hier reicht: Man sieht das Ergebnis, ohne die
+   * Karten zu sehen.
+   */
+  const filterFeld = filterOffen ? (
+    <FilterBereich
+      filter={filter}
+      setzen={setzen}
+      bezirke={bezirke}
+      aktiv={filterAktiv}
+      zuruecksetzen={zuruecksetzen}
+    />
+  ) : null;
 
   return (
     // `keyboard` steht hier wegen der Antwort-Leiste: Sie klebt am unteren Rand, und
@@ -231,16 +261,6 @@ export default function FeedScreen() {
         />
       </View>
 
-      {filterOffen ? (
-        <FilterBereich
-          filter={filter}
-          setzen={setzen}
-          bezirke={bezirke}
-          aktiv={filterAktiv}
-          zuruecksetzen={zuruecksetzen}
-        />
-      ) : null}
-
       {/* Die Kategorien bleiben IMMER sichtbar und wandern nicht mit in den
           Filterbereich. Sie sind der meistbenutzte Filter, und sie sind das
           Erkennungszeichen der App — sechs Farben, die sonst nirgends vorkommen.
@@ -260,6 +280,12 @@ export default function FeedScreen() {
           />
         ))}
       </SsScrollReihe>
+
+      {/* Im Fluss, wo darunter etwas scrollt. Im Stapel liegt dasselbe Feld weiter
+          unten als Blatt über den Karten — Begründung bei `filterFeld` oben. */}
+      {!stapelSichtbar ? (
+        <View style={styles.filterImFluss}>{filterFeld}</View>
+      ) : null}
 
       {ansicht === 'liste' ? (
         <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
@@ -294,6 +320,7 @@ export default function FeedScreen() {
                 />
               ) : undefined
             }
+            blatt={filterFeld}
           />
         </View>
       )}
@@ -721,9 +748,13 @@ const styles = StyleSheet.create({
   filterKnopfAktiv: { backgroundColor: colors.ink, borderColor: colors.ink },
   filterKnopfGedrueckt: { opacity: 0.7 },
 
+  // KEIN `marginHorizontal`: Das Feld steht an zwei Stellen mit verschiedenen
+  // Seitenabständen — im Fluss als Kind des Screens (der hat keinen, deshalb
+  // `filterImFluss`) und im Stapel als Blatt in der Kartenfläche (die hat schon
+  // 16 px von `stapelBereich`). Ein eigener Rand hier hieße an der zweiten Stelle
+  // 32 px. Genau die Falle aus der PLAN-Liste: zwei Werte, jeder für sich richtig.
   filterBereich: {
     gap: spacing.md,
-    marginHorizontal: spacing.lg,
     marginBottom: spacing.sm,
     padding: spacing.md,
     borderRadius: radius.md,
@@ -758,6 +789,10 @@ const styles = StyleSheet.create({
   // darin: Die Karten liegen absolut übereinander, und wo Yoga bei absoluten Kindern
   // die Polsterung des Elternteils anrechnet, macht der Browser es anders herum.
   // Ein Rand außen ist auf beiden Plattformen derselbe.
+  // Der Seitenabstand des Filterfelds, wenn es im Fluss steht. Im Stapel kommt er
+  // von `stapelBereich` unten.
+  filterImFluss: { marginHorizontal: spacing.lg },
+
   stapelBereich: { flex: 1, paddingHorizontal: spacing.lg },
 
   listeAussen: { flex: 1 },

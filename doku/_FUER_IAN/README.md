@@ -352,6 +352,37 @@ trotzdem, aber jetzt als das, was sie ist: eine Abdeckung fürs erste Bild.
 
 Beides ist behoben, hochgeladen und auf der echten Adresse nachgeprüft.
 
+## ✅ Erledigt am 03.09.: der Filter hat den Stapel kaputt geschoben
+
+**Diesen habe ich gefunden, indem ich die fertige Fassung am schmalen Fenster
+durchgeklickt habe** — so, wie deine drei sie am Handy sehen werden. Im Code sieht man
+so etwas nie.
+
+Tippte man im Stapel auf **„Filter"**, klappte das Feld auf und drückte die Karte aus
+ihrem Platz heraus. Auf deinem iPhone lag sie dann **über den Kategorie-Pillen und über
+dem „Bin dabei"-Knopf**; auf einem kleineren iPhone war es schlimmer: Die Karte
+verdeckte die Reihe **„Für wen"** — also ausgerechnet den Alters-Filter, den sich Daria
+und Leopold gewünscht hatten. Man kam nicht mehr dran.
+
+Der Grund ist einer, der nur zusammen entsteht: Die Fläche für die Karten nimmt sich
+„den Rest vom Platz". Nimmt das Filterfeld 250 Pixel, bleibt weniger Rest, als eine
+Karte hoch ist — und die Karten schrumpfen nicht mit, weil sie frei übereinanderliegen.
+Jeder der beiden Werte ist für sich richtig.
+
+**Du hast entschieden: Das Filterfeld legt sich über die Karten, statt sie
+wegzuschieben** — dasselbe Urteil wie beim Prototyp-Hinweis, den du unten haben wolltest.
+Damit die Karte nicht einfach spurlos verschwindet, zählt die Anzeige oben live mit
+(„Noch 8 Karten" → „Noch 7", sobald du „18–25" tippst).
+
+*Nebenbei: Mein erster Fix war zu kurz gesprungen. Er sah auf zwei Handygrößen richtig
+aus und ließ auf der dritten die Knöpfe verschwinden. Jetzt hängt das Feld dort, wo die
+Karten selbst wissen, wo sie aufhören — das stimmt auf jeder Größe, auch wenn wir
+später eine fünfte Filterreihe dazubauen. Und wenn das Feld einmal nicht ganz
+hineinpasst, blendet es unten weich aus und lässt sich schieben, statt abgeschnitten zu
+sein.*
+
+Behoben, hochgeladen, auf der echten Adresse nachgeprüft.
+
 ## ✅ Erledigt am 03.09.: deine Arbeit liegt jetzt sicher
 
 Das hier hat niemand gemeldet, es ist beim Nachsehen aufgefallen — und es war das

@@ -1515,6 +1515,81 @@ Nach dem Fix: `rotate(0deg) scale(0.9|0.95|1)`, alle Stempel auf 0, und beim Zie
 
 ---
 
+### Nachtrag 2026-09-03 (2) — das Filterfeld schob den Stapel kaputt ✅
+
+**Gefunden beim Durchklicken der LIVE-Fassung in Handybreite**, nicht im Code. Das war
+der Zweck des Durchgangs: Die drei Mitgründer kennen Phase 13; Filter, Direktchats und
+Gruppen hat am Handy noch nie jemand angefasst.
+
+**Was los war.** Tippt man im Stapel auf „Filter", klappte das Feld im normalen
+Layoutfluss auf und nahm dem Stapel rund 250 px. Die Kartenfläche ist aber
+`flex: 1` — sie bekommt den **Rest**, nicht ein Mindestmaß. Und die Karten darin liegen
+`position: absolute`, schrumpfen also **nicht** mit: Sie quollen aus ihrer Fläche
+heraus, wegen `justifyContent: 'center'` gleich nach beiden Seiten.
+
+Gemessen auf 390 × 844:
+
+| Element | y-Bereich | Was passierte |
+|---|---|---|
+| Kategorie-Pillen | 494–544 | Karte lag **darüber** |
+| Kartenfläche | 535–681 (146 px) | 67 px zu kurz für die Karte |
+| Oberste Karte | 502–715 (213 px) | **34 px Überstand je Seite** |
+| „Bin dabei" | 681–712 | lag **über** der Karte |
+
+Auf einem iPhone SE (375 × 667) war es eindeutig kaputt: Die Karte verdeckte die
+Reihe **„Für wen"** — ausgerechnet den Alters-Filter, den Daria und Leopold wollten —,
+die Knöpfe lagen mitten im Kartentext, und die Kategorie-Reihe war ganz weg.
+
+**Warum es nie jemandem aufgefallen ist.** Am breiten Fenster passt beides nebeneinander;
+der Fehler braucht wenig Höhe UND ein offenes Filterfeld. Dieselbe Sorte wie der
+`PanResponder` in Phase 11: „läuft am Schreibtisch, klemmt am Handy".
+
+> ✅ **Ians vierzehnte Entscheidung, 2026-09-03: das Filterfeld legt sich über die
+> Karten, statt sie wegzuschieben.** Verworfen: beim Filtern automatisch auf die Liste
+> springen (die App wechselt die Ansicht, ohne dass man es gesagt hat) und ein eigener
+> Filter-Bildschirm (am meisten Platz — aber Abschnitt 9b sagt schon jetzt, dass 17
+> Routen zu viele sind). Dasselbe Muster wie sein Urteil zum Prototyp-Hinweis (harte
+> Regel 22): **Was nur eine Weile da ist, überdeckt — es schiebt nicht.** Den Haken
+> kennt er: Beim Filtern sieht man die Karte nicht. Getragen wird das vom Zähler
+> „Noch 8 Karten" oben, der beim Tippen live mitzählt (nachgemessen: 8 → 2 bei „Sport",
+> 8 → 7 bei „18–25").
+
+**Der erste Anlauf war zu kurz gesprungen, und das ist die Lehre.** Das Blatt lag
+zunächst im Screen über dem ganzen Stapelbereich. Auf 390 × 844 und 375 × 667 sah das
+richtig aus — auf **360 × 600 verschwanden „Weg" und „Bin dabei" vollständig
+dahinter**. Der Screen weiß eben nicht, wo die Karten aufhören und die Knöpfe anfangen;
+er hätte eine Höhe raten müssen.
+
+**Der Fix ist deshalb ein Slot, kein Overlay im Screen.** `WischStapel` nimmt jetzt
+`blatt?: ReactNode` und hängt es **in die Kartenfläche** — dort heißt
+`maxHeight: '100%'` wörtlich „bis zu den Knöpfen und keinen Punkt weiter", ohne dass
+irgendwo eine Zahl steht, die jemand nachziehen müsste, wenn eine fünfte Filterreihe
+dazukommt. Passt es nicht, scrollt das Blatt, statt abgeschnitten zu werden — ein
+Filter, dessen unterste Reihe hinter der Kante liegt, wäre derselbe Fehler noch einmal,
+nur leiser.
+
+**Und weil ein abgeschnittener Kasten seine untere Rahmenlinie verliert**, sieht er
+abgerissen aus statt fortgesetzt. Deshalb hat das Blatt unten eine **weiche Kante** —
+dieselbe Technik wie `SsScrollReihe` (gestapelte Flächen statt eines Verlaufs, harte
+Regel 19), senkrecht, und mit derselben Regel: **nur, wenn wirklich etwas
+abgeschnitten ist.** Nachgemessen: auf 360 × 600 da, ganz unten weg, auf 390 × 844 gar
+nicht erst vorhanden.
+
+**Nachgewiesen mit `elementFromPoint`, nicht mit dem Auge.** Eine erste Messung an den
+Text-Knoten legte nahe, die Knöpfe seien verdeckt — sie waren es nicht. Wer wissen
+will, ob ein Knopf bedienbar ist, fragt den Browser, wer an dieser Stelle wirklich
+getroffen wird. Endstand auf 360 × 600: Blatt endet bei y = 437, „Bin dabei" beginnt
+bei y = 449, Treffer bei Knopfmitte = „Bin dabei".
+
+**Was dabei sonst geprüft wurde** (alles in Ordnung): der Wischstapel steht nach dem
+`NOTBREITE`-Fix live gerade und ohne „Weg"-Stempel · die Gruppen-Liste, die
+Gruppen-Detailseite und die Verlassen-Rückfrage samt dem in Phase 17 korrigierten Satz
+· die Chat-Liste mit gemischten Aktivitäts- und Direktchats · die waagrechten
+Filterreihen scrollen auch **geschachtelt** im senkrechten Blatt · React #418 in der
+Konsole ist die bekannte, dokumentierte Hydration-Warnung.
+
+---
+
 ## 6. Ian schreibt selbst
 
 Stellen mit echten Trade-offs, an denen Ians Meinung das Produkt formt. Jeweils
@@ -2221,6 +2296,7 @@ einseitig folgen, einander nicht schreiben können, auch wenn beide wollten
 | `features/groups/gruppe.ts` | Wie kommt man hinein? | ✅ **auf Anfrage**, Gründer bestätigt *(Phase 17)* |
 | `features/groups/gruppe.ts` | Was wird aus meinen Posts beim Austritt? | ✅ **sie bleiben stehen** *(Phase 17)* |
 | `features/groups/gruppe.ts` | Kann der Gründer gehen? | ✅ **ja — die Leitung geht weiter** *(Phase 17)* |
+| `app/(tabs)/index.tsx` · `WischStapel` | Was tut das Filterfeld im Stapel? | ✅ **es legt sich drüber**, es schiebt nicht *(2026-09-03)* |
 
 **Diese Regeln sind Ians, nicht Claudes.** In allen Dateien stehen die
 verworfenen Möglichkeiten samt Begründung weiter im Kopfkommentar — als Gedächtnis,
@@ -2452,6 +2528,29 @@ Der Plan ist abgearbeitet. Diese Liste ist ein Vorrat, keine Reihenfolge.
 
 ### Fallen, die bisher Zeit gekostet haben
 
+- **Ein `flex: 1`-Kasten mit absolut positionierten Kindern hat keine Mindesthöhe.**
+  (2026-09-03) Der Kommentar daneben sagte es schon falsch: „braucht die Fläche selbst
+  keine Höhe — sie bekommt sie vom `flex: 1`". `flex: 1` heißt **Restplatz**. Nimmt ein
+  aufgeklapptes Feld daneben 250 px, bleibt weniger übrig, als eine Karte hoch ist —
+  und weil die Karten `position: absolute` sind, schrumpfen sie nicht mit, sondern
+  quellen heraus. Ein normales Kind hätte den Kasten aufgedrückt oder wäre gestaucht
+  worden; ein absolutes Kind weiß nichts von seinem Kasten und der Kasten nichts von
+  ihm. Beide Werte sind einzeln richtig, der Fehler entsteht erst zusammen. **Und
+  `justifyContent: 'center'` macht es symmetrisch schlimm**: Der Überstand ging nach
+  oben UND unten — über die Kategorie-Pillen und über „Weg"/„Bin dabei".
+- **„Wo endet der Platz?" weiß der Baustein, nicht der Screen.** (2026-09-03) Der erste
+  Fix legte das Filterfeld im Screen über den ganzen Stapelbereich. Auf 390 × 844 und
+  375 × 667 sah das richtig aus — auf **360 × 600 verschwanden die Knöpfe vollständig
+  dahinter**. Der Screen kann nicht wissen, wo die Karten aufhören; er hätte eine Höhe
+  raten müssen. Als Slot IN der Kartenfläche (`WischStapel.blatt`) heißt
+  `maxHeight: '100%'` genau das Richtige — und bleibt richtig, wenn eine Filterreihe
+  dazukommt. Gleiche Familie wie `NOTBREITE` in `wisch.ts`: **Die Grenze gehört dorthin,
+  wo die Geometrie bekannt ist.**
+- **Ob ein Knopf verdeckt ist, sagt `document.elementFromPoint`** — nicht das Auge und
+  nicht die Textgeometrie. (2026-09-03) Eine Messung am Text-Knoten („Weg" bei y = 448)
+  legte nahe, der Knopf liege hinter dem Filterfeld. Er lag es nicht: Der Knopf-Kasten
+  begann bei y = 516, der Textknoten hat seine eigene Lage. Die ehrliche Frage ist,
+  wer an der Knopfmitte wirklich getroffen wird.
 - **`npm run deploy` sichert NICHTS.** (2026-09-03, zwei Tage lang unbemerkt) Das Skript
   baut und schiebt den Zweig `gh-pages` — den gebauten, minifizierten Zustand. `main`
   fasst es nie an. Dadurch stand als Quellcode auf GitHub noch „Phase 0 bis 8" vom

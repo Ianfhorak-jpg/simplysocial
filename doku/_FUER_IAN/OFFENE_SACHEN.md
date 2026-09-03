@@ -3,7 +3,7 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 02.09.2026 (nach Phase 15 — Altersgruppe und Filter)
+> Stand: 03.09.2026 (nach Phase 17 und zwei behobenen Fehlern)
 
 ---
 
@@ -87,6 +87,26 @@ gefärbte Kreise mit euren Anfangsbuchstaben statt Emoji-Gesichtern.
 
 *Nebenbei aufgefallen und behoben: Du und Lea hattet dieselbe Avatarfarbe. Das lag an
 der Art, wie die Farbe berechnet wurde, und ist mit den Emojis nie aufgefallen.*
+
+### 2b. Zwei neue Sachen, bei denen nur du sagen kannst, ob sie sich richtig anfühlen
+
+Seit du das letzte Mal geschaut hast, sind **Direktnachrichten** und **Gruppen**
+dazugekommen — beides Leopolds Wünsche. Zwei Stellen darin sind Ermessenssachen, und
+beide sind ein Wort im Code, wenn du sie anders willst:
+
+**a) Wer darf dir schreiben?** Gerade gilt: **nur bei gegenseitigem Folgen.** Du kannst
+also niemandem schreiben, der dir nicht auch folgt — auch dann nicht, wenn ihr beide
+wollt. Das ist sicher, aber es könnte zu eng sein. Probier es aus: Geh auf ein fremdes
+Profil und schau, ob dort ein „Nachricht"-Knopf steht oder ein Satz, warum nicht.
+*Falls zu eng: „einseitig genügt" oder „jeder darf" — beides ist ein Wort
+(`SCHREIB_REGEL`).*
+
+**b) Fühlt sich der Alters-Filter zu weich an?** Wer „18–25" wählt, bekommt auch alle
+Posts angezeigt, bei denen niemand ein Alter eingestellt hat („für alle") — das war
+deine Entscheidung, damit der Feed nicht auf eine Karte zusammenschrumpft. Der Preis
+ist, dass der Filter wenig zu filtern scheint. **Das wird erst scharf, wenn Leute die
+Altersgruppe wirklich setzen** — also erst bei vielen Posts. Guck es dir an und sag,
+ob es dich stört.
 
 ### 3. Auf dem Handy fehlen die Symbole — das ist bekannt und Absicht
 
@@ -204,6 +224,25 @@ Speicher, Push-Nachrichten). Kein Thema für jetzt — nur damit es dich nicht �
 
 ## ✅ Erledigt
 
+- [x] **Zwei Fehler am Handy gefunden und behoben** (03.09.2026) — den ersten hast du
+  selbst gemeldet: Die Karteikarten lagen schief und der Stempel „Weg" war dauerhaft da.
+  Den zweiten habe ich beim Durchklicken der fertigen Fassung in Handybreite gefunden:
+  **Wenn man im Stapel auf „Filter" tippte, quoll die Karte über die Knöpfe** — auf
+  einem kleineren iPhone verdeckte sie ausgerechnet den Alters-Filter. Du hast
+  entschieden, dass sich das Filterfeld **drüberlegt statt zu schieben**, wie beim
+  Prototyp-Hinweis. Ist drin und hochgeladen.
+- [x] **Gruppen** (02.09.2026) — Leopolds „Gruppen wären noch gut zu adden". Eine Gruppe
+  ist eine dritte Stufe beim Posten: „Alle", „Nur Follower" oder „Nur Marswiese Tennis".
+  Der Post steht im normalen Feed, nur mit dem Gruppennamen an der Karte — **kein
+  eigener Bereich**, weil ein zweiter Feed den ersten leer macht. Hinein kommt man auf
+  Anfrage, der Gründer bestätigt. Deine zwei Entscheidungen dazu: Beim Austritt bleiben
+  die Posts stehen, und wenn der Gründer geht, erbt das Mitglied, das am längsten dabei
+  ist.
+- [x] **Direktnachrichten** (02.09.2026) — Leopolds „man kann nicht einfach so Leuten
+  schreiben". Jetzt geht es. Deine Entscheidungen: schreiben darf man **bei
+  gegenseitigem Folgen**, und ein Direktchat entsteht **erst mit der ersten gesendeten
+  Nachricht** — wer auf „Nachricht" tippt und es sich anders überlegt, hinterlässt beim
+  anderen nichts. *Ob die Regel zu eng ist, ist Punkt 2b oben.*
 - [x] **Filter und Altersgruppe** (02.09.2026) — Leopold hatte gesagt, man könne „nicht
   so genau filtern, was ein Problem wird, wenn es viele Anfragen gibt". Jetzt gibt es
   im Feed **Suchen, Bezirk, Wann und Altersgruppe**. Er hatte Hashtags vorgeschlagen —

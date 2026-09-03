@@ -46,8 +46,25 @@ Feedback gebaut.** Das Nächste ist deshalb keine Phase, sondern eine Frage an M
 die drei sollen die neue Fassung ansehen. Erst danach kommt das Große — Backend,
 EAS-Build, App Store.
 
-🐞 **Vorher war aber noch ein echter Fehler drin, und Ian hat ihn gefunden
-(2026-09-03): Die Karteikarten lagen schief.** Alle drei standen im Ruhezustand auf
+🐞 **Beim Durchklicken der Live-Fassung in Handybreite (2026-09-03) kam noch ein
+zweiter echter Fehler heraus: Das Filterfeld schob den Wischstapel kaputt.** Klappte
+man im Stapel „Filter" auf, nahm das Feld dem Stapel rund 250 px — und weil die Karten
+`position: absolute` liegen, schrumpften sie nicht mit, sondern quollen über die
+Kategorie-Pillen und über „Bin dabei". Auf einem iPhone SE verdeckte die Karte
+ausgerechnet den **Alters-Filter**, den Daria und Leopold sich gewünscht hatten.
+Behoben, hochgeladen. Drei Dinge sind daran wichtiger als der Fix:
+1. **Ians vierzehnte Entscheidung: Das Feld legt sich drüber, es schiebt nicht** —
+   dasselbe Urteil wie beim Prototyp-Hinweis (Regel 22). Getragen wird das vom Zähler
+   „Noch 8 Karten" oben, der beim Tippen live mitzählt.
+2. **Der erste Fix war zu kurz gesprungen.** Das Blatt lag im Screen über dem ganzen
+   Stapelbereich; auf 390 × 844 und 375 × 667 sah das richtig aus, auf **360 × 600
+   verschwanden die Knöpfe dahinter**. Der Screen weiß nicht, wo die Karten aufhören.
+   Als Slot IN der Kartenfläche (`WischStapel.blatt`, harte Regel 36) stimmt es überall.
+3. **Gefunden nur durch Durchklicken am schmalen Fenster.** Im Code sieht man es nie:
+   Zwei für sich richtige Stilwerte ergeben zusammen den Fehler.
+
+🐞 **Davor, gleicher Tag, hat Ian selbst einen gefunden: Die Karteikarten lagen
+schief.** Alle drei standen im Ruhezustand auf
 -16°, leicht vergrößert, und der Stempel **„Weg" war dauerhaft sichtbar** — bis man
 eine Karte anfasste. Das ist behoben und hochgeladen. Es war **eine** Ursache für
 beide Symptome: Beim Web-Export ist die Kartenbreite null, damit wird `[-b, 0, b]` zu
@@ -514,6 +531,17 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    mitversioniert**: nach einem frischen Clone neu anlegen, Anleitung in
    `doku/LIESMICH.md`.
 
+36. **Was über dem Wischstapel liegen soll, geht durch `WischStapel.blatt` — nie über
+   den Stapelbereich im Screen.** Der Screen weiß nicht, wo die Karten aufhören und
+   die Knöpfe anfangen; er müsste eine Höhe raten. Der Slot hängt IN der Kartenfläche,
+   dort heißt `maxHeight: '100%'` wörtlich „bis zu den Knöpfen" — und bleibt richtig,
+   wenn eine Filterreihe dazukommt. **Am 2026-09-03 war genau das der Fehler**: Das
+   Filterfeld klappte im Fluss auf, nahm dem Stapel 250 px, und weil die Karten
+   absolut liegen (also nicht mitschrumpfen), quollen sie über die Kategorien und über
+   „Bin dabei". Auf dem iPhone SE verdeckte die Karte den Alters-Filter. Wer hier
+   etwas hineinhängt, prüft es auf **360 × 600**, nicht nur auf 390 × 844 — und fragt
+   `document.elementFromPoint`, ob die Knöpfe wirklich noch getroffen werden.
+
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
 - **Große Display-Fonts clippen auf iOS.** `lineHeight ≈ 1.2 × fontSize` setzen, sonst
@@ -681,6 +709,14 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   belastbare Vergleich schneidet das `},<id>,[deps])` am Modulende weg und vergleicht
   die Rümpfe als MENGE — dann bleibt genau das letzte Modul übrig, und dessen einziger
   Unterschied sind die `__r()`-Startaufrufe.
+- **Ein `flex: 1`-Kasten mit absolut positionierten Kindern hat keine Mindesthöhe.**
+  (2026-09-03) `flex: 1` heißt **Restplatz**, nicht Mindestplatz. Nimmt ein
+  aufgeklapptes Feld daneben 250 px, bleibt weniger übrig, als eine Karte hoch ist —
+  und ein absolut positioniertes Kind schrumpft nicht mit, es quillt heraus. Mit
+  `justifyContent: 'center'` gleich nach beiden Seiten. Der Kommentar an der Stelle
+  behauptete das Gegenteil („bekommt sie vom `flex: 1`") und stand seit Phase 11 da.
+- **Ob ein Knopf verdeckt ist, sagt `document.elementFromPoint`**, nicht das Auge und
+  nicht die Geometrie des Textknotens darin. (2026-09-03)
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

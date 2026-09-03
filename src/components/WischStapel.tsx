@@ -1,5 +1,13 @@
-import { useRef, type ReactNode } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { useRef, useState, type ReactNode } from 'react';
+import {
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 
 import { PostCard } from './PostCard';
 import { WischKarte, type WischKarteHandle } from './WischKarte';
@@ -55,6 +63,21 @@ export interface WischStapelProps {
    * (`fussnote` unten), zuckt der Stapel nicht, wenn der Inhalt wechselt.
    */
   fussnote?: ReactNode;
+  /**
+   * Etwas, das über den Karten liegt, solange es da ist — heute das Filterfeld.
+   *
+   * ── Warum das hier hineingereicht wird und nicht im Screen darüberliegt ──────
+   * Weil NUR hier bekannt ist, wo die Karten aufhören und die Knöpfe anfangen.
+   * Der erste Anlauf am 2026-09-03 legte das Feld im Screen über den ganzen
+   * Stapelbereich — auf einem 360×600-Fenster verschwanden dadurch „Weg“ und
+   * „Bin dabei“ vollständig dahinter. Als Kind der Kartenfläche kann das nicht
+   * mehr passieren: `maxHeight: '100%'` heißt hier „bis zu den Knöpfen und keinen
+   * Punkt weiter“, ohne dass irgendwo eine Höhe in Pixeln geraten wird.
+   *
+   * Es scrollt, statt abgeschnitten zu werden. Ein Filter, dessen unterste Reihe
+   * hinter der Kante liegt, ist derselbe Fehler noch einmal — nur leiser.
+   */
+  blatt?: ReactNode;
 }
 
 type Karte = { art: 'anleitung' } | { art: 'post'; eintrag: FeedEintrag };
@@ -66,6 +89,7 @@ export function WischStapel({
   onWeg,
   onAntippen,
   fussnote,
+  blatt,
 }: WischStapelProps) {
   const obenRef = useRef<WischKarteHandle>(null);
 
@@ -114,6 +138,11 @@ export function WischStapel({
             </WischKarte>
           ))
           .reverse()}
+
+        {/* Steht nach den Karten im Baum und liegt dadurch darüber. Ohne feste
+            Höhe: Ist das Blatt kürzer als die Fläche, bleibt die Karte darunter
+            sichtbar UND wischbar — es ist ein Blatt, kein Vorhang. */}
+        {blatt ? <Blatt>{blatt}</Blatt> : null}
       </View>
 
       <View style={styles.knoepfe}>
@@ -152,6 +181,71 @@ export function WischStapel({
         )}
       </View>
     </>
+  );
+}
+
+/**
+ * Was über den Karten liegt — heute das Filterfeld.
+ *
+ * ── Warum es scrollt und wo seine Grenze herkommt ────────────────────────────
+ * `maxHeight: '100%'` misst sich an der Kartenfläche, und die endet dort, wo die
+ * Knöpfe anfangen. Dadurch kann kein Blatt „Weg“ und „Bin dabei“ verdecken, egal
+ * wie viele Filterreihen einmal dazukommen — ohne dass irgendwo eine Höhe in
+ * Pixeln steht, die jemand nachziehen müsste.
+ *
+ * ── Warum es unten eine weiche Kante braucht ─────────────────────────────────
+ * Beim Abschneiden verliert der Kasten seine untere Rahmenlinie: Er sieht dann
+ * abgerissen aus, nicht fortgesetzt — und wer nicht ahnt, dass da noch etwas ist,
+ * findet den Alters-Filter nicht. Das ist derselbe Gedanke wie bei
+ * `SsScrollReihe` (harte Regel 19), nur senkrecht. Die Technik ist absichtlich
+ * dieselbe: gestapelte Flächen statt eines echten Verlaufs, weil
+ * `react-native-web` `experimental_backgroundImage` nicht kennt und
+ * `expo-linear-gradient` ein Native-Modul wäre (harte Regel 1).
+ *
+ * Und wie dort gilt: **Die Kante steht nur, wenn wirklich etwas abgeschnitten
+ * ist.** Eine Kante, die immer da ist, verspricht Inhalt, den es nicht gibt.
+ */
+const KANTE_HOEHE = 28;
+const STREIFEN = 7;
+
+function Blatt({ children }: { children: ReactNode }) {
+  const [y, setY] = useState(0);
+  const [sichtbar, setSichtbar] = useState(0);
+  const [inhalt, setInhalt] = useState(0);
+
+  // Ein Pixel Toleranz, wie in `SsScrollReihe`: Auf Web sind das Fließkommazahlen,
+  // und „ganz unten“ ist dort oft 295.98 statt 296.
+  const untenAb = inhalt - (y + sichtbar) > 1;
+
+  return (
+    <View style={styles.blatt}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) =>
+          setY(e.nativeEvent.contentOffset.y)
+        }
+        onLayout={(e: LayoutChangeEvent) => setSichtbar(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_, hoehe) => setInhalt(hoehe)}>
+        {children}
+      </ScrollView>
+
+      {untenAb ? (
+        <View style={styles.kante}>
+          {Array.from({ length: STREIFEN }, (_, i) => {
+            // Die Deckkraft eines Streifens ist die eines echten Verlaufs an seiner
+            // Mitte: nach unten hin undurchsichtig, nach oben durchsichtig.
+            const deckung = (i + 0.5) / STREIFEN;
+            return (
+              <View
+                key={i}
+                style={[styles.streifen, { backgroundColor: colors.surface, opacity: deckung }]}
+              />
+            );
+          })}
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -226,6 +320,22 @@ const styles = StyleSheet.create({
   // darin absolut übereinander (siehe `WischKarte`), deshalb braucht die Fläche
   // selbst keine Höhe — sie bekommt sie vom `flex: 1`.
   flaeche: { flex: 1, justifyContent: 'center', marginTop: spacing.xs },
+
+  // `maxHeight: '100%'` ist die ganze Sicherung — Begründung bei `Blatt` oben.
+  blatt: { position: 'absolute', top: 0, left: 0, right: 0, maxHeight: '100%' },
+
+  // Wie in `SsScrollReihe`: ausgeschrieben statt `absoluteFillObject`, das es in
+  // React Native 0.86 nicht mehr gibt. `pointerEvents` im `style`, sonst schluckt
+  // die Kante die Tipps auf die unterste Filterreihe.
+  kante: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: KANTE_HOEHE,
+    pointerEvents: 'none',
+  },
+  streifen: { flex: 1 },
 
   knoepfe: {
     flexDirection: 'row',
