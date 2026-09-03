@@ -352,6 +352,34 @@ trotzdem, aber jetzt als das, was sie ist: eine Abdeckung fürs erste Bild.
 
 Beides ist behoben, hochgeladen und auf der echten Adresse nachgeprüft.
 
+## ✅ Erledigt am 03.09.: deine Arbeit liegt jetzt sicher
+
+Das hier hat niemand gemeldet, es ist beim Nachsehen aufgefallen — und es war das
+Wichtigste an diesem Tag.
+
+**Auf GitHub stand als Quellcode noch der Stand vom 01.09.** Alles danach — der
+Wischstapel, der aufgeräumte Erstellen-Screen, die 41 Icons, die Filter, die
+Direktnachrichten, die Gruppen und der Fix von heute Früh — lag **nur auf deinem
+Laptop**: 54 Dateien, gut 7.000 Zeilen, neun Phasen Arbeit.
+
+Der Grund ist eine Falle, auf die man leicht hereinfällt: `npm run deploy` heißt
+„hochladen" und sieht deshalb aus wie eine Sicherung. Ist es aber nicht. Es schiebt nur
+die **fertig gebaute Seite** hinauf, damit sie im Netz steht — den Quellcode fasst es
+nie an. Und aus der gebauten Seite bekommt man den Code nicht zurück; der ist dort
+zusammengepresst und unlesbar.
+
+Dasselbe galt für **PLAN.md und den ganzen `_FUER_IAN`-Ordner** — die lagen in gar
+keiner Sicherung. iCloud zählt nicht: iCloud spiegelt nur. Wenn hier eine Datei kaputt
+geht, geht sie dort mit kaputt, und es gibt keine ältere Fassung zum Zurückholen.
+
+**Beides ist jetzt erledigt.** Der gesamte Code steht auf GitHub, die Doku liegt im
+Ordner `doku/` mit dabei, und damit sie nicht wieder veraltet, frischt der Computer sie
+bei jedem Speichern selbst auf — du musst dafür nichts tun.
+
+**Was du dir merken solltest:** `npm run deploy` bringt die Seite ins Netz.
+`git push` bringt die Arbeit in Sicherheit. Das sind zwei verschiedene Dinge, und du
+brauchst beide.
+
 ## ✅ Erledigt: was du am 02.09. gemeldet hast
 
 **„Auf Chrome am Handy sieht es kurz komisch aus."** — gefunden und behoben. Es lag

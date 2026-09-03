@@ -43,6 +43,23 @@ und dass das Wischen weiterhin geht (115 px ziehen → Karte kippt mit und flieg
 
 ---
 
+## Und noch etwas vom 03.09.: die Arbeit ist jetzt gesichert
+
+Beim Nachsehen kam heraus, dass auf GitHub als **Quellcode noch der Stand vom 01.09.**
+lag — neun Phasen Arbeit (rund 7.000 Zeilen) gab es nur auf deinem Laptop. Auch PLAN.md
+und dieser Ordner hier lagen in gar keiner Sicherung.
+
+Der Grund ist eine Falle im Namen: `npm run deploy` heißt „hochladen", schiebt aber nur
+die **fertig gebaute Seite** ins Netz. Den Quellcode fasst es nie an, und aus der
+gebauten Seite bekommt man ihn nicht zurück.
+
+Alles ist inzwischen hochgeladen, die Doku liegt im Ordner `doku/` mit dabei, und sie
+frischt sich beim Speichern selbst auf. **Merksatz für später:** `npm run deploy` bringt
+die Seite ins Netz, `git push` bringt die Arbeit in Sicherheit — zwei verschiedene
+Dinge, du brauchst beide.
+
+---
+
 ## Kopier das in den Chat
 
 **Es steht keine Phase mehr an.** Der nächste Schritt passiert nicht im Code, sondern

@@ -39,6 +39,17 @@ nicht an Disziplin. Von Hand geht es mit `npm run doku`.
 > chmod +x .git/hooks/pre-commit
 > ```
 
+> ⚠️ **Eine Lücke, die der Hook nicht schließen kann:** Wenn sich **NUR** die Doku
+> geändert hat und keine einzige Datei im Repo, hält Git den Commit für leer und bricht
+> ab — **bevor** der Hook läuft. Der Hook frischt `doku/` dann zwar auf und merkt es vor,
+> aber die Entscheidung ist schon gefallen. Es sieht aus, als hätte er versagt; er kam
+> nur zu spät. Der zweite Versuch geht durch, weil jetzt etwas vorgemerkt ist. Sauberer
+> ist es andersherum:
+>
+> ```bash
+> npm run doku && git add -A && git commit -m "…"
+> ```
+
 ## Was NICHT hier landet
 
 Die grosse `CLAUDE.md` aus `C.C.Projekts_Ian/` gehört allen 33 Projekten, nicht

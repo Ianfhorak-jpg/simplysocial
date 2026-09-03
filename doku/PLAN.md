@@ -2234,11 +2234,15 @@ npm install          # nur beim ersten Mal
 npx expo start --web # Prototyp im Browser
 npm run typecheck    # tsc --noEmit  → war beim Übergeben sauber
 npm run deploy       # bauen + auf GitHub Pages schieben (scripts/deploy.sh)
+npm run doku         # PLAN.md/CLAUDE.md/_FUER_IAN → doku/ (macht der pre-commit-Hook selbst)
+git add -A && git commit && git push   # ← DAS ist die Sicherung, nicht der Deploy
 ```
 
 **Prototyp: https://ianfhorak-jpg.github.io/simplysocial/** · Code:
 https://github.com/Ianfhorak-jpg/simplysocial (Zweig `main` = Quellcode,
 `gh-pages` = gebautes Bündel, ein Commit, wird bei jedem Deploy überschrieben).
+**`npm run deploy` fasst `main` NICHT an** — wer nur deployt, sichert nichts. Seit dem
+2026-09-03 liegt auch die Doku im Repo (`doku/`, siehe `doku/LIESMICH.md`).
 
 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/** · Code:
 https://github.com/Ianfhorak-jpg/simplysocial-landing · Quelle liegt in `landing/`.
@@ -2448,6 +2452,15 @@ Der Plan ist abgearbeitet. Diese Liste ist ein Vorrat, keine Reihenfolge.
 
 ### Fallen, die bisher Zeit gekostet haben
 
+- **`npm run deploy` sichert NICHTS.** (2026-09-03, zwei Tage lang unbemerkt) Das Skript
+  baut und schiebt den Zweig `gh-pages` — den gebauten, minifizierten Zustand. `main`
+  fasst es nie an. Dadurch stand als Quellcode auf GitHub noch „Phase 0 bis 8" vom
+  01.09., während **neun Phasen (54 Dateien, ~7.100 Zeilen) nur lokal lagen**. Aus dem
+  Bündel auf `gh-pages` bekommt man keinen lesbaren Quellcode zurück; iCloud spiegelt
+  nur und hebt keine Versionen auf. Die Täuschung ist die Wortwahl: Ein Skript, das
+  „hochladen" heißt, sieht aus wie eine Sicherung. **Nach jeder Phase committen — der
+  Deploy ist keine.** Seit dem 03.09. liegt die Doku über `doku/` mit im Repo
+  (`npm run doku`, plus ein `pre-commit`-Hook, der es selbst tut).
 - **`*/` in einem Blockkommentar beendet den Kommentar.** (Phase 0, `mock.ts`)
 - **React Native kennt bei `cursor` nur `'auto'` und `'pointer'`.** (Phase 0)
   Dasselbe gilt für `outlineStyle: 'none'` (Phase 3).

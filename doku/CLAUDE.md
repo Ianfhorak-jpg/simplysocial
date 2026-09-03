@@ -316,7 +316,9 @@ cd simplysocial
 npm install
 npx expo start --web      # Web-Preview
 npx tsc --noEmit          # Typecheck
-npm run deploy            # bauen + auf GitHub Pages schieben
+npm run deploy            # bauen + auf GitHub Pages schieben (NUR gh-pages!)
+npm run doku              # Doku nach doku/ spiegeln (macht der pre-commit-Hook selbst)
+git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine.
 ```
 
 ## Harte Regeln
@@ -500,6 +502,17 @@ npm run deploy            # bauen + auf GitHub Pages schieben
    Hauptfeed ohnehin stehen, so wie ein Profil auch. Ein eigener TAB hätte den
    Hauptfeed geleert, und ein leerer Hauptfeed ist am Anfang das größere Problem. Der
    Weg zu `/gruppen` liegt deshalb am Profil, nicht in der Tab-Leiste.
+
+35. **`npm run deploy` ist KEINE Sicherung — es schiebt nur `gh-pages`.** Der Zweig
+   trägt das gebaute, minifizierte Bündel; `main` mit dem Quellcode fasst das Skript
+   nie an. Am 2026-09-03 kam so heraus, dass neun Phasen (54 Dateien, ~7.100 Zeilen)
+   ausschließlich lokal lagen, während die Seite tagelang aktuell aussah. **Nach jeder
+   Phase committen und pushen.** Die Doku (`PLAN.md`, `CLAUDE.md`, `_FUER_IAN/`) liegt
+   außerhalb der Repo-Wurzel und kommt über `doku/` mit — kopiert von
+   `scripts/doku.sh`, aufgerufen von `.git/hooks/pre-commit`, damit die Kopie nicht
+   still veraltet wie `landing/stil.css` (Regel 13). **Der Hook wird nicht
+   mitversioniert**: nach einem frischen Clone neu anlegen, Anleitung in
+   `doku/LIESMICH.md`.
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
