@@ -30,6 +30,46 @@ Zwei Sachen dazu:
 
 ---
 
+## 🟡 Wartet auf Christoph und Daria
+
+### Leopolds Rückmeldung ist da — und sie war anders als alles davor
+
+Leopold hat die App als Erster wirklich **benutzt** statt angeschaut: Gruppe gegründet,
+gepostet, herumprobiert. Der Unterschied ist der ganze Punkt — er hat in zehn Minuten
+etwas gefunden, das ich am selben Tag beim Durchklicken übersehen habe, weil man es nur
+merkt, wenn man etwas *erreichen* will:
+
+**Man kann niemanden in eine Gruppe einladen.** Es gibt nur den Weg von aussen (jemand
+findet die Gruppe und fragt an, du bestätigst). Wer eine Gruppe gründet, sitzt allein
+drin und kann nichts dagegen tun. Das ist kein Wunsch, das ist ein Loch in dem, was im
+September gebaut wurde.
+
+**Du hast entschieden** (steht in PLAN.md, Phase 18):
+- **Einladen aus der Gruppe heraus** — du wählst aus deinen Followern, die bekommen eine
+  Einladung und sagen ja. Nicht per weiterleitbarem Link.
+- **Der Schiebe-Balken fürs Alter kommt, über den Jahrgang.** Ich hatte dagegengeredet,
+  weil die App gar kein Geburtsdatum kennt — deine Antwort war die Mitte, die ich nicht
+  angeboten hatte: nur das Jahr, mehr braucht ihr nicht.
+
+**Gebaut ist noch nichts**, weil du auf Christoph und Daria wartest — richtig so, was die
+sagen kann die Reihenfolge umwerfen. Der Plan steht, ich kann jederzeit anfangen.
+
+**Eine Frage wartet auf dich, aber erst beim Bauen:** Was soll am Profil stehen, wenn der
+Jahrgang drin ist — „Jahrgang 2009", „17 Jahre", oder weiterhin nur „26+" und der
+Jahrgang dient bloss zum Filtern? Das Letzte gäbe Leopold seinen Balken und Daria ihre
+Antwort, ohne jedem das genaue Alter anzuschreiben. Hängt mit Punkt 1 unten zusammen.
+
+### Was Leopold sonst noch wollte
+- **Nicht zwei Sachen gleichzeitig zusagen können.** Prüft heute niemand. Gute Idee, und
+  klein — sie schützt vor genau der Enttäuschung, an der sich so eine App herumspricht.
+- **Private vs. öffentliche Gruppen.** Kommt zusammen mit dem Einladen, sonst wäre eine
+  private Gruppe eine, die niemand betreten kann.
+- **Eine Kalender-Funktion** — hat er selbst „für später" gesagt.
+- **Er musste fragen, wie man eine Gruppe macht.** Der Knopf liegt ganz unten am Profil
+  (vorletztes Element, fast zwei Bildschirme runter).
+
+---
+
 ## 🔴 Wichtig, bevor die App über euren Freundeskreis hinausgeht
 
 ### 1. Rechtliches — hol dir erwachsenen Rat

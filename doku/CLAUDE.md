@@ -35,6 +35,25 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+📝 **Phase 18 ist GEPLANT, nicht gebaut (2026-09-03).** Leopold hat die neue Fassung
+als Erster wirklich BENUTZT statt angeschaut — Gruppe gegründet, gepostet — und dabei in
+zehn Minuten ein **Loch** gefunden, das beim Durchklicken am selben Tag niemandem
+auffiel: **Man kann niemanden in eine Gruppe einladen.** Phase 17 hat nur die Richtung
+von aussen nach innen gebaut (anfragen → Gründer bestätigt); wer gründet, sitzt allein
+drin. Dazu kamen vier Wünsche und Ians eigener Einwand, die Chats seien „noch nicht ganz
+übersichtlich, inspiriere dich von WhatsApp". **Ian will erst Christoph und Daria
+abwarten** — deshalb steht in PLAN.md ein Plan (Phase 18a–d) und kein Code. Zwei
+Entscheidungen stehen aber schon fest:
+- **Ians sechzehnte: Einladen aus der Gruppe heraus**, nicht per Link — dasselbe Muster
+  wie „Bin dabei", eine Seite bietet an, die andere bestätigt. Verworfen ist der
+  weiterleitbare Link (landet irgendwann in einer fremden Gruppe).
+- **Ians siebzehnte: der Schiebe-Balken fürs Alter kommt, auf JAHRGANG.** Ich hatte
+  dagegengehalten, weil das Modell kein Geburtsdatum kannte und ein Balken über drei
+  Bändern eine schlechtere Pillenreihe wäre. Seine Antwort war eine, die ich nicht
+  angeboten hatte: nur das Jahr. Damit fallen `AgeGroup`/`AgeBand` (harte Regel 27) weg —
+  `User.jahrgang: number`, und am Post ein Union `{ kind: 'egal' } | { kind: 'spanne'; … }`.
+  **Offen bleibt, was am Profil steht** (Jahrgang, Alter, oder weiter ein grobes Band).
+
 🔜 **Als Nächstes: wieder herzeigen.** Am 2026-09-02 haben die drei Mitgründer den
 Prototyp am Handy durchgeklickt. Ihr Urteil zur Sache war gut (Leopold: „für die
 Aktivitäten-Funktion sehr gut, an sich funktioniert es"), die Kritik betraf das

@@ -1462,6 +1462,145 @@ an einer Karte.
 
 ---
 
+### Phase 18 — Was aus Leopolds und Ians Rückmeldung folgt 📝 *(geplant am 2026-09-03, NICHT gebaut)*
+
+> **Dieser Abschnitt ist ein Plan, kein Bericht.** Ian am 2026-09-03: *„Fang schon mal
+> an einen Plan zu schreiben was man ändern muss, aber ich wart noch auf die zwei
+> anderen dass sie sich melden."* Gebaut wird erst, wenn Christoph und Daria geantwortet
+> haben — was sie sagen, kann die Reihenfolge hier noch umwerfen. **Zwei Entscheidungen
+> sind aber schon gefallen** (Abschnitt 6, Punkte 24 und 25), und die stehen fest.
+
+#### 18a — Gruppen: einladen, und privat vs. öffentlich
+
+**Das Loch:** Phase 17 hat nur eine Richtung gebaut. Von aussen anfragen geht
+(`beitrittAnfragen` → `beitrittBestaetigen`), von innen jemanden holen nicht. Leopold hat
+eine Gruppe gegründet und sass allein drin.
+
+> ✅ **Ians Entscheidung 24: Einladen aus der Gruppe heraus** (Abschnitt 6). Nicht der
+> Einladungs-Link.
+
+**Was zu bauen ist:**
+
+| Datei | Was |
+|---|---|
+| `types/models.ts` | **`GroupInvite`** — eigener Typ, nicht `GroupRequest` mit einem Richtungs-Feld. Dritte Runde derselben Frage; die Antwort war zweimal „eigener Typ" (Phase 16 `ChatThread`, Phase 17 `GroupRequest`) und ist es hier wieder: Eine Anfrage trägt den Satz, den der Fragende geschrieben hat, eine Einladung trägt den nicht. |
+| `types/models.ts` | **`Group.offen: boolean`** — bewusst ein Boolean und KEIN Union: Die zweite Stufe braucht keine zusätzlichen Daten (die Regel aus Phase 17 gilt genau dann, wenn sie welche braucht). |
+| `features/groups/hooks.ts` | `einladen()`, `einladungAnnehmen()`, `einladungAblehnen()`, `useMeineEinladungen()`. Alles, was zusammengehört, in EINEM `aendern` (harte Regel 6). |
+| `features/groups/gruppe.ts` | Die Regeln daneben, wie `AUSTRITT_WIRKUNG`: **wer einladen darf** und **was „privat" bedeutet**. Screens lesen sie nie (harte Regel 32). |
+| `app/gruppe/[id].tsx` | Knopf „Leute einladen" → Liste der eigenen Follower, je ein „Einladen". Wer schon drin oder eingeladen ist, steht mit Zustand da statt mit Knopf. |
+| `app/(tabs)/requests.tsx` | Eingegangene Einladungen — **im selben Tab und in derselben Zahl** wie Beitritts-Anfragen. Dasselbe Muster wie Phase 17, und aus demselben Grund: Es ist für den Empfänger dieselbe Sache („jemand will was von mir"). |
+| `app/gruppe/neu.tsx` | Ein Schalter „offen / nur auf Einladung" beim Gründen. |
+| `app/gruppen.tsx` | Private Gruppen, in denen ich nicht bin, tauchen in der Liste NICHT auf. |
+
+**Zwei Fragen, die beim Bauen beantwortet werden müssen** — sie stehen hier, damit sie
+nicht wieder erst im Code auffallen:
+1. **Wer darf einladen — nur der Gründer oder jedes Mitglied?** Nur der Gründer passt zu
+   `GRUENDER_AUSTRITT` (er ist der Einzige mit Rechten, bewusst); jedes Mitglied wächst
+   schneller und ist für „Marswiese Tennis" wahrscheinlich das, was man meint.
+2. **Was sieht ein Fremder, der den Link einer PRIVATEN Gruppe bekommt?** Seit Phase 8
+   ist jeder Screen direkt aufrufbar (harte Regel 11) — „gibt es nicht" wäre eine Lüge,
+   den Namen zu zeigen wäre ein Leck. Wahrscheinlich: Name ja, Mitglieder und Posts nein.
+
+#### 18b — Jahrgang statt Alters-Bänder
+
+> ✅ **Ians Entscheidung 25: der Schiebe-Balken kommt, auf JAHRGANG** — „mehr als
+> Jahrgang brauchen wir nicht" (Abschnitt 6).
+
+Das ist der Eingriff mit den weitesten Folgen in diesem Plan, weil er das **Datenmodell**
+ändert und nicht eine Oberfläche. Heute:
+
+```
+AgeGroup = 'egal' | '14-17' | '18-25' | '26+'     ← am POST
+AgeBand  = Exclude<AgeGroup, 'egal'>              ← am MENSCHEN
+```
+
+Danach: Ein Mensch hat einen **Jahrgang** (`2009`), ein Post eine **Spanne**. Vorschlag
+für die Typen — dieselbe Bauart wie `Visibility` in Phase 17:
+
+```
+User.jahrgang: number
+Post.alter: { kind: 'egal' } | { kind: 'spanne'; vonJahrgang: number; bisJahrgang: number }
+```
+
+**Warum wieder ein Union und nicht zwei Zahlen mit `| null`:** Sonst ist
+„Spanne ohne Grenzen" darstellbar, und jede Anzeigestelle muss raten. Das ist die
+vierte Runde derselben Frage (`Post.district`, `ChatThread.postId`, `Visibility`) — und
+beim dritten Mal hat der Compiler die Arbeitsliste geschrieben. Hier ebenso: Sobald
+`post.ageGroup === 'egal'` ungültig wird, findet `tsc` jede Stelle.
+
+**Was dabei wegfällt und was bleibt:** Harte Regel 27 (`AgeGroup` vs. `AgeBand`) wird
+ersetzt — *der Grund dahinter bleibt aber wahr*: Eine Aktivität kann „für alle" sein, ein
+Mensch kann nicht „egal" alt sein. Im neuen Modell ist das sogar sauberer, weil ein
+Jahrgang gar nicht „egal" sein KANN. **Ians Entscheidung 18 bleibt unangetastet:** Ein
+Post „für alle" passt weiter zu jedem Alters-Filter (`ALTER_REGEL`).
+
+**Betroffen:** `config/alter.ts` (die Bänder-Tabelle verschwindet), `features/posts/filter.ts`,
+`app/create.tsx`, `components/PostCard.tsx`, `components/Profil.tsx`, `data/mock.ts`
+(sechs Nutzer bekommen Jahrgänge), plus jede Stelle, die `AGE_LABELS` liest.
+
+**Zwei Warnungen, die vor dem Bauen gehört werden wollen:**
+1. **Ein Schieberegler in einem Scroll-Bereich ist die Phase-11-Geste noch einmal.**
+   `PanResponder` gibt die Geste her, wenn jemand fragt — auf einem Handy nimmt der
+   ScrollView sie beim ersten senkrechten Zucken. `onPanResponderTerminationRequest`
+   muss auf `false`, sonst „läuft am Schreibtisch, klemmt am Handy" (Falle aus Phase 11).
+   JS-only ist er machbar, ein Native-Modul kommt nicht in Frage (harte Regel 1).
+2. **Ein Jahrgang ist genauer als ein Band, und das ist der Punkt — aber auch der Preis.**
+   Auf einem Profil steht dann nicht mehr „26+", sondern etwas, aus dem man das Alter
+   ausrechnen kann. Bei einer App mit 16-Jährigen hängt das an Abschnitt 8, Punkt 1
+   (Mindestalter, DSGVO) — offen, wartet auf erwachsenen Rat.
+   **Offene Frage für Ian:** Was steht am Profil — „Jahrgang 2009", „17", oder weiterhin
+   ein grobes Band, während der Jahrgang nur zum Filtern dient? Das Letzte gäbe Leopold
+   seinen Balken und Daria ihre Antwort, ohne jedem das genaue Alter anzuschreiben.
+
+#### 18c — Die Chats übersichtlicher machen
+
+Ian am 2026-09-03: *„ich finde es ist noch nicht ganz übersichtlich, inspiriere dich von
+WhatsApp oder so für die Chats."*
+
+**Nachgemessen auf 360 × 600, damit „übersichtlich" eine Zahl bekommt:**
+
+| | SimplySocial heute | WhatsApp |
+|---|---|---|
+| Höhe einer Zeile | **100–118 px** — ungleich, weil die Nachricht umbricht | ~72 px, immer gleich |
+| Abstand dazwischen | 12 px Lücke + Rahmen (jeder Chat ist eine KARTE) | 0, nur eine dünne Trennlinie |
+| Textzeilen je Chat | **3** (Name + Zeit · Aktivität · Nachricht) | 2 |
+| **Chats auf einem Schirm** | **4** | 7 |
+
+**Was den Unterschied macht, in dieser Reihenfolge:**
+1. **Karten zu Zeilen.** Jeder Chat ist heute eine eigene Karte mit Rahmen und 12 px
+   Luft. Das ist im Feed richtig (dort ist eine Karte ein Angebot) und in einer Chat-Liste
+   falsch — dort ist eine Zeile ein Weg. Allein das bringt drei Chats mehr aufs Bild.
+2. **`numberOfLines={1}` auf die Nachricht.** 100 gegen 118 px ist der Unterschied
+   zwischen einer Liste und einer Ansammlung; ungleiche Höhen sind der Hauptgrund,
+   warum etwas „unruhig" aussieht.
+3. **Die dritte Zeile ist die eigentliche Frage — und sie ist Ians.** „Tennis spielen ·
+   Heute 19:30" ist genau das, was diese App von WhatsApp unterscheidet: Ein Chat gehört
+   hier zu einer Verabredung. Streicht man sie, sieht die Liste aus wie WhatsApp und
+   beantwortet nicht mehr, worum es geht. **Vorschlag:** Zeile behalten, aber klein und
+   einzeilig neben die Uhrzeit statt als eigene Zeile — oder nur die Uhrzeit der
+   Verabredung, weil der Kategorie-Streifen links das Thema schon trägt.
+
+**Was NICHT geändert wird, und warum:**
+- **Die Gruppen „Aktuell" und „Vorbei" bleiben** (harte Regel 30). WhatsApp hat keine
+  Abschnitte, aber die beiden hier sind Ians Regel aus `chat/lifecycle.ts` — ein Chat,
+  der abläuft, muss sich von einem unterscheiden, der läuft. Eine flache Liste würde
+  seine Sortierregel zerschneiden.
+- **Der Farbstreifen links bleibt** (harte Regel 29). Er trägt eine Auskunft, die
+  WhatsApp nicht braucht: dass ein Direktchat KEINE Kategorie hat und deshalb keinen
+  Streifen bekommt.
+
+#### 18d — Im Vorrat, noch nicht entschieden
+
+- **„Nicht 2 Sachen gleichzeitig"** (Leopold). Nichts prüft das heute. Kleines,
+  eigenständiges Stück in `features/requests/logic.ts`, und es schützt vor genau der
+  Enttäuschung, an der sich so eine App herumspricht — jemand kommt nicht. **Die Frage
+  dahinter ist, ob es hart sperrt oder nur warnt.**
+- **„Deine Gruppen" höher aufs Profil.** Der Knopf liegt bei **y = 1168 von 1380** —
+  vorletztes Element. Leopold musste fragen, wie man eine Gruppe macht. Ians
+  Entscheidung 16 (kein eigener Tab) bleibt davon unberührt; es geht nur darum, wie weit
+  man scrollen muss.
+- **Kalender-Funktion** (Leopold, ausdrücklich „für später").
+
 ### Nachtrag 2026-09-03 — die schiefen Karteikarten ✅
 
 **Kein Phasen-Umbau, ein Fehler.** Ian beim Durchsehen am Computer: „bei den
@@ -2226,6 +2365,52 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
     die rote Zeile am Feld. Scrollt man zum Knopf zurück, trägt der Satz. Die
     Korrektur wäre ein Wort: `FEHLER_ANTWORT`. **Nicht ohne Rückfrage.**
 
+24. ✅ **Wie jemand in eine Gruppe hineinkommt** (`features/groups/gruppe.ts`) —
+    **entschieden am 2026-09-03: Einladen aus der Gruppe heraus.** *(Ians sechzehnte
+    Entscheidung. Geplant, noch nicht gebaut — Phase 18a.)*
+
+    Die Frage kam von **Leopold**, und zwar nicht als Wunsch, sondern als Befund: „ich
+    hab nicht gesehen wie man Leute added, sondern nur die Gruppe erstellen." Es gab es
+    tatsächlich nicht — Phase 17 hat nur die Richtung von aussen nach innen gebaut.
+
+    Ians Antwort war **A**: Der Gründer tippt „Leute einladen", wählt aus seinen
+    Followern, die bekommen eine Einladung und sagen ja. **Dasselbe Muster wie
+    „Bin dabei"**: Eine Seite bietet an, die andere bestätigt — niemand landet ungefragt
+    in einer Gruppe.
+
+    *Verworfen:* **B) ein Einladungs-Link zum Weiterschicken** (läge nahe, weil die vier
+    ohnehin über WhatsApp reden — aber ein weitergeleiteter Link ist nicht mehr
+    kontrollierbar und landet irgendwann in einer fremden Gruppe) und **C) beides**
+    (zwei Wege zum selben Ziel, und Abschnitt 9b sagt schon jetzt, dass die App zu viele
+    Bildschirme hat).
+
+    **Offen und beim Bauen zu entscheiden:** ob nur der Gründer einladen darf oder jedes
+    Mitglied. Siehe Phase 18a.
+
+25. ✅ **Der Schiebe-Balken fürs Alter** — **entschieden am 2026-09-03: er kommt, und er
+    läuft über den JAHRGANG.** *(Ians siebzehnte Entscheidung. Geplant, noch nicht
+    gebaut — Phase 18b.)*
+
+    Auch das kam von Leopold: „Kann man theoretisch die Altersauswahl mit so einem
+    Schiebe-Balken machen?" Ian hat ihm „Sicher" geantwortet. **Ich habe dagegengehalten**
+    — nicht gegen den Balken, sondern gegen das, was er verspricht: Das Modell kannte
+    kein Geburtsdatum, ein Mensch hatte eines von drei Bändern (`AgeBand`). Ein Balken
+    darüber wäre eine schlechtere Pillenreihe gewesen: schwerer zu treffen, und man sieht
+    die Möglichkeiten nicht mehr alle auf einmal.
+
+    Ians Antwort war eine, die ich nicht angeboten hatte: **„mach ma das mit nur dem
+    Jahrgang als Schiebe-Balken, aber mehr als Jahrgang brauchen wir nicht."** Also
+    weder die Bänder behalten noch ein volles Geburtsdatum einführen, sondern die Mitte —
+    das Jahr genügt. Damit bekommt der Balken echte Werte, ohne dass jemand Tag und Monat
+    hergeben muss.
+
+    **Den Haken kennt er:** Ein Jahrgang ist genauer als ein Band, und das ist der Sinn
+    der Sache — aber auf einem Profil steht dann etwas, aus dem man das Alter ausrechnen
+    kann. Bei einer App mit 16-Jährigen hängt das an Abschnitt 8, Punkt 1 (Mindestalter,
+    DSGVO), und der wartet auf erwachsenen Rat. **Eine Frage bleibt deshalb offen und
+    steht in Phase 18b:** ob am Profil der Jahrgang steht, das Alter, oder weiterhin nur
+    ein grobes Band, während der Jahrgang bloss zum Filtern dient.
+
 ---
 
 ## 7. Bewusst NICHT im Prototyp
@@ -2289,6 +2474,46 @@ sich funktioniert es." Was danach kam, ist Verbesserung, nicht Zweifel.
   richtigen App tun würden?" Ians Antwort am 2026-09-02: **erst weiter im Prototyp**,
   Backend danach. Die Begründung gehört in die Gruppe, nicht nur hierher: Funktionen,
   die nie jemand geklickt hat, landen sonst fest in einer Datenbank.
+
+### Rückmeldung von Leopold, 2026-09-03 — die erste aus echter BENUTZUNG
+
+Leopold hat die neue Fassung nicht angeschaut, sondern **benutzt**: Gruppe gegründet,
+gepostet, herumprobiert. Der Unterschied zeigt sich sofort — er findet in zehn Minuten
+zwei Dinge, die beim Durchklicken vom selben Tag keiner gesehen hat, weil man sie nur
+merkt, wenn man etwas *erreichen* will.
+
+| Was er sagt | Art | Befund im Code |
+|---|---|---|
+| „ich hab nicht gesehen wie man Leute added, sondern nur die Gruppe erstellen" | **Loch** | Es gibt keinen Einladen-Weg. Nur `beitrittAnfragen` (von aussen) + `beitrittBestaetigen` (Gründer). Wer gründet, sitzt allein drin. |
+| „Wie macht man die Gruppen?" (musste fragen) | **Auffindbarkeit** | „Deine Gruppen" liegt bei **y = 1168** von 1380, bei 600 px Fenster — vorletztes Element auf dem Profil. |
+| „das man nicht 2 Sachen gleichzeitig machen kann" | Wunsch, gut | Nichts prüft das, nirgends. Man kann für zwei Aktivitäten zur selben Zeit zusagen. |
+| „private vs öffentliche" Gruppen | Wunsch | Alle Gruppen stehen für jeden in `/gruppen`. |
+| „Altersauswahl mit so einem Schiebe-Balken?" | Wunsch, ⚠️ | Siehe unten — das Modell kennt kein Geburtsdatum. |
+| „für später vielleicht eine Kalender-Funktion" | Wunsch, ausdrücklich später | — |
+
+**Das Loch bei den Gruppen ist die Nachricht.** Phase 17 hat **eine Richtung** gebaut —
+von aussen anfragen, Gründer bestätigt — und die andere nicht: Der Gründer hat keinen
+Weg, jemanden hereinzuholen. Bei vier Gründern und einem leeren Feed heisst das: Man
+gründet „Marswiese Tennis" und wartet darauf, dass jemand die Gruppe von selbst findet.
+Derselbe blinde Fleck wie bei den zwei Leer-Zuständen am selben Tag — jedes Stück für
+sich stimmt, aber die Frage „und wie kommt der Gründer zu Mitgliedern?" hat nie jemand
+gestellt. **Sie zu stellen brauchte kein Durchklicken, sondern jemanden, der etwas
+erreichen wollte.**
+
+> ⚠️ **Zum Schiebe-Balken, und es ist eine Datenfrage, keine Oberflächenfrage.** Ian hat
+> Leopold „Sicher" geantwortet — machbar ist er. Aber ein Balken verspricht eine
+> Genauigkeit, die es nicht gibt: Ein Post könnte „16 bis 24" sagen, ein MENSCH hat aber
+> nur eines von drei Bändern (`AgeBand`, harte Regel 27) — ein Geburtsdatum steht
+> nirgends im Modell. Also entweder rastet der Balken auf dieselben drei Bänder ein
+> (dann ist er eine schlechtere Pillenreihe: schwerer zu treffen, und man sieht die
+> Möglichkeiten nicht mehr alle auf einmal), oder alle geben ihr echtes Alter an — und
+> das ist eine ganz andere Entscheidung, die an Abschnitt 8, Punkt 1 hängt (Mindestalter,
+> DSGVO). **Nicht bauen, ohne das entschieden zu haben.**
+
+**Einladen und „privat vs. öffentlich" sind EIN Stück Arbeit, nicht zwei.** Sobald es
+ein Einladen gibt, bekommt „privat" erst seine Bedeutung: eine Gruppe, in die man nur
+auf Einladung kommt, statt auf Anfrage. Getrennt gebaut, wäre „privat" eine Gruppe, die
+niemand betreten kann.
 
 ---
 
