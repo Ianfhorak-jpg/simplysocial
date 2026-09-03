@@ -3,7 +3,7 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 03.09.2026 (nach Phase 17 und vier behobenen Fehlern)
+> Stand: 03.09.2026 (nach Phase 17 und fünf behobenen Fehlern — Durchgang vollständig)
 
 ---
 
@@ -229,13 +229,23 @@ Speicher, Push-Nachrichten). Kein Thema für jetzt — nur damit es dich nicht �
   angeschaut, den **Kernablauf** (posten → Bin dabei → bestätigen → Chat) und die
   **Direktnachrichten** noch nicht — also genau das, was die drei als Erstes anklicken
   werden. Nachgeholt, und dabei kam heraus:
+  **Damit bin ich einmal komplett durch die App durch** — auch die vier
+  Sicherheits-Screens (melden, blockieren, Nutzungsbedingungen, Account löschen), die
+  seit Phase 7 keiner mehr in Handybreite gesehen hatte. Die sind sauber.
+
   1. **Beim Posten zeigte der rote Hinweis ins Leere.** Wenn „Mehr einstellen" offen
      war und du den Titel vergessen hattest, stand unten „Es fehlt noch was — die roten
      Stellen" — und auf dem ganzen Bildschirm war nichts rot. Die rote Stelle lag mehr
      als eine Bildschirmhöhe weiter oben. **Du hast entschieden: beides** — der
      Bildschirm springt jetzt hin, UND der Satz sagt, welches Feld es ist („Schau noch
      mal beim Titel."). *Das ist deine fünfzehnte Entscheidung.*
-  2. **Bei einer Suche ohne Treffer standen zwei Meldungen übereinander**, die fast
+  2. **Im Screen „Nutzungsbedingungen" stand eine Notiz an dich** — „Steht auch in
+     `_FUER_IAN/OFFENE_SACHEN.md`.", mitten in dem roten Kasten, den jeder liest, der
+     dem Link folgt. Das ist dein privater Arbeitsordner; auf einer Adresse, die du
+     weiterschickst, hat er nichts verloren — und ausgerechnet dieser Screen soll
+     seriös wirken. Weg. (Der Kasten selbst bleibt natürlich: Der Rechtstext fehlt
+     weiter sichtbar, das ist Punkt 1 oben.)
+  3. **Bei einer Suche ohne Treffer standen zwei Meldungen übereinander**, die fast
      dasselbe sagten („Hier ist der Stapel durch" und „Dazu ist gerade nichts da") —
      und auf einem kleinen Handy rutschte der Knopf „Filter zurücksetzen" halb hinter
      die Leiste unten. Jetzt steht dort **eine** Meldung, die mit dem Ausweg.

@@ -60,7 +60,15 @@ Nachgeholt auf 375 × 667 und 360 × 600, beide Fehler behoben und hochgeladen:
    UND das Feld benennen** (`FEHLER_ANTWORT`). Der Satz heisst jetzt „Schau noch mal
    beim Titel." und nicht „Es fehlt noch der Titel": Zwei der fünf Meldungen betreffen
    ein Feld, das ausgefüllt und trotzdem falsch ist.
-2. **Zwei Leer-Zustände übereinander.** Sucht man nach einem Wort, das in keinem Post
+2. **Eine Entwickler-Notiz stand im Nutzungsbedingungen-Screen.** Im roten Kasten
+   stand als letzte Zeile „Steht auch in `_FUER_IAN/OFFENE_SACHEN.md`." — Backticks als
+   Zeichen mitgerendert, und ein privater Arbeitsordner auf einer öffentlich abrufbaren
+   Adresse (harte Regel 12), ausgerechnet auf dem Screen, der seriös wirken soll.
+   Entfernt; der Zeiger stand ohnehin im Dateikopf. **Damit ist der Durchgang
+   vollständig:** `/einstellungen`, `/nutzungsbedingungen`, `/account-loeschen`,
+   `/melden`, die Follower-Listen und `/post/[id]` sind auf 360 × 600 nachgeprüft —
+   kein Überquellen, kein verdeckter Knopf.
+3. **Zwei Leer-Zustände übereinander.** Sucht man nach einem Wort, das in keinem Post
    vorkommt, standen „Hier ist der Stapel durch" und „Dazu ist gerade nichts da"
    untereinander und widersprachen einander; der Ausweg („Filter zurücksetzen") lag auf
    360 × 600 halb hinter der Tab-Leiste. `StapelDurch` ist eine **Überschrift über
@@ -758,6 +766,17 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   behauptete das Gegenteil („bekommt sie vom `flex: 1`") und stand seit Phase 11 da.
 - **Ob ein Knopf verdeckt ist, sagt `document.elementFromPoint`**, nicht das Auge und
   nicht die Geometrie des Textknotens darin. (2026-09-03)
+- **`elementFromPoint` sagt, ob etwas getroffen wird — nicht, ob das richtig ist.**
+  (2026-09-03) Auf `/einstellungen` meldete die Prüfung zwei verdeckte Knöpfe. Oben lag
+  der **Prototyp-Hinweis**, und der SOLL überdecken (Regel 22, Ians Entscheidung); sein
+  „Verstanden" ist erreichbar, danach ist nichts mehr verdeckt. Wer nur die Zahl liest,
+  repariert eine Entscheidung.
+- **Entwickler-Notizen in JSX-TEXT sind öffentlich.** (2026-09-03) „Steht auch in
+  `_FUER_IAN/OFFENE_SACHEN.md`." stand nicht im Kommentar, sondern im gerenderten Text
+  der Nutzungsbedingungen — samt Backticks, die React Native als Zeichen ausgibt. In
+  einem Kommentar sind Backticks Projektkonvention, in JSX-Text sind sie ein sichtbarer
+  Formatierungsfehler. Zum Suchen: `document.body.innerText` auf Backticks und interne
+  Pfade prüfen, nicht den Quelltext greppen — dort stehen sie überall zu Recht.
 - **Ein Screen weiss nicht, was im Bild ist.** (2026-09-03) `VERSTECKTER_FEHLER`
   behandelt genau den Fall „rote Stelle nicht sichtbar" — setzt sichtbar aber mit
   *aufgeklappt* gleich. Ein aufgeklapptes Feld kann trotzdem 752 px weit weg sein.

@@ -93,9 +93,12 @@ export default function NutzungsbedingungenScreen() {
             <Offen text="Was mit den Daten passiert (DSGVO), wie lange sie bleiben" />
             <Offen text="Was bei einem Verstoß passiert und wie man dagegen Einspruch erhebt" />
           </View>
-          <SsText variant="caption" color={colors.inkSoft}>
-            Steht auch in `_FUER_IAN/OFFENE_SACHEN.md`.
-          </SsText>
+          {/* Hier stand „Steht auch in `_FUER_IAN/OFFENE_SACHEN.md`." — eine Notiz an
+              Ian, mitten in einem Screen, den Fremde lesen. Zwei Fehler in einer Zeile:
+              Die Backticks sind eine Markdown-Konvention und wurden als Zeichen
+              mitgerendert, und `_FUER_IAN/` ist ein privater Arbeitsordner, der auf
+              einer öffentlich abrufbaren Adresse nichts verloren hat (harte Regel 12).
+              Der Zeiger auf die Datei steht im Dateikopf, wo er hingehört. */}
         </SsCard>
       </View>
 

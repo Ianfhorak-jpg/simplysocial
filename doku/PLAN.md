@@ -1677,6 +1677,41 @@ Haken der App benennt.
 Beide Zweige nachgeprüft: durchgewischt → Überschrift **plus** volle Liste; wirklich
 leer → **ein** Leer-Zustand mit dem Ausweg, vollständig im Bild.
 
+#### Fund 3 — eine Entwickler-Notiz stand im Nutzungsbedingungen-Screen
+
+Im roten Kasten („Dieser Teil fehlt noch — mit Absicht") stand als letzte Zeile:
+**„Steht auch in `_FUER_IAN/OFFENE_SACHEN.md`."** Zwei Fehler in einer Zeile:
+
+1. **Die Backticks wurden als Zeichen mitgerendert.** Eine Markdown-Konvention an einer
+   Stelle, an der es kein Markdown gibt — dieselbe Sorte wie das Backtick im CSS-Block
+   von `+html.tsx` (Falle vom 2026-09-02), nur harmloser: Dort brach der Build, hier
+   sah es bloss nach Formatierungsfehler aus.
+2. **`_FUER_IAN/` ist ein privater Arbeitsordner.** Harte Regel 12 sagt, der Prototyp
+   ist öffentlich abrufbar und Links werden weitergeleitet — und ausgerechnet der
+   Nutzungsbedingungen-Screen ist der, der seriös wirken soll. Ein Fremder las dort
+   einen Dateinamen, der an eine einzelne Person adressiert ist.
+
+Entfernt; der Zeiger auf die Datei stand ohnehin schon im Dateikopf, wo er hingehört.
+**Nachgeprüft, dass es die einzige Stelle war:** `document.body.innerText` auf dem
+Screen enthält jetzt null Backticks und kein `_FUER_IAN` — alle übrigen Treffer im Code
+stehen in Kommentaren, nicht in gerendertem Text.
+
+#### Die restlichen Screens in Handybreite — alle sauber
+
+Damit ist der Gang vollständig. Nachgeholt am 2026-09-03 auf **360 × 600**, live:
+`/einstellungen` · `/nutzungsbedingungen` · `/account-loeschen` · `/melden` ·
+`/user/[id]/follower` · `/post/[id]`. Geprüft wurde je Screen dasselbe Raster: quillt
+etwas seitlich heraus, und wird jeder Knopf per `document.elementFromPoint` an seiner
+Mitte wirklich getroffen. **Ergebnis: kein seitliches Überquellen, kein verdeckter
+Knopf.**
+
+> **Ein Beinahe-Fehlalarm, und er ist die Lehre:** Auf `/einstellungen` meldete das
+> Raster zuerst zwei verdeckte Knöpfe („Account löschen", „Bausteine anschauen"). Oben
+> lag der **Prototyp-Hinweis** — und der SOLL überdecken (harte Regel 22, Ians
+> Entscheidung). Sein „Verstanden" liegt mit im Kasten und ist erreichbar; danach war
+> kein Knopf mehr verdeckt. **`elementFromPoint` sagt, ob etwas getroffen wird, nicht
+> ob das richtig ist.** Wer nur die Zahl liest, repariert eine Entscheidung.
+
 #### Was dabei sonst geprüft wurde — alles in Ordnung
 
 Erstellen-Screen mit Gruppen-Sichtbarkeit (die Vorschau zeigt „Nur Marswiese Tennis") ·
