@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { PostCard } from './PostCard';
 import { SsAvatar, SsCard, SsChip, SsIconText, SsText } from './ui';
 
-import { AGE_LABELS } from '@/config/alter';
+import { alterAmProfil } from '@/config/alter';
 import { useProfilPosts } from '@/features/posts/hooks';
 import { CURRENT_USER_ID } from '@/features/store';
 import { colors, radius, spacing } from '@/theme';
@@ -58,11 +58,16 @@ export function Profil({
             </SsText>
             {/* Handle, Bezirk und seit Phase 15 die Altersgruppe — Darias Frage
                 („Foto von der Person oder halt Altersgruppe") wird hier beantwortet,
-                gleich neben dem Avatar. Der Bezirk einer PERSON ist Pflicht und wird
+                gleich neben dem Avatar — seit Phase 18b als Jahrgang.
+
+                Was dort STEHT, ist Ians Entscheidung 30 und liegt in
+                `JAHRGANG_ANZEIGE` (`config/alter.ts`), nicht hier: „Jahrgang 2009",
+                „17 Jahre" oder ein grobes Band sind drei Antworten auf dieselbe
+                Datenschutz-Frage, und die Korrektur soll ein Wort bleiben. Der Bezirk einer PERSON ist Pflicht und wird
                 deshalb direkt geschrieben; nur ein Post darf ohne auskommen (harte
                 Regel 20). */}
             <SsText variant="caption" color={colors.inkSoft}>
-              {person.handle} · {person.district} Wien · {AGE_LABELS[person.ageGroup]}
+              {person.handle} · {person.district} Wien · {alterAmProfil(person.jahrgang)}
             </SsText>
           </View>
         </View>

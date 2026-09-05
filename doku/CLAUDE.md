@@ -78,8 +78,32 @@ daran wichtiger als das Aussehen:
    teilen sie sich einen Fehlbetrag. **`flex: 1` an dem Text, der nachgeben soll, lässt
    gar keinen entstehen.**
 
-📝 **18b und 18d sind weiter Plan, nicht Code.** Der Jahrgangs-Balken steht als 18b in
-PLAN.md. Zwei Entscheidungen dazu stehen schon fest:
+✅ **Phase 18b ist fertig (2026-09-05): Jahrgang statt Alters-Bänder.** Der Eingriff mit
+den weitesten Folgen, weil er das DATENMODELL ändert: `AgeGroup` und `AgeBand` sind weg,
+am Menschen steht `jahrgang: number`, am Post ein Union `PostAlter`. Dazu ein neuer
+Baustein `SsJahrgangBalken` — zwei Griffe auf einer Schiene, JS-only. Vier Dinge sind
+daran wichtiger als der Regler:
+1. **Der Compiler hat wieder die Arbeitsliste geschrieben — 37 Fehler in acht Dateien.**
+   Vierte Runde derselben Frage nach `Post.district`, `ChatThread.postId` und
+   `Visibility`, und dieselbe Antwort: Braucht eine Stufe zusätzliche Daten, ist es ein
+   Union. Mit `vonJahrgang: number | null` wäre „Spanne ohne Grenzen" darstellbar
+   gewesen — und `tsc` hätte geschwiegen.
+2. **Der Filter benutzt DENSELBEN Typ wie der Post, und das widerspricht 18a nicht.**
+   `GroupRequest` und `GroupInvite` sind zwei Typen, weil sie verschiedene Daten tragen.
+   Filter und Post tragen dieselben und deuten sie gleich; was sich unterscheidet, ist
+   die REGEL (`passtZumAlter`). Zwei gleich geformte Typen mit zwei Namen wären eine
+   Unterscheidung, die niemand anwenden kann.
+3. **`HOECHSTALTER` war zuerst 70 — großzügig gedacht, in der Bedienung das Gegenteil.**
+   56 Jahrgänge auf 280 px, und alle wirklichen Nutzer drängen sich im rechten Fünftel.
+   Im Code nicht zu sehen, am Screenshot sofort. Jetzt 50.
+4. **Ein Fehler kam nur durch ECHTES Ziehen heraus: ein zusammengeschobenes Griffpaar
+   klemmte.** Ich entschied beim ANFASSEN über die Tipp-Stelle, welchen Griff jemand
+   meint — bei zwei Griffen auf demselben Wert gibt es diese Auskunft aber nicht. Die
+   fehlende ist die RICHTUNG, und die entsteht erst bei der ersten Bewegung. **Wenn zwei
+   Dinge ununterscheidbar sind, ist die Antwort nicht „nimm eines", sondern „warte auf
+   die Auskunft, die sie unterscheidet."**
+
+📝 **18d ist weiter Vorrat, nicht Code.** Zwei Entscheidungen aus 18a/18b als Gedächtnis:
 - **Ians sechzehnte: Einladen aus der Gruppe heraus**, nicht per Link — dasselbe Muster
   wie „Bin dabei", eine Seite bietet an, die andere bestätigt. Verworfen ist der
   weiterleitbare Link (landet irgendwann in einer fremden Gruppe). **Gebaut in 18a.**
@@ -403,9 +427,10 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 4. ~~Herzeigen und zuhören~~ ✅ *Ian hat beides am Handy angeschaut, 2026-09-01*
 5. ~~Umbau nach seinem Feedback~~ ✅ *Phase 10, 11 und 12, alle am 2026-09-01*
 6. ~~Wieder herzeigen~~ ✅ *alle drei Mitgründer, 2026-09-02*
-7. ~~Umbau nach ihrem Feedback~~ ✅ *Phase 14 bis 17 am 2026-09-02, Phase 18a und 18c am
+7. ~~Umbau nach ihrem Feedback~~ ✅ *Phase 14 bis 17 am 2026-09-02, Phase 18a bis 18c am
    2026-09-05:* ~~Icons statt Emojis~~ · ~~Altersgruppe + Filter~~ ·
-   ~~Direktnachrichten~~ · ~~Gruppen~~ · ~~in Gruppen einladen~~ · ~~Chat-Liste~~
+   ~~Direktnachrichten~~ · ~~Gruppen~~ · ~~in Gruppen einladen~~ · ~~Jahrgang~~ ·
+   ~~Chat-Liste~~
 8. **Wieder herzeigen** ← *hier sind wir* — die drei haben Phase 13 gesehen, nicht 18a
 9. Danach: echtes Backend, EAS-Build, App Store
 
@@ -557,12 +582,18 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Regel 16); und die Bedeutung einer Pille („was heißt *diese Woche*?") lebt sonst
    mitten in 600 Zeilen Oberfläche und ist beim nächsten Umbau weg. Zum Zurücksetzen
    `FILTER_LEER` nehmen, nie die Werte von Hand aufzählen.
-27. **`AgeGroup` und `AgeBand` sind nicht dasselbe.** `AgeGroup` (mit `egal`) gehört an
-   den POST — „für wen ist das gedacht". `AgeBand` (ohne `egal`) gehört an den
-   MENSCHEN — ein Mensch ist nicht „egal" alt. Wer an der Person `AgeGroup` benutzt,
-   baut ein Feld, bei dem jede Anzeigestelle raten muss, ob `'egal'` „keine Angabe"
-   oder „jedes Alter" heißt. `AgeBand` ist als `Exclude<AgeGroup, 'egal'>` definiert:
-   Ein neues Band kommt an EINER Stelle dazu.
+27. **Ein Mensch hat einen `jahrgang: number`, ein Post ein Union `PostAlter`.**
+   *(Ersetzt seit Phase 18b die alte Regel über `AgeGroup` und `AgeBand` — die Typen
+   gibt es nicht mehr.)* Der Grund der alten Regel gilt weiter: Eine Aktivität kann
+   „für alle" sein, ein Mensch nicht. Im neuen Modell ist er nur nicht mehr
+   formulierbar, und das ist der Fortschritt — eine Zahl KANN nicht „egal" sein.
+   Gefragt wird nie `post.alter === 'egal'`, sondern `post.alter.kind === 'egal'`.
+   Der FILTER benutzt denselben Typ wie der Post, und das ist kein Verstoß gegen
+   Regel 39: Zwei Typen braucht es, wenn zwei Dinge verschiedene Daten tragen — hier
+   tragen beide dieselbe Spanne, und was sich unterscheidet, ist die Regel
+   (`passtZumAlter`). **Die Wörter stehen in `config/alter.ts`**, nie im Screen: `Jg.
+   2009–2012` an der Karte, `Jahrgang 2009–2012` im Detail, `Jahrgang 2009` am Profil.
+   Am Profil ist es Ians Entscheidung 30 und hängt an einem Wort (`JAHRGANG_ANZEIGE`).
 
 28. **Ein Chat hat seit Phase 16 vielleicht KEINEN Post.** Gefragt wird danach nie mit
    `!thread.postId`, sondern mit `istDirektChat()` aus `features/chat/direkt.ts` — im
@@ -693,6 +724,24 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    der beiden entsteht gar kein Fehlbetrag: Der andere behält seine natürliche Breite,
    dieser bekommt exakt den Rest. Am 2026-09-05 in der Chat-Zeile zweimal falsch geraten
    (1 : 4, dann 1 : 24), bevor es nachgemessen war.
+
+44. **Ein Schiebe-Regler gehört NIE in `SsScrollReihe`** — und überhaupt nie in einen
+   waagrechten ScrollView. Zwei Gesten-Erkenner übereinander, die beide waagrecht
+   ziehen wollen, streiten sich um jede Berührung, und wer gewinnt, hängt an der
+   Reihenfolge im Baum. `FilterGruppe` in `(tabs)/index.tsx` hat dafür seit Phase 18b
+   die Prop `reihe={false}`. Dazu gelten für jeden Regler die zwei alten Fallen:
+   `onPanResponderTerminationRequest: () => false` (Phase 11 — sonst nimmt ein
+   senkrechter ScrollView die Geste beim ersten Zucken) und ein Rückfall gegen die
+   gemessene Breite **null** (`NOTBREITE`, 2026-09-03 — beim Web-Export gibt es kein
+   Fenster, und beide Griffe kleben links).
+45. **Sind zwei Dinge in einem Moment ununterscheidbar, wird die Entscheidung VERTAGT,
+   nicht geraten.** In `SsJahrgangBalken` stehen manchmal beide Griffe auf demselben
+   Wert. Wer dann beim Anfassen über die Tipp-Stelle entscheidet, bekommt ein Paar, das
+   festklebt: Ein Druck acht Pixel links der Mitte wählt „von", und „von" kommt von dort
+   nur nach links. Die fehlende Auskunft ist die RICHTUNG, und die entsteht erst bei der
+   ersten Bewegung — also `aktiv = null`, `schieben` entscheidet beim ersten Move, und
+   `loslassen` holt es nach, falls es nie eine Bewegung gab. **Gefunden nur durch echtes
+   Ziehen:** Ein `click` löst weder `onPanResponderMove` noch das Kreuzungsverbot aus.
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
@@ -936,6 +985,16 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - **`scrollWidth > clientWidth` findet abgeschnittenen Text.** (Phase 18a) Das
   Gegenstück zu `document.elementFromPoint` für verdeckte Knöpfe. Zusammen mit der
   Überquell- und der Icon-Namen-Prüfung ist der Durchgang in Handybreite EIN Aufruf.
+- **Eine Auswahl-Spanne, die 80 % ihrer Breite an niemanden vergibt, ist keine.**
+  (Phase 18b) `HOECHSTALTER = 70` war großzügig gedacht — 56 Jahrgänge auf 280 px, und
+  alle wirklichen Nutzer der App drängen sich im rechten Fünftel. Im Code sieht man das
+  nie; auf dem ersten Screenshot des Reglers sofort. **Bei jedem Wertebereich fragen, wo
+  die echten Werte LIEGEN, nicht nur, welche möglich sind.**
+- **Ein Regler, auf den man nur klickt, ist nicht geprüft.** (Phase 18b) `click` löst
+  weder `onPanResponderMove` noch das Kreuzungsverbot aus. Es braucht echte
+  Zeigergesten (`mouse.down` → mehrere `mouse.move` → `mouse.up`) und die Grenzfälle:
+  kreuzen, zusammenschieben, wieder auseinanderziehen, tippen ohne Bewegung. Der
+  eigentliche Fehler steckte im dritten davon.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

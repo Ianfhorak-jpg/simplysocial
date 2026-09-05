@@ -7,6 +7,7 @@ export * from './SsChip';
 export * from './SsIcon';
 export * from './SsIconText';
 export * from './SsInput';
+export * from './SsJahrgangBalken';
 export * from './SsKonfetti';
 export * from './SsScreen';
 export * from './SsScrollReihe';

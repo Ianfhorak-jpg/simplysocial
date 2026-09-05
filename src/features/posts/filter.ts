@@ -1,5 +1,5 @@
 import { tageEntfernt } from '@/lib/zeit';
-import type { AgeGroup, Post } from '@/types/models';
+import type { Post, PostAlter } from '@/types/models';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@ import type { AgeGroup, Post } from '@/types/models';
  *
  * Leopolds Rückmeldung nach dem Durchklicken: „man kann nicht so genau filtern, was
  * ein Problem wird, wenn es viele Anfragen gibt." Sein Vorschlag waren Hashtags.
- * Gebaut wurden stattdessen vier Filter: **Bezirk · Wann · Altersgruppe · Suche**.
+ * Gebaut wurden stattdessen vier Filter: **Bezirk · Wann · Jahrgang · Suche**.
  *
  * Warum nicht Hashtags (die Begründung gehört hierher, weil hier jemand nachschaut,
  * der sie wieder einbauen will):
@@ -122,8 +122,8 @@ export function passtZumBezirk(post: Post, bezirk: string | null): boolean {
  * — man tippt auf „18–25" und der Feed schrumpft von zwölf Karten auf eine. Einen
  * Filter, der das tut, benutzt man genau einmal.
  *
- * **Den Haken kennt er:** Der Filter fühlt sich dadurch weich an. Man wählt „14–17"
- * und sieht trotzdem fast alles, weil fast alles „für alle" ist. Er wird erst
+ * **Den Haken kennt er:** Der Filter fühlt sich dadurch weich an. Man stellt den
+ * Regler auf 2009–2012 und sieht trotzdem fast alles, weil fast alles „für alle" ist. Er wird erst
  * scharf, wenn Leute die Altersgruppe wirklich setzen — und das tun sie erst, wenn
  * es viele Posts gibt. Genau in dieser Reihenfolge ist es richtig herum.
  *
@@ -132,8 +132,8 @@ export function passtZumBezirk(post: Post, bezirk: string | null): boolean {
  *             Leopolds Problem am direktesten. Aber: bei wenigen Nutzern fast immer
  *             leer, und er belohnt Poster dafür, das Feld eng zu stellen — bei einer
  *             App, die Leute zusammenbringen soll, die falsche Richtung.
- *   'zu-mir'  Kein Band zum Auswählen, sondern EIN Schalter: „Nur, wo ich
- *             hineinpasse." Nimmt das eigene `ageGroup` vom Profil. Beantwortet die
+ *   'zu-mir'  Keine Spanne zum Einstellen, sondern EIN Schalter: „Nur, wo ich
+ *             hineinpasse." Nimmt den eigenen `jahrgang` vom Profil. Beantwortet die
  *             eigentliche Frage mit einem Tipp — aber man kann dann nicht mehr für
  *             jemand anderen schauen, und die App entscheidet still anhand eines
  *             Profilfelds mit.
@@ -145,22 +145,37 @@ export function passtZumBezirk(post: Post, bezirk: string | null): boolean {
 export const ALTER_REGEL: 'offen' | 'streng' | 'zu-mir' = 'offen';
 
 /**
- * Passt der Post zur gewählten Altersgruppe?
+ * Passt der Post zur gewählten Jahrgangs-Spanne?
  *
- * `egal` als FILTER heißt immer „zeig alles" — das ist die Voreinstellung und keine
- * Auswahl. Nur die andere Richtung ist die Streitfrage oben: was ein Post mit
- * `ageGroup: 'egal'` unter einem gesetzten Filter tut.
+ * Der Filter benutzt denselben Typ wie der Post (`PostAlter`) — bewusst, und anders
+ * als bei `GroupRequest`/`GroupInvite` in Phase 18a. Die Faustregel dort war: zwei
+ * Dinge, die verschiedene Daten tragen, bekommen zwei Typen. Hier tragen beide
+ * dieselben Daten und deuten sie gleich (eine Jahrgangs-Spanne ist eine
+ * Jahrgangs-Spanne). Was sich unterscheidet, ist nicht der Typ, sondern die REGEL —
+ * und die steht in dieser Funktion. Zwei gleich geformte Typen mit zwei Namen wären
+ * eine Unterscheidung, die niemand anwenden kann.
+ *
+ * Drei Fälle, und nur der dritte ist Rechnerei:
+ *   1. Der FILTER sagt „egal" — das ist die Voreinstellung, keine Auswahl. Alles
+ *      durch, ohne Frage.
+ *   2. Der POST sagt „für alle" — das ist Ians Entscheidung 18 und die Streitfrage
+ *      oben (`ALTER_REGEL`).
+ *   3. Beide haben eine Spanne: Sie müssen sich ÜBERSCHNEIDEN, nicht decken. Wer
+ *      2006–2010 sucht, will auch den Post für 2008–2012 sehen — der ist für die
+ *      Hälfte der Gesuchten gedacht. Eine Deckungs-Prüfung wäre unter wenigen Posts
+ *      fast immer leer, und das ist genau der Fehler, den `ALTER_REGEL` vermeidet.
  *
  * `'zu-mir'` steht bewusst nicht in dieser Funktion: Die Regel bräuchte das eigene
  * Profil, und damit wäre die Funktion nicht mehr rein. Sie käme über den Aufrufer
- * herein — der Feed setzt den Filter dann einfach auf das eigene Band. Der Screen
- * würde einen Schalter statt einer Pillenreihe zeigen; die Regel hier bliebe, wie
- * sie ist.
+ * herein — der Feed setzt die Spanne dann einfach auf den eigenen Jahrgang.
  */
-export function passtZumAlter(post: Post, alter: AgeGroup): boolean {
-  if (alter === 'egal') return true;
-  if (post.ageGroup === alter) return true;
-  return ALTER_REGEL !== 'streng' && post.ageGroup === 'egal';
+export function passtZumAlter(post: Post, alter: PostAlter): boolean {
+  if (alter.kind === 'egal') return true;
+  if (post.alter.kind === 'egal') return ALTER_REGEL !== 'streng';
+  // Zwei Spannen überschneiden sich genau dann, wenn jede vor dem Ende der anderen
+  // anfängt. Ausgeschrieben und nicht über eine Hilfsfunktion: Die Bedingung ist
+  // kurz, und wer sie hier liest, sieht sofort, dass beide Richtungen geprüft sind.
+  return post.alter.vonJahrgang <= alter.bisJahrgang && alter.vonJahrgang <= post.alter.bisJahrgang;
 }
 
 // ── Freitext-Suche ───────────────────────────────────────────────────────────

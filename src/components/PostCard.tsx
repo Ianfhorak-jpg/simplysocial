@@ -54,13 +54,17 @@ export function PostCard({
 
       <SsText variant="heading">{post.title}</SsText>
 
-      {/* Zeit, Ort und — seit Phase 15 — für wen. Die Altersgruppe steht hier in der
-          ruhigen Zeile und nicht als eigene Pille: Sie ist eine Angabe wie der Ort,
-          keine Auszeichnung. Und `alterAmPost` gibt `null` zurück, solange der Post
-          für alle offen ist — das ist der Normalfall, und der braucht kein Wort. */}
+      {/* Zeit, Ort und — seit Phase 15 — für wen. Die Jahrgangs-Spanne steht hier in
+          der ruhigen Zeile und nicht als eigene Pille: Sie ist eine Angabe wie der
+          Ort, keine Auszeichnung. Und `alterAmPost` gibt `null` zurück, solange der
+          Post für alle offen ist — das ist der Normalfall, und der braucht kein Wort.
+
+          Auf der KARTE steht die Kurzform („Jg. 2009–2012"), im Detail der ganze Satz
+          — beide kommen aus `config/alter.ts`, damit die Schreibweise einer Spanne
+          nicht an zwei Stellen entsteht. */}
       <SsText variant="caption" color={colors.inkSoft}>
         {startOderSeit(post.startsAt)}   ·   {ortText(post.district)}
-        {alterAmPost(post.ageGroup) ? `   ·   ${alterAmPost(post.ageGroup)}` : ''}
+        {alterAmPost(post.alter) ? `   ·   ${alterAmPost(post.alter)}` : ''}
       </SsText>
 
       {post.note ? (

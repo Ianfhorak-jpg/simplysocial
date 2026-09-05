@@ -12,10 +12,12 @@ import {
   SsIconText,
   SsInput,
   SsScreen,
+  SsJahrgangBalken,
   SsScrollReihe,
   SsSegment,
   SsText,
 } from '@/components/ui';
+import { jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
 import { CATEGORIES } from '@/config/categories';
 import { CATEGORY_ORDER, categoryColors, colors, radius, spacing } from '@/theme';
 import { ICONS, type IconName } from '@/theme/icons';
@@ -38,6 +40,9 @@ export default function BausteineScreen() {
   const [kaputt, setKaputt] = useState('25:99');
   const [suche, setSuche] = useState('Tennis');
   const [wahl, setWahl] = useState<'links' | 'rechts'>('links');
+  // Echte Grenzen statt fester Jahreszahlen — sonst zeigt die Galerie in drei
+  // Jahren eine Spanne, die der Regler in der App gar nicht mehr hergibt.
+  const [jahrgaenge, setJahrgaenge] = useState(spanneUmJahrgang(jahrgangMax() - 5));
 
   return (
     <SsScreen scroll keyboard contentStyle={styles.page}>
@@ -147,6 +152,18 @@ export default function BausteineScreen() {
             { wert: 'links', label: 'Alle' },
             { wert: 'rechts', label: 'Nur meine Follower' },
           ]}
+        />
+      </Abschnitt>
+
+      <Abschnitt
+        titel="Jahrgangs-Balken"
+        hinweis="Zwei Griffe, die einander nicht kreuzen. Schieb sie zusammen und zieh dann wieder auseinander — das ist der Fall, an dem so ein Regler sonst klemmt.">
+        <SsJahrgangBalken
+          von={jahrgaenge.vonJahrgang}
+          bis={jahrgaenge.bisJahrgang}
+          min={jahrgangMin()}
+          max={jahrgangMax()}
+          onChange={(vonJahrgang, bisJahrgang) => setJahrgaenge({ vonJahrgang, bisJahrgang })}
         />
       </Abschnitt>
 

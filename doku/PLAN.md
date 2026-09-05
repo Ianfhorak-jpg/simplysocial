@@ -1467,8 +1467,8 @@ an einer Karte.
 > **Der Abschnitt war ein Plan und ist jetzt großteils ein Bericht.** Ian am 2026-09-03:
 > *„Fang schon mal an einen Plan zu schreiben was man ändern muss, aber ich wart noch
 > auf die zwei anderen dass sie sich melden."* Am **2026-09-05** hat er zweimal gesagt:
-> *„mit Plan weitermachen."* **18a und 18c sind damit gebaut** (siehe unten), **18b ist
-> als Nächstes dran**, 18d steht weiter als Vorrat da.
+> *„mit Plan weitermachen."* **18a, 18b und 18c sind damit gebaut** (siehe unten), 18d
+> steht weiter als Vorrat da.
 
 #### 18a — Gruppen: einladen, und privat vs. öffentlich ✅ *(gebaut am 2026-09-05)*
 
@@ -1543,56 +1543,89 @@ alle Textknoten findet abgeschnittenen Text — das Gegenstück zu `elementFromP
 verdeckte Knöpfe. Beides zusammen mit der Überquell- und der Icon-Namen-Prüfung ist jetzt
 ein Durchgang statt vier.
 
-#### 18b — Jahrgang statt Alters-Bänder
+#### 18b — Jahrgang statt Alters-Bänder ✅ *(gebaut am 2026-09-05)*
 
-> ✅ **Ians Entscheidung 25: der Schiebe-Balken kommt, auf JAHRGANG** — „mehr als
-> Jahrgang brauchen wir nicht" (Abschnitt 6).
+> ✅ **Ians Entscheidung 17: der Schiebe-Balken kommt, auf JAHRGANG** — „mehr als
+> Jahrgang brauchen wir nicht" (Abschnitt 6). Und **Entscheidung 30 vom 2026-09-05:
+> am Profil steht der Jahrgang offen** („Jahrgang 2009").
 
-Das ist der Eingriff mit den weitesten Folgen in diesem Plan, weil er das **Datenmodell**
-ändert und nicht eine Oberfläche. Heute:
+Der Eingriff mit den weitesten Folgen in diesem Plan, weil er das **Datenmodell** ändert
+und nicht eine Oberfläche. Vorher:
 
 ```
 AgeGroup = 'egal' | '14-17' | '18-25' | '26+'     ← am POST
 AgeBand  = Exclude<AgeGroup, 'egal'>              ← am MENSCHEN
 ```
 
-Danach: Ein Mensch hat einen **Jahrgang** (`2009`), ein Post eine **Spanne**. Vorschlag
-für die Typen — dieselbe Bauart wie `Visibility` in Phase 17:
+Jetzt:
 
 ```
 User.jahrgang: number
 Post.alter: { kind: 'egal' } | { kind: 'spanne'; vonJahrgang: number; bisJahrgang: number }
 ```
 
-**Warum wieder ein Union und nicht zwei Zahlen mit `| null`:** Sonst ist
-„Spanne ohne Grenzen" darstellbar, und jede Anzeigestelle muss raten. Das ist die
-vierte Runde derselben Frage (`Post.district`, `ChatThread.postId`, `Visibility`) — und
-beim dritten Mal hat der Compiler die Arbeitsliste geschrieben. Hier ebenso: Sobald
-`post.ageGroup === 'egal'` ungültig wird, findet `tsc` jede Stelle.
+**Warum wieder ein Union und nicht zwei Zahlen mit `| null`:** Sonst ist „Spanne ohne
+Grenzen" darstellbar, und jede Anzeigestelle muss raten. Vierte Runde derselben Frage
+(`Post.district`, `ChatThread.postId`, `Visibility`) — und es hat genauso funktioniert
+wie beim dritten Mal: Sobald `post.ageGroup === 'egal'` ungültig wurde, hat `tsc` **37
+Fehler in acht Dateien** gemeldet, und das war die vollständige Arbeitsliste.
 
-**Was dabei wegfällt und was bleibt:** Harte Regel 27 (`AgeGroup` vs. `AgeBand`) wird
-ersetzt — *der Grund dahinter bleibt aber wahr*: Eine Aktivität kann „für alle" sein, ein
-Mensch kann nicht „egal" alt sein. Im neuen Modell ist das sogar sauberer, weil ein
-Jahrgang gar nicht „egal" sein KANN. **Ians Entscheidung 18 bleibt unangetastet:** Ein
-Post „für alle" passt weiter zu jedem Alters-Filter (`ALTER_REGEL`).
+**Was weggefallen ist:** Harte Regel 27 (`AgeGroup` vs. `AgeBand`) — *der Grund dahinter
+bleibt aber wahr*: Eine Aktivität kann „für alle" sein, ein Mensch nicht. Im neuen Modell
+ist das sogar sauberer, weil es sich gar nicht mehr AUSDRÜCKEN lässt: Ein `jahrgang` ist
+eine Zahl und kann nicht „egal" sein. **Ians Entscheidung 18 ist unangetastet:** Ein Post
+„für alle" passt weiter zu jedem Alters-Filter (`ALTER_REGEL`).
 
-**Betroffen:** `config/alter.ts` (die Bänder-Tabelle verschwindet), `features/posts/filter.ts`,
-`app/create.tsx`, `components/PostCard.tsx`, `components/Profil.tsx`, `data/mock.ts`
-(sechs Nutzer bekommen Jahrgänge), plus jede Stelle, die `AGE_LABELS` liest.
+**Neu gebaut: `SsJahrgangBalken`** — zwei Griffe auf einer Schiene, JS-only
+(`PanResponder`, harte Regel 1). Benutzt an **drei** Stellen: Feed-Filter, Erstellen-Screen
+und `/bausteine`. Bewusst ein Baustein und keine lokale Komponente: Zwei Regler mit
+verschiedenem Rastverhalten sind ein Fehler, den man erst merkt, wenn jemand beides
+hintereinander bedient.
 
-**Zwei Warnungen, die vor dem Bauen gehört werden wollen:**
-1. **Ein Schieberegler in einem Scroll-Bereich ist die Phase-11-Geste noch einmal.**
-   `PanResponder` gibt die Geste her, wenn jemand fragt — auf einem Handy nimmt der
-   ScrollView sie beim ersten senkrechten Zucken. `onPanResponderTerminationRequest`
-   muss auf `false`, sonst „läuft am Schreibtisch, klemmt am Handy" (Falle aus Phase 11).
-   JS-only ist er machbar, ein Native-Modul kommt nicht in Frage (harte Regel 1).
-2. **Ein Jahrgang ist genauer als ein Band, und das ist der Punkt — aber auch der Preis.**
-   Auf einem Profil steht dann nicht mehr „26+", sondern etwas, aus dem man das Alter
-   ausrechnen kann. Bei einer App mit 16-Jährigen hängt das an Abschnitt 8, Punkt 1
-   (Mindestalter, DSGVO) — offen, wartet auf erwachsenen Rat.
-   **Offene Frage für Ian:** Was steht am Profil — „Jahrgang 2009", „17", oder weiterhin
-   ein grobes Band, während der Jahrgang nur zum Filtern dient? Das Letzte gäbe Leopold
-   seinen Balken und Daria ihre Antwort, ohne jedem das genaue Alter anzuschreiben.
+#### Was beim Bauen herauskam *(2026-09-05)*
+
+**1. Die zwei bekannten Gesten-Fallen waren beide da, und beide vorher bedacht.**
+`onPanResponderTerminationRequest: () => false` (sonst nimmt der ScrollView die Geste,
+Phase 11), und `NOTBREITE` gegen die gemessene Breite null (sonst kleben beim Web-Export
+beide Griffe links, wie die schiefen Karteikarten am 2026-09-03). Ein Unterschied zum
+Wischstapel ist wichtig: Hier repariert sich das nach der Messung von selbst, weil es
+gewöhnliche Styles sind und keine `AnimatedInterpolation`, die auf einen Eingang wartet.
+
+**Dazu eine dritte, die im Plan nicht stand:** Der Regler darf NICHT in `SsScrollReihe`
+liegen. Der Filterbereich packt jede Gruppe in einen waagrechten ScrollView — zwei
+Gesten-Erkenner übereinander, die beide waagrecht ziehen wollen. `FilterGruppe` hat
+deshalb seit 18b eine Prop `reihe`.
+
+**2. `HOECHSTALTER` war zuerst 70 — großzügig gedacht, in der Bedienung das Gegenteil.**
+Am Regler nachgemessen: 56 Jahrgänge auf 280 px, und ALLE wirklichen Nutzer drängen sich
+im rechten Fünftel. Ein Regler, dessen brauchbarer Teil 50 px breit ist, ist keiner. Jetzt
+50 — weit genug, dass die App nicht behauptet, sie sei nur für Jugendliche, und eng genug,
+dass ein Jahrgang gut 7 px bekommt. **Das war im Code nicht zu sehen und auf dem
+Screenshot sofort.**
+
+**3. Der Fehler, den nur ECHTES Ziehen gefunden hat: ein zusammengeschobenes Griffpaar
+klemmte.** Beide Griffe auf demselben Wert, nach rechts ziehen — nichts passierte. Die
+Ursache ist ein Denkfehler in der Frage: Ich habe beim ANFASSEN entschieden, welchen Griff
+jemand meint, und zwar über die Tipp-Stelle. Bei zwei Griffen auf demselben Wert gibt es
+diese Auskunft nicht: Ein Druck acht Pixel links der Mitte wählte „von", und „von" kommt
+von dort nur nach links.
+
+Die fehlende Auskunft ist die **RICHTUNG**, und die entsteht erst bei der ersten Bewegung.
+Die Entscheidung wird deshalb vertagt (`aktiv = null`) statt geraten; `schieben` fällt sie
+beim ersten Move, `loslassen` holt sie nach, falls es nie eine Bewegung gab (dann zählt
+doch die Tipp-Stelle — sie sagt, in welche Richtung das Paar aufgehen soll).
+
+**Die Lehre ist allgemeiner als der Regler:** Wenn zwei Dinge ununterscheidbar sind, ist
+die Antwort nicht „nimm eines", sondern „warte auf die Auskunft, die sie unterscheidet".
+
+**4. Geprüft wurde mit echten Zeigergesten, nicht mit `click`.** Ein Regler, auf den man
+nur klickt, ist nicht geprüft: `click` löst weder `onPanResponderMove` noch das
+Kreuzungsverbot aus. Vier Fälle durchgespielt — kreuzen, aus der Klemme lösen, Tipp weit
+weg, Tipp auf das Paar — und der dritte Fehler kam erst im zweiten davon heraus.
+
+**Was den Regler ehrlich macht, ist der Kartenzähler:** Beim Aufziehen von 2007–2012 auf
+1984–2011 geht „Noch 7 Karten" auf „Noch 8". Ohne diese Zahl daneben sähe man einen Regler,
+der sich bewegt, und wüsste nie, ob er etwas tut.
 
 #### 18c — Die Chats übersichtlicher machen ✅ *(gebaut am 2026-09-05)*
 
@@ -2765,6 +2798,27 @@ Was eine frische Sitzung davon wissen muss:
   Ein eigener, leichterer Zähler daneben zählte Einladungen mit, die der Screen ausblendet
   — und die Zahl klebte dann für immer am Tab.
 
+**Phase 18b ist seit dem 2026-09-05 fertig** (Jahrgang statt Alters-Bänder).
+Was eine frische Sitzung davon wissen muss:
+- **`AgeGroup` und `AgeBand` gibt es nicht mehr.** Am Menschen steht `jahrgang: number`,
+  am Post ein Union `PostAlter`. Harte Regel 27 ist damit ersetzt — der Grund dahinter
+  gilt weiter, er ist nur nicht mehr formulierbar: Ein Jahrgang KANN nicht „egal" sein.
+- **Der Filter benutzt denselben Typ wie der Post** (`PostAlter`), und das ist kein
+  Widerspruch zu Phase 18a: Dort ging es um zwei Dinge mit VERSCHIEDENEN Daten
+  (`GroupRequest` trägt einen Satz, `GroupInvite` nicht). Hier tragen beide dieselben und
+  deuten sie gleich. Was sich unterscheidet, ist die Regel — und die steht in
+  `passtZumAlter`.
+- **`SsJahrgangBalken` liegt in `components/ui/` und wird an drei Stellen benutzt.**
+  Er darf NIE in `SsScrollReihe` — zwei waagrechte Gesten-Erkenner übereinander.
+  `FilterGruppe` hat dafür die Prop `reihe`.
+- **`MINDESTALTER` und `HOECHSTALTER` sind ANZEIGE-Grenzen**, keine Prüfung. Ein
+  Jahrgang außerhalb bleibt gültig, er ist nur mit diesem Regler nicht einstellbar.
+- **`JAHRGANG_ANZEIGE` ist Ians Entscheidung 30 und die Umkehrstelle**, falls der
+  Datenschutz-Rat gegen den offenen Jahrgang spricht (`'band'` rechnet die alten drei
+  Bänder zurück — die verworfene Möglichkeit ist ein echter Rückweg, kein Kommentar).
+- **`data/mock.ts` rechnet Jahrgänge aus ALTERN** (`jahrgang(16)`, `fuerAlter(14, 17)`).
+  Feste Jahreszahlen wären am 1. Jänner still falsch.
+
 **Phase 18c ist seit dem 2026-09-05 fertig** (die Chat-Liste, Ians eigener Einwand).
 Was eine frische Sitzung davon wissen muss:
 - **Die Chat-Liste ist die einzige Liste der App aus ZEILEN statt Karten.** Das ist kein
@@ -2959,6 +3013,7 @@ einseitig folgen, einander nicht schreiben können, auch wenn beide wollten
 | `features/groups/gruppe.ts` | Was sieht ein Fremder von einer privaten Gruppe? | ✅ **Name, Kategorie, Bezirk, Anzahl** — sonst nichts *(Phase 18a)* |
 | `features/groups/gruppe.ts` | Was ist beim Gründen voreingestellt? | ✅ **offen** *(Phase 18a)* |
 | `app/(tabs)/chats.tsx` | Welche Zeile weicht in der Chat-Liste? | ✅ **die Verabredungs-Zeit** — die Aktivität rückt hinter den Namen *(Phase 18c)* |
+| `config/alter.ts` | Was steht als Alter am Profil? | ✅ **„Jahrgang 2009"**, offen *(Phase 18b)* |
 
 **Diese Regeln sind Ians, nicht Claudes.** In allen Dateien stehen die
 verworfenen Möglichkeiten samt Begründung weiter im Kopfkommentar — als Gedächtnis,

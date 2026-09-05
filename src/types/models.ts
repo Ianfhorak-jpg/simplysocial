@@ -68,28 +68,47 @@ export type VisibilityKind = Visibility['kind'];
  * Vorschlag gedacht ist, und `egal` ist die Voreinstellung — das ist der ganze
  * Mechanismus.
  *
- * Warum so grob: Eine App, die das genaue Alter Minderjähriger speichert und
- * danach sortiert, braucht Antworten, die dieser Prototyp nicht hat (Abschnitt 8
- * in PLAN.md). Drei Bänder und ein "egal" beantworten Darias Frage — "ist da wer
- * in meinem Alter?" — ohne eine einzige Zahl über eine Person zu speichern.
+ * ── Phase 18b: aus drei Bändern wurde EIN Jahrgang ───────────────────────────
+ * Bis zum 2026-09-05 standen hier `AgeGroup` ('egal' | '14-17' | '18-25' | '26+')
+ * und `AgeBand` (dasselbe ohne 'egal'). Beide sind weg. **Ians Entscheidung 17:**
+ * „mehr als Jahrgang brauchen wir nicht."
  *
- * Die Reihenfolge im Typ ist die Reihenfolge in der Oberfläche (`config/alter.ts`).
+ * Ich hatte dagegengehalten — ein Schieberegler über drei Bändern wäre eine
+ * schlechtere Pillenreihe, und das Modell kannte kein Geburtsdatum. Seine Antwort
+ * war eine, die ich nicht angeboten hatte: **nur das JAHR**. Damit ist ein
+ * Schieberegler sinnvoll (47 Stufen statt drei), und ein Geburtsdatum gibt es
+ * weiterhin nicht — ein Jahrgang ist kein Geburtstag.
+ *
+ * Der Grund, warum `AgeBand` überhaupt ein eigener Typ war, bleibt wahr: Eine
+ * Aktivität kann „für alle" sein, ein Mensch nicht. Im neuen Modell ist das
+ * sauberer als vorher, weil es sich gar nicht mehr AUSDRÜCKEN lässt — ein
+ * `User.jahrgang` ist eine Zahl und kann nicht „egal" sein.
+ *
+ * ── Warum ein Union und nicht zwei Zahlen mit `| null` ───────────────────────
+ * Vierte Runde derselben Frage nach `Post.district`, `ChatThread.postId` und
+ * `Visibility`. Mit `vonJahrgang: number | null` wäre „Spanne ohne Grenzen"
+ * darstellbar, und jede Anzeigestelle müsste raten, ob das „für alle" heißt oder
+ * „halb ausgefüllt". Mit dem Union ist der Zustand UNDARSTELLBAR — und weil
+ * `post.ageGroup === 'egal'` dadurch ungültig wird, schreibt `tsc` die Arbeitsliste.
  */
-export type AgeGroup = 'egal' | '14-17' | '18-25' | '26+';
 
 /**
- * Die Altersgruppe eines MENSCHEN — dieselben Bänder, aber ohne `egal`.
+ * Für wen eine Aktivität gedacht ist.
  *
- * Das ist bewusst ein eigener Typ und keine Wiederverwendung von `AgeGroup`: Eine
- * Aktivität kann "für alle" sein, ein Mensch nicht. Stünde an der Person
- * `ageGroup: 'egal'`, müsste jede Anzeigestelle raten, ob das "keine Angabe" oder
- * "jedes Alter" heißt — und beim Filtern wäre es beides gleichzeitig.
+ * `egal` ist die Voreinstellung und der Normalfall. Ians Entscheidung 18 hängt
+ * daran: Ein Post „für alle" passt zu JEDEM Alters-Filter (`ALTER_REGEL` in
+ * `features/posts/filter.ts`) — sonst würfe der Filter ausgerechnet die offensten
+ * Posts weg.
  *
- * `Exclude` statt einer zweiten Aufzählung: Kommt später ein Band dazu (etwa
- * `36+`), steht es an EINER Stelle und gilt sofort für beide. Die Phase-14-Lehre
- * angewandt — ein Union-Typ ist ein Werkzeug, kein bloßer Typ.
+ * Die Spanne ist in JAHRGÄNGEN angegeben, nicht in Jahren: `vonJahrgang` ist der
+ * ÄLTERE Rand (die kleinere Zahl), `bisJahrgang` der jüngere. Das ist auf den
+ * ersten Blick verdreht — „von 2001 bis 2008" heißt „von 25 bis 18 Jahre" — aber
+ * jede andere Wahl hätte irgendwo eine Umkehrung versteckt, und eine versteckte
+ * Umkehrung ist genau die Sorte Fehler, die niemand sieht.
  */
-export type AgeBand = Exclude<AgeGroup, 'egal'>;
+export type PostAlter =
+  | { kind: 'egal' }
+  | { kind: 'spanne'; vonJahrgang: number; bisJahrgang: number };
 
 export type PostStatus = 'open' | 'full' | 'past';
 export type RequestStatus = 'pending' | 'accepted' | 'declined';
@@ -115,13 +134,13 @@ export interface Post {
   startsAt: string; // ISO 8601
   level: SkillLevel;
   /**
-   * Für wen die Aktivität gedacht ist. Phase 15, Ians Entscheidung vom 2026-09-02.
+   * Für wen die Aktivität gedacht ist. Phase 15, seit Phase 18b eine Jahrgangs-Spanne.
    *
    * PFLICHTFELD und nicht optional, obwohl `egal` die Voreinstellung ist: Ein
    * fehlendes Feld und ein bewusstes "egal" sähen im Code gleich aus, und der
    * Filter müsste beide Fälle erraten. Der Erstellen-Screen setzt es immer.
    */
-  ageGroup: AgeGroup;
+  alter: PostAlter;
   spotsTotal: number;
   spotsFilled: number;
   note: string; // "Hab 2 Schläger dabei"
@@ -318,17 +337,25 @@ export interface User {
   bio: string;
   district: string;
   /**
-   * Wie alt diese Person ungefähr ist — Darias Frage aus dem Feedback vom
-   * 2026-09-02: „Foto von der Person oder halt Altersgruppe".
+   * In welchem Jahr diese Person geboren ist — Darias Frage aus dem Feedback vom
+   * 2026-09-02 („Foto von der Person oder halt Altersgruppe"), seit Phase 18b als
+   * Jahrgang statt als Band (Ians Entscheidung 17).
    *
-   * `AgeBand` und nicht `AgeGroup`: An einer Person gibt es kein „egal" (siehe den
-   * Typ oben). Deshalb ist es auch ein Pflichtfeld — ein Profil ohne Altersangabe
-   * beantwortet die Frage nicht, für die es da ist.
+   * Eine blanke `number`, und das ist der einzige Punkt, an dem dieser Umbau WENIGER
+   * abgesichert ist als vorher: `AgeBand` war eine Whitelist, `2009` ist eine Zahl
+   * wie jede andere. Der Compiler prüft nicht, ob sie plausibel ist — das tun
+   * `JAHRGANG_MIN` und `JAHRGANG_MAX` in `config/alter.ts`, und zwar an der einen
+   * Stelle, an der ein Mensch sie eingibt.
    *
-   * Was hier NICHT steht, ist ein Geburtsdatum. Die App braucht keines: Sie prüft
-   * kein Alter, sie zeigt nur, in welcher Gegend es liegt.
+   * Ein Pflichtfeld, wie das Band vorher: Ein Profil ohne Altersangabe beantwortet
+   * die Frage nicht, für die es da ist.
+   *
+   * Was hier NICHT steht, ist ein Geburtsdatum — nur das Jahr. Die App prüft kein
+   * Alter, sie zeigt nur, in welcher Gegend es liegt. **Am Profil steht der Jahrgang
+   * offen** (Ians Entscheidung 30, `JAHRGANG_ANZEIGE`); daraus rechnet jeder Fremde
+   * das Alter aus, und das hängt an der offenen DSGVO-Frage in PLAN.md, Abschnitt 8.
    */
-  ageGroup: AgeBand;
+  jahrgang: number;
   interests: ActivityCategory[];
   followerIds: string[];
   followingIds: string[];

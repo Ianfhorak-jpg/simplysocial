@@ -7,6 +7,7 @@ import type {
   JoinRequest,
   Message,
   Post,
+  PostAlter,
   Report,
   User,
 } from '@/types/models';
@@ -43,6 +44,31 @@ export const CURRENT_USER_ID = 'u_ian';
 // Hydration-Warnung. Sichtbar ist davon nichts, und mit echtem Backend fällt es weg.
 
 /** ISO-Zeitpunkt: `tage` Tage von heute, zur Uhrzeit `hhmm`. */
+/**
+ * Der Jahrgang eines Menschen, der HEUTE `alter` Jahre alt ist.
+ *
+ * Gerechnet statt hingeschrieben, aus demselben Grund wie `vorStunden` und `bald`
+ * weiter unten: Feste Jahreszahlen sind am 1. Jänner still falsch. „Ian, Jahrgang
+ * 2009" wäre nach dem Jahreswechsel plötzlich 17 statt 16, und im Jahr darauf 18 —
+ * eine Fake-Person, die neben der App altert, ohne dass es jemand merkt.
+ *
+ * Die ALTER hier sind dieselben, die vor Phase 18b als Bänder dastanden: Wer „14–17"
+ * war, ist jetzt 16; wer „18–25" war, 21; wer „26+" war, 31.
+ */
+function jahrgang(alter: number): number {
+  return new Date().getFullYear() - alter;
+}
+
+/**
+ * Eine Jahrgangs-Spanne aus zwei ALTERN — „für 14- bis 17-Jährige".
+ *
+ * Beachte die Umkehrung: Das JÜNGSTE Alter ergibt den GRÖSSTEN Jahrgang. Genau
+ * deshalb steht sie hier einmal und nicht siebzehnmal im Kopf eines Lesenden.
+ */
+function fuerAlter(vonAlter: number, bisAlter: number): PostAlter {
+  return { kind: 'spanne', vonJahrgang: jahrgang(bisAlter), bisJahrgang: jahrgang(vonAlter) };
+}
+
 function at(tage: number, hhmm: string): string {
   const [h, m] = hhmm.split(':').map(Number);
   const d = new Date();
@@ -107,7 +133,7 @@ const USER_SEEDS: UserSeed[] = [
     displayName: 'Ian',
     bio: 'Bau gerade diese App. Immer für spontan zu haben.',
     district: '1070',
-    ageGroup: '14-17',
+    jahrgang: jahrgang(16),
     interests: ['creative', 'sport', 'study'],
   },
   {
@@ -116,7 +142,7 @@ const USER_SEEDS: UserSeed[] = [
     displayName: 'Lea',
     bio: 'Draußen lieber als drinnen. Tennis seit ich acht bin.',
     district: '1220',
-    ageGroup: '14-17',
+    jahrgang: jahrgang(16),
     interests: ['sport', 'outdoor', 'culture'],
   },
   {
@@ -125,7 +151,7 @@ const USER_SEEDS: UserSeed[] = [
     displayName: 'Tobias',
     bio: 'Koffein und Kletterhalle. Sag Bescheid, wenn wer mit will.',
     district: '1100',
-    ageGroup: '18-25',
+    jahrgang: jahrgang(21),
     interests: ['sport', 'food'],
   },
   {
@@ -134,7 +160,7 @@ const USER_SEEDS: UserSeed[] = [
     displayName: 'Mira',
     bio: 'Fotografiere analog, esse zu viel Ramen. Zeig dir gern, wie die Kamera geht.',
     district: '1050',
-    ageGroup: '26+',
+    jahrgang: jahrgang(31),
     interests: ['creative', 'food', 'culture'],
   },
   {
@@ -143,7 +169,7 @@ const USER_SEEDS: UserSeed[] = [
     displayName: 'Florian',
     bio: 'Käfig, Kahlenberg, alles was draußen ist.',
     district: '1020',
-    ageGroup: '14-17',
+    jahrgang: jahrgang(16),
     interests: ['sport', 'outdoor'],
   },
   {
@@ -152,7 +178,7 @@ const USER_SEEDS: UserSeed[] = [
     displayName: 'Sara',
     bio: 'Lerne lieber zu zweit als allein. Und geh gern ins Kino.',
     district: '1030',
-    ageGroup: '18-25',
+    jahrgang: jahrgang(21),
     interests: ['study', 'culture'],
   },
 ];
@@ -333,7 +359,7 @@ export const posts: Post[] = [
     district: '1220',
     startsAt: bald(2, '17:00'),
     level: 'any',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 2,
     spotsFilled: 1,
     note: 'Hab zwei Schläger dabei, du brauchst nur Sportschuhe.',
@@ -350,7 +376,7 @@ export const posts: Post[] = [
     district: '1140',
     startsAt: bald(1, '15:30'),
     level: 'any',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 4,
     spotsFilled: 2,
     note: 'Kaffee gegen den Nachmittagsdurchhänger. Ich hab danach nichts mehr vor.',
@@ -367,7 +393,7 @@ export const posts: Post[] = [
     district: '1140',
     startsAt: at(1, '14:00'),
     level: 'any',
-    ageGroup: '14-17',
+    alter: fuerAlter(14, 17),
     spotsTotal: 3,
     spotsFilled: 1,
     note: 'Kurvendiskussion. Ich hab die alten Angaben vom Vorjahr mit.',
@@ -384,7 +410,7 @@ export const posts: Post[] = [
     district: '1040',
     startsAt: at(1, '18:30'),
     level: 'beginner',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 5,
     spotsFilled: 2,
     note: 'Analog oder digital, egal. Ich zeig dir gern, wie man manuell belichtet.',
@@ -400,7 +426,7 @@ export const posts: Post[] = [
     district: '1020',
     startsAt: bald(4, '19:00'),
     level: 'intermediate',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 8,
     spotsFilled: 8,
     note: 'Vier gegen vier. Bring was Helles und was Dunkles mit.',
@@ -417,7 +443,7 @@ export const posts: Post[] = [
     district: '1060',
     startsAt: at(2, '20:45'),
     level: 'any',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 3,
     spotsFilled: 0,
     note: 'Irgendwas im Original mit Untertiteln. Welcher Film, entscheiden wir gemeinsam.',
@@ -438,7 +464,7 @@ export const posts: Post[] = [
     district: null,
     startsAt: at(1, '16:00'),
     level: 'any',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 4,
     spotsFilled: 1,
     note: 'Einmal von der U6 bis zur Brücke und zurück. Gemütlich, kein Sport.',
@@ -454,7 +480,7 @@ export const posts: Post[] = [
     district: '1070',
     startsAt: at(3, '15:00'),
     level: 'any',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 3,
     spotsFilled: 0,
     note: 'Nur Block und Bleistift. Ich sitz sowieso dort, kommt gern wer dazu.',
@@ -470,7 +496,7 @@ export const posts: Post[] = [
     district: '1100',
     startsAt: at(2, '17:30'),
     level: 'beginner',
-    ageGroup: '18-25',
+    alter: fuerAlter(18, 25),
     spotsTotal: 3,
     spotsFilled: 1,
     note: 'Ich kletter seit einem Jahr. Anfänger sind ausdrücklich willkommen.',
@@ -487,7 +513,7 @@ export const posts: Post[] = [
     district: '1070',
     startsAt: at(1, '19:00'),
     level: 'any',
-    ageGroup: '26+',
+    alter: fuerAlter(26, 40),
     spotsTotal: 4,
     spotsFilled: 2,
     note: 'Das kleine Lokal in der Neubaugasse. Reservieren geht nicht, wir stellen uns an.',
@@ -503,7 +529,7 @@ export const posts: Post[] = [
     district: '1030',
     startsAt: at(2, '16:30'),
     level: 'any',
-    ageGroup: '14-17',
+    alter: fuerAlter(14, 17),
     spotsTotal: 2,
     spotsFilled: 0,
     note: 'Ich muss vor Publikum reden können, ohne rot zu werden. Du hörst zu, ich dir auch.',
@@ -519,7 +545,7 @@ export const posts: Post[] = [
     district: '1190',
     startsAt: at(4, '19:15'),
     level: 'any',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 6,
     spotsFilled: 3,
     note: 'Mit dem 38A rauf. Nimm was zum Draufsitzen mit, die Bänke sind immer voll.',
@@ -536,7 +562,7 @@ export const posts: Post[] = [
     district: '1030',
     startsAt: at(5, '20:00'),
     level: 'any',
-    ageGroup: '18-25',
+    alter: fuerAlter(18, 25),
     spotsTotal: 3,
     spotsFilled: 1,
     note: 'Karten gibts an der Abendkassa, ungefähr 18 Euro.',
@@ -552,7 +578,7 @@ export const posts: Post[] = [
     district: '1010',
     startsAt: at(-1, '07:00'),
     level: 'any',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 3,
     spotsFilled: 2,
     note: 'Frühe Runde vor der Schule, gut fünf Kilometer, gemütliches Tempo.',
@@ -573,7 +599,7 @@ export const posts: Post[] = [
     district: '1170',
     startsAt: at(3, '10:00'),
     level: 'intermediate',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 3,
     spotsFilled: 1,
     note: 'Platz 2 ist reserviert. Wer zuerst da ist, holt die Bälle.',
@@ -590,7 +616,7 @@ export const posts: Post[] = [
     district: '1010',
     startsAt: at(2, '20:15'),
     level: 'any',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 4,
     spotsFilled: 1,
     note: 'Der Film läuft nur diese Woche. Karten holen wir vor Ort.',
@@ -606,7 +632,7 @@ export const posts: Post[] = [
     district: '1070',
     startsAt: at(1, '16:00'),
     level: 'any',
-    ageGroup: 'egal',
+    alter: { kind: 'egal' },
     spotsTotal: 3,
     spotsFilled: 0,
     note: 'Ich hab die Mitschrift getippt, wir gehen sie gemeinsam durch.',

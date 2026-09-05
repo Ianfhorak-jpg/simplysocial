@@ -11,12 +11,14 @@ import {
   SsIcon,
   SsInput,
   SsScreen,
+  SsJahrgangBalken,
   SsScrollReihe,
   SsSegment,
   SsText,
 } from '@/components/ui';
-import { AGE_FILTER_LABELS, AGE_ORDER } from '@/config/alter';
+import { FILTER_EGAL, jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
 import { BRAND } from '@/config/brand';
+import { useCurrentUser } from '@/features/social/hooks';
 import { WANN_LABELS, WANN_ORDER } from '@/features/posts/filter';
 import {
   FILTER_LEER,
@@ -90,6 +92,8 @@ export default function FeedScreen() {
   // ändert — der Feed rechnet also nur neu, wenn wirklich jemand gefiltert hat.
   // (Vorher stand hier ein `useMemo`, das genau das von Hand nachgebaut hat.)
   const [filter, setFilter] = useState<FeedFilter>(FILTER_LEER);
+  // Nur für den Vorschlag im Jahrgangs-Regler — der Feed filtert NICHT nach mir.
+  const ich = useCurrentUser();
   const setzen = <K extends keyof FeedFilter>(feld: K, wert: FeedFilter[K]) =>
     setFilter((alt) => ({ ...alt, [feld]: wert }));
 
@@ -209,6 +213,7 @@ export default function FeedScreen() {
       bezirke={bezirke}
       aktiv={filterAktiv}
       zuruecksetzen={zuruecksetzen}
+      meinJahrgang={ich.jahrgang}
     />
   ) : null;
 
@@ -543,12 +548,15 @@ function FilterBereich({
   bezirke,
   aktiv,
   zuruecksetzen,
+  meinJahrgang,
 }: {
   filter: FeedFilter;
   setzen: <K extends keyof FeedFilter>(feld: K, wert: FeedFilter[K]) => void;
   bezirke: string[];
   aktiv: boolean;
   zuruecksetzen: () => void;
+  /** Nur für den VORSCHLAG beim Einschalten des Reglers, nicht für die Regel. */
+  meinJahrgang: number;
 }) {
   return (
     <View style={styles.filterBereich}>
@@ -597,15 +605,46 @@ function FilterBereich({
         ))}
       </FilterGruppe>
 
-      <FilterGruppe titel="Für wen">
-        {AGE_ORDER.map((a) => (
+      {/* Seit Phase 18b ein Schiebe-Balken statt einer Pillenreihe — Ians
+          Entscheidung 17: „mehr als Jahrgang brauchen wir nicht."
+
+          `reihe={false}`, und das ist keine Kleinigkeit: `SsScrollReihe` ist ein
+          waagrechter ScrollView, und ein Regler DARIN würde sich mit ihm um jede
+          Berührung streiten (die Phase-11-Falle, siehe `SsJahrgangBalken`). Der
+          Regler steht deshalb im ruhigen Block.
+
+          Der Vorschlag beim Einschalten kommt aus dem eigenen Jahrgang. Das ist NICHT
+          die verworfene Regel `'zu-mir'` aus `filter.ts` — die würde still
+          mitfiltern; hier steht die Spanne sichtbar da und ist sofort verschiebbar. */}
+      <FilterGruppe titel="Jahrgang" reihe={false}>
+        <View style={styles.filterPillen}>
           <SsChip
-            key={a}
-            label={AGE_FILTER_LABELS[a]}
-            selected={filter.alter === a}
-            onPress={() => setzen('alter', a)}
+            label={FILTER_EGAL}
+            selected={filter.alter.kind === 'egal'}
+            onPress={() => setzen('alter', { kind: 'egal' })}
           />
-        ))}
+          <SsChip
+            label="Bestimmte Jahrgänge"
+            selected={filter.alter.kind === 'spanne'}
+            onPress={() =>
+              setzen('alter', { kind: 'spanne', ...spanneUmJahrgang(meinJahrgang) })
+            }
+          />
+        </View>
+
+        {filter.alter.kind === 'spanne' ? (
+          <View style={styles.filterBalken}>
+            <SsJahrgangBalken
+              von={filter.alter.vonJahrgang}
+              bis={filter.alter.bisJahrgang}
+              min={jahrgangMin()}
+              max={jahrgangMax()}
+              onChange={(vonJahrgang, bisJahrgang) =>
+                setzen('alter', { kind: 'spanne', vonJahrgang, bisJahrgang })
+              }
+            />
+          </View>
+        ) : null}
       </FilterGruppe>
 
       {aktiv ? (
@@ -631,10 +670,20 @@ function FilterBereich({
 function FilterGruppe({
   titel,
   hinweis,
+  reihe = true,
   children,
 }: {
   titel: string;
   hinweis?: string;
+  /**
+   * `false` für Inhalte, die NICHT in einen waagrechten ScrollView dürfen.
+   *
+   * Seit Phase 18b gibt es genau einen solchen Inhalt: den Jahrgangs-Regler. Zwei
+   * Gesten-Erkenner übereinander, die beide waagrecht ziehen wollen, streiten sich
+   * um jede Berührung — und wer gewinnt, hängt an der Reihenfolge im Baum. Das ist
+   * die Phase-11-Falle, nur mit umgekehrten Rollen.
+   */
+  reihe?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -649,7 +698,11 @@ function FilterGruppe({
           </SsText>
         ) : null}
       </View>
-      <SsScrollReihe contentContainerStyle={styles.filterPillen}>{children}</SsScrollReihe>
+      {reihe ? (
+        <SsScrollReihe contentContainerStyle={styles.filterPillen}>{children}</SsScrollReihe>
+      ) : (
+        <View>{children}</View>
+      )}
     </View>
   );
 }
@@ -786,7 +839,8 @@ const styles = StyleSheet.create({
   },
   filterGruppe: { gap: spacing.sm },
   filterKopf: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.sm },
-  filterPillen: { gap: spacing.sm },
+  filterPillen: { flexDirection: 'row', gap: spacing.sm },
+  filterBalken: { marginTop: spacing.sm },
   filterZuruecksetzen: { alignSelf: 'flex-start', cursor: 'pointer' },
 
   // Die Reihe geht von Kante zu Kante (damit die Pillen unter dem Rand

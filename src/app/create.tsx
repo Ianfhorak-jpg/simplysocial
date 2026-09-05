@@ -15,12 +15,13 @@ import {
   SsChip,
   SsIcon,
   SsInput,
+  SsJahrgangBalken,
   SsScreen,
   SsSegment,
   SsText,
 } from '@/components/ui';
 import { BRAND } from '@/config/brand';
-import { AGE_LABELS, AGE_ORDER } from '@/config/alter';
+import { ALLE_LABEL, jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
 import { LEVEL_LABELS } from '@/config/categories';
 import { sichtbarkeitBauen } from '@/features/groups/gruppe';
 import { useMeineGruppen } from '@/features/groups/hooks';
@@ -44,7 +45,7 @@ import {
 } from '@/lib/zeit';
 import { CATEGORY_ORDER, colors, radius, spacing, status } from '@/theme';
 import type { IconName } from '@/theme/icons';
-import type { ActivityCategory, AgeGroup, SkillLevel, VisibilityKind } from '@/types/models';
+import type { ActivityCategory, PostAlter, SkillLevel, VisibilityKind } from '@/types/models';
 
 /**
  * Einen Post schreiben — der Screen, ohne den die App nur ein Katalog wäre.
@@ -101,13 +102,15 @@ const STANDARD = {
   /** Können: keine Hürde. Wer „Fortgeschritten" will, klappt auf und sagt es. */
   level: 'any' as SkillLevel,
   /**
-   * Altersgruppe: für alle. Phase 15.
+   * Jahrgang: für alle. Phase 15, seit Phase 18b eine Spanne statt eines Bandes.
    *
    * Die Voreinstellung ist hier mehr als Bequemlichkeit — sie ist die Haltung der
    * App. Ein Vorschlag ist offen, bis jemand ihn ausdrücklich einschränkt; niemand
-   * grenzt versehentlich Leute aus, weil er ein Feld nicht aufgeklappt hat.
+   * grenzt versehentlich Leute aus, weil er ein Feld nicht aufgeklappt hat. Und sie
+   * trägt Ians Entscheidung 18: Ein Post „für alle" passt zu JEDEM Alters-Filter —
+   * wäre die Voreinstellung eine Spanne, würfe der Filter die meisten Posts weg.
    */
-  alter: 'egal' as AgeGroup,
+  alter: { kind: 'egal' } as PostAlter,
   /**
    * Sichtbarkeit: alle. Ein Post, den nur Follower oder eine Gruppe sehen, ist eine
    * bewusste Ansage.
@@ -267,7 +270,7 @@ export default function CreateScreen() {
   const [sichtdauer, setSichtdauer] = useState<Sichtdauer>(STANDARD.sichtdauer);
   const [bezirk, setBezirk] = useState(ich.district);
   const [level, setLevel] = useState<SkillLevel>(STANDARD.level);
-  const [alter, setAlter] = useState<AgeGroup>(STANDARD.alter);
+  const [alter, setAlter] = useState<PostAlter>(STANDARD.alter);
   // Ausdrücklich `<number>`: `STANDARD` ist `as const`, sonst erbte der Zustand den
   // Literaltyp `3` und der Zähler dürfte ihn nicht mehr ändern.
   const [plaetze, setPlaetze] = useState<number>(STANDARD.plaetze);
@@ -400,7 +403,7 @@ export default function CreateScreen() {
       startsAt,
       expiresAt: ablaufZeitpunkt(startsAt, sichtdauer),
       level,
-      ageGroup: alter,
+      alter,
       spotsTotal: plaetze,
       note: notiz,
       meetingPoint: treffpunkt,
@@ -445,7 +448,7 @@ export default function CreateScreen() {
                   startsAt: startsAt ?? zeitpunkt(tagVersatz, 12 * 60),
                   expiresAt: laeuftAb ?? undefined,
                   level,
-                  ageGroup: alter,
+                  alter,
                   spotsTotal: plaetze,
                   spotsFilled: 0,
                   note: notiz.trim(),
@@ -559,25 +562,44 @@ export default function CreateScreen() {
             </View>
           </Feld>
 
+          {/* Seit Phase 18b ein Schiebe-Balken auf Jahrgängen statt drei Pillen —
+              Ians Entscheidung 17. Es ist derselbe Baustein wie im Feed-Filter, und
+              das ist Absicht: Wer hier eine Spanne einstellt und dort danach sucht,
+              soll nicht zweimal etwas anderes bedienen. */}
           <Feld titel="Für wen ist das?" hinweis="damit niemand fehl am Platz ist">
             <View style={styles.pillen}>
-              {AGE_ORDER.map((a) => (
-                <SsChip
-                  key={a}
-                  label={AGE_LABELS[a]}
-                  selected={alter === a}
-                  onPress={() => setAlter(a)}
-                />
-              ))}
+              <SsChip
+                label={ALLE_LABEL}
+                selected={alter.kind === 'egal'}
+                onPress={() => setAlter({ kind: 'egal' })}
+              />
+              <SsChip
+                label="Bestimmte Jahrgänge"
+                selected={alter.kind === 'spanne'}
+                onPress={() => setAlter({ kind: 'spanne', ...spanneUmJahrgang(ich.jahrgang) })}
+              />
             </View>
-            {/* Der Satz steht nur da, wenn jemand einschränkt. Bei „Für alle" wäre
-                er eine Erklärung für etwas, das gar nichts tut — und der Screen hat
-                seit Phase 12 die Regel, nichts zu zeigen, was nichts sagt. */}
-            {alter !== 'egal' ? (
-              <SsText variant="caption" color={colors.inkSoft}>
-                Dein Post ist trotzdem für alle sichtbar. Die Altersgruppe sagt nur, an
-                wen er sich richtet — und andere können danach filtern.
-              </SsText>
+
+            {/* Der Regler und der Satz stehen nur da, wenn jemand einschränkt. Bei
+                „Für alle" wären sie eine Erklärung für etwas, das gar nichts tut —
+                und der Screen hat seit Phase 12 die Regel, nichts zu zeigen, was
+                nichts sagt. */}
+            {alter.kind === 'spanne' ? (
+              <>
+                <SsJahrgangBalken
+                  von={alter.vonJahrgang}
+                  bis={alter.bisJahrgang}
+                  min={jahrgangMin()}
+                  max={jahrgangMax()}
+                  onChange={(vonJahrgang, bisJahrgang) =>
+                    setAlter({ kind: 'spanne', vonJahrgang, bisJahrgang })
+                  }
+                />
+                <SsText variant="caption" color={colors.inkSoft}>
+                  Dein Post ist trotzdem für alle sichtbar. Der Jahrgang sagt nur, an
+                  wen er sich richtet — und andere können danach filtern.
+                </SsText>
+              </>
             ) : null}
           </Feld>
 

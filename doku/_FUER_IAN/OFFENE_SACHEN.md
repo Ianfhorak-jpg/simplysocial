@@ -3,7 +3,7 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 03.09.2026 (nach Phase 17 und sechs behobenen Fehlern — Durchgang vollständig)
+> Stand: 05.09.2026 (nach Phase 18a, 18b und 18c — einladen, Jahrgang, Chat-Liste)
 
 ---
 
@@ -51,13 +51,23 @@ September gebaut wurde.
   weil die App gar kein Geburtsdatum kennt — deine Antwort war die Mitte, die ich nicht
   angeboten hatte: nur das Jahr, mehr braucht ihr nicht.
 
-**Gebaut ist noch nichts**, weil du auf Christoph und Daria wartest — richtig so, was die
-sagen kann die Reihenfolge umwerfen. Der Plan steht, ich kann jederzeit anfangen.
+**Beides ist jetzt gebaut** (05.09.). Dazu ist deine eigene Rückmeldung gekommen — dass
+die Chat-Liste „noch nicht ganz übersichtlich" ist. Auch die ist erledigt:
 
-**Eine Frage wartet auf dich, aber erst beim Bauen:** Was soll am Profil stehen, wenn der
-Jahrgang drin ist — „Jahrgang 2009", „17 Jahre", oder weiterhin nur „26+" und der
-Jahrgang dient bloss zum Filtern? Das Letzte gäbe Leopold seinen Balken und Daria ihre
-Antwort, ohne jedem das genaue Alter anzuschreiben. Hängt mit Punkt 1 unten zusammen.
+- **Einladen** — auf der Gruppenseite steht „Leute einladen", du wählst aus deinen
+  Followern, die anderen sagen ja. Und beim Gründen kannst du jetzt „Offen" oder
+  „Privat" wählen.
+- **Der Jahrgangs-Balken** — im Feed unter „Filter" und beim Posten unter „Mehr
+  einstellen". Zwei Griffe, die einander nicht kreuzen können.
+- **Die Chat-Liste** — vorher passten 4 Chats auf den Schirm, jetzt 7. Die Karten sind
+  Zeilen geworden, und die Aktivität steht klein hinter dem Namen („Lea · Tennis
+  spielen") statt in einer eigenen Zeile. **Was dabei wegfällt: Wann das Treffen ist,
+  steht nur noch im Chat selbst.** Schau bitte am Handy, ob dir das fehlt — das ist eine
+  Zeile Code zurück.
+
+**Es wartet keine Frage auf dich.** Die letzte („was steht am Profil, wenn der Jahrgang
+drin ist") hast du am 05.09. beantwortet: **„Jahrgang 2009"** steht offen da. Was das
+bedeutet, steht gleich unten bei Punkt 1 — es macht ihn dringender.
 
 ### Was Leopold sonst noch wollte
 - **Nicht zwei Sachen gleichzeitig zusagen können.** Prüft heute niemand. Gute Idee, und
@@ -82,6 +92,15 @@ treffen**. Das ist kein Hobbyprojekt mehr. Vier Punkte, die geklärt sein müsse
   es eine Datenschutzerklärung — das ist Pflicht, nicht Kür.
 - **Mindestalter.** Ab welchem Alter darf man mitmachen? Unter 14 wird es in Österreich
   richtig kompliziert.
+
+  ⚠️ **Seit 05.09. steht auf jedem Profil der Jahrgang** („Jahrgang 2009") — deine
+  Entscheidung, und sie ist in Ordnung. Aber sie macht diesen Punkt dringender: Vorher
+  stand dort ein grobes Band („14–17"), jetzt rechnet jeder Fremde aus einem Jahrgang das
+  genaue Alter aus. Bei einer App, auf der 16-Jährige sich zu Treffen verabreden, ist das
+  genau die Frage, die eine erwachsene Person beantworten sollte, bevor die App über
+  euren Freundeskreis hinausgeht. **Zurücknehmen ist ein Wort im Code** (`JAHRGANG_ANZEIGE`
+  — dann steht wieder ein Band da und der Jahrgang dient nur zum Filtern). Sag Bescheid,
+  wenn der Rat das nahelegt.
 - **Haftung.** Wenn bei einem Treffen etwas passiert — wer haftet?
 
 **Wen fragen:** deine Eltern zuerst, dann jemand mit Ahnung. Die Wirtschaftskammer hat

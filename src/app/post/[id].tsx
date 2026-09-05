@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { useSichtText } from '@/components/SichtMarke';
 import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsIcon, SsInput, SsScreen, SsText } from '@/components/ui';
-import { AGE_LABELS } from '@/config/alter';
+import { alterAmDetail } from '@/config/alter';
 import { LEVEL_LABELS } from '@/config/categories';
 import { useChatZuPost } from '@/features/chat/hooks';
 import { freiePlaetze, istOffen, usePost } from '@/features/posts/hooks';
@@ -125,10 +125,10 @@ export default function PostDetailScreen() {
             Für alle" wäre an jedem zweiten Post eine Zeile, die nichts sagt — und
             genau dadurch übersieht man sie dort, wo sie etwas sagt. Dieselbe Regel
             wie bei „Sichtbar für" weiter unten. */}
-        {post.ageGroup !== 'egal' ? (
+        {post.alter.kind !== 'egal' ? (
           <>
             <Trenner />
-            <Zeile icon="person" label="Für wen" wert={AGE_LABELS[post.ageGroup]} />
+            <Zeile icon="person" label="Für wen" wert={alterAmDetail(post.alter)} />
           </>
         ) : null}
         <Trenner />

@@ -11,7 +11,7 @@ import { gehoertAufsProfil } from './profil';
 import { vergleichePosts } from './sort';
 import { gehoertInDenStapel, type StapelKontext } from './wisch';
 
-import type { ActivityCategory, AgeGroup, Group, Post, SkillLevel, User, Visibility } from '@/types/models';
+import type { ActivityCategory, Group, Post, PostAlter, SkillLevel, User, Visibility } from '@/types/models';
 
 /**
  * Der Zugang zu Posts. Screens lesen NIE aus `data/mock.ts` (harte Regel 2 aus
@@ -51,8 +51,14 @@ export interface FeedFilter {
   bezirk: string | null;
   /** Zeitfenster. Phase 15. */
   wann: WannFilter;
-  /** Für welche Altersgruppe. `'egal'` heißt „alles zeigen". Phase 15. */
-  alter: AgeGroup;
+  /**
+   * Für welche Jahrgänge. `{ kind: 'egal' }` heißt „alles zeigen". Phase 15,
+   * seit Phase 18b eine Spanne statt eines Bandes.
+   *
+   * Bewusst derselbe Typ wie am Post: Beide tragen dieselben Daten und deuten sie
+   * gleich. Was sie unterscheidet, ist die REGEL — und die steht in `passtZumAlter`.
+   */
+  alter: PostAlter;
   /** Freitext über Titel und Notiz. Leer heißt „nicht suchen". Phase 15. */
   suche: string;
 }
@@ -69,7 +75,7 @@ export const FILTER_LEER: FeedFilter = {
   nurGefolgte: false,
   bezirk: null,
   wann: 'egal',
-  alter: 'egal',
+  alter: { kind: 'egal' },
   suche: '',
 };
 
@@ -80,7 +86,7 @@ export function aktiveFilter(filter: FeedFilter): number {
   if (filter.nurGefolgte) n += 1;
   if (filter.bezirk !== null) n += 1;
   if (filter.wann !== 'egal') n += 1;
-  if (filter.alter !== 'egal') n += 1;
+  if (filter.alter.kind !== 'egal') n += 1;
   if (filter.suche.trim() !== '') n += 1;
   return n;
 }
@@ -273,7 +279,7 @@ export type PostEntwurf = {
   expiresAt: string;
   level: SkillLevel;
   /** Für wen die Aktivität gedacht ist. Phase 15, Voreinstellung `egal`. */
-  ageGroup: AgeGroup;
+  alter: PostAlter;
   spotsTotal: number;
   note: string;
   meetingPoint?: string;
