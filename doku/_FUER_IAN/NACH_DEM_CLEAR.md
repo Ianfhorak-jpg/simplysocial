@@ -3,15 +3,51 @@
 > Diese Datei steht hier, weil der Chat nach dem `/clear` weg ist — der Text darin
 > also auch. Hier findest du ihn wieder.
 >
-> Stand: **05.09.2026.** **Phase 0 bis 18a sind fertig und online** — damit ist
+> Stand: **05.09.2026.** **Phase 0 bis 18c sind fertig und online** — damit ist
 > **alles gebaut, was Christoph, Leopold und Daria am 02.09. gesagt haben**: die Emojis
 > raus (14), Altersgruppe und Filter (15), Direktnachrichten (16) und Gruppen (17).
-> **Und was Leopold am 03.09. beim wirklichen Benutzen gefunden hat, ist seit dem 05.09.
-> auch zu** (18a) — siehe gleich unten. Die Liste ist leer.
+> **Was Leopold am 03.09. beim wirklichen Benutzen gefunden hat, ist auch zu** (18a),
+> **dein Jahrgangs-Balken steht** (18b) und **deine Chat-Liste ist aufgeräumt** (18c).
+> Die Liste ist leer.
 
 ---
 
-## Das Neueste: man kann jetzt Leute in eine Gruppe einladen (05.09.)
+## Das Neueste (05.09.): der Jahrgangs-Balken und die Chat-Liste
+
+### Der Schiebe-Balken fürs Alter — auf Jahrgang, wie du gesagt hast
+
+Zu finden an **zwei** Stellen: im Feed unter **„Filter"** ganz unten („Bestimmte
+Jahrgänge"), und beim Posten unter **„Mehr einstellen"** bei „Für wen ist das?".
+
+Zwei Griffe, die einander **nicht kreuzen** können. Schieb sie mal zusammen und zieh
+dann wieder auseinander — genau da klemmen solche Regler sonst, und genau da hat er beim
+Prüfen auch geklemmt, bis es behoben war.
+
+**Achte im Feed auf die Zahl oben rechts** („Noch 8 Karten"). Sie zählt beim Schieben
+mit. Ohne sie sähe man einen Regler, der sich bewegt, und wüsste nie, ob er etwas tut.
+
+**Was sich dabei am Profil geändert hat:** Dort steht jetzt **„Jahrgang 2010"** statt
+„14–17". Das war deine Entscheidung, und sie ist in Ordnung — aber sie macht eine offene
+Sache dringender: Aus einem Jahrgang rechnet jeder Fremde das genaue Alter aus. Das steht
+in `OFFENE_SACHEN.md` bei Punkt 1 (Rechtliches). **Zurücknehmen ist ein Wort im Code.**
+
+### Die Chat-Liste — dein „noch nicht ganz übersichtlich"
+
+Du hattest recht, und es war nachmessbar: Auf einem schmalen Handy passten **4** Chats
+auf den Schirm, bei WhatsApp sind es **7**. Jetzt sind es auch 7.
+
+Zwei Sachen haben das gemacht: Aus den Karten sind **Zeilen** geworden (kein Rahmen,
+keine Lücke, nur eine dünne Linie), und aus **drei** Textzeilen je Chat sind **zwei**
+geworden — die Aktivität steht jetzt klein hinter dem Namen: „Lea · Tennis spielen".
+
+**Was dabei wegfällt, und du sollst es wissen:** *Wann* das Treffen ist, steht in der
+Liste nicht mehr — nur noch im Chat selbst, gleich oben. Und bei einer Direktnachricht
+fällt der `@name` weg, der vorher die zweite Zeile füllte. Schau bitte am Handy, ob dir
+eines davon fehlt. Beides zurückzuholen ist eine Zeile.
+
+---
+
+## Davor am selben Tag: man kann Leute in eine Gruppe einladen (05.09.)
 
 Leopold hat am 03.09. eine Gruppe gegründet — und **sass allein drin**. Es gab keinen Weg,
 jemanden hineinzuholen; gebaut war nur die Richtung von aussen nach innen (anfragen, der
