@@ -59,9 +59,27 @@ Dinge sind daran wichtiger als die Knöpfe:
    soll), der Umschalter wurde auf 360 px zu „Jeder kann anfr…" abgeschnitten, und eine
    private Gruppe zeigte „Anfragen ansehen" für Anfragen, die es dort nicht geben kann.
 
-📝 **18b bis 18d sind weiter Plan, nicht Code.** Ians eigener Einwand, die Chats seien
-„noch nicht ganz übersichtlich, inspiriere dich von WhatsApp", steht als 18c in PLAN.md;
-der Jahrgangs-Balken als 18b. Zwei Entscheidungen dazu stehen schon fest:
+✅ **Phase 18c ist fertig (2026-09-05): die Chat-Liste.** Ians eigener Einwand („noch
+nicht ganz übersichtlich, inspiriere dich von WhatsApp") war nachmessbar: Auf 360 × 600
+passten **4** Chats auf den Schirm, bei WhatsApp **7**. Jetzt sind es 7. Drei Dinge sind
+daran wichtiger als das Aussehen:
+1. **Aus Karten wurden ZEILEN — und das ist eine Aussage, kein Stil.** Eine `SsCard` ist
+   im Feed richtig, weil eine Karte dort ein ANGEBOT ist, das man annehmen kann. In einer
+   Chat-Liste ist eine Zeile ein WEG. Der Unterschied kostete Rahmen, Radius und 12 px
+   Lücke je Chat.
+2. **Ians Entscheidung 29 war, welche der drei Textzeilen weicht:** Die Aktivität rückt
+   klein hinter den Namen („Lea · Tennis spielen"), die **Verabredungs-Zeit fällt aus der
+   Liste**. Verworfen: die Zeit behalten und den Titel streichen (woran man einen Chat
+   wiedererkennt, ist der Titel — nicht eine Uhrzeit), und alle drei Zeilen behalten
+   (halber Gewinn für dieselbe Arbeit).
+3. **`flexShrink` zu gewichten war der falsche Griff.** „Tobi… · Kaffee nach der Sc…" —
+   beide Texte kürzten sich, und 1 gegen 4 und dann 1 gegen 24 änderten daran fast
+   nichts. Der Grund stand in den berechneten Stilen: Beide haben `flexBasis: auto`, also
+   teilen sie sich einen Fehlbetrag. **`flex: 1` an dem Text, der nachgeben soll, lässt
+   gar keinen entstehen.**
+
+📝 **18b und 18d sind weiter Plan, nicht Code.** Der Jahrgangs-Balken steht als 18b in
+PLAN.md. Zwei Entscheidungen dazu stehen schon fest:
 - **Ians sechzehnte: Einladen aus der Gruppe heraus**, nicht per Link — dasselbe Muster
   wie „Bin dabei", eine Seite bietet an, die andere bestätigt. Verworfen ist der
   weiterleitbare Link (landet irgendwann in einer fremden Gruppe). **Gebaut in 18a.**
@@ -385,9 +403,9 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 4. ~~Herzeigen und zuhören~~ ✅ *Ian hat beides am Handy angeschaut, 2026-09-01*
 5. ~~Umbau nach seinem Feedback~~ ✅ *Phase 10, 11 und 12, alle am 2026-09-01*
 6. ~~Wieder herzeigen~~ ✅ *alle drei Mitgründer, 2026-09-02*
-7. ~~Umbau nach ihrem Feedback~~ ✅ *Phase 14 bis 17 am 2026-09-02, Phase 18a am
+7. ~~Umbau nach ihrem Feedback~~ ✅ *Phase 14 bis 17 am 2026-09-02, Phase 18a und 18c am
    2026-09-05:* ~~Icons statt Emojis~~ · ~~Altersgruppe + Filter~~ ·
-   ~~Direktnachrichten~~ · ~~Gruppen~~ · ~~in Gruppen einladen~~
+   ~~Direktnachrichten~~ · ~~Gruppen~~ · ~~in Gruppen einladen~~ · ~~Chat-Liste~~
 8. **Wieder herzeigen** ← *hier sind wir* — die drei haben Phase 13 gesehen, nicht 18a
 9. Danach: echtes Backend, EAS-Build, App Store
 
@@ -658,6 +676,23 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    heisst durchgewischt (die Liste ist voll, sie nimmt nichts weg), „Liste leer" heisst
    es gibt wirklich nichts — ein zu enger Filter oder der stille Dienstag aus
    Abschnitt 8. Zwei verschiedene Sachverhalte, zwei verschiedene Antworten.
+
+42. **Die Chat-Liste besteht aus ZEILEN, jede andere Liste der App aus Karten.** Seit
+   Phase 18c: keine `SsCard`, volle Breite, 1 px Trennlinie hinter dem Avatar, 70 px
+   Höhe, zwei Textzeilen. Der Grund ist eine Aussage und kein Geschmack — eine Karte ist
+   ein ANGEBOT (Feed, Anfragen: man kann sie annehmen), eine Zeile ist ein WEG. Wer sie
+   zurück auf Karten stellt, macht 7 Chats wieder zu 4. **Der Streifen-PLATZ steht dabei
+   immer, die Farbe nicht** — das ist kein Verstoß gegen Regel 29, sondern ihre
+   Anwendung: Verboten ist ein grauer ERSATZ-Streifen, nicht ein reservierter Platz. In
+   einer Karte war „6 px weiter links" die Auskunft; in einer Zeilenliste sind
+   ausgefranste Avatar-Spalten genau das „unruhig", gegen das die Phase gebaut ist.
+43. **Sollen zwei Texte nebeneinander ungleich nachgeben, bekommt der nachgebende
+   `flex: 1` — nicht der andere ein höheres `flexShrink`.** Solange beide `flexBasis:
+   auto` haben, teilen sie sich einen Fehlbetrag, und jede Gewichtung dagegen ist ein
+   Wert, der beim nächsten längeren Text wieder falsch ist. Mit `flexBasis: 0` an einem
+   der beiden entsteht gar kein Fehlbetrag: Der andere behält seine natürliche Breite,
+   dieser bekommt exakt den Rest. Am 2026-09-05 in der Chat-Zeile zweimal falsch geraten
+   (1 : 4, dann 1 : 24), bevor es nachgemessen war.
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 

@@ -1464,11 +1464,11 @@ an einer Karte.
 
 ### Phase 18 — Was aus Leopolds und Ians Rückmeldung folgt
 
-> **Der Abschnitt war ein Plan und ist jetzt teils ein Bericht.** Ian am 2026-09-03:
+> **Der Abschnitt war ein Plan und ist jetzt großteils ein Bericht.** Ian am 2026-09-03:
 > *„Fang schon mal an einen Plan zu schreiben was man ändern muss, aber ich wart noch
-> auf die zwei anderen dass sie sich melden."* Am **2026-09-05** hat er gesagt: *„mit
-> Plan weitermachen."* **18a ist damit gebaut** (siehe unten), 18b bis 18d stehen weiter
-> als Plan da.
+> auf die zwei anderen dass sie sich melden."* Am **2026-09-05** hat er zweimal gesagt:
+> *„mit Plan weitermachen."* **18a und 18c sind damit gebaut** (siehe unten), **18b ist
+> als Nächstes dran**, 18d steht weiter als Vorrat da.
 
 #### 18a — Gruppen: einladen, und privat vs. öffentlich ✅ *(gebaut am 2026-09-05)*
 
@@ -1594,35 +1594,33 @@ Post „für alle" passt weiter zu jedem Alters-Filter (`ALTER_REGEL`).
    ein grobes Band, während der Jahrgang nur zum Filtern dient? Das Letzte gäbe Leopold
    seinen Balken und Daria ihre Antwort, ohne jedem das genaue Alter anzuschreiben.
 
-#### 18c — Die Chats übersichtlicher machen
+#### 18c — Die Chats übersichtlicher machen ✅ *(gebaut am 2026-09-05)*
 
 Ian am 2026-09-03: *„ich finde es ist noch nicht ganz übersichtlich, inspiriere dich von
 WhatsApp oder so für die Chats."*
 
 **Nachgemessen auf 360 × 600, damit „übersichtlich" eine Zahl bekommt:**
 
-| | SimplySocial heute | WhatsApp |
-|---|---|---|
-| Höhe einer Zeile | **100–118 px** — ungleich, weil die Nachricht umbricht | ~72 px, immer gleich |
-| Abstand dazwischen | 12 px Lücke + Rahmen (jeder Chat ist eine KARTE) | 0, nur eine dünne Trennlinie |
-| Textzeilen je Chat | **3** (Name + Zeit · Aktivität · Nachricht) | 2 |
-| **Chats auf einem Schirm** | **4** | 7 |
+| | vorher | nachher | WhatsApp |
+|---|---|---|---|
+| Höhe einer Zeile | **100–118 px** — ungleich, weil die Nachricht umbrach | **70 px, immer gleich** | ~72 px |
+| Abstand dazwischen | 12 px Lücke + Rahmen (jeder Chat eine KARTE) | 1 px Trennlinie | 1 px Trennlinie |
+| Textzeilen je Chat | **3** (Name + Zeit · Aktivität · Nachricht) | **2** | 2 |
+| **Chats auf einem Schirm** | **4** | **7** | 7 |
 
-**Was den Unterschied macht, in dieser Reihenfolge:**
-1. **Karten zu Zeilen.** Jeder Chat ist heute eine eigene Karte mit Rahmen und 12 px
-   Luft. Das ist im Feed richtig (dort ist eine Karte ein Angebot) und in einer Chat-Liste
-   falsch — dort ist eine Zeile ein Weg. Allein das bringt drei Chats mehr aufs Bild.
-2. **`numberOfLines={1}` auf die Nachricht.** 100 gegen 118 px ist der Unterschied
-   zwischen einer Liste und einer Ansammlung; ungleiche Höhen sind der Hauptgrund,
-   warum etwas „unruhig" aussieht.
-3. **Die dritte Zeile ist die eigentliche Frage — und sie ist Ians.** „Tennis spielen ·
-   Heute 19:30" ist genau das, was diese App von WhatsApp unterscheidet: Ein Chat gehört
-   hier zu einer Verabredung. Streicht man sie, sieht die Liste aus wie WhatsApp und
-   beantwortet nicht mehr, worum es geht. **Vorschlag:** Zeile behalten, aber klein und
-   einzeilig neben die Uhrzeit statt als eigene Zeile — oder nur die Uhrzeit der
-   Verabredung, weil der Kategorie-Streifen links das Thema schon trägt.
+**Was gebaut wurde, in dieser Reihenfolge:**
+1. **Karten zu Zeilen.** Jeder Chat war eine `SsCard` mit Rahmen und 12 px Luft. Das ist
+   im Feed richtig (dort ist eine Karte ein ANGEBOT, das man annehmen kann) und in einer
+   Chat-Liste falsch — dort ist eine Zeile ein WEG. Die Zeilen gehen jetzt über die volle
+   Breite; die Trennlinie beginnt hinter dem Avatar, damit die Avatare eine
+   ununterbrochene Spalte bilden.
+2. **`numberOfLines={1}` auf die Nachricht.** 70 statt 100–118 px, und vor allem: **immer
+   gleich**. Ungleiche Höhen waren der Hauptgrund, warum die Liste „unruhig" aussah.
+3. **Die dritte Zeile — Ians Entscheidung 29 (Abschnitt 6).** Die Aktivität steht jetzt
+   klein hinter dem Namen („Lea · Tennis spielen"), die Verabredungs-Zeit fällt aus der
+   Liste. Verworfen: die Zeit behalten und den Titel streichen; alle drei Zeilen behalten.
 
-**Was NICHT geändert wird, und warum:**
+**Was NICHT geändert wurde, und warum:**
 - **Die Gruppen „Aktuell" und „Vorbei" bleiben** (harte Regel 30). WhatsApp hat keine
   Abschnitte, aber die beiden hier sind Ians Regel aus `chat/lifecycle.ts` — ein Chat,
   der abläuft, muss sich von einem unterscheiden, der läuft. Eine flache Liste würde
@@ -1630,6 +1628,44 @@ WhatsApp oder so für die Chats."*
 - **Der Farbstreifen links bleibt** (harte Regel 29). Er trägt eine Auskunft, die
   WhatsApp nicht braucht: dass ein Direktchat KEINE Kategorie hat und deshalb keinen
   Streifen bekommt.
+
+#### Was beim Bauen herauskam *(2026-09-05)*
+
+**Der Streifen-PLATZ steht jetzt auch dann, wenn er leer bleibt — und das ist kein
+Verstoß gegen harte Regel 29, sondern ihre Anwendung.** Verboten ist ein grauer
+ERSATZ-Streifen, und der kommt nicht: Ein Direktchat bekommt keine Farbe. Er bekommt nur
+dieselben 6 px Platz. In einer KARTE durfte der Inhalt 6 px weiter links anfangen, das
+war die Auskunft; in einer ZEILENLISTE sind ausgefranste Avatar-Spalten genau das
+„unruhig", gegen das diese Phase gebaut ist. Die Auskunft steckt weiter im Platz: keine
+Farbe = keine Aktivität.
+
+**Zwei Fehler, beide erst am Schirm sichtbar:**
+
+1. **„Lea· Tennis spielen" — der Abstand vor dem Trennpunkt fehlte.** Im Code stand
+   `` {` · ${post.title}`} `` mit führendem Leerzeichen. `react-native-web` rendert Text
+   als HTML, und **HTML frisst führende Leerzeichen**. Auf Native wäre es dagegen stehen
+   geblieben — ein Leerzeichen im Text hätte also je nach Plattform ein anderes Ergebnis.
+   Der Abstand steht jetzt als `marginLeft` im Style und ist damit überall derselbe.
+2. **„Tobi… · Kaffee nach der Sc…" — beide Texte kürzten sich, statt nur die Aktivität.**
+   Der erste Versuch war, das über `flexShrink` zu gewichten (1 gegen 4, dann 1 gegen 24).
+   Am Gerät nachgemessen war der Name trotzdem „Tobi…". Der Grund stand in den berechneten
+   Stilen: **Beide Texte haben `flexBasis: auto`**, also ihre natürliche Breite — damit
+   gibt es einen Fehlbetrag, den sich beide teilen, und jede Gewichtung dagegen ist ein
+   Wert, der beim nächsten längeren Titel wieder falsch ist.
+
+   Richtig ist `flex: 1` an der **Aktivität** (also `flexBasis: 0`): Dann gibt es gar
+   keinen Fehlbetrag. Der Name behält seine natürliche Breite, die Aktivität bekommt
+   exakt den Rest und kürzt sich darin selbst. Erst wenn der Name ALLEIN breiter ist als
+   die Zeile, greift Shrink — und dann muss er es auch, sonst drückt ein langer Name die
+   Uhrzeit aus dem Bild. **Die Lehre: Wer an `flexShrink` dreht, verteilt einen
+   Fehlbetrag; wer `flexBasis: 0` setzt, lässt keinen entstehen.**
+
+**Ein Prüfschritt war nötig, den die Fake-Daten nicht hergeben:** Es gibt keinen
+abgelaufenen Chat in `mock.ts`, also wird die Gruppe „Vorbei" nie gezeichnet — und genau
+deren Ränder hatte ich geändert (die Liste hat ihren Seitenrand verloren, die Überschrift
+musste ihn bekommen). Geprüft mit einem kurzzeitigen Eingriff in die Gruppierung,
+Screenshot, zurückgesetzt. **Ein Zustand, den die Fake-Daten nicht erzeugen, ist ein
+Zustand, den niemand ansieht.**
 
 #### 18d — Im Vorrat, noch nicht entschieden
 
@@ -2497,6 +2533,47 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
     Anfrage-Funktion aus Phase 17 stillgelegt — bei einer App, deren ganzer Zweck das
     Finden ist.
 
+29. ✅ **Welche Zeile in der Chat-Liste weichen muss** (`app/(tabs)/chats.tsx`) —
+    **entschieden am 2026-09-05: die Aktivität rückt klein HINTER den Namen, die
+    Verabredungs-Zeit fällt aus der Liste.** *(Ians einundzwanzigste Entscheidung.)*
+
+    Die Frage ist seine eigene: *„ich finde es ist noch nicht ganz übersichtlich,
+    inspiriere dich von WhatsApp oder so für die Chats."* Nachgemessen auf 360 × 600 war
+    das keine Geschmacksfrage — **4 Chats** passten auf den Schirm, bei WhatsApp sind es
+    **7**. Zwei Ursachen: Jeder Chat war eine Karte (Rahmen + 12 px Lücke), und drei
+    Textzeilen ergaben 100–118 px, ungleich hoch, weil die Nachricht umbrach.
+
+    Karten zu Zeilen zu machen war keine Frage. Die Frage war die **dritte Zeile**, weil
+    genau sie diese App von WhatsApp unterscheidet: Ein Chat gehört hier zu einer
+    Verabredung. Verworfen:
+    - **Die Verabredungs-Zeit behalten und den Titel streichen** („Cool, freut mich!  ·
+      Heute 19:30"). Die Kategorie trägt zwar der Farbstreifen, aber woran man einen Chat
+      WIEDERERKENNT, ist „Tennis spielen" — eine Uhrzeit ist es nicht.
+    - **Alle drei Zeilen behalten** und nur die Karten abschaffen. Hätte 5–6 Chats
+      gebracht statt 7, also den halben Gewinn für dieselbe Arbeit.
+
+    **Den Haken kennt er:** Wann das Treffen ist, steht in der Liste nicht mehr — nur noch
+    im Chat selbst. Und bei einem Direktchat fällt der Handle weg, der bisher die zweite
+    Zeile füllte; bei zwei Leuten mit demselben Vornamen unterscheidet sie dann nur noch
+    die Avatarfarbe. Beides ist eine Zeile Code wert, falls es sich am Handy anders
+    anfühlt als am Papier.
+
+30. ✅ **Was das Alter am Profil sagt** (`components/Profil.tsx`) —
+    **entschieden am 2026-09-05: „Jahrgang 2009".** *(Ians zweiundzwanzigste
+    Entscheidung, `JAHRGANG_ANZEIGE`.)*
+
+    Die Frage stand seit dem Plan zu 18b offen und ist die Kehrseite seiner Entscheidung
+    17 (der Filter läuft über den Jahrgang): Ein Jahrgang ist genauer als ein Band — das
+    ist der Sinn, und das ist der Preis. Verworfen: **weiter ein grobes Band zeigen**
+    (genau filtern, grob zeigen — hätte am wenigsten preisgegeben, aber zwei Wahrheiten
+    über dasselbe Feld nebeneinandergestellt) und **das ausgerechnete Alter** („17
+    Jahre" — dasselbe Wissen, nur noch direkter).
+
+    **Den Haken kennt er, und er hängt an einer offenen Frage:** Aus einem Jahrgang
+    rechnet jeder Fremde das Alter aus. Bei einer App mit 16-Jährigen gehört das zu
+    Abschnitt 8, Punkt 1 (Mindestalter, DSGVO) — das wartet weiter auf erwachsenen Rat.
+    Die Korrektur ist ein Wort (`JAHRGANG_ANZEIGE` in `config/alter.ts`).
+
 ---
 
 ## 7. Bewusst NICHT im Prototyp
@@ -2688,6 +2765,21 @@ Was eine frische Sitzung davon wissen muss:
   Ein eigener, leichterer Zähler daneben zählte Einladungen mit, die der Screen ausblendet
   — und die Zahl klebte dann für immer am Tab.
 
+**Phase 18c ist seit dem 2026-09-05 fertig** (die Chat-Liste, Ians eigener Einwand).
+Was eine frische Sitzung davon wissen muss:
+- **Die Chat-Liste ist die einzige Liste der App aus ZEILEN statt Karten.** Das ist kein
+  Versehen und keine halbe Umstellung: Eine Karte ist ein ANGEBOT (Feed, Anfragen), eine
+  Zeile ist ein WEG. Wer die Chat-Liste wieder auf `SsCard` umstellt, macht 7 Chats
+  wieder zu 4.
+- **Der Streifen-Platz steht immer, die Farbe nicht.** Harte Regel 29 gilt unverändert
+  (kein grauer Ersatz-Streifen für Direktchats) — nur der 6 px breite PLATZ bleibt
+  reserviert, damit die Avatare eine Spalte bilden.
+- **`flexBasis: 0` statt `flexShrink`-Tuning.** Zwei Texte nebeneinander, von denen einer
+  zuerst nachgeben soll: Der, der nachgibt, bekommt `flex: 1`. An `flexShrink` zu drehen
+  verteilt einen Fehlbetrag und ist beim nächsten längeren Text wieder falsch.
+- **`mock.ts` hat keinen abgelaufenen Chat** — die Gruppe „Vorbei" wird nie gezeichnet.
+  Wer an ihren Rändern etwas ändert, muss sie kurzzeitig erzwingen, um sie zu sehen.
+
 **Alles aus dem Feedback der Mitgründer ist gebaut — Phase 14 bis 18a sind fertig.**
 Das Nächste ist deshalb keine Phase, sondern eine Frage an Menschen:
 **den Prototyp noch einmal herzeigen.** Die drei haben ihn am 2026-09-02 in der Fassung
@@ -2866,6 +2958,7 @@ einseitig folgen, einander nicht schreiben können, auch wenn beide wollten
 | `features/groups/gruppe.ts` | Wer darf jemanden einladen? | ✅ **jedes Mitglied** *(Phase 18a)* |
 | `features/groups/gruppe.ts` | Was sieht ein Fremder von einer privaten Gruppe? | ✅ **Name, Kategorie, Bezirk, Anzahl** — sonst nichts *(Phase 18a)* |
 | `features/groups/gruppe.ts` | Was ist beim Gründen voreingestellt? | ✅ **offen** *(Phase 18a)* |
+| `app/(tabs)/chats.tsx` | Welche Zeile weicht in der Chat-Liste? | ✅ **die Verabredungs-Zeit** — die Aktivität rückt hinter den Namen *(Phase 18c)* |
 
 **Diese Regeln sind Ians, nicht Claudes.** In allen Dateien stehen die
 verworfenen Möglichkeiten samt Begründung weiter im Kopfkommentar — als Gedächtnis,

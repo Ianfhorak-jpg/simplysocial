@@ -1,24 +1,49 @@
 import { router } from 'expo-router';
 import { useMemo } from 'react';
-import { SectionList, StyleSheet, View } from 'react-native';
+import { Pressable, SectionList, StyleSheet, View } from 'react-native';
 
-import { SsAvatar, SsButton, SsCard, SsIcon, SsIconText, SsScreen, SsText } from '@/components/ui';
-import { CATEGORIES } from '@/config/categories';
+import { SsAvatar, SsButton, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { useChatListe, type ChatEintrag } from '@/features/chat/hooks';
 import { NACHKLANG_TAGE } from '@/features/chat/lifecycle';
 import { CURRENT_USER_ID } from '@/features/store';
-import { startOderSeit, vergangen } from '@/lib/zeit';
-import { colors, spacing } from '@/theme';
+import { categoryColors, colors, spacing } from '@/theme';
+import { vergangen } from '@/lib/zeit';
 
 /**
  * Der Chats-Tab: alle Verabredungen, an denen gerade geschrieben wird.
  *
  * ── Warum hier keine Kontaktliste steht ───────────────────────────────────────
  * In den meisten Apps ist die Chat-Liste eine Liste von MENSCHEN. Hier ist sie eine
- * Liste von TREFFEN — deshalb steht unter jedem Namen, worum es geht. Bei zwei
+ * Liste von TREFFEN — deshalb steht hinter jedem Namen, worum es geht. Bei zwei
  * Verabredungen mit derselben Person sind das zwei Zeilen und nicht eine, in der
  * beides durcheinandergeht. Das ist die direkte Folge daraus, dass ein Chat immer an
  * einem Post hängt (`features/chat/logic.ts`).
+ *
+ * ── Phase 18c: aus Karten wurden ZEILEN (Ians Entscheidung 29) ────────────────
+ * Ian am 2026-09-03: „ich finde es ist noch nicht ganz übersichtlich, inspiriere dich
+ * von WhatsApp oder so für die Chats." Nachgemessen auf 360 × 600 war das keine
+ * Geschmacksfrage, sondern eine Zahl: **4 Chats** passten auf den Schirm, bei WhatsApp
+ * sind es 7. Zwei Ursachen, beide behoben:
+ *
+ *   1. Jeder Chat war eine `SsCard` — Rahmen, Radius, 12 px Lücke zur nächsten. Eine
+ *      Karte ist im Feed richtig (dort ist sie ein ANGEBOT, das man annehmen kann);
+ *      in einer Chat-Liste ist eine Zeile ein WEG. Jetzt: volle Breite, eine dünne
+ *      Trennlinie, keine Lücke.
+ *   2. Drei Textzeilen je Chat (Name+Zeit · Aktivität · Nachricht) ergaben 100–118 px
+ *      — ungleich hoch, weil die Nachricht umbrach. Ungleiche Höhen sind der
+ *      Hauptgrund, warum eine Liste „unruhig" aussieht.
+ *
+ * **Ians Entscheidung 29** war, welche der drei Zeilen weichen muss: Die Aktivität
+ * rückt klein HINTER den Namen, die Verabredungs-Zeit fällt aus der Liste heraus.
+ * Verworfen: die Verabredungs-Zeit behalten und dafür den Titel streichen (die
+ * Kategorie trägt zwar der Farbstreifen, aber „Tennis spielen" ist das, woran man
+ * einen Chat wiedererkennt — eine Uhrzeit ist es nicht), und alle drei Zeilen zu
+ * behalten (hätte nur den halben Gewinn gebracht).
+ *
+ * Der Preis, den er kennt: **Wann das Treffen ist, steht hier nicht mehr.** Es steht
+ * im Chat selbst, gleich oben. Und bei einem Direktchat fällt der Handle weg, der
+ * bisher die zweite Zeile füllte — bei zwei Leuten mit demselben Vornamen unterscheidet
+ * sie jetzt nur noch die Avatarfarbe.
  *
  * ── Die zwei Gruppen ──────────────────────────────────────────────────────────
  * Ians Regel aus `features/chat/lifecycle.ts`: Nach dem Treffen rutscht ein Chat unter
@@ -43,9 +68,10 @@ import { colors, spacing } from '@/theme';
  *
  * Gruppiert wird deshalb weiter nach ZUSTAND (aktiv/vorbei — das ist Ians Regel),
  * und die SORTE erkennt man an der Zeile selbst: Ein Aktivitäts-Chat trägt den
- * Farbstreifen seiner Kategorie und eine Zeile, die sagt, worum es geht. Ein
- * Direktchat hat beides nicht, weil es beides nicht gibt.
+ * Farbstreifen seiner Kategorie und den Titel hinter dem Namen. Ein Direktchat hat
+ * beides nicht, weil es beides nicht gibt.
  */
+
 /**
  * Eine Gruppe in der Liste.
  *
@@ -60,6 +86,20 @@ interface ChatGruppe {
   hinweis?: string;
   data: ChatEintrag[];
 }
+
+/**
+ * Die Maße der Zeile — an einer Stelle, weil die Trennlinie sie NACHRECHNEN muss.
+ *
+ * Die Linie beginnt nicht am linken Rand, sondern erst hinter dem Avatar (wie in
+ * jeder Messenger-Liste): Sie trennt dann die Textblöcke und nicht die Bilder, und
+ * die Avatare bilden eine ununterbrochene Spalte. Dafür braucht sie exakt die Summe
+ * aus Streifen + Rand + Avatarbreite + Abstand — stünde die Zahl hart im Style,
+ * würde sie beim nächsten Größenwechsel still falsch.
+ */
+const STREIFEN = 6;
+const RAND = spacing.lg;
+const AVATAR = 44; // `size="md"` in SsAvatar
+const TEXT_LINKS = STREIFEN + RAND + AVATAR + spacing.md;
 
 export default function ChatsScreen() {
   const chats = useChatListe();
@@ -110,10 +150,13 @@ export default function ChatsScreen() {
           ) : null
         }
         renderItem={({ item }) => <ChatZeile eintrag={item} />}
-        ItemSeparatorComponent={() => <View style={styles.luecke} />}
-        SectionSeparatorComponent={() => <View style={styles.luecke} />}
+        // Die Trennlinie steht ZWISCHEN den Zeilen, nicht an jeder Zeile unten: sonst
+        // hat die letzte Zeile vor der nächsten Überschrift eine Linie, die nichts
+        // trennt.
+        ItemSeparatorComponent={() => <View style={styles.trenner} />}
+        SectionSeparatorComponent={() => <View style={styles.gruppenLuecke} />}
         // Wie im Anfragen-Tab: die Überschriften sind transparent und würden beim
-        // Kleben über die Karten darunter wandern.
+        // Kleben über die Zeilen darunter wandern.
         stickySectionHeadersEnabled={false}
         style={styles.listeAussen}
         contentContainerStyle={styles.liste}
@@ -132,50 +175,71 @@ export default function ChatsScreen() {
  * müsste man jeden Chat aufmachen, um zu sehen, ob etwas Neues drinsteht. Das „Du:"
  * davor gehört dazu — ohne das liest man die eigene letzte Nachricht als Antwort des
  * anderen und glaubt, man sei dran.
+ *
+ * ── Warum der Streifen-Platz auch dann steht, wenn er leer bleibt ─────────────
+ * Harte Regel 29 verbietet einen grauen ERSATZ-Streifen für Direktchats, und das gilt
+ * unverändert: Ein Direktchat hat keine Kategorie, also bekommt er keine Farbe. Aber
+ * er bekommt seit Phase 18c denselben 6 px breiten PLATZ, nur ungefärbt. In einer
+ * Karte durfte der Inhalt 6 px weiter links anfangen — das war die Auskunft. In einer
+ * Zeilenliste sind ausgefranste Avatar-Spalten genau das „unruhig", gegen das diese
+ * Phase gebaut ist. Die Auskunft steckt weiter im Platz: keine Farbe = keine Aktivität.
  */
 function ChatZeile({ eintrag }: { eintrag: ChatEintrag }) {
   const { thread, post, gegenueber, letzte } = eintrag;
   const vonMir = letzte?.senderId === CURRENT_USER_ID;
 
   return (
-    <SsCard
-      // Ohne Post kein Streifen — und bewusst auch keine graue Ersatzfarbe. Ein
-      // Direktchat HAT keine Kategorie; ihm eine zu geben wäre dieselbe Notlüge wie
-      // ein Platzhalter-Post (siehe `ChatEintrag.post` in `chat/hooks.ts`). Dass die
-      // Karte 6 px schmaler einrückt, ist kein Fehler, sondern die Auskunft.
-      category={post?.category}
-      onPress={() => router.push({ pathname: '/chat/[id]', params: { id: thread.id } })}>
-      <View style={styles.zeile}>
+    <Pressable
+      onPress={() => router.push({ pathname: '/chat/[id]', params: { id: thread.id } })}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.zeile, pressed && styles.gedrueckt]}>
+      <View
+        style={[
+          styles.streifen,
+          post ? { backgroundColor: categoryColors[post.category].base } : null,
+        ]}
+      />
+
+      <View style={styles.inhalt}>
         <SsAvatar name={gegenueber.displayName} seed={gegenueber.id} photoUrl={gegenueber.photoUrl} size="md" />
 
         <View style={styles.text}>
-          <View style={styles.namensZeile}>
-            <SsText variant="bodyStrong" numberOfLines={1} style={styles.name}>
-              {gegenueber.displayName}
-            </SsText>
-            <SsText variant="caption" color={colors.inkSoft}>
+          <View style={styles.kopfZeile}>
+            {/* Name und Aktivität teilen sich den Platz links, die Uhrzeit steht rechts.
+                Von den beiden muss die AKTIVITÄT nachgeben — „Tobi… · Kaffee nach der
+                Sch…" ist zweimal halb statt einmal ganz.
+
+                Der erste Versuch war, das über `flexShrink` zu gewichten (1 gegen 24).
+                Am Gerät nachgemessen war der Name trotzdem „Tobi…", und der Grund steht
+                in den berechneten Stilen: Beide Texte haben `flexBasis: auto`, also
+                ihre natürliche Breite. Damit gibt es einen Fehlbetrag, den sich beide
+                teilen — jede Gewichtung dagegen ist ein Wert, der beim nächsten längeren
+                Titel wieder falsch ist.
+
+                `flex: 1` an der Aktivität (also `flexBasis: 0`) nimmt den Fehlbetrag
+                ganz weg: Der Name behält seine natürliche Breite, die Aktivität bekommt
+                exakt den Rest und kürzt sich darin selbst. Erst wenn der Name ALLEIN
+                breiter ist als die Zeile, greift Shrink — und dann muss er es auch,
+                sonst drückt ein langer Name die Uhrzeit aus dem Bild. */}
+            <View style={styles.namensBlock}>
+              <SsText variant="bodyStrong" numberOfLines={1} style={styles.name}>
+                {gegenueber.displayName}
+              </SsText>
+              {post ? (
+                <SsText
+                  variant="caption"
+                  color={colors.inkSoft}
+                  numberOfLines={1}
+                  style={styles.aktivitaet}>
+                  {`· ${post.title}`}
+                </SsText>
+              ) : null}
+            </View>
+
+            <SsText variant="caption" color={colors.inkSoft} style={styles.zeit}>
               {vergangen(thread.lastMessageAt)}
             </SsText>
           </View>
-
-          {/* Das Kategorie-Icon steht hier statt einer zweiten Pille: In einer Liste
-              von Chats ist die Kategorie eine Nebenangabe, keine Überschrift.
-
-              Bei einem Direktchat steht an derselben Stelle der Handle mit dem
-              Personen-Icon. Die Zeile ganz wegzulassen wäre die Alternative gewesen —
-              dann hätten die Zeilen zwei verschiedene Höhen, und eine Liste, in der
-              die Karten unterschiedlich hoch sind, liest sich unruhig. Der Handle ist
-              außerdem nicht bloß Füllung: Bei zwei Leuten mit demselben Vornamen ist
-              er das Einzige, was sie in dieser Liste unterscheidet. */}
-          {post ? (
-            <SsIconText icon={CATEGORIES[post.category].icon}>
-              {`${post.title} · ${startOderSeit(post.startsAt)}`}
-            </SsIconText>
-          ) : (
-            <SsIconText icon="person" color={colors.inkSoft}>
-              {gegenueber.handle}
-            </SsIconText>
-          )}
 
           {letzte ? (
             <SsText variant="body" numberOfLines={1} color={colors.ink}>
@@ -189,7 +253,7 @@ function ChatZeile({ eintrag }: { eintrag: ChatEintrag }) {
           )}
         </View>
       </View>
-    </SsCard>
+    </Pressable>
   );
 }
 
@@ -221,22 +285,51 @@ const styles = StyleSheet.create({
   kopf: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.md },
 
   listeAussen: { flex: 1 },
-  liste: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, flexGrow: 1 },
-  luecke: { height: spacing.md },
-  gruppenKopf: { paddingTop: spacing.sm, paddingBottom: spacing.xs, gap: 2 },
+  // Kein `paddingHorizontal` mehr: Die Zeilen gehen über die volle Breite, so wie in
+  // jeder Messenger-Liste. Den Seitenrand bringt die Zeile selbst mit.
+  liste: { paddingBottom: spacing.xxl, flexGrow: 1 },
+  gruppenKopf: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    gap: 2,
+  },
+  gruppenLuecke: { height: spacing.sm },
+  trenner: { height: 1, marginLeft: TEXT_LINKS, backgroundColor: colors.line },
 
-  zeile: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  zeile: { flexDirection: 'row', backgroundColor: colors.surface, cursor: 'pointer' },
+  gedrueckt: { opacity: 0.72 },
+  streifen: { width: STREIFEN },
+  inhalt: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingLeft: RAND,
+    paddingRight: RAND,
+    paddingVertical: spacing.md,
+  },
+
   // `minWidth: 0`, sonst schrumpft der Block nicht unter seine Eigenbreite und der
-  // Zeitstempel rechts wird aus der Karte gedrückt (dieselbe Falle wie in SsInput).
+  // Zeitstempel rechts wird aus der Zeile gedrückt (dieselbe Falle wie in SsInput).
   text: { flex: 1, minWidth: 0, gap: 2 },
-  namensZeile: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.sm },
+  kopfZeile: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.sm },
+  namensBlock: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'baseline' },
   name: { flexShrink: 1 },
+  // Der Abstand vor dem Trennpunkt steht im STYLE und nicht als Leerzeichen im
+  // Text: `react-native-web` rendert Text als HTML, und HTML frisst führende
+  // Leerzeichen — aus „Lea · Tennis" wurde am Schirm „Lea· Tennis". Auf Native
+  // würde ein Leerzeichen dagegen stehen bleiben, also wären es dort zwei.
+  aktivitaet: { flex: 1, minWidth: 0, marginLeft: 5 },
+  // Die Uhrzeit gibt nie nach — sie ist kurz, und eine halbe Uhrzeit ist keine.
+  zeit: { flexShrink: 0 },
 
   leer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xxxl,
   },
   leerKnopf: { marginTop: spacing.md, alignSelf: 'center' },
