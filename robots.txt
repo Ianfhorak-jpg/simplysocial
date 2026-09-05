@@ -1,0 +1,4 @@
+# Das hier ist ein Prototyp mit erfundenen Daten, keine Website.
+# Er soll gefunden werden, indem Ian den Link schickt — nicht über Google.
+User-agent: *
+Disallow: /
