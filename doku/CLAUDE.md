@@ -385,9 +385,9 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 4. ~~Herzeigen und zuhören~~ ✅ *Ian hat beides am Handy angeschaut, 2026-09-01*
 5. ~~Umbau nach seinem Feedback~~ ✅ *Phase 10, 11 und 12, alle am 2026-09-01*
 6. ~~Wieder herzeigen~~ ✅ *alle drei Mitgründer, 2026-09-02*
-7. ~~Umbau nach ihrem Feedback~~ ✅ *Phase 14 bis 17, alle am 2026-09-02:*
-   ~~Icons statt Emojis~~ · ~~Altersgruppe + Filter~~ · ~~Direktnachrichten~~ ·
-   ~~Gruppen~~
+7. ~~Umbau nach ihrem Feedback~~ ✅ *Phase 14 bis 17 am 2026-09-02, Phase 18a am
+   2026-09-05:* ~~Icons statt Emojis~~ · ~~Altersgruppe + Filter~~ ·
+   ~~Direktnachrichten~~ · ~~Gruppen~~ · ~~in Gruppen einladen~~
 8. **Wieder herzeigen** ← *hier sind wir* — die drei haben Phase 13 gesehen, nicht 18a
 9. Danach: echtes Backend, EAS-Build, App Store
 

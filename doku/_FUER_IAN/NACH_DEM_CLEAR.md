@@ -3,11 +3,34 @@
 > Diese Datei steht hier, weil der Chat nach dem `/clear` weg ist — der Text darin
 > also auch. Hier findest du ihn wieder.
 >
-> Stand: **03.09.2026.** **Phase 0 bis 17 sind fertig und online** — damit ist
+> Stand: **05.09.2026.** **Phase 0 bis 18a sind fertig und online** — damit ist
 > **alles gebaut, was Christoph, Leopold und Daria am 02.09. gesagt haben**: die Emojis
 > raus (14), Altersgruppe und Filter (15), Direktnachrichten (16) und Gruppen (17).
-> Die Liste ist leer. **Dazu ist am 03.09. der Karteikarten-Fehler behoben, den du
-> gemeldet hast** (schiefe Karte, „Weg" immer sichtbar) — siehe gleich unten.
+> **Und was Leopold am 03.09. beim wirklichen Benutzen gefunden hat, ist seit dem 05.09.
+> auch zu** (18a) — siehe gleich unten. Die Liste ist leer.
+
+---
+
+## Das Neueste: man kann jetzt Leute in eine Gruppe einladen (05.09.)
+
+Leopold hat am 03.09. eine Gruppe gegründet — und **sass allein drin**. Es gab keinen Weg,
+jemanden hineinzuholen; gebaut war nur die Richtung von aussen nach innen (anfragen, der
+Gründer sagt ja). Das ist jetzt zu.
+
+**Was neu ist:** In jeder Gruppe, in der du drin bist, steht unter „Wer dabei ist" ein
+Knopf **„Leute einladen"**. Und beim Gründen gibt es unten die Frage **„Wer darf hinein?"**
+mit *Offen* oder *Privat*.
+
+**Drei Sachen hast du dabei entschieden:**
+1. **Einladen darf jedes Mitglied**, nicht nur der Gründer. Eine Tennisgruppe ist keine
+   Behörde.
+2. **Private Gruppen stehen in keiner Liste.** Wer den Link bekommt, sieht Name,
+   Kategorie, Bezirk und wie viele drin sind — sonst nichts, und keinen Weg hinein.
+3. **Voreingestellt ist „Offen"**, weil die meisten nichts umstellen und sonst niemand
+   mehr eine Gruppe fände.
+
+Ausführlich mit Ausprobier-Anleitung steht das in `README.md`, Abschnitt „Erledigt:
+Leute in eine Gruppe einladen".
 
 ---
 
