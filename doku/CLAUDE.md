@@ -35,18 +35,36 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
-📝 **Phase 18 ist GEPLANT, nicht gebaut (2026-09-03).** Leopold hat die neue Fassung
-als Erster wirklich BENUTZT statt angeschaut — Gruppe gegründet, gepostet — und dabei in
-zehn Minuten ein **Loch** gefunden, das beim Durchklicken am selben Tag niemandem
-auffiel: **Man kann niemanden in eine Gruppe einladen.** Phase 17 hat nur die Richtung
-von aussen nach innen gebaut (anfragen → Gründer bestätigt); wer gründet, sitzt allein
-drin. Dazu kamen vier Wünsche und Ians eigener Einwand, die Chats seien „noch nicht ganz
-übersichtlich, inspiriere dich von WhatsApp". **Ian will erst Christoph und Daria
-abwarten** — deshalb steht in PLAN.md ein Plan (Phase 18a–d) und kein Code. Zwei
-Entscheidungen stehen aber schon fest:
+✅ **Phase 18a ist fertig (2026-09-05): einladen, und privat vs. offen.** Leopold hatte
+die neue Fassung als Erster wirklich BENUTZT statt angeschaut — Gruppe gegründet,
+gepostet — und in zehn Minuten ein **Loch** gefunden, das beim Durchklicken am selben Tag
+niemandem auffiel: **Man kann niemanden in eine Gruppe einladen.** Phase 17 hatte nur die
+Richtung von aussen nach innen gebaut; wer gründete, sass allein drin. Das ist zu. Vier
+Dinge sind daran wichtiger als die Knöpfe:
+1. **Gründen und Einladen sind ab jetzt ZWEI Rechte.** `creatorId` trägt WENIGER als
+   vorher — der Gründer bestätigt Anfragen von aussen, mehr nicht. Wer im Screen
+   `istGruender()` schreibt, wo `darfEinladen()` hingehört, merkt es **nie**: In einer
+   frisch gegründeten Gruppe antworten beide gleich.
+2. **`GroupInvite` ist ein eigener Typ, `Group.offen` ein Boolean** — und das ist kein
+   Widerspruch, sondern dieselbe Regel zweimal richtig angewandt. Ein Union braucht es,
+   wenn die neue Stufe zusätzliche Daten BRAUCHT (`Visibility` braucht eine `groupId`);
+   „privat" braucht nichts.
+3. **Ein neuer Typ ist kein Netz.** `Group.offen` hinzuzufügen meldete sofort vier
+   Stellen. `GroupInvite` meldete **null** — ihn las ja noch niemand. Die eine Stelle, an
+   der das gefährlich war, ist `requests.tsx`: Die Zeilen wurden mit `'gruppe' in item`
+   unterschieden, und eine Einladung trägt AUCH eine `gruppe`. Sie wäre still als
+   Beitritts-Anfrage mit „Aufnehmen"-Knopf gezeichnet worden.
+4. **Drei Fehler kamen nur durchs Durchklicken heraus**, keiner im Code sichtbar: der
+   Gründername stand bei einer privaten Gruppe da (ein Name aus der Liste, die zubleiben
+   soll), der Umschalter wurde auf 360 px zu „Jeder kann anfr…" abgeschnitten, und eine
+   private Gruppe zeigte „Anfragen ansehen" für Anfragen, die es dort nicht geben kann.
+
+📝 **18b bis 18d sind weiter Plan, nicht Code.** Ians eigener Einwand, die Chats seien
+„noch nicht ganz übersichtlich, inspiriere dich von WhatsApp", steht als 18c in PLAN.md;
+der Jahrgangs-Balken als 18b. Zwei Entscheidungen dazu stehen schon fest:
 - **Ians sechzehnte: Einladen aus der Gruppe heraus**, nicht per Link — dasselbe Muster
   wie „Bin dabei", eine Seite bietet an, die andere bestätigt. Verworfen ist der
-  weiterleitbare Link (landet irgendwann in einer fremden Gruppe).
+  weiterleitbare Link (landet irgendwann in einer fremden Gruppe). **Gebaut in 18a.**
 - **Ians siebzehnte: der Schiebe-Balken fürs Alter kommt, auf JAHRGANG.** Ich hatte
   dagegengehalten, weil das Modell kein Geburtsdatum kannte und ein Balken über drei
   Bändern eine schlechtere Pillenreihe wäre. Seine Antwort war eine, die ich nicht
@@ -370,7 +388,7 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 7. ~~Umbau nach ihrem Feedback~~ ✅ *Phase 14 bis 17, alle am 2026-09-02:*
    ~~Icons statt Emojis~~ · ~~Altersgruppe + Filter~~ · ~~Direktnachrichten~~ ·
    ~~Gruppen~~
-8. **Wieder herzeigen** ← *hier sind wir* — die drei haben Phase 13 gesehen, nicht 17
+8. **Wieder herzeigen** ← *hier sind wir* — die drei haben Phase 13 gesehen, nicht 18a
 9. Danach: echtes Backend, EAS-Build, App Store
 
 ## Stack
@@ -612,7 +630,27 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    gerechneten Höhen; die drei Felder in `mehrBereich` bekommen dessen y **beim Lesen**
    dazu, nicht beim Merken. Und der Sprung wartet **zwei** `requestAnimationFrame`:
    Auf Web meldet `onLayout` über einen ResizeObserver, also erst nach dem Zeichnen.
-38. **`StapelDurch` ist eine ÜBERSCHRIFT über einer Liste, kein Leer-Zustand.** Sein
+38. **Gründen und Einladen sind zwei verschiedene Rechte.** Seit Phase 18a fragt man
+   „darf der jemanden holen?" mit `darfEinladen()` aus `features/groups/gruppe.ts`, nie
+   mit `istGruender()`. **Die Verwechslung fällt nie auf**, weil in einer frisch
+   gegründeten Gruppe beide dasselbe antworten — sie fällt erst dem auf, der in einer
+   fremden Gruppe Mitglied ist und den Knopf nicht findet. Dasselbe gilt für die
+   Gegenrichtung: `Group.offen` fragt man über `darfBeitreten()` bzw.
+   `beitrittHuerdeText()`, nicht mit `!gruppe.offen` im Screen.
+39. **Eine Einladung ist KEINE Anfrage mit umgedrehtem Vorzeichen.** `GroupInvite` ist
+   ein eigener Typ neben `GroupRequest` (vierte Runde derselben Frage nach
+   `ChatThread.postId`, `GroupRequest` und `Visibility`). Wer die beiden in einer Liste
+   nebeneinanderlegt, unterscheidet sie an `einladung`, **nie an `gruppe`** — beide
+   tragen eine. Bis Phase 17 war `'gruppe' in item` eindeutig, seit Phase 18a nicht mehr,
+   und der Typecheck hätte dazu geschwiegen: Eine Einladung wäre als Beitritts-Anfrage
+   gezeichnet worden, mit „Aufnehmen"-Knopf.
+40. **Eine Zahl an einem Tab liest denselben Haken wie der Screen darunter.** Seit
+   Phase 18a addiert `(tabs)/_layout.tsx` `useMeineEinladungen()` — denselben Haken, den
+   `requests.tsx` benutzt, und keinen leichteren Filter daneben. Grund: Der Haken blendet
+   Einladungen aus, in deren Gruppe man inzwischen ohnehin ist. Ein eigener Zähler zählte
+   sie mit, und dann klebt eine Zahl am Tab, die man nicht wegbekommt, weil die Zeile
+   dazu gar nicht dasteht.
+41. **`StapelDurch` ist eine ÜBERSCHRIFT über einer Liste, kein Leer-Zustand.** Sein
    Text verspricht sie („Alles, was du gesehen hast, steht unten weiter in der Liste").
    Deshalb erscheint er nur, wenn `listeHatWas` — sonst stünde er über nichts, und
    `LeererFeed` sagt darunter dasselbe noch einmal, nur mit dem Ausweg, den die
@@ -842,6 +880,27 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   `merkePosition(feld)` gab einen Handler zurück — die Fabrik wird aber beim RENDERN
   aufgerufen, und `react-hooks/refs` verbietet das zu Recht. Der Ausweg ist eine
   gewöhnliche Funktion, aufgerufen aus dem `onLayout`-Handler heraus.
+- **Ein NEUER Typ ist kein Netz — nur eine Verengung ist eins.** (Phase 18a)
+  `Group.offen: boolean` hinzuzufügen meldete sofort vier Stellen; `GroupInvite`
+  einzuführen meldete **null**, weil ihn noch niemand las. Das ist die dritte Fassung
+  derselben Lehre (Phase 16: Lockerung meldet nichts; Phase 14: Verengung schreibt die
+  Arbeitsliste). **Bei einem neuen Typ muss man selbst suchen, wo die alte
+  Unterscheidung jetzt mehrdeutig wird** — hier war es `'gruppe' in item` in
+  `requests.tsx`.
+- **`SsSegment` schneidet Beschriftungen ab, ohne sich zu beschweren.** (Phase 18a)
+  Auf 360 px wurde „Jeder kann anfragen" zu „Jeder kann anfr…". Dieselbe Falle wie
+  „Sta…" in Phase 11, aber mit ANDERER Ursache: dort `flex: 1`, hier schlicht zu langer
+  Text. Faustregel für einen Umschalter: **ein Wort je Seite**, die Erklärung in die
+  Zeile darunter — und dasselbe Wort nehmen, das das Ergebnis später auch heißt.
+- **Eine Regel, deren GRUND wegfällt, hinterlässt ihre Wirkung.** (Phase 18a) Phase 17
+  zeigt den Gründer auf der Gruppenseite, damit man weiß, wer die Anfrage bestätigt. Bei
+  einer privaten Gruppe gibt es keine Anfrage — der Grund ist weg, der Name stand
+  trotzdem da, und er kam aus genau der Mitgliederliste, die zubleiben soll. Beim
+  Einbau einer neuen Stufe also nicht nur fragen „was zeige ich neu?", sondern **„welche
+  bestehende Anzeige hat ihren Grund verloren?"**
+- **`scrollWidth > clientWidth` findet abgeschnittenen Text.** (Phase 18a) Das
+  Gegenstück zu `document.elementFromPoint` für verdeckte Knöpfe. Zusammen mit der
+  Überquell- und der Icon-Namen-Prüfung ist der Durchgang in Handybreite EIN Aufruf.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

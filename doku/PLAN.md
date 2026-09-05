@@ -1462,15 +1462,19 @@ an einer Karte.
 
 ---
 
-### Phase 18 — Was aus Leopolds und Ians Rückmeldung folgt 📝 *(geplant am 2026-09-03, NICHT gebaut)*
+### Phase 18 — Was aus Leopolds und Ians Rückmeldung folgt
 
-> **Dieser Abschnitt ist ein Plan, kein Bericht.** Ian am 2026-09-03: *„Fang schon mal
-> an einen Plan zu schreiben was man ändern muss, aber ich wart noch auf die zwei
-> anderen dass sie sich melden."* Gebaut wird erst, wenn Christoph und Daria geantwortet
-> haben — was sie sagen, kann die Reihenfolge hier noch umwerfen. **Zwei Entscheidungen
-> sind aber schon gefallen** (Abschnitt 6, Punkte 24 und 25), und die stehen fest.
+> **Der Abschnitt war ein Plan und ist jetzt teils ein Bericht.** Ian am 2026-09-03:
+> *„Fang schon mal an einen Plan zu schreiben was man ändern muss, aber ich wart noch
+> auf die zwei anderen dass sie sich melden."* Am **2026-09-05** hat er gesagt: *„mit
+> Plan weitermachen."* **18a ist damit gebaut** (siehe unten), 18b bis 18d stehen weiter
+> als Plan da.
 
-#### 18a — Gruppen: einladen, und privat vs. öffentlich
+#### 18a — Gruppen: einladen, und privat vs. öffentlich ✅ *(gebaut am 2026-09-05)*
+
+> ✅ **Fertig.** Leopolds Loch ist zu: Wer eine Gruppe gründet, sitzt nicht mehr allein
+> drin. Was dabei entschieden und was dabei gefunden wurde, steht am Ende dieses
+> Unterabschnitts unter „Was beim Bauen herauskam".
 
 **Das Loch:** Phase 17 hat nur eine Richtung gebaut. Von aussen anfragen geht
 (`beitrittAnfragen` → `beitrittBestaetigen`), von innen jemanden holen nicht. Leopold hat
@@ -1494,12 +1498,50 @@ eine Gruppe gegründet und sass allein drin.
 
 **Zwei Fragen, die beim Bauen beantwortet werden müssen** — sie stehen hier, damit sie
 nicht wieder erst im Code auffallen:
-1. **Wer darf einladen — nur der Gründer oder jedes Mitglied?** Nur der Gründer passt zu
-   `GRUENDER_AUSTRITT` (er ist der Einzige mit Rechten, bewusst); jedes Mitglied wächst
-   schneller und ist für „Marswiese Tennis" wahrscheinlich das, was man meint.
-2. **Was sieht ein Fremder, der den Link einer PRIVATEN Gruppe bekommt?** Seit Phase 8
-   ist jeder Screen direkt aufrufbar (harte Regel 11) — „gibt es nicht" wäre eine Lüge,
-   den Namen zu zeigen wäre ein Leck. Wahrscheinlich: Name ja, Mitglieder und Posts nein.
+1. ✅ **Wer darf einladen — nur der Gründer oder jedes Mitglied?**
+   **Ians Entscheidung 26 vom 2026-09-05: jedes Mitglied.** (`EINLADEN_DARF`)
+2. ✅ **Was sieht ein Fremder, der den Link einer PRIVATEN Gruppe bekommt?**
+   **Ians Entscheidung 27: Name, Kategorie, Bezirk und Mitgliederzahl — sonst nichts.**
+   (`PRIVAT_SICHT`)
+
+Dazu kam eine dritte, die im Plan nicht stand:
+3. ✅ **Was ist beim Gründen voreingestellt? Ians Entscheidung 28: offen.**
+   (`NEUE_GRUPPE_OFFEN`) Begründung wie bei `STANDARD` in `create.tsx`: Die
+   Voreinstellung IST das, was fast alle abschicken.
+
+#### Was beim Bauen herauskam *(2026-09-05)*
+
+**Der Compiler hat wieder die Arbeitsliste geschrieben — diesmal nur zur Hälfte.**
+`Group.offen: boolean` hinzuzufügen ist eine VERENGUNG: `tsc` meldete sofort die vier
+Stellen, die eine Gruppe bauen. `GroupInvite` dagegen erzeugte **null** Fehler, weil
+ihn noch niemand liest. **Ein neuer Typ ist kein Netz** — dort musste die Enge von Hand
+entstehen, und die eine Stelle, an der sie gefehlt hätte, war `requests.tsx`: Die
+Unterscheidung der Zeilen hing an `'gruppe' in item`, und eine Einladung trägt AUCH
+eine `gruppe`. Sie wäre still als Beitritts-Anfrage gezeichnet worden, mit
+„Aufnehmen"-Knopf. Geprüft wird jetzt an `einladung` — dem Feld, das nur eine der drei
+Sorten hat.
+
+**Drei Fehler, alle nur durchs Durchklicken gefunden**, keiner im Code sichtbar:
+
+1. **Bei einer privaten Gruppe stand „Aufgemacht von Mira."** — ein Name aus genau der
+   Mitgliederliste, die zubleiben soll. Zwei einzeln richtige Regeln: Phase 17 zeigt den
+   Gründer, damit man weiß, wer die Anfrage bestätigt; Phase 18a verbirgt die Mitglieder.
+   Bei einer privaten Gruppe **fällt der Grund für die erste weg und das Leck der zweiten
+   bleibt**. Das ist dieselbe Sorte Fehler wie der falsche Satz in `austrittFolgen()`
+   (Phase 17) — und wieder war der Beweis eine Zeile im gerenderten Text.
+2. **Der Umschalter „Jeder kann anfragen" / „Nur auf Einladung" wurde auf 360 px zu
+   „Jeder kann anfr…"** abgeschnitten. `SsSegment` teilt die Breite und schneidet ab,
+   ohne sich zu beschweren. Dieselbe Falle wie „Sta…" in Phase 11, aber mit anderer
+   Ursache: dort war es `flex: 1`, hier ist der Text schlicht zu lang. Jetzt **ein Wort
+   je Seite** („Offen" / „Privat"), und zwar dasselbe Wort, das die Vorschau und die
+   Gruppenseite benutzen.
+3. **Eine private Gruppe zeigte ihrem Gründer „Anfragen ansehen".** Ein Knopf, der auf
+   einen Vorgang zeigt, den es für diese Gruppe nicht gibt.
+
+**Ein Prüfschritt ist dabei neu und lohnt sich weiter:** `scrollWidth > clientWidth` über
+alle Textknoten findet abgeschnittenen Text — das Gegenstück zu `elementFromPoint` für
+verdeckte Knöpfe. Beides zusammen mit der Überquell- und der Icon-Namen-Prüfung ist jetzt
+ein Durchgang statt vier.
 
 #### 18b — Jahrgang statt Alters-Bänder
 
@@ -2411,6 +2453,50 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
     steht in Phase 18b:** ob am Profil der Jahrgang steht, das Alter, oder weiterhin nur
     ein grobes Band, während der Jahrgang bloss zum Filtern dient.
 
+26. ✅ **Wer jemanden in eine Gruppe einladen darf** (`features/groups/gruppe.ts`) —
+    **entschieden am 2026-09-05: jedes Mitglied.** *(Ians achtzehnte Entscheidung,
+    gebaut in Phase 18a.)*
+
+    Verworfen: **nur der Gründer** (passt zum Rest — er ist heute schon der Einzige mit
+    Rechten —, macht ihn aber zum Flaschenhals, und genau diese Umständlichkeit hat
+    Leopold eine Ebene höher gemeldet) und **jedes Mitglied schlägt vor, der Gründer
+    bestätigt** (sicher, aber ein dritter Zustand, den die App erklären muss).
+
+    **Den Haken kennt er:** Der Gründer kann nicht mehr steuern, wer dazukommt. Zwei
+    Dinge mildern es, und beide gab es schon — eingeladen wird nur, wen man kennt (die
+    Liste kommt aus dem eigenen Folge-Graph, nicht aus allen Nutzern), und wer dazukommt,
+    kann jederzeit wieder gehen. Ein Rauswerfen gibt es bewusst nicht.
+
+    ⚠️ **Was das über `creatorId` sagt:** Der Gründer trägt ab jetzt WENIGER als vorher —
+    er bestätigt Anfragen von außen, mehr nicht. Wer die beiden Rechte gedanklich
+    zusammenwirft, schreibt irgendwo `istGruender()`, wo `darfEinladen()` hingehört. **Und
+    es fällt nie auf**, weil beide in einer frisch gegründeten Gruppe dasselbe antworten.
+
+27. ✅ **Was ein Fremder von einer PRIVATEN Gruppe sieht** (`features/groups/gruppe.ts`) —
+    **entschieden am 2026-09-05: Name, Kategorie, Bezirk und Mitgliederzahl. Sonst
+    nichts.** *(Ians neunzehnte Entscheidung, `PRIVAT_SICHT`.)*
+
+    Die Frage gäbe es ohne harte Regel 11 gar nicht: Seit Phase 8 ist jeder Screen direkt
+    aufrufbar, und ein Link landet irgendwann in einer fremden WhatsApp-Gruppe. Verworfen:
+    **nur der Name** (eine Karte, auf der fast nichts steht, sieht aus wie ein Fehler) und
+    **„Diese Gruppe gibt es nicht"** (eine Lüge — und sie hätte den Satz unterlaufen, den
+    derselbe Screen für eine wirklich aufgelöste Gruppe zeigt).
+
+    **Was daraus für die Liste folgt und keine eigene Frage war:** In `/gruppen` taucht
+    eine private Gruppe, in der ich nicht bin, NICHT auf. Das ist kein Widerspruch —
+    die Entscheidung beantwortet „was sehe ich, wenn ich die Adresse habe", die Liste
+    beantwortet „was schlägt die App mir vor".
+
+28. ✅ **Was beim Gründen voreingestellt ist** (`features/groups/gruppe.ts`) —
+    **entschieden am 2026-09-05: offen.** *(Ians zwanzigste Entscheidung,
+    `NEUE_GRUPPE_OFFEN`.)*
+
+    Dieselbe Überlegung wie bei `STANDARD` in `create.tsx` (harte Regel 18): Die meisten
+    klappen nichts auf, also IST die Voreinstellung das, was fast alle abschicken. „Nur
+    auf Einladung" als Standard hätte fast jede Gruppe unauffindbar gemacht und die
+    Anfrage-Funktion aus Phase 17 stillgelegt — bei einer App, deren ganzer Zweck das
+    Finden ist.
+
 ---
 
 ## 7. Bewusst NICHT im Prototyp
@@ -2583,7 +2669,26 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > ist — „aufgeklappt" ist nicht dasselbe wie „sichtbar", und „Stapel leer" ist nicht
 > dasselbe wie „es gibt nichts".**
 
-**Alles aus dem Feedback der Mitgründer ist gebaut — Phase 14 bis 17 sind fertig.**
+**Phase 18a ist seit dem 2026-09-05 fertig** (Gruppen: einladen, und privat vs. offen).
+Was eine frische Sitzung davon wissen muss:
+- **`GroupInvite` ist ein EIGENER Typ**, kein `GroupRequest` mit Richtungsfeld — die
+  vierte Runde derselben Frage und dieselbe Antwort. Sachlich sind es auch zwei Dinge:
+  Eine Anfrage hat einen Absender, der etwas will, und einen Satz, den er geschrieben
+  hat; eine Einladung hat einen EMPFÄNGER, der nichts wollte, und deshalb keinen Text.
+- **`Group.offen` ist ein Boolean und bewusst KEIN Union.** Die Regel aus Phase 17
+  („braucht eine neue Stufe zusätzliche Daten, ist es ein Union") gilt genau dann, wenn
+  sie welche BRAUCHT. Eine private Gruppe trägt nichts mit sich, was eine offene nicht
+  auch hat.
+- **Gründen und Einladen sind ZWEI Rechte.** Nie `istGruender()` schreiben, wo
+  `darfEinladen()` hingehört — in einer frisch gegründeten Gruppe antworten beide gleich,
+  also fällt die Verwechslung nie auf.
+- **In `requests.tsx` wird an `einladung` unterschieden, nicht an `gruppe`.** Bis Phase 17
+  reichte `'gruppe' in item`; eine Einladung trägt auch eine.
+- **Die Zahl am Anfragen-Tab liest denselben Haken wie der Screen** (`useMeineEinladungen`).
+  Ein eigener, leichterer Zähler daneben zählte Einladungen mit, die der Screen ausblendet
+  — und die Zahl klebte dann für immer am Tab.
+
+**Alles aus dem Feedback der Mitgründer ist gebaut — Phase 14 bis 18a sind fertig.**
 Das Nächste ist deshalb keine Phase, sondern eine Frage an Menschen:
 **den Prototyp noch einmal herzeigen.** Die drei haben ihn am 2026-09-02 in der Fassung
 von Phase 13 durchgeklickt; seither sind die Emojis raus, sechs Filter, Direktchats und
@@ -2758,6 +2863,9 @@ einseitig folgen, einander nicht schreiben können, auch wenn beide wollten
 | `app/(tabs)/index.tsx` · `WischStapel` | Was tut das Filterfeld im Stapel? | ✅ **es legt sich drüber**, es schiebt nicht *(2026-09-03)* |
 | `app/create.tsx` | Was, wenn die rote Stelle aus dem Bild fällt? | ✅ **hinspringen UND benennen** *(2026-09-03)* |
 | `app/(tabs)/index.tsx` | Was steht da, wenn Stapel UND Liste leer sind? | ✅ **ein** Leer-Zustand, der mit dem Ausweg *(2026-09-03)* |
+| `features/groups/gruppe.ts` | Wer darf jemanden einladen? | ✅ **jedes Mitglied** *(Phase 18a)* |
+| `features/groups/gruppe.ts` | Was sieht ein Fremder von einer privaten Gruppe? | ✅ **Name, Kategorie, Bezirk, Anzahl** — sonst nichts *(Phase 18a)* |
+| `features/groups/gruppe.ts` | Was ist beim Gründen voreingestellt? | ✅ **offen** *(Phase 18a)* |
 
 **Diese Regeln sind Ians, nicht Claudes.** In allen Dateien stehen die
 verworfenen Möglichkeiten samt Begründung weiter im Kopfkommentar — als Gedächtnis,

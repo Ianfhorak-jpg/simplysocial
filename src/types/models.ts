@@ -199,6 +199,24 @@ export interface Group {
    * kurz, und zwei Wahrheiten wären nur zwei Gelegenheiten, auseinanderzulaufen.
    */
   memberIds: string[];
+  /**
+   * Findet man diese Gruppe von selbst — oder kommt man nur hinein, wenn jemand von
+   * drinnen einen holt? Phase 18a, Ians Entscheidung 28 (Standard: `true`).
+   *
+   * ── Warum ein Boolean und KEIN Union ──────────────────────────────────────
+   * Phase 17 hat gelernt: „Braucht eine neue Stufe zusätzliche Daten, ist es ein
+   * Union" (`Visibility`). Die Betonung liegt auf BRAUCHT. Eine private Gruppe
+   * trägt nichts mit sich, was eine offene nicht auch hat — kein Passwort, keine
+   * Liste von Berechtigten, keinen Link. Ein Union wäre hier zwei Fälle mit
+   * demselben Inhalt, also nur Zeremonie.
+   *
+   * ── Was `false` NICHT heißt ───────────────────────────────────────────────
+   * Nicht „unsichtbar". Wer die Adresse hat, sieht Name, Kategorie, Bezirk und die
+   * Mitgliederzahl — nur keine Posts, keine Mitgliederliste und keinen Weg hinein
+   * (Ians Entscheidung 27). Die Regel dazu steht in `features/groups/gruppe.ts`
+   * unter `PRIVAT_SICHT`, nicht in einem Screen.
+   */
+  offen: boolean;
   /** Wo die Gruppe hauptsächlich unterwegs ist. `null` heißt „ganz Wien". */
   district: string | null;
   createdAt: string;
@@ -226,6 +244,42 @@ export interface GroupRequest {
   fromUserId: string;
   message: string;
   /** Dieselben drei Zustände wie bei einer Post-Anfrage, und dieselbe Bedeutung. */
+  status: RequestStatus;
+  createdAt: string;
+}
+
+/**
+ * Eine Einladung in eine Gruppe — Phase 18a. Die Gegenrichtung zu `GroupRequest`.
+ *
+ * ── Warum Phase 18 überhaupt nötig war ────────────────────────────────────────
+ * Phase 17 hat nur EINE Richtung gebaut: von außen anfragen, der Gründer bestätigt.
+ * Leopold hat am 2026-09-03 als Erster die App wirklich BENUTZT statt angeschaut,
+ * eine Gruppe gegründet — und sass allein darin. Es gab keinen Weg, jemanden
+ * hineinzuholen. Zehn Minuten Benutzung haben gefunden, was ein ganzer Tag
+ * Durchklicken nicht gefunden hat.
+ *
+ * ── Warum ein EIGENER Typ und nicht `GroupRequest` mit einem Richtungs-Feld ───
+ * Das ist dieselbe Frage zum vierten Mal (`ChatThread.postId`, `GroupRequest`,
+ * `Visibility`) und dieselbe Antwort. Ein Feld `richtung: 'rein' | 'raus'` hätte
+ * jede bestehende Stelle still weiterlaufen lassen: `useEingehendeGruppenAnfragen`
+ * hätte plötzlich auch Einladungen gefunden und sie dem Gründer zum Bestätigen
+ * hingelegt — Unsinn, und der Compiler hätte geschwiegen.
+ *
+ * Sachlich sind es auch zwei Dinge. Eine Anfrage hat einen ABSENDER, der etwas
+ * will, und eine `message`, die er geschrieben hat. Eine Einladung hat einen
+ * EMPFÄNGER, der nichts wollte — deshalb steht hier `toUserId`, und deshalb steht
+ * hier KEINE Nachricht: Wer einlädt, tippt in einer Liste seiner Follower auf
+ * „Einladen". Ein Textfeld je Person wäre die Hürde, die genau das verhindert,
+ * wofür die Einladung da ist.
+ */
+export interface GroupInvite {
+  id: string;
+  groupId: string;
+  /** Wer eingeladen hat. Jedes Mitglied darf das — Ians Entscheidung 26. */
+  fromUserId: string;
+  /** Wer eingeladen wurde. Das Feld, das es bei `GroupRequest` nicht gibt. */
+  toUserId: string;
+  /** Dieselben drei Zustände. `accepted` heißt: drin. */
   status: RequestStatus;
   createdAt: string;
 }

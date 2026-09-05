@@ -17,18 +17,26 @@ import {
 import {
   austrittFolgen,
   beitrittHuerdeText,
+  darfEinladen,
   istGruender,
   istMitglied,
   mitgliederText,
   nachfolgerId,
+  privatHinweis,
 } from '@/features/groups/gruppe';
 import {
   beitrittAnfragen,
   beitrittZuruecknehmen,
+  einladen,
+  einladungAblehnen,
+  einladungAnnehmen,
   gruppeVerlassen,
+  useEinladbare,
   useGruppe,
+  useMeineEinladung,
   useMeineGruppenAnfrage,
   useMitglieder,
+  type EinladbarEintrag,
 } from '@/features/groups/hooks';
 import { useGruppenPosts } from '@/features/posts/hooks';
 import { useIstBlockiert } from '@/features/safety/hooks';
@@ -72,11 +80,18 @@ export default function GruppeScreen() {
   const mitglieder = useMitglieder(gruppe);
   const posts = useGruppenPosts(gruppe);
   const meineAnfrage = useMeineGruppenAnfrage(id);
+  const meineEinladung = useMeineEinladung(id);
+  const einladbare = useEinladbare(gruppe);
   const gruender = useUser(gruppe?.creatorId);
+  // WER eingeladen hat, ist bei einer privaten Gruppe die einzige Auskunft, die man
+  // von aussen bekommt — und die, an der man entscheidet. „Lea hat dich geholt" ist
+  // etwas anderes als „jemand hat dich geholt".
+  const einlader = useUser(meineEinladung?.fromUserId);
   const blockiert = useIstBlockiert(gruppe?.creatorId);
 
   const [nachricht, setNachricht] = useState('');
   const [fragt, setFragt] = useState(false);
+  const [laedtEin, setLaedtEin] = useState(false);
 
   if (!gruppe) {
     return (
@@ -93,6 +108,11 @@ export default function GruppeScreen() {
 
   const drin = istMitglied(gruppe, ich.id);
   const meine = istGruender(gruppe, ich.id);
+  // Phase 18a: NICHT `meine` — seit Ians Entscheidung 26 sind Gründen und Einladen
+  // zwei verschiedene Rechte. In einer frisch gegründeten Gruppe geben beide
+  // dieselbe Antwort, deshalb fällt eine Verwechslung hier nie auf.
+  const darfHolen = darfEinladen(gruppe, ich.id);
+  const privat = privatHinweis(gruppe);
   // Ians Entscheidung 2: Wer die Gruppe verlässt, gibt sie an den weiter, der am
   // längsten dabei ist. Der Name steht in der Rückfrage — sonst tippt jemand auf
   // „Verlassen" und erfährt erst hinterher, dass er seine Gruppe verschenkt hat.
@@ -117,7 +137,20 @@ export default function GruppeScreen() {
           {mitgliederText(gruppe.memberIds.length)}   ·   {ortText(gruppe.district)}
         </SsText>
 
-        {gruender ? (
+        {/* Der Satz kommt aus `gruppe.ts` und nicht von hier — dieselbe Trennung
+            wie bei `austrittFolgen()` weiter unten. Von INNEN ist „privat" eine
+            Auskunft (deine Posts laufen enger), von AUSSEN eine Hürde; welcher der
+            beiden Sätze fällt, entscheidet die Regel, nicht der Screen. */}
+        {privat && drin ? <SsIconText icon="schloss">{privat}</SsIconText> : null}
+
+        {/* ⚠️ Beim Durchklicken am 2026-09-05 gefunden, und nur dort zu finden: Bei
+            einer PRIVATEN Gruppe, in der man nicht ist, stand hier „Aufgemacht von
+            Mira." — ein Name aus genau der Mitgliederliste, die zubleiben soll.
+            Zwei Regeln, die einzeln stimmen: Phase 17 zeigt den Gründer, damit man
+            weiß, wer die Anfrage bestätigt; Phase 18a verbirgt die Mitglieder. Bei
+            einer privaten Gruppe gibt es gar keine Anfrage zu bestätigen — der
+            Grund für die erste Regel fällt weg, das Leck der zweiten bleibt. */}
+        {gruender && (drin || gruppe.offen) ? (
           <SsText variant="caption" color={colors.inkSoft}>
             {meine ? 'Du hast sie aufgemacht.' : `Aufgemacht von ${gruender.displayName}.`}
           </SsText>
@@ -137,6 +170,42 @@ export default function GruppeScreen() {
               <MitgliedZeile key={person.id} person={person} gruppe={gruppe} ichId={ich.id} />
             ))}
           </View>
+
+          {/* Phase 18a — Leopolds Loch. Der Knopf steht direkt unter „Wer dabei
+              ist", weil das die Stelle ist, an der die Frage aufkommt: Man sieht,
+              wer da ist, und merkt, wer fehlt. Zugeklappt, weil die Liste so lang
+              ist wie mein Folge-Graph und die Gruppenseite nicht davon leben soll. */}
+          {darfHolen ? (
+            <View style={styles.block}>
+              {laedtEin ? (
+                <>
+                  <SsText variant="label">Wen willst du holen?</SsText>
+                  {einladbare.length === 0 ? (
+                    <SsText variant="caption" color={colors.inkSoft}>
+                      Du kannst Leute einladen, denen du folgst oder die dir folgen. Im
+                      Moment ist das niemand — folg jemandem, dann steht er hier.
+                    </SsText>
+                  ) : (
+                    einladbare.map((eintrag) => (
+                      <EinladbarZeile
+                        key={eintrag.person.id}
+                        eintrag={eintrag}
+                        gruppe={gruppe}
+                      />
+                    ))
+                  )}
+                  <SsButton label="Fertig" block onPress={() => setLaedtEin(false)} />
+                </>
+              ) : (
+                <SsButton
+                  label="Leute einladen"
+                  icon="personen"
+                  block
+                  onPress={() => setLaedtEin(true)}
+                />
+              )}
+            </View>
+          ) : null}
 
           <SsButton
             label="Für die Gruppe posten"
@@ -205,6 +274,8 @@ export default function GruppeScreen() {
         <Aussenseite
           gruppe={gruppe}
           angefragt={meineAnfrage !== undefined}
+          einladungId={meineEinladung?.id}
+          einladerName={einlader?.displayName}
           blockiert={blockiert}
           nachricht={nachricht}
           setNachricht={setNachricht}
@@ -212,8 +283,13 @@ export default function GruppeScreen() {
       )}
 
       {/* Ganz unten und nur für den Gründer: DASS Anfragen warten, nicht wie man sie
-          beantwortet. Das steht im Anfragen-Tab. */}
-      {meine ? (
+          beantwortet. Das steht im Anfragen-Tab.
+
+          Seit Phase 18a NICHT bei einer privaten Gruppe: In die kommt niemand über
+          eine Anfrage, also kann hier auch keine warten. Ein Knopf, der auf einen
+          Vorgang zeigt, den es für diese Gruppe nicht gibt, ist dasselbe wie ein
+          Satz, der etwas verspricht, was die Regel nicht tut (harte Regel 32). */}
+      {meine && gruppe.offen ? (
         <SsButton
           label="Anfragen ansehen"
           icon="hand"
@@ -238,23 +314,61 @@ export default function GruppeScreen() {
 function Aussenseite({
   gruppe,
   angefragt,
+  einladungId,
+  einladerName,
   blockiert,
   nachricht,
   setNachricht,
 }: {
   gruppe: Group;
   angefragt: boolean;
+  /** Phase 18a: Liegt eine Einladung für mich vor, gibt es hier einen Weg hinein. */
+  einladungId?: string;
+  einladerName?: string;
   blockiert: boolean;
   nachricht: string;
   setNachricht: (t: string) => void;
 }) {
-  const huerde = beitrittHuerdeText();
+  const huerde = beitrittHuerdeText(gruppe);
 
   if (blockiert) {
     return (
       <SsText variant="caption" color={colors.inkSoft} center>
         Zwischen dir und dem Gründer dieser Gruppe steht eine Blockierung.
       </SsText>
+    );
+  }
+
+  // Die Einladung steht VOR allem anderen — auch vor „Anfrage geschickt" und vor
+  // der Privat-Hürde. Sie ist der einzige Zustand hier, in dem ein Weg hinein
+  // offen ist, und bei einer privaten Gruppe der einzige überhaupt. Stünde sie
+  // weiter unten, läse man erst „hier kommst du nicht hinein" und darunter den
+  // Knopf, der genau das widerlegt.
+  if (einladungId) {
+    return (
+      <View style={styles.block}>
+        <SsIconText icon="funken">
+          {einladerName ? `${einladerName} hat dich eingeladen` : 'Du bist eingeladen'}
+        </SsIconText>
+        <SsText variant="caption" color={colors.inkSoft}>
+          {angefragt
+            ? // Der Fall aus `data/mock.ts` (gr3 + gi1): Man hat angefragt UND
+              // wird eingeladen. Der Satz sagt, was mit der Anfrage passiert —
+              // sonst sucht man sie hinterher im Anfragen-Tab.
+              'Du hattest hier auch angefragt. Nimmst du an, erledigt sich das damit.'
+            : 'Nimm an, dann bist du sofort dabei — der Gründer muss nichts mehr bestätigen.'}
+        </SsText>
+        <SsButton
+          label="Annehmen"
+          icon="haken"
+          variant="category"
+          category={gruppe.category}
+          block
+          size="lg"
+          onPress={() => einladungAnnehmen(einladungId)}
+        />
+        <SsButton label="Nein danke" block onPress={() => einladungAblehnen(einladungId)} />
+      </View>
     );
   }
 
@@ -270,11 +384,19 @@ function Aussenseite({
     );
   }
 
+  // Ians Entscheidung 27: Name, Kategorie, Bezirk und Mitgliederzahl stehen oben
+  // in der Karte und bleiben stehen — hier kommt nur dazu, dass es keinen Weg
+  // hinein gibt. Kein „gibt es nicht", keine leere Fläche: beides sähe aus wie ein
+  // Fehler, und der Screen sagt zwei Zeilen höher schon etwas anderes für den Fall,
+  // dass es die Gruppe wirklich nicht mehr gibt.
   if (huerde) {
     return (
-      <SsText variant="caption" color={colors.inkSoft} center>
-        {huerde}
-      </SsText>
+      <View style={styles.block}>
+        <SsIconText icon="schloss">{huerde}</SsIconText>
+        <SsText variant="caption" color={colors.inkSoft}>
+          Was hier läuft und wer dabei ist, bleibt zu.
+        </SsText>
+      </View>
     );
   }
 
@@ -303,6 +425,49 @@ function Aussenseite({
         onPress={() => beitrittAnfragen(gruppe.id, nachricht)}
       />
     </View>
+  );
+}
+
+/**
+ * Eine Person, die man holen könnte — Phase 18a.
+ *
+ * ── Warum vier Zustände und nicht ein ausgegrauter Knopf ──────────────────────
+ * „Schon drin", „schon eingeladen" und „hat selbst angefragt" sind drei
+ * verschiedene Auskünfte, und keine davon passt in einen `disabled`-Knopf: Der
+ * sagt nur, dass gerade nichts geht, nicht warum. Bei „hat selbst angefragt" ist
+ * das besonders wichtig — dort liegt die Handlung woanders, nämlich im
+ * Anfragen-Tab beim Gründer.
+ *
+ * Ein Textfeld je Person gibt es bewusst nicht (siehe `GroupInvite` in
+ * `types/models.ts`): Eine Einladung ist ein Tipp, sonst lädt niemand jemanden ein.
+ */
+function EinladbarZeile({ eintrag, gruppe }: { eintrag: EinladbarEintrag; gruppe: Group }) {
+  const { person, zustand } = eintrag;
+
+  return (
+    <SsCard>
+      <View style={styles.person}>
+        <SsAvatar name={person.displayName} seed={person.id} photoUrl={person.photoUrl} size="sm" />
+        <SsText variant="body" style={styles.name} numberOfLines={1}>
+          {person.displayName}
+        </SsText>
+
+        {zustand === 'einladbar' ? (
+          <SsButton
+            label="Einladen"
+            variant="category"
+            category={gruppe.category}
+            onPress={() => einladen(gruppe.id, person.id)}
+          />
+        ) : zustand === 'eingeladen' ? (
+          <SsIconText icon="uhr">Eingeladen</SsIconText>
+        ) : zustand === 'angefragt' ? (
+          <SsIconText icon="hand">Fragt schon an</SsIconText>
+        ) : (
+          <SsIconText icon="haken">Dabei</SsIconText>
+        )}
+      </View>
+    </SsCard>
   );
 }
 

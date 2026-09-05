@@ -2,6 +2,7 @@ import { naechsteHalbeStunde } from '@/lib/zeit';
 import type {
   ChatThread,
   Group,
+  GroupInvite,
   GroupRequest,
   JoinRequest,
   Message,
@@ -195,6 +196,12 @@ export const users: User[] = USER_SEEDS.map((seed) => ({
 //   g3  Ian ist DRAUSSEN und hat angefragt (gr3) → er sieht die Gruppe, aber nicht
 //       ihre Posts (p16) und nicht ihre Mitgliederliste. Das ist der Beweis, dass
 //       die dritte Sichtbarkeits-Stufe wirklich etwas tut.
+//   g4  PRIVAT, und Ian ist weder drin noch eingeladen (Phase 18a) → sie steht
+//       NICHT in der Liste auf `/gruppen`. Zu sehen bekommt man sie nur, indem man
+//       `/gruppe/g4` direkt aufruft — und genau das ist der Fall, den Ians
+//       Entscheidung 27 beantwortet: der Link, der in eine fremde WhatsApp-Gruppe
+//       weitergeleitet wurde. Ohne diesen einen Datensatz prüft niemand, was ein
+//       Fremder dort liest.
 //
 // Der Gründer steht in `memberIds` IMMER an erster Stelle, danach in der
 // Reihenfolge des Beitritts — daran hängt Ians Regel, wer die Gruppe erbt
@@ -212,6 +219,7 @@ export const groups: Group[] = [
     category: 'sport',
     creatorId: 'u_lea',
     memberIds: ['u_lea', 'u_ian', 'u_flo'],
+    offen: true,
     district: '1170',
     createdAt: vorStunden(24 * 40),
   },
@@ -222,6 +230,7 @@ export const groups: Group[] = [
     category: 'study',
     creatorId: 'u_ian',
     memberIds: ['u_ian', 'u_sara'],
+    offen: true,
     district: '1070',
     createdAt: vorStunden(24 * 12),
   },
@@ -232,8 +241,22 @@ export const groups: Group[] = [
     category: 'culture',
     creatorId: 'u_mira',
     memberIds: ['u_mira', 'u_tobi', 'u_sara', 'u_flo'],
+    offen: true,
     district: '1050',
     createdAt: vorStunden(24 * 90),
+  },
+  {
+    id: 'g4',
+    name: 'Atelier Donnerstag',
+    description: 'Kleine Runde, die zusammen zeichnet. Wir kennen uns aus der Schule.',
+    category: 'creative',
+    creatorId: 'u_mira',
+    memberIds: ['u_mira', 'u_tobi'],
+    // Die einzige private Gruppe — und Ian ist NICHT drin. Siehe den Kopf oben:
+    // Sie ist nur über `/gruppe/g4` erreichbar und beweist, was ein Fremder sieht.
+    offen: false,
+    district: '1050',
+    createdAt: vorStunden(24 * 60),
   },
 ];
 
@@ -263,6 +286,39 @@ export const groupRequests: GroupRequest[] = [
     message: 'Servus! Würd gern mitkommen, wenn noch wer Platz hat.',
     status: 'pending',
     createdAt: vorStunden(11),
+  },
+];
+
+// ── Einladungen (Phase 18a) ──────────────────────────────────────────────────
+// Zwei Stück, eine je Richtung — sonst sieht man immer nur die halbe Mechanik:
+//
+//   gi1  Sara → Ian, in g3 „Kino am Donnerstag". EINGEHEND: Sie liegt im
+//        Anfragen-Tab und zählt in dieselbe Zahl wie die Beitritts-Anfragen.
+//        Sara ist NICHT die Gründerin von g3 (das ist Mira) — genau das ist der
+//        Punkt von Ians Entscheidung 26: Jedes Mitglied darf jemanden holen.
+//        Dass Ian gleichzeitig eine offene Anfrage an dieselbe Gruppe hat (gr3),
+//        ist Absicht: Nimmt er die Einladung an, muss die Anfrage verschwinden —
+//        sonst stünde „Wartet" bei einer Gruppe, in der er schon drin ist.
+//
+//   gi2  Ian → Mira, in g1 „Marswiese Tennis". AUSGEHEND: Auf der Gruppenseite
+//        steht Mira dadurch mit „Eingeladen" statt mit einem Knopf. Ohne diesen
+//        Datensatz sähe man den Zustand zwischen Einladen und Annehmen nie.
+export const groupInvites: GroupInvite[] = [
+  {
+    id: 'gi1',
+    groupId: 'g3',
+    fromUserId: 'u_sara',
+    toUserId: 'u_ian',
+    status: 'pending',
+    createdAt: vorStunden(2),
+  },
+  {
+    id: 'gi2',
+    groupId: 'g1',
+    fromUserId: 'u_ian',
+    toUserId: 'u_mira',
+    status: 'pending',
+    createdAt: vorStunden(20),
   },
 ];
 

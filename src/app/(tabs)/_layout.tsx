@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { StyleSheet, type ColorValue } from 'react-native';
 
 import { SsIcon } from '@/components/ui';
-import { useOffeneGruppenAnfragen } from '@/features/groups/hooks';
+import { useMeineEinladungen, useOffeneGruppenAnfragen } from '@/features/groups/hooks';
 import { useOffeneAnfragen } from '@/features/requests/hooks';
 import { colors, spacing, status, type } from '@/theme';
 import type { IconName } from '@/theme/icons';
@@ -32,7 +32,13 @@ export default function TabsLayout() {
   // Entscheidung 2 vermeiden wollte. Addiert wird hier, einmal — die Haken bleiben
   // getrennt, damit niemand die zwei Listen wieder auseinandernehmen muss.
   const offeneGruppen = useOffeneGruppenAnfragen();
-  const wartend = offene.length + offeneGruppen.length;
+  // Phase 18a zählt eine dritte Sorte mit: Einladungen an mich. Bewusst DERSELBE
+  // Haken, den der Screen benutzt, und nicht ein leichterer Filter daneben — der
+  // Screen blendet Einladungen aus, in deren Gruppe ich inzwischen schon bin, und
+  // ein eigener Zähler würde sie mitzählen. Das Ergebnis wäre eine Zahl am Tab, die
+  // man nicht wegbekommt, weil die Zeile dazu gar nicht dasteht.
+  const einladungen = useMeineEinladungen();
+  const wartend = offene.length + offeneGruppen.length + einladungen.length;
 
   return (
     <Tabs

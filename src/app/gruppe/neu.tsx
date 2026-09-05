@@ -2,8 +2,18 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { SsBack, SsButton, SsCard, SsChip, SsInput, SsScreen, SsText } from '@/components/ui';
-import { kategorieVorschlag, mitgliederText } from '@/features/groups/gruppe';
+import {
+  SsBack,
+  SsButton,
+  SsCard,
+  SsChip,
+  SsIconText,
+  SsInput,
+  SsScreen,
+  SsSegment,
+  SsText,
+} from '@/components/ui';
+import { kategorieVorschlag, mitgliederText, NEUE_GRUPPE_OFFEN } from '@/features/groups/gruppe';
 import { gruppeErstellen } from '@/features/groups/hooks';
 import { useCurrentUser } from '@/features/social/hooks';
 import { istWienerBezirk, ortText } from '@/lib/bezirk';
@@ -35,6 +45,10 @@ export default function GruppeNeuScreen() {
   const [kategorie, setKategorie] = useState<ActivityCategory>(kategorieVorschlag(ich.interests));
   const [beschreibung, setBeschreibung] = useState('');
   const [bezirk, setBezirk] = useState(ich.district);
+  // Phase 18a. `useState<boolean>` ausgeschrieben — sonst erbt der Zustand den
+  // Literaltyp der Konstante und lässt sich nicht mehr umschalten (die Falle aus
+  // Phase 12 mit `STANDARD.plaetze`).
+  const [offen, setOffen] = useState<boolean>(NEUE_GRUPPE_OFFEN);
   const [geprueft, setGeprueft] = useState(false);
 
   const nameSauber = name.trim();
@@ -59,6 +73,7 @@ export default function GruppeNeuScreen() {
       description: beschreibung,
       category: kategorie,
       district: bezirkLeer ? null : bezirk.trim(),
+      offen,
     });
 
     // `replace` wie beim Posten: Das halb ausgefüllte Formular soll nicht hinter der
@@ -72,7 +87,12 @@ export default function GruppeNeuScreen() {
 
       <SsText variant="title">Neue Gruppe</SsText>
       <SsText variant="caption" color={colors.inkSoft}>
-        Du bist danach der Gründer und bestätigst, wer dazukommt.
+        {/* Seit Phase 18a stimmt „du bestätigst, wer dazukommt" nur noch halb: Von
+            aussen anfragen läuft weiter über den Gründer, aber einladen darf jedes
+            Mitglied (Ians Entscheidung 26). Der Satz sagt jetzt beides — sonst
+            verspricht der Screen eine Kontrolle, die es nicht mehr gibt. */}
+        Du bist danach der Gründer. Anfragen von aussen bestätigst du; einladen darf
+        später jeder, der drin ist.
       </SsText>
 
       <SsCard category={kategorie}>
@@ -86,6 +106,10 @@ export default function GruppeNeuScreen() {
         <SsText variant="caption" color={colors.inkSoft}>
           {mitgliederText(1)}   ·   {ortText(istWienerBezirk(bezirk) ? bezirk.trim() : null)}
         </SsText>
+        {/* Harte Regel 18 gilt auch hier: Die Vorschau ist die Stelle, an der man
+            sieht, was eingestellt IST. Ein Schloss, das nur im Formular steht, wäre
+            genau die Einstellung, die man beim Abschicken vergessen hat. */}
+        {offen ? null : <SsIconText icon="schloss">Privat</SsIconText>}
       </SsCard>
 
       <SsInput
@@ -126,6 +150,36 @@ export default function GruppeNeuScreen() {
         maxLength={4}
         error={zeigen('bezirk')}
       />
+
+      <View style={styles.feld}>
+        <SsText variant="label">Wer darf hinein?</SsText>
+        {/* Eine geteilte Fläche und keine zwei Pillen — es ist ein Entweder-oder,
+            und `SsSegment` sagt das von selbst (siehe den Kopf des Bausteins).
+
+            ⚠️ EIN WORT je Seite, und das ist keine Kürze um der Kürze willen. Auf
+            360 px stand hier zuerst „Jeder kann anfragen" / „Nur auf Einladung" —
+            und die linke Hälfte zeigte „Jeder kann anfr…". `SsSegment` teilt die
+            Breite und schneidet ab, ohne sich zu beschweren; am breiten Fenster
+            sieht man es nie (dieselbe Falle wie mit „Sta…" in Phase 11, nur mit
+            einer anderen Ursache: dort war es `flex`, hier ist der Text zu lang).
+            Was die beiden Wörter BEDEUTEN, steht in der Zeile darunter — und
+            „Privat" ist dasselbe Wort, das die Vorschau und die Gruppenseite
+            benutzen. Ein Umschalter, der etwas anderes heißt als das Ergebnis, ist
+            zwei Vokabeln für eine Sache. */}
+        <SsSegment<boolean>
+          value={offen}
+          onChange={setOffen}
+          options={[
+            { wert: true, label: 'Offen' },
+            { wert: false, label: 'Privat' },
+          ]}
+        />
+        <SsText variant="caption" color={colors.inkSoft}>
+          {offen
+            ? 'Die Gruppe steht in der Liste. Wer hinein will, fragt an — du bestätigst.'
+            : 'Die Gruppe steht in keiner Liste. Hinein kommt nur, wen jemand von drinnen einlädt.'}
+        </SsText>
+      </View>
 
       <SsButton label="Gruppe erstellen" icon="personen" block size="lg" onPress={absenden} />
     </SsScreen>

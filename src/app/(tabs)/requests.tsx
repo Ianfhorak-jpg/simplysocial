@@ -7,8 +7,12 @@ import { mitgliederText } from '@/features/groups/gruppe';
 import {
   beitrittAblehnen,
   beitrittBestaetigen,
+  einladungAblehnen,
+  einladungAnnehmen,
   useEingehendeGruppenAnfragen,
   useGesendeteGruppenAnfragen,
+  useMeineEinladungen,
+  type EinladungEintrag,
   type GruppenAnfrageEintrag,
 } from '@/features/groups/hooks';
 import { freiePlaetze } from '@/features/posts/hooks';
@@ -61,10 +65,29 @@ import type { Group, Post, RequestStatus } from '@/types/models';
  */
 type Abschnitt =
   | { art: 'post'; post: Post }
-  | { art: 'gruppe'; gruppe: Group };
+  | { art: 'gruppe'; gruppe: Group }
+  | { art: 'einladung' };
 
-/** Was in so einem Abschnitt liegt. Beide haben `anfrage`, sonst nichts gemeinsam. */
-type Zeile = AnfrageEintrag | GruppenAnfrageEintrag;
+/**
+ * Was in so einem Abschnitt liegt.
+ *
+ * ⚠️ **Der Unterschied darf nicht an `'gruppe' in item` hängen.** Bis Phase 17
+ * reichte das, weil nur die Gruppen-Anfrage eine `gruppe` trug. Eine Einladung
+ * trägt auch eine — die Prüfung wäre still falsch geworden und hätte Einladungen
+ * als Beitritts-Anfragen gezeichnet, mit „Aufnehmen"-Knopf und allem. Deshalb wird
+ * ab jetzt an dem geprüft, was jede Sorte NUR SELBST hat: `einladung`.
+ *
+ * Das ist dieselbe Lehre wie bei `Visibility` in Phase 17, eine Ebene tiefer: Ein
+ * Union wächst, und ein Merkmal, das heute eindeutig ist, ist es morgen nicht mehr.
+ * Am sichersten wäre ein `art`-Feld an jedem Eintrag — hier ist es nicht nötig,
+ * weil `einladung` per Typ nur an einem der drei vorkommt und `tsc` das prüft.
+ */
+type Zeile = AnfrageEintrag | GruppenAnfrageEintrag | EinladungEintrag;
+
+/** Die ID einer Zeile, egal welcher Sorte — für `keyExtractor`. */
+function zeilenId(e: Zeile): string {
+  return 'einladung' in e ? e.einladung.id : e.anfrage.id;
+}
 
 export default function RequestsScreen() {
   const [ansicht, setAnsicht] = useState<'bekommen' | 'geschickt'>('bekommen');
@@ -72,10 +95,12 @@ export default function RequestsScreen() {
   const gesendet = useGesendeteAnfragen();
   const gruppenAnfragen = useEingehendeGruppenAnfragen();
   const gruppenGesendet = useGesendeteGruppenAnfragen();
+  const einladungen = useMeineEinladungen();
 
   const offeneAnzahl =
     gruppen.reduce((summe, g) => summe + g.eintraege.length, 0) +
-    gruppenAnfragen.reduce((summe, g) => summe + g.eintraege.length, 0);
+    gruppenAnfragen.reduce((summe, g) => summe + g.eintraege.length, 0) +
+    einladungen.length;
 
   // SectionList erwartet seine Zeilen unter dem Namen `data`. Die Haken liefern
   // `eintraege` — ein Wort, das etwas bedeutet. Übersetzt wird hier, damit die
@@ -83,13 +108,20 @@ export default function RequestsScreen() {
   const sections = useMemo(
     () => [
       ...gruppen.map((g) => ({ art: 'post' as const, post: g.post, data: g.eintraege as Zeile[] })),
+      // Einladungen stehen zwischen den beiden — unter den Post-Anfragen, weil die
+      // einen Termin haben, der vorbeigeht (dieselbe Uhr wie in Phase 17), und über
+      // den Beitritts-Anfragen, weil eine Einladung an MICH gerichtet ist: Jemand
+      // hat mich ausgesucht. Eine Beitritts-Anfrage ist eine Warteschlange.
+      ...(einladungen.length > 0
+        ? [{ art: 'einladung' as const, data: einladungen as Zeile[] }]
+        : []),
       ...gruppenAnfragen.map((g) => ({
         art: 'gruppe' as const,
         gruppe: g.gruppe,
         data: g.eintraege as Zeile[],
       })),
     ],
-    [gruppen, gruppenAnfragen],
+    [gruppen, gruppenAnfragen, einladungen],
   );
 
   /**
@@ -126,22 +158,27 @@ export default function RequestsScreen() {
       {ansicht === 'bekommen' ? (
         <SectionList<Zeile, Abschnitt>
           sections={sections}
-          // Post-Anfragen heißen `r…`, Gruppen-Anfragen `gr…` (`neueId` in
-          // `store.ts`) — in einer gemeinsamen Liste sind die Schlüssel damit
-          // eindeutig, ohne dass hier ein Präfix drangeklebt werden muss.
-          keyExtractor={(e) => e.anfrage.id}
+          // Post-Anfragen heißen `r…`, Gruppen-Anfragen `gr…`, Einladungen `gi…`
+          // (`neueId` in `store.ts`) — in einer gemeinsamen Liste sind die Schlüssel
+          // damit eindeutig, ohne dass hier ein Präfix drangeklebt werden muss.
+          keyExtractor={zeilenId}
           renderSectionHeader={({ section }) =>
             section.art === 'post' ? (
               <GruppenKopf post={section.post} />
-            ) : (
+            ) : section.art === 'gruppe' ? (
               <GruppeKopf gruppe={section.gruppe} />
+            ) : (
+              <EinladungenKopf />
             )
           }
           renderItem={({ item }) =>
             // Am ITEM unterschieden und nicht am Abschnitt: TypeScript weiß beim
-            // Zeichnen nicht, dass die beiden zusammengehören — `'gruppe' in item`
-            // ist die Prüfung, die es wirklich beweist.
-            'gruppe' in item ? (
+            // Zeichnen nicht, dass die beiden zusammengehören. Die Reihenfolge der
+            // Prüfungen ist wichtig — `einladung` zuerst, weil eine Einladung AUCH
+            // eine `gruppe` trägt (siehe den Kopf bei `Zeile`).
+            'einladung' in item ? (
+              <EinladungZeile eintrag={item} />
+            ) : 'gruppe' in item ? (
               <GruppenAnfrageZeile eintrag={item} />
             ) : (
               <EingehendeZeile eintrag={item} />
@@ -160,10 +197,14 @@ export default function RequestsScreen() {
       ) : (
         <SectionList<Zeile, { art: 'gesendet' }>
           sections={[{ art: 'gesendet', data: gesendetAlles }]}
-          keyExtractor={(e) => e.anfrage.id}
+          keyExtractor={zeilenId}
           renderSectionHeader={() => null}
           renderItem={({ item }) =>
-            'gruppe' in item ? (
+            // In „Geschickt" liegen keine Einladungen — die kommen an, sie gehen
+            // nicht von hier weg. Wen ICH eingeladen habe, steht auf der
+            // Gruppenseite bei der Person („Eingeladen"), weil es dort die Frage
+            // beantwortet, die man wirklich hat: Wer fehlt noch?
+            'einladung' in item ? null : 'gruppe' in item ? (
               <GesendeteGruppenZeile eintrag={item} />
             ) : (
               <GesendeteZeile eintrag={item} />
@@ -402,6 +443,89 @@ function GruppenAnfrageZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) {
           block
           style={styles.knopf}
           onPress={() => beitrittBestaetigen(anfrage.id)}
+        />
+      </View>
+    </SsCard>
+  );
+}
+
+/**
+ * Die Überschrift über den Einladungen — Phase 18a.
+ *
+ * Anders als die beiden Köpfe darüber zeigt sie KEINEN Gegenstand: Bei den anderen
+ * warten mehrere Leute auf DASSELBE (einen Post, eine Gruppe), hier wartet je eine
+ * andere Gruppe auf MICH. Ein Kopf je Einladung wäre eine Überschrift über einer
+ * einzigen Zeile — die Gruppe steht deshalb in der Zeile selbst.
+ */
+function EinladungenKopf() {
+  return (
+    <View style={styles.gruppenKopf}>
+      <SsText variant="heading">Du bist eingeladen</SsText>
+      <SsText variant="caption" color={colors.inkSoft}>
+        Jemand aus einer Gruppe hat dich geholt. Nimmst du an, bist du sofort dabei.
+      </SsText>
+    </View>
+  );
+}
+
+/**
+ * Eine Einladung an mich.
+ *
+ * ── Warum hier zwei Namen stehen ──────────────────────────────────────────────
+ * Die GRUPPE ist die Sache, um die es geht, und steht deshalb oben wie ein
+ * Post-Titel. Wer eingeladen hat, steht darunter — aber es ist nicht Beiwerk: Bei
+ * einer privaten Gruppe ist es das Einzige, was man über sie weiß, und die einzige
+ * Grundlage der Entscheidung.
+ *
+ * ── Warum „Nein danke" links steht ────────────────────────────────────────────
+ * Dieselbe Regel wie bei `EingehendeZeile`: Rechts unten landet der Daumen von
+ * selbst, dort gehört die Zusage hin. Das Ablehnen ist hier aber NICHT rot — eine
+ * Einladung auszuschlagen tut niemandem weh, und es gibt nichts zu warnen.
+ */
+function EinladungZeile({ eintrag }: { eintrag: EinladungEintrag }) {
+  const { einladung, von, gruppe } = eintrag;
+
+  return (
+    <SsCard category={gruppe.category}>
+      <Pressable
+        onPress={() => router.push({ pathname: '/gruppe/[id]', params: { id: gruppe.id } })}
+        accessibilityRole="button"
+        style={styles.gruppenKopf}>
+        <View style={styles.gruppenZeile}>
+          <SsChip category={gruppe.category} />
+          <SsText variant="caption" color={colors.inkSoft}>
+            {mitgliederText(gruppe.memberIds.length)}
+          </SsText>
+        </View>
+        <SsText variant="heading" numberOfLines={1}>
+          {gruppe.name}
+        </SsText>
+      </Pressable>
+
+      <View style={styles.person}>
+        <SsAvatar name={von.displayName} seed={von.id} photoUrl={von.photoUrl} size="sm" />
+        <View style={styles.personText}>
+          <SsText variant="body">{von.displayName} hat dich eingeladen</SsText>
+          <SsText variant="caption" color={colors.inkSoft}>
+            {vergangen(einladung.createdAt)}
+          </SsText>
+        </View>
+      </View>
+
+      <View style={styles.knopfZeile}>
+        <SsButton
+          label="Nein danke"
+          block
+          style={styles.knopf}
+          onPress={() => einladungAblehnen(einladung.id)}
+        />
+        <SsButton
+          variant="category"
+          category={gruppe.category}
+          label="Annehmen"
+          block
+          style={styles.knopf}
+          onPress={() => einladungAnnehmen(einladung.id)}
         />
       </View>
     </SsCard>

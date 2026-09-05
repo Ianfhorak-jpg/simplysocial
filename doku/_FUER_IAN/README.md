@@ -190,8 +190,11 @@ funktioniert es." Alles, was sie geändert haben wollten, ist gebaut:
 | ~~**3.**~~ | ~~**Direktnachrichten** — bisher kann man nur über eine Aktivität schreiben~~ — ✅ **fertig am 02.09.** | Leopold |
 | ~~**4.**~~ | ~~**Gruppen** wie „Marswiese Tennis", denen man beitreten kann~~ — ✅ **fertig am 02.09.** | Leopold |
 
+Und was **Leopold am 03.09. beim wirklichen Benutzen** gefunden hat, ist seit dem
+**05.09.** auch zu — siehe den nächsten Abschnitt.
+
 **Die Liste ist leer. Deshalb ist der nächste Schritt kein Bauen, sondern ein
-Herschicken:** Die drei haben die Fassung von *vor* diesen vier Umbauten gesehen.
+Herschicken:** Die drei haben die Fassung von *vor* diesen fünf Umbauten gesehen.
 Schick ihnen den Link noch einmal und frag, ob sich das jetzt anders anfühlt. Was sie
 diesmal sagen, entscheidet, was als Nächstes gebaut wird — mehr als alles, was in
 PLAN.md steht.
@@ -208,6 +211,59 @@ inhaltlich sitzt.
   Initialen dort, wo das Bild hinkommt. *(Ausführlich in OFFENE_SACHEN.md, Punkt 9.)*
 - **Leopold antworten** auf „Wäre das alles für die erste richtige Version?" — deine
   Antwort war: erst den Prototyp fertig machen, Backend danach.
+
+## ✅ Erledigt: Leute in eine Gruppe einladen (05.09.)
+
+**Leopold hat es gefunden, indem er die App wirklich benutzt hat** statt sie
+durchzuklicken: Er hat eine Gruppe gegründet — und sass allein drin. Es gab keinen Weg,
+jemanden hineinzuholen. Am 02.09. war nur die Richtung von aussen nach innen gebaut:
+anfragen, der Gründer sagt ja. Wer gründet, hat niemanden zum Anfragen.
+
+**Was jetzt geht:** Auf jeder Gruppenseite, in der du drin bist, steht unter „Wer dabei
+ist" ein Knopf **„Leute einladen"**. Der klappt eine Liste auf mit allen, denen du folgst
+oder die dir folgen. Neben jedem steht entweder „Einladen", oder es steht da, warum
+nicht: *Dabei* · *Eingeladen* · *Fragt schon an*. Beim anderen landet die Einladung im
+**Anfragen-Tab**, im selben roten Zähler wie alles andere — er kann annehmen oder nicht.
+
+**Drei Sachen hast du dabei entschieden:**
+
+1. **Einladen darf jedes Mitglied, nicht nur der Gründer.** Eine Tennisgruppe ist keine
+   Behörde: Wer drin ist, darf jemanden mitbringen. Der Haken, den du kennst: Der Gründer
+   kann dann nicht mehr steuern, wer dazukommt. Zwei Dinge bremsen das — man kann nur
+   Leute einladen, die man kennt (die Liste kommt aus deinen Followern), und wer
+   dazukommt, kann jederzeit wieder gehen.
+
+2. **Es gibt jetzt private Gruppen.** Beim Gründen steht unten **„Wer darf hinein?"** mit
+   *Offen* oder *Privat*. Offen heißt wie bisher: Die Gruppe steht in der Liste, jeder
+   kann anfragen. Privat heißt: Sie steht in **keiner** Liste, und hinein kommt nur, wen
+   jemand von drinnen einlädt.
+
+3. **Was ein Fremder von einer privaten Gruppe sieht:** Name, Kategorie, Bezirk und wie
+   viele drin sind — und dazu den Satz, dass man nur auf Einladung hineinkommt. Keine
+   Posts, keine Mitglieder, kein Knopf. Das ist wichtig, weil jeder Bildschirm der App
+   eine eigene Adresse hat und Links weitergeschickt werden. „Diese Gruppe gibt es nicht"
+   wäre gelogen gewesen, den ganzen Inhalt zu zeigen wäre ein Leck.
+
+**Voreingestellt ist „Offen"** — deine Entscheidung, aus demselben Grund wie beim Posten:
+Die meisten stellen nichts um, also ist die Voreinstellung das, was fast alle abschicken.
+Wären alle Gruppen automatisch privat, fände niemand mehr eine.
+
+**Was du beim Ausprobieren sehen solltest:**
+- *Marswiese Tennis* → **„Leute einladen"** steht da, obwohl **Lea** die Gruppe gegründet
+  hat und nicht du. Genau das ist deine Entscheidung 1.
+- Anfragen-Tab → **Sara hat dich in „Kino am Donnerstag" eingeladen.** Sara ist dort
+  nicht die Gründerin, sondern nur ein Mitglied. Wenn du annimmst, verschwindet auch
+  deine eigene alte Anfrage an dieselbe Gruppe — sonst stünde bei „Geschickt" für immer
+  „Wartet" bei einer Gruppe, in der du längst drin bist.
+- `…github.io/simplysocial/gruppe/g4` direkt aufrufen → **„Atelier Donnerstag"**, eine
+  private Gruppe, in der du nicht bist. Genau das sieht ein Fremder mit dem Link. In der
+  Gruppenliste taucht sie nicht auf, und das ist Absicht.
+
+**Drei Fehler sind dabei aufgefallen und behoben**, alle drei nur durchs Durchklicken am
+schmalen Fenster zu finden: Bei einer privaten Gruppe stand der Name des Gründers da (ein
+Name aus genau der Liste, die zubleiben soll); der Umschalter zeigte „Jeder kann anfr…",
+weil die Beschriftung auf einem schmalen Handy nicht passte; und eine private Gruppe bot
+„Anfragen ansehen" an, obwohl dort gar keine Anfrage ankommen kann.
 
 ## ✅ Erledigt: Gruppen (02.09.)
 

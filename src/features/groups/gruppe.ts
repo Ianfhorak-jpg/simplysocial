@@ -41,6 +41,109 @@ export const BEITRITT: Beitritt = 'anfrage';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
+ *  WER DARF JEMANDEN IN EINE GRUPPE EINLADEN?
+ *  Phase 18a. Entschieden von Ian am 2026-09-05.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Die Frage stellt sich, weil Phase 17 nur EINE Richtung gebaut hat: von außen
+ * anfragen, der Gründer bestätigt. Leopold hat am 2026-09-03 eine Gruppe gegründet
+ * und sass allein drin — es gab keinen Weg, jemanden hineinzuholen.
+ *
+ *   A. NUR DER GRÜNDER. Passt zum Rest: Er ist heute schon der Einzige mit
+ *      Rechten (`GRUENDER_AUSTRITT`, `beitrittBestaetigen`), und das ist bewusst so.
+ *      Haken: Er ist der Flaschenhals. Wer sechs Leute holen will, muss den Gründer
+ *      bitten, sie zu holen — genau die Umständlichkeit, die Leopold gemeldet hat,
+ *      nur eine Ebene höher.
+ *
+ *   B. JEDES MITGLIED. Wer drin ist, darf seine Follower holen. Eine Gruppe wächst
+ *      dann so, wie eine Runde im echten Leben wächst: Jeder bringt jemanden mit.
+ *      Haken: Der Gründer verliert die Kontrolle darüber, wer dazukommt. Jemand holt
+ *      einen Freund, den der Rest nicht kennt.
+ *
+ *   C. JEDES MITGLIED DARF VORSCHLAGEN, DER GRÜNDER BESTÄTIGT. Sicher.
+ *      Haken: ein dritter Zustand („eingeladen, wartet auf den Gründer"), den die
+ *      App erklären muss — und Leopolds Problem war gerade, dass zu viel über den
+ *      Gründer läuft.
+ *
+ * ── Ians Entscheidung, 2026-09-05: B, JEDES MITGLIED. ───────────────────────
+ * „Marswiese Tennis" ist keine Behörde. Wer drin ist, gehört dazu und darf jemanden
+ * mitbringen; C hätte den Flaschenhals von A behalten und noch einen Zustand
+ * dazugelegt.
+ *
+ * **Den Haken kennt er:** Der Gründer kann nicht mehr steuern, wer dazukommt. Zwei
+ * Dinge mildern es, und beide gab es schon: Eingeladen wird nur, wem man FOLGT (die
+ * Liste in `useEinladbare` kommt aus den eigenen Followern, nicht aus allen
+ * Nutzern), und wer dazukommt, kann jederzeit wieder gehen. Ein Rauswerfen gibt es
+ * bewusst nicht — das wäre eine Machtfrage mehr, und die Gruppe ist acht Leute groß.
+ *
+ * ⚠️ **Was das über `creatorId` sagt:** Der Gründer trägt ab jetzt WENIGER als
+ * vorher. Er bestätigt Anfragen von außen, mehr nicht. Wer die beiden Rechte
+ * gedanklich zusammenwirft, baut irgendwo `istGruender()` ein, wo `darfEinladen()`
+ * hingehört — deshalb steht es hier als eigene Regel und nicht als Abfrage im Screen.
+ */
+export type EinladenDarf = 'nur-gruender' | 'jedes-mitglied' | 'mitglied-schlaegt-vor';
+
+/** Ians Entscheidung vom 2026-09-05 (siehe Kopf darüber). **Nicht ohne Rückfrage.** */
+export const EINLADEN_DARF: EinladenDarf = 'jedes-mitglied';
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  WAS SIEHT EIN FREMDER VON EINER PRIVATEN GRUPPE?
+ *  Phase 18a. Entschieden von Ian am 2026-09-05.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Seit Phase 17 gibt es Gruppen, in die man auf Anfrage kommt. Mit dem Einladen
+ * (oben) wird eine zweite Sorte möglich: eine, in die man NUR auf Einladung kommt.
+ * `Group.offen` unterscheidet die beiden.
+ *
+ * Damit stellt sich eine Frage, die es ohne harte Regel 11 gar nicht gäbe: Seit
+ * Phase 8 ist JEDER Screen direkt aufrufbar. Ein Link auf `/gruppe/g4` landet in
+ * irgendeiner WhatsApp-Gruppe, und irgendwann tippt ihn jemand an, der nicht
+ * gemeint war.
+ *
+ *   A. NAME, KATEGORIE, BEZIRK UND MITGLIEDERZAHL — sonst nichts. Kein Weg hinein,
+ *      keine Posts, keine Mitgliederliste.
+ *      Haken: Man weiß, DASS es diese Runde gibt, und kommt nicht hinein. Das ist
+ *      unangenehm, aber ehrlich.
+ *
+ *   B. NUR DER NAME. Noch dichter.
+ *      Haken: Eine Karte, auf der fast nichts steht, sieht aus wie ein Fehler.
+ *
+ *   C. GAR NICHTS — „Diese Gruppe gibt es nicht."
+ *      Dichteste Variante, und die einzige, bei der man nicht einmal die Existenz
+ *      erfährt. Haken: Es ist eine Lüge, und wer den Link von einem Freund hat,
+ *      hält die App für kaputt.
+ *
+ * ── Ians Entscheidung, 2026-09-05: A. ───────────────────────────────────────
+ * Nichts über PERSONEN nach außen (keine Mitgliederliste, keine Posts), aber auch
+ * keine Lüge über die Gruppe selbst. C hätte den Screen aus `/gruppe/[id]`
+ * unterlaufen, der schon sagt „Diese Gruppe gibt es nicht mehr" — zwei verschiedene
+ * Sachverhalte mit demselben Satz, und niemand könnte sie auseinanderhalten.
+ *
+ * **Was daraus für die LISTE folgt und keine eigene Frage war:** In `/gruppen`
+ * taucht eine private Gruppe, in der ich nicht bin, NICHT auf (`inGruppenListe`).
+ * Das ist kein Widerspruch zu A: A beantwortet „was sehe ich, wenn ich die Adresse
+ * habe", die Liste beantwortet „was schlägt die App mir vor". Eine Reihe von Türen,
+ * die alle zu sind, ist kein Vorschlag.
+ */
+export type PrivatSicht = 'name-und-kategorie' | 'nur-name' | 'gar-nichts';
+
+/** Ians Entscheidung vom 2026-09-05 (siehe Kopf darüber). **Nicht ohne Rückfrage.** */
+export const PRIVAT_SICHT: PrivatSicht = 'name-und-kategorie';
+
+/**
+ * Was beim Gründen voreingestellt ist — Ians Entscheidung vom 2026-09-05: **offen**.
+ *
+ * Dieselbe Überlegung wie bei `STANDARD` in `app/create.tsx` (harte Regel 18): Die
+ * meisten klappen nichts auf, also IST die Voreinstellung das, was fast alle
+ * abschicken. „Nur auf Einladung" als Standard hätte fast jede Gruppe unauffindbar
+ * gemacht und die Anfrage-Funktion aus Phase 17 stillgelegt — bei einer App, deren
+ * ganzer Zweck das Finden ist.
+ */
+export const NEUE_GRUPPE_OFFEN = true;
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
  *  WAS PASSIERT MIT DEN POSTS, WENN JEMAND DIE GRUPPE VERLÄSST?
  *  Im PLAN.md ausdrücklich offen gelassen: „beim Bauen entscheiden".
  *  Entschieden von Ian am 2026-09-02.
@@ -181,6 +284,10 @@ export function istGruender(gruppe: Group, userId: string): boolean {
  */
 export function darfBeitreten(gruppe: Group, userId: string): boolean {
   if (istMitglied(gruppe, userId)) return false;
+  // Phase 18a: Eine private Gruppe ist die App-weite Regel für DIESE eine Gruppe
+  // ausgeschaltet. Steht VOR dem `switch`, weil `Group.offen` das speziellere Wort
+  // hat — `BEITRITT` sagt, wie es normalerweise geht, `offen` sagt, ob es hier geht.
+  if (!gruppe.offen) return false;
   switch (BEITRITT) {
     case 'offen':
     case 'anfrage':
@@ -191,13 +298,49 @@ export function darfBeitreten(gruppe: Group, userId: string): boolean {
 }
 
 /**
+ * Darf diese Person jemanden in die Gruppe holen? Führt `EINLADEN_DARF` aus.
+ *
+ * Bewusst NICHT `istGruender()` im Screen: Seit Ians Entscheidung 26 sind das zwei
+ * verschiedene Rechte, und sie stehen nur zufällig beide beim Gründer, solange er
+ * allein drin ist. Wer im Screen die falsche Frage stellt, merkt es nie — bei einer
+ * frisch gegründeten Gruppe geben beide dieselbe Antwort.
+ */
+export function darfEinladen(gruppe: Group, userId: string): boolean {
+  if (!istMitglied(gruppe, userId)) return false;
+  switch (EINLADEN_DARF) {
+    case 'jedes-mitglied':
+    case 'mitglied-schlaegt-vor':
+      return true;
+    case 'nur-gruender':
+      return istGruender(gruppe, userId);
+  }
+}
+
+/**
+ * Gehört diese Gruppe in die Liste auf `/gruppen`? Führt `PRIVAT_SICHT` aus.
+ *
+ * Eine private Gruppe, in der ich nicht bin, taucht dort nicht auf — auch dann
+ * nicht, wenn ihre Seite über einen Link erreichbar bleibt. Die beiden Fragen sind
+ * verschieden: „was sehe ich, wenn ich die Adresse habe" gegen „was schlägt die App
+ * mir vor". Siehe den Kopf bei `PRIVAT_SICHT`.
+ */
+export function inGruppenListe(gruppe: Group, userId: string): boolean {
+  return gruppe.offen || istMitglied(gruppe, userId);
+}
+
+/**
  * Was auf der Gruppenseite steht, wenn man NICHT beitreten kann.
  *
  * Steht hier neben der Regel und nicht im Screen — dieselbe Überlegung wie bei
  * `blockFolgen()` in `safety/block.ts` und `schreibHuerdeText()` in `chat/direkt.ts`:
  * Ändert Ian die Regel, ändert sich der Satz mit. `undefined` heißt „keine Hürde".
  */
-export function beitrittHuerdeText(): string | undefined {
+export function beitrittHuerdeText(gruppe: Group): string | undefined {
+  // Phase 18a: Erst die Gruppe, dann die App-Regel — dieselbe Reihenfolge wie in
+  // `darfBeitreten()`, damit die beiden nie auseinanderlaufen können.
+  if (!gruppe.offen) {
+    return 'Diese Gruppe ist privat. Hinein kommt man nur, wenn jemand von drinnen dich einlädt.';
+  }
   switch (BEITRITT) {
     case 'offen':
     case 'anfrage':
@@ -205,6 +348,20 @@ export function beitrittHuerdeText(): string | undefined {
     case 'einladung':
       return 'In diese Gruppe kommt man nur, wenn jemand von drinnen dich einlädt.';
   }
+}
+
+/**
+ * Der Satz an einer privaten Gruppe, wenn man DRIN ist — die andere Hälfte von
+ * `beitrittHuerdeText()`.
+ *
+ * Von innen ist „privat" keine Hürde, sondern eine Auskunft: Deine Posts für diese
+ * Gruppe erreichen nur Leute, die eingeladen wurden. Ohne den Satz sähe eine private
+ * Gruppe von innen aus wie jede andere, und niemand wüsste, dass sein Beitrag hier
+ * enger läuft als sonst.
+ */
+export function privatHinweis(gruppe: Group): string | undefined {
+  if (gruppe.offen) return undefined;
+  return 'Privat — hier kommt nur hinein, wer eingeladen wird.';
 }
 
 /**

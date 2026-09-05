@@ -4,9 +4,25 @@ import { istBlockiert } from '../safety/hooks';
 import { useUserMap } from '../social/hooks';
 import { CURRENT_USER_ID, aendern, neueId, useSlice } from '../store';
 
-import { istGruender, istMitglied, nachfolgerId, postsBeimAustritt, BEITRITT } from './gruppe';
+import {
+  darfEinladen,
+  inGruppenListe,
+  istGruender,
+  istMitglied,
+  nachfolgerId,
+  postsBeimAustritt,
+  BEITRITT,
+  EINLADEN_DARF,
+} from './gruppe';
 
-import type { ActivityCategory, Group, GroupRequest, User, Visibility } from '@/types/models';
+import type {
+  ActivityCategory,
+  Group,
+  GroupInvite,
+  GroupRequest,
+  User,
+  Visibility,
+} from '@/types/models';
 
 /**
  * Der Zugang zu Gruppen — Phase 17. Screens lesen NIE aus `data/mock.ts`
@@ -39,6 +55,10 @@ export function useGruppenListe(): GruppenEintrag[] {
     );
 
     return gruppen
+      // Phase 18a: Private Gruppen, in denen ich nicht bin, stehen hier nicht.
+      // Die Regel steht in `gruppe.ts` (`inGruppenListe`), nicht hier — sonst
+      // beantwortete dieser Haken eine Frage, die Ian entschieden hat.
+      .filter((gruppe) => inGruppenListe(gruppe, CURRENT_USER_ID))
       .map((gruppe) => ({
         gruppe,
         mitglied: istMitglied(gruppe, CURRENT_USER_ID),
@@ -120,6 +140,8 @@ export interface GruppenEntwurf {
   description: string;
   category: ActivityCategory;
   district: string | null;
+  /** Phase 18a. Voreingestellt auf `NEUE_GRUPPE_OFFEN` — Ians Entscheidung 28. */
+  offen: boolean;
 }
 
 /** Gruppe anlegen. Gibt die neue ID zurück, damit der Screen dorthin springen kann. */
@@ -133,6 +155,7 @@ export function gruppeErstellen(entwurf: GruppenEntwurf): string {
       description: entwurf.description.trim(),
       category: entwurf.category,
       district: entwurf.district,
+      offen: entwurf.offen,
       creatorId: CURRENT_USER_ID,
       // Der Gründer ist Mitglied, und zwar an erster Stelle. Beides trägt: Er soll
       // seine eigene Gruppe im Feed sehen, und die Reihenfolge ist die Grundlage
@@ -166,6 +189,10 @@ export function beitrittAnfragen(gruppeId: string, message: string): void {
     const gruppe = alt.groups.find((g) => g.id === gruppeId);
     if (!gruppe) return {};
     if (istMitglied(gruppe, CURRENT_USER_ID)) return {};
+    // Phase 18a: In eine private Gruppe kommt man nur auf Einladung. Der Screen
+    // zeigt den Knopf gar nicht erst — das hier ist das Netz für den direkten
+    // Link, dieselbe Vorsicht wie bei der Block-Prüfung ein paar Zeilen weiter.
+    if (!gruppe.offen) return {};
 
     if (BEITRITT === 'offen') {
       return { groups: mitMitglied(alt.groups, gruppeId, CURRENT_USER_ID) };
@@ -420,4 +447,247 @@ export function useGesendeteGruppenAnfragen(): GruppenAnfrageEintrag[] {
 
     return eintraege.sort((a, b) => b.anfrage.createdAt.localeCompare(a.anfrage.createdAt));
   }, [anfragen, gruppen, userMap]);
+}
+
+// ── Einladen (Phase 18a) ─────────────────────────────────────────────────────
+
+/**
+ * Eine Einladung samt allem, was eine Zeile braucht.
+ *
+ * Zwei Personen, nicht eine: Bei einer eingehenden Einladung will man wissen, WER
+ * einen geholt hat — bei „Marswiese Tennis" ist das der Unterschied zwischen „Lea
+ * hat mich geholt" und „irgendwer hat mich geholt".
+ */
+export interface EinladungEintrag {
+  einladung: GroupInvite;
+  /** Wer eingeladen hat. */
+  von: User;
+  gruppe: Group;
+}
+
+/**
+ * Wen ich in diese Gruppe holen kann — und in welchem Zustand er gerade ist.
+ *
+ * `zustand` statt eines Booleans, weil es vier verschiedene Sätze sind und ein
+ * `disabled`-Knopf keinen davon sagen kann.
+ */
+export interface EinladbarEintrag {
+  person: User;
+  zustand: 'einladbar' | 'drin' | 'eingeladen' | 'angefragt';
+}
+
+/**
+ * Wen kann ich überhaupt einladen?
+ *
+ * ── Warum BEIDE Richtungen des Folgens ────────────────────────────────────────
+ * Die Liste ist mein Folge-Graph: wem ich folge UND wer mir folgt, zusammengelegt.
+ * Nur eine Richtung zu nehmen wäre eine Regel, die man nicht erklären kann — wer
+ * seinen Tennispartner einladen will und ihn nicht findet, weil er ihm zwar folgt,
+ * aber nicht gefolgt wird, hält die App für kaputt. Das ist genau die Sorte
+ * Sackgasse, die Leopold eine Ebene höher gemeldet hat.
+ *
+ * ── Warum überhaupt eine Schranke ─────────────────────────────────────────────
+ * Sie ist die Gegenleistung für Ians Entscheidung 26 (jedes Mitglied darf
+ * einladen): Wer holt, holt aus seinem eigenen Umfeld, nicht aus dem
+ * Nutzerverzeichnis von ganz Wien. Bewusst ANDERS als `SCHREIB_REGEL`
+ * (gegenseitiges Folgen) in `chat/direkt.ts` — eine Nachricht landet ungefragt bei
+ * jemandem, eine Einladung ist eine Frage, die man mit einem Tipp wegwischt.
+ *
+ * Blockierte Leute stehen nicht drin, in keiner Richtung (`istBlockiert`).
+ */
+export function useEinladbare(gruppe: Group | undefined): EinladbarEintrag[] {
+  const einladungen = useSlice('groupInvites');
+  const anfragen = useSlice('groupRequests');
+  const userMap = useUserMap();
+
+  return useMemo(() => {
+    const ich = userMap.get(CURRENT_USER_ID);
+    if (!gruppe || !ich || !darfEinladen(gruppe, CURRENT_USER_ID)) return [];
+
+    // `Set` und nicht `concat`: Wer mir folgt UND dem ich folge, stünde sonst
+    // zweimal in der Liste — mit demselben `key`, und React beschwert sich zu Recht.
+    const bekannte = new Set([...ich.followingIds, ...ich.followerIds]);
+
+    const eingeladen = new Set(
+      einladungen
+        .filter((e) => e.groupId === gruppe.id && e.status === 'pending')
+        .map((e) => e.toUserId),
+    );
+    const angefragt = new Set(
+      anfragen
+        .filter((a) => a.groupId === gruppe.id && a.status === 'pending')
+        .map((a) => a.fromUserId),
+    );
+
+    const eintraege: EinladbarEintrag[] = [];
+    for (const id of bekannte) {
+      const person = userMap.get(id);
+      if (!person) continue;
+      if (istBlockiert(ich, person)) continue;
+
+      // Die Reihenfolge der Prüfungen IST die Rangfolge der Auskünfte: „drin"
+      // sticht „eingeladen", weil eine angenommene Einladung beides wahr macht.
+      const zustand = istMitglied(gruppe, person.id)
+        ? ('drin' as const)
+        : eingeladen.has(person.id)
+          ? ('eingeladen' as const)
+          : angefragt.has(person.id)
+            ? ('angefragt' as const)
+            : ('einladbar' as const);
+
+      eintraege.push({ person, zustand });
+    }
+
+    // Wen man holen KANN, zuerst — der Rest ist Auskunft, keine Handlung. Innerhalb
+    // einer Stufe alphabetisch, damit die Liste sich nicht bei jedem Öffnen neu
+    // sortiert (`Set` behält die Einfügereihenfolge, und die hängt an zwei Listen).
+    const rangE = { einladbar: 0, angefragt: 1, eingeladen: 2, drin: 3 };
+    return eintraege.sort(
+      (a, b) =>
+        rangE[a.zustand] - rangE[b.zustand] ||
+        a.person.displayName.localeCompare(b.person.displayName),
+    );
+  }, [gruppe, einladungen, anfragen, userMap]);
+}
+
+/**
+ * Jemanden einladen.
+ *
+ * ⚠️ Führt `EINLADEN_DARF` aus — aber nur zwei seiner drei Werte vollständig. Bei
+ * `'mitglied-schlaegt-vor'` müsste hier eine Einladung entstehen, die der GRÜNDER
+ * erst freigibt, und dafür bräuchte `GroupInvite` einen vierten Zustand. Das ist
+ * die eine Stelle in diesem Ordner, an der ein Wechsel der Regel mehr ist als ein
+ * Wort — deshalb steht es hier und nicht nur im Kopf von `gruppe.ts`.
+ */
+export function einladen(gruppeId: string, toUserId: string): void {
+  aendern((alt) => {
+    const gruppe = alt.groups.find((g) => g.id === gruppeId);
+    if (!gruppe) return {};
+    if (!darfEinladen(gruppe, CURRENT_USER_ID)) return {};
+    if (EINLADEN_DARF === 'mitglied-schlaegt-vor' && !istGruender(gruppe, CURRENT_USER_ID)) {
+      return {};
+    }
+    if (istMitglied(gruppe, toUserId)) return {};
+
+    // Zweimal tippen darf keine zweite Einladung erzeugen — dieselbe Vorsicht wie
+    // in `beitrittAnfragen`. Ohne das stünde die Person doppelt in der Liste des
+    // Empfängers und er müsste zweimal absagen.
+    const schonDa = alt.groupInvites.some(
+      (e) => e.groupId === gruppeId && e.toUserId === toUserId && e.status === 'pending',
+    );
+    if (schonDa) return {};
+
+    const ich = alt.users.find((u) => u.id === CURRENT_USER_ID);
+    const ziel = alt.users.find((u) => u.id === toUserId);
+    if (!ich || !ziel || istBlockiert(ich, ziel)) return {};
+
+    const neu: GroupInvite = {
+      id: neueId('gi'),
+      groupId: gruppeId,
+      fromUserId: CURRENT_USER_ID,
+      toUserId,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+    return { groupInvites: [...alt.groupInvites, neu] };
+  });
+}
+
+/**
+ * Eine Einladung annehmen — Einladung, Mitgliedschaft und die eigene alte Anfrage
+ * in EINEM `aendern` (harte Regel 6).
+ *
+ * ── Die dritte Änderung ist die, die man vergisst ─────────────────────────────
+ * Man kann angefragt HABEN und trotzdem eingeladen werden: Ein Mitglied sieht, dass
+ * jemand hinein will, und holt ihn direkt, statt auf den Gründer zu warten. Genau
+ * dieser Fall steht in `data/mock.ts` (gr3 und gi1 zeigen beide auf g3). Bliebe die
+ * Anfrage stehen, stünde im Anfragen-Tab „Wartet" bei einer Gruppe, in der man
+ * schon drin ist — und im Tab des Gründers eine Zeile, die er beantworten soll.
+ */
+export function einladungAnnehmen(einladungId: string): void {
+  aendern((alt) => {
+    const einladung = alt.groupInvites.find((e) => e.id === einladungId);
+    if (!einladung || einladung.status !== 'pending') return {};
+    if (einladung.toUserId !== CURRENT_USER_ID) return {};
+
+    const gruppe = alt.groups.find((g) => g.id === einladung.groupId);
+    if (!gruppe) return {};
+
+    return {
+      groupInvites: alt.groupInvites.map((e) =>
+        e.id === einladungId ? { ...e, status: 'accepted' as const } : e,
+      ),
+      groups: mitMitglied(alt.groups, gruppe.id, CURRENT_USER_ID),
+      groupRequests: alt.groupRequests.filter(
+        (a) => !(a.groupId === gruppe.id && a.fromUserId === CURRENT_USER_ID),
+      ),
+    };
+  });
+}
+
+/**
+ * Eine Einladung ablehnen. Ohne Rückfrage — wie eine abgelehnte Anfrage: Man kann
+ * erneut eingeladen werden, es geht nichts unwiederbringlich verloren.
+ */
+export function einladungAblehnen(einladungId: string): void {
+  aendern((alt) => {
+    const einladung = alt.groupInvites.find((e) => e.id === einladungId);
+    if (!einladung || einladung.status !== 'pending') return {};
+    if (einladung.toUserId !== CURRENT_USER_ID) return {};
+
+    return {
+      groupInvites: alt.groupInvites.map((e) =>
+        e.id === einladungId ? { ...e, status: 'declined' as const } : e,
+      ),
+    };
+  });
+}
+
+/** Meine offene Einladung in DIESE Gruppe — für die Gruppenseite. */
+export function useMeineEinladung(gruppeId: string | undefined): GroupInvite | undefined {
+  const einladungen = useSlice('groupInvites');
+  return einladungen.find(
+    (e) => e.groupId === gruppeId && e.toUserId === CURRENT_USER_ID && e.status === 'pending',
+  );
+}
+
+/**
+ * Alle Einladungen, die auf meine Antwort warten — für den Anfragen-Tab.
+ *
+ * Sie liegen dort im selben Tab und in derselben Zahl wie die Beitritts-Anfragen,
+ * obwohl sie das Gegenteil davon sind. Der Grund ist derselbe wie in Phase 17: Für
+ * den EMPFÄNGER ist es dieselbe Sache — jemand will etwas von mir, und ich sage ja
+ * oder nein. Wonach die App gliedert, ist der Zustand, nicht die Herkunft (dieselbe
+ * Überlegung wie harte Regel 30 bei der Chat-Liste).
+ */
+export function useMeineEinladungen(): EinladungEintrag[] {
+  const einladungen = useSlice('groupInvites');
+  const gruppen = useSlice('groups');
+  const userMap = useUserMap();
+
+  return useMemo(() => {
+    const ich = userMap.get(CURRENT_USER_ID);
+    const eintraege: EinladungEintrag[] = [];
+
+    for (const einladung of einladungen) {
+      if (einladung.toUserId !== CURRENT_USER_ID || einladung.status !== 'pending') continue;
+      const gruppe = gruppen.find((g) => g.id === einladung.groupId);
+      if (!gruppe) continue;
+      // Bin ich inzwischen anders hineingekommen (über meine eigene Anfrage), ist
+      // die Einladung gegenstandslos. Sie hier zu verstecken ist richtiger, als sie
+      // beim Bestätigen wegzuräumen: Der Gründer weiß nichts von der Einladung.
+      if (istMitglied(gruppe, CURRENT_USER_ID)) continue;
+      const von = userMap.get(einladung.fromUserId);
+      if (!von) continue;
+      if (ich && istBlockiert(ich, von)) continue;
+      eintraege.push({ einladung, von, gruppe });
+    }
+
+    // Die neueste zuerst — anders als bei den eingehenden Anfragen, und aus dem
+    // umgekehrten Grund: Dort ist die Reihenfolge eine Fairness („wer zuerst
+    // gefragt hat"), hier ist sie eine Neuigkeit.
+    return eintraege.sort((a, b) =>
+      b.einladung.createdAt.localeCompare(a.einladung.createdAt),
+    );
+  }, [einladungen, gruppen, userMap]);
 }

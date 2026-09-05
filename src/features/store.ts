@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react';
 import {
   CURRENT_USER_ID,
   chatThreads as mockChats,
+  groupInvites as mockGroupInvites,
   groupRequests as mockGroupRequests,
   groups as mockGroups,
   joinRequests as mockRequests,
@@ -14,6 +15,7 @@ import {
 import type {
   ChatThread,
   Group,
+  GroupInvite,
   GroupRequest,
   JoinRequest,
   Message,
@@ -56,6 +58,11 @@ export interface AppState {
   groups: Group[];
   groupRequests: GroupRequest[];
   /**
+   * Phase 18a. Die Gegenrichtung zu `groupRequests` — und eine EIGENE Liste, kein
+   * Richtungsfeld in der bestehenden. Warum, steht am Typ in `types/models.ts`.
+   */
+  groupInvites: GroupInvite[];
+  /**
    * Post-IDs, die ich im Wischstapel nach links geschoben habe (Phase 11).
    *
    * Die einzige Liste hier ohne Gegenstück in `mock.ts`, und das ist richtig so:
@@ -77,6 +84,7 @@ let state: AppState = {
   reports: mockReports,
   groups: mockGroups,
   groupRequests: mockGroupRequests,
+  groupInvites: mockGroupInvites,
   weggewischt: [],
 };
 
