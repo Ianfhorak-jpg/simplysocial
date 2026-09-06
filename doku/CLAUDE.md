@@ -204,6 +204,28 @@ SafeArea stimmt oben und unten, Deep Links funktionieren nativ. Belege liegen al
 Apple-Login) und der Gesten-Durchgang. **Ein Mausklick am Simulator ist keine
 Gestenprüfung** — Wischstapel, Tastatur im Chat und der Jahrgangs-Balken sind unbelegt.
 
+🔜 **Neu und geplant, noch nicht gebaut (2026-09-06): Phase 19c und 19d.** Ian hat die
+fertige Karte BENUTZT und zwei Dinge gesagt — *„ich finde die Map nicht schön, sie sollte
+zum App-Interface passen, ich mag Karten von Apple"* und *„wenn man auf einen Bezirk
+klickt, sollen die Aktivitäten über dem Klick herausspringen, klein, mit dem Minimum an
+Info — und wenn ich interessiert bin, klicke ich drauf und sehe die ganze."* Beides steht
+ausgeschrieben in **PLAN.md, Abschnitt 5b, Phasen 19c und 19d.** Vier Dinge daraus:
+
+1. **Es sind zwei Phasen, und das ist die wichtigste Entscheidung des Plans.** 19c ändert
+   die BEDIENUNG und braucht nichts Neues; 19d ändert die KARTE und braucht einen
+   Native-Baustein, einen neuen Build und Ians Apple-Schlüssel. Zusammen gebaut hätte
+   jeder Fehler zwei mögliche Ursachen — dieselbe Überlegung wie „Gerät vor Backend".
+2. **Mit 19c anfangen**, sie läuft sofort und macht die App besser statt schöner: Heute
+   beantwortet ein Tipp auf die Karte nur die halbe Frage, man muss nach unten schauen.
+3. **19d ist Ians Entscheidung gegen meine Empfehlung** — ich hatte den *gezeichneten*
+   Apple-Stil vorgeschlagen (Donau blau, Parks grün, warmes Beige; eine Datei, läuft
+   überall, kein neuer Baustein). Er will die echte. Wird gebaut, nicht neu verhandelt.
+4. **Eine echte Apple-Karte macht die App NICHT genauer.** Am Post steht seit Phase 2 nur
+   `district`, keine Koordinate. Die Apple-Karte ist der Hintergrund, `wien-bezirke.ts`
+   bleibt die Auflage darüber — und **harte Regel 47 gilt jetzt gegen einen stärkeren
+   Reiz**: Wer eine echte Karte sieht, denkt an Stecknadeln, und eine Stecknadel verrät
+   statt „1220" die genaue Parkbank um 17:00.
+
 ✅ **Phase 19b ist fertig (2026-09-06): die Wien-Karte.** Leopolds zweite Idee, und
 das erste Stück, das `react-native-svg` aus Phase 19 wirklich ausnutzt. Dritte Stufe im
 Umschalter („Stapel · Liste · Karte"), 23 echte Bezirksflächen aus den amtlichen Daten
@@ -586,6 +608,9 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 8. **Wieder herzeigen** — die drei haben Phase 13 gesehen, nicht 18a. Läuft neben 9.
 9. **Aufs Gerät** (Phase 19) ← *hier sind wir* — erster EAS-Build, `react-native-svg`,
    Durchgang am iPhone. ~~Wien-Karte (19b)~~ ✅ *2026-09-06*
+9b. **Karte nachbessern** — **19c** (Aktivitäten springen heraus, braucht nichts Neues)
+   und danach **19d** (echte Apple-Karte, braucht Ians Apple-Schlüssel). *Geplant am
+   2026-09-06, PLAN.md Abschnitt 5b.*
 10. **Backend** (Phase 20) — Supabase: Schema, Policies, Anmelden, `store.ts` tauschen
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 

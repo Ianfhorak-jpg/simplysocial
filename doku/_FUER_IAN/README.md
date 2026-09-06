@@ -177,6 +177,39 @@ am Post steht dann „Wien". Das Zweite war die interessantere Antwort: Gefragt 
 passieren soll, wenn ein zugeklapptes Feld leer ist, und du hast die Frage weggenommen,
 statt sie zu beantworten.
 
+## 🔜 Als Nächstes an der Karte: dein Feedback ist eingeplant (06.09.)
+
+Du hast zwei Sachen gesagt, und beide sind aufgeschrieben — **gebaut ist noch nichts.**
+
+**1. „Wenn ich auf einen Bezirk klicke, sollen die Aktivitäten herausspringen."**
+Genau so kommt es: eine kleine Sprechblase über dem Bezirk mit bis zu **drei**
+Aktivitäten — nur Farbe, Titel und Uhrzeit, sonst nichts. Tippst du eine an, siehst du
+sie ganz. Liegen mehr als drei dort, steht darunter „alle 5 ansehen".
+
+*Warum drei und nicht alle zum Durchwischen:* Zum Durchwischen bräuchte es einen vierten
+Wisch-Erkenner, und der läge direkt über einer Karte, die sich selbst schieben lässt.
+Genau daran ist in dieser App schon einmal etwas kaputtgegangen.
+
+**Das ist der Teil, der sofort geht** — kein Apple, kein neuer Build, läuft im Browser
+und am Handy.
+
+**2. „Ich mag Karten von Apple."** Kommt danach, als eigener Schritt. Ich hatte dir eine
+*nachgebaute* Karte im Apple-Stil empfohlen (Donau blau, Parks grün, warmes Beige) —
+du willst die echte, und die baue ich. **Dafür brauche ich einmal etwas von dir**, es
+steht in `OFFENE_SACHEN.md`: einen Maps-Schlüssel aus deinem Apple-Konto.
+
+*Zwei Sachen sollst du vorher wissen:* Im Browser gibt es die echte Apple-Karte
+vorerst nicht — dort bleibt die gezeichnete stehen, die beiden sehen also eine Weile
+verschieden aus. Und die App wird davon **nicht genauer**: An einer Aktivität steht nur
+„1070" und keine genaue Stelle, das ist Absicht. Die Apple-Karte ist der Hintergrund,
+unsere Bezirksflächen bleiben oben drauf.
+
+**Warum getrennt und nicht alles auf einmal:** Wenn danach etwas nicht geht, soll es
+genau eine mögliche Ursache geben. Das ist dieselbe Überlegung, mit der wir schon
+entschieden haben, erst aufs Handy zu gehen und dann ans Backend.
+
+---
+
 ## ✅ Erledigt: die Wien-Karte (06.09.)
 
 **Leopolds Idee, und sie ist drin.** Im Feed gibt es oben jetzt drei Knöpfe statt

@@ -301,6 +301,32 @@ Am Anfang, wenn es wenige Posts gibt, spricht viel für die erste Variante — d
 steht sie drin. Wenn du später findest, dass die Karte „zu voll" aussieht, sind es fünf
 Zeilen in einer Datei. Ausgeschrieben in PLAN.md, Abschnitt 6, Punkt 35.
 
+## 🟠 NEU (06.09.2026) — für die echte Apple-Karte brauche ich einen Schlüssel von dir
+
+Du hast entschieden, dass es die **echte Apple-Karte** werden soll, nicht eine
+nachgebaute. Das ist geplant als Phase 19d. Zwei Dinge dazu, und beide brauchen dich:
+
+**1. Ein Maps-Schlüssel in deinem Apple-Konto.** Kostet nichts, dauert ein paar Minuten,
+aber nur du kommst hinein: *Apple Developer → Certificates, Identifiers & Profiles →
+Identifiers → Maps IDs*. Dabei fällt ein privater Schlüssel als Datei ab. **Die Datei
+kommt NICHT ins Projekt** — sie gehört behandelt wie ein Passwort (dieselbe Regel wie bei
+allen API-Schlüsseln).
+
+**2. Du sollst wissen, was du dafür eintauschst.** Ich hatte dir eine nachgebaute Karte
+im Apple-Stil empfohlen, du hast die echte gewählt. Das ist deine Entscheidung und ich
+baue sie — aber diese drei Sachen gehören dazu:
+
+- **Im Browser gibt es sie vorerst nicht.** Auf dem iPhone ja, im Prototyp-Link, den du
+  herumschickst, erst später. Deshalb bleibt dort die gezeichnete Karte stehen — du
+  verlierst also nichts, aber die beiden sehen eine Weile verschieden aus.
+- **Die App wird davon nicht genauer.** An einer Aktivität steht nur „1070", keine
+  genaue Stelle — das haben wir mit Absicht so gebaut. Eine echte Karte darunter ändert
+  daran nichts; sie ist der Hintergrund, unsere Bezirksflächen bleiben oben drauf.
+- **Es braucht einen neuen Build**, und danach läuft der alte nicht mehr.
+
+**Wenn du das lieber später willst, kostet das nichts** — Phase 19c (die Aktivitäten
+springen aus der Karte) hängt nicht daran und kann jederzeit vorher gebaut werden.
+
 ## 🟡 Braucht dich, aber hat noch Zeit
 
 ### 2. Schau dir die neuen Icons am Handy an — und sag, ob sie zu blass sind

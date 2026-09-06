@@ -2637,6 +2637,250 @@ da, sie werden nur nie als Fläche gezeigt. **Kein Feld kommt dazu, keins änder
 > - **`stufeFuer()` in `karte.ts` ist die eine Stelle, an der noch eine echte Wahl
 >   steckt** (siehe unten, „Ian schreibt selbst").
 
+### Phase 19c — Die Aktivitäten springen aus der Karte ⬜ *(Ians Rückmeldung, 2026-09-06)*
+
+> **Woher es kommt.** Ian hat die fertige Karte aus 19b benutzt und zwei Dinge gesagt:
+> *„Ich finde die Map nicht schön, sie sollte zum App-Interface passen, ich mag Karten
+> von Apple"* und *„wenn man auf einen Bezirk klickt, sollen die Aktivitäten über dem
+> Klick herausspringen, klein, mit dem Minimum an Info — und wenn ich interessiert bin,
+> klicke ich drauf und sehe die ganze."*
+>
+> Das sind **zwei verschiedene Wünsche**, und sie werden getrennt gebaut. Warum, steht
+> gleich unten — es ist derselbe Grund, aus dem Phase 19 vor Phase 20 steht.
+
+#### Warum 19c und 19d zwei Phasen sind und nicht eine
+
+| | 19c — Herausspringen | 19d — Echte Apple-Karte |
+|---|---|---|
+| Was es ändert | **Wie man die Karte benutzt** | **Wie die Karte aussieht** |
+| Neue Abhängigkeit | keine | `react-native-maps` (nativ) + MapKit JS (Web) |
+| Neuer Build nötig | nein | **ja** |
+| Wartet auf Ian | nein | **ja** — Apple-Schlüssel |
+| Läuft im Web-Prototyp | sofort | erst mit Schlüssel |
+
+**Beide zusammen zu bauen hebt genau den Nutzen auf, für den Phase 19 vor Phase 20
+steht.** Springt danach etwas nicht heraus, gibt es zwei mögliche Ursachen: die neue
+Blase oder die neue Karten-Bibliothek. Getrennt ist jede Frage einzeln beantwortbar —
+und 19c ist zugleich die Absicherung: **Wenn die Blase auf der gezeichneten Karte
+funktioniert, ist sie beim Tausch der Karte darunter nicht mehr neu.**
+
+Dazu kommt ein Argument, das erst beim Nachdenken auftaucht: **19c ist der Teil, der
+die App besser MACHT; 19d ist der Teil, der sie schöner macht.** Heute muss man nach
+einem Tipp nach unten schauen, um zu sehen, was in dem Bezirk los ist — die Karte
+beantwortet also nur die halbe Frage. Das behebt 19c, ganz ohne Apple.
+
+#### Ians vierunddreißigste Entscheidung (2026-09-06)
+
+| Frage | Entscheidung | Verworfen — und warum |
+|---|---|---|
+| Wie viele Aktivitäten springen heraus? | **Bis zu drei übereinander, darunter „alle 5 ansehen"** | **Alle, waagrecht durchwischbar** (wie die Ortskarten in Apple Karten): kommt an alles heran, ist aber der VIERTE Wisch-Erkenner der App — und er läge direkt über einer Karte, die selbst geschoben wird. Genau der Streit, vor dem harte Regel 44 warnt. **Eine große mit Blätterpfeilen**: am ruhigsten, aber man muss fünfmal tippen, um zu sehen, was es gibt — und das Überblicken war der Grund für die Karte. |
+
+#### Was zu bauen ist
+
+| Baustein | Wo | Anmerkung |
+|---|---|---|
+| `KartenBlase` | `components/` (neu) | Die Sprechblase über dem Bezirk: bis zu drei Mini-Karten, ein Pfeil nach unten, eine Fußzeile. **Kein eigener Gesten-Erkenner.** |
+| `MiniPostKarte` | in `KartenBlase` | Eine Zeile je Aktivität. **Nicht `PostCard` verkleinern** — siehe unten. |
+| `BLASE_MAX` | `features/posts/karte.ts` | Ians Drei. Gehört zu den Regeln, nicht in den Screen (Regel 48). |
+| Ankerpunkt-Rechnung | `SsWienKarte` | Bezirks-Label → Bildschirmpunkt, über dieselbe Umkehrrechnung, die der Tipp schon benutzt. |
+
+#### Die fünf Entscheidungen, die beim Bauen anfallen — schon getroffen, damit sie nicht geraten werden
+
+1. **Die Blase hängt am BEZIRK, nicht am Finger.** Ian sagte „über dem Klick", und
+   wörtlich genommen hieße das: Tippt man Donaustadt am äußersten Rand an, steht die
+   Blase am Rand. Sie soll aber auf den Bezirk zeigen, den sie meint — also sitzt der
+   Anker auf dem **Beschriftungspunkt** aus `wien-bezirke.ts` (`label.x/y`), dem Punkt
+   mit dem größten Abstand zum Rand. Das ist auch die stabile Wahl: Zweimal denselben
+   Bezirk antippen ergibt zweimal dieselbe Stelle.
+2. **Die Blase kippt nach unten, wenn oben kein Platz ist.** Bei den Bezirken 19, 21
+   und 22 säße sie sonst über dem oberen Kartenrand. Standardverhalten jeder Sprechblase,
+   und ohne es ist die halbe Karte unbrauchbar. Der Pfeil wechselt mit.
+3. **Während einer Geste ist die Blase weg, danach setzt sie sich neu an.** Mitzuwandern
+   hieße, während des Schiebens zu rendern — und **genau das vermeidet `SsWienKarte`
+   bewusst** (die Geste bewegt eine `Animated.View`, es rendert nichts neu). Der Zoom
+   wird ohnehin schon beim Loslassen in den State übernommen (`zoomStufe`); an derselben
+   Stelle wird die Blase neu gesetzt. Kein neuer Mechanismus, nur ein zweiter Nutzer
+   eines vorhandenen.
+4. **Die Mini-Karte ist NICHT `PostCard` mit kleinerer Schrift.** Sie zeigt
+   **Kategoriefarbe · Titel · Zeit** und sonst nichts. Was bewusst FEHLT, ist der
+   Bezirk — den hat man gerade selbst angetippt, er stünde in jeder der drei Zeilen
+   dasselbe. (Dieselbe Überlegung wie in 18c bei der Chat-Liste: Was der Zusammenhang
+   schon sagt, ist in der Zeile Ballast.) `PostCard` zu verkleinern wäre der falsche
+   Weg — sie trägt Sichtbarkeits-Marke, Notiz, Plätze, Anfrage-Zustand und den
+   Doppel-Hinweis; das alles auf 44 px Höhe ist keine Karte mehr, sondern eine
+   unleserliche Karte.
+5. **„alle 5 ansehen" wechselt in die Listenansicht** und lässt den Bezirksfilter
+   stehen. Der Filter überlebt das Umschalten ohnehin (harte Regel 26), und es gibt das
+   Muster schon: `StapelDurch` hat seit Phase 13 die Zeile „Zur Listenansicht wechseln".
+   **Verworfen:** die Blase einfach schließen, weil die Liste unter der Karte ja schon
+   gefiltert ist — ein Knopf, der scheinbar nichts tut, ist schlimmer als keiner.
+
+#### Was dabei schiefgehen wird
+
+1. **Die Blase verdeckt die Karte, die man gerade lesen will.** Drei Mini-Karten sind
+   rund 150 px hoch, und die Karte ist auf 360 × 600 nur 168 px hoch. **Vor dem Bauen
+   nachmessen**, nicht danach: Passt die Blase nicht, ist die Antwort nicht „kleinere
+   Schrift", sondern **weniger als drei bei kleinen Schirmen** — dieselbe Rechnung wie
+   `KARTE_ANTEIL`.
+2. **Ein Tipp auf die Blase darf nicht als Tipp auf die KARTE ankommen.** Die Blase
+   liegt über einer Fläche, die einen `PanResponder` hat, und der beansprucht die
+   Berührung beim Beginn (`onStartShouldSetPanResponder: () => true`). Die Blase gehört
+   deshalb **nicht in die Karten-Fläche**, sondern als Geschwister darüber — dasselbe
+   Muster wie `WischStapel.blatt` (harte Regel 36), nur andersherum begründet.
+3. **Ein leerer Bezirk hat nichts zum Herausspringen.** Tippt man den 8. an und dort
+   liegt nichts, darf keine leere Blase erscheinen. Entweder gar keine — oder eine mit
+   einem Satz. **Vorschlag: gar keine**, und die Zeile unter der Karte sagt weiter
+   „1080 Wien · 0 Posts". Eine Blase, die „nichts" sagt, ist ein Klick, der bestraft wird.
+4. **Die Zahl im 7. Bezirk passt weiterhin nicht hinein.** 19c ändert daran nichts —
+   das ist die bekannte Folge von Wiens Geografie (siehe 19b). Wer beim Bauen der Blase
+   in Versuchung kommt, das „gleich mitzumachen", macht zwei Sachen gleichzeitig.
+
+---
+
+### Phase 19d — Die echte Apple-Karte ⬜ *(Ians Entscheidung, gegen meine Empfehlung)*
+
+> **Ians fünfunddreißigste Entscheidung, 2026-09-06.** Gefragt war, wie weit „wie Apple
+> Karten" gehen soll. Angeboten hatte ich drei Wege; **empfohlen hatte ich den
+> gezeichneten Apple-Stil** (Donau blau, Parks grün, warmes Beige — eine Datei mehr,
+> läuft überall, kein neuer Baustein). **Ian hat die echte Apple-Karte gewählt.**
+>
+> Das ist seine Entscheidung und sie wird gebaut. Der Preis stand in der Frage und
+> gehört hierher, damit ihn niemand später „entdeckt":
+
+| Was | Folge |
+|---|---|
+| `react-native-maps` ist ein **Native-Baustein** | Neuer Build. Nach ihm stürzt der alte Dev-Build ab (die ACTA-Falle) |
+| Auf **Web gibt es MapKit nicht** | Der Prototyp, den Ian herzeigt, hätte ohne Weiteres **keine Karte** |
+| MapKit JS braucht einen **Apple-Schlüssel** | Wartet auf Ian — er hat den Developer-Account seit dem 2026-08-31 |
+| Apple verlangt **Namensnennung** | Apple-Logo und Rechtelink auf der Karte, nicht verhandelbar |
+
+#### Der Befund, der alles andere ordnet: eine echte Karte macht die App NICHT genauer
+
+**An einem Post steht seit Phase 2 nur `district: '1070'` — keine Koordinate.** Eine
+echte Apple-Karte darunter ändert daran kein Zeichen. Sie kann Straßen zeigen, aber
+nicht, WO die Aktivität ist, weil die App es selbst nicht weiß.
+
+Daraus folgen zwei Dinge, und beide sind wichtiger als jede Zeile Code dieser Phase:
+
+1. **Unsere Bezirksflächen bleiben oben drauf.** Die Apple-Karte ist der HINTERGRUND,
+   nicht der Ersatz. `wien-bezirke.ts` wird nicht überflüssig — es wird zur Auflage.
+2. **Harte Regel 47 bleibt unangetastet, und die Versuchung wächst.** Wer eine echte
+   Karte sieht, denkt an Stecknadeln. Eine Stecknadel verrät statt „1220" die genaue
+   Parkbank um 17:00. **Ians Entscheidung 28 gilt weiter** — und sie gilt jetzt gegen
+   einen stärkeren Reiz als vorher.
+
+#### Warum die Phase noch einmal in zwei Hälften zerfällt
+
+| Hälfte | Was | Braucht | Kann wann |
+|---|---|---|---|
+| **19d-1 · iOS** | `react-native-maps` mit Apple-Provider | einen neuen Build | **sofort nach 19c** |
+| **19d-2 · Web** | MapKit JS | Maps-ID + Schlüssel + ein **JWT** | am besten **nach Phase 20** |
+
+**Der Grund für die Trennung ist ein technischer, den man vorher wissen muss:** MapKit
+JS wird nicht mit einem einfachen Schlüssel freigeschaltet, sondern mit einem **signierten
+Token (JWT)**, das ablaufen soll. Ein Token, das ein Jahr gilt und im Quelltext einer
+öffentlichen Seite steht, ist genau die Sorte Schlüssel-im-Code, die harte Regel 1 aus
+der Haupt-CLAUDE.md verbietet. Sauber ist es, wenn eine kleine Serverfunktion es
+ausstellt — **und einen Server gibt es ab Phase 20 (Supabase Edge Function).**
+
+**Bis dahin behält der Web-Prototyp die gezeichnete Karte aus 19b.** Das ist kein
+Notbehelf, sondern die Bauart:
+
+> **`SsWienKarte` bleibt und wird der Rückfall.** Wo kein Apple-Schlüssel eingerichtet
+> ist — im Web-Prototyp, in jeder Vorschau, in jedem Screenshot-Durchgang —, zeichnet
+> die App weiter ihre eigene Karte. **Damit ist 19b nicht weggeworfen**, sondern das
+> Netz unter 19d.
+
+#### Ians sechsunddreißigste Entscheidung (2026-09-06)
+
+| Frage | Entscheidung | Verworfen — und warum |
+|---|---|---|
+| Wie zeigt eine geografische Karte, wo etwas los ist? | **Die Bezirke werden zart getönt** — je mehr los ist, desto kräftiger | **Zahlen-Blasen wie Apple-Pins** (meine Empfehlung): am nächsten an Apples Sprache, und sie lösen nebenbei das Problem, dass die Zahl im 7. Bezirk nicht in die Fläche passt. **Beides zusammen**: die meiste Auskunft und das meiste, was gleichzeitig um Aufmerksamkeit kämpft. |
+
+> **Was aus der Entscheidung folgt, und es ist ein Haken:** Mit dem Tönen bleibt die
+> **Zahl in der Fläche** — also bleibt auch das Problem aus 19b, dass sie im 7., 8. und
+> 1. Bezirk erst beim Hineinzoomen erscheint. Eine Blase hätte keinen Platz IN der
+> Fläche gebraucht. **Das ist kein Grund, die Entscheidung zu ändern**, aber es ist der
+> erste Ort, an dem man nachsieht, falls sich die Karte später „zu leer" anfühlt.
+>
+> Und ein zweiter, der beim Bauen auffallen wird: **Ein Farbschleier über einer echten
+> Karte macht Grün und Blau darunter schmutzig.** Apples Wasser ist ein gesättigtes
+> Blau; ein grauer oder farbiger Schleier darauf sieht nach Schmutz aus, nicht nach
+> Auskunft. **Vorschlag zum Ausprobieren, nicht zum Beschließen:** den Schleier nur auf
+> das LAND legen und die Wasserflächen aussparen — Apple liefert dafür keine Maske, wohl
+> aber `GRUENGEWOGD` von der Stadt Wien (sieben saubere Flächen: Donau, Neue Donau, Alte
+> Donau, Donaukanal, Bäche, stehende Gewässer, Donaunebengewässer). **Nachgeprüft am
+> 2026-09-06, der Datensatz ist da und klein.**
+
+#### Was zu bauen ist
+
+| Schritt | Was | Anmerkung |
+|---|---|---|
+| 19d-1a | `npx expo install react-native-maps` | Expo bringt das Config-Plugin mit. **Nur dieser eine neue Baustein**, wie bei `react-native-svg` in Phase 19 |
+| 19d-1b | Neuer Build | Simulator reicht zum Prüfen (Phase-19-Erkenntnis: keine Signatur nötig) |
+| 19d-1c | `SsAppleKarte.native.tsx` | `<MapView>` + `<Polygon>` je Bezirk, Tönung als `fillColor` |
+| 19d-1d | Eine gemeinsame Schnittstelle | **Der eigentliche Entwurf dieser Phase**, siehe unten |
+| 19d-2a | Maps-ID + Schlüssel bei Apple | **Nur Ian** |
+| 19d-2b | Token-Ausgabe | Supabase Edge Function (Phase 20) |
+| 19d-2c | `SsAppleKarte.web.tsx` | MapKit JS, `mapkit.PolygonOverlay` |
+
+#### Der Entwurf, an dem diese Phase steht oder fällt
+
+**Es gibt ab 19d drei Kartenzeichner** (gezeichnet · MapKit nativ · MapKit JS) und
+**genau eine** Bedeutung. Wenn die Bedeutung in die Zeichner rutscht, hat die App drei
+Wahrheiten darüber, was „viel los" heißt — und auffallen würde es nur dem, der alle
+drei nebeneinander hält.
+
+Was deshalb **oberhalb** der Zeichner bleibt, egal welcher zeichnet:
+
+- `features/posts/karte.ts` — Tönungsstufen, Zoomgrenzen, `BLASE_MAX`, Lizenzzeilen
+- `data/wien-bezirke.ts` — die Flächen selbst
+- `KartenBlase` samt Mini-Karten aus 19c — sie kennt die Karte nicht, nur einen Punkt
+- die Auswahl — sie IST der Bezirksfilter (harte Regel 50), nicht ein Zustand im Zeichner
+
+Was ein Zeichner **allein** verantwortet: den Hintergrund, das Zeichnen der Polygone,
+und wie aus einer Geste ein „hier wurde getippt" wird.
+
+> **Eine gute Nachricht, die man beim Planen leicht übersieht:** Mit MapKit fällt unser
+> eigener `PanResponder` weg — die Karte schiebt und zoomt dann selbst. **Das ist ein
+> Gesten-Erkenner WENIGER**, und ausgerechnet der, dessen Verhalten unter einem echten
+> Finger noch ungeprüft ist. Der Preis (ein Native-Baustein) und dieser Gewinn gehören
+> zusammen genannt.
+
+#### Was dabei schiefgehen wird
+
+1. **`react-native-maps` auf Web ist nicht dasselbe Paket.** Es gibt Web-Anläufe dazu,
+   sie zeichnen Google-Karten. **Nicht danach greifen**, um sich die zweite Hälfte zu
+   sparen — das ergäbe eine App, die auf dem Handy Apple und im Browser Google zeigt.
+2. **Plattform-Endungen zerlegen einen Zeichner in drei Dateien** — genau das, was
+   Phase 19 bei `SsIcon` bewusst NICHT getan hat (harte Regel 24). Hier ist es richtig
+   und dort war es falsch, und der Unterschied ist der Grund: Bei `SsIcon` sind die
+   Zeichner gleich und nur die Elemente heißen anders. Hier sind es **wirklich
+   verschiedene Karten-Bibliotheken**. Wer das mit einem `Platform.OS`-Zweig in einer
+   Datei löst, importiert beide Bibliotheken in beide Bündel.
+3. **Apples Namensnennung ist keine Zeile Text.** MapKit verlangt das Apple-Logo und
+   einen Rechtelink an der Karte. Kommt zu `KARTE_QUELLE` dazu, ersetzt es nicht — die
+   Bezirksflächen bleiben ja von der Stadt Wien (CC BY).
+4. **Der Zoom hört auf, unser Zoom zu sein.** `ZOOM_MIN`/`ZOOM_MAX` aus `karte.ts`
+   gelten für die gezeichnete Karte; MapKit rechnet in Kamera-Höhen. Beides gleich
+   nennen zu wollen wäre eine Scheingenauigkeit — **die Grenzen gehören je Zeichner
+   ausgedrückt, die REGEL („man muss an die Innenbezirke herankommen") bleibt gemeinsam.**
+5. **Der Prüfweg von 19b funktioniert nicht mehr.** Der Treffer-Test lief bisher in
+   JavaScript (`lib/karte-treffer.ts`) und war damit auf beiden Plattformen derselbe;
+   mit MapKit beantwortet ihn die Bibliothek. **`karte-treffer.ts` bleibt trotzdem** —
+   der gezeichnete Rückfall braucht ihn weiter.
+
+#### Was nur Ian kann
+
+- **Maps-ID und privaten Schlüssel** im Apple-Developer-Konto anlegen (Certificates,
+  Identifiers & Profiles → Maps IDs). Kostet nichts, dauert ein paar Minuten, braucht
+  aber seinen Login. Steht in `_FUER_IAN/OFFENE_SACHEN.md`.
+- **Beurteilen, ob es sich richtig anfühlt.** Eine echte Karte unter unseren Flächen
+  kann auch unruhig wirken — Straßennamen und Geschäfte konkurrieren mit dem, was die
+  App sagen will. Das ist keine Messung, das ist ein Urteil.
+
+---
+
 ### Phase 20 — Das Backend: Supabase ⬜
 
 **Ians Entscheidung vom 2026-09-06.** Der Punkt stand seit dem 2026-08-31 in Abschnitt 8
@@ -3852,6 +4096,27 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > Erzeugt wird alles von `landing-vorschau/erzeugen-palette.py` (leitet die Palette ab
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
+
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-06, spätester Eintrag): Phase 19c —
+> die Aktivitäten springen aus der Karte.** Ian hat 19b benutzt und zwei Dinge
+> zurückgemeldet; sie stehen ausgeschrieben als **Phase 19c und 19d** in Abschnitt 5b.
+> Vier Dinge, die eine frische Sitzung wissen muss, BEVOR sie anfängt:
+>
+> 1. **Es sind zwei Phasen, und das ist der Plan, kein Zufall.** 19c ändert die
+>    BEDIENUNG (Blase über dem Bezirk) und braucht nichts Neues. 19d ändert die KARTE
+>    selbst (echte Apple-Karte) und braucht einen Native-Baustein, einen neuen Build
+>    und Ians Apple-Schlüssel. Zusammen gebaut hätte jeder Fehler danach zwei mögliche
+>    Ursachen — dieselbe Überlegung, aus der Phase 19 vor Phase 20 steht.
+> 2. **Mit 19c anfangen.** Sie läuft sofort, auf Web und iPhone, und macht die App
+>    besser statt schöner: Heute muss man nach einem Tipp auf die Karte nach UNTEN
+>    schauen, um zu sehen, was in dem Bezirk los ist.
+> 3. **19d ist Ians Entscheidung GEGEN meine Empfehlung** (ich hatte den gezeichneten
+>    Apple-Stil vorgeschlagen). Sie wird gebaut, nicht neu verhandelt. Der Preis steht
+>    in der Phase, damit ihn niemand später „entdeckt".
+> 4. **Eine echte Apple-Karte macht die App NICHT genauer.** Am Post steht nur
+>    `district`, keine Koordinate. Die Apple-Karte ist der Hintergrund, unsere
+>    Bezirksflächen bleiben oben drauf — und harte Regel 47 gilt gegen einen stärkeren
+>    Reiz als vorher.
 
 > ✅ **Phase 19b ist seit dem 2026-09-06 fertig — die Wien-Karte.** Was eine frische
 > Sitzung davon wissen muss:
