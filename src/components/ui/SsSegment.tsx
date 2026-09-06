@@ -74,7 +74,15 @@ const styles = StyleSheet.create({
   haelfte: {
     flex: 1,
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    // 8 statt 12 seit Phase 19b, und das ist eine Messung: Mit DREI Stufen
+    // („Stapel · Liste · Karte") passt die Leiste auf einem 360-px-Schirm neben
+    // „Noch 12 Karten" höchstens 232 px breit sein. Bei 12 px Innenabstand bekommt
+    // „Stapel" davon 47,33 px und braucht 47 — es ging also rechnerisch gerade
+    // eben auf, und beim nächsten Gerät mit einer Spur breiterer Schrift stünde
+    // wieder „Sta…" da (Phase 11), wie schon „Jeder kann anfr…" (Phase 18a).
+    // Mit 8 px sind es 55,3 gegen 47. Die zweistufigen Leisten gewinnen dadurch
+    // ebenfalls Platz für ihre Beschriftung — die Änderung schadet keiner.
+    paddingHorizontal: spacing.sm,
     borderRadius: radius.pill,
     cursor: 'pointer',
   },

@@ -84,7 +84,41 @@ export function passtZurZeit(post: Post, wann: WannFilter, jetzt: Date): boolean
 // ── Bezirk ───────────────────────────────────────────────────────────────────
 
 /**
- * Passt der Post zum gewählten Bezirk? `null` heißt „überall", und dann passt alles.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  WAS „BEZIRK" ALS FILTER HEISSEN KANN — drei Stufen, ein Union
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Bis Phase 19b stand hier `string | null`: eine PLZ oder „überall". Mit der
+ * Wien-Karte kam eine dritte Stufe dazu, die es vorher nicht gab — **„nur die Posts
+ * OHNE Bezirk"**. Auf einer Karte haben die keinen Ort; sie stehen als antippbare
+ * Zeile darunter (Ians Entscheidung 31), und ein Tipp darauf muss sie zeigen können.
+ *
+ * ── Warum ein Union und kein Sonderwert ──────────────────────────────────────
+ * Der billige Weg wäre `bezirk: 'ohne'` gewesen — ein Wort, das sonst keine PLZ ist.
+ * Genau das ist die Falle, in die dieses Projekt schon dreimal getreten ist
+ * (`Post.district`, `ChatThread.postId`, `Visibility`): Ein Sonderwert in einem
+ * weiten Typ ist für den Compiler ein ganz normaler String, `post.district === 'ohne'`
+ * bleibt gültiger Code, und der Vergleich ist still für immer falsch.
+ *
+ * Mit dem Union wird `filter.bezirk === null` **ungültig** — und damit schreibt
+ * `tsc` die Arbeitsliste, statt dass jemand `grep`t. Das ist die Lehre aus Phase 17,
+ * hier zum vierten Mal angewandt.
+ *
+ * Dass `'einer'` als einzige Stufe Daten trägt, ist der Grund, dass es überhaupt ein
+ * Union sein muss — nach derselben Faustregel, nach der `Group.offen` in Phase 18a
+ * bewusst ein schlichtes Boolean geblieben ist.
+ */
+export type BezirkFilter =
+  | { kind: 'alle' }
+  | { kind: 'einer'; plz: string }
+  | { kind: 'ohne' };
+
+/** Stabile Werte für die zwei datenlosen Stufen — spart je Rendern ein neues Objekt. */
+export const BEZIRK_ALLE: BezirkFilter = { kind: 'alle' };
+export const BEZIRK_OHNE: BezirkFilter = { kind: 'ohne' };
+
+/**
+ * Passt der Post zum gewählten Bezirk?
  *
  * ── Der Fall, den man leicht übersieht ───────────────────────────────────────
  * Seit dem 2026-09-02 kann ein Post SELBST keinen Bezirk haben (`district: null`,
@@ -93,14 +127,17 @@ export function passtZurZeit(post: Post, wann: WannFilter, jetzt: Date): boolean
  * es in Floridsdorf stattfindet. Wer nach einem bestimmten Bezirk sucht, will keine
  * Posts, bei denen der Ort offen ist.
  *
- * Die Kehrseite gehört dazu: Solche Posts sind NUR unter „Überall" zu finden. Wenn
- * viele Leute das Feld leer lassen, verstecken sich die Posts vor dem Bezirksfilter.
- * Genau davor warnt der Haken in `app/create.tsx` (`BEZIRK_FREIWILLIG`) — hier ist
- * die Stelle, an der er sich auswirkt.
+ * Die Kehrseite gehört dazu: Solche Posts waren bis Phase 19b NUR unter „Überall" zu
+ * finden — sie versteckten sich vor dem Bezirksfilter, und genau davor warnt der
+ * Haken in `app/create.tsx` (`BEZIRK_FREIWILLIG`). **Mit `'ohne'` gibt es sie jetzt
+ * erstmals als eigene Auswahl.** Der Haken wird dadurch kleiner, nicht kleiner
+ * wichtig: Der Weg dorthin führt über die Karte, und wer nie auf die Karte geht,
+ * sieht sie weiter nur unter „Überall".
  */
-export function passtZumBezirk(post: Post, bezirk: string | null): boolean {
-  if (bezirk === null) return true;
-  return post.district === bezirk;
+export function passtZumBezirk(post: Post, bezirk: BezirkFilter): boolean {
+  if (bezirk.kind === 'alle') return true;
+  if (bezirk.kind === 'ohne') return post.district === null;
+  return post.district === bezirk.plz;
 }
 
 // ── Altersgruppe ─────────────────────────────────────────────────────────────

@@ -204,7 +204,36 @@ SafeArea stimmt oben und unten, Deep Links funktionieren nativ. Belege liegen al
 Apple-Login) und der Gesten-Durchgang. **Ein Mausklick am Simulator ist keine
 Gestenprüfung** — Wischstapel, Tastatur im Chat und der Jahrgangs-Balken sind unbelegt.
 
-🗺️ **Neu und spezifiziert (2026-09-06): Phase 19b — die Wien-Karte.** Leopolds zweite
+✅ **Phase 19b ist fertig (2026-09-06): die Wien-Karte.** Leopolds zweite Idee, und
+das erste Stück, das `react-native-svg` aus Phase 19 wirklich ausnutzt. Dritte Stufe im
+Umschalter („Stapel · Liste · Karte"), 23 echte Bezirksflächen aus den amtlichen Daten
+der Stadt Wien, eingefärbt nach „wie viel ist hier los", antippbar, mit Schieben und
+Zoomen. **Belegt auf Web UND nativ auf iOS** (`r01`–`r04`, `r05-ios-karte.png`). Sechs
+Dinge sind daran wichtiger als das Bild:
+1. **Aus 3 MB wurden 11 kB, und das Verfahren ist der Punkt.** 118.683 amtliche
+   Stützpunkte → 886 (0,7 %). Entscheidend ist die REIHENFOLGE: **erst auf ein Raster
+   runden, dann vereinfachen.** Zwei Nachbarbezirke teilen sich eine Grenze; vereinfacht
+   jeder sie für sich, entstehen Lücken. Gerundet sind die geteilten Punkte vorher
+   bitgleich.
+2. **Die Josefstadt ist bei Handybreite 14 × 11 Bildpunkte groß** — neun der 23 Bezirke
+   liegen unter 30 px, und genau dort liegen die meisten Posts. Nachgemessen wurde auch
+   der naheliegendste Ausweg: „nächster Beschriftungspunkt gewinnt" ergibt **11 × 11 px**,
+   also schlechter als nichts zu tun. **Was zu klein ist, ist das BILD, nicht die
+   Logik** — deshalb Ians Entscheidung 33 (Zoom), gegen meine Empfehlung.
+3. **Ein Kneifen wurde als Tipp gewertet** — der einzige echte Fehler der Phase, und nur
+   mit ECHTEN Touch-Ereignissen zu finden. `gestureState.dx/dy` misst bei mehreren
+   Fingern den MITTELPUNKT; zwei symmetrisch auseinandergezogene Finger lassen ihn
+   stehen. Die Bewegungsgrenze (Regel 15) stellt hier die falsche Frage.
+4. **`FeedFilter.bezirk` ist ein Union geworden** — vierte Runde nach `Post.district`,
+   `ChatThread.postId` und `Visibility`, und wieder hat `tsc` die Arbeitsliste
+   geschrieben. Nebengewinn: Posts ohne Bezirk sind erstmals ausdrücklich wählbar.
+5. **Die Kartenhöhe hängt am Schirm (28 %), nicht an einer festen Zahl.** Mit festen
+   230 px bekam die Liste auf 390 × 844 gute 266 px und auf **360 × 600 genau 22 px**.
+6. **„Sta…" ist zum dritten Mal aufgetreten** (nach Phase 11 und 18a) und diesmal
+   nachgerechnet: Bei 12 px Innenabstand bekommt „Stapel" 47,33 px und braucht 47 —
+   deshalb steht `SsSegment` jetzt auf 8 px.
+
+🗺️ **Wie sie spezifiziert wurde (2026-09-06): Phase 19b — die Wien-Karte.** Leopolds zweite
 Idee aus dem BENUTZEN. Eine dritte Ansicht neben Stapel und Liste: 23 gezeichnete
 Bezirksflächen, eingefärbt nach „wie viel ist hier los", Tippen zeigt die Posts darunter.
 **Sie ist billig, weil an jedem Post seit Phase 2 `district: '1070'` steht** — die
@@ -553,7 +582,7 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    ~~nicht 2 Sachen gleichzeitig~~
 8. **Wieder herzeigen** — die drei haben Phase 13 gesehen, nicht 18a. Läuft neben 9.
 9. **Aufs Gerät** (Phase 19) ← *hier sind wir* — erster EAS-Build, `react-native-svg`,
-   Durchgang am iPhone
+   Durchgang am iPhone. ~~Wien-Karte (19b)~~ ✅ *2026-09-06*
 10. **Backend** (Phase 20) — Supabase: Schema, Policies, Anmelden, `store.ts` tauschen
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 
@@ -893,6 +922,30 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    (18a), nur eingebaut statt vergessen. **Bei jeder neuen Auskunft fragen: Wem gehört
    die Information, aus der sie gerechnet ist?**
 
+48. **Die Wien-Karte besteht aus VIER Dateien, und keine davon ist ein Screen.**
+   `data/wien-bezirke.ts` (**erzeugt** — nicht von Hand ändern, `python3
+   scripts/bezirke-bauen.py` baut sie neu) · `features/posts/karte.ts` (was eine Farbe
+   bedeutet, wie weit man zoomen darf) · `lib/karte-treffer.ts` (welcher Bezirk unter
+   einem Punkt liegt) · `components/ui/SsWienKarte.tsx` (Zeichnen und Geste). Dieselbe
+   Bauart wie `theme/icons.ts` + `SsIcon`, und aus demselben Grund: Ein neuer
+   Grenzverlauf ist ein Skriptlauf, eine neue Farbe eine Regel-Datei — nie ein Screen.
+   **Die Namensnennung (`KARTE_QUELLE`, CC BY 4.0, Stadt Wien) ist Lizenzbedingung** und
+   wird IN der Karte gezeichnet, damit sie mitreist.
+49. **Ein Kneifen ist NIE ein Tipp — auch wenn sich nichts bewegt hat.**
+   `gestureState.dx/dy` misst bei mehreren Fingern den MITTELPUNKT, und der steht beim
+   symmetrischen Auseinanderziehen still. Die Bewegungsgrenze aus harter Regel 15 fängt
+   das nicht: Sie fragt „hat sich der Finger bewegt?", richtig ist „war das überhaupt
+   eine Ein-Finger-Geste?" (`mehrfingrig` in `SsWienKarte`). **Wer einen Erkenner mit
+   mehreren Fingern baut, prüft ihn mit echten Touch-Ereignissen** — mit der Maus ist
+   der Fehler unsichtbar.
+50. **Was auf einer Karte gewählt ist, IST der Bezirksfilter** — es gibt keinen zweiten
+   Zustand daneben. Deshalb überlebt eine Auswahl das Umschalten auf Liste oder Stapel,
+   und deshalb gilt harte Regel 26 auch hier. Gezählt wird über `useBezirksZaehlung`,
+   und `useBezirkeImFeed` leitet seine Liste daraus ab — die Regel „beim Zählen wird
+   genau der Bezirksfilter ausgeschaltet und sonst keiner" steht damit an EINER Stelle.
+   Ohne sie zeigte die Karte nach dem ersten Tipp eine einzige eingefärbte Fläche in
+   einem grauen Wien.
+
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
 - **Große Display-Fonts clippen auf iOS.** `lineHeight ≈ 1.2 × fontSize` setzen, sonst
@@ -1206,6 +1259,32 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   19.6 scheinbar widerlegt. Der Prozess war nur gar nicht tot; `launch` holte die App
   bloß nach vorn. Mit `pgrep` dazwischen kamen beide Hinweise wie erwartet. Dieselbe
   Falle wie das `browser_navigate` in Phase 18d.
+- **Benachbarte Flächen einzeln zu vereinfachen reißt Lücken.** (Phase 19b) Zwei
+  Bezirke teilen sich eine Grenze. Douglas-Peucker ist zwar umkehrungsinvariant, teilt
+  aber verschiedene Teilstücke verschieden auf. Der Ausweg ist die REIHENFOLGE: erst
+  alle Punkte auf ein Raster runden (dann sind geteilte Stützpunkte bitgleich), dann
+  glätten. Gilt für jede Karte, jedes Diagramm mit angrenzenden Formen.
+- **Der Schwerpunkt einer Fläche liegt oft nicht IN ihr.** (Phase 19b) Bei den
+  gebogenen Bezirken (13., 21., 22.) stünde die Zahl beim Nachbarn. Gesucht ist der
+  Punkt mit dem größten Abstand zum Rand — und dieser Abstand gehört MITGESPEICHERT
+  (`label.r`), weil erst er die Frage „passt die Zahl überhaupt hinein?" beantwortet.
+- **`gestureState.dx/dy` ist bei mehreren Fingern der MITTELPUNKT.** (Phase 19b) Ein
+  symmetrisches Kneifen bewegt ihn nicht — die Berührung sieht beim Loslassen aus wie
+  ein Tipp, und die Auswahl sprang vom 8. in den 1. Bezirk. Gefunden nur mit CDP
+  `Input.dispatchTouchEvent`; mit `page.mouse` ist der Fall gar nicht erzeugbar. Dritte
+  Fassung der Phase-18b-Lehre.
+- **Eine feste Höhe ist auf einem kleinen Schirm eine ganz andere Höhe.** (Phase 19b)
+  Über der Karte stehen 235 px Kopf, Umschalter, Suche und Kategorien — **unabhängig
+  von der Schirmhöhe**. Eine feste Kartenhöhe von 230 px ließ auf 390 × 844 eine
+  Liste von 266 px und auf 360 × 600 **genau 22 px**. Was unter etwas Festem liegt,
+  bemisst sich am Anteil, nicht an einer Zahl.
+- **Der Web-Export und `visualViewport` können ein Bild verfälschen, ohne dass am Code
+  etwas falsch ist.** (Phase 19b) Ein Screenshot zeigte plötzlich angeschnittene Ränder;
+  Verdacht war das eigene `preventDefault` beim Mausrad. Gemessen: `visualViewport.scale`
+  stand auf 1,089, der Kartenzoom lief davon unabhängig richtig. Ein hängengebliebener
+  Seitenzoom im Prüfbrowser — zurückzusetzen nur über CDP `Emulation.setPageScaleFactor`,
+  Strg+0 half nicht. **Vor der Fehlersuche im eigenen Code prüfen, ob das MESSGERÄT
+  verstellt ist.**
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

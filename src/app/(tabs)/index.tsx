@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { AntwortLeiste } from '@/components/AntwortLeiste';
 import { PostCard } from '@/components/PostCard';
@@ -15,15 +15,24 @@ import {
   SsScrollReihe,
   SsSegment,
   SsText,
+  SsWienKarte,
 } from '@/components/ui';
 import { FILTER_EGAL, jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
 import { BRAND } from '@/config/brand';
 import { useCurrentUser } from '@/features/social/hooks';
-import { WANN_LABELS, WANN_ORDER } from '@/features/posts/filter';
+import {
+  BEZIRK_ALLE,
+  BEZIRK_OHNE,
+  WANN_LABELS,
+  WANN_ORDER,
+  type BezirkFilter,
+} from '@/features/posts/filter';
+import { bezirkPostText, ohneBezirkText } from '@/features/posts/karte';
 import {
   FILTER_LEER,
   aktiveFilter,
   useBezirkeImFeed,
+  useBezirksZaehlung,
   useFeed,
   useStapel,
   wegwischen,
@@ -82,7 +91,29 @@ import { CATEGORY_ORDER, categoryColors, colors, radius, spacing } from '@/theme
  * scrollt gar nichts.
  */
 
-type Ansicht = 'stapel' | 'liste';
+type Ansicht = 'stapel' | 'liste' | 'karte';
+
+/**
+ * Wie hoch die Karte höchstens werden darf — als ANTEIL am Schirm, nicht als feste
+ * Zahl.
+ *
+ * Das ist nachgemessen und nicht geschätzt. Über der Karte stehen Kopf, Umschalter,
+ * Suchzeile und Kategorien: zusammen **235 px, unabhängig von der Schirmhöhe**.
+ * Eine feste Kartenhöhe von 230 px ließ deshalb auf 390 × 844 eine gute Liste
+ * (266 px) und auf **360 × 600 genau 22 px** — einen blauen Streifen. Dabei ist
+ * „Posts erscheinen darunter" genau Ians Entscheidung 30; eine Ansicht, die sie
+ * nur auf großen Geräten einlöst, löst sie nicht ein.
+ *
+ * 28 % ergibt 168 px auf 600 (Liste 137), 187 auf 667 und die vollen 230 auf 844.
+ * Die Obergrenze bleibt, weil eine Karte, die die halbe App füllt, aus dem Feed
+ * eine Kartenansicht mit Anhang macht.
+ *
+ * `useWindowDimensions` statt `onLayout`: Die Schirmhöhe steht beim ersten Rendern
+ * schon fest. Gemessen käme sie auf Web erst NACH dem Zeichnen (2026-09-03) — die
+ * Karte würde bei jedem Umschalten sichtbar zusammenspringen.
+ */
+const KARTE_ANTEIL = 0.28;
+const KARTE_MAX_HOEHE = 230;
 
 export default function FeedScreen() {
   const [ansicht, setAnsicht] = useState<Ansicht>('stapel');
@@ -100,6 +131,10 @@ export default function FeedScreen() {
   const eintraege = useFeed(filter);
   const stapel = useStapel(filter);
   const bezirke = useBezirkeImFeed(filter);
+  // Phase 19b. Dieselbe Zählung speist Karte UND Filter-Pillen — die Regel „beim
+  // Zählen wird genau der Bezirksfilter ausgeschaltet" steht damit an EINER Stelle
+  // (`useBezirksZaehlung`), nicht zweimal fast gleich.
+  const { proBezirk, ohneBezirk } = useBezirksZaehlung(filter);
 
   /** Ist der Filterbereich aufgeklappt? Zu beim Aufschlagen — wie beim Posten. */
   const [filterOffen, setFilterOffen] = useState(false);
@@ -211,6 +246,7 @@ export default function FeedScreen() {
       filter={filter}
       setzen={setzen}
       bezirke={bezirke}
+      ohneBezirk={ohneBezirk}
       aktiv={filterAktiv}
       zuruecksetzen={zuruecksetzen}
       meinJahrgang={ich.jahrgang}
@@ -253,6 +289,7 @@ export default function FeedScreen() {
           options={[
             { wert: 'stapel', label: 'Stapel' },
             { wert: 'liste', label: 'Liste' },
+            { wert: 'karte', label: 'Karte' },
           ]}
         />
         <SsText variant="caption" color={colors.inkSoft}>
@@ -302,7 +339,17 @@ export default function FeedScreen() {
         <View style={styles.filterImFluss}>{filterFeld}</View>
       ) : null}
 
-      {ansicht === 'liste' ? (
+      {ansicht === 'karte' ? (
+        <KarteAnsicht
+          zaehlung={proBezirk}
+          ohneBezirk={ohneBezirk}
+          bezirk={filter.bezirk}
+          setzen={setzen}
+          eintraege={eintraege}
+          filterAktiv={filterAktiv}
+          zuruecksetzen={zuruecksetzen}
+        />
+      ) : ansicht === 'liste' ? (
         <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
       ) : stapelLeer ? (
         // Ians Regel, Phase 11: Am Ende des Stapels steht keine leere Fläche,
@@ -399,6 +446,98 @@ function FeedListe({
       showsVerticalScrollIndicator={false}
       ListEmptyComponent={<LeererFeed filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />}
     />
+  );
+}
+
+/**
+ * Die dritte Ansicht: Wien als Karte.
+ *
+ * Phase 19b, aus Leopolds Wunsch. **Sie ist kein eigener Ort** — dieselben Posts,
+ * dieselben sechs Filter, nur nach Bezirken angeordnet (harte Regel 16, dieselbe
+ * Begründung wie beim Stapel). Der Umschalter oben hat deshalb eine dritte Stufe
+ * bekommen und die Tab-Leiste keinen vierten Tab: Ein eigener Tab hätte den
+ * Hauptfeed geleert, und ein leerer Hauptfeed ist am Anfang das größere Problem
+ * (dasselbe Argument wie bei den Gruppen, harte Regel 34).
+ *
+ * ── Der Tipp setzt den GANZ NORMALEN Bezirksfilter ───────────────────────────
+ * Und das ist der Grund, warum die Karte so billig war: Es gibt keinen zweiten
+ * Zustand „auf der Karte gewählt" neben `filter.bezirk`. Wer einen Bezirk antippt
+ * und dann auf „Liste" umschaltet, sieht dieselbe Auswahl weiter — das ist keine
+ * Zugabe, sondern das, was harte Regel 26 verlangt.
+ *
+ * ── Warum bei einem völlig leeren Feed GAR KEINE Karte dasteht ───────────────
+ * Eine Karte ohne Posts ist nicht leer, sie ist 23 graue Flächen — sie sieht kaputt
+ * aus, nicht ruhig. Und stünde `LeererFeed` darunter, hätte der Screen wieder zwei
+ * Antworten auf dieselbe Frage (die Lehre vom 2026-09-03 mit `StapelDurch`).
+ * Deshalb: nichts da, keine Karte, nur der Satz mit dem Ausweg.
+ */
+function KarteAnsicht({
+  zaehlung,
+  ohneBezirk,
+  bezirk,
+  setzen,
+  eintraege,
+  filterAktiv,
+  zuruecksetzen,
+}: {
+  zaehlung: Record<string, number>;
+  ohneBezirk: number;
+  bezirk: BezirkFilter;
+  setzen: <K extends keyof FeedFilter>(feld: K, wert: FeedFilter[K]) => void;
+  eintraege: FeedEintrag[];
+  filterAktiv: boolean;
+  zuruecksetzen: () => void;
+}) {
+  const { height: fensterHoehe } = useWindowDimensions();
+  const nichtsDa = Object.keys(zaehlung).length === 0 && ohneBezirk === 0;
+  if (nichtsDa) {
+    return <LeererFeed filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />;
+  }
+
+  const gewaehlt = bezirk.kind === 'einer' ? bezirk.plz : null;
+  const ueberschrift =
+    bezirk.kind === 'einer'
+      ? `${bezirk.plz} Wien · ${bezirkPostText(eintraege.length)}`
+      : bezirk.kind === 'ohne'
+        ? `Ohne Bezirk · ${bezirkPostText(eintraege.length)}`
+        : `Ganz Wien · ${bezirkPostText(eintraege.length)}`;
+
+  return (
+    <>
+      <View style={styles.karteBereich}>
+        <SsWienKarte
+          zaehlung={zaehlung}
+          gewaehlt={gewaehlt}
+          maxHoehe={Math.min(KARTE_MAX_HOEHE, fensterHoehe * KARTE_ANTEIL)}
+          // Ein Tipp ins Umland kommt als `null` und hebt die Auswahl auf. Das ist
+          // die einzige Stelle, an der man ohne Umweg wieder ganz Wien sieht — ein
+          // zweiter Tipp auf denselben Bezirk tut das absichtlich NICHT: Auf einer
+          // Karte ist „nochmal draufdrücken" das Zeichen für „genauer hinsehen",
+          // nicht für „abwählen".
+          onWaehlen={(plz) =>
+            setzen('bezirk', plz === null ? BEZIRK_ALLE : { kind: 'einer', plz })
+          }
+        />
+      </View>
+
+      <View style={styles.karteZeile}>
+        <SsText variant="label" numberOfLines={1} style={styles.karteTitel}>
+          {ueberschrift}
+        </SsText>
+        {/* Posts ohne Bezirksangabe haben auf einer Karte keinen Ort. Sie hier
+            wegzulassen hieße, dass die Ansicht still Posts verschluckt — Ians
+            Entscheidung 31. Die Zeile steht nur da, wenn es welche gibt. */}
+        {ohneBezirk > 0 ? (
+          <SsChip
+            label={ohneBezirkText(ohneBezirk)}
+            selected={bezirk.kind === 'ohne'}
+            onPress={() => setzen('bezirk', bezirk.kind === 'ohne' ? BEZIRK_ALLE : BEZIRK_OHNE)}
+          />
+        ) : null}
+      </View>
+
+      <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
+    </>
   );
 }
 
@@ -546,6 +685,7 @@ function FilterBereich({
   filter,
   setzen,
   bezirke,
+  ohneBezirk,
   aktiv,
   zuruecksetzen,
   meinJahrgang,
@@ -553,6 +693,8 @@ function FilterBereich({
   filter: FeedFilter;
   setzen: <K extends keyof FeedFilter>(feld: K, wert: FeedFilter[K]) => void;
   bezirke: string[];
+  /** Wie viele Posts gerade GAR keinen Bezirk haben — Phase 19b. */
+  ohneBezirk: number;
   aktiv: boolean;
   zuruecksetzen: () => void;
   /** Nur für den VORSCHLAG beim Einschalten des Reglers, nicht für die Regel. */
@@ -592,17 +734,37 @@ function FilterBereich({
         hinweis={bezirke.length === 0 ? 'gerade nichts mit Bezirk' : undefined}>
         <SsChip
           label="Überall"
-          selected={filter.bezirk === null}
-          onPress={() => setzen('bezirk', null)}
+          selected={filter.bezirk.kind === 'alle'}
+          onPress={() => setzen('bezirk', BEZIRK_ALLE)}
         />
         {bezirke.map((b) => (
           <SsChip
             key={b}
             label={b}
-            selected={filter.bezirk === b}
-            onPress={() => setzen('bezirk', filter.bezirk === b ? null : b)}
+            selected={filter.bezirk.kind === 'einer' && filter.bezirk.plz === b}
+            onPress={() =>
+              setzen(
+                'bezirk',
+                filter.bezirk.kind === 'einer' && filter.bezirk.plz === b
+                  ? BEZIRK_ALLE
+                  : { kind: 'einer', plz: b },
+              )
+            }
           />
         ))}
+        {/* Seit Phase 19b eine eigene Stufe und keine Lücke mehr: Posts, bei denen
+            niemand einen Bezirk angegeben hat. Sie steht nur da, wenn es welche
+            gibt — eine Pille, die immer null Ergebnisse liefert, ist eine
+            Sackgasse wie die 23 leeren Bezirke daneben. */}
+        {ohneBezirk > 0 ? (
+          <SsChip
+            label="Ohne Bezirk"
+            selected={filter.bezirk.kind === 'ohne'}
+            onPress={() =>
+              setzen('bezirk', filter.bezirk.kind === 'ohne' ? BEZIRK_ALLE : BEZIRK_OHNE)
+            }
+          />
+        ) : null}
       </FilterGruppe>
 
       {/* Seit Phase 18b ein Schiebe-Balken statt einer Pillenreihe — Ians
@@ -778,12 +940,18 @@ const styles = StyleSheet.create({
 
   // Die Mindestbreite ist keine Kosmetik, sondern die Reparatur einer Falle:
   // `flex: 1` heißt in React Native `flexBasis: 0` (im Browser wäre es `auto`). Die
-  // beiden Hälften von `SsSegment` melden damit Breite null an. Als einziges Kind
-  // einer Spalte wird das Segment trotzdem auf volle Breite gestreckt — in dieser
-  // ZEILE hier gibt es nichts, was es streckt, und es fiel auf seine Polsterung
-  // zusammen: aus „Stapel" wurde „Sta…". 78 px je Hälfte reichen für die
-  // 15-px-Beschriftung.
-  ansicht: { minWidth: 168 },
+  // Hälften von `SsSegment` melden damit Breite null an. Als einziges Kind einer
+  // Spalte wird das Segment trotzdem auf volle Breite gestreckt — in dieser ZEILE
+  // hier gibt es nichts, was es streckt, und es fiel auf seine Polsterung zusammen:
+  // aus „Stapel" wurde „Sta…".
+  //
+  // Seit Phase 19b sind es DREI Stufen, und die Zahl ist nachgemessen statt geraten:
+  // Die Zeile hat 328 px, rechts steht im Stapel höchstens „Noch 12 Karten" (84 px),
+  // dazwischen 12 px Lücke — also bleiben 232. `flex: 1` teilt gleichmäßig, der
+  // längste Text („Stapel", 47 px) bekommt somit ein Drittel. Damit das nicht auf
+  // den Zehntelpixel aufgeht, ist zugleich der Innenabstand in `SsSegment` von 12
+  // auf 8 gefallen.
+  ansicht: { minWidth: 232 },
 
   ansichtZeile: {
     flexDirection: 'row',
@@ -870,6 +1038,24 @@ const styles = StyleSheet.create({
   filterImFluss: { marginHorizontal: spacing.lg },
 
   stapelBereich: { flex: 1, paddingHorizontal: spacing.lg },
+
+  // Die Karte ist fest, die Liste darunter scrollt — „Karte bleibt stehen, Posts
+  // erscheinen darunter" (Ians Entscheidung 30). Deshalb KEIN gemeinsamer
+  // ScrollView: Ein Gesten-Erkenner auf der Karte und ein senkrechter Scroll
+  // darüber streiten sich sonst um jede Berührung (harte Regel 44).
+  karteBereich: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  karteZeile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  // `flexShrink: 1` und nicht `flex: 1`: Die Überschrift soll nachgeben, wenn die
+  // Pille daneben Platz braucht — aber sie soll den Platz nicht ERZWINGEN, wenn
+  // keine Pille da ist (harte Regel 43, die Kehrseite).
+  karteTitel: { flexShrink: 1 },
 
   listeAussen: { flex: 1 },
   // `flexGrow: 1` am Inhalt, damit der leere Zustand die volle Höhe bekommt und

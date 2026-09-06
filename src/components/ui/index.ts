@@ -13,3 +13,4 @@ export * from './SsScreen';
 export * from './SsScrollReihe';
 export * from './SsSegment';
 export * from './SsText';
+export * from './SsWienKarte';

@@ -1,0 +1,451 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, PanResponder, Platform, Pressable, StyleSheet, View } from 'react-native';
+import Svg, { G, Path, Text as SvgText } from 'react-native-svg';
+
+import { SsText } from './SsText';
+import { BEZIRKE, KARTE_BREITE, KARTE_HOEHE } from '@/data/wien-bezirke';
+import {
+  KARTE_LEER,
+  KARTE_QUELLE,
+  STUFEN,
+  TIPP_WEG_MAX,
+  ZOOM_MAX,
+  ZOOM_MIN,
+  stufeFuer,
+} from '@/features/posts/karte';
+import { bezirkAn } from '@/lib/karte-treffer';
+import { colors } from '@/theme';
+
+export interface SsWienKarteProps {
+  /** Wie viele Posts je Bezirks-PLZ. Fehlt einer, ist er leer. */
+  zaehlung: Readonly<Record<string, number>>;
+  /** Welcher Bezirk ist gewählt — `null` heißt „ganz Wien". */
+  gewaehlt: string | null;
+  /** Ein Tipp auf eine Fläche. `null`, wenn jemand ins Umland tippt. */
+  onWaehlen: (plz: string | null) => void;
+  /**
+   * Höchste Höhe in Bildpunkten. Ohne sie nimmt die Karte bei Handybreite 255 px
+   * und lässt der Liste darunter auf einem 600-px-Schirm fast nichts — Ians
+   * Entscheidung 30 sagt aber ausdrücklich „Posts erscheinen DARUNTER". Wird sie
+   * wirksam, schrumpft die Karte als Ganzes und bleibt mittig; sie wird nie
+   * beschnitten.
+   */
+  maxHoehe?: number;
+}
+
+/**
+ * Die Wien-Karte — 23 Bezirksflächen, eingefärbt nach „wie viel ist hier los".
+ *
+ * Phase 19b, aus Leopolds Wunsch. **Was eine Farbe bedeutet, steht nicht hier,
+ * sondern in `features/posts/karte.ts`** — dieselbe Trennung wie zwischen
+ * `theme/icons.ts` und `SsIcon`: Hier wird gezeichnet, dort wird entschieden.
+ * Die Umrisse liegen als dritte Datei in `data/wien-bezirke.ts` und sind erzeugt.
+ *
+ * ── Warum sich die Karte schieben und zoomen lässt ────────────────────────────
+ * Ians Entscheidung 33, und sie ist die Antwort auf eine Messung: Bei Handybreite
+ * ist die **Josefstadt 14 × 11 Bildpunkte** groß. Die ganze Begründung samt der
+ * beiden verworfenen Wege steht bei `KARTE_GESTE` in `karte.ts`.
+ *
+ * ── Warum die Geste die ANSICHT bewegt und nicht das SVG ──────────────────────
+ * Der naheliegende Weg wäre, den `viewBox` mitzuziehen. Dann rechnet bei jedem
+ * Fingerbreit jemand 886 Punkte neu und React zeichnet 23 Pfade — auf einem echten
+ * Gerät ist das der Unterschied zwischen flüssig und ruckelig. Stattdessen liegt
+ * das fertige SVG in einer `Animated.View`, und geschoben wird deren `transform`.
+ * Während der Geste **rendert damit gar nichts neu**; erst beim Loslassen wird der
+ * Zoom in den State übernommen, weil dann die Zahlen neu entschieden werden müssen
+ * (siehe `zahlPasst`).
+ *
+ * ── Falle 1: die Geste (Phase 11, harte Regel 44) ─────────────────────────────
+ * `onPanResponderTerminationRequest` steht per Voreinstellung auf „ja". Die Karte
+ * liegt im Feed unter einer Liste, also nimmt ihr sonst der erste Scroll-Versuch
+ * die Berührung ab — genau der Fehler, der den Wischstapel in Handybreite lahmlegte.
+ *
+ * ── Falle 2: die gemessene Breite (2026-09-03, `NOTBREITE`) ───────────────────
+ * Alles hier hängt an der gemessenen Breite: die Größe des SVG, die Grenzen fürs
+ * Schieben, das Umrechnen eines Tipps in Kartenkoordinaten. Beim Web-Export gibt es
+ * kein Fenster und `onLayout` feuert nie. Mit **null** wäre die Karte unsichtbar und
+ * jeder Tipp träfe rechnerisch die linke obere Ecke.
+ *
+ * ── Falle 3: der zusätzliche `click` (harte Regel 15) ─────────────────────────
+ * Ein Browser schickt nach jedem Ziehen noch ein `click` hinterher. Deshalb
+ * entscheidet der Erkenner beim LOSLASSEN selbst, ob es ein Tipp war — er merkt
+ * sich, ob sich in der ganzen Berührung etwas bewegt hat (`TIPP_WEG_MAX`). Aus
+ * demselben Grund haben die Flächen kein eigenes `onPress`.
+ */
+
+/** Breite, mit der gerechnet wird, solange nichts gemessen ist. Siehe Falle 2. */
+const NOTBREITE = 328;
+
+/** Die Zahl in der Fläche, in Bildpunkten — unabhängig vom Zoom. */
+const ZAHL_PX = 11;
+
+/** Die weiße Fuge zwischen zwei Bezirken, in Rastereinheiten. */
+const FUGE = 2.5;
+
+/** Der Umriss um den gewählten Bezirk. Dicker als die Fuge, sonst sieht man ihn nicht. */
+const AUSWAHL_STRICH = 6;
+
+export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe }: SsWienKarteProps) {
+  const [gemessen, setGemessen] = useState(0);
+  const platz = gemessen || NOTBREITE;
+  // Wien ist breiter als hoch (1000 : 777). Passt die Höhe nicht, wird die Breite
+  // zurückgerechnet statt zu beschneiden — eine halbe Donaustadt sähe nach Fehler aus.
+  const breite = maxHoehe
+    ? Math.min(platz, (maxHoehe * KARTE_BREITE) / KARTE_HOEHE)
+    : platz;
+  const hoehe = (breite * KARTE_HOEHE) / KARTE_BREITE;
+  /** Wie viele Bildpunkte eine Rastereinheit bei dieser Breite ist. */
+  const proEinheit = breite / KARTE_BREITE;
+
+  // Die Anzeige läuft über `Animated` (kein Rendern während der Geste), der
+  // logische Zustand liegt daneben im Ref — die Handler brauchen ihn zum Rechnen
+  // und Begrenzen. `useNativeDriver` bleibt aus: Im Browser gibt es ihn nicht, und
+  // Werte, die aus einer Geste per `setValue` kommen, müssen ohnehin durch JS
+  // (dieselbe Überlegung wie in `WischKarte`).
+  const schiebenX = useRef(new Animated.Value(0)).current;
+  const schiebenY = useRef(new Animated.Value(0)).current;
+  const zoomWert = useRef(new Animated.Value(1)).current;
+
+  /** Der Zoom, wie er beim letzten Loslassen stand — nur dafür rendert die Karte neu. */
+  const [zoomStufe, setZoomStufe] = useState(1);
+
+  const zustand = useRef({ zoom: 1, x: 0, y: 0 });
+  // Maße und `onWaehlen` gehören MIT ins Ref: Ein `PanResponder` wird einmal gebaut
+  // und sähe sonst für immer die Werte des ersten Renderns.
+  const masse = useRef({ breite, hoehe, proEinheit, onWaehlen });
+  useEffect(() => {
+    masse.current = { breite, hoehe, proEinheit, onWaehlen };
+  }, [breite, hoehe, proEinheit, onWaehlen]);
+
+  const responder = useMemo(() => {
+    /**
+     * Wie weit man höchstens schieben darf.
+     *
+     * `transform: scale` vergrößert um die MITTE der Ansicht. Bei Zoom `s` ragt die
+     * Karte also auf jeder Seite um `breite × (s − 1) / 2` hinaus — genau so weit
+     * darf man sie zurückschieben und keinen Fingerbreit weiter. Ohne diese Grenze
+     * kann man die Karte aus dem Fenster ziehen und sitzt vor einer leeren Fläche.
+     */
+    const grenze = (laenge: number, zoom: number) => Math.max(0, (laenge * (zoom - 1)) / 2);
+    const klemmen = (wert: number, max: number) => Math.max(-max, Math.min(max, wert));
+
+    /** Der Zustand beim Beginn der aktuellen Finger-Stellung. Siehe `neuAnsetzen`. */
+    let basis = { zoom: 1, x: 0, y: 0, mitteX: 0, mitteY: 0, abstand: 0, finger: 0 };
+    let gewandert = 0;
+    /**
+     * Lag in dieser Berührung je ein zweiter Finger auf?
+     *
+     * **Ohne das ist ein Kneifen ein Tipp** — am 2026-09-06 mit echten
+     * Touch-Ereignissen gefunden, nachdem ein Mausklick monatelang nichts gezeigt
+     * hätte. Der Grund ist eine Eigenschaft von `PanResponder`, die man nicht
+     * vermutet: `gestureState.dx/dy` misst bei mehreren Fingern den MITTELPUNKT.
+     * Wer zwei Finger symmetrisch auseinanderzieht, lässt den Mittelpunkt stehen —
+     * `dx` und `dy` bleiben null, und beim Loslassen sieht die Berührung aus wie
+     * ein Tipp. In der Prüfung sprang die Auswahl dadurch vom 8. in den 1. Bezirk.
+     *
+     * Die Bewegungsgrenze allein kann das nicht abfangen, weil sie die falsche
+     * Frage stellt. Die richtige ist nicht „hat sich der Finger bewegt?", sondern
+     * „**war das überhaupt eine Ein-Finger-Geste?**" — ein Kneifen ist nie ein Tipp,
+     * auch wenn es sich um keinen Pixel verschiebt.
+     */
+    let mehrfingrig = false;
+
+    /**
+     * Wechselt die Zahl der Finger, wird neu angesetzt.
+     *
+     * Ohne das springt die Karte in dem Moment, in dem ein zweiter Finger dazukommt
+     * oder einer losgelassen wird: Der Erkenner rechnet dann eine Bewegung aus, die
+     * niemand gemacht hat — er vergleicht mit einem Bezugspunkt, den es nicht mehr
+     * gibt. Dieselbe Sorte Fehler wie ein Griffpaar, das über die Tipp-Stelle statt
+     * über die Richtung entscheidet (harte Regel 45): Was fehlt, ist eine Auskunft,
+     * und die entsteht erst neu.
+     */
+    const neuAnsetzen = (beruehrungen: { pageX: number; pageY: number }[]) => {
+      const a = beruehrungen[0];
+      const b = beruehrungen[1];
+      basis = {
+        ...zustand.current,
+        mitteX: b ? (a.pageX + b.pageX) / 2 : a.pageX,
+        mitteY: b ? (a.pageY + b.pageY) / 2 : a.pageY,
+        abstand: b ? Math.hypot(b.pageX - a.pageX, b.pageY - a.pageY) : 0,
+        finger: beruehrungen.length,
+      };
+    };
+
+    const setzen = (zoom: number, x: number, y: number) => {
+      const { breite: w, hoehe: h } = masse.current;
+      const geklemmt = {
+        zoom,
+        x: klemmen(x, grenze(w, zoom)),
+        y: klemmen(y, grenze(h, zoom)),
+      };
+      zustand.current = geklemmt;
+      zoomWert.setValue(geklemmt.zoom);
+      schiebenX.setValue(geklemmt.x);
+      schiebenY.setValue(geklemmt.y);
+    };
+
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      // Phase 11, teuer bezahlt: sonst nimmt die Liste darunter die Geste ab.
+      onPanResponderTerminationRequest: () => false,
+
+      onPanResponderGrant: (evt) => {
+        gewandert = 0;
+        mehrfingrig = evt.nativeEvent.touches.length >= 2;
+        neuAnsetzen(evt.nativeEvent.touches);
+      },
+
+      onPanResponderMove: (evt, geste) => {
+        const beruehrungen = evt.nativeEvent.touches;
+        if (beruehrungen.length === 0) return;
+        if (beruehrungen.length !== basis.finger) neuAnsetzen(beruehrungen);
+        if (beruehrungen.length >= 2) mehrfingrig = true;
+        gewandert = Math.max(gewandert, Math.abs(geste.dx) + Math.abs(geste.dy));
+
+        if (beruehrungen.length >= 2) {
+          const [a, b] = beruehrungen;
+          const abstand = Math.hypot(b.pageX - a.pageX, b.pageY - a.pageY);
+          if (basis.abstand <= 0) return;
+          const zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, (basis.zoom * abstand) / basis.abstand));
+          /**
+           * Gezoomt wird um die MITTE der Ansicht, geschoben wird mit derselben
+           * Bewegung mit.
+           *
+           * Der Lehrbuchweg wäre, die Stelle ZWISCHEN den Fingern festzuhalten. Er
+           * braucht die Fingerposition relativ zur Karte — und was ein Erkenner in
+           * `touches` liefert, ist `pageX`: Seitenkoordinaten. Der Unterschied ist
+           * der Ursprung der Karte, und der kürzt sich nur in DIFFERENZEN weg, nicht
+           * in „wie weit ist der Finger von der Mitte entfernt". Ihn zu besorgen
+           * hieße, während der Geste zu messen — auf Web meldet `onLayout` erst nach
+           * dem Zeichnen (2026-09-03), also käme die Zahl zu spät.
+           *
+           * Mit der Mitte als Angelpunkt bleibt nur Rechnen mit Differenzen übrig,
+           * und das stimmt auf beiden Plattformen. Der Preis ist ehrlich: Man zoomt
+           * in die Bildmitte und schiebt sein Ziel mit denselben zwei Fingern dorthin
+           * — was man ohnehin tut. **Falls sich das am Gerät falsch anfühlt**, ist
+           * der Weg heraus, die Kartenposition EINMAL nach dem Einblenden zu messen
+           * und hier gegenzurechnen, nicht diese Formel zu erraten.
+           */
+          const faktor = zoom / basis.zoom;
+          const mitteX = (a.pageX + b.pageX) / 2;
+          const mitteY = (a.pageY + b.pageY) / 2;
+          setzen(
+            zoom,
+            basis.x * faktor + (mitteX - basis.mitteX),
+            basis.y * faktor + (mitteY - basis.mitteY),
+          );
+          return;
+        }
+
+        setzen(basis.zoom, basis.x + geste.dx, basis.y + geste.dy);
+      },
+
+      onPanResponderRelease: (evt) => {
+        setZoomStufe(zustand.current.zoom);
+        if (mehrfingrig || gewandert > TIPP_WEG_MAX) return;
+        // Ein Tipp. `locationX/Y` liegt relativ zur Karten-Fläche; daraus wird die
+        // Stelle im Raster, indem man die Ansicht rückwärts rechnet: erst das
+        // Schieben abziehen, dann um die Mitte herausskalieren, dann in Einheiten.
+        const { breite: w, hoehe: h, proEinheit: pe, onWaehlen: waehlen } = masse.current;
+        const { zoom, x: tx, y: ty } = zustand.current;
+        const px = evt.nativeEvent.locationX;
+        const py = evt.nativeEvent.locationY;
+        const kx = (px - w / 2 - tx) / zoom + w / 2;
+        const ky = (py - h / 2 - ty) / zoom + h / 2;
+        waehlen(bezirkAn(kx / pe, ky / pe));
+      },
+    });
+  }, [schiebenX, schiebenY, zoomWert]);
+
+  /**
+   * Auf Web zusätzlich: Mausrad zoomt, und der Browser darf die Seite nicht selbst
+   * vergrößern.
+   *
+   * `touch-action: none` ist der Teil, der auf einem Handy-Browser den Unterschied
+   * macht — ohne ihn behandelt Chrome eine Zwei-Finger-Bewegung als Seiten-Zoom und
+   * der `PanResponder` sieht sie nie. Beides steht hinter `Platform.OS === 'web'`,
+   * wie jeder andere DOM-Zugriff im Projekt.
+   */
+  const rahmen = useRef<View>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const knoten = rahmen.current as unknown as HTMLElement | null;
+    if (!knoten || typeof knoten.addEventListener !== 'function') return;
+    knoten.style.touchAction = 'none';
+    const rad = (e: WheelEvent) => {
+      e.preventDefault();
+      const { zoom, x, y } = zustand.current;
+      const neu = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12)));
+      const w = masse.current.breite;
+      const h = masse.current.hoehe;
+      const max = (l: number) => Math.max(0, (l * (neu - 1)) / 2);
+      const nx = Math.max(-max(w), Math.min(max(w), (x * neu) / zoom));
+      const ny = Math.max(-max(h), Math.min(max(h), (y * neu) / zoom));
+      zustand.current = { zoom: neu, x: nx, y: ny };
+      zoomWert.setValue(neu);
+      schiebenX.setValue(nx);
+      schiebenY.setValue(ny);
+      setZoomStufe(neu);
+    };
+    knoten.addEventListener('wheel', rad, { passive: false });
+    return () => knoten.removeEventListener('wheel', rad);
+  }, [schiebenX, schiebenY, zoomWert]);
+
+  /** Der stärkste Bezirk — er bekommt die dunkelste Fläche (Ians Entscheidung 32). */
+  const hoechst = useMemo(
+    () => Object.values(zaehlung).reduce((a, b) => Math.max(a, b), 0),
+    [zaehlung],
+  );
+
+  /**
+   * Passt die Zahl in die Fläche?
+   *
+   * `label.r` ist der Abstand des Beschriftungspunktes zum Rand, in Rastereinheiten.
+   * Die Zahl bleibt am Schirm immer gleich groß (`ZAHL_PX`), also wird sie in
+   * Einheiten kleiner, je weiter man hineinzoomt — und passt irgendwann. Genau dafür
+   * ist die Geste da.
+   */
+  const zahlEinheiten = ZAHL_PX / (proEinheit * zoomStufe);
+  const zahlPasst = (radius: number, ziffern: number) =>
+    radius >= zahlEinheiten * (0.32 * ziffern + 0.3);
+
+  const flaechen = useMemo(
+    () =>
+      BEZIRKE.map((b) => {
+        const anzahl = zaehlung[b.plz] ?? 0;
+        const stufe = stufeFuer(anzahl, hoechst);
+        const farben = stufe < 0 ? null : STUFEN[stufe];
+        return {
+          ...b,
+          anzahl,
+          fuellung: farben ? farben.flaeche : KARTE_LEER,
+          zahlFarbe: farben ? farben.zahl : colors.inkSoft,
+          zeigeZahl: anzahl > 0 && zahlPasst(b.label.r, String(anzahl).length),
+        };
+      }),
+    // `zahlPasst` hängt an `zahlEinheiten` und wird bewusst nicht als Funktion in die
+    // Liste geschrieben — sie bekäme bei jedem Rendern eine neue Identität.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [zaehlung, hoechst, zahlEinheiten],
+  );
+
+  const gewaehltePfad = flaechen.find((f) => f.plz === gewaehlt);
+  const verschoben = zoomStufe > 1.01;
+
+  const inhalt = (
+    <>
+      {flaechen.map((f) => (
+        <Path key={f.plz} d={f.d} fill={f.fuellung} stroke={colors.bg} strokeWidth={FUGE} />
+      ))}
+      {/* Der gewählte Bezirk wird ein zweites Mal gezeichnet — nur so liegt sein
+          Umriss ÜBER den Nachbarn. Zeichnete man ihn an seiner Stelle in der Liste,
+          würden die später gezeichneten Nachbarn ihre eigene Fuge darüberlegen und
+          der Umriss wäre an drei Seiten halb verdeckt. */}
+      {gewaehltePfad ? (
+        <Path
+          d={gewaehltePfad.d}
+          fill="none"
+          stroke={colors.ink}
+          strokeWidth={AUSWAHL_STRICH}
+          strokeLinejoin="round"
+        />
+      ) : null}
+      {flaechen
+        .filter((f) => f.zeigeZahl)
+        .map((f) => (
+          <SvgText
+            key={`z${f.plz}`}
+            x={f.label.x}
+            y={f.label.y}
+            fill={f.zahlFarbe}
+            fontSize={zahlEinheiten}
+            fontWeight="600"
+            textAnchor="middle"
+            // Auf Web kennt SVG `dominant-baseline`, `react-native-svg` nicht
+            // verlässlich — deshalb wird von Hand um eine knappe halbe Zeilenhöhe
+            // nach unten gerückt. Sonst sitzt die Zahl auf ihrer Grundlinie und
+            // steht damit deutlich zu hoch in der Fläche.
+            dy={zahlEinheiten * 0.35}>
+            {f.anzahl}
+          </SvgText>
+        ))}
+    </>
+  );
+
+  return (
+    <View style={styles.rahmen}>
+      <View
+        ref={rahmen}
+        style={[styles.fenster, { height: hoehe, width: breite }]}
+        onLayout={(e) => setGemessen(e.nativeEvent.layout.width)}
+        {...responder.panHandlers}>
+        <Animated.View
+          style={{
+            transform: [
+              { translateX: schiebenX },
+              { translateY: schiebenY },
+              { scale: zoomWert },
+            ],
+          }}>
+          <Svg width={breite} height={hoehe} viewBox={`0 0 ${KARTE_BREITE} ${KARTE_HOEHE}`}>
+            <G>{inhalt}</G>
+          </Svg>
+        </Animated.View>
+      </View>
+
+      {/* Die Namensnennung liegt IN der Karte und nicht daneben im Screen — sie ist
+          Bedingung der Lizenz (CC BY), und was neben einem Baustein steht, bleibt beim
+          nächsten Umbau liegen. So reist sie mit, wohin die Karte auch kommt. */}
+      <SsText variant="caption" color={colors.inkSoft} style={styles.quelle}>
+        {KARTE_QUELLE}
+      </SsText>
+
+      {/* Steht nur da, wenn er etwas tut. Ein Knopf „Ganz Wien" auf einer Karte, die
+          schon ganz Wien zeigt, sieht aus wie ein kaputter Knopf. */}
+      {verschoben ? (
+        <Pressable
+          style={styles.zurueck}
+          // Der Knopf ist 26 px hoch — unter Apples 44. Statt ihn aufzublasen und
+          // damit die Karte zu verdecken, vergrößert `hitSlop` nur die empfindliche
+          // Fläche. Das ist genau der Fall, für den es die Prop gibt.
+          hitSlop={10}
+          onPress={() => {
+            zustand.current = { zoom: 1, x: 0, y: 0 };
+            zoomWert.setValue(1);
+            schiebenX.setValue(0);
+            schiebenY.setValue(0);
+            setZoomStufe(1);
+          }}>
+          <SsText variant="caption" color={colors.surface}>
+            Ganz Wien
+          </SsText>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  rahmen: {
+    position: 'relative',
+    alignItems: 'center',
+  },
+  quelle: { fontSize: 10, lineHeight: 14, paddingTop: 2 },
+  fenster: {
+    // Ohne das ragt die gezoomte Karte über ihren Platz hinaus und liegt über den
+    // Kategorie-Pillen darüber und der Liste darunter.
+    overflow: 'hidden',
+    backgroundColor: colors.bg,
+  },
+  zurueck: {
+    position: 'absolute',
+    right: 8,
+    bottom: 8,
+    backgroundColor: colors.ink,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+});

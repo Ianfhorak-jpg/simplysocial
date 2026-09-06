@@ -2485,7 +2485,7 @@ den Build erst dann noch einmal machen, wenn alle Native-Bausteine beisammen sin
 
 ---
 
-### Phase 19b — Die Wien-Karte ⬜ *(Leopolds Idee, spezifiziert am 2026-09-06)*
+### Phase 19b — Die Wien-Karte ✅ *(Leopolds Idee, gebaut am 2026-09-06)*
 
 > **Woher sie kommt.** Leopold hat sich eine Karte gewünscht, auf der man sieht, wo
 > gerade etwas los ist — „klein anfangen, nur Wien" (Ians Zusatz). Es ist die zweite
@@ -2533,6 +2533,108 @@ da, sie werden nur nie als Fläche gezeigt. **Kein Feld kommt dazu, keins änder
    zeigt einen Satz und einen Ausweg (`LeererFeed`, seit dem 03.09.). Eine leere Karte
    zeigt **23 graue Flächen** — sie sieht nicht leer aus, sondern kaputt. Es braucht
    denselben Satz und denselben Ausweg wie die Liste, nur über der Karte.
+
+> ### Gebaut am 2026-09-06 — was daraus geworden ist
+>
+> **Die Karte steht, auf Web und nativ auf iOS.** Dritte Stufe im Umschalter
+> („Stapel · Liste · Karte"), 23 echte Bezirksflächen, eingefärbt nach Posts,
+> antippbar, mit Schieben und Zoomen. Belege: `r01`–`r04` (Web, 360 × 600 und
+> 390 × 844) und **`r05-ios-karte.png`** (iPhone 17 Pro, iOS 26.5).
+>
+> **Die vier Dateien und warum es vier sind:**
+>
+> | Datei | Was darin steht | Warum getrennt |
+> |---|---|---|
+> | `data/wien-bezirke.ts` | 23 SVG-Pfade, Name, PLZ, Beschriftungspunkt | **Erzeugt.** Wie `theme/icons.ts`: nur Daten |
+> | `features/posts/karte.ts` | Farbskala, Zoomgrenzen, Lizenzzeile, Ians Entscheidungen | Wie `wisch.ts`, `filter.ts`, `kollision.ts` |
+> | `lib/karte-treffer.ts` | „welcher Bezirk liegt unter diesem Punkt" | Reine Geometrie, plattformgleich |
+> | `components/ui/SsWienKarte.tsx` | Zeichnen und Geste | Der Zeichner, wie `SsIcon` |
+>
+> **Sieben Dinge, die wichtiger sind als das Bild:**
+>
+> 1. **Aus 3 MB wurden 11 kB — und das Verfahren ist der Punkt, nicht die Zahl.**
+>    `scripts/bezirke-bauen.py` holt die amtlichen Grenzen (Stadt Wien, CC BY 4.0)
+>    und macht aus **118.683 Stützpunkten 886** (0,7 %). Entscheidend ist die
+>    REIHENFOLGE: **erst auf ein Raster runden, dann vereinfachen.** Zwei Nachbarn
+>    teilen sich eine Grenze; vereinfacht jeder sie für sich, entstehen Lücken.
+>    Gerundet sind die geteilten Punkte vorher bitgleich, und Douglas-Peucker ist
+>    umkehrungsinvariant.
+> 2. **Der Beschriftungspunkt ist NICHT der Schwerpunkt.** Bei den gebogenen
+>    Bezirken (13., 21., 22.) läge der außerhalb der Fläche und die Zahl stünde
+>    beim Nachbarn. Gesucht wird der Punkt mit dem größten Abstand zum Rand — und
+>    dieser Abstand wird als `label.r` MITGESPEICHERT, weil der Zeichner daran
+>    entscheidet, ob die Zahl überhaupt hineinpasst.
+> 3. **Die Josefstadt ist bei Handybreite 14 × 11 Bildpunkte groß.** Neun der 23
+>    Bezirke liegen unter 30 px, und ausgerechnet dort liegen die meisten Posts.
+>    Nachgemessen wurde auch der naheliegendste Ausweg — „der Bezirk mit dem
+>    nächsten Beschriftungspunkt gewinnt" ergibt **11 × 11 px**, also schlechter
+>    als nichts zu tun. **Was zu klein ist, ist das BILD, nicht die Logik.**
+> 4. **`FeedFilter.bezirk` ist ein Union geworden** (`BezirkFilter`: `alle` ·
+>    `einer` · `ohne`) — die vierte Runde derselben Frage nach `Post.district`,
+>    `ChatThread.postId` und `Visibility`, und wieder hat `tsc` die Arbeitsliste
+>    geschrieben (vier Stellen, alle im Filterfeld). Nebengewinn: Posts ohne
+>    Bezirk sind zum ersten Mal ausdrücklich auswählbar statt nur unter „Überall"
+>    auffindbar.
+> 5. **`useBezirksZaehlung` ist die neue Quelle, `useBezirkeImFeed` leitet ab.**
+>    Nicht danebengebaut — die Regel „beim Zählen wird genau der Bezirksfilter
+>    ausgeschaltet" steht damit weiter an EINER Stelle. Auf der Karte hätte ihr
+>    Fehlen eine sichtbarere Wirkung als im Filter: nach dem ersten Tipp eine
+>    einzige eingefärbte Fläche in einem grauen Wien.
+> 6. **Die Kartenhöhe hängt am Schirm (28 %), nicht an einer festen Zahl.** Mit
+>    festen 230 px bekam die Liste auf 390 × 844 gute 266 px und auf **360 × 600
+>    genau 22 px** — einen blauen Streifen. „Posts erscheinen darunter" ist aber
+>    Ians Entscheidung 30; eine Ansicht, die sie nur auf großen Geräten einlöst,
+>    löst sie nicht ein.
+> 7. **Der Umschalter mit DREI Beschriftungen ist die vorhergesagte Falle — und
+>    sie ist eingetreten.** „Sta…", zum dritten Mal nach Phase 11 und 18a.
+>    Nachgemessen statt geraten: Die Zeile hat 328 px, rechts steht „Noch 12
+>    Karten" (84 px), also bleiben 232 für den Balken; bei 12 px Innenabstand
+>    bekommt „Stapel" davon 47,33 px und braucht 47. Das geht auf dem Zehntelpixel
+>    auf — deshalb ist der Innenabstand in `SsSegment` auf 8 px gefallen (55,3
+>    gegen 47). Die zweistufigen Leisten gewinnen dadurch mit.
+>
+> #### Der Fehler, den nur echte Touch-Ereignisse gezeigt haben
+>
+> **Ein Kneifen wurde als Tipp gewertet.** Beim Auseinanderziehen sprang die
+> Auswahl vom 8. in den 1. Bezirk. Der Grund ist eine Eigenschaft von
+> `PanResponder`, auf die man nicht kommt: **`gestureState.dx/dy` misst bei
+> mehreren Fingern den MITTELPUNKT.** Wer zwei Finger symmetrisch auseinanderzieht,
+> lässt den Mittelpunkt stehen — `dx` und `dy` bleiben null, und beim Loslassen
+> sieht die Berührung aus wie ein Tipp.
+>
+> Die Bewegungsgrenze (harte Regel 15) kann das nicht abfangen, weil sie die
+> falsche Frage stellt. Die richtige ist nicht „hat sich der Finger bewegt?",
+> sondern **„war das überhaupt eine Ein-Finger-Geste?"** — ein Kneifen ist nie ein
+> Tipp, auch wenn es sich um keinen Pixel verschiebt (`mehrfingrig`).
+>
+> **Gefunden nur, weil echte Touch-Ereignisse geschickt wurden** (CDP
+> `Input.dispatchTouchEvent`), nicht mit der Maus. Dritte Fassung der
+> Phase-18b-Lehre. Geprüft sind seither alle vier Fälle: Kneifen auf (1 → 3,64),
+> Kneifen zu (→ 1), Schieben bei Zoom 4 (ohne Auswahl), Ein-Finger-Tipp (wählt).
+>
+> #### Beim Zoomen wird um die MITTE gedreht, nicht um die Fingerstelle
+>
+> Der Lehrbuchweg hält die Stelle zwischen den Fingern fest. Er braucht die
+> Fingerposition **relativ zur Karte** — und `touches` liefert `pageX`, also
+> Seitenkoordinaten. Der Unterschied ist der Kartenursprung, und der kürzt sich nur
+> in DIFFERENZEN weg, nicht in „wie weit ist der Finger von der Mitte entfernt".
+> Ihn zu besorgen hieße, während der Geste zu messen — auf Web meldet `onLayout`
+> erst nach dem Zeichnen. **Falls es sich am Gerät falsch anfühlt**, ist der Weg
+> heraus, die Kartenposition EINMAL nach dem Einblenden zu messen, nicht die Formel
+> zu erraten.
+>
+> #### Was offen bleibt
+>
+> - **Der Finger-Durchgang am echten iPhone** — wie alles aus Phase 19.5. Am
+>   Simulator ist die Karte gezeichnet, aber nicht angefasst worden: `xcrun simctl`
+>   kann keinen Tipp schicken, und `idb` ist nicht installiert. Belegt ist sie dort
+>   über eine **vorübergehend** auf `'karte'` gestellte Startansicht (zurückgenommen).
+> - **Bei Zoom 1 fehlt ausgerechnet die Zahl des stärksten Bezirks** (1070 mit
+>   fünf Posts ist 20 px breit). Die Aussage der Karte steht also erst nach dem
+>   Hineinzoomen ganz da. Das ist die Folge von Wiens Geografie und der Grund,
+>   warum die Geste überhaupt gebaut wurde — kein Fehler, aber es gehört gewusst.
+> - **`stufeFuer()` in `karte.ts` ist die eine Stelle, an der noch eine echte Wahl
+>   steckt** (siehe unten, „Ian schreibt selbst").
 
 ### Phase 20 — Das Backend: Supabase ⬜
 
@@ -3532,6 +3634,36 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
 
 ---
 
+### 35. Was „viel los" heißt — `stufeFuer()` in `features/posts/karte.ts` ⬜
+
+Die Karte färbt vier Stufen, **relativ zum stärksten Bezirk** (deine Entscheidung 32).
+Offen ist die eine Zeile darin: wie aus „2 von 5 Posts" eine Stufe wird.
+
+Es steht heute ein **Aufrunden** da, und das ist eine Wahl mit einer Folge:
+
+```ts
+export function stufeFuer(anzahl: number, hoechst: number): number {
+  if (anzahl <= 0) return -1;          // leer: graue Fläche, KEINE Zahl
+  if (hoechst <= 0) return -1;
+  const anteil = anzahl / hoechst;
+  return Math.min(STUFEN.length - 1, Math.ceil(anteil * STUFEN.length) - 1);
+}
+```
+
+- **Aufrunden** (jetzt): Jeder Bezirk mit mindestens einem Post bekommt mindestens
+  Stufe 1. Der Unterschied „hier war jemand" gegen „hier ist was los" bleibt am unteren
+  Ende sichtbar — genau dort, wo die App die längste Zeit ihres Lebens steht. Der Haken:
+  Bei einem starken Bezirk (10 Posts) sehen 1 und 2 gleich aus wie 3.
+- **Abrunden**: strenger, die Spitze hebt sich klarer ab — und bei fünf Posts fielen
+  alle Einer-Bezirke auf dieselbe blasse Stufe wie… nichts. Das ist der Fall, den
+  `KARTE_LEER` bewusst anders zeichnet.
+- **Logarithmisch**: gerechter bei sehr ungleicher Verteilung (ein Bezirk mit 50, der
+  Rest mit 1–3). Der Preis ist, dass niemand die Karte mehr im Kopf zurückrechnen kann.
+
+**Die Frage ist deine, weil sie die AUSSAGE der Karte bestimmt** und nicht ihr Aussehen:
+Soll sie zeigen, *wo überhaupt etwas ist*, oder *wo am meisten ist*. Fünf Zeilen in
+`karte.ts`; verworfene Möglichkeiten wie üblich in den Kopfkommentar.
+
 ## 7. Bewusst NICHT im Prototyp
 
 Login · Karte · Push-Nachrichten · Bezahlung · **echte Bilder-Uploads** ·
@@ -3719,6 +3851,25 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > Erzeugt wird alles von `landing-vorschau/erzeugen-palette.py` (leitet die Palette ab
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
+
+> ✅ **Phase 19b ist seit dem 2026-09-06 fertig — die Wien-Karte.** Was eine frische
+> Sitzung davon wissen muss:
+> - **Vier Dateien, und die Aufteilung ist die Regel, nicht der Zufall:**
+>   `data/wien-bezirke.ts` (erzeugt, nur Daten) · `features/posts/karte.ts` (was eine
+>   Farbe bedeutet) · `lib/karte-treffer.ts` (Geometrie) · `components/ui/SsWienKarte.tsx`
+>   (Zeichnen und Geste). Wer eine Farbe ändern will, fasst NICHT den Screen an.
+> - **`data/wien-bezirke.ts` ist ERZEUGT.** Nicht von Hand ändern —
+>   `python3 scripts/bezirke-bauen.py` baut sie neu. Der Kopf der Datei sagt es auch.
+> - **Die Namensnennung ist Pflicht** (CC BY 4.0, Stadt Wien). Sie steht als
+>   `KARTE_QUELLE` in `karte.ts` und wird IN der Karte gezeichnet, nicht daneben im
+>   Screen — was neben einem Baustein steht, bleibt beim nächsten Umbau liegen.
+> - **`FeedFilter.bezirk` ist seit 19b ein Union** (`BezirkFilter`). `filter.bezirk === null`
+>   gibt es nicht mehr; gefragt wird `filter.bezirk.kind`.
+> - **Ein Kneifen ist nie ein Tipp** (`mehrfingrig` in `SsWienKarte`). Wer den
+>   Erkenner anfasst, prüft mit ECHTEN Touch-Ereignissen nach — mit der Maus ist der
+>   Fehler unsichtbar.
+> - **Die Karte lässt sich schieben und zoomen** (Ians Entscheidung 33, gegen meine
+>   Empfehlung „Lupe"). Der Grund ist eine Messung und steht bei `KARTE_GESTE`.
 
 > 🚀 **Stand 2026-09-06: Der Weg zur echten App ist geplant — Abschnitt 5b, Phasen 19
 > bis 21.** Das Erste ist damit nicht mehr eine Frage, sondern ein Handgriff:

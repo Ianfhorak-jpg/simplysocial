@@ -5,7 +5,15 @@ import { istMitglied } from '../groups/gruppe';
 import { istBlockiert } from '../safety/hooks';
 import { useUserMap } from '../social/hooks';
 
-import { passtZumAlter, passtZumBezirk, passtZumText, passtZurZeit, type WannFilter } from './filter';
+import {
+  BEZIRK_ALLE,
+  passtZumAlter,
+  passtZumBezirk,
+  passtZumText,
+  passtZurZeit,
+  type BezirkFilter,
+  type WannFilter,
+} from './filter';
 import { istAktuell } from './lifecycle';
 import { gehoertAufsProfil } from './profil';
 import { vergleichePosts } from './sort';
@@ -47,8 +55,12 @@ export interface FeedFilter {
   kategorie: KategorieFilter;
   /** Nur Posts von Leuten, denen ich folge. */
   nurGefolgte: boolean;
-  /** Postleitzahl, oder `null` für „überall". Phase 15. */
-  bezirk: string | null;
+  /**
+   * Wo. Drei Stufen: überall, ein bestimmter Bezirk, oder ausdrücklich die Posts
+   * OHNE Bezirksangabe. Phase 15, seit Phase 19b ein Union statt `string | null` —
+   * die Begründung steht bei `BezirkFilter` in `filter.ts`.
+   */
+  bezirk: BezirkFilter;
   /** Zeitfenster. Phase 15. */
   wann: WannFilter;
   /**
@@ -73,7 +85,7 @@ export interface FeedFilter {
 export const FILTER_LEER: FeedFilter = {
   kategorie: 'alle',
   nurGefolgte: false,
-  bezirk: null,
+  bezirk: BEZIRK_ALLE,
   wann: 'egal',
   alter: { kind: 'egal' },
   suche: '',
@@ -84,7 +96,7 @@ export function aktiveFilter(filter: FeedFilter): number {
   let n = 0;
   if (filter.kategorie !== 'alle') n += 1;
   if (filter.nurGefolgte) n += 1;
-  if (filter.bezirk !== null) n += 1;
+  if (filter.bezirk.kind !== 'alle') n += 1;
   if (filter.wann !== 'egal') n += 1;
   if (filter.alter.kind !== 'egal') n += 1;
   if (filter.suche.trim() !== '') n += 1;
@@ -220,17 +232,51 @@ export function useFeed(filter: FeedFilter): FeedEintrag[] {
  * soll die Bezirke sehen, in denen Sport stattfindet, nicht die mit Kaffee.
  */
 export function useBezirkeImFeed(filter: FeedFilter): string[] {
-  const ohneBezirk = useMemo(() => ({ ...filter, bezirk: null }), [filter]);
-  const eintraege = useFeed(ohneBezirk);
+  const { proBezirk } = useBezirksZaehlung(filter);
+  // Aufsteigend. Postleitzahlen sind alle vierstellig, deshalb sortiert die
+  // Zeichenkettenordnung hier genauso wie eine Zahlenordnung.
+  return useMemo(() => Object.keys(proBezirk).sort(), [proBezirk]);
+}
+
+/**
+ * Wie viele Posts je Bezirk — die Zahlen, aus denen die Wien-Karte ihre Farben nimmt
+ * (Phase 19b).
+ *
+ * ── Warum das DIESELBE Funktion ist wie die Filter-Auswahl ───────────────────
+ * `useBezirkeImFeed` leitet seine Liste seit Phase 19b aus dieser Zählung ab und
+ * rechnet nicht mehr selbst. Der Grund ist die Regel, die in beiden steckt und die
+ * man leicht ein zweites Mal falsch schreibt: **Beim Zählen wird genau der
+ * Bezirksfilter ausgeschaltet und sonst keiner.** Stünde sie zweimal da, sähe die
+ * Karte eines Tages andere Bezirke als die Filterreihe — und auffallen würde es nur
+ * dem, der beides nebeneinander hält.
+ *
+ * Auf der Karte hat dieselbe Regel eine zweite Wirkung, die es im Filter nicht gab:
+ * Ohne sie zeigte die Karte nach dem ersten Tipp **eine einzige eingefärbte Fläche
+ * in einem grauen Wien** — und der einzige Weg zurück wäre der Zurücksetzen-Knopf.
+ * Das ist die Phase-15-Falle, nur sichtbarer.
+ *
+ * `ohneBezirk` ist der zweite Rückgabewert und nicht wegzulassen: Posts ohne
+ * Bezirksangabe (seit dem 2026-09-02 möglich) haben auf einer Karte keinen Ort. Eine
+ * Ansicht, die sie stillschweigend verschluckt, ist genau die Sorte Fehler, gegen die
+ * `LeererFeed` und `StapelDurch` seit dem 2026-09-03 auseinandergehalten werden —
+ * deshalb stehen sie als eigene Zeile unter der Karte (Ians Entscheidung 31).
+ */
+export function useBezirksZaehlung(filter: FeedFilter): {
+  proBezirk: Record<string, number>;
+  ohneBezirk: number;
+} {
+  const ohneBezirkFilter = useMemo(() => ({ ...filter, bezirk: BEZIRK_ALLE }), [filter]);
+  const eintraege = useFeed(ohneBezirkFilter);
 
   return useMemo(() => {
-    const menge = new Set<string>();
-    // Posts ohne Bezirk (seit 2026-09-02 möglich) tragen hier nichts bei — sie
-    // sind nur unter „Überall" zu finden, siehe `passtZumBezirk` in `filter.ts`.
-    for (const e of eintraege) if (e.post.district) menge.add(e.post.district);
-    // Aufsteigend. Postleitzahlen sind alle vierstellig, deshalb sortiert die
-    // Zeichenkettenordnung hier genauso wie eine Zahlenordnung.
-    return [...menge].sort();
+    const proBezirk: Record<string, number> = {};
+    let ohneBezirk = 0;
+    for (const e of eintraege) {
+      const bezirk = e.post.district;
+      if (bezirk) proBezirk[bezirk] = (proBezirk[bezirk] ?? 0) + 1;
+      else ohneBezirk += 1;
+    }
+    return { proBezirk, ohneBezirk };
   }, [eintraege]);
 }
 
