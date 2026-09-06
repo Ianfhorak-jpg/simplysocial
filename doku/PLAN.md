@@ -1702,7 +1702,7 @@ Zustand, den niemand ansieht.**
 
 #### 18d — Nicht zwei Sachen gleichzeitig ✅ *(gebaut am 2026-09-05)*
 
-> ✅ **Fertig, bis auf eine Zeile, die Ian selbst schreibt** (`zaehltAlsTermin`, siehe
+> ✅ **Fertig — seit dem 2026-09-06 auch die letzte Zeile** (`zaehltAlsTermin`, siehe
 > unten). Die zwei ersten Punkte des Vorrats sind gebaut, der dritte bleibt liegen.
 
 **Leopolds Wunsch beim Benutzen am 2026-09-03: *„nicht 2 Sachen gleichzeitig."*** Bis
@@ -1787,22 +1787,33 @@ Auf 360 × 600 passt sie mit dem zusätzlichen Kasten weiter ganz ins Bild; nach
 mit `elementFromPoint`, `scrollWidth > clientWidth` und der Überquell-Prüfung, alle drei
 Screens sauber.
 
-#### 18d — offen für Ian
+#### 18d — die letzte Zeile ✅ *(entschieden am 2026-09-06)*
 
-**`zaehltAlsTermin()` in `features/requests/kollision.ts` steht als `TODO` da.** Die
+**`zaehltAlsTermin()` in `features/requests/kollision.ts` stand als `TODO` da.** Die
 Frage ist beim Bauen aufgetaucht und stand in keinem Plan: *Was zählt überhaupt als
 „schon verabredet"?* Drei Antworten, alle drei vertretbar, alle drei im Kopfkommentar
-der Funktion — es ist eine Zeile:
+der Funktion — es war eine Zeile:
 
 | | Zeile | Haken |
 |---|---|---|
 | a | `return true;` | Wer sich am Sonntag drei Sachen ausdenkt und postet, wird ab dem zweiten gewarnt, obwohl noch nichts feststeht. |
 | b | `return t.rolle === 'zugesagt';` | Der eigene Post ist auch eine Verabredung, sobald jemand kommt — dort wäre die Warnung still. |
-| c | `return t.rolle === 'zugesagt' \|\| t.jemandDabei;` | Eine Bedingung mehr, die man erklären muss. **Steht gerade als Platzhalter drin.** |
+| **c** ✅ | `return t.rolle === 'zugesagt' \|\| t.jemandDabei;` | Eine Bedingung mehr, die man erklären muss. **Ians Entscheidung 34.** |
 
 Sichtbar wird der Unterschied sofort an `p17`: Ians eigener Post „Physik-Zusammenfassung
 durchgehen" liegt zur selben Zeit wie Leas „Donauinsel spazieren" und hat
 `spotsFilled: 0`. Unter **a** warnt `/post/p7`, unter **b** und **c** nicht.
+
+> **Warum das trotzdem eine Änderung war, obwohl keine Zeile Code sich bewegt hat.**
+> `c` stand als Platzhalter drin, damit der Prototyp läuft — mit einem `TODO Ian`
+> darüber und dem ausdrücklichen Satz „das ist keine Entscheidung". Ein Platzhalter,
+> der zufällig richtig ist, und eine Entscheidung sind zwei verschiedene Zustände: Der
+> Unterschied liegt vollständig in dem, was die nächste Sitzung liest. Deshalb ist der
+> Kopfkommentar jetzt so gebaut wie in `block.ts`, `direkt.ts` und `gruppe.ts` —
+> verworfene Möglichkeiten samt Grund, Ians Haken, und „nicht ohne Rückfrage ändern".
+> **Und deshalb war kein Deploy nötig:** Das Bündel verhält sich identisch. Ein Deploy
+> hätte nur einen neuen Metro-Hash erzeugt und so ausgesehen, als hätte sich etwas
+> geändert (siehe Fallen-Liste).
 
 ### Nachtrag 2026-09-03 — die schiefen Karteikarten ✅
 
@@ -2736,12 +2747,32 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
     Post ist noch keine Verabredung, es kann ja niemand kommen") ist richtig, gehört
     aber nicht in den Screen, sondern in `zaehltAlsTermin()`. Dort steht es jetzt.
 
-34. ⏳ **Was als „schon verabredet" zählt** (`features/requests/kollision.ts`) —
-    **wartet auf Ian.** Die Frage ist beim Bauen von 18d aufgetaucht und stand in keinem
-    Plan. Vorbereitet ist alles: Signatur, Typ `Termin`, die drei Möglichkeiten samt
-    Haken im Kopfkommentar, `TODO`. **Es ist eine Zeile**, und sie entscheidet, wie oft
-    die Warnung überhaupt kommt — siehe die Tabelle am Ende von Phase 18d. Als
-    Platzhalter steht c) drin, damit der Prototyp währenddessen läuft.
+34. ✅ **Was als „schon verabredet" zählt** (`features/requests/kollision.ts`) —
+    **entschieden am 2026-09-06: erst, wenn wirklich jemand dabei ist.** *(Ians
+    sechsundzwanzigste Entscheidung, `zaehltAlsTermin()`.)*
+
+    Ein eigener Post zählt nicht, solange niemand zugesagt hat; sobald einer da ist,
+    zählt er wie jede andere Verabredung. Sein Grund: **Ein Post ist ein ANGEBOT, bis
+    jemand annimmt** — dieselbe Unterscheidung, die im Feed eine Karte von einer
+    Chat-Zeile trennt (Phase 18c). Solange `spotsFilled` null ist, hat man niemandem
+    etwas versprochen. Verworfen:
+    - **Alles zählt** (`return true`). Streng und in einem Satz erklärbar, aber die
+      Warnung käme dort, wo noch nichts feststeht: Wer sich am Sonntag drei Sachen
+      ausdenkt und postet, wird ab dem zweiten gewarnt. Derselbe Schaden wie ein
+      Zwei-Stunden-Fenster (Punkt 32) — eine Warnung, die man dauernd wegklickt, liest
+      nach der dritten niemand mehr, und dann ist auch die richtige weg.
+    - **Nur eigene Zusagen** (`t.rolle === 'zugesagt'`). Am leisesten, aber der eigene
+      Post ist auch eine Verabredung, sobald jemand kommt — und wer acht Leute zum
+      Tennis eingeladen hat und dann woanders zusagt, lässt acht stehen, nicht einen.
+
+    **Den Haken kennt er:** Es ist eine Bedingung mehr, als man in einem Satz erklärt.
+    Auf „warum warnt es hier und dort nicht?" ist die Antwort nicht „weil es dein Post
+    ist", sondern „weil bei deinem noch niemand dabei ist".
+
+    **Der Code hat sich dabei um kein Zeichen geändert** — c) stand als Platzhalter
+    drin. Geändert hat sich sein Status, und das ist keine Formalität: Über der Zeile
+    stand ein `TODO Ian` mit dem Satz „das ist keine Entscheidung", und genau darauf
+    verlässt sich die nächste Sitzung.
 
 ---
 
@@ -2979,9 +3010,11 @@ Wunsch, und „Deine Gruppen" nach oben). Was eine frische Sitzung davon wissen 
 - **`KOLLISION_FENSTER_MIN` überbrückt eine Lücke im Datenmodell.** Ein `Post` hat
   `startsAt` und KEINE Dauer. „Überschneidung" ist deshalb geschätzt, und genau das ist
   der Grund, warum die Regel warnt statt zu sperren.
-- **`zaehltAlsTermin()` ist ein `TODO` für Ian** (Abschnitt 6, Punkt 34). Ein
-  Platzhalter steht drin, damit der Prototyp läuft — **nicht** stillschweigend als
-  entschieden behandeln.
+- **`zaehltAlsTermin()` ist seit dem 2026-09-06 entschieden** (Abschnitt 6, Punkt 34):
+  **erst, wenn wirklich jemand dabei ist.** Ein eigener Post ohne Zusage zählt nicht —
+  ein Post ist ein Angebot, bis jemand annimmt. Der Wert stand vorher schon als
+  Platzhalter da; das `TODO` ist weg, der Kopfkommentar ist jetzt wie in `block.ts`
+  gebaut. **Nicht ohne Rückfrage ändern.**
 - **`p18` in `mock.ts` ist der einzige Grund, warum man die Warnung überhaupt SIEHT.**
   Nicht „aufräumen". Seine Zeit steht als `bald(2.5, …)` neben `p1`s `bald(2, …)`, damit
   die 30 Minuten Abstand zu jeder Tageszeit gelten — auch nach 22 Uhr, wenn beide auf
@@ -3083,9 +3116,9 @@ keinem Plan: Ein Post „für alle" passt zu jedem Alters-Filter.
 > Bauen merkt, dass etwas „ohne Server nicht geht", hat fast immer einen Weg übersehen —
 > der Prototyp muss nicht echt sein, er muss sich echt anfühlen.
 
-> ⏳ **Achtung, das gilt seit dem 2026-09-05 NICHT mehr:** Eine Frage wartet — Punkt 34,
-> `zaehltAlsTermin()` in `features/requests/kollision.ts`. Alles andere unten stimmt
-> weiter.
+> ✅ **Wieder gültig seit dem 2026-09-06.** Die eine offene Frage (Punkt 34,
+> `zaehltAlsTermin()`) hat Ian an diesem Tag beantwortet: **erst, wenn jemand dabei
+> ist.** Der Wert im Code blieb derselbe — was sich geändert hat, ist sein Status.
 
 **Es wartet keine Frage mehr auf Ian.** Die letzten beiden hat er am 2026-09-02 beim
 Bauen von Phase 17 beantwortet (Abschnitt 6, Punkte 20 und 21: Gruppen-Posts bleiben
@@ -3177,7 +3210,7 @@ einseitig folgen, einander nicht schreiben können, auch wenn beide wollten
 | `features/requests/kollision.ts` | Zwei Sachen gleichzeitig — sperren oder warnen? | ✅ **warnen, aber durchlassen** *(Phase 18d)* |
 | `features/requests/kollision.ts` | Was heißt „gleichzeitig" ohne Dauer am Post? | ✅ **eine Stunde** *(Phase 18d)* |
 | `features/requests/kollision.ts` | Gilt das auch beim Selbst-Posten? | ✅ **ja** *(Phase 18d)* |
-| `features/requests/kollision.ts` | Was zählt als „schon verabredet"? | ⏳ **wartet auf Ian** — eine Zeile, `zaehltAlsTermin()` |
+| `features/requests/kollision.ts` | Was zählt als „schon verabredet"? | ✅ **erst, wenn jemand dabei ist** *(2026-09-06)* |
 | `components/Profil.tsx` | Wo liegt der Weg zu den Gruppen? | ✅ **gleich unter der Kopfkarte**, y = 305 statt 1168 *(Phase 18d)* |
 
 **Diese Regeln sind Ians, nicht Claudes.** In allen Dateien stehen die

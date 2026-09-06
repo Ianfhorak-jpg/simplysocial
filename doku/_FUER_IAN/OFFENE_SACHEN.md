@@ -3,14 +3,28 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 05.09.2026 (nach Phase 18a bis 18d — einladen, Jahrgang, Chat-Liste,
-> nicht zwei Sachen gleichzeitig)
+> Stand: 06.09.2026 (Phase 18a bis 18d fertig — einladen, Jahrgang, Chat-Liste,
+> nicht zwei Sachen gleichzeitig. **Es wartet keine Programmier-Entscheidung mehr.**)
 
 ---
 
-## 🔵 Eine Zeile, die du selbst schreibst
+## ✅ Erledigt am 06.09.2026 — die Zeile, die du selbst geschrieben hast
 
-### Was zählt als „schon verabredet"?
+### Was zählt als „schon verabredet"? → **erst, wenn wirklich jemand dabei ist**
+
+**Du hast c) genommen.** Dein eigener Post zählt nicht, solange niemand zugesagt hat;
+sobald einer da ist, zählt er wie jede andere Verabredung. Dein Grund, wie er jetzt im
+Code steht: *Ein Post ist ein Angebot, bis jemand annimmt.*
+
+Ein Nachsatz, der wichtiger ist, als er aussieht: **Am Code hat sich kein Zeichen
+geändert** — genau diese Zeile stand schon da, aber als Platzhalter, mit einem „das ist
+keine Entscheidung" darüber. Geändert hat sich, was danebensteht. Wer den Code in einem
+halben Jahr liest, sieht jetzt eine Regel mit Grund statt einer offenen Frage.
+
+*Der ursprüngliche Text bleibt zum Nachlesen stehen:*
+
+<details>
+<summary>Wie die Frage gestellt war</summary>
 
 **Datei:** `simplysocial/src/features/requests/kollision.ts`, ganz unten —
 `zaehltAlsTermin()`. Da steht ein `TODO` mit deinem Namen.
@@ -30,6 +44,8 @@ Drei Antworten, such dir eine aus — es ist wirklich nur die eine Zeile:
 
 Schreib die Zeile hin und einen Satz darüber, warum — so wie in den anderen
 Regel-Dateien. Wenn du magst, sag es mir stattdessen einfach, dann baue ich es ein.
+
+</details>
 
 ---
 

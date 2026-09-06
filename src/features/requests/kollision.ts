@@ -141,33 +141,52 @@ export interface Termin {
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- *  TODO IAN — WAS ZÄHLT ALS „SCHON VERABREDET"?
+ *  WAS ZÄHLT ALS „SCHON VERABREDET"?
+ *  Ians Entscheidung 34 vom 2026-09-06: ERST, WENN JEMAND DABEI IST.
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Die Frage ist beim Bauen aufgetaucht und stand in keinem Plan. Sie entscheidet,
- * wie oft die Warnung überhaupt kommt:
+ * Die Frage ist beim Bauen von 18d aufgetaucht und stand in keinem Plan. Sie
+ * entscheidet, wie oft die Warnung überhaupt kommt — und damit, ob sie gelesen
+ * wird. Drei Antworten standen zur Wahl:
  *
  *   a) `return true;`
  *      Alles zählt — auch ein eigener Post, bei dem noch niemand zugesagt hat.
- *      Streng und einfach zu erklären. Haken: Wer sich am Sonntag drei Sachen
- *      hintereinander ausdenkt und postet, wird ab dem zweiten gewarnt, obwohl
- *      noch gar nichts feststeht.
+ *      Streng und einfach zu erklären. Verworfen, weil es die Warnung dort
+ *      auslöst, wo noch gar nichts feststeht: Wer sich am Sonntag drei Sachen
+ *      hintereinander ausdenkt und postet, wird ab dem zweiten gewarnt. Das ist
+ *      derselbe Schaden wie bei 120 Minuten Fenster — eine Warnung, die man
+ *      dauernd wegklickt, liest nach der dritten niemand mehr, und dann ist auch
+ *      die richtige weg.
  *
  *   b) `return t.rolle === 'zugesagt';`
- *      Nur, wo ich selbst zugesagt habe. Am leisesten. Haken: Der eigene Post ist
- *      auch eine Verabredung, sobald jemand kommt — und ausgerechnet dort wäre die
- *      Warnung still.
+ *      Nur, wo ich selbst zugesagt habe. Am leisesten. Verworfen, weil der eigene
+ *      Post auch eine Verabredung ist, sobald jemand kommt — und ausgerechnet
+ *      dort wäre die Warnung still. Wer acht Leute zum Tennis eingeladen hat und
+ *      dann woanders zusagt, lässt acht Leute stehen, nicht einen.
  *
- *   c) `return t.rolle === 'zugesagt' || t.jemandDabei;`
- *      Ein eigener Post zählt erst, wenn wirklich jemand dabei ist. Haken: eine
- *      Bedingung mehr, die man erklären muss, wenn jemand fragt „warum warnt es
- *      hier und dort nicht?"
+ *   c) `return t.rolle === 'zugesagt' || t.jemandDabei;`   ← DIESE
+ *      Ein eigener Post zählt erst, wenn wirklich jemand dabei ist.
  *
- * Schreib die eine Zeile, die du willst, hin — und den Grund als Kommentar
- * darüber, so wie in den anderen Regel-Dateien.
+ * ── Warum c ──────────────────────────────────────────────────────────────────
+ * Ein Post ist ein ANGEBOT, bis jemand annimmt — dieselbe Unterscheidung, die im
+ * Feed eine Karte von einer Chat-Zeile trennt (Phase 18c). Solange `spotsFilled`
+ * null ist, hat man niemandem etwas versprochen, und die App hat nichts zu
+ * mahnen. Sobald einer zusagt, ist es eine Verabredung wie jede andere, und dann
+ * warnt sie auch.
+ *
+ * Damit sagt die Regel dasselbe wie `TerminRolle` weiter oben: Eine bloß
+ * GESCHICKTE Anfrage ist noch keine Verabredung. Ein Post ohne Zusage ist die
+ * Gegenrichtung derselben Sache.
+ *
+ * ── Der Haken, den Ian dabei kennt ───────────────────────────────────────────
+ * Es ist eine Bedingung mehr, als man in einem Satz erklärt. Fragt jemand „warum
+ * warnt es hier und dort nicht?", ist die Antwort nicht „weil es dein Post ist",
+ * sondern „weil bei deinem noch niemand dabei ist". Der Wechsel ist EINE Zeile;
+ * beide verworfenen stehen oben.
+ *
+ * **Nicht ohne Rückfrage ändern.**
  */
 export function zaehltAlsTermin(t: Termin): boolean {
-  // TODO Ian: eine der drei Zeilen von oben.
   return t.rolle === 'zugesagt' || t.jemandDabei;
 }
 

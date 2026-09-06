@@ -55,9 +55,14 @@ Datenmodell** überbrücken musste. Fünf Dinge sind daran wichtiger als der Hin
    Absagen, Blockieren und Melden. Eine Überschneidung ist nichts davon — die Regel
    lässt sie ausdrücklich zu. Rot hier verbraucht die stärkste Farbe der App für etwas,
    das man bewusst überschreiben darf.
-5. **Eine Zeile wartet auf Ian:** `zaehltAlsTermin()` — was überhaupt als „schon
-   verabredet" zählt (PLAN.md, Abschnitt 6, Punkt 34). Ein Platzhalter steht drin, damit
-   der Prototyp läuft. **Nicht stillschweigend als entschieden behandeln.**
+5. **Die letzte Zeile ist seit dem 2026-09-06 entschieden:** `zaehltAlsTermin()` — was
+   überhaupt als „schon verabredet" zählt (PLAN.md, Abschnitt 6, Punkt 34). **Ians
+   sechsundzwanzigste Entscheidung: erst, wenn wirklich jemand dabei ist.** Ein eigener
+   Post ohne Zusage zählt nicht — ein Post ist ein ANGEBOT, bis jemand annimmt, dieselbe
+   Unterscheidung wie Karte gegen Chat-Zeile in 18c. Der Code hat sich dabei um kein
+   Zeichen geändert: Genau dieser Wert stand als Platzhalter drin. **Ein Platzhalter, der
+   zufällig richtig ist, und eine Entscheidung sind trotzdem zwei verschiedene Zustände**
+   — der Unterschied liegt vollständig in dem, was die nächste Sitzung liest.
 
 Dazu der zweite Vorrats-Punkt: **„Deine Gruppen" liegt jetzt bei y = 305 von 1388** statt
 bei 1168 von 1380 — über einen dritten Slot `nachKopf` in `Profil.tsx`, nicht im Screen
@@ -378,12 +383,11 @@ das heimlich Termine erfindet.
 > ✅ **Und die kleine Frage daneben, gleicher Tag:** Vor „Mehr einstellen" stehen jetzt
 > **die drei Striche ☰**, nicht ⚙️ — wie er es ursprünglich gesagt hatte. `MEHR_SYMBOL`.
 
-⏳ **Eine Frage wartet auf Ian (seit 2026-09-05):** `zaehltAlsTermin()` in
-`features/requests/kollision.ts` — was überhaupt als „schon verabredet" zählt. Drei
-Möglichkeiten stehen samt Haken im Kopfkommentar der Funktion, es ist **eine Zeile**.
-Ein Platzhalter steht drin, damit der Prototyp läuft; er ist keine Entscheidung.
-*(Die Sätze weiter unten, die „es wartet keine Frage" sagen, stammen aus früheren
-Phasen und stimmen für ihre eigene Frage weiter.)*
+✅ **Es wartet keine Frage mehr auf Ian (Stand 2026-09-06).** Die letzte —
+`zaehltAlsTermin()` in `features/requests/kollision.ts` — hat er an diesem Tag
+beantwortet: **erst, wenn wirklich jemand dabei ist.** Damit sind alle sechsundzwanzig
+Regel-Entscheidungen getroffen, und die verworfenen Möglichkeiten stehen in allen sieben
+Regel-Dateien weiter im Kopfkommentar — als Gedächtnis, nicht als Einladung.
 
 **Seit Phase 11 ist der Startbildschirm ein Wischstapel** („wie so ein bisschen
 Tinder"): Karteikarten, die kippen, sich mit einer Abrisskante vom Block lösen und
