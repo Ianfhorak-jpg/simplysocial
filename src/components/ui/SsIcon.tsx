@@ -1,4 +1,5 @@
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import { ICONS, STRICH, type IconName } from '@/theme/icons';
 import { colors } from '@/theme';
@@ -6,32 +7,27 @@ import { colors } from '@/theme';
 /**
  * Zeichnet ein Icon aus `theme/icons.ts`.
  *
- * ══ Warum hier KEIN `react-native-svg` steht ══════════════════════════════════
- * Der naheliegende Weg wäre `npx expo install react-native-svg`. Dagegen stehen
- * zwei Dinge, und beide sind älter als diese Datei:
+ * ══ Warum hier seit Phase 19 `react-native-svg` steht ═════════════════════════
+ * Bis zum 2026-09-06 stand an dieser Stelle das Gegenteil: kein Native-Modul, und
+ * auf iOS ein sichtbarer Platzhalter-Kreis. Beides war richtig, solange der
+ * Prototyp eine Webseite war — und beides ist mit dem ersten EAS-Build hinfällig.
  *
- *   · Harte Regel 1 (CLAUDE.md) und PLAN.md, Phase 14, wörtlich: „Kein
- *     Native-Modul, keine Schrift-Icons — gezeichnete Pfade in einer Datei."
- *   · Die ACTA-Falle: Ein Native-Import, der nach dem ersten EAS-Build dazukommt,
- *     lässt den bestehenden Dev-Build sofort abstürzen. Der Prototyp bleibt JS-only,
- *     damit die Web-Version verlässlich läuft — dieselbe Entscheidung wie beim
- *     Konfetti (`Animated` statt einer Native-Lib).
+ * Die Begründung von damals kippt nicht, sie läuft ab. Harte Regel 1 („kein
+ * Native-Modul") gilt dem PROTOTYP, damit die Web-Version verlässlich läuft; die
+ * ACTA-Falle („ein Native-Import nach dem Build lässt den Dev-Build abstürzen")
+ * gilt allem, was NACH einem Build dazukommt. Deshalb steht dieser Tausch VOR dem
+ * ersten Build und nicht danach — PLAN.md, Phase 19.3.
  *
- * Auf Web braucht es die Bibliothek auch gar nicht: `react-dom` rendert ein echtes
- * `<svg>`, und der Prototyp IST eine Webseite — jede Rückmeldung bisher kam aus
- * einem Handy-Browser.
+ * ══ Warum der Web-Zweig trotzdem bleibt ═══════════════════════════════════════
+ * `react-native-svg` kann auch Web. Es ersatzlos für beide Seiten zu nehmen wäre
+ * weniger Code — und würde die eine Fassung anfassen, die seit vier Wochen läuft
+ * und die alle Rückmeldungen geliefert hat. `react-dom` zeichnet dort ein echtes
+ * `<svg>`; es gibt nichts zu gewinnen und eine laufende Seite zu verlieren.
  *
- * ══ Was das für iOS bedeutet — die ehrliche Lücke ═════════════════════════════
- * Auf Native gibt es kein `<svg>`. Diese Datei zeichnet dort einen sichtbaren
- * Platzhalter (Kreis in der Icon-Farbe), KEIN leeres Nichts. Der Unterschied ist
- * Absicht: Ein leerer Platz sieht aus wie Gestaltung, ein Kreis sieht aus wie eine
- * Baustelle. Wer die App zum ersten Mal auf einem Gerät startet, soll das sehen.
- *
- * Der Weg heraus ist EINE Datei, nicht dreißig Screens — das ist der ganze Zweck
- * der Aufteilung in `theme/icons.ts` (Daten) und diese Datei (Zeichnen):
- * beim ersten EAS-Build `npx expo install react-native-svg`, dann hier
- * `<Svg>`/`<Path>` statt `<svg>`/`<path>` — dieselben Pfadstrings, dieselben Props.
- * Kein Screen wird dafür angefasst. Steht so auch in `_FUER_IAN/OFFENE_SACHEN.md`.
+ * Was die beiden Zweige verbindet, ist wichtiger als dass es zwei sind: Sie lesen
+ * DIESELBEN Pfadstrings aus `theme/icons.ts` und setzen dieselben Werte. Ein neues
+ * Icon kommt weiter in EINE Datei, und kein Screen wird angefasst — das war der
+ * ganze Zweck der Trennung von Daten und Zeichner.
  */
 
 export interface SsIconProps {
@@ -70,15 +66,32 @@ function strichFuer(size: number): number {
 export function SsIcon({ name, size = 20, color = colors.ink, titel }: SsIconProps) {
   const form = ICONS[name];
   const breite = strichFuer(size);
+  const flaechen = 'flaechen' in form ? (form.flaechen as readonly string[]) : [];
 
   if (Platform.OS !== 'web') {
-    // Siehe Dateikopf: sichtbare Baustelle statt stiller Leerstelle.
     return (
-      <View
+      <Svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={color}
+        strokeWidth={breite}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        // Ohne `accessible={false}` liest VoiceOver auf iOS jedes Icon einzeln vor,
+        // auch das neben einem Text — dasselbe „Haken, Angefragt", gegen das oben
+        // schon `titel` gebaut ist. Auf Web erledigt das `aria-hidden`.
+        accessible={titel ? true : false}
         accessibilityRole={titel ? 'image' : undefined}
-        accessibilityLabel={titel}
-        style={[styles.nativePlatzhalter, { width: size, height: size, borderColor: color }]}
-      />
+        accessibilityLabel={titel}>
+        {form.striche.map((d, i) => (
+          <Path key={`s${i}`} d={d} />
+        ))}
+        {flaechen.map((d, i) => (
+          <Path key={`f${i}`} d={d} fill={color} stroke="none" />
+        ))}
+      </Svg>
     );
   }
 
@@ -101,15 +114,9 @@ export function SsIcon({ name, size = 20, color = colors.ink, titel }: SsIconPro
       {form.striche.map((d, i) => (
         <path key={`s${i}`} d={d} />
       ))}
-      {'flaechen' in form
-        ? (form.flaechen as readonly string[]).map((d, i) => (
-            <path key={`f${i}`} d={d} fill={color} stroke="none" />
-          ))
-        : null}
+      {flaechen.map((d, i) => (
+        <path key={`f${i}`} d={d} fill={color} stroke="none" />
+      ))}
     </svg>
   );
 }
-
-const styles = StyleSheet.create({
-  nativePlatzhalter: { borderWidth: 1.5, borderRadius: 999, opacity: 0.5 },
-});

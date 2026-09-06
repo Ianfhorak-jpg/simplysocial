@@ -2,12 +2,15 @@
   "expo": {
     "name": "SimplySocial",
     "slug": "simplysocial",
+    "owner": "ian43566",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "simplysocial",
     "userInterfaceStyle": "light",
     "ios": {
+      "bundleIdentifier": "at.simplysocial.app",
+      "supportsTablet": false,
       "icon": "./assets/expo.icon"
     },
     "android": {
@@ -38,6 +41,12 @@
       "typedRoutes": true,
       "reactCompiler": true,
       "baseUrl": "/simplysocial"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a37d2454-0fd5-4db3-a06a-8da62057c380"
+      }
     }
   }
 }

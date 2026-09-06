@@ -3,26 +3,46 @@
 > Diese Datei steht hier, weil der Chat nach dem `/clear` weg ist — der Text darin
 > also auch. Hier findest du ihn wieder.
 >
-> Stand: **05.09.2026.** **Phase 0 bis 18d sind fertig und online** — damit ist
+> Stand: **06.09.2026.** **Phase 0 bis 18d sind fertig und online** — damit ist
 > **alles gebaut, was Christoph, Leopold und Daria am 02.09. gesagt haben**: die Emojis
 > raus (14), Altersgruppe und Filter (15), Direktnachrichten (16) und Gruppen (17).
 > **Was Leopold am 03.09. beim wirklichen Benutzen gefunden hat, ist auch zu** (18a),
 > **dein Jahrgangs-Balken steht** (18b), **deine Chat-Liste ist aufgeräumt** (18c) und
 > **die App warnt jetzt vor Doppel-Verabredungen** (18d — Leopolds letzter Punkt).
-> **Eine Zeile wartet auf dich**, siehe unten.
+>
+> **Die Zeile, die hier gewartet hat, hast du am 06.09. beantwortet** — `zaehltAlsTermin()`,
+> „erst, wenn wirklich jemand dabei ist". Dafür wartet jetzt **eine andere Sache**:
+> die **Farbe der Landing-Page**, siehe unten.
 
 ---
 
-## Zuerst: eine Zeile, die du selbst schreiben sollst
+## Zuerst: schau dir die drei Farben an
 
-`simplysocial/src/features/requests/kollision.ts`, ganz unten — `zaehltAlsTermin()`.
-Da steht ein `TODO` mit deinem Namen und drei fertige Zeilen zur Auswahl. Die Frage:
-**Zählt auch ein Post als „schon verabredet", den du selbst geschrieben hast und bei
-dem noch niemand zugesagt hat?**
+Du wolltest die Landing-Page in **Olivgrün, Weinrot und Türkis** sehen. Sie liegen fertig
+im Ordner **`landing-vorschau/`** — dort **`index.html` doppelklicken**, dann hast du alle
+drei nebeneinander und kommst zwischen ihnen hin und her. Die `probe-*.png` daneben sind
+nur Screenshots, falls du schnell draufschauen willst, ohne etwas zu öffnen.
 
-Ausführlich mit den Haken steht es in **OFFENE_SACHEN.md** ganz oben (🔵). Gerade steht
-Möglichkeit c) als Platzhalter drin, damit der Prototyp läuft — **das ist keine
-Entscheidung, nur ein Lückenfüller.**
+**Die echte Seite ist unberührt.** Der Ordner liegt außerhalb ihres Repos und kann nicht
+versehentlich mit hochgeladen werden — an `simplysocial-landing` hat sich nichts geändert.
+
+Was ich von dir brauche, sind **zwei** Sachen, nicht eine:
+
+1. **Welche Farbe.**
+2. **A oder B** — in den Vorschauen sind auch die sechs Kategoriefarben (Sport gelb,
+   Essen grün, Lernen blau …) zu Abstufungen der Leitfarbe geworden. Deshalb sehen die
+   Pillen jetzt fast gleich aus. Das ist Absicht, damit du die Farbe beurteilen kannst,
+   aber es ist die eigentliche Frage:
+   **A** = eine Marke, eine Farbe (aus einem Guss, aber du erkennst eine Aktivität nicht
+   mehr an der Farbe, du musst lesen) · **B** = Leitfarbe nur für Knöpfe, Schriftzug und
+   Marker, die Kategorien bleiben bunt.
+
+Ausführlich, mit dem Grund, warum der Marker unter dem Wort „jetzt" bei Weinrot heller
+ausfällt als der Rest: **`landing-vorschau/LIESMICH.md`** und **OFFENE_SACHEN.md,
+Punkt 4b.**
+
+**Es eilt nicht** — die Farbe blockiert Phase 19 nicht. Aber je später sie kommt, desto
+mehr Screens sind schon gebaut, die sie mitbekommen müssen.
 
 ---
 

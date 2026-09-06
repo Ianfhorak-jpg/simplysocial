@@ -184,9 +184,10 @@ damit dich nichts überrascht.
 ### Bald, in Phase 19 (aufs Handy)
 - **Dein iPhone einmal anmelden.** Für einen Test-Build muss dein Gerät bei Apple
   registriert werden. Ist ein Klick auf einem Link, den ich dir schicke.
-- **Der Name der App bei Apple wird festgelegt** — technisch `at.simplysocial.app`.
-  **Der ist nach der ersten Einreichung nie wieder änderbar.** Sag Bescheid, wenn dir
-  etwas anderes lieber ist; danach ist es zu spät.
+- ~~**Der Name der App bei Apple wird festgelegt**~~ ✅ **erledigt am 06.09.2026:**
+  Du hast `at.simplysocial.app` bestätigt. Der Wert steht jetzt in der App und ist ab
+  der ersten Einreichung bei Apple für immer festgelegt. (`at.` weil die App aus Wien
+  ist und `simplysocial.at` auf deiner Domain-Liste steht.)
 
 ### In Phase 20 (Backend)
 - **Ein Supabase-Konto anlegen** (gratis, mit deiner E-Mail). Die Zugangsschlüssel
@@ -306,20 +307,23 @@ ist, dass der Filter wenig zu filtern scheint. **Das wird erst scharf, wenn Leut
 Altersgruppe wirklich setzen** — also erst bei vielen Posts. Guck es dir an und sag,
 ob es dich stört.
 
-### 3. Auf dem Handy fehlen die Symbole — das ist bekannt und Absicht
+### 3. ~~Auf dem Handy fehlen die Symbole~~ ✅ erledigt am 06.09.2026
 
-Wenn die App später als **echte iPhone-App** läuft (nicht im Browser), stehen an den
-Stellen der Symbole vorerst **leere Kreise**. Das ist kein Fehler und wird auch nicht
-versehentlich so bleiben:
+**Die 41 Symbole zeichnen jetzt auch auf dem iPhone.** Der Einbau war genau das, was
+hier seit Wochen angekündigt stand: **eine Datei, kein Bildschirm angefasst.** Möglich
+war das nur, weil von Anfang an getrennt lag, *welche* Symbole es gibt
+(`theme/icons.ts`) und *wie* sie gezeichnet werden (`SsIcon.tsx`) — geändert wurde nur
+das Zweite.
 
-Symbole zeichnen geht im Browser von selbst; auf dem iPhone bräuchte es ein Zusatzpaket,
-und genau das ist die Sorte Paket, die bei ACTA die Vorschau kaputtgemacht hat. Deshalb
-ist es bewusst noch nicht drin. **Beim ersten echten App-Build wird es eingebaut** —
-das ist eine Datei und ungefähr eine Stunde, kein Bildschirm muss dafür angefasst
-werden. Im Browser (also überall, wo du den Link herzeigst) ist alles vollständig da.
+Warum es überhaupt so lange leere Kreise waren: Symbole zeichnen geht im Browser von
+selbst, auf dem iPhone braucht es ein Zusatzpaket — und genau die Sorte Paket hat bei
+ACTA die Vorschau kaputtgemacht. Deshalb kam es erst jetzt dazu, **vor** dem ersten
+echten App-Build und nicht danach. Kommt so ein Paket nämlich *nach* einem Build dazu,
+stürzt der bestehende Build ab.
 
-Ein *leerer* Kreis statt gar nichts ist Absicht: Nichts sähe aus wie Gestaltung, ein
-Kreis sieht aus wie eine Baustelle — und genau das ist es.
+**Was du davon merkst:** Sobald die App auf deinem Handy läuft, sieh dir die Symbole an
+und sag, ob sie genauso aussehen wie im Browser. Das ist Punkt 2 oben, jetzt mit echter
+Grundlage.
 
 ### 4. Logo
 Dein Freund zeichnet es. **Sag ihm bitte, bis wann du es brauchst.** Bis dahin baue ich
@@ -330,6 +334,33 @@ Was er wissen sollte:
 - Es braucht das Logo in **quadratisch** (App-Icon, das runde Ecken bekommt) und als
   **breiten Schriftzug** (für die Kopfzeile).
 - Am besten als SVG oder PNG mit durchsichtigem Hintergrund.
+
+**Wenn es da ist, schick es einfach her** — das App-Icon hat seinen Platz schon
+(`simplysocial/assets/expo.icon`), und der Schriftzug in der Kopfzeile hängt an einer
+einzigen Datei (`src/config/brand.ts`, harte Regel 3). Beides ist ein Austausch, keine
+Umbauarbeit. **Am besten kommt es, bevor die App eingereicht wird** — das App-Icon ist
+das Erste, was im Store zu sehen ist.
+
+### 4b. Farbe — drei Vorschauen liegen bereit (06.09.2026)
+Du wolltest die Landing-Page in **Olivgrün, Weinrot und Türkis** sehen. Sie liegen im
+Ordner **`landing-vorschau/`** — dort `index.html` doppelklicken, dann hast du alle drei
+nebeneinander und kommst zwischen ihnen hin und her. **Die veröffentlichte Seite ist
+unberührt**, der Ordner liegt außerhalb ihres Repos.
+
+Was ich von dir brauche, ist nicht nur „welche ist hübscher", sondern eine Stufe darunter:
+
+- **A · Eine Marke, eine Farbe** — so wie in der Vorschau. Auch die sechs
+  Kategorie-Farben (Sport gelb, Essen grün, Lernen blau …) werden Abstufungen der
+  Leitfarbe. Wirkt aus einem Guss. Preis: Man erkennt eine Aktivität nicht mehr an der
+  Farbe, man muss lesen.
+- **B · Leitfarbe nur für die Marke** — Knöpfe, Schriftzug und Marker bekommen die neue
+  Farbe, die sechs Kategorien bleiben bunt und behalten ihre Auskunft.
+
+**Sag mir die Farbe UND A oder B.** Beides zusammen, dann baue ich es in einem Zug ein —
+in die App *und* in die Seite, denn die beiden führen ihre Farben getrennt.
+
+Die ganze Erklärung steht in `landing-vorschau/LIESMICH.md`, auch warum der Marker unter
+dem Wort „jetzt" bei Weinrot heller ausfällt als der Rest.
 
 ### 5. Fotos für die Landing-Page — falls ihr wollt
 Die Seite steht, kurz gehalten, wie du wolltest. Was noch dazukönnte, wenn ihr Lust habt:

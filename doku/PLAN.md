@@ -2249,7 +2249,61 @@ Ertrag von harter Regel 1, drei Wochen später eingelöst.
   Auf iOS schiebt die Tastatur die Ansicht, und `KeyboardAvoidingView` verhält sich auf
   iOS anders als auf Android.
 
-#### 19.1 — `app.json` ergänzen ⬜
+> ### Stand 19.1 bis 19.3 — fertig am 2026-09-06
+>
+> **Ians vierundzwanzigste Entscheidung dieser Art, und die einzige unumkehrbare des
+> ganzen Projekts: der Bundle Identifier ist `at.simplysocial.app`.** Verworfen sind
+> `com.simplysocial.app` (die internationale Schreibweise — aber `simplysocial.com`
+> gehört ihnen nicht, `simplysocial.at` steht auf der Domain-Liste) und
+> `at.simplysocial.simplysocial` (das, was Expo von selbst erfunden hätte). **Nach der
+> ersten Einreichung ist der Wert bei Apple für immer festgelegt.**
+>
+> **Das EAS-Projekt existiert:** `@ian43566/simplysocial`, ID
+> `a37d2454-0fd5-4db3-a06a-8da62057c380`, angelegt mit `eas init --force`. Ian war bei
+> Expo bereits eingeloggt; die Wahl zwischen persönlichem Konto und `ian43566s-team`
+> fiel auf das persönliche — anders als die Bundle-ID ist ein Projekt jederzeit in eine
+> Organisation übertragbar. `owner: "ian43566"` steht deshalb in `app.json`, sonst
+> fragt jeder Befehl neu.
+>
+> **`channel` ist aus `eas.json` wieder herausgeflogen, und das ist kein Detail.** Ein
+> Kanal gehört zu `expo-updates` — dem Baustein, mit dem eine gebaute App später neuen
+> JavaScript-Code über die Luft nachlädt. Der ist hier nicht installiert. Ein Kanal, auf
+> den nie jemand sendet, ist Konfiguration für etwas, das nicht existiert: EAS warnt
+> beim Build, und in vier Wochen liest jemand die Zeile und glaubt, Over-the-Air-Updates
+> seien eingerichtet. `appVersionSource: "remote"` bleibt dagegen — es nimmt die
+> Handarbeit weg, die man garantiert vergisst: Apple lehnt jeden TestFlight-Upload ab,
+> dessen `buildNumber` schon einmal da war.
+>
+> **Vier Messungen statt vier Vermutungen — alle vor dem ersten Build:**
+>
+> 1. **Der Preis des Imports ist bekannt: +49.524 Bytes, +3,5 %.** Das Web-Bündel wächst
+>    von 1.398.342 auf 1.447.866 (roh; gzip gesamt 390.064). Ein statisches `import`
+>    zieht den ganzen Modulbaum ins Bündel, auch wenn der Web-Zweig
+>    `react-native-svg` nie aufruft. **Vermeidbar wäre es**, über Metros
+>    Plattform-Endungen (`SsIcon.native.tsx` / `SsIcon.web.tsx`) — dann bliebe die
+>    Bibliothek ganz aus dem Web-Bündel. **Bewusst nicht gemacht:** Das zerlegt EINEN
+>    Zeichner in drei Dateien, und der ganze Zweck der Trennung von `theme/icons.ts`
+>    (Daten) und `SsIcon.tsx` (Zeichnen) war, dass ein Icon-Wechsel EINE Datei ist.
+> 2. **Das iOS-Bündel baut durch** — `expo export --platform ios` liefert 2,9 MB
+>    Hermes-Bytecode. Das ist mehr als ein Typecheck: Metro muss dabei jedes Modul für
+>    die Plattform iOS auflösen. Ein Import, den es auf Native nicht gibt, fällt hier
+>    auf — in einer Minute am Mac statt nach fünfzehn in der Cloud.
+> 3. **Die elf Web-Zugriffe stehen wirklich alle hinter `Platform.OS !== 'web'`** —
+>    nachgezählt, nicht geglaubt: `_layout.tsx` (Startfläche, Tab-Titel),
+>    `PrototypHinweis` und `WischStapel` (je zwei `sessionStorage`).
+> 4. **Die laufende Web-Fassung ist unbeschädigt:** gebautes `dist/` lokal serviert,
+>    390 × 844, Feed rendert vollständig, **null Konsolenfehler**. Der Web-Zweig ist
+>    unverändert — geprüft wurde, ob der neue Import einen Seiteneffekt hat.
+>
+> **`expo-doctor`: 20 von 21 Prüfungen sauber.** Der eine Befund sind fünf
+> Patch-Versionen (`expo` 57.0.18 statt .20, dazu `expo-constants`, `-font`, `-linking`,
+> `-router`). **Bewusst nicht aktualisiert vor dem ersten Build.** Der ganze Zweck von
+> „erst aufs Gerät" ist, dass beim ersten Fehler nur EINE Sache neu ist — und
+> `react-native-svg` ist diese eine Sache. Patch-Stände blockieren keinen EAS-Build; sie
+> werden nachgezogen, wenn der Build einmal durch ist. **Wer sie vorher anfasst, fasst
+> zugleich die Web-Fassung an, die live ist.**
+
+#### 19.1 — `app.json` ergänzen ✅ *(2026-09-06)*
 
 Heute fehlt **`ios.bundleIdentifier` komplett**. `eas build:configure` würde einen
 erfinden. Selbst setzen, und zwar bewusst:
@@ -2275,7 +2329,7 @@ erfinden. Selbst setzen, und zwar bewusst:
 betrifft nur GitHub Pages. Wer es für den Build entfernt, macht die Landing-Adresse
 kaputt.
 
-#### 19.2 — `eas.json` anlegen ⬜
+#### 19.2 — `eas.json` anlegen ✅ *(2026-09-06)*
 
 Gibt es heute nicht. Drei Profile, und der Unterschied ist nicht kosmetisch:
 
@@ -2290,7 +2344,7 @@ ist eine *Hülle*. Man baut ihn EINMAL und lädt danach den JavaScript-Code hine
 gebaut werden muss er nur, wenn ein **Native-Baustein** dazukommt — genau die ACTA-Falle
 aus CLAUDE.md. Deshalb steht 19.3 vor 19.4.
 
-#### 19.3 — `react-native-svg` einbauen ⬜
+#### 19.3 — `react-native-svg` einbauen ✅ *(2026-09-06)*
 
 ```bash
 npx expo install react-native-svg
@@ -3517,6 +3571,37 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > Alles, was eine frische Sitzung wissen muss, steht in Dateien — nicht im Gespräch.
 
 ### Das Erste, was zu tun ist
+
+> ❓ **Davor eine Frage, die auf Ian wartet — sie kostet keine Arbeitszeit, blockiert
+> aber sonst still (2026-09-06):** Er hat die Landing-Page in drei Farben angefragt.
+> Die Vorschauen liegen in **`landing-vorschau/`** (Olivgrün `#6E7B33`, Weinrot
+> `#8A2540`, Türkis `#0E8189`). **Nicht im `landing/`-Repo** — sie können nicht
+> versehentlich live gehen, und `git status` dort war nach dem Bauen leer.
+>
+> Offen ist **Farbe UND A oder B**: (A) auch die sechs Kategoriefarben werden
+> Abstufungen der Leitfarbe — aus einem Guss, aber die Kategorie verrät sich nicht mehr
+> über die Farbe; (B) nur Marke, Kategorien bleiben bunt. Steht ausgeschrieben in
+> `landing-vorschau/LIESMICH.md` und in `_FUER_IAN/OFFENE_SACHEN.md`, Punkt 4b.
+>
+> **Wenn die Antwort da ist, drei Dinge, die man sonst übersieht:**
+> 1. **Die Farbe muss an ZWEI Orte** — `simplysocial/src/theme/colors.ts` und
+>    `landing/stil.css`. Letztere ist eine Kopie, keine Verbindung (harte Regel 13);
+>    nur eine zu ändern fällt erst auf, wenn beides nebeneinander auf einem Schirm liegt.
+> 2. **Elf Farbwerte hängen an keiner Variable.** Fünf in `stil.css` (Marker unter
+>    „jetzt", Strich am Zitat, „Social" im Schriftzug, Live-Punkt, `::selection`) und
+>    sechs als Liste im Code von `seite.js` (Konfetti — als Inline-Style gesetzt, dagegen
+>    kommt CSS nur mit `!important` an). Alle elf stehen in den `farben-*.css` schon
+>    aufgeschrieben; beim echten Einbau gehören sie in Variablen, dann ist die nächste
+>    Farbänderung eine Zeile.
+> 3. **Der Marker unter „jetzt" ist ein Textmarker-Strich, kein Rechteck** — `height:
+>    .46em` deckt nur die untere Worthälfte, die obere steht auf Papierweiß. Der Text
+>    muss deshalb DUNKEL bleiben, und die Fläche wird aufgehellt, bis er 4.5:1 erreicht.
+>    Satt eingefärbt mit weißem Text verschwindet das Wort oben — beim Bauen genau so
+>    passiert und erst am Screenshot gesehen, nicht im Code.
+>
+> Erzeugt wird alles von `landing-vorschau/erzeugen-palette.py` (leitet die Palette ab
+> und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
+> vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
 > 🚀 **Stand 2026-09-06: Der Weg zur echten App ist geplant — Abschnitt 5b, Phasen 19
 > bis 21.** Das Erste ist damit nicht mehr eine Frage, sondern ein Handgriff:

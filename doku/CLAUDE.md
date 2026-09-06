@@ -414,11 +414,26 @@ das heimlich Termine erfindet.
 > ✅ **Und die kleine Frage daneben, gleicher Tag:** Vor „Mehr einstellen" stehen jetzt
 > **die drei Striche ☰**, nicht ⚙️ — wie er es ursprünglich gesagt hatte. `MEHR_SYMBOL`.
 
-✅ **Es wartet keine Frage mehr auf Ian (Stand 2026-09-06).** Die letzte —
-`zaehltAlsTermin()` in `features/requests/kollision.ts` — hat er an diesem Tag
-beantwortet: **erst, wenn wirklich jemand dabei ist.** Damit sind alle sechsundzwanzig
-Regel-Entscheidungen getroffen, und die verworfenen Möglichkeiten stehen in allen sieben
-Regel-Dateien weiter im Kopfkommentar — als Gedächtnis, nicht als Einladung.
+✅ **Alle sechsundzwanzig Regel-Entscheidungen sind getroffen (Stand 2026-09-06).**
+Die letzte — `zaehltAlsTermin()` in `features/requests/kollision.ts` — hat er an diesem
+Tag beantwortet: **erst, wenn wirklich jemand dabei ist.** Die verworfenen Möglichkeiten
+stehen in allen sieben Regel-Dateien weiter im Kopfkommentar — als Gedächtnis, nicht als
+Einladung.
+
+❓ **Eine Frage wartet trotzdem auf Ian, und sie betrifft KEINE Regel-Datei
+(2026-09-06):** Er wollte die Landing-Page in **Olivgrün, Weinrot und Türkis** sehen.
+Die drei Vorschauen liegen in **`landing-vorschau/`** — nicht in `landing/`, damit sie
+nicht mit hochgeladen werden können. Sie kopieren die Seite nicht, sondern laden sie aus
+`../landing/` und legen nur eine Farbdatei darüber; ändert sich die echte Seite, ziehen
+alle drei mit. **Was noch nicht entschieden ist, steht in
+`landing-vorschau/LIESMICH.md` und als Punkt 4b in `_FUER_IAN/OFFENE_SACHEN.md`:**
+Farbe *und* ob die sechs Kategoriefarben mit auf die Leitfarbe gehen (A) oder bunt
+bleiben (B). **Vor dem Einbau der gewählten Farbe harte Regel 13 lesen** — sie muss in
+`simplysocial/src/theme/colors.ts` UND in `landing/stil.css`, sonst driften App und
+Seite. Dazu liegen in `stil.css` **fünf Farbwerte ohne Variable** (Marker unter „jetzt",
+Strich am Zitat, „Social" im Schriftzug, Live-Punkt, `::selection`) und **sechs im
+Code von `seite.js`** (Konfetti); alle elf stehen in den `farben-*.css` schon
+aufgeschrieben und gehören beim echten Einbau in Variablen aufgelöst.
 
 **Seit Phase 11 ist der Startbildschirm ein Wischstapel** („wie so ein bisschen
 Tinder"): Karteikarten, die kippen, sich mit einer Abrisskante vom Block lösen und
