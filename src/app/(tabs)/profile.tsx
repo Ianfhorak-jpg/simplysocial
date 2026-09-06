@@ -39,12 +39,17 @@ export default function ProfileScreen() {
 
       <Profil
         person={ich}
-        fuss={
-          <View style={styles.fuss}>
-            {/* Der Weg zu den Gruppen liegt hier und nicht in der Tab-Leiste (die
-                Begründung steht im Kopf von `app/gruppen.tsx`). Die Zeile darunter
-                sagt, was einen erwartet — ohne sie ist „Gruppen" ein Knopf, hinter
-                dem alles Mögliche sein könnte. */}
+        nachKopf={
+          /* Seit Phase 18d GLEICH unter der Kopfkarte statt ganz unten. Der Knopf lag
+             bei y = 1168 von 1380 — vorletztes Element, auf einem Handy zweimal
+             scrollen. Leopold hat beim Benutzen am 2026-09-03 fragen müssen, wie man
+             eine Gruppe macht; im Code war nichts kaputt, der Weg war nur zu weit
+             unten. Ians Entscheidung 16 (kein eigener Tab) bleibt unberührt — es
+             geht nur darum, wie weit man scrollt.
+
+             Die Zeile darunter sagt, was einen erwartet: ohne sie ist „Gruppen" ein
+             Knopf, hinter dem alles Mögliche sein könnte. */
+          <View style={styles.gruppen}>
             <SsButton
               label="Deine Gruppen"
               icon="personen"
@@ -57,7 +62,10 @@ export default function ProfileScreen() {
                 ? `Noch in keiner. Für eine Gruppe kannst du gezielt posten.`
                 : meineGruppen.map((g) => g.name).join(' · ')}
             </SsText>
-
+          </View>
+        }
+        fuss={
+          <View style={styles.fuss}>
             <SsButton
               label="Einstellungen"
               icon="regler"
@@ -81,4 +89,7 @@ const styles = StyleSheet.create({
   // hinter dem alles Mögliche sein könnte — und genau die drei Sachen, die Apple
   // sehen will, findet man dann nicht.
   fuss: { marginTop: spacing.xl, gap: spacing.sm },
+  // Enger als der Fuss: Der Block gehört optisch noch zur Kopfkarte darüber und soll
+  // nicht wie ein eigener Abschnitt zwischen Profil und Interessen stehen.
+  gruppen: { gap: spacing.sm },
 });

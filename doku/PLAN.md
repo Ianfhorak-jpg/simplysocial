@@ -1700,17 +1700,109 @@ musste ihn bekommen). Geprüft mit einem kurzzeitigen Eingriff in die Gruppierun
 Screenshot, zurückgesetzt. **Ein Zustand, den die Fake-Daten nicht erzeugen, ist ein
 Zustand, den niemand ansieht.**
 
-#### 18d — Im Vorrat, noch nicht entschieden
+#### 18d — Nicht zwei Sachen gleichzeitig ✅ *(gebaut am 2026-09-05)*
 
-- **„Nicht 2 Sachen gleichzeitig"** (Leopold). Nichts prüft das heute. Kleines,
-  eigenständiges Stück in `features/requests/logic.ts`, und es schützt vor genau der
-  Enttäuschung, an der sich so eine App herumspricht — jemand kommt nicht. **Die Frage
-  dahinter ist, ob es hart sperrt oder nur warnt.**
-- **„Deine Gruppen" höher aufs Profil.** Der Knopf liegt bei **y = 1168 von 1380** —
-  vorletztes Element. Leopold musste fragen, wie man eine Gruppe macht. Ians
-  Entscheidung 16 (kein eigener Tab) bleibt davon unberührt; es geht nur darum, wie weit
-  man scrollen muss.
-- **Kalender-Funktion** (Leopold, ausdrücklich „für später").
+> ✅ **Fertig, bis auf eine Zeile, die Ian selbst schreibt** (`zaehltAlsTermin`, siehe
+> unten). Die zwei ersten Punkte des Vorrats sind gebaut, der dritte bleibt liegen.
+
+**Leopolds Wunsch beim Benutzen am 2026-09-03: *„nicht 2 Sachen gleichzeitig."*** Bis
+dahin prüfte das nichts. Man konnte um 17:00 beim Tennis zusagen und um 17:15 beim
+Kaffee — und musste einem von beiden absagen. Genau die Enttäuschung, an der sich so
+eine App herumspricht.
+
+**Ians drei Entscheidungen dazu (Abschnitt 6, Punkte 31–33):**
+
+| Frage | Antwort | Wo sie steht |
+|---|---|---|
+| Sperren oder warnen? | **warnen, aber durchlassen** | `DOPPEL_REGEL` |
+| Was heißt „gleichzeitig", wenn ein Post keine Dauer hat? | **eine Stunde** | `KOLLISION_FENSTER_MIN` |
+| Gilt es auch beim Selbst-Posten? | **ja, gleich behandeln** | `PRUEFT_BEIM_POSTEN` |
+
+**Was gebaut wurde:**
+
+| Datei | Was |
+|---|---|
+| `features/requests/kollision.ts` | **Die Regel**, wie `block.ts`, `wisch.ts`, `direkt.ts` und `gruppe.ts`. Drei Konstanten, `kollidiert()`, `doppelHinweisText()`. Screens lesen die Konstanten nie. |
+| `features/requests/hooks.ts` | `useKollisionen(startsAt, ausserPostId?)` — sammelt nur, was in Frage kommt, und lässt die Regel entscheiden. |
+| `components/DoppelHinweis.tsx` | Der Kasten über dem Knopf. Ein Baustein, weil er an DREI Stellen steht. |
+| `app/post/[id].tsx` · `AntwortLeiste.tsx` · `app/create.tsx` | Die drei Stellen. |
+| `data/mock.ts` | **`p18` „Eis essen gehen"** — der Post, an dem man die Warnung überhaupt sieht. |
+
+**Und der zweite Vorrats-Punkt gleich mit: „Deine Gruppen" liegt jetzt oben.**
+Nachgemessen auf 360 × 600: **y = 305 von 1388** statt vorher **1168 von 1380** — ohne
+Scrollen im Bild. Umgesetzt über einen dritten Slot `nachKopf` in `components/Profil.tsx`
+und nicht im Screen: Harte Regel 7 will Profil-Inhalt in dieser einen Datei, damit das
+eigene Profil nie etwas anderes zeigt als das, was Fremde sehen. Auf einem fremden Profil
+bleibt der Slot leer, und das ist richtig — welche Gruppen jemand hat, gehört zu dem, was
+eine geschlossene Gruppe zurückhält (`PRIVAT_SICHT`, Phase 18a).
+
+**Offen bleibt: Kalender-Funktion** (Leopold, ausdrücklich „für später").
+
+#### Was beim Bauen herauskam *(2026-09-05)*
+
+**1. Die Regel musste eine Lücke im DATENMODELL überbrücken, und das ist der Grund
+gegen das Sperren.** Ein `Post` hat `startsAt` und **keine Dauer**. „Überschneidung" ist
+damit kein Fakt, den die Daten hergeben, sondern eine Festlegung — 60 Minuten. Eine
+Sperre behauptet Gewissheit; die App hat hier nur eine Schätzung. Das Argument gegen B
+ist also nicht Bequemlichkeit, sondern Ehrlichkeit. Der Weg heraus stünde fest, falls
+sich 60 Minuten als zu grob erweisen: ein Feld `dauerMinuten` am Post — verworfen, weil
+Phase 12 den Erstellen-Screen gerade auf zwei Felder leergeräumt hat (harte Regel 18).
+
+**2. Möglichkeit C wäre ein eingebauter Datenschutzfehler gewesen.** „Nur der Poster
+sieht es" klingt harmlos und hätte der App beigebracht, fremden Leuten zu verraten, wo
+jemand sonst noch hingeht — auch aus privaten Gruppen und aus Posts nur für Follower.
+Das ist **derselbe Fehler wie der Gründername an einer privaten Gruppe** (Phase 18a),
+nur schlimmer: Dort war er vergessen, hier wäre er die Funktion gewesen.
+
+**3. Ohne `p18` in `mock.ts` hätte diese Phase gar nichts getan — und niemand hätte es
+gemerkt.** In den Fake-Daten gab es vorher **keine einzige** Überschneidung: Ians zwei
+bestätigte Zusagen (`p1`, `p2`) liegen genau eine Stunde auseinander, alle anderen Posts
+an anderen Tagen. Die Prüfung wäre im Code richtig und auf dem Schirm unsichtbar
+gewesen. Das ist die Lehre aus Phase 18c beim zweiten Mal — **ein Zustand, den die
+Fake-Daten nicht erzeugen, ist ein Zustand, den niemand ansieht.**
+
+Die Zeit von `p18` steht als **`bald(2.5, '17:30')`** neben `p1`s `bald(2, '17:00')` und
+nicht als feste Uhrzeit. Beide runden auf dieselbe halbe Stunde, also liegen sie zu JEDER
+Tageszeit genau 30 Minuten auseinander — auch nach 22 Uhr, wenn beide auf morgen
+rutschen. Mit einer festen Uhrzeit wäre die Kollision abends still verschwunden, und wer
+den Prototyp am Abend aufmacht, hätte die Warnung nie gesehen.
+
+**4. Die Warnung ist nicht rot, und das ist eine Entscheidung.** `status.danger` ist in
+`theme/colors.ts` für **Absagen, Blockieren, Melden** vergeben. Eine Überschneidung ist
+nichts davon — Ians Regel lässt sie ausdrücklich zu. Rot hier würde die stärkste Farbe
+der App für etwas verbrauchen, das man bewusst überschreiben darf, und wäre beim
+nächsten echten Fehler abgenutzt. Es ist deshalb `accent.soft` mit einem Streifen links
+— dieselbe Sprache wie die Chat-Zeile aus Phase 18c. Das Icon ist `uhr` und nicht
+`warnung`: Der Satz sagt eine Uhrzeit, keine Gefahr.
+
+**5. Der Hinweis steht AUSSERHALB der Vorschau im Erstellen-Screen.** Über der Vorschau
+steht „So sehen es die anderen" — und dass du dich doppelt verabredest, sehen die
+anderen gerade nicht. Er gehört zu dir, nicht zur Karte. Ein Kasten innerhalb der
+Vorschau hätte die Absicherung aus harter Regel 18 stillschweigend zu einer Lüge gemacht.
+
+**6. Geprüft wurde in Handybreite, und die Antwortleiste war der Grund dafür.** Die drei
+Stellen sind verschieden eng: Das Post-Detail scrollt, der Erstellen-Screen auch — die
+Antwortleiste im Wischstapel ist ein Blatt mit fester Unterkante, das nach OBEN wächst.
+Auf 360 × 600 passt sie mit dem zusätzlichen Kasten weiter ganz ins Bild; nachgesehen
+mit `elementFromPoint`, `scrollWidth > clientWidth` und der Überquell-Prüfung, alle drei
+Screens sauber.
+
+#### 18d — offen für Ian
+
+**`zaehltAlsTermin()` in `features/requests/kollision.ts` steht als `TODO` da.** Die
+Frage ist beim Bauen aufgetaucht und stand in keinem Plan: *Was zählt überhaupt als
+„schon verabredet"?* Drei Antworten, alle drei vertretbar, alle drei im Kopfkommentar
+der Funktion — es ist eine Zeile:
+
+| | Zeile | Haken |
+|---|---|---|
+| a | `return true;` | Wer sich am Sonntag drei Sachen ausdenkt und postet, wird ab dem zweiten gewarnt, obwohl noch nichts feststeht. |
+| b | `return t.rolle === 'zugesagt';` | Der eigene Post ist auch eine Verabredung, sobald jemand kommt — dort wäre die Warnung still. |
+| c | `return t.rolle === 'zugesagt' \|\| t.jemandDabei;` | Eine Bedingung mehr, die man erklären muss. **Steht gerade als Platzhalter drin.** |
+
+Sichtbar wird der Unterschied sofort an `p17`: Ians eigener Post „Physik-Zusammenfassung
+durchgehen" liegt zur selben Zeit wie Leas „Donauinsel spazieren" und hat
+`spotsFilled: 0`. Unter **a** warnt `/post/p7`, unter **b** und **c** nicht.
 
 ### Nachtrag 2026-09-03 — die schiefen Karteikarten ✅
 
@@ -2607,6 +2699,50 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
     Abschnitt 8, Punkt 1 (Mindestalter, DSGVO) — das wartet weiter auf erwachsenen Rat.
     Die Korrektur ist ein Wort (`JAHRGANG_ANZEIGE` in `config/alter.ts`).
 
+31. ✅ **Was passiert, wenn man sich doppelt verabredet** (`features/requests/kollision.ts`)
+    — **entschieden am 2026-09-05: warnen, aber durchlassen.** *(Ians dreiundzwanzigste
+    Entscheidung, `DOPPEL_REGEL`.)*
+
+    Leopolds Wunsch vom 2026-09-03: *„nicht 2 Sachen gleichzeitig."* Über dem Knopf steht
+    jetzt, womit es sich beißt — tippen kann man trotzdem. Verworfen:
+    - **Hart sperren.** Der Knopf wäre aus. Das Argument dagegen ist kein
+      Bequemlichkeits-Argument, sondern ein ehrliches: Ein Post hat **keine Dauer**, die
+      App schätzt also. Eine Sperre behauptet Gewissheit, die sie nicht hat.
+    - **Nur der Poster sieht es** („Sara ist um die Zeit schon woanders"). Damit
+      verriete die App Saras Pläne an jemanden, den sie nichts angehen — auch Pläne aus
+      privaten Gruppen. Derselbe Fehler wie der Gründername an einer privaten Gruppe
+      (Phase 18a), nur eingebaut statt vergessen.
+
+    **Den Haken kennt er:** Wer die Warnung wegklickt, ist trotzdem doppelt verabredet.
+    Die App verhindert es nicht, sie macht es sichtbar. Die Korrektur ist ein Wort;
+    alle drei Regeln stehen fertig in der Datei.
+
+32. ✅ **Was „gleichzeitig" heißt, wenn ein Post keine Dauer hat**
+    (`features/requests/kollision.ts`) — **entschieden am 2026-09-05: eine Stunde.**
+    *(Ians vierundzwanzigste Entscheidung, `KOLLISION_FENSTER_MIN`.)*
+
+    Verworfen: **zwei Stunden** (vorsichtiger, warnt aber oft ohne Not — und eine
+    Warnung, die man dauernd wegklickt, liest nach der dritten niemand mehr, dann ist
+    auch die richtige weg) und **ein eigenes Feld `dauerMinuten` am Post** (ehrlich statt
+    geschätzt, aber ein Feld mehr in einem Screen, den Phase 12 gerade auf zwei
+    leergeräumt hat — harte Regel 18). Das Feld bleibt der Weg heraus, falls sich
+    60 Minuten im Betrieb als zu grob erweisen.
+
+33. ✅ **Ob die Regel auch beim Selbst-Posten gilt** (`features/requests/kollision.ts`)
+    — **entschieden am 2026-09-05: ja, gleich behandeln.** *(Ians fünfundzwanzigste
+    Entscheidung, `PRUEFT_BEIM_POSTEN`.)* Doppelbuchung ist Doppelbuchung, egal von
+    welcher Seite man hineinläuft, und weil es dieselbe Funktion ist, kostet die zweite
+    Stelle fast nichts. Verworfen: nur beim Anfragen — das Argument dafür („ein eigener
+    Post ist noch keine Verabredung, es kann ja niemand kommen") ist richtig, gehört
+    aber nicht in den Screen, sondern in `zaehltAlsTermin()`. Dort steht es jetzt.
+
+34. ⏳ **Was als „schon verabredet" zählt** (`features/requests/kollision.ts`) —
+    **wartet auf Ian.** Die Frage ist beim Bauen von 18d aufgetaucht und stand in keinem
+    Plan. Vorbereitet ist alles: Signatur, Typ `Termin`, die drei Möglichkeiten samt
+    Haken im Kopfkommentar, `TODO`. **Es ist eine Zeile**, und sie entscheidet, wie oft
+    die Warnung überhaupt kommt — siehe die Tabelle am Ende von Phase 18d. Als
+    Platzhalter steht c) drin, damit der Prototyp währenddessen läuft.
+
 ---
 
 ## 7. Bewusst NICHT im Prototyp
@@ -2834,7 +2970,27 @@ Was eine frische Sitzung davon wissen muss:
 - **`mock.ts` hat keinen abgelaufenen Chat** — die Gruppe „Vorbei" wird nie gezeichnet.
   Wer an ihren Rändern etwas ändert, muss sie kurzzeitig erzwingen, um sie zu sehen.
 
-**Alles aus dem Feedback der Mitgründer ist gebaut — Phase 14 bis 18a sind fertig.**
+**Phase 18d ist seit dem 2026-09-05 fertig** (nicht zwei Sachen gleichzeitig — Leopolds
+Wunsch, und „Deine Gruppen" nach oben). Was eine frische Sitzung davon wissen muss:
+- **Die Regel steht in `features/requests/kollision.ts`**, wie `block.ts`, `wisch.ts`,
+  `direkt.ts` und `gruppe.ts`. Drei Konstanten (`DOPPEL_REGEL`, `KOLLISION_FENSTER_MIN`,
+  `PRUEFT_BEIM_POSTEN`), und der Satz kommt aus `doppelHinweisText()` — Screens lesen
+  die Konstanten nie.
+- **`KOLLISION_FENSTER_MIN` überbrückt eine Lücke im Datenmodell.** Ein `Post` hat
+  `startsAt` und KEINE Dauer. „Überschneidung" ist deshalb geschätzt, und genau das ist
+  der Grund, warum die Regel warnt statt zu sperren.
+- **`zaehltAlsTermin()` ist ein `TODO` für Ian** (Abschnitt 6, Punkt 34). Ein
+  Platzhalter steht drin, damit der Prototyp läuft — **nicht** stillschweigend als
+  entschieden behandeln.
+- **`p18` in `mock.ts` ist der einzige Grund, warum man die Warnung überhaupt SIEHT.**
+  Nicht „aufräumen". Seine Zeit steht als `bald(2.5, …)` neben `p1`s `bald(2, …)`, damit
+  die 30 Minuten Abstand zu jeder Tageszeit gelten — auch nach 22 Uhr, wenn beide auf
+  morgen rutschen.
+- **`Profil.tsx` hat einen dritten Slot `nachKopf`**, und „Deine Gruppen" steckt dort.
+  Nicht in den Screen zurückschieben: Harte Regel 7 will Profil-Inhalt in dieser einen
+  Datei.
+
+**Alles aus dem Feedback der Mitgründer ist gebaut — Phase 14 bis 18d sind fertig.**
 Das Nächste ist deshalb keine Phase, sondern eine Frage an Menschen:
 **den Prototyp noch einmal herzeigen.** Die drei haben ihn am 2026-09-02 in der Fassung
 von Phase 13 durchgeklickt; seither sind die Emojis raus, sechs Filter, Direktchats und
@@ -2927,6 +3083,10 @@ keinem Plan: Ein Post „für alle" passt zu jedem Alters-Filter.
 > Bauen merkt, dass etwas „ohne Server nicht geht", hat fast immer einen Weg übersehen —
 > der Prototyp muss nicht echt sein, er muss sich echt anfühlen.
 
+> ⏳ **Achtung, das gilt seit dem 2026-09-05 NICHT mehr:** Eine Frage wartet — Punkt 34,
+> `zaehltAlsTermin()` in `features/requests/kollision.ts`. Alles andere unten stimmt
+> weiter.
+
 **Es wartet keine Frage mehr auf Ian.** Die letzten beiden hat er am 2026-09-02 beim
 Bauen von Phase 17 beantwortet (Abschnitt 6, Punkte 20 und 21: Gruppen-Posts bleiben
 beim Austritt stehen, und die Leitung einer Gruppe geht weiter). Davor am selben Tag
@@ -3014,6 +3174,11 @@ einseitig folgen, einander nicht schreiben können, auch wenn beide wollten
 | `features/groups/gruppe.ts` | Was ist beim Gründen voreingestellt? | ✅ **offen** *(Phase 18a)* |
 | `app/(tabs)/chats.tsx` | Welche Zeile weicht in der Chat-Liste? | ✅ **die Verabredungs-Zeit** — die Aktivität rückt hinter den Namen *(Phase 18c)* |
 | `config/alter.ts` | Was steht als Alter am Profil? | ✅ **„Jahrgang 2009"**, offen *(Phase 18b)* |
+| `features/requests/kollision.ts` | Zwei Sachen gleichzeitig — sperren oder warnen? | ✅ **warnen, aber durchlassen** *(Phase 18d)* |
+| `features/requests/kollision.ts` | Was heißt „gleichzeitig" ohne Dauer am Post? | ✅ **eine Stunde** *(Phase 18d)* |
+| `features/requests/kollision.ts` | Gilt das auch beim Selbst-Posten? | ✅ **ja** *(Phase 18d)* |
+| `features/requests/kollision.ts` | Was zählt als „schon verabredet"? | ⏳ **wartet auf Ian** — eine Zeile, `zaehltAlsTermin()` |
+| `components/Profil.tsx` | Wo liegt der Weg zu den Gruppen? | ✅ **gleich unter der Kopfkarte**, y = 305 statt 1168 *(Phase 18d)* |
 
 **Diese Regeln sind Ians, nicht Claudes.** In allen Dateien stehen die
 verworfenen Möglichkeiten samt Begründung weiter im Kopfkommentar — als Gedächtnis,

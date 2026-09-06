@@ -3,7 +3,33 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 05.09.2026 (nach Phase 18a, 18b und 18c — einladen, Jahrgang, Chat-Liste)
+> Stand: 05.09.2026 (nach Phase 18a bis 18d — einladen, Jahrgang, Chat-Liste,
+> nicht zwei Sachen gleichzeitig)
+
+---
+
+## 🔵 Eine Zeile, die du selbst schreibst
+
+### Was zählt als „schon verabredet"?
+
+**Datei:** `simplysocial/src/features/requests/kollision.ts`, ganz unten —
+`zaehltAlsTermin()`. Da steht ein `TODO` mit deinem Namen.
+
+Die App warnt jetzt, wenn du dich doppelt verabredest („Du bist heute 19:30 schon bei
+‚Tennis spielen'."). Beim Bauen ist eine Frage aufgetaucht, die vorher in keinem Plan
+stand: **Zählt auch ein Post, den du selbst geschrieben hast und bei dem noch niemand
+zugesagt hat?**
+
+Drei Antworten, such dir eine aus — es ist wirklich nur die eine Zeile:
+
+| | Zeile | Was das heißt |
+|---|---|---|
+| **a** | `return true;` | Alles zählt. Denkst du dir am Sonntag drei Sachen aus und postest sie, warnt es ab der zweiten — obwohl noch gar nichts feststeht. |
+| **b** | `return t.rolle === 'zugesagt';` | Nur, wo du selbst zugesagt hast. Am leisesten. Dein eigener Post ist dann still, auch wenn schon Leute kommen. |
+| **c** | `return t.rolle === 'zugesagt' \|\| t.jemandDabei;` | Dein eigener Post zählt, sobald wirklich jemand dabei ist. **Steht gerade als Platzhalter drin** — das ist keine Entscheidung, nur damit der Prototyp läuft. |
+
+Schreib die Zeile hin und einen Satz darüber, warum — so wie in den anderen
+Regel-Dateien. Wenn du magst, sag es mir stattdessen einfach, dann baue ich es ein.
 
 ---
 

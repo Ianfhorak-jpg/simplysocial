@@ -8,6 +8,7 @@ import {
   type ScrollView,
 } from 'react-native';
 
+import { DoppelHinweis } from '@/components/DoppelHinweis';
 import { PostCard } from '@/components/PostCard';
 import {
   SsBack,
@@ -25,6 +26,8 @@ import { ALLE_LABEL, jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config
 import { LEVEL_LABELS } from '@/config/categories';
 import { sichtbarkeitBauen } from '@/features/groups/gruppe';
 import { useMeineGruppen } from '@/features/groups/hooks';
+import { useKollisionen } from '@/features/requests/hooks';
+import { PRUEFT_BEIM_POSTEN } from '@/features/requests/kollision';
 import { postErstellen, type FeedEintrag } from '@/features/posts/hooks';
 import {
   ablaufZeitpunkt,
@@ -308,6 +311,11 @@ export default function CreateScreen() {
   const minuten = parseUhrzeit(zeitRoh);
   const startsAt = minuten === null ? null : zeitpunkt(tagVersatz, minuten);
   const laeuftAb = startsAt === null ? null : ablaufZeitpunkt(startsAt, sichtdauer);
+  // Ians Entscheidung 33: Die Doppel-Pruefung gilt auch beim Selbst-Posten
+  // (`PRUEFT_BEIM_POSTEN` in `requests/kollision.ts`). Der Haken laeuft immer und
+  // vertraegt `undefined` — die Konstante entscheidet erst beim ZEICHNEN, sonst
+  // haenge ich eine Regel an die Reihenfolge der Haken.
+  const kollisionen = useKollisionen(startsAt ?? undefined);
 
   const fehler: Record<Feldname, string> = {
     kategorie: kategorie ? '' : 'Wähle aus, worum es geht.',
@@ -465,6 +473,11 @@ export default function CreateScreen() {
             : null
         }
       />
+
+      {/* AUSSERHALB der Vorschau: Ueber ihr steht „So sehen es die anderen" — und
+          dass du dich doppelt verabredest, sehen die anderen gerade nicht. Der
+          Hinweis gehoert zu dir, nicht zur Karte. */}
+      {PRUEFT_BEIM_POSTEN ? <DoppelHinweis kollisionen={kollisionen} /> : null}
 
       {/* Die nackten `View`s um die fünf rot werdenden Felder sind Anker, kein Layout:
           `onLayout` meldet die y-Position, und ohne sie wüsste `absenden()` nicht,

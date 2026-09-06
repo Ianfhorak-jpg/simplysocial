@@ -36,11 +36,28 @@ import type { User } from '@/types/models';
 export function Profil({
   person,
   aktion,
+  nachKopf,
   fuss,
 }: {
   person: User;
   /** Steht in der Kopfkarte unter den Zahlen — der Folgen-Knopf am fremden Profil. */
   aktion?: ReactNode;
+  /**
+   * Direkt UNTER der Kopfkarte, vor Interessen und Posts — seit Phase 18d der Platz
+   * fuer „Deine Gruppen".
+   *
+   * ── Warum ein dritter Slot und nicht einfach im Screen ────────────────────────
+   * Harte Regel 7: Profil-Inhalt kommt aus dieser Datei, damit das eigene Profil nie
+   * etwas anderes zeigt als das, was Fremde sehen. Ein Block, den der Screen selbst
+   * zwischen Kopfkarte und Interessen schoebe, waere genau der erste Schritt zum
+   * Auseinanderlaufen. Slots sind der vorgesehene Weg — `aktion` und `fuss` sind
+   * dieselbe Bauart.
+   *
+   * Auf einem FREMDEN Profil bleibt er leer, und das ist richtig: Welche Gruppen
+   * jemand hat, gehoert zu dem, was eine geschlossene Gruppe zurueckhaelt
+   * (Phase 18a, `PRIVAT_SICHT`).
+   */
+  nachKopf?: ReactNode;
   /** Ganz unten, nach den Posts. */
   fuss?: ReactNode;
 }) {
@@ -94,6 +111,8 @@ export function Profil({
 
         {aktion}
       </SsCard>
+
+      {nachKopf}
 
       {person.interests.length > 0 ? (
         <View style={styles.block}>

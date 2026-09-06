@@ -625,6 +625,37 @@ export const posts: Post[] = [
     createdAt: vorStunden(7),
   },
   {
+    // ── Der Post, an dem man Leopolds Wunsch UEBERHAUPT sieht (Phase 18d) ──────
+    // Ian hat bei p1 ("Tennis spielen") eine bestaetigte Zusage. Dieser hier faengt
+    // eine halbe Stunde spaeter an — also mitten im Tennis. Wer ihn oeffnet, liest
+    // ueber "Bin dabei" den Doppel-Hinweis (`features/requests/kollision.ts`).
+    //
+    // Die Zeit steht bewusst als `bald(2.5, …)` neben p1s `bald(2, …)` und nicht
+    // als feste Uhrzeit: Beide runden auf dieselbe halbe Stunde, also liegen sie zu
+    // JEDER Tageszeit genau 30 Minuten auseinander — auch nach 22 Uhr, wenn beide
+    // auf morgen rutschen. Eine feste Uhrzeit waere abends still keine Kollision
+    // mehr, und dann sieht die Warnung niemand, der den Prototyp am Abend aufmacht.
+    //
+    // **Nicht "aufraeumen".** Ohne diesen Post gibt es in den Fake-Daten keine
+    // einzige Ueberschneidung, und die ganze Pruefung waere unsichtbar (die Lehre
+    // aus Phase 18c: ein Zustand, den die Fake-Daten nicht erzeugen, ist ein
+    // Zustand, den niemand ansieht).
+    id: 'p18',
+    authorId: 'u_flo',
+    category: 'food',
+    title: 'Eis essen gehen',
+    district: '1220',
+    startsAt: bald(2.5, '17:30'),
+    level: 'any',
+    alter: { kind: 'egal' },
+    spotsTotal: 3,
+    spotsFilled: 0,
+    note: 'Beim Standl an der Alten Donau. Dauert eh nur eine halbe Stunde.',
+    visibility: { kind: 'public' },
+    status: 'open',
+    createdAt: vorStunden(2),
+  },
+  {
     id: 'p17',
     authorId: 'u_ian',
     category: 'study',

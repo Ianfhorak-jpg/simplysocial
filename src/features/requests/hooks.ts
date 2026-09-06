@@ -5,6 +5,7 @@ import { istBlockiert } from '../safety/hooks';
 import { useUserMap } from '../social/hooks';
 import { CURRENT_USER_ID, aendern, neueId, useSlice } from '../store';
 
+import { kollidiert, zaehltAlsTermin, type Termin } from './kollision';
 import { istDannVoll, postNachBestaetigung, uebrigeAnfragenBeiVollemPost } from './logic';
 
 import type { JoinRequest, Post, User } from '@/types/models';
@@ -246,4 +247,61 @@ export function anfrageAblehnen(anfrageId: string): void {
       a.id === anfrageId && a.status === 'pending' ? { ...a, status: 'declined' as const } : a,
     ),
   }));
+}
+
+// ── Phase 18d: zwei Sachen gleichzeitig ──────────────────────────────────────
+
+/**
+ * Womit sich ein Termin um `startsAt` beißen würde — Leopolds Wunsch, Ians
+ * Entscheidungen 31–33 (`requests/kollision.ts`).
+ *
+ * ── Warum der Haken die Regel NICHT enthält ───────────────────────────────────
+ * Er sammelt nur, was in Frage kommt, und lässt `zaehltAlsTermin()` und
+ * `kollidiert()` entscheiden. Dieselbe Trennung wie bei `filter.ts` und `sort.ts`:
+ * Der Datenzugriff lebt hier, die Regel dort — sonst steht Ians Entscheidung in
+ * einem Haken, den beim nächsten Umbau jemand umschreibt.
+ *
+ * `ausserPostId` ist der Post, um den es gerade geht. Ohne ihn meldet der Post
+ * sich selbst als Kollision, sobald man ihn geschrieben hat.
+ *
+ * Sortiert nach Startzeit: Der Hinweis nennt den ERSTEN, und das soll der frühere
+ * sein und nicht der, der zufällig oben im Speicher liegt.
+ */
+export function useKollisionen(
+  startsAt: string | undefined,
+  ausserPostId?: string,
+): Termin[] {
+  const posts = useSlice('posts');
+  const anfragen = useSlice('joinRequests');
+
+  return useMemo(() => {
+    if (!startsAt) return [];
+
+    const kandidaten: Termin[] = [];
+
+    for (const post of posts) {
+      if (post.id === ausserPostId) continue;
+      // Ein vorbeigegangener Post ist keine Verabredung mehr. `past` setzt der
+      // Verfasser selbst (`lifecycle.ts`) — die reine Uhrzeit reicht nicht, weil ein
+      // Post nach Ians Regel bis Tagesende stehen bleibt.
+      if (post.status === 'past') continue;
+
+      if (post.authorId === CURRENT_USER_ID) {
+        kandidaten.push({ post, rolle: 'gastgeber', jemandDabei: post.spotsFilled > 0 });
+        continue;
+      }
+
+      // Nur BESTÄTIGTE Anfragen. Eine geschickte ist eine Frage, keine Zusage —
+      // sonst warnt die App bei jedem, der sich mehrere Sachen offenhält.
+      const zugesagt = anfragen.some(
+        (a) =>
+          a.postId === post.id && a.fromUserId === CURRENT_USER_ID && a.status === 'accepted',
+      );
+      if (zugesagt) kandidaten.push({ post, rolle: 'zugesagt', jemandDabei: true });
+    }
+
+    return kandidaten
+      .filter((t) => zaehltAlsTermin(t) && kollidiert(startsAt, t.post.startsAt))
+      .sort((a, b) => a.post.startsAt.localeCompare(b.post.startsAt));
+  }, [posts, anfragen, startsAt, ausserPostId]);
 }

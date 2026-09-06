@@ -8,7 +8,13 @@ import { alterAmDetail } from '@/config/alter';
 import { LEVEL_LABELS } from '@/config/categories';
 import { useChatZuPost } from '@/features/chat/hooks';
 import { freiePlaetze, istOffen, usePost } from '@/features/posts/hooks';
-import { anfrageSenden, anfrageZuruecknehmen, useMeineAnfrage } from '@/features/requests/hooks';
+import { DoppelHinweis } from '@/components/DoppelHinweis';
+import {
+  anfrageSenden,
+  anfrageZuruecknehmen,
+  useKollisionen,
+  useMeineAnfrage,
+} from '@/features/requests/hooks';
 import { useIstBlockiert, useMeineMeldung } from '@/features/safety/hooks';
 import { useCurrentUser } from '@/features/social/hooks';
 import { postIds } from '@/features/statisch';
@@ -63,6 +69,10 @@ export default function PostDetailScreen() {
     eintrag?.author.displayName ?? '',
     eintrag?.post.authorId === ich.id,
   );
+  // Phase 18d: Womit sich eine Zusage hier beissen wuerde. Auch dieser Haken laeuft
+  // vor dem Ausstieg — `useKollisionen` vertraegt `undefined` und gibt dann eine leere
+  // Liste. Der Post selbst wird ausgenommen, sonst meldet er sich selbst.
+  const kollisionen = useKollisionen(eintrag?.post.startsAt, eintrag?.post.id);
 
   // Erst NACH allen Haken aussteigen — React verlangt, dass in jedem Durchlauf
   // dieselben Haken in derselben Reihenfolge aufgerufen werden.
@@ -250,6 +260,10 @@ export default function PostDetailScreen() {
               multiline
               maxLength={200}
             />
+            {/* Ians Entscheidung 31: warnen, nicht sperren. Der Hinweis steht
+                deshalb UEBER dem Knopf und nicht statt seiner — er soll gelesen
+                werden, bevor man tippt, und den Weg trotzdem offen lassen. */}
+            <DoppelHinweis kollisionen={kollisionen} />
             <SsButton
               label="Bin dabei"
               icon="hand"

@@ -212,6 +212,41 @@ inhaltlich sitzt.
 - **Leopold antworten** auf „Wäre das alles für die erste richtige Version?" — deine
   Antwort war: erst den Prototyp fertig machen, Backend danach.
 
+## ✅ Erledigt: nicht zwei Sachen gleichzeitig (05.09.)
+
+**Leopolds letzter offener Wunsch.** Bis jetzt konnte man um 17:00 beim Tennis zusagen
+und um 17:15 beim Kaffee — und musste danach einem von beiden absagen. Genau daran
+spricht sich so eine App herum: jemand kommt nicht.
+
+**Jetzt steht über dem Knopf, womit es sich beißt:**
+
+> 🕐 Du bist heute 19:30 schon bei „Tennis spielen".
+
+**Du hast drei Sachen entschieden:**
+
+1. **Es warnt, es sperrt nicht.** Du kannst trotzdem auf „Bin dabei" tippen. Der Grund
+   ist nicht Bequemlichkeit: Ein Post sagt, **wann** er losgeht, aber nicht, **wie
+   lange** er dauert. Die App rät also — und was man rät, darf man nicht verbieten.
+2. **„Gleichzeitig" heißt: weniger als eine Stunde Abstand.** Tennis um 17:00 und
+   Kaffee um 17:45 beißen sich, Kino um 19:00 nicht.
+3. **Es gilt auch, wenn du selbst etwas postest.** Im Erstellen-Screen steht der
+   Hinweis unter der Vorschau.
+
+**Verworfen — und das ist der interessante Teil:** Die dritte Möglichkeit war, dass nur
+der *Poster* es sieht („Sara ist um die Zeit schon woanders"). Klingt praktisch, ist
+aber ein Datenleck: Die App hätte damit fremden Leuten verraten, wo Sara sonst noch
+hingeht — auch Termine aus **privaten Gruppen**. Genau derselbe Fehler wie der
+Gründername, der neulich bei einer privaten Gruppe stand, nur wäre er hier Absicht
+gewesen.
+
+**Eine Zeile wartet noch auf dich** — siehe OFFENE_SACHEN.md ganz oben (🔵). Es geht
+darum, ob auch ein Post zählt, den *du* geschrieben hast und bei dem noch niemand
+zugesagt hat.
+
+**Dazu gleich noch etwas Kleines:** **„Deine Gruppen" steht jetzt oben am Profil**,
+direkt unter deiner Karte, statt ganz unten. Leopold musste fragen, wie man eine Gruppe
+macht — der Knopf war da, er lag nur so weit unten, dass man zweimal scrollen musste.
+
 ## ✅ Erledigt: Leute in eine Gruppe einladen (05.09.)
 
 **Leopold hat es gefunden, indem er die App wirklich benutzt hat** statt sie

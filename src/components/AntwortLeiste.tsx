@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 
+import { DoppelHinweis } from './DoppelHinweis';
 import { SsAvatar, SsButton, SsInput, SsText } from './ui';
 
 import type { FeedEintrag } from '@/features/posts/hooks';
 import { grussVorschlag } from '@/features/posts/wisch';
+import { useKollisionen } from '@/features/requests/hooks';
 import { categoryColors, colors, radius, spacing } from '@/theme';
 
 /**
@@ -39,6 +41,10 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
   const { post, author } = eintrag;
   const palette = categoryColors[post.category];
   const [text, setText] = useState(() => grussVorschlag(author.displayName));
+  // Phase 18d: dieselbe Pruefung wie im Post-Detail, weil der Wischstapel derselbe
+  // Weg zu derselben Anfrage ist. Stuende sie nur im Detail, waere sie ausgerechnet
+  // auf dem Startbildschirm still — dort, wo am schnellsten zugesagt wird.
+  const kollisionen = useKollisionen(post.startsAt, post.id);
 
   // Ein Wert für beides: die Leiste fährt hoch, während der Schleier dunkler wird.
   // Zwei getrennte Animationen könnten auseinanderlaufen — das sieht man sofort.
@@ -88,6 +94,8 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
           multiline
           maxLength={200}
         />
+
+        <DoppelHinweis kollisionen={kollisionen} />
 
         <SsButton
           variant="category"

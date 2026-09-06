@@ -35,6 +35,35 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 18d ist fertig (2026-09-05): nicht zwei Sachen gleichzeitig.** Leopolds
+letzter offener Wunsch — und der erste Eingriff, bei dem eine Regel eine **Lücke im
+Datenmodell** überbrücken musste. Fünf Dinge sind daran wichtiger als der Hinweiskasten:
+1. **Ein `Post` hat `startsAt` und KEINE Dauer.** „Überschneidung" ist damit kein Fakt,
+   den die Daten hergeben, sondern eine Festlegung — `KOLLISION_FENSTER_MIN = 60`. Und
+   genau das ist der Grund, warum **Ians Entscheidung 31 „warnen" heißt und nicht
+   „sperren"**: Eine Sperre behauptet Gewissheit, die App hat eine Schätzung.
+2. **Die dritte Möglichkeit wäre ein eingebauter Datenschutzfehler gewesen.** „Nur der
+   Poster sieht es" hätte der App beigebracht, fremden Leuten zu verraten, wo jemand
+   sonst noch hingeht — auch aus privaten Gruppen. Derselbe Fehler wie der Gründername
+   an einer privaten Gruppe (18a), nur wäre er hier die Funktion gewesen statt ein
+   Versehen.
+3. **Ohne `p18` in `mock.ts` hätte die Phase nichts getan, und niemand hätte es
+   gemerkt.** In den Fake-Daten gab es vorher KEINE Überschneidung: Ians zwei Zusagen
+   liegen genau eine Stunde auseinander, alle anderen Posts an anderen Tagen. Das ist
+   die Lehre aus 18c zum zweiten Mal.
+4. **Der Hinweis ist nicht rot, und das ist eine Entscheidung.** `status.danger` gehört
+   Absagen, Blockieren und Melden. Eine Überschneidung ist nichts davon — die Regel
+   lässt sie ausdrücklich zu. Rot hier verbraucht die stärkste Farbe der App für etwas,
+   das man bewusst überschreiben darf.
+5. **Eine Zeile wartet auf Ian:** `zaehltAlsTermin()` — was überhaupt als „schon
+   verabredet" zählt (PLAN.md, Abschnitt 6, Punkt 34). Ein Platzhalter steht drin, damit
+   der Prototyp läuft. **Nicht stillschweigend als entschieden behandeln.**
+
+Dazu der zweite Vorrats-Punkt: **„Deine Gruppen" liegt jetzt bei y = 305 von 1388** statt
+bei 1168 von 1380 — über einen dritten Slot `nachKopf` in `Profil.tsx`, nicht im Screen
+(harte Regel 7). Leopold musste fragen, wie man eine Gruppe macht; im Code war nichts
+kaputt, der Weg war nur zu weit unten.
+
 ✅ **Phase 18a ist fertig (2026-09-05): einladen, und privat vs. offen.** Leopold hatte
 die neue Fassung als Erster wirklich BENUTZT statt angeschaut — Gruppe gegründet,
 gepostet — und in zehn Minuten ein **Loch** gefunden, das beim Durchklicken am selben Tag
@@ -349,7 +378,12 @@ das heimlich Termine erfindet.
 > ✅ **Und die kleine Frage daneben, gleicher Tag:** Vor „Mehr einstellen" stehen jetzt
 > **die drei Striche ☰**, nicht ⚙️ — wie er es ursprünglich gesagt hatte. `MEHR_SYMBOL`.
 
-**Es wartet gerade keine Frage auf Ian.**
+⏳ **Eine Frage wartet auf Ian (seit 2026-09-05):** `zaehltAlsTermin()` in
+`features/requests/kollision.ts` — was überhaupt als „schon verabredet" zählt. Drei
+Möglichkeiten stehen samt Haken im Kopfkommentar der Funktion, es ist **eine Zeile**.
+Ein Platzhalter steht drin, damit der Prototyp läuft; er ist keine Entscheidung.
+*(Die Sätze weiter unten, die „es wartet keine Frage" sagen, stammen aus früheren
+Phasen und stimmen für ihre eigene Frage weiter.)*
 
 **Seit Phase 11 ist der Startbildschirm ein Wischstapel** („wie so ein bisschen
 Tinder"): Karteikarten, die kippen, sich mit einer Abrisskante vom Block lösen und
@@ -430,7 +464,8 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 7. ~~Umbau nach ihrem Feedback~~ ✅ *Phase 14 bis 17 am 2026-09-02, Phase 18a bis 18c am
    2026-09-05:* ~~Icons statt Emojis~~ · ~~Altersgruppe + Filter~~ ·
    ~~Direktnachrichten~~ · ~~Gruppen~~ · ~~in Gruppen einladen~~ · ~~Jahrgang~~ ·
-   ~~Chat-Liste~~
+   ~~Chat-Liste~~ ·
+   ~~nicht 2 Sachen gleichzeitig~~
 8. **Wieder herzeigen** ← *hier sind wir* — die drei haben Phase 13 gesehen, nicht 18a
 9. Danach: echtes Backend, EAS-Build, App Store
 
@@ -743,6 +778,22 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    `loslassen` holt es nach, falls es nie eine Bewegung gab. **Gefunden nur durch echtes
    Ziehen:** Ein `click` löst weder `onPanResponderMove` noch das Kreuzungsverbot aus.
 
+46. **Was eine Terminüberschneidung bedeutet, steht in `features/requests/kollision.ts`
+   und nirgends sonst.** Dieselbe Bauart wie `safety/block.ts` (Regel 17) und
+   `groups/gruppe.ts` (Regel 32): Screens lesen `DOPPEL_REGEL`, `KOLLISION_FENSTER_MIN`
+   und `PRUEFT_BEIM_POSTEN` nie, sie sehen nur das Ergebnis; der Satz kommt aus
+   `doppelHinweisText()`. **`KOLLISION_FENSTER_MIN` ist eine SCHÄTZUNG, keine Messung** —
+   ein `Post` hat keine Dauer. Genau deshalb warnt die Regel und sperrt nicht: Ein
+   ausgegrauter Knopf würde eine Gewissheit behaupten, die die Daten nicht hergeben.
+   Wer den Hinweis irgendwo neu zeichnet, nimmt `<DoppelHinweis>` — nicht eigenes JSX.
+47. **Was die App über die Pläne einer Person weiß, sagt sie NUR dieser Person.** Beim
+   Doppel-Hinweis lag die naheliegende dritte Möglichkeit darin, dem Poster beim
+   Bestätigen zu zeigen, dass der Anfragende zur selben Zeit woanders ist. Das hätte
+   Termine aus privaten Gruppen und aus Posts nur für Follower an jemanden gegeben, den
+   sie nichts angehen — dieselbe Sorte Leck wie der Gründername an einer privaten Gruppe
+   (18a), nur eingebaut statt vergessen. **Bei jeder neuen Auskunft fragen: Wem gehört
+   die Information, aus der sie gerechnet ist?**
+
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
 - **Große Display-Fonts clippen auf iOS.** `lineHeight ≈ 1.2 × fontSize` setzen, sonst
@@ -995,6 +1046,31 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   Zeigergesten (`mouse.down` → mehrere `mouse.move` → `mouse.up`) und die Grenzfälle:
   kreuzen, zusammenschieben, wieder auseinanderziehen, tippen ohne Bewegung. Der
   eigentliche Fehler steckte im dritten davon.
+- **Eine Regel, die nichts vorfindet, sieht aus wie eine Regel, die tut.** (Phase 18d)
+  Die Doppelbuchungs-Prüfung war fertig, getippt, typecheck-sauber — und in den
+  Fake-Daten gab es keine einzige Überschneidung. Ians zwei bestätigte Zusagen liegen
+  genau eine Stunde auseinander (die Grenze ist `<`, also KEINE Kollision), alle anderen
+  Posts an anderen Tagen. Ohne `p18` wäre die ganze Phase unsichtbar geblieben. **Zweite
+  Fassung der 18c-Lehre: Nach dem Bauen nicht fragen „läuft der Code?", sondern „welche
+  Daten bringen ihn zum Sprechen?" — und wenn es keine gibt, welche dazuschreiben.**
+- **Eine relative Zeitangabe in Fake-Daten braucht einen relativen PARTNER.** (Phase 18d)
+  `p18` sollte 30 Minuten nach `p1` liegen. Mit einer festen Uhrzeit hätte das nur
+  tagsüber gestimmt: `bald()` schiebt einen Termin nach 22 Uhr auf morgen, und dann wäre
+  die Kollision abends still verschwunden — für jeden, der den Prototyp am Abend
+  aufmacht. `bald(2.5, …)` neben `bald(2, …)` rundet auf dieselbe halbe Stunde und hält
+  den Abstand zu jeder Tageszeit.
+- **Eine Farbe hat in diesem Projekt eine Bedeutung, nicht nur einen Kontrastwert.**
+  (Phase 18d) Der naheliegende Griff für eine Warnung ist `status.danger`. Der Kommentar
+  in `theme/colors.ts` sagt aber, wofür das Rot da ist: Absagen, Blockieren, Melden. Ein
+  Hinweis, den die Regel ausdrücklich überschreiben lässt, gehört nicht dazu — sonst ist
+  das Rot beim nächsten echten Fehler abgenutzt. **Vor dem Einfärben den Kommentar an
+  der Farbe lesen.**
+- **Ein `click` auf einen Wischstapel-Knopf ist keine Wisch-Prüfung, aber auch keine
+  verlässliche Navigation.** (Phase 18d) Beim Durchklicken verschwanden Karten scheinbar
+  zu zweit, und der Wisch-Zustand überlebte ein `browser_navigate` auf dieselbe Adresse
+  (Expo Router macht daraus eine Navigation im Client, kein Neuladen). Wer den Stapel in
+  einen bestimmten Zustand bringen will, erzwingt ein echtes Neuladen mit einer
+  veränderten Adresse (`?x=` + Zeitstempel).
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

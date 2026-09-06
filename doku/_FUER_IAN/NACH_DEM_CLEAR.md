@@ -3,16 +3,48 @@
 > Diese Datei steht hier, weil der Chat nach dem `/clear` weg ist — der Text darin
 > also auch. Hier findest du ihn wieder.
 >
-> Stand: **05.09.2026.** **Phase 0 bis 18c sind fertig und online** — damit ist
+> Stand: **05.09.2026.** **Phase 0 bis 18d sind fertig und online** — damit ist
 > **alles gebaut, was Christoph, Leopold und Daria am 02.09. gesagt haben**: die Emojis
 > raus (14), Altersgruppe und Filter (15), Direktnachrichten (16) und Gruppen (17).
 > **Was Leopold am 03.09. beim wirklichen Benutzen gefunden hat, ist auch zu** (18a),
-> **dein Jahrgangs-Balken steht** (18b) und **deine Chat-Liste ist aufgeräumt** (18c).
-> Die Liste ist leer.
+> **dein Jahrgangs-Balken steht** (18b), **deine Chat-Liste ist aufgeräumt** (18c) und
+> **die App warnt jetzt vor Doppel-Verabredungen** (18d — Leopolds letzter Punkt).
+> **Eine Zeile wartet auf dich**, siehe unten.
 
 ---
 
-## Das Neueste (05.09.): der Jahrgangs-Balken und die Chat-Liste
+## Zuerst: eine Zeile, die du selbst schreiben sollst
+
+`simplysocial/src/features/requests/kollision.ts`, ganz unten — `zaehltAlsTermin()`.
+Da steht ein `TODO` mit deinem Namen und drei fertige Zeilen zur Auswahl. Die Frage:
+**Zählt auch ein Post als „schon verabredet", den du selbst geschrieben hast und bei
+dem noch niemand zugesagt hat?**
+
+Ausführlich mit den Haken steht es in **OFFENE_SACHEN.md** ganz oben (🔵). Gerade steht
+Möglichkeit c) als Platzhalter drin, damit der Prototyp läuft — **das ist keine
+Entscheidung, nur ein Lückenfüller.**
+
+---
+
+## Neu (05.09.): die Warnung vor zwei Sachen gleichzeitig
+
+Leopolds letzter offener Wunsch. Zu sehen an drei Stellen, am schnellsten so:
+
+1. Öffne **„Eis essen gehen"** im Feed (der Post von Florian, heute Nachmittag).
+   Über „Bin dabei" steht: *„Du bist heute 19:30 schon bei ‚Tennis spielen'."*
+2. Wisch dieselbe Karte im **Stapel nach rechts** — in der Leiste steht derselbe Satz.
+3. Geh auf **Posten**. Auch dort steht er, unter der Vorschau.
+
+**Es sperrt nicht, es warnt** — du kannst trotzdem tippen. Der Grund steht in der Datei:
+Ein Post sagt, *wann* er losgeht, nicht *wie lange* er dauert. Die App schätzt eine
+Stunde, und was man schätzt, darf man nicht verbieten.
+
+**Und noch etwas Kleines:** **„Deine Gruppen" steht jetzt oben am Profil**, gleich unter
+deiner Karte statt ganz unten.
+
+---
+
+## Davor (05.09.): der Jahrgangs-Balken und die Chat-Liste
 
 ### Der Schiebe-Balken fürs Alter — auf Jahrgang, wie du gesagt hast
 
