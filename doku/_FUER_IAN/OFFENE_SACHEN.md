@@ -5,9 +5,42 @@
 >
 > Stand: 06.09.2026 — **der Prototyp ist fertig, der Weg zur echten App ist geplant.**
 > Drei Entscheidungen von dir sind eingearbeitet (Supabase · erst aufs Handy · drei
-> Anmeldewege). **Neu und dringend: Punkt 0 gleich hier drunter.**
+> Anmeldewege). **Neu und dringend: Punkt 0 gleich hier drunter.** **Neu am 06.09.2026
+> abends: eine Frage zum Kontolöschen, gleich hier drüber — sie ist wie deine Nummer 12.**
 
 ---
+
+## 🔵 NEU (06.09.2026) — eine Frage an dich, und sie ist wie deine Nummer 12
+
+**Was passiert mit deinen Sachen, wenn du dein Konto löschst?**
+
+Den Löschen-Knopf gibt es seit Phase 7, und Apple verlangt ihn. Bisher tat der letzte
+Klick nichts, weil es ohne Anmeldung gar kein Konto gab. Jetzt gibt es eines — und die
+Datenbank sagt gerade **nein**: Wer je gepostet oder eine Gruppe gegründet hat, kann
+sein Konto überhaupt nicht löschen. Das ist kein Zustand zum Liegenlassen, aber es ist
+der ehrlichste: Sie weigert sich, statt still etwas zu tun, das keiner entschieden hat.
+
+Das ist genau deine Frage von damals noch einmal, nur größer. Bei **Nummer 12** hast du
+entschieden: Wer eine Gruppe verlässt, dessen **Posts bleiben stehen** — weil Löschen
+fremde Verabredungen absagt wegen einer Sache, die die anderen nichts angeht. Hier geht
+es um die ganze App, und ein Konto löschen heißt etwas, das ein Gruppenaustritt nicht
+heißt: „ich will hier weg". Das ist ein Recht, kein Wunsch.
+
+| | Was passiert | Der Haken |
+|---|---|---|
+| **A. Alles mit** | Posts, Gruppen, Nachrichten — alles weg. | Wer morgen 17:00 mit vier Leuten Tennis wollte, sagt allen vier kommentarlos ab. Und acht Leute verlieren ihre Gruppe, weil einer geht — **das hast du bei Nummer 13 schon einmal verworfen.** |
+| **B. Du gehst, das Verabredete bleibt** | Dein Profil wird geleert („Gelöschtes Konto"), laufende Posts und Chats bleiben, die Gruppe wird vererbt. | „Gelöscht" heißt dann nicht „weg". Deine Sätze stehen weiter in fremden Chats. Das hängt an der Rechtsfrage in Punkt 1. |
+| **C. Geteilt** | Posts, an denen **niemand** hängt, gehen. Posts mit Zusagen bleiben bis zum Ablauf. Profil wie B. | Sachlich das Genaueste — aber zwei Leute löschen am selben Tag, bei einem bleiben drei Posts und beim anderen keiner. Sieht von außen willkürlich aus. |
+
+Die drei stehen fertig ausgeschrieben in
+`simplysocial/supabase/entscheidungen/konto-loeschen.sql`. Die Datei liegt **absichtlich
+nicht** bei den anderen — sie läuft nicht mit, bis du gewählt hast. Dieselbe Anordnung
+wie `landing-vorschau/` neben `landing/`.
+
+**Eines steht schon fest und ist bei allen dreien gleich:** Eine **Meldung** überlebt
+das Konto dessen, der sie geschrieben hat. Sonst hätte jeder, der jemanden anzeigt, mit
+dem Löschen seines Kontos den Beleg mitgenommen — und wer gemeldet wird, hätte einen Weg
+gehabt, ihn verschwinden zu lassen.
 
 ## 🔴 0. NEU und zeitkritisch — Apple hat diesen Monat die Regeln geändert
 
@@ -216,6 +249,19 @@ Aktivitäten wie vorher heraus. Bilder: `t01-ios-apple-karte.png` und
   wenn sie dir zu blass ist, ist der Rückweg ein Wort im Code.
 
 ### In Phase 20 (Backend)
+
+> ✅ **Am 06.09.2026 ist die Hälfte davon schon gebaut — ohne dein Konto.** Das Schema
+> (welche Tabellen es gibt) und die Regeln (wer was sehen darf) stehen fertig da und
+> sind geprüft. Das ging, weil die Absicherung ein Postgres-Ding ist und nicht ein
+> Supabase-Ding: Ich habe mir einen Postgres auf den Rechner gelegt und **von außen
+> angegriffen** — mit dem Schlüssel eines zweiten Kontos versucht, an Sachen zu kommen,
+> die nicht für es bestimmt sind. 18 Versuche, 18-mal abgewiesen. Nachlesen und selbst
+> laufen lassen: `simplysocial/supabase/LIESMICH.md`.
+>
+> **Was dir das bringt:** Wenn du das Supabase-Konto anlegst, ist es kein Anfang mehr,
+> sondern ein Einspielen. Und wenn dabei etwas schiefgeht, liegt es nicht an den Regeln
+> — die sind schon bewiesen.
+
 - **Ein Supabase-Konto anlegen** (gratis, mit deiner E-Mail). Die Zugangsschlüssel
   kommen dann in die Shell-Umgebung, **nie in den Code** — das ist die feste Regel aus
   dem Hauptordner.

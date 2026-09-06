@@ -35,6 +35,40 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 20.1 und 20.2 sind fertig (2026-09-06): das Schema und die Regeln auf dem
+Server.** Alles in `simplysocial/supabase/` — und **ohne Supabase-Konto gebaut und
+trotzdem bewiesen.** `bash supabase/pruefen/aufbauen.sh` baut eine Wegwerf-Datenbank
+und lässt 18 Angriffe von außen laufen; erwartet sind 18 Häkchen und kein Kreuz. Sechs
+Dinge sind daran wichtiger als die Tabellen:
+1. **Die Absicherung ist ein POSTGRES-Ding, kein Supabase-Ding — deshalb ging 20.2 vor
+   20.3.** Der Plan hängte den Prüfstein an „den Zugangsschlüssel eines zweiten Kontos",
+   und das las sich, als brauchte er ein Projekt in der Cloud. Er braucht keines:
+   `auth.uid()` sind vier Zeilen, `set local role authenticated` ist wortgleich das,
+   was PostgREST tut. **Dieselbe Trennung wie „Simulator statt EAS-Build" in Phase 19:**
+   *halten die Regeln?* und *ist das Projekt eingerichtet?* sind zwei Fragen.
+2. **Eine Policy, die ihre eigene Tabelle abfragt, rekursiert — und sagt es erst beim
+   ersten Lesen.** „Die Mitgliederliste sehen nur Mitglieder" naheliegend hingeschrieben
+   ergibt `infinite recursion detected in policy for relation "group_members"`. Der
+   Ausweg sind `security definer`-Funktionen im Schema `regel` — dieselbe Bauart wie
+   `safety/block.ts`, nur in SQL.
+3. **Ein `count(*)` auf einer geschützten Tabelle LÜGT, es verweigert nicht.** Ein
+   Fremder bekommt für eine private Gruppe die Zahl **0** statt „Zugriff verweigert" —
+   `PRIVAT_SICHT` verspricht aber die richtige Zahl. Die **ZAHL ja, die LISTE nein**,
+   und das sind zwei Rechte, nicht eines mit einer Ausnahme.
+4. **Ein gelöschter Post hätte einen bestehenden Chat still zugesperrt** — mein eigener
+   Fehler, gefunden beim Nachlesen. `on delete set null` machte aus einem
+   Aktivitäts-Chat einen Direktchat, und dort gilt `SCHREIB_REGEL = 'gegenseitig'`: Zwei
+   Leute, die sich getroffen haben und einander nicht folgen, hätten einander nicht mehr
+   schreiben können. Die Herkunft eines Chats ist eine TATSACHE (`aus_aktivitaet`), kein
+   abgeleiteter Wert. **Gegengeprüft** — der Test wird rot, wenn man es zurückstellt.
+5. **Harte Regel 47 ist jetzt nicht „nicht eingebaut", sondern UNMÖGLICH.** Die
+   verworfene dritte Möglichkeit aus 18d scheitert an der Policy auf `join_requests`:
+   Ein Poster sieht nur Anfragen an SEINE Posts.
+6. **Eine neue Frage wartet auf Ian, und sie kam aus dem Schema:** `delete from
+   auth.users` scheitert an `groups_creator_id_fkey` — wer je gepostet oder gegründet
+   hat, kann sein Konto nicht löschen. Drei Möglichkeiten ausgeschrieben in
+   `supabase/entscheidungen/konto-loeschen.sql`, **außerhalb von `migrations/`**.
+
 🚀 **Der Weg zur echten App ist geplant (2026-09-06): PLAN.md, Abschnitt 5b, Phasen 19
 bis 21.** Bis hierher war jede Phase eine Verbesserung an etwas, das schon lief; ab hier
 sind es drei Dinge, die es noch nicht gibt. **Ians drei Entscheidungen dazu, alle vor dem
@@ -685,8 +719,11 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    ~~**19d-1** (echte Apple-Karte auf iOS)~~ ✅, beide *2026-09-06*. **19d-2** (MapKit JS
    im Browser) wartet auf Phase 20: Der Token muss von einem Server ausgestellt werden.
    PLAN.md Abschnitt 5b.
-10. **Backend** (Phase 20) ← *hier geht es weiter* — Supabase: Schema, Policies,
-   Anmelden, `store.ts` tauschen. Danach fällt 19d-2 nebenbei ab.
+10. **Backend** (Phase 20) ← *hier sind wir* — ~~Schema (20.1)~~ ✅ · ~~Policies
+   (20.2)~~ ✅ *beide 2026-09-06, ohne Konto gebaut und mit 18 Angriffen belegt* ·
+   **Anmelden (20.3)** ← *hier geht es weiter, und das braucht Ians Konten* ·
+   `store.ts` tauschen (20.4/20.5) · Profilbilder · Meldungen lesen.
+   Danach fällt 19d-2 nebenbei ab.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 
 > Der Plan dazu steht ausgeschrieben in **[PLAN.md, Abschnitt 5b](PLAN.md)**. Die drei
@@ -1078,6 +1115,41 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    EINER Datei importierte `react-native-maps` auch ins Web-Bündel, wo es MapKit nicht
    gibt. Das ist genau umgekehrt zu `SsIcon` (Regel 24), und der Unterschied ist der
    Grund: Dort zeichnen beide Zweige dasselbe, hier sind es zwei Bibliotheken.
+54. **Eine Server-Regel steht im Schema `regel` und NIE in einer Policy.**
+   `regel.sind_blockiert()`, `regel.ist_mitglied()`, `regel.folgen_sich_gegenseitig()`,
+   `regel.ist_teilnehmer()`, `regel.mitglieder_anzahl()` — dieselbe Bauart wie
+   `safety/block.ts` (Regel 17) und `groups/gruppe.ts` (Regel 32), eine Ebene tiefer.
+   Der Grund ist diesmal aber nicht nur Ordnung: Eine Policy, die ihre EIGENE Tabelle
+   abfragt, ergibt `infinite recursion detected in policy for relation …` — und zwar
+   erst beim ersten Lesen, nicht beim Anlegen. `security definer` beendet die Kette
+   nach einem Schritt. Jede dieser Funktionen ist damit ein kontrolliertes Loch in der
+   Absicherung: Es sind so wenige wie möglich, sie stehen alle beieinander, jede
+   beantwortet EINE Ja/Nein-Frage, und `set search_path = ''` ist Pflicht — ohne ihn
+   kann jemand mit eigenem Schema eine Tabelle davorschieben.
+55. **Auf `group_members` gibt es KEIN Insert-Recht, und das ist die Aussage.**
+   Beitreten ist das ERGEBNIS einer bestätigten Anfrage oder angenommenen Einladung,
+   kein Schreibvorgang. Stünde dort ein `insert`, könnte sich jeder mit einer Zeile in
+   jede Gruppe schreiben und Phase 17 („der Gründer bestätigt") wäre eine
+   Höflichkeitsform. Dasselbe fürs Austreten: Ein blankes `delete` überspränge
+   `nachfolgerId()` (Ians Entscheidung 13) und damit die Erbfolge. Mitgliedschaften
+   ändern sich nur über die Funktionen aus 20.5.
+56. **Die HERKUNFT eines Chats ist eine Tatsache, kein abgeleiteter Wert.** In der App
+   heißt `istDirektChat(t)` genau `t.postId === undefined` — richtig, solange sich ein
+   Post nicht löschen lässt. In der Datenbank lässt er sich löschen, und mit
+   `on delete set null` wird aus einem Aktivitäts-Chat lautlos ein Direktchat: Dann
+   gilt `SCHREIB_REGEL = 'gegenseitig'`, und zwei Leute, die sich getroffen haben und
+   einander nicht folgen, können einander nicht mehr schreiben. Gefragt wird deshalb an
+   `chat_threads.aus_aktivitaet`, nie an `post_id`. **Allgemeiner: Wenn ein Wert
+   heute aus einem anderen ableitbar ist, heißt das nicht, dass er es morgen noch ist —
+   und die Ableitung ändert sich still.**
+57. **Was am Server gilt, wird ANGEGRIFFEN, nicht angeschaut.**
+   `bash supabase/pruefen/aufbauen.sh`, 18 Prüfungen, erwartet sind 18 Häkchen. Jeder
+   Block setzt `set local role authenticated` — **wer als `postgres` prüft, prüft
+   nichts**, denn der Eigentümer einer Tabelle umgeht seine eigenen Policies. Und ein
+   Test, der nur „ist fehlgeschlagen" abfragt, prüft zu wenig: Er muss `SQLSTATE =
+   '42501'` verlangen, sonst zählt ein Insert, der an einem CHECK scheitert, als „von
+   RLS abgewiesen".
+
 53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
    rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und
    schreibt sie **nie** ein zweites Mal in den Generator. Die Projektion ist flach mit

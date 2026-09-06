@@ -3018,7 +3018,7 @@ stört. **Erst schauen lassen, dann bauen.**
 
 ---
 
-### Phase 20 — Das Backend: Supabase ⬜
+### Phase 20 — Das Backend: Supabase · **20.1 ✅ · 20.2 ✅ (2026-09-06)** · 20.3–20.8 ⬜
 
 **Ians Entscheidung vom 2026-09-06.** Der Punkt stand seit dem 2026-08-31 in Abschnitt 8
 offen und ist die folgenreichste technische Wahl des Projekts.
@@ -3081,7 +3081,7 @@ der Gratis-Stufe** und verlangt auch bei winzigen Mengen ein Zahlungsmittel. Dar
 Wunsch nach Profilbildern (`User.photoUrl?`, seit Phase 15 vorbereitet) wäre damit
 sofort ein Kostenpunkt gewesen.
 
-#### 20.1 — Das Schema, und was auf dem Weg verlorengeht ⬜
+#### 20.1 — Das Schema, und was auf dem Weg verlorengeht ✅ *(2026-09-06)*
 
 Die Übersetzung ist an drei Stellen keine Übersetzung, sondern eine Entscheidung.
 
@@ -3124,7 +3124,7 @@ Entscheidung 9, unverändert — in SQL heißt das `null` erlaubt gegen `not nul
 **keine Koordinaten-Spalte**, nirgends. Das war Ians eigene Intuition vom August und ist
 datenschutzrechtlich die richtige.
 
-#### 20.2 — Die Regeln auf den Server ⬜
+#### 20.2 — Die Regeln auf den Server ✅ *(2026-09-06)*
 
 **Was der Browser ausfiltert, hat er vorher heruntergeladen.** Der Satz steht seit
 Phase 2 in PLAN.md und wird hier eingelöst. Jede Regel, die heute in einer Regel-Datei
@@ -3142,6 +3142,74 @@ lebt, braucht ihr Gegenstück als Policy:
 > offenen Policies. Der Prüfstein ist: **mit dem Zugangsschlüssel eines zweiten Kontos
 > direkt an der Datenbank vorbei versuchen, einen Follower-Post zu lesen.** Was dabei
 > nicht kommt, ist geschützt. Alles andere ist geglaubt.
+
+
+#### Was beim Bauen von 20.1 und 20.2 herauskam *(2026-09-06)*
+
+Beides liegt in `simplysocial/supabase/`. **Ohne Supabase-Konto gebaut und trotzdem
+bewiesen** — das ist der erste Befund und der, der die Reihenfolge des Rests ändert:
+
+**0. Die Absicherung ist ein POSTGRES-Ding, kein Supabase-Ding.** Der Plan hatte den
+Prüfstein an ein zweites Konto gehängt („mit dem Zugangsschlüssel eines zweiten Kontos
+direkt an der Datenbank vorbei"), und das las sich, als brauchte er ein Projekt in der
+Cloud. Er braucht keines: `brew install postgresql@17`, `auth.uid()` in vier Zeilen
+nachgebaut, `set local role authenticated` — und der Angriff läuft. Das ist dieselbe
+Trennung wie „Simulator statt EAS-Build" in Phase 19, eine Ebene tiefer: **Die Frage
+*halten die Regeln?* und die Frage *ist das Projekt eingerichtet?* sind zwei Fragen, und
+nur die zweite braucht Ian.** `supabase/pruefen/aufbauen.sh` baut alles neu auf und
+lässt 18 Prüfungen laufen.
+
+**1. Eine Policy, die ihre eigene Tabelle abfragt, rekursiert — und sagt es erst beim
+ersten Lesen.** „Die Mitgliederliste sehen nur Mitglieder" naheliegend hingeschrieben
+ergibt `infinite recursion detected in policy for relation "group_members"`. Kein
+Nachdenken hätte das verhindert; es steht in keinem Typ und in keinem Kommentar. Der
+Ausweg sind die Funktionen im Schema `regel`: `security definer`, also einmal
+kontrolliert an RLS vorbei. **Das ist dieselbe Bauart wie `safety/block.ts` (harte Regel
+17), nur in SQL** — die Regel steht an EINER Stelle, alle Policies sehen ihr Ergebnis.
+Und `set search_path = ''` ist dabei Pflicht, keine Sorgfalt.
+
+**2. Ein `count(*)` auf einer geschützten Tabelle LÜGT, es verweigert nicht.**
+`PRIVAT_SICHT = 'name-und-kategorie'` verspricht einem Fremden Name, Kategorie, Bezirk
+**und die Mitgliederzahl**. Zählt er selbst, bekommt er nicht „Zugriff verweigert",
+sondern die Zahl **0** — eine falsche Auskunft, die wie eine leere Gruppe aussieht.
+Deshalb `regel.mitglieder_anzahl()`. **Die ZAHL ja, die LISTE nein**, und das ist zwei
+verschiedene Rechte, nicht eines mit einer Ausnahme.
+
+**3. Ein gelöschter Post hätte einen bestehenden Chat still zugesperrt — mein eigener
+Fehler, gefunden beim Nachlesen der Policy.** `chat_threads.post_id` war
+`on delete set null`, und `istDirektChat()` heißt in der App „kein Post am Faden". Also:
+Post löschen → aus dem Aktivitäts-Chat wird ein Direktchat → es gilt Ians
+`SCHREIB_REGEL = 'gegenseitig'` → zwei Leute, die sich getroffen haben und einander
+nicht folgen, können einander nicht mehr schreiben. **Wegen einer dritten Sache, und
+niemand hat es entschieden.** Im Prototyp konnte das nicht auffallen: Dort lässt sich
+ein Post gar nicht löschen. Die Herkunft eines Chats ist eine TATSACHE über seine
+Entstehung und kein abgeleiteter Wert — sie steht jetzt als `aus_aktivitaet` da.
+**Gegengeprüft:** Stellt man die Policy auf `post_id` zurück, wird der Test rot
+(Phase-18d-Lehre — eine Regel, die nichts vorfindet, sieht aus wie eine Regel, die tut).
+
+**4. Ein Test, der nur „ist fehlgeschlagen" prüft, prüft zu wenig.** Die vier
+Schreibversuche fingen zuerst `insufficient_privilege OR check_violation` ab — ein Insert,
+der an einem CHECK scheitert, hätte damit als „von RLS abgewiesen" gezählt. Jetzt wird
+`SQLSTATE = '42501'` verlangt. Drei der vier melden wörtlich *„new row violates
+row-level security policy"*, der vierte *„permission denied for table group_members"* —
+und das ist richtig so: Auf `group_members` gibt es bewusst **kein** Insert-Recht.
+
+**5. `zaehltAlsTermin()` und harte Regel 47 sind jetzt nicht mehr „nicht eingebaut",
+sondern UNMÖGLICH.** Die verworfene dritte Möglichkeit aus Phase 18d (dem Poster
+zeigen, dass der Anfragende woanders ist) scheitert an der `select`-Policy auf
+`join_requests`: Ein Poster sieht nur Anfragen an SEINE Posts. Der Prüffall steht in
+den Daten — Lea hat zwei Anfragen laufen, Ian sieht genau eine.
+
+**6. Die Kontolöschung ist eine Frage an Ian geworden, und das kam aus dem Schema.**
+`delete from auth.users` scheitert heute an `groups_creator_id_fkey`: Wer je gepostet
+oder gegründet hat, kann sein Konto nicht löschen. Den Screen dafür gibt es seit Phase 7
+und Apple verlangt ihn. Es ist dieselbe Frage wie `AUSTRITT_WIRKUNG` (Entscheidung 12),
+nur größer — die drei Möglichkeiten stehen ausgeschrieben in
+`supabase/entscheidungen/konto-loeschen.sql`, **außerhalb von `migrations/`**, damit sie
+nicht versehentlich laufen. Dieselbe Anordnung wie `landing-vorschau/` neben `landing/`.
+Was schon feststeht und bei allen dreien gleich ist: `reports.from_user_id` ist
+`on delete set null` — **eine Meldung überlebt das Konto dessen, der sie geschrieben
+hat**, sonst nimmt jeder Anzeigende beim Löschen den Beleg mit.
 
 #### 20.3 — Anmelden ⬜ *(Ians 27. Entscheidung)*
 
@@ -4234,7 +4302,36 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-06, spätester Eintrag): Phase 20 —
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-06 abends, spätester Eintrag):
+> Phase 20.3 — Anmelden.** 20.1 (Schema) und 20.2 (Regeln) sind **gebaut und geprüft**,
+> siehe Abschnitt 5b, „Was beim Bauen von 20.1 und 20.2 herauskam". Sechs Dinge, die
+> eine frische Sitzung wissen muss:
+>
+> 1. **Es liegt alles in `simplysocial/supabase/`, und es läuft ohne Supabase-Konto.**
+>    `bash supabase/pruefen/aufbauen.sh` baut eine Wegwerf-Datenbank und lässt 18
+>    Prüfungen laufen. Erwartet: 18 Häkchen, kein Kreuz. Braucht nur
+>    `brew install postgresql@17`. **Vor jeder Änderung an einer Policy laufen lassen,
+>    danach wieder** — das ist der einzige Test, den dieses Projekt hat.
+> 2. **Die Absicherung ist ein Postgres-Ding, kein Supabase-Ding.** Deshalb ging 20.2
+>    vor 20.3, obwohl der Plan die Reihenfolge andersherum nahelegte. Dieselbe Trennung
+>    wie „Simulator statt EAS-Build" in Phase 19: *halten die Regeln?* und *ist das
+>    Projekt eingerichtet?* sind zwei Fragen, und nur die zweite braucht Ian.
+> 3. **Regeln stehen im Schema `regel`, nie in einer Policy** (harte Regel 54). Wer
+>    „ist X Mitglied?" in eine Policy schreibt statt `regel.ist_mitglied()` zu rufen,
+>    bekommt `infinite recursion detected` — und zwar erst beim ersten Lesen.
+> 4. **Auf `group_members` gibt es bewusst KEIN Insert-Recht.** Beitreten ist das
+>    Ergebnis einer bestätigten Anfrage, kein Schreibvorgang. Es kommt mit 20.5 als
+>    Postgres-Funktion. Wer stattdessen eine Insert-Policy hinzufügt, macht Phase 17
+>    („der Gründer bestätigt") zu einer Höflichkeitsform.
+> 5. **Eine Frage wartet auf Ian: die Kontolöschung.** `supabase/entscheidungen/
+>    konto-loeschen.sql`, drei Möglichkeiten ausgeschrieben, dieselbe Frage wie seine
+>    Entscheidung 12. Sie blockiert 20.3 NICHT — aber 20.6 und Phase 21 (Apple 1.2).
+> 6. **20.3 ist die erste Aufgabe, die wirklich auf Ian wartet**: Supabase-Konto,
+>    Google-Freischaltung, und Apple VOR Google (Richtlinie 4.8). Was NICHT auf ihn
+>    wartet, ist der Umbau von `CURRENT_USER_ID` — die Konstante ERSATZLOS löschen,
+>    dann schreibt `tsc` die Arbeitsliste (siehe 20.3 in Abschnitt 5b).
+
+> 📎 **Der vorige Eintrag, weil er noch Gültiges enthält: Phase 20 —
 > das Backend (Supabase).** Der Kartenzweig ist bis auf eine Hälfte zu Ende: **19d-1
 > (iOS) ist gebaut**, 19d-2 (MapKit JS im Browser) wartet bewusst auf Phase 20, weil sie
 > einen Server zum Ausstellen des Tokens braucht. Fünf Dinge, die eine frische Sitzung
