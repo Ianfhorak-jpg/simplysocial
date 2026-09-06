@@ -73,6 +73,29 @@ export function startOderSeit(iso: string, jetzt: Date = new Date()): string {
   return `Seit ${uhrzeit(iso)}`;
 }
 
+/**
+ * Die kürzeste ehrliche Zeitangabe: "18:30" · "seit 18:30" · "Do 16:30".
+ *
+ * Gebaut für die Karten-Blase (Phase 19c), wo neben der Zeit noch ein Titel stehen
+ * muss und die ganze Zeile rund 200 px breit ist. "Heute 18:30" nimmt dort ein
+ * Drittel der Breite für eine Auskunft, die der Zusammenhang schon gibt — man hat
+ * gerade selbst auf einen Bezirk getippt und sieht dessen heutige Posts.
+ *
+ * Das Wort "Heute" fällt deshalb weg, "Morgen" wird zum Wochentag. Was NICHT
+ * wegfällt, ist "seit": Ein Post, der schon läuft, sieht sonst aus wie eine
+ * Einladung für später — dieselbe Überlegung wie bei `startOderSeit`, nur enger.
+ *
+ * **Nicht im Feed verwenden.** Dort fehlt der Zusammenhang, der "Do" eindeutig macht:
+ * Ein Donnerstag in dieser und einer in drei Wochen sähen gleich aus. Genau dagegen
+ * setzt `startText` ab einer Woche das Datum davor.
+ */
+export function kurzStart(iso: string, jetzt: Date = new Date()): string {
+  if (tageEntfernt(iso, jetzt) === 0) {
+    return istVorbei(iso, jetzt) ? `seit ${uhrzeit(iso)}` : uhrzeit(iso);
+  }
+  return `${WOCHENTAGE[new Date(iso).getDay()]} ${uhrzeit(iso)}`;
+}
+
 /** Kurzform ohne Uhrzeit für enge Stellen: "Heute" · "Morgen" · "Do". */
 export function tagText(iso: string, jetzt: Date = new Date()): string {
   const tage = tageEntfernt(iso, jetzt);

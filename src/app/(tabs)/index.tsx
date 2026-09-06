@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { FlatList, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { AntwortLeiste } from '@/components/AntwortLeiste';
+import { KartenBlase } from '@/components/KartenBlase';
 import { PostCard } from '@/components/PostCard';
 import { WischStapel, anleitungGesehen, anleitungMerken } from '@/components/WischStapel';
 import {
@@ -348,6 +349,7 @@ export default function FeedScreen() {
           eintraege={eintraege}
           filterAktiv={filterAktiv}
           zuruecksetzen={zuruecksetzen}
+          zurListe={() => setAnsicht('liste')}
         />
       ) : ansicht === 'liste' ? (
         <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
@@ -479,6 +481,7 @@ function KarteAnsicht({
   eintraege,
   filterAktiv,
   zuruecksetzen,
+  zurListe,
 }: {
   zaehlung: Record<string, number>;
   ohneBezirk: number;
@@ -487,6 +490,8 @@ function KarteAnsicht({
   eintraege: FeedEintrag[];
   filterAktiv: boolean;
   zuruecksetzen: () => void;
+  /** „alle 5 ansehen" in der Blase. Siehe dort, warum es NICHT die Blase schließt. */
+  zurListe: () => void;
 }) {
   const { height: fensterHoehe } = useWindowDimensions();
   const nichtsDa = Object.keys(zaehlung).length === 0 && ohneBezirk === 0;
@@ -516,6 +521,27 @@ function KarteAnsicht({
           // nicht für „abwählen".
           onWaehlen={(plz) =>
             setzen('bezirk', plz === null ? BEZIRK_ALLE : { kind: 'einer', plz })
+          }
+          /**
+           * Phase 19c: Was in dem Bezirk los ist, springt über ihm heraus — bis dahin
+           * musste man dafür nach UNTEN schauen, und die Karte beantwortete nur die
+           * halbe Frage.
+           *
+           * **Ein leerer Bezirk bekommt gar keine Blase.** Tippt man den 8. an und
+           * dort liegt nichts, wäre eine Blase mit „nichts" ein Klick, der bestraft
+           * wird; die Zeile unter der Karte sagt weiter „1080 Wien · 0 Posts". Das ist
+           * dieselbe Überlegung wie bei `StapelDurch` (harte Regel 41): Kein zweiter
+           * Kasten, der dasselbe noch einmal sagt.
+           */
+          blase={(anker) =>
+            eintraege.length === 0 ? null : (
+              <KartenBlase
+                anker={anker}
+                eintraege={eintraege}
+                onPost={(id) => router.push({ pathname: '/post/[id]', params: { id } })}
+                onAlle={zurListe}
+              />
+            )
           }
         />
       </View>

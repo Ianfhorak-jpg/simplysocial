@@ -226,6 +226,38 @@ ausgeschrieben in **PLAN.md, Abschnitt 5b, Phasen 19c und 19d.** Vier Dinge dara
    Reiz**: Wer eine echte Karte sieht, denkt an Stecknadeln, und eine Stecknadel verrät
    statt „1220" die genaue Parkbank um 17:00.
 
+✅ **Phase 19c ist fertig (2026-09-06): die Aktivitäten springen aus der Karte.** Ians
+erste von zwei Rückmeldungen zu 19b — bis dahin beantwortete ein Tipp auf die Karte nur
+die halbe Frage, man musste nach UNTEN schauen. Jetzt schwebt über dem angetippten Bezirk
+eine Sprechblase mit bis zu drei Zeilen (Kategoriefarbe · Titel · Zeit), darunter „alle 3
+ansehen". **Kein neuer Baustein von außen, kein neuer Build** — genau deshalb steht sie
+vor 19d. Belege `s01`–`s09` im Projektordner. Fünf Dinge sind daran wichtiger als die
+Blase selbst:
+1. **Die Platzrechnung stand vor dem ersten Handgriff — und war zu pessimistisch.** Die
+   Kartenfläche ist auf 360 × 600 tatsächlich 216 × 168 px und auf 390 × 844 296 × 230,
+   beide Zahlen auf den Punkt. Falsch war die FOLGERUNG: gerechnet mit dem Anker der
+   Inneren Stadt, aber der 7. Bezirk sitzt tiefer und hat mehr Platz über sich — dort
+   passen auf dem großen Handy alle drei. **Ein Wertebereich hat einen ungünstigsten und
+   einen mittleren Fall, und eine hergezeigte Zahl muss sagen, welcher sie ist.**
+2. **Der teuerste Fehler war ein FEHLENDER Fänger und sah aus wie ein kaputter Zustand.**
+   `react-native-web` macht aus `box-none` ein CSS `pointer-events: none` und vererbt das
+   an alle Nachkommen — **außer an Text-Knoten, denen RNW selbst ein `auto` gibt.** Die
+   Blase ließ also überall durch, nur nicht auf den Buchstaben: Ein Zug über sie
+   markierte Text, statt die Karte zu schieben. Ein ausdrückliches `pointerEvents:
+   'auto'` am Körper behebt es, `userSelect: 'none'` nimmt die Markierung.
+3. **Mein eigener Prüflauf hat den Fehler zuerst falsch beschrieben.** Der Schiebe-Test
+   fasste die Karte in der Mitte an — also auf der Blase. Gemessen wurde das Overlay und
+   nicht die Karte. **Wer ein Overlay einbaut, setzt seine Gestentests außerhalb davon
+   an**, sonst prüft er das Neue gegen sich selbst.
+4. **Zwei Konsolenwarnungen waren beide meine, und eine steht wörtlich in dieser Datei**
+   (`pointerEvents` als Prop, ACTA-Falle aus Phase 4). Der Beleg war nicht der Code,
+   sondern die Konsole — eine Warnung JE AUFRUF.
+5. **Ians siebenunddreißigste Entscheidung: in der Blase steht oben, was als Nächstes
+   losgeht** (`BLASE_REIHENFOLGE`, über `nachStartzeit` aus `sort.ts`). Die Liste
+   darunter sortiert weiter nach dem Neuesten. Das ist kein Widerspruch wie bei
+   `StapelDurch`/`LeererFeed`, sondern eine kurze und eine lange Antwort auf zwei
+   verschiedene Fragen — die Blase ist eine AUSWAHL, die Liste die ganze Menge.
+
 ✅ **Phase 19b ist fertig (2026-09-06): die Wien-Karte.** Leopolds zweite Idee, und
 das erste Stück, das `react-native-svg` aus Phase 19 wirklich ausnutzt. Dritte Stufe im
 Umschalter („Stapel · Liste · Karte"), 23 echte Bezirksflächen aus den amtlichen Daten
@@ -608,9 +640,9 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 8. **Wieder herzeigen** — die drei haben Phase 13 gesehen, nicht 18a. Läuft neben 9.
 9. **Aufs Gerät** (Phase 19) ← *hier sind wir* — erster EAS-Build, `react-native-svg`,
    Durchgang am iPhone. ~~Wien-Karte (19b)~~ ✅ *2026-09-06*
-9b. **Karte nachbessern** — **19c** (Aktivitäten springen heraus, braucht nichts Neues)
-   und danach **19d** (echte Apple-Karte, braucht Ians Apple-Schlüssel). *Geplant am
-   2026-09-06, PLAN.md Abschnitt 5b.*
+9b. **Karte nachbessern** — ~~**19c** (Aktivitäten springen heraus)~~ ✅ *2026-09-06*,
+   danach **19d** (echte Apple-Karte, **braucht Ians Apple-Schlüssel**) ← *hier geht es
+   weiter*. PLAN.md Abschnitt 5b.
 10. **Backend** (Phase 20) — Supabase: Schema, Policies, Anmelden, `store.ts` tauschen
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 
@@ -973,6 +1005,19 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    genau der Bezirksfilter ausgeschaltet und sonst keiner" steht damit an EINER Stelle.
    Ohne sie zeigte die Karte nach dem ersten Tipp eine einzige eingefärbte Fläche in
    einem grauen Wien.
+51. **Was über der Karte schweben soll, geht durch `SsWienKarte.blase` — nie als Kind
+   der Kartenfläche.** Dasselbe Muster wie `WischStapel.blatt` (harte Regel 36) und aus
+   zwei Gründen, die beide erst am Gerät auffallen: Die Fläche hat `overflow: hidden`
+   (die Blase wäre halb abgeschnitten) und einen `PanResponder` mit
+   `onStartShouldSetPanResponder: () => true` (sie wäre nicht antippbar). Der Slot bekommt
+   einen **`KartenAnker`** — die Umkehrung genau der Rechnung, mit der ein Tipp in
+   Kartenkoordinaten übersetzt wird, **aus demselben Zustand**; zwei getrennte Rechnungen
+   driften beim ersten Zoom auseinander. Und: **`pointerEvents` steht im `style`, nie in
+   den Props** (ACTA-Falle) — der Blasenkörper braucht dabei ein ausdrückliches `'auto'`,
+   weil `react-native-web` ein geerbtes `box-none` an alle Nachkommen weitergibt außer an
+   Text-Knoten. Wie viele Zeilen hineinpassen, rechnet `passform()` aus dem Platz;
+   `BLASE_MAX` in `karte.ts` ist die Obergrenze, keine Zusage.
+
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
@@ -1313,6 +1358,24 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   Seitenzoom im Prüfbrowser — zurückzusetzen nur über CDP `Emulation.setPageScaleFactor`,
   Strg+0 half nicht. **Vor der Fehlersuche im eigenen Code prüfen, ob das MESSGERÄT
   verstellt ist.**
+- **`box-none` vererbt sich im Browser anders als auf dem Gerät.** (Phase 19c)
+  `react-native-web` macht daraus CSS `pointer-events: none`, und CSS gibt das an ALLE
+  Nachkommen weiter — außer an Text-Knoten, denen RNW selbst ein `auto` mitgibt. Ein
+  Kasten mit `box-none` ist im Browser also durchlässig, seine Buchstaben aber nicht.
+  Das Symptom sieht nach etwas ganz anderem aus: Ein Zug über die Blase markierte Text,
+  statt die Karte zu schieben. **Wer einen Kasten über einer Geste baut, sagt an jedem
+  Kind ausdrücklich, ob es fängt oder nicht** — `pointerEvents: 'auto'` am Körper.
+- **Ein Prüflauf, der das Neue anfasst, misst das Neue und nicht das Alte.** (Phase 19c)
+  Der Schiebe-Test griff die Karte in ihrer Mitte an — dort lag seit fünf Minuten die
+  neue Blase. Der erste Befund („Schieben geht gar nicht mehr") war falsch, alles lief
+  längst richtig. **Gestentests gehören an eine Stelle, die das neue Element NICHT
+  bedeckt.** Dieselbe Sorte Fehler wie das `browser_navigate` in 18d: Das Messgerät stand
+  im Weg, nicht der Code.
+- **Eine gerechnete Zahl braucht die Angabe, welcher Fall sie ist.** (Phase 19c) Die
+  Platzrechnung vor dem Bauen stimmte auf den Pixel — die Folgerung „es passt fast nie
+  mehr als eine Zeile" war trotzdem falsch, weil sie mit dem ungünstigsten Anker
+  gerechnet war und als allgemeine Aussage hergezeigt wurde. Bei einer Spanne immer
+  mitsagen: schlechtester Fall oder mittlerer.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

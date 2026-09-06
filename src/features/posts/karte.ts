@@ -190,3 +190,73 @@ export function ohneBezirkText(anzahl: number): string {
 export function bezirkPostText(anzahl: number): string {
   return anzahl === 1 ? '1 Post' : `${anzahl} Posts`;
 }
+
+// ── Was aus einem Bezirk herausspringt (Phase 19c) ───────────────────────────
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  Ians Entscheidung 34: BIS ZU DREI Aktivitäten springen heraus, darunter „alle
+ *  N ansehen".
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Seine Rückmeldung zu 19b: „wenn man auf einen Bezirk klickt, sollen die Aktivitäten
+ * über dem Klick herausspringen, klein, mit dem Minimum an Info — und wenn ich
+ * interessiert bin, klicke ich drauf und sehe die ganze."
+ *
+ * Verworfen, mit Begründung — als Gedächtnis, nicht als Einladung:
+ *   'alle'   Alle, waagrecht durchwischbar (wie die Ortskarten in Apple Karten).
+ *            Kommt an alles heran und wäre der VIERTE Wisch-Erkenner der App — direkt
+ *            über einer Karte, die selbst geschoben wird. Genau der Streit, vor dem
+ *            harte Regel 44 warnt.
+ *   'eine'   Eine große mit Blätterpfeilen. Am ruhigsten, aber man muss fünfmal
+ *            tippen, um zu sehen, was es gibt — und das Überblicken war der Grund
+ *            für die ganze Karte.
+ *
+ * ── Warum das eine OBERGRENZE ist und keine Zusage ────────────────────────────
+ * Drei passen fast nie. Nachgerechnet vor dem Bauen, nicht danach: Auf 360 × 600 ist
+ * die Kartenfläche 216 × 168 px, und der Beschriftungspunkt der Inneren Stadt sitzt
+ * bei y = 94 — es bleiben **90 px** über ihm. Eine Zeile ist 30 px hoch, dazu Rahmen,
+ * Pfeil und Fußzeile. Es passt **eine**; auf 390 × 844 (230 px Karte, 125 px über dem
+ * Anker) passen **zwei**.
+ *
+ * Die Antwort darauf ist nicht kleinere Schrift, sondern weniger Zeilen — dieselbe
+ * Rechnung wie bei `KARTE_ANTEIL`. Wie viele wirklich passen, entscheidet der
+ * Zeichner aus dem gemessenen Platz (`KartenBlase`); hier steht nur, wie viele es
+ * höchstens sein dürfen.
+ */
+export const BLASE_MAX = 3;
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  Ians Entscheidung 37, 2026-09-06: In der Blase steht oben, WAS ALS NÄCHSTES
+ *  LOSGEHT.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Die Frage kam beim Bauen auf und stand in keinem Plan: Auf einen Bezirk mit fünf
+ * Posts passen ein bis zwei Zeilen — welche zwei?
+ *
+ * Verworfen:
+ *   'neueste'  Dieselbe Reihenfolge wie die Liste darunter (`sort.ts`, Ians
+ *              Entscheidung 1). Eine Wahrheit statt zweier — und genau daran
+ *              scheitert es: Ein Post, der in zwanzig Minuten losgeht, fällt aus der
+ *              Blase, weil jemand später etwas für Samstag gepostet hat. Im Feed ist
+ *              das Neueste richtig, weil dort ALLES steht und man weiterscrollt; in
+ *              einer Auswahl von zwei aus fünf ist es die falsche Frage.
+ *   'frei'     Erst die mit freien Plätzen. Klingt hilfsbereit, sortiert sich aber
+ *              um, während man hinschaut — ein bestätigter Platz verschiebt die
+ *              Blase, ohne dass jemand etwas getan hat.
+ *
+ * **Den Haken kennt er:** Blase und Liste darunter sortieren verschieden. Das ist
+ * vertretbar, weil die Blase eine AUSWAHL ist und die Liste die vollständige Menge —
+ * anders als bei `StapelDurch` und `LeererFeed` (2026-09-03) geben sie nicht zwei
+ * Antworten auf dieselbe Frage, sondern eine kurze und eine lange auf zwei.
+ *
+ * Der Vergleich selbst steht als `nachStartzeit` schon in `sort.ts` und wird von dort
+ * genommen: Was die Reihenfolge von Posts angeht, soll es keine zweite Rechnung geben.
+ */
+export const BLASE_REIHENFOLGE: 'naechste' | 'neueste' | 'frei' = 'naechste';
+
+/** „alle 5 ansehen" — die Fußzeile der Blase, wenn nicht alles hineinpasst. */
+export function blaseAlleText(gesamt: number): string {
+  return `alle ${gesamt} ansehen`;
+}

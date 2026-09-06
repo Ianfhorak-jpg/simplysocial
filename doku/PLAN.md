@@ -2637,7 +2637,7 @@ da, sie werden nur nie als Fläche gezeigt. **Kein Feld kommt dazu, keins änder
 > - **`stufeFuer()` in `karte.ts` ist die eine Stelle, an der noch eine echte Wahl
 >   steckt** (siehe unten, „Ian schreibt selbst").
 
-### Phase 19c — Die Aktivitäten springen aus der Karte ⬜ *(Ians Rückmeldung, 2026-09-06)*
+### Phase 19c — Die Aktivitäten springen aus der Karte ✅ *(gebaut am 2026-09-06)*
 
 > **Woher es kommt.** Ian hat die fertige Karte aus 19b benutzt und zwei Dinge gesagt:
 > *„Ich finde die Map nicht schön, sie sollte zum App-Interface passen, ich mag Karten
@@ -2674,6 +2674,18 @@ beantwortet also nur die halbe Frage. Das behebt 19c, ganz ohne Apple.
 | Frage | Entscheidung | Verworfen — und warum |
 |---|---|---|
 | Wie viele Aktivitäten springen heraus? | **Bis zu drei übereinander, darunter „alle 5 ansehen"** | **Alle, waagrecht durchwischbar** (wie die Ortskarten in Apple Karten): kommt an alles heran, ist aber der VIERTE Wisch-Erkenner der App — und er läge direkt über einer Karte, die selbst geschoben wird. Genau der Streit, vor dem harte Regel 44 warnt. **Eine große mit Blätterpfeilen**: am ruhigsten, aber man muss fünfmal tippen, um zu sehen, was es gibt — und das Überblicken war der Grund für die Karte. |
+
+#### Ians siebenunddreißigste Entscheidung (2026-09-06, beim Bauen dazugekommen)
+
+| Frage | Entscheidung | Verworfen — und warum |
+|---|---|---|
+| Auf einen Bezirk mit fünf Posts passen ein bis zwei Zeilen — welche? | **Was als Nächstes losgeht** (`BLASE_REIHENFOLGE = 'naechste'`) | **Neueste zuerst**, wie die Liste darunter (`sort.ts`, Entscheidung 1): eine Wahrheit statt zweier — und genau daran scheitert es. Ein Post, der in zwanzig Minuten losgeht, fiele aus der Blase, weil jemand später etwas für Samstag gepostet hat. Im Feed ist das Neueste richtig, weil dort ALLES steht; in einer Auswahl von zwei aus fünf ist es die falsche Frage. **Erst die mit freien Plätzen**: sortiert sich um, während man hinschaut. |
+
+**Den Haken kennt er:** Blase und Liste darunter sortieren verschieden. Das ist
+vertretbar, weil die Blase eine AUSWAHL ist und die Liste die vollständige Menge — anders
+als bei `StapelDurch` und `LeererFeed` (2026-09-03) geben sie nicht zwei Antworten auf
+dieselbe Frage, sondern eine kurze und eine lange auf zwei. Der Vergleich selbst ist
+`nachStartzeit` aus `sort.ts`, also keine zweite Rechnung.
 
 #### Was zu bauen ist
 
@@ -2734,6 +2746,59 @@ beantwortet also nur die halbe Frage. Das behebt 19c, ganz ohne Apple.
 4. **Die Zahl im 7. Bezirk passt weiterhin nicht hinein.** 19c ändert daran nichts —
    das ist die bekannte Folge von Wiens Geografie (siehe 19b). Wer beim Bauen der Blase
    in Versuchung kommt, das „gleich mitzumachen", macht zwei Sachen gleichzeitig.
+
+#### Was beim Bauen herauskam *(2026-09-06)*
+
+**Gebaut sind vier Dateien und keine davon ist ein Screen** — dieselbe Aufteilung wie
+19b: `features/posts/karte.ts` (`BLASE_MAX`, `BLASE_REIHENFOLGE`, `blaseAlleText`) ·
+`components/KartenBlase.tsx` (Zeichnen und Passform) · `components/ui/SsWienKarte.tsx`
+(`KartenAnker`, der Slot `blase`) · `lib/zeit.ts` (`kurzStart`). Der Screen reicht nur
+durch. Belege: `s01`–`s09` im Projektordner.
+
+**1. Die Platzrechnung stand VOR dem ersten Handgriff — und sie war zu pessimistisch.**
+Vorhergesagt hatte ich eine Zeile auf 360 × 600 und zwei auf 390 × 844. Nachgemessen im
+Browser: Die Kartenfläche ist auf 360 × 600 tatsächlich **216 × 168 px**, auf 390 × 844
+**296 × 230 px** — beide Zahlen auf den Punkt. Falsch war die Folgerung, weil ich mit dem
+Anker der Inneren Stadt gerechnet habe: Der 7. Bezirk sitzt tiefer, hat also mehr Platz
+über sich, und dort passen auf dem großen Handy **alle drei** (`s08`). Auf 360 × 600
+bleibt es bei einer Zeile plus „alle 3 ansehen" (`s03`). **Die Lehre ist nicht „nicht
+rechnen", sondern: Ein Wertebereich hat einen ungünstigsten Fall UND einen mittleren, und
+die Zahl, die man herzeigt, muss sagen, welcher von beiden sie ist.** Dieselbe Sorte Fund
+wie `HOECHSTALTER = 70` in 18b.
+
+**2. Der teuerste Fehler war ein FEHLENDER Fänger, und er sah aus wie ein kaputter
+Zustand.** Nach dem Einbau bewegte sich die Blase beim Schieben und Zoomen nicht mehr mit
+— und die Karte schien mitgesperrt. Die Ursache ist eine Eigenheit von
+`react-native-web`: Ein `box-none` wird dort zu CSS `pointer-events: none`, und CSS
+vererbt das an alle Nachkommen — **an alle außer den Text-Knoten, denen RNW selbst ein
+`auto` mitgibt.** Die Blase ließ also überall durch, nur nicht auf den Buchstaben; ein Zug
+über sie markierte Text, statt die Karte zu bewegen. Ein ausdrückliches
+`pointerEvents: 'auto'` am Blasenkörper macht daraus wieder eine Fläche mit einer Kante,
+und `userSelect: 'none'` nimmt die Markierung. **Beides stimmt auf iOS genauso** —
+nachgesehen, nicht gehofft: `pointerEvents`, `userSelect` und `boxShadow` (als String)
+stehen alle drei in `StyleSheetTypes.d.ts` als `ViewStyle`-Props von React Native 0.86.
+
+**3. Mein eigener Prüflauf hat den Fehler zuerst falsch beschrieben.** Der Schiebe-Test
+fasste die Karte in ihrer Mitte an — also **auf der Blase**, die dort seit fünf Minuten
+lag. Gemessen wurde damit das Overlay und nicht die Karte, und der erste Befund
+(„Schieben geht gar nicht mehr") war falsch. Erst ein Zug **unterhalb** der Blase zeigte
+die Wahrheit: Schieben, Zoomen und das Ausblenden während der Geste liefen längst richtig
+(`deckkraft: 0` während, `1` danach, `s07`). **Wer ein Overlay einbaut, muss seine
+Gestentests außerhalb davon ansetzen — sonst prüft er das Neue gegen sich selbst.**
+
+**4. Zwei Warnungen in der Konsole waren beide meine, und eine steht wörtlich in
+CLAUDE.md.** `props.pointerEvents is deprecated` — die ACTA-Falle aus Phase 4, in die ich
+trotzdem gelaufen bin, weil jedes Beispiel im Netz es als Prop schreibt. Dazu
+`"shadow*" style props are deprecated`; das Projekt hat den richtigen Weg seit Phase 13
+in `PrototypHinweis.tsx` stehen (`boxShadow` als String). **Der Beleg war nicht der Code,
+sondern die Konsole — eine Warnung JE AUFRUF.**
+
+**5. Was die Blase NICHT anfasst.** Der Titel wird auf 360 × 600 bei langen Namen
+gekürzt („Physik-Zusammenfas…"), weil die ganze Karte dort nur 216 px breit ist. Die
+Antwort darauf wäre, die Blase über den Kartenrand hinausragen zu lassen — das ist
+bewusst NICHT gebaut: Sie liegt deckungsgleich über der Kartenfläche, und alles andere
+wäre eine Ausnahme, die man beim nächsten Umbau erklären muss. Ein gekürzter Titel in
+einer Zeile ist auch nicht neu — die Chat-Liste macht es seit 18c genauso.
 
 ---
 
@@ -4097,26 +4162,48 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-06, spätester Eintrag): Phase 19c —
-> die Aktivitäten springen aus der Karte.** Ian hat 19b benutzt und zwei Dinge
-> zurückgemeldet; sie stehen ausgeschrieben als **Phase 19c und 19d** in Abschnitt 5b.
-> Vier Dinge, die eine frische Sitzung wissen muss, BEVOR sie anfängt:
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-06, spätester Eintrag): Phase 19d —
+> die echte Apple-Karte.** ~~19c~~ ist seit dem 2026-09-06 gebaut (Abschnitt 5b, samt
+> „Was beim Bauen herauskam"). Fünf Dinge, die eine frische Sitzung wissen muss, BEVOR
+> sie anfängt:
 >
-> 1. **Es sind zwei Phasen, und das ist der Plan, kein Zufall.** 19c ändert die
->    BEDIENUNG (Blase über dem Bezirk) und braucht nichts Neues. 19d ändert die KARTE
->    selbst (echte Apple-Karte) und braucht einen Native-Baustein, einen neuen Build
->    und Ians Apple-Schlüssel. Zusammen gebaut hätte jeder Fehler danach zwei mögliche
->    Ursachen — dieselbe Überlegung, aus der Phase 19 vor Phase 20 steht.
-> 2. **Mit 19c anfangen.** Sie läuft sofort, auf Web und iPhone, und macht die App
->    besser statt schöner: Heute muss man nach einem Tipp auf die Karte nach UNTEN
->    schauen, um zu sehen, was in dem Bezirk los ist.
-> 3. **19d ist Ians Entscheidung GEGEN meine Empfehlung** (ich hatte den gezeichneten
+> 1. **19d wartet auf Ian, 19c tat das nicht.** `react-native-maps` ist ein
+>    Native-Baustein: neuer Build, und MapKit JS im Web braucht einen **Apple-Schlüssel**
+>    aus seinem Developer-Account. Ohne den hätte der Prototyp, den er herzeigt, keine
+>    Karte mehr. **Vor dem ersten Handgriff klären, ob der Schlüssel da ist.**
+> 2. **19d ist Ians Entscheidung GEGEN meine Empfehlung** (ich hatte den gezeichneten
 >    Apple-Stil vorgeschlagen). Sie wird gebaut, nicht neu verhandelt. Der Preis steht
 >    in der Phase, damit ihn niemand später „entdeckt".
-> 4. **Eine echte Apple-Karte macht die App NICHT genauer.** Am Post steht nur
+> 3. **Eine echte Apple-Karte macht die App NICHT genauer.** Am Post steht nur
 >    `district`, keine Koordinate. Die Apple-Karte ist der Hintergrund, unsere
 >    Bezirksflächen bleiben oben drauf — und harte Regel 47 gilt gegen einen stärkeren
 >    Reiz als vorher.
+> 4. **Die Blase aus 19c muss den Tausch überleben, und dafür ist sie gebaut.** Sie
+>    hängt am `KartenAnker` aus `SsWienKarte`, nicht an einer Kartenbibliothek. Wer die
+>    Fläche darunter austauscht, muss genau eine Sache neu beantworten: **Wo liegt der
+>    Beschriftungspunkt eines Bezirks auf dem Schirm?** Solange `SsWienKarte` weiter
+>    einen `KartenAnker` liefert, ändert sich an `KartenBlase` kein Zeichen.
+> 5. **Danach ist der Kartenzweig zu Ende und es kommt Phase 20 (Supabase).** 19c und
+>    19d waren beide reine Oberfläche auf Daten, die es seit Phase 2 gibt.
+
+> ✅ **Phase 19c ist seit dem 2026-09-06 fertig — die Blase über dem Bezirk.** Was eine
+> frische Sitzung davon wissen muss:
+> - **Was über der Karte schwebt, geht durch `SsWienKarte.blase`** — einen Slot, der
+>   einen `KartenAnker` bekommt (harte Regel 51). Nie ein Kind der Kartenfläche: Die hat
+>   `overflow: hidden` und einen `PanResponder`, der jede Berührung beansprucht.
+> - **`pointerEvents` gehört in den `style`, nicht in die Props** (ACTA-Falle) — und der
+>   Blasenkörper braucht ein ausdrückliches `pointerEvents: 'auto'`, weil
+>   `react-native-web` ein geerbtes `box-none` an alle Nachkommen weitergibt AUSSER an
+>   Text-Knoten. Ohne das markiert ein Zug über die Blase Text, statt die Karte zu
+>   schieben.
+> - **Wie viele Zeilen passen, rechnet `passform()` aus dem Platz** — `BLASE_MAX = 3` ist
+>   eine Obergrenze, keine Zusage. Auf 360 × 600 ist es eine Zeile plus „alle 3 ansehen",
+>   auf 390 × 844 sind es drei.
+> - **Ians Entscheidung 37: das zeitlich Nächste zuerst** (`BLASE_REIHENFOLGE`), über
+>   `nachStartzeit` aus `sort.ts`. Die Liste darunter sortiert weiter nach dem Neuesten —
+>   das ist kein Widerspruch, sondern Auswahl gegen Gesamtmenge.
+> - **Ein leerer Bezirk bekommt gar keine Blase.** Die Zeile darunter sagt weiter
+>   „1230 Wien · 0 Posts" (`s09`).
 
 > ✅ **Phase 19b ist seit dem 2026-09-06 fertig — die Wien-Karte.** Was eine frische
 > Sitzung davon wissen muss:

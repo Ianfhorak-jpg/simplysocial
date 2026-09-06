@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { G, Path, Text as SvgText } from 'react-native-svg';
 
@@ -16,6 +16,29 @@ import {
 import { bezirkAn } from '@/lib/karte-treffer';
 import { colors } from '@/theme';
 
+/**
+ * Wo ein Bezirk gerade auf dem Schirm liegt — alles in Bildpunkten, relativ zur
+ * linken oberen Ecke der Kartenfläche.
+ *
+ * Gebraucht wird das seit Phase 19c von der Blase, die über dem gewählten Bezirk
+ * schwebt. **Sie hängt am Bezirk und nicht am Finger** (Ians Rückmeldung sagte „über
+ * dem Klick", gemeint ist aber der Bezirk): Der Anker sitzt auf dem
+ * Beschriftungspunkt aus `wien-bezirke.ts`, dem Punkt mit dem größten Abstand zum
+ * Rand. Das ist zugleich die stabile Wahl — zweimal denselben Bezirk antippen ergibt
+ * zweimal dieselbe Stelle, auch wenn man einmal die Mitte und einmal den Zipfel trifft.
+ */
+export interface KartenAnker {
+  /** Der Punkt, auf den die Spitze zeigt. */
+  x: number;
+  y: number;
+  /** Wie viel Platz über bzw. unter dem Anker frei ist, bis die Karte zu Ende ist. */
+  platzOben: number;
+  platzUnten: number;
+  /** Die Kartenfläche selbst — die Blase darf nicht breiter werden. */
+  breite: number;
+  hoehe: number;
+}
+
 export interface SsWienKarteProps {
   /** Wie viele Posts je Bezirks-PLZ. Fehlt einer, ist er leer. */
   zaehlung: Readonly<Record<string, number>>;
@@ -31,6 +54,24 @@ export interface SsWienKarteProps {
    * beschnitten.
    */
   maxHoehe?: number;
+  /**
+   * Was über dem gewählten Bezirk schweben soll — seit Phase 19c die `KartenBlase`.
+   *
+   * ── Warum ein Slot und nicht der Inhalt selbst ───────────────────────────────
+   * Dasselbe Muster wie `WischStapel.blatt` (harte Regel 36) und aus demselben
+   * Grund: Der Screen weiß, WAS über der Karte stehen soll, aber nicht, WO der
+   * Bezirk nach Schieben und Zoomen liegt — das weiß nur dieser Baustein. Und die
+   * Karte darf nichts von Posts wissen, sonst wäre sie kein `ui/`-Baustein mehr.
+   *
+   * ── Warum der Slot NICHT in der Kartenfläche hängt ───────────────────────────
+   * Die Fläche hat `overflow: hidden` (sonst ragt die gezoomte Karte über ihren
+   * Platz) und einen `PanResponder`, der jede Berührung beim Beginn beansprucht
+   * (`onStartShouldSetPanResponder: () => true`). Ein Kind darin wäre halb
+   * abgeschnitten und nicht antippbar. Der Slot liegt deshalb als GESCHWISTER
+   * darüber, deckungsgleich, mit `pointerEvents="box-none"` — was neben der Blase
+   * liegt, fällt weiter auf die Karte durch.
+   */
+  blase?: (anker: KartenAnker) => ReactNode;
 }
 
 /**
@@ -85,7 +126,7 @@ const FUGE = 2.5;
 /** Der Umriss um den gewählten Bezirk. Dicker als die Fuge, sonst sieht man ihn nicht. */
 const AUSWAHL_STRICH = 6;
 
-export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe }: SsWienKarteProps) {
+export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }: SsWienKarteProps) {
   const [gemessen, setGemessen] = useState(0);
   const platz = gemessen || NOTBREITE;
   // Wien ist breiter als hoch (1000 : 777). Passt die Höhe nicht, wird die Breite
@@ -106,8 +147,29 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe }: SsWienK
   const schiebenY = useRef(new Animated.Value(0)).current;
   const zoomWert = useRef(new Animated.Value(1)).current;
 
-  /** Der Zoom, wie er beim letzten Loslassen stand — nur dafür rendert die Karte neu. */
-  const [zoomStufe, setZoomStufe] = useState(1);
+  /**
+   * Die Ansicht, wie sie beim letzten Loslassen stand — nur dafür rendert die Karte
+   * neu. Bis Phase 19c stand hier nur der Zoom (für `zahlPasst`); seit die Blase am
+   * Bezirk hängt, wird auch das Schieben gebraucht: Der Anker ist die Umkehrung
+   * derselben Rechnung, mit der ein Tipp in Kartenkoordinaten übersetzt wird.
+   */
+  const [sicht, setSicht] = useState({ zoom: 1, x: 0, y: 0 });
+  const zoomStufe = sicht.zoom;
+
+  /**
+   * Während einer Geste ist die Blase weg, danach setzt sie sich neu an.
+   *
+   * **Bewusst `Animated` und kein `useState`.** Die Karte rendert während des
+   * Schiebens absichtlich gar nichts neu (siehe oben) — ein `setInGeste(true)` beim
+   * Fingerauflegen würde bei jeder Berührung 23 SVG-Pfade neu erzeugen, und das
+   * ausgerechnet in dem Moment, in dem die Geste anfangen soll. Eine Deckkraft
+   * lässt sich wie das Schieben selbst am React-Baum vorbei setzen.
+   *
+   * Mitwandern wäre die Alternative gewesen und ist verworfen: Dann müsste die
+   * Blase in dieselbe `Animated.View` wie die Karte, würde also mitskaliert — eine
+   * Sprechblase, die beim Hineinzoomen viermal so groß wird.
+   */
+  const blaseDeckkraft = useRef(new Animated.Value(1)).current;
 
   const zustand = useRef({ zoom: 1, x: 0, y: 0 });
   // Maße und `onWaehlen` gehören MIT ins Ref: Ein `PanResponder` wird einmal gebaut
@@ -193,6 +255,7 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe }: SsWienK
 
       onPanResponderGrant: (evt) => {
         gewandert = 0;
+        blaseDeckkraft.setValue(0);
         mehrfingrig = evt.nativeEvent.touches.length >= 2;
         neuAnsetzen(evt.nativeEvent.touches);
       },
@@ -243,7 +306,8 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe }: SsWienK
       },
 
       onPanResponderRelease: (evt) => {
-        setZoomStufe(zustand.current.zoom);
+        blaseDeckkraft.setValue(1);
+        setSicht({ ...zustand.current });
         if (mehrfingrig || gewandert > TIPP_WEG_MAX) return;
         // Ein Tipp. `locationX/Y` liegt relativ zur Karten-Fläche; daraus wird die
         // Stelle im Raster, indem man die Ansicht rückwärts rechnet: erst das
@@ -256,8 +320,21 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe }: SsWienK
         const ky = (py - h / 2 - ty) / zoom + h / 2;
         waehlen(bezirkAn(kx / pe, ky / pe));
       },
+
+      /**
+       * Nimmt uns doch jemand die Geste ab, kommt kein `Release` mehr — und die
+       * Blase bliebe für immer unsichtbar. `onPanResponderTerminationRequest` steht
+       * zwar auf `false`, aber das ist eine BITTE, die abgelehnt wird; das System
+       * kann eine Geste trotzdem beenden (ein Anruf, ein Wechsel in den
+       * Hintergrund). Ein unsichtbarer, aber antippbarer Kasten wäre der
+       * unangenehmste Zustand von beiden.
+       */
+      onPanResponderTerminate: () => {
+        blaseDeckkraft.setValue(1);
+        setSicht({ ...zustand.current });
+      },
     });
-  }, [schiebenX, schiebenY, zoomWert]);
+  }, [schiebenX, schiebenY, zoomWert, blaseDeckkraft]);
 
   /**
    * Auf Web zusätzlich: Mausrad zoomt, und der Browser darf die Seite nicht selbst
@@ -287,7 +364,7 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe }: SsWienK
       zoomWert.setValue(neu);
       schiebenX.setValue(nx);
       schiebenY.setValue(ny);
-      setZoomStufe(neu);
+      setSicht({ zoom: neu, x: nx, y: ny });
     };
     knoten.addEventListener('wheel', rad, { passive: false });
     return () => knoten.removeEventListener('wheel', rad);
@@ -334,6 +411,29 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe }: SsWienK
   const gewaehltePfad = flaechen.find((f) => f.plz === gewaehlt);
   const verschoben = zoomStufe > 1.01;
 
+  /**
+   * Wo der gewählte Bezirk gerade auf dem Schirm liegt — die Umkehrung der Rechnung
+   * aus `onPanResponderRelease`.
+   *
+   * Dort wird aus einem Bildpunkt eine Rasterstelle: erst das Schieben abziehen, dann
+   * um die Mitte herausskalieren. Hier geht es rückwärts — erst um die Mitte
+   * skalieren, dann das Schieben addieren. **Beide müssen aus DEMSELBEN Zustand
+   * rechnen**, sonst zeigt die Blase nach dem ersten Zoom neben den Bezirk, den man
+   * angetippt hat.
+   *
+   * `null`, wenn der Anker aus der Kartenfläche herausgeschoben wurde: Eine
+   * Sprechblase, deren Spitze außerhalb des Bildes sitzt, zeigt auf nichts.
+   */
+  const anker: KartenAnker | null = (() => {
+    if (!gewaehltePfad) return null;
+    const x = (gewaehltePfad.label.x * proEinheit - breite / 2) * sicht.zoom + breite / 2 + sicht.x;
+    const y = (gewaehltePfad.label.y * proEinheit - hoehe / 2) * sicht.zoom + hoehe / 2 + sicht.y;
+    if (x < 0 || x > breite || y < 0 || y > hoehe) return null;
+    return { x, y, platzOben: y, platzUnten: hoehe - y, breite, hoehe };
+  })();
+
+  const blaseInhalt = blase && anker ? blase(anker) : null;
+
   const inhalt = (
     <>
       {flaechen.map((f) => (
@@ -376,23 +476,35 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe }: SsWienK
 
   return (
     <View style={styles.rahmen}>
-      <View
-        ref={rahmen}
-        style={[styles.fenster, { height: hoehe, width: breite }]}
-        onLayout={(e) => setGemessen(e.nativeEvent.layout.width)}
-        {...responder.panHandlers}>
-        <Animated.View
-          style={{
-            transform: [
-              { translateX: schiebenX },
-              { translateY: schiebenY },
-              { scale: zoomWert },
-            ],
-          }}>
-          <Svg width={breite} height={hoehe} viewBox={`0 0 ${KARTE_BREITE} ${KARTE_HOEHE}`}>
-            <G>{inhalt}</G>
-          </Svg>
-        </Animated.View>
+      <View style={[styles.flaeche, { width: breite, height: hoehe }]}>
+        <View
+          ref={rahmen}
+          style={[styles.fenster, { height: hoehe, width: breite }]}
+          onLayout={(e) => setGemessen(e.nativeEvent.layout.width)}
+          {...responder.panHandlers}>
+          <Animated.View
+            style={{
+              transform: [
+                { translateX: schiebenX },
+                { translateY: schiebenY },
+                { scale: zoomWert },
+              ],
+            }}>
+            <Svg width={breite} height={hoehe} viewBox={`0 0 ${KARTE_BREITE} ${KARTE_HOEHE}`}>
+              <G>{inhalt}</G>
+            </Svg>
+          </Animated.View>
+        </View>
+
+        {/* Die Blase — GESCHWISTER der Kartenfläche, nicht ihr Kind. Warum, steht bei
+            der Prop `blase` oben. `box-none` heißt: Diese Schicht selbst fängt nichts
+            ab, ihre Kinder schon — was neben der Blase liegt, kommt weiter bei der
+            Karte an. */}
+        {blaseInhalt ? (
+          <Animated.View style={[styles.ueberKarte, { opacity: blaseDeckkraft }]}>
+            {blaseInhalt}
+          </Animated.View>
+        ) : null}
       </View>
 
       {/* Die Namensnennung liegt IN der Karte und nicht daneben im Screen — sie ist
@@ -416,7 +528,7 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe }: SsWienK
             zoomWert.setValue(1);
             schiebenX.setValue(0);
             schiebenY.setValue(0);
-            setZoomStufe(1);
+            setSicht({ zoom: 1, x: 0, y: 0 });
           }}>
           <SsText variant="caption" color={colors.surface}>
             Ganz Wien
@@ -433,6 +545,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   quelle: { fontSize: 10, lineHeight: 14, paddingTop: 2 },
+  /** Karte und Blase liegen deckungsgleich übereinander — dafür braucht es einen
+      gemeinsamen Bezugsrahmen. Ohne ihn müsste die Blase im `rahmen` positioniert
+      werden, und der ist bei schmaler Karte breiter als sie (`alignItems: 'center'`). */
+  flaeche: { position: 'relative' },
+  // `StyleSheet.absoluteFillObject` gibt es in React Native 0.86 nicht mehr (ACTA).
+  ueberKarte: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    // Diese Schicht selbst fängt nichts ab, ihre Kinder schon — was neben der Blase
+    // liegt, kommt weiter bei der Karte an. Im `style`, nicht als Prop (ACTA-Falle).
+    pointerEvents: 'box-none',
+  },
   fenster: {
     // Ohne das ragt die gezoomte Karte über ihren Platz hinaus und liegt über den
     // Kategorie-Pillen darüber und der Liste darunter.
