@@ -2501,7 +2501,7 @@ ist das erste Stück, das `react-native-svg` aus Phase 19 wirklich ausnutzt.
 der Postleitzahl IST die Bezirksnummer. Die Daten für die Karte liegen seit vier Wochen
 da, sie werden nur nie als Fläche gezeigt. **Kein Feld kommt dazu, keins ändert sich.**
 
-#### Ians achtundzwanzigste bis einunddreißigste Entscheidung (alle 2026-09-06)
+#### Ians achtundzwanzigste bis dreiunddreißigste Entscheidung (alle 2026-09-06)
 
 | Frage | Entscheidung | Verworfen — und warum |
 |---|---|---|
@@ -2510,6 +2510,7 @@ da, sie werden nur nie als Fläche gezeigt. **Kein Feld kommt dazu, keins änder
 | Was tut ein Tipp? | **Karte bleibt stehen, Posts erscheinen darunter** | In die Liste springen (die Karte wäre ein Knopf, und jeder Vergleich kostet einen Rückweg). In den Stapel springen (man sieht nicht mehr, was man gewählt hat). |
 | Posts ohne Bezirk? | **Antippbare Zeile unter der Karte: „2 ohne Bezirk"** | Weglassen (eine Ansicht, die still Posts verschluckt — genau die Sorte Fehler wie die zwei Leer-Zustände vom 03.09.). Überall mitfärben (behauptet Aktivität an 23 Orten, die es nicht gibt). |
 | Einfärben? | **Relativ zum stärksten Bezirk** | Feste Stufen (bei fünf Posts wäre ganz Wien blassgrau). Nur Zahlen (dann ist es eine Tabelle in Kartenform). |
+| Wie kommt man an die Innenbezirke? *(kam erst beim Bauen auf, 06.09.)* | **Schieben und Zoomen mit zwei Fingern** — Ians Entscheidung 33, **gegen meine Empfehlung** | Eine **Lupe** (zweite, größere Karte nur für die Bezirke 1–9, so machen es Papierkarten): braucht keine Geste und wäre das Sicherste — aber man muss zwei Karten übereinander erst verstehen, und von einer Karte erwartet man heute Zoom. **Karte nur zum Anschauen** mit einer Auswahlreihe darunter: am wenigsten Arbeit, und praktisch das, was Ian beim Filter schon verworfen hat. **Die Messung dahinter:** Josefstadt 14 × 11 px bei Handybreite; „nächster Beschriftungspunkt gewinnt" ergäbe 11 × 11 px, also schlechter als nichts zu tun. **Der Haken, den er kennt:** dritter Gesten-Erkenner der App, und die beiden anderen sind am echten iPhone noch ungeprüft. |
 
 #### Was zu bauen ist
 
