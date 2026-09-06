@@ -478,7 +478,10 @@ das heimlich Termine erfindet.
 > ✅ **Und die kleine Frage daneben, gleicher Tag:** Vor „Mehr einstellen" stehen jetzt
 > **die drei Striche ☰**, nicht ⚙️ — wie er es ursprünglich gesagt hatte. `MEHR_SYMBOL`.
 
-✅ **Alle sechsundzwanzig Regel-Entscheidungen sind getroffen (Stand 2026-09-06).**
+✅ **Alle Regel-Entscheidungen sind getroffen (Stand 2026-09-06).** Zuletzt die
+dreiunddreißigste: **die Karte lässt sich schieben und zoomen** (`KARTE_GESTE` in
+`features/posts/karte.ts`) — gegen meine Empfehlung „Lupe“, und sein Argument war das
+bessere.
 Die letzte — `zaehltAlsTermin()` in `features/requests/kollision.ts` — hat er an diesem
 Tag beantwortet: **erst, wenn wirklich jemand dabei ist.** Die verworfenen Möglichkeiten
 stehen in allen sieben Regel-Dateien weiter im Kopfkommentar — als Gedächtnis, nicht als
