@@ -179,7 +179,32 @@ daran wichtiger als der Regler:
   `User.jahrgang: number`, und am Post ein Union `{ kind: 'egal' } | { kind: 'spanne'; … }`.
   **Offen bleibt, was am Profil steht** (Jahrgang, Alter, oder weiter ein grobes Band).
 
-🔜 **Als Nächstes: Phase 19 — und daneben wieder herzeigen.** Am 2026-09-02 haben die drei Mitgründer den
+✅ **Phase 19 läuft — SimplySocial ist eine echte iOS-App (2026-09-06).** Sie startet
+auf einem iPhone-Simulator (17 Pro, iOS 26.5), **alle geprüften Icons zeichnen**, die
+SafeArea stimmt oben und unten, Deep Links funktionieren nativ. Belege liegen als
+`p19-ios-*.png` im Projektordner. Vier Dinge sind daran wichtiger als der Screenshot:
+1. **Der Plan sah einen Cloud-Build vor, der auf Ians Apple-Login gewartet hätte — ein
+   Simulator-Build braucht keine Signatur.** Damit zerfällt „läuft es auf iOS?" in zwei
+   getrennt beantwortbare Fragen: *startet die App und zeichnet sie richtig* (Simulator,
+   erledigt) und *wie fühlt sie sich unter einem Finger an* (Ians Gerät, offen). Das ist
+   dieselbe Trennung, aus der Phase 19 überhaupt vor Phase 20 steht — nur eine Stufe
+   feiner.
+2. **`react-native-svg` war der einzige neue Native-Baustein, und das war der Punkt.**
+   Der erste Build scheiterte an zwei Compilerfehlern; der zweite lief durch, ohne dass
+   etwas geändert wurde (Xcode kompilierte beim ersten Mal noch Pods, während der Icon
+   Composer lief). Weil nur EINE Sache neu war, war diese Diagnose in Minuten fertig.
+3. **Die Fehlermeldung wäre fast verlorengegangen** — der Aufruf lief durch `tail -60`,
+   und genau die `error:`-Zeilen wurden weggeworfen. Übrig blieb „2 error(s)" ohne einen
+   Grund. Ein Build-Protokoll gehört ganz in eine Datei und wird hinterher gegrept.
+4. **Vorhersage 19.6 ist bestätigt:** Nach einem echten Kaltstart kommen Anleitungskarte
+   und Prototyp-Hinweis wieder — auf Native gibt es kein `sessionStorage`. **Das bleibt
+   bis Phase 20 liegen**, wo `expo-secure-store` ohnehin dazukommt.
+
+🔜 **Was jetzt auf Ian wartet: der Build auf sein echtes iPhone** (EAS, braucht seinen
+Apple-Login) und der Gesten-Durchgang. **Ein Mausklick am Simulator ist keine
+Gestenprüfung** — Wischstapel, Tastatur im Chat und der Jahrgangs-Balken sind unbelegt.
+
+🔜 **Daneben weiter: wieder herzeigen.** Am 2026-09-02 haben die drei Mitgründer den
 Prototyp am Handy durchgeklickt. Ihr Urteil zur Sache war gut (Leopold: „für die
 Aktivitäten-Funktion sehr gut, an sich funktioniert es"), die Kritik betraf das
 Aussehen: **„schaut noch bisschen nach AI aus, wegen den Emojis"** (Christoph) — **das
@@ -656,12 +681,16 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    baut, die ein Icon durchreicht, tippt die Prop `IconName` — nie `string`. **Ausgenommen ist, was ein Mensch selbst tippt**: Leas
    „Cool, freut mich! 🎾" in `data/mock.ts` bleibt. Ein Emoji, das die App VORSCHLÄGT,
    ist dagegen Oberfläche — deshalb ist das 🙌 aus `grussVorschlag()` weg.
-24. **`SsIcon` zeichnet auf Web und nirgends sonst.** Auf iOS/Android steht ein
-   sichtbarer Platzhalter, weil es dort kein `<svg>` gibt und `react-native-svg` ein
-   Native-Modul wäre (Regel 1, und PLAN.md Phase 14 sagt es wörtlich). **Das ist keine
-   Baustelle zum Nebenbei-Beheben** — der Tausch gehört zum ersten EAS-Build und ist
-   dann EINE Datei: Pfaddaten (`theme/icons.ts`) und Zeichner (`SsIcon.tsx`) sind
-   genau dafür getrennt. Kein Screen wird angefasst.
+24. **`SsIcon` zeichnet auf BEIDEN Plattformen — seit Phase 19 auch nativ.**
+   *(Ersetzt seit dem 2026-09-06 die alte Fassung „zeichnet auf Web und nirgends
+   sonst".)* Auf Web `<svg>` über `react-dom`, auf iOS `<Svg>`/`<Path>` aus
+   `react-native-svg`. **Beide Zweige lesen dieselben Pfade aus `theme/icons.ts`** —
+   der Tausch war EINE Datei und kein Screen, genau wie seit Phase 14 angekündigt.
+   Der Web-Zweig bleibt bewusst bei `react-dom`: Es gibt dort nichts zu gewinnen und
+   eine seit vier Wochen laufende Seite zu verlieren. **Der Preis des Imports ist
+   gemessen:** +49.524 B im Web-Bündel (+3,5 %). Vermeidbar wäre er über
+   Plattform-Endungen (`SsIcon.native.tsx`), aber das zerlegt EINEN Zeichner in drei
+   Dateien — der Grund, warum es die Trennung Daten/Zeichner gibt, wäre dahin.
 25. **`landing/icons.js` ist eine KOPIE von `theme/icons.ts`, keine Verbindung** —
    dieselbe Lage wie bei `stil.css` (Regel 13) und derselbe Grund: Die Landing-Page hat
    bewusst kein npm. Wer einen Pfad in der App ändert, ändert die Seite NICHT mit.
@@ -1146,6 +1175,23 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   Punkte umgerechnet wurden (Anzeige × 1.28, dann ÷ 3). Erst die Zahl **51 pt** hat die
   Ursache benannt; vorher standen drei gleich plausible Vermutungen nebeneinander.
   **Ein Screenshot ist eine Messung, wenn man ihn ausmisst.**
+- **Ein Build-Protokoll darf nie durch `tail` laufen.** (Phase 19, 2026-09-06)
+  `npx expo run:ios 2>&1 | tail -60` zeigte am Ende „2 error(s)" — und keinen einzigen
+  Grund, weil `tail` genau die `error:`-Zeilen weggeworfen hatte, wegen derer der Aufruf
+  lief. Ein Build erzeugt hunderte Zeilen und meldet Fehler in der MITTE. Ganz in eine
+  Datei schreiben, hinterher `grep -n "error:"`.
+- **Ein Simulator-Build braucht keine Apple-Signatur — ein Gerätebuild schon.**
+  (Phase 19) Das ist der Unterschied zwischen „heute" und „wenn Ian Zeit hat": Zertifikate,
+  Provisioning und registrierte Geräte verlangt Apple nur für echte Hardware. `npx expo
+  run:ios` baut lokal, installiert und startet — und `xcrun simctl openurl booted
+  "simplysocial://<route>"` navigiert per Deep Link, macht also den Screen-Durchgang ohne
+  Finger möglich. **Was er NICHT ersetzt, sind Gesten** (Phase-18b-Lehre: ein `click` löst
+  weder `onPanResponderMove` noch das Kreuzungsverbot aus).
+- **Was wie ein Neustart aussieht, ist oft keiner.** (Phase 19) `xcrun simctl terminate`
+  + `launch` zeigte die Kaltstart-Hinweise NICHT — und hätte damit die Vorhersage aus
+  19.6 scheinbar widerlegt. Der Prozess war nur gar nicht tot; `launch` holte die App
+  bloß nach vorn. Mit `pgrep` dazwischen kamen beide Hinweise wie erwartet. Dieselbe
+  Falle wie das `browser_navigate` in Phase 18d.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

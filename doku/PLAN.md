@@ -2366,7 +2366,75 @@ braucht es die Bibliothek nicht, und `react-dom` zeichnet ein echtes `<svg>`.
 > falsch: Der ganze Zweck von „erst aufs Gerät" ist, dass beim ersten Fehler nur EINE
 > Sache neu ist. Vier neue Native-Bausteine auf einmal heben genau das wieder auf.
 
-#### 19.4 — Der Build ⬜
+> ### Der Weg, den der Plan nicht vorgesehen hatte: erst der Simulator
+>
+> **Phase 19 lässt sich noch einmal halbieren, und das war am 2026-09-06 der Fortschritt
+> des Tages.** Der Plan sah einen Cloud-Build vor, der Ians Apple-Zugangsdaten braucht —
+> also einen Halt. Ein **Simulator-Build braucht keine Signatur**: keine Zertifikate,
+> kein registriertes Gerät, keinen Apple-Login. Apple verlangt das alles nur für echte
+> Hardware.
+>
+> Damit zerfällt „läuft die App auf iOS?" in zwei Fragen, die getrennt beantwortbar sind
+> — dieselbe Logik, aus der Phase 19 überhaupt vor Phase 20 steht:
+>
+> | Frage | Wer beantwortet sie | Braucht |
+> |---|---|---|
+> | Startet die App nativ? Zeichnen die 41 Icons? Stimmt die SafeArea? | **Simulator** ✅ | nichts |
+> | Wie fühlt sich der Wischstapel unter einem Finger an? | **Ians iPhone** ⬜ | Apple-Login |
+>
+> `npx expo run:ios` erzeugt dabei den `ios/`-Ordner, den EAS sonst in der Cloud anlegt.
+> Er steht schon in `.gitignore`, und das ist richtig: Bei Expos „Continuous Native
+> Generation" ist `app.json` die Quelle und `ios/` das Erzeugnis. **Wer den Ordner
+> eincheckt, hat ab da zwei Wahrheiten.**
+>
+> **Der erste Lauf scheiterte an zwei Compilerfehlern — der zweite lief durch, ohne dass
+> irgendetwas geändert wurde.** Beim ersten Mal kompilierte Xcode noch die Pods, während
+> der Icon Composer lief; beim zweiten standen die Zwischenergebnisse. **Wichtiger als
+> der Fehler ist, dass er beinahe unsichtbar geblieben wäre:** Der Aufruf war
+> `npx expo run:ios 2>&1 | tail -60` — und `tail` hat genau die `error:`-Zeilen
+> weggeworfen, wegen derer er lief. Übrig blieb „2 error(s)" ohne einen einzigen Grund.
+> **Bei einem Build-Lauf nie durch `tail` filtern; ganz ins Protokoll schreiben und
+> hinterher `grep`en.**
+>
+> **Was der Screen-Durchgang am Simulator (iPhone 17 Pro, iOS 26.5) gezeigt hat:**
+>
+> 1. **Die Icons zeichnen.** Stift am „Posten", Lupe im Suchfeld, Regler am Filter, die
+>    sechs Kategoriesymbole, X und Hand auf den Stapelknöpfen, die vier Tab-Icons, Blatt
+>    und roter Mülleimer in den Einstellungen. `react-native-svg` liest dieselben Pfade
+>    aus `theme/icons.ts` wie der Browser — **kein Screen wurde angefasst**, wie seit
+>    Phase 14 angekündigt. Belege: `p19-ios-*.png`.
+> 2. **Die SafeArea stimmt oben und unten** — der Schriftzug sitzt unter der Notch, die
+>    Tab-Leiste über dem Home-Indikator. Der ganze `visualViewport`-Nachtrag vom selben
+>    Tag ist reine Web-Logik; auf Native macht das `react-native-safe-area-context`, und
+>    es tut es.
+> 3. **Deep Links funktionieren nativ.** `xcrun simctl openurl booted
+>    "simplysocial://einstellungen"` springt in den Screen. Das ist mehr als eine
+>    Spielerei: **Damit ist der Screen-Durchgang ohne Finger machbar** — genau die
+>    Prüfwerkzeuge, von denen der Plan sagte, es gebe sie auf dem Gerät nicht.
+> 4. **Der Doppel-Hinweis aus 18d läuft nativ**, in Grau und nicht in Rot, mit Uhr-Icon.
+>    Der letzte Eingriff vor dieser Phase überlebt den Plattformwechsel unverändert.
+>
+> **Was der Simulator NICHT beantworten kann und deshalb offen bleibt:** der Wischstapel
+> unter einem echten Finger samt der Zurück-Wischgeste vom Bildschirmrand, die Tastatur
+> im Chat (harte Regel 9), der Jahrgangs-Balken mit zwei Griffen und einem Finger
+> (Regel 45), und ob `NOTBREITE` anspringt. **Ein Mausklick am Simulator ist keine
+> Gestenprüfung** — dieselbe Lehre wie aus Phase 18b, wo genau dieser Irrtum den Fehler
+> im Griffpaar verdeckt hat.
+>
+> **19.6 ist bestätigt, nicht nur vermutet.** Nach einem echten Kaltstart (Prozess
+> nachweislich beendet, dann `simctl launch`) sind Anleitungskarte UND Prototyp-Hinweis
+> wieder da. `weggeklickt` in `PrototypHinweis.tsx` ist ein Modul-`let`, und
+> `sessionStorage` gibt es auf Native nicht. **Bleibt liegen bis Phase 20**, wo
+> `expo-secure-store` ohnehin dazukommt — ein zweiter Native-Baustein jetzt hätte den
+> Zweck der ganzen Phase aufgehoben.
+>
+> **Eine Falle dabei fast übersehen:** Ein erster `terminate` + `launch` zeigte die
+> Hinweise NICHT — was die Vorhersage widerlegt hätte. Der Prozess war aber gar nicht
+> tot; `launch` hatte die App nur nach vorn geholt. Erst mit `pgrep`-Prüfung dazwischen
+> war es ein echter Kaltstart. **Dieselbe Falle wie das `browser_navigate` in Phase 18d:
+> Was wie ein Neustart aussieht, ist oft keiner.**
+
+#### 19.4 — Der Build ✅ *(2026-09-06, Simulator)* / ⬜ *(Gerät)*
 
 ```bash
 npx eas-cli login
@@ -2383,7 +2451,7 @@ sich nicht antun muss.
 Ians Gerät muss einmalig registriert werden (`eas device:create`) — bei einem
 `development`-Profil führt EAS da durch.
 
-#### 19.5 — Der Durchgang am Gerät ⬜
+#### 19.5 — Der Durchgang ✅ *(Screens, 2026-09-06)* / ⬜ *(Gesten)*
 
 Dieselbe Sorgfalt wie bei den Web-Durchgängen, aber **die Prüfwerkzeuge von dort gibt es
 hier nicht**: kein `document.elementFromPoint`, kein `scrollWidth > clientWidth`, kein
@@ -2400,7 +2468,7 @@ Reihenfolge nach Risiko, nicht nach Bildschirm-Reihenfolge:
 5. **Die Tab-Leiste über der Home-Anzeige** und die SafeArea unten.
 6. **Die 41 Symbole** — sind sie nach dem Tausch dieselben wie im Browser?
 
-#### 19.6 — Was der Durchgang mit Sicherheit findet ⬜
+#### 19.6 — Was der Durchgang mit Sicherheit findet ✅ *(bestätigt, 2026-09-06)*
 
 **Zwei Hinweise kommen auf iOS bei jedem Kaltstart wieder.** `anleitungGesehen()` im
 `WischStapel` und `merken()` im `PrototypHinweis` fallen auf Native beide auf einen
