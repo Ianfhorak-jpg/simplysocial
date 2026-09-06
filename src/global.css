@@ -1,13 +1,35 @@
 /*
   Nur für die Web-Version. Auf iOS und Android wird diese Datei ignoriert.
 
-  Das Problem: Handy-Browser rechnen `100vh` gegen den Bildschirm OHNE Adressleiste.
-  Die Leiste liegt dann über den untersten Pixeln der Seite. Ein Scroll-Bereich, der
-  genau `100vh` hoch ist, hält sich deshalb für "am Ende", während sein letztes Stück
-  unsichtbar unter der Browser-Leiste steckt — man kommt nicht ganz nach unten.
+  ── Die Höhe der App, in drei Stufen ──────────────────────────────────────────
+  Jede Stufe überschreibt die davor. Sie stehen absichtlich alle drei hier, damit
+  man die Geschichte an einer Stelle liest statt in drei Dateien.
 
-  `100dvh` (dynamic viewport height) rechnet mit dem TATSÄCHLICH sichtbaren Bereich
-  und wächst mit, wenn die Adressleiste beim Scrollen verschwindet.
+  1. `100%`   — der Rückfall. Rechnet gegen den Bildschirm OHNE Browserleisten:
+                Der Inhalt ist dann zu HOCH, sein letztes Stück steckt unsichtbar
+                unter der Adressleiste, und man kommt nicht ganz nach unten.
+
+  2. `100dvh` — der Fix dagegen. Sollte den TATSÄCHLICH sichtbaren Bereich meinen
+                und mitwachsen, wenn eine Leiste verschwindet.
+
+                **Er reicht nicht.** Ian am 2026-09-06 auf Chrome am iPhone, mit
+                Chromes Adressleiste UNTEN: unter der Tab-Leiste stand ein toter
+                Streifen von 51 pt — fast genau die Höhe dieser Leiste. Am
+                Screenshot nachgemessen: 661 pt sichtbar, 610 pt App. Chrome zieht
+                seine Leiste also zweimal ab, einmal aus dem Fenster und einmal
+                über `dvh`. Ein Neuladen hat es scheinbar repariert, weil der
+                Browser dabei neu rechnet — bis zur nächsten Bewegung der Leiste.
+                Die untenliegende Adressleiste ist neuer als die dvh-Umsetzung in
+                WebKit, und dort meldet sie einen veralteten Wert.
+
+  3. `var(--ss-hoehe)` — was wirklich gilt, sobald JavaScript gelaufen ist.
+                Gesetzt aus `window.visualViewport.height`, dem einzigen Wert, der
+                per Definition „was gerade zu sehen ist" bedeutet UND bei jeder
+                Änderung ein Ereignis schickt. Das Messen steht in `app/+html.tsx`
+                — dort auch, warum eine offene Tastatur die Höhe NICHT verändert.
+
+  **Wer hier etwas ändert, ändert die andere Hälfte mit.** Die Klasse
+  `ss-hoehe-echt` verbindet die beiden Dateien; ohne sie greift Stufe 3 nicht.
 */
 html,
 body,
@@ -21,4 +43,19 @@ body,
   #root {
     height: 100dvh;
   }
+}
+
+/*
+  Stufe 3. Die Klasse setzt das Skript in `app/+html.tsx`, sobald es einmal
+  gemessen hat — vorher gilt weiter Stufe 2, damit eine Seite ohne JavaScript
+  nicht auf Höhe null zusammenfällt.
+
+  Die Selektoren tragen `html.ss-hoehe-echt` nur mit, um Expos eigenen Reset zu
+  schlagen (`<style id="expo-reset">` setzt `#root{height:100%}`). Gegen eine ID
+  gewinnt keine Reihenfolge, nur mehr Gewicht.
+*/
+html.ss-hoehe-echt,
+html.ss-hoehe-echt body,
+html.ss-hoehe-echt #root {
+  height: var(--ss-hoehe);
 }

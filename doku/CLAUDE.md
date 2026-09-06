@@ -1075,6 +1075,25 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   (Expo Router macht daraus eine Navigation im Client, kein Neuladen). Wer den Stapel in
   einen bestimmten Zustand bringen will, erzwingt ein echtes Neuladen mit einer
   veränderten Adresse (`?x=` + Zeitstempel).
+- **`100dvh` ist auf dem Handy keine verlässliche Antwort, `visualViewport` schon.**
+  (2026-09-06, von Ian gemeldet: unter der Tab-Leiste stand ein toter Streifen, ein
+  Neuladen machte ihn weg.) Am Screenshot nachgemessen: **661 pt sichtbar, 610 pt App**,
+  Lücke **51 pt** — fast genau die Höhe von Chromes eigener unterer Leiste. Chrome am
+  iPhone mit der Adressleiste UNTEN zieht sie zweimal ab: Das Fenster endet ohnehin über
+  ihr, und `dvh` rechnet sie noch einmal heraus. **Das Bittere ist, dass `100dvh` selbst
+  ein Fix war** — gegen `100vh`, das zu GROSS war und den Inhalt unter der Adressleiste
+  versteckte. Dieselbe Zeile erzeugt jetzt den umgekehrten Fehler. Eine CSS-Einheit rührt
+  der Browser nur an, wenn er ohnehin neu rechnet; deshalb half das Neuladen. Der
+  belastbare Wert ist `window.visualViewport.height` — als einziger definiert als „was
+  gerade zu sehen ist", und er MELDET seine Änderung. Die drei Stufen stehen in
+  `src/global.css`, das Messen in `app/+html.tsx`.
+- **Ein Fehler, den man am Mac nicht sieht, wird am Screenshot GERECHNET.** (2026-09-06)
+  Der Browser am Schreibtisch kennt keine Trennung von Layout- und Sicht-Fenster, also
+  war die Lücke dort mit `browser_resize` nicht zu erzeugen — drei Versuche gingen ins
+  Leere. Gefunden wurde sie, indem aus Ians Bild die vier Kanten abgelesen und in
+  Punkte umgerechnet wurden (Anzeige × 1.28, dann ÷ 3). Erst die Zahl **51 pt** hat die
+  Ursache benannt; vorher standen drei gleich plausible Vermutungen nebeneinander.
+  **Ein Screenshot ist eine Messung, wenn man ihn ausmisst.**
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

@@ -74,6 +74,9 @@ export default function Root({ children }: PropsWithChildren) {
         <ScrollViewStyleReset />
 
         <style dangerouslySetInnerHTML={{ __html: startFlaeche }} />
+        {/* Muss VOR dem Bündel laufen: Die Höhe soll schon beim ersten Bildaufbau
+            stimmen, nicht erst, wenn React da ist. */}
+        <script dangerouslySetInnerHTML={{ __html: hoeheMessen }} />
       </head>
       <body>
         {children}
@@ -129,4 +132,63 @@ const startFlaeche = `
   @media (prefers-reduced-motion: reduce) {
     #ss-start { transition: none; }
   }
+`;
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  DIE HÖHE DER APP — GEMESSEN STATT GERECHNET
+ *  Ians Fehlermeldung vom 2026-09-06, Chrome am iPhone.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Unter der Tab-Leiste stand ein toter Streifen; ein Neuladen machte ihn weg, bis
+ * zum nächsten Mal. Am Screenshot nachgemessen: **661 pt sichtbar, 610 pt App** —
+ * die Lücke ist 51 pt und damit fast genau die Höhe von Chromes eigener unterer
+ * Leiste. Chrome zieht sie zweimal ab: Das Fenster endet ohnehin über ihr, und
+ * `100dvh` rechnet sie noch einmal heraus.
+ *
+ * Die drei Stufen der Höhe stehen in `src/global.css`, dort auch die Begründung
+ * gegen `100%` und gegen `100dvh` allein. Hier steht nur, WOHER der richtige Wert
+ * kommt: `window.visualViewport`. Der ist als einziger definiert als „was gerade zu
+ * sehen ist" — und er schickt ein Ereignis, wenn sich das ändert. Genau das fehlt
+ * einer CSS-Einheit, die der Browser nur beim Neurechnen anfasst.
+ *
+ * ── Warum die offene Tastatur die Höhe NICHT verändert ───────────────────────
+ * `visualViewport.height` schrumpft auch, wenn die Bildschirmtastatur aufgeht.
+ * Würde die App mitschrumpfen, änderte sich das Verhalten des Chat-Screens
+ * (harte Regel 9: Eingabe fest unten) still mit — aus einem Fehlerfix würde
+ * nebenbei eine Umgestaltung. Deshalb der Schwellwert: Fällt die Höhe unter drei
+ * Viertel des größten bisher gesehenen Werts, ist das die Tastatur und kein
+ * Leistenwechsel, und der letzte gute Wert bleibt stehen.
+ *
+ * **Der Vergleichswert kalibriert sich selbst** und wird beim Drehen zurückgesetzt
+ * — quer ist ein Fenster wirklich viel niedriger, und ohne das Zurücksetzen hielte
+ * das Skript jede Drehung für eine offene Tastatur.
+ *
+ * Ohne JavaScript passiert hier nichts, und Stufe 2 aus `global.css` gilt weiter.
+ * Das ist Absicht: Eine Seite, deren Höhe an einem Skript hängt, das nie ankommt,
+ * wäre auf Höhe null — derselbe Gedanke wie das Sicherheitsnetz `ss-notausgang`
+ * weiter oben.
+ */
+const hoeheMessen = `
+(function () {
+  var sicht = window.visualViewport;
+  if (!sicht) return;
+  var wurzel = document.documentElement;
+  var groesste = 0;
+  var breite = 0;
+
+  function setzen() {
+    var h = sicht.height;
+    if (sicht.width !== breite) { breite = sicht.width; groesste = 0; }
+    if (h > groesste) { groesste = h; }
+    if (h < groesste * 0.75) { return; }
+    wurzel.style.setProperty('--ss-hoehe', h + 'px');
+    wurzel.classList.add('ss-hoehe-echt');
+  }
+
+  sicht.addEventListener('resize', setzen);
+  sicht.addEventListener('scroll', setzen);
+  window.addEventListener('orientationchange', setzen);
+  setzen();
+})();
 `;

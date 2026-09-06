@@ -1462,6 +1462,60 @@ an einer Karte.
 
 ---
 
+### Nachtrag 2026-09-06 — der tote Streifen unter der Tab-Leiste ✅
+
+**Ian am Handy, Chrome:** *„die Website bugt unten, mit einem Refresh lässt sich das
+fixen aber ich will das weg haben."* Auf dem Bild steht unter der Tab-Leiste ein Streifen
+in der Grundfarbe, dann erst Chromes eigene Leiste.
+
+**Gefunden wurde es nicht im Browser, sondern im Screenshot.** Am Schreibtisch ist die
+Lücke nicht herstellbar: Dort sind Layout-Fenster und Sicht-Fenster dasselbe, und
+`browser_resize` erzeugt genau den Fall nicht, um den es geht. Drei Vermutungen standen
+gleich plausibel nebeneinander (veraltete SafeArea-Insets, ein gecachter Frame in
+`react-native-safe-area-context`, die Tab-Leiste selbst). Entschieden hat erst das
+Ausmessen von Ians Bild:
+
+| | |
+|---|---|
+| sichtbare Seitenhöhe | 661 pt |
+| App-Höhe | 610 pt |
+| Tab-Leiste | 52 pt — **korrekt**, nicht ihr Fehler |
+| **Lücke** | **51 pt** ≈ Höhe von Chromes unterer Leiste |
+
+Damit war die Ursache benannt: **Chrome zieht seine eigene Leiste zweimal ab.** Das
+Fenster endet ohnehin schon über ihr, und `100dvh` rechnet sie noch einmal heraus. Ians
+Chrome hat die Adressleiste UNTEN — diese Stellung ist neuer als die dvh-Umsetzung in
+WebKit. Ein Neuladen half, weil der Browser dabei ohnehin neu rechnet.
+
+**Die Ironie gehört zur Lehre:** `100dvh` stand in `global.css` als Fix gegen `100vh`,
+das zu GROSS war und den Inhalt unter der Adressleiste versteckte. Der Kommentar dort
+beschrieb genau das. Dieselbe Zeile erzeugt jetzt den umgekehrten Fehler.
+
+**Der Fix ist eine dritte Stufe**, kein Ersetzen: `100%` → `100dvh` → `var(--ss-hoehe)`,
+alle drei in `global.css` untereinander, gesetzt aus `window.visualViewport.height` von
+einem Skript in `app/+html.tsx`. Der Unterschied ist grundsätzlich — eine CSS-Einheit
+rührt der Browser nur an, wenn er ohnehin neu rechnet; `visualViewport` **meldet** seine
+Änderung. Vier Dinge daran sind wichtiger als die Zeilen:
+
+1. **Die offene Tastatur darf die Höhe NICHT verändern.** `visualViewport.height`
+   schrumpft auch bei ihr. Ließe man die App mitschrumpfen, änderte sich das Verhalten
+   des Chat-Screens (harte Regel 9: Eingabe fest unten) still mit — aus einem Fehlerfix
+   würde nebenbei eine Umgestaltung. Deshalb der Schwellwert von drei Vierteln.
+2. **Der Vergleichswert kalibriert sich selbst und wird beim Drehen zurückgesetzt.**
+   Ohne das Zurücksetzen hielte das Skript jede Drehung ins Querformat für eine offene
+   Tastatur — quer ist ein Fenster wirklich um die Hälfte niedriger.
+3. **Ohne JavaScript passiert nichts, und Stufe 2 gilt weiter.** Eine Seite, deren Höhe
+   an einem Skript hängt, das nie ankommt, wäre auf Höhe null. Derselbe Gedanke wie das
+   Sicherheitsnetz `ss-notausgang` (harte Regel 21).
+4. **Die Klasse `ss-hoehe-echt` verbindet zwei Dateien.** Sie steht im Skript und im
+   CSS; wer eine der beiden Hälften anfasst, muss die andere kennen. Ihr Selektor trägt
+   `html.` nur mit, um Expos eigenen Reset (`#root{height:100%}`) zu schlagen — gegen
+   eine ID gewinnt keine Reihenfolge, nur mehr Gewicht.
+
+Nachgeprüft am gebauten Bündel in vier Fällen: Leistenwechsel (folgt, Lücke 0), Tastatur
+(hält den letzten guten Wert), Drehen (setzt zurück und folgt), ohne Skript (Stufe 2
+trägt, keine Höhe null).
+
 ### Phase 18 — Was aus Leopolds und Ians Rückmeldung folgt
 
 > **Der Abschnitt war ein Plan und ist jetzt großteils ein Bericht.** Ian am 2026-09-03:
