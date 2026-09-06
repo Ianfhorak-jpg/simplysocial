@@ -3200,16 +3200,23 @@ zeigen, dass der Anfragende woanders ist) scheitert an der `select`-Policy auf
 `join_requests`: Ein Poster sieht nur Anfragen an SEINE Posts. Der Prüffall steht in
 den Daten — Lea hat zwei Anfragen laufen, Ian sieht genau eine.
 
-**6. Die Kontolöschung ist eine Frage an Ian geworden, und das kam aus dem Schema.**
+**6. Die Kontolöschung ist eine Frage an Ian geworden — und noch am selben Tag seine
+39. Entscheidung (siehe Abschnitt 6, Punkt 39). Sie kam aus dem Schema.**
 `delete from auth.users` scheitert heute an `groups_creator_id_fkey`: Wer je gepostet
 oder gegründet hat, kann sein Konto nicht löschen. Den Screen dafür gibt es seit Phase 7
 und Apple verlangt ihn. Es ist dieselbe Frage wie `AUSTRITT_WIRKUNG` (Entscheidung 12),
-nur größer — die drei Möglichkeiten stehen ausgeschrieben in
+nur größer. **Ians Antwort: A, alles mit — außer der Gruppe, die gehört acht Leuten
+und wird nach Entscheidung 13 vererbt.** Gebaut in `0003_konto_loeschen.sql`, geprüft
+mit sieben weiteren Fällen (jetzt 25 statt 18). Die verworfenen Möglichkeiten stehen in
 `supabase/entscheidungen/konto-loeschen.sql`, **außerhalb von `migrations/`**, damit sie
-nicht versehentlich laufen. Dieselbe Anordnung wie `landing-vorschau/` neben `landing/`.
-Was schon feststeht und bei allen dreien gleich ist: `reports.from_user_id` ist
-`on delete set null` — **eine Meldung überlebt das Konto dessen, der sie geschrieben
-hat**, sonst nimmt jeder Anzeigende beim Löschen den Beleg mit.
+nicht versehentlich laufen — dieselbe Anordnung wie `landing-vorschau/` neben `landing/`.
+
+**Und dabei kam ein zweiter eigener Fehler heraus:** `reports.from_user_id` war
+`not null` UND `on delete set null`. Postgres nimmt das an und scheitert erst beim
+ersten echten Kontolöschen. Ausgerechnet an der einen Stelle, von der ich geschrieben
+hatte, sie stünde bei allen drei Möglichkeiten schon fest — **eine Meldung überlebt das
+Konto dessen, der sie geschrieben hat**, sonst nimmt jeder Anzeigende beim Löschen den
+Beleg mit. Sie tut es jetzt auch wirklich.
 
 #### 20.3 — Anmelden ⬜ *(Ians 27. Entscheidung)*
 
@@ -4114,6 +4121,62 @@ Posts —, und die Korrektur ist eine Zeile. **Der Grund gegen „nach Rang" ist
 stärkere:** Eine Karte, die immer gleich aussieht, beantwortet die Frage nicht mehr,
 für die es sie gibt.
 
+### 39. Was beim Kontolöschen mit den eigenen Sachen passiert ✅
+
+**Entschieden von Ian am 2026-09-06: A — alles mit.** Gebaut in
+`simplysocial/supabase/migrations/0003_konto_loeschen.sql`; die verworfenen
+Möglichkeiten stehen weiter in `supabase/entscheidungen/konto-loeschen.sql`.
+
+**Die Frage kam aus dem Schema, nicht aus dem Plan.** `delete from auth.users`
+scheiterte an `groups_creator_id_fkey`: Wer je gepostet oder eine Gruppe gegründet
+hatte, konnte sein Konto überhaupt nicht löschen. Den Screen dafür gibt es seit
+Phase 7 und Apple verlangt ihn (Richtlinie 1.2).
+
+Verworfen sind **B** (Profil leeren, Verabredetes bleibt stehen) und **C** (nur
+Posts ohne Zusagen gehen). Den Haken von A kennt er und hat ihn gewählt: Wer morgen
+17:00 mit vier Leuten verabredet war, sagt allen vieren kommentarlos ab.
+
+> **Die zweite Hälfte dieser Entscheidung ist die interessantere.** A sagte
+> „Gruppen weg" — und kollidierte damit mit `GRUENDER_AUSTRITT = 'weitergeben'`
+> (seine Entscheidung 13), die in `features/groups/gruppe.ts` als „nicht ohne
+> Rückfrage ändern" markiert ist. Ein Konto zu löschen IST ein Verlassen. Gefragt,
+> ob A das überschreibt, war seine Antwort die genauere von beiden:
+>
+> **A gilt für alles, was NUR mir gehört. Eine Gruppe gehört acht Leuten.**
+>
+> Damit bleibt Entscheidung 13 unangetastet: Die Gruppe geht an das Mitglied, das am
+> längsten dabei ist (kleinstes `joined_at`). Ist niemand sonst drin, löst sie sich
+> auf — keine Ausnahme, sondern dieselbe Regel, und genau so stand es schon im Kopf
+> von `nachfolgerId()`.
+>
+> **Das ist der Grund, warum ein Screen eine Regel-Datei nie überstimmen darf:** Der
+> Widerspruch war nur sichtbar, weil `GRUENDER_AUSTRITT` als benannte Konstante an
+> EINER Stelle steht. Läge dieselbe Regel verstreut in drei Screens, hätte A sie
+> still überschrieben.
+
+**Der Screen versprach seit Phase 7 das Gegenteil, und niemand hätte es gemerkt.**
+In `/account-loeschen` stand fest im JSX: „die Nachrichten selbst bleiben bei den
+anderen stehen" — das ist Möglichkeit **B**. Über Gruppen stand gar nichts. Ein fest
+getippter Satz ändert sich nicht mit, wenn jemand die Regel entscheidet; es gab keine
+Stelle, die beim Wählen von A mitgewandert wäre. Behoben nach derselben Bauart wie
+`blockFolgen()` (harte Regel 17): Die Sätze kommen jetzt aus `loeschFolgen()` in
+`features/safety/konto.ts`, wo auch `LOESCH_WIRKUNG` und die verworfenen Möglichkeiten
+stehen. **Das ist der eigentliche Ertrag der Regel-Dateien** — sie sind nicht Ordnung,
+sie sind der Grund, warum eine Entscheidung überhaupt irgendwo ankommt.
+
+**Zwei weitere Fehler kamen heraus, beide erst beim Ausführen:**
+1. `reports.from_user_id` war `not null` UND `on delete set null`. Postgres nimmt
+   diese Kombination beim Anlegen an und scheitert erst, wenn wirklich jemand sein
+   Konto löscht — also am denkbar schlechtesten Tag. Ausgerechnet bei der Meldung,
+   von der im Plan stand, sie sei bei allen drei Möglichkeiten gleich geregelt.
+2. Die `auth.uid()`-Attrappe war **nicht** wortgleich mit Supabase: Sie castete vor
+   dem `nullif`. Eine mit `set local` gesetzte und zurückgerollte Sitzungsvariable
+   steht danach auf dem leeren String, und `''::json` ist `22P02`. Der Fehler sah aus
+   wie einer in der Policy. **Eine Attrappe, die vom Original abweicht, prüft die
+   Attrappe.**
+
+---
+
 ## 7. Bewusst NICHT im Prototyp
 
 Login · Karte · Push-Nachrichten · Bezahlung · **echte Bilder-Uploads** ·
@@ -4308,8 +4371,8 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > eine frische Sitzung wissen muss:
 >
 > 1. **Es liegt alles in `simplysocial/supabase/`, und es läuft ohne Supabase-Konto.**
->    `bash supabase/pruefen/aufbauen.sh` baut eine Wegwerf-Datenbank und lässt 18
->    Prüfungen laufen. Erwartet: 18 Häkchen, kein Kreuz. Braucht nur
+>    `bash supabase/pruefen/aufbauen.sh` baut eine Wegwerf-Datenbank und lässt 25
+>    Prüfungen laufen. Erwartet: 25 Häkchen, kein Kreuz. Braucht nur
 >    `brew install postgresql@17`. **Vor jeder Änderung an einer Policy laufen lassen,
 >    danach wieder** — das ist der einzige Test, den dieses Projekt hat.
 > 2. **Die Absicherung ist ein Postgres-Ding, kein Supabase-Ding.** Deshalb ging 20.2
@@ -4323,9 +4386,10 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 >    Ergebnis einer bestätigten Anfrage, kein Schreibvorgang. Es kommt mit 20.5 als
 >    Postgres-Funktion. Wer stattdessen eine Insert-Policy hinzufügt, macht Phase 17
 >    („der Gründer bestätigt") zu einer Höflichkeitsform.
-> 5. **Eine Frage wartet auf Ian: die Kontolöschung.** `supabase/entscheidungen/
->    konto-loeschen.sql`, drei Möglichkeiten ausgeschrieben, dieselbe Frage wie seine
->    Entscheidung 12. Sie blockiert 20.3 NICHT — aber 20.6 und Phase 21 (Apple 1.2).
+> 5. **Es wartet KEINE Frage mehr auf Ian.** Die Kontolöschung war am 2026-09-06 die
+>    letzte und ist seine 39. Entscheidung: **A, alles mit — außer der Gruppe**, die
+>    nach Entscheidung 13 vererbt wird (`0003_konto_loeschen.sql`, Abschnitt 6
+>    Punkt 39). Was auf ihn wartet, sind Konten, keine Entscheidungen.
 > 6. **20.3 ist die erste Aufgabe, die wirklich auf Ian wartet**: Supabase-Konto,
 >    Google-Freischaltung, und Apple VOR Google (Richtlinie 4.8). Was NICHT auf ihn
 >    wartet, ist der Umbau von `CURRENT_USER_ID` — die Konstante ERSATZLOS löschen,

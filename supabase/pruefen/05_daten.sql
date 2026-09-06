@@ -70,3 +70,16 @@ insert into chat_participants (thread_id, user_id) values
   ('0c000002-0000-0000-0000-000000000002','33333333-3333-3333-3333-333333333333');
 insert into messages (thread_id, sender_id, text) values
   ('0c000001-0000-0000-0000-000000000001','22222222-2222-2222-2222-222222222222','Passt 17:00?');
+
+-- Für die Kontolöschung (Ians Entscheidung 39): Nora ist ALLEIN in ihrer Gruppe.
+-- Ohne diesen Fall bliebe der Zweig „kein Nachfolger → auflösen" ungeprüft — die
+-- Lehre aus Phase 18d, dass eine Regel ohne passende Daten stumm bleibt.
+insert into groups (id, name, category, creator_id, offen) values
+  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','Nora allein','creative',
+   '55555555-5555-5555-5555-555555555555', true);
+insert into group_members (group_id, user_id) values
+  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','55555555-5555-5555-5555-555555555555');
+
+-- Ian hat jemanden gemeldet. Die Meldung muss sein Konto ÜBERLEBEN.
+insert into reports (target_type, target_id, from_user_id, reason) values
+  ('user','44444444-4444-4444-4444-444444444444','11111111-1111-1111-1111-111111111111','belaestigung');

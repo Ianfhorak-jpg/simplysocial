@@ -31,6 +31,7 @@ $PSQL -q -c "drop database if exists ss;" -c "create database ss;" > /dev/null 2
 $PSQL -q -d ss -f "$HIER/00_supabase_lokal.sql"
 $PSQL -q -d ss -f "$HIER/../migrations/0001_schema.sql"
 $PSQL -q -d ss -f "$HIER/../migrations/0002_policies.sql"
+$PSQL -q -d ss -f "$HIER/../migrations/0003_konto_loeschen.sql"
 $PSQL -q -d ss -f "$HIER/05_daten.sql"
 echo "Datenbank steht. Jetzt der Angriff:"
 echo

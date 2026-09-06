@@ -30,7 +30,16 @@
 --  nicht heißt: „ich will hier weg", und das ist ein Recht, kein Wunsch.
 --
 --  ═══════════════════════════════════════════════════════════════════════════════
---   GEWÄHLT:  ⬜ noch offen  —  Ian, 2026-09-__
+--   GEWÄHLT:  ✅ **A — alles mit**, Ian am 2026-09-06 (seine 39. Entscheidung).
+--
+--   MIT EINER AUSNAHME, DIE ER SELBST GEZOGEN HAT: A kollidierte mit
+--   `GRUENDER_AUSTRITT = 'weitergeben'` (Entscheidung 13), und ein Konto zu löschen
+--   IST ein Verlassen. Nachgefragt, und seine Antwort war die genauere von beiden:
+--
+--       **A gilt für alles, was NUR mir gehört. Eine Gruppe gehört acht Leuten.**
+--
+--   Gebaut in `../migrations/0003_konto_loeschen.sql`. B und C bleiben unten stehen —
+--   als Gedächtnis, nicht als Einladung.
 --  ═══════════════════════════════════════════════════════════════════════════════
 
 

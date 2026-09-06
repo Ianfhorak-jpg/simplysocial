@@ -10,7 +10,30 @@
 
 ---
 
-## 🔵 NEU (06.09.2026) — eine Frage an dich, und sie ist wie deine Nummer 12
+## ✅ Erledigt am 06.09.2026 — deine 39. Entscheidung: Konto löschen
+
+> **Du hast A genommen: alles mit.** Posts weg, Nachrichten weg, Chats weg.
+>
+> **Und dann hast du die Frage besser gemacht, als sie gestellt war.** A hieß auch
+> „Gruppen weg" — aber deine Entscheidung 13 sagt schon, dass eine Gruppe beim
+> Weggehen an das längste Mitglied geht, und Kontolöschen ist ein Weggehen. Auf die
+> Nachfrage kam die genauere Antwort: **A gilt für alles, was nur dir gehört. Eine
+> Gruppe gehört acht Leuten.** Die wird vererbt wie immer; bist du allein drin, löst
+> sie sich auf.
+>
+> Gebaut und geprüft: `simplysocial/supabase/migrations/0003_konto_loeschen.sql`.
+> Sieben neue Prüfungen dazu, alle grün — unter anderem, dass Leas Gruppe stehen
+> bleibt und ihr gehört, wenn du gehst.
+>
+> **Was dabei aufgefallen ist und dich betrifft:** Mit A sagt dein Kontolöschen
+> laufende Verabredungen ab, ohne dass die anderen erfahren, warum. Das ist genau der
+> Haken, den du gewählt hast — aber die App sollte es beim Löschen HINSCHREIBEN, so
+> wie sie es beim Blockieren und beim Gruppenverlassen auch tut. Das kommt mit dem
+> Umbau des Löschen-Screens (Phase 20).
+
+---
+
+## 📕 Die Frage dazu, wie sie gestellt war (bleibt stehen, nicht gelöscht)
 
 **Was passiert mit deinen Sachen, wenn du dein Konto löschst?**
 

@@ -227,3 +227,62 @@ begin;
     raise notice '  ✗ ZUGESPERRT (SQLSTATE=%) — der gelöschte Post hat den Chat gekippt', z;
   end $$;
 rollback;
+
+\echo '── Konto löschen: Ians Entscheidung 39 (A) + Entscheidung 13 ───────────'
+
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111"}';
+  -- Ian hat 3 Posts, eine Gruppe mit Lea drin, Chats und eine geschriebene Meldung.
+  select konto_loeschen();
+  reset role;   -- ab hier NACHSEHEN, nicht mehr angreifen
+
+  select case when count(*) = 0 then '  ✓ ' else '  ✗ GEBLIEBEN — ' end
+      || 'Ians Posts sind weg (Entscheidung 39: alles mit)'
+    from posts where author_id = '11111111-1111-1111-1111-111111111111';
+
+  select case when count(*) = 0 then '  ✓ ' else '  ✗ GEBLIEBEN — ' end
+      || 'Ians Profil ist weg'
+    from profiles where id = '11111111-1111-1111-1111-111111111111';
+
+  -- DER Prüffall für Entscheidung 13: Die Gruppe darf NICHT verschwinden.
+  select case when count(*) = 1 then '  ✓ ' else '  ✗ AUFGELÖST — ' end
+      || 'die Gruppe mit Lea besteht weiter'
+    from groups where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+  select case when creator_id = '22222222-2222-2222-2222-222222222222'
+              then '  ✓ ' else '  ✗ FALSCHER ERBE — ' end
+      || 'und gehört jetzt Lea (wer am längsten dabei ist)'
+    from groups where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+  -- Der Beleg überlebt den Melder.
+  select case when count(*) = 1 then '  ✓ ' else '  ✗ MITGENOMMEN — ' end
+      || 'Ians Meldung steht noch da (from_user_id ist jetzt null)'
+    from reports where target_id = '44444444-4444-4444-4444-444444444444'
+      and reason = 'belaestigung' and from_user_id is null;
+rollback;
+
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"55555555-5555-5555-5555-555555555555"}';
+  -- Nora ist ALLEIN in ihrer Gruppe. „Weitergeben" ohne Nachfolger heißt auflösen —
+  -- und das ist keine Ausnahme, sondern dieselbe Regel: Die Gruppe gehört den Leuten
+  -- darin, und es sind keine mehr da.
+  select konto_loeschen();
+  reset role;
+  select case when count(*) = 0 then '  ✓ ' else '  ✗ VERWAIST — ' end
+      || 'Noras Gruppe löst sich auf, weil sie allein darin war'
+    from groups where id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+rollback;
+
+begin;
+  set local role anon;
+  do $$ declare z text; begin
+    perform konto_loeschen();
+    raise notice '  ✗ DURCHGELASSEN — ohne Anmeldung ein Konto gelöscht';
+  exception when others then get stacked diagnostics z = returned_sqlstate;
+    if z = '42501' then raise notice '  ✓ ohne Anmeldung löscht konto_loeschen() nichts';
+    else raise notice '  ✗ FALSCHER GRUND (SQLSTATE=%)', z;
+    end if;
+  end $$;
+rollback;

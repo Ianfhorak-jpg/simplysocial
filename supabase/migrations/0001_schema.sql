@@ -131,7 +131,11 @@ create index on group_members (group_id, joined_at);
 -- ── Posts ────────────────────────────────────────────────────────────────────
 create table posts (
   id         uuid primary key default gen_random_uuid(),
-  author_id  uuid not null references profiles (id),
+  -- `cascade` ist Ians Entscheidung 39 vom 2026-09-06 („alles mit"): Löscht jemand
+  -- sein Konto, gehen seine Posts mit. Den Haken kennt er und hat ihn gewählt — wer
+  -- morgen 17:00 mit vier Leuten verabredet war, sagt allen vier kommentarlos ab.
+  -- Seine GRUPPEN gehen NICHT mit; die werden vererbt (Entscheidung 13, siehe 0003).
+  author_id  uuid not null references profiles (id) on delete cascade,
   category   activity_category not null,
   title      text not null check (length(title) between 1 and 80),
 
@@ -304,7 +308,17 @@ create table reports (
   id           uuid primary key default gen_random_uuid(),
   target_type  report_target not null,
   target_id    uuid not null,
-  from_user_id uuid not null references profiles (id) on delete set null,
+  -- ⚠️ BEWUSST OHNE `not null`, und das ist kein Schlampen — hier stand es zuerst,
+  -- zusammen mit `on delete set null`. Postgres NIMMT diese Kombination an und
+  -- scheitert erst, wenn wirklich jemand sein Konto löscht:
+  --   `null value in column "from_user_id" violates not-null constraint`
+  -- Also genau an dem Tag, an dem es niemand mehr in Ruhe nachsehen kann. Am
+  -- 2026-09-06 gemessen, nicht überlegt.
+  --
+  -- `null` heißt hier „der Melder hat sein Konto gelöscht" — die MELDUNG bleibt.
+  -- Sonst nähme jeder, der jemanden anzeigt, mit dem Löschen den Beleg mit, und wer
+  -- gemeldet wird, hätte einen Weg, ihn verschwinden zu lassen.
+  from_user_id uuid references profiles (id) on delete set null,
   reason       report_reason not null,
   note         text not null default '',
   created_at   timestamptz not null default now(),

@@ -18,10 +18,19 @@ create table if not exists auth.users (
   email text
 );
 
+-- ⚠️ Die REIHENFOLGE der beiden Schritte ist keine Geschmacksfrage, und sie hat am
+-- 2026-09-06 eine Prüfung falsch rot gemacht. `nullif(..., '')` steht VOR dem Cast,
+-- genau wie im Original.
+--
+-- Der Grund: Eine Sitzungsvariable, die einmal mit `set local` gesetzt und dann
+-- zurückgerollt wurde, ist danach nicht WEG — sie steht auf dem leeren String. Wer
+-- zuerst castet, bekommt `''::json` und damit `22P02 invalid input syntax`, wo eine
+-- schlichte `null` hingehört. Das sieht dann aus wie ein Fehler in der Policy und ist
+-- einer in der Attrappe.
 create or replace function auth.uid() returns uuid
 language sql stable
 as $$
-  select nullif(current_setting('request.jwt.claims', true)::json ->> 'sub', '')::uuid
+  select (nullif(current_setting('request.jwt.claims', true), '')::json ->> 'sub')::uuid
 $$;
 
 -- Die zwei Rollen, unter denen PostgREST arbeitet. `anon` ist der nicht angemeldete

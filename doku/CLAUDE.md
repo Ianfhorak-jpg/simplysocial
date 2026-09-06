@@ -38,7 +38,7 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 ✅ **Phase 20.1 und 20.2 sind fertig (2026-09-06): das Schema und die Regeln auf dem
 Server.** Alles in `simplysocial/supabase/` — und **ohne Supabase-Konto gebaut und
 trotzdem bewiesen.** `bash supabase/pruefen/aufbauen.sh` baut eine Wegwerf-Datenbank
-und lässt 18 Angriffe von außen laufen; erwartet sind 18 Häkchen und kein Kreuz. Sechs
+und lässt 25 Angriffe von außen laufen; erwartet sind 25 Häkchen und kein Kreuz. Sechs
 Dinge sind daran wichtiger als die Tabellen:
 1. **Die Absicherung ist ein POSTGRES-Ding, kein Supabase-Ding — deshalb ging 20.2 vor
    20.3.** Der Plan hängte den Prüfstein an „den Zugangsschlüssel eines zweiten Kontos",
@@ -64,10 +64,28 @@ Dinge sind daran wichtiger als die Tabellen:
 5. **Harte Regel 47 ist jetzt nicht „nicht eingebaut", sondern UNMÖGLICH.** Die
    verworfene dritte Möglichkeit aus 18d scheitert an der Policy auf `join_requests`:
    Ein Poster sieht nur Anfragen an SEINE Posts.
-6. **Eine neue Frage wartet auf Ian, und sie kam aus dem Schema:** `delete from
-   auth.users` scheitert an `groups_creator_id_fkey` — wer je gepostet oder gegründet
-   hat, kann sein Konto nicht löschen. Drei Möglichkeiten ausgeschrieben in
-   `supabase/entscheidungen/konto-loeschen.sql`, **außerhalb von `migrations/`**.
+6. **Aus dem Schema kam eine Frage an Ian — und noch am selben Tag seine 39.
+   Entscheidung: A, „alles mit" — außer der Gruppe.** `delete from auth.users`
+   scheiterte an `groups_creator_id_fkey`: Wer je gepostet oder gegründet hatte, konnte
+   sein Konto gar nicht löschen. **Die zweite Hälfte der Entscheidung ist die
+   interessantere:** A sagte „Gruppen weg" und kollidierte damit mit
+   `GRUENDER_AUSTRITT = 'weitergeben'` (Entscheidung 13). Seine Antwort war die
+   genauere — *A gilt für alles, was NUR mir gehört; eine Gruppe gehört acht Leuten.*
+   Der Widerspruch war überhaupt nur sichtbar, **weil die Regel als benannte Konstante
+   an EINER Stelle steht**; verstreut in drei Screens hätte A sie still überschrieben.
+   Gebaut in `0003_konto_loeschen.sql`.
+7. **Der Lösch-Screen versprach seit Phase 7 das GEGENTEIL.** Dort stand fest im JSX
+   „die Nachrichten selbst bleiben bei den anderen stehen" — das ist Möglichkeit B,
+   und über Gruppen stand nichts. Ein getippter Satz wandert nicht mit, wenn jemand die
+   Regel entscheidet. Jetzt kommen die Sätze aus `loeschFolgen()` in
+   `features/safety/konto.ts` (harte Regel 17, wie `blockFolgen()`). **Das ist der
+   eigentliche Ertrag der Regel-Dateien: nicht Ordnung, sondern der Grund, warum eine
+   Entscheidung überhaupt irgendwo ankommt.**
+8. **Zwei eigene Fehler, beide erst beim AUSFÜHREN sichtbar.** `reports.from_user_id`
+   war `not null` UND `on delete set null` — Postgres nimmt das an und scheitert erst,
+   wenn wirklich jemand sein Konto löscht. Und die `auth.uid()`-Attrappe war **nicht**
+   wortgleich mit Supabase (Cast vor `nullif` statt danach), was eine Prüfung falsch
+   rot machte: **Eine Attrappe, die vom Original abweicht, prüft die Attrappe.**
 
 🚀 **Der Weg zur echten App ist geplant (2026-09-06): PLAN.md, Abschnitt 5b, Phasen 19
 bis 21.** Bis hierher war jede Phase eine Verbesserung an etwas, das schon lief; ab hier
@@ -604,7 +622,12 @@ das heimlich Termine erfindet.
 > **die drei Striche ☰**, nicht ⚙️ — wie er es ursprünglich gesagt hatte. `MEHR_SYMBOL`.
 
 ✅ **Alle Regel-Entscheidungen sind getroffen (Stand 2026-09-06).** Zuletzt die
-achtunddreißigste: **die Kartenfarbe bleibt bei gleich breiten Stufen** (`stufeFuer()`
+**neununddreißigste: beim Kontolöschen geht alles mit — außer der Gruppe.**
+(`supabase/migrations/0003_konto_loeschen.sql`, PLAN.md Abschnitt 6, Punkt 39.) Sie
+ist die erste, die aus dem SCHEMA kam statt aus einem Screen, und die erste, bei der
+eine neue Entscheidung eine ältere hätte überschreiben können: A hieß „Gruppen weg",
+`GRUENDER_AUSTRITT` hieß „vererben". Gefragt statt geraten — *eine Gruppe gehört acht
+Leuten.* Davor die achtunddreißigste: **die Kartenfarbe bleibt bei gleich breiten Stufen** (`stufeFuer()`
 in `features/posts/karte.ts`, PLAN.md Abschnitt 6, Punkt 35) — die Karte sagt damit
 weiter, *wo überhaupt etwas ist*, und bleibt im Kopf zurückrechenbar. Dabei kam heraus,
 dass zwei der drei angebotenen Möglichkeiten **fast dieselbe Regel** waren; die
@@ -1142,8 +1165,20 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    `chat_threads.aus_aktivitaet`, nie an `post_id`. **Allgemeiner: Wenn ein Wert
    heute aus einem anderen ableitbar ist, heißt das nicht, dass er es morgen noch ist —
    und die Ableitung ändert sich still.**
+58. **Eine neue Entscheidung überschreibt NIE still eine alte Regel-Datei.** Ians
+   Entscheidung 39 (Kontolöschen: „alles mit") sagte wörtlich „Gruppen weg" — und
+   `GRUENDER_AUSTRITT = 'weitergeben'` (Entscheidung 13) sagt, dass eine Gruppe beim
+   Weggehen vererbt wird. Beide sind seine, beide gelten, und ein Kontolöschen IST ein
+   Weggehen. Der Ausweg war nicht, eine der beiden auszulegen, sondern **nachzufragen**
+   — und die Antwort war präziser als beide Fassungen für sich (*A gilt für alles, was
+   NUR mir gehört*). **Der Widerspruch war überhaupt nur sichtbar, weil die ältere
+   Regel als benannte Konstante an EINER Stelle steht.** Wer eine neue Regel einbaut,
+   sucht deshalb zuerst die Regel-Dateien nach dem Fall ab, den sie berührt — und was
+   dort „nicht ohne Rückfrage ändern" trägt, ändert man nicht ohne Rückfrage, auch
+   nicht als Nebenwirkung.
+
 57. **Was am Server gilt, wird ANGEGRIFFEN, nicht angeschaut.**
-   `bash supabase/pruefen/aufbauen.sh`, 18 Prüfungen, erwartet sind 18 Häkchen. Jeder
+   `bash supabase/pruefen/aufbauen.sh`, 25 Prüfungen, erwartet sind 25 Häkchen. Jeder
    Block setzt `set local role authenticated` — **wer als `postgres` prüft, prüft
    nichts**, denn der Eigentümer einer Tabelle umgeht seine eigenen Policies. Und ein
    Test, der nur „ist fehlgeschlagen" abfragt, prüft zu wenig: Er muss `SQLSTATE =

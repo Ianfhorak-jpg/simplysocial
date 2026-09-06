@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { nachfolgerId } from '../groups/gruppe';
 import { CURRENT_USER_ID, aendern, neueId, useSlice } from '../store';
 
 import { BLOCK_WIRKUNG } from './block';
@@ -279,6 +280,18 @@ export interface MeineSpuren {
   anfragen: number;
   follower: number;
   folgt: number;
+  /**
+   * Gruppen, die ICH gegründet habe — Ians Entscheidung 39 vom 2026-09-06.
+   *
+   * Steht getrennt von `posts` und `chats`, weil es die einzige Zahl hier ist, die
+   * NICHT verschwindet: Eine Gruppe gehört den Leuten darin, sie wird vererbt
+   * (Entscheidung 13). Stünde sie unter „Das verschwindet", stünde dort etwas
+   * Falsches. Was daraus für Sätze werden, entscheidet `loeschFolgen()` in
+   * `safety/konto.ts` — nicht der Screen.
+   */
+  gruppenAlsGruender: number;
+  /** Wer die Gruppe erben würde. `null`, wenn es keine gibt oder ich allein darin bin. */
+  nachfolgerName: string | null;
 }
 
 /**
@@ -299,15 +312,26 @@ export function useMeineSpuren(): MeineSpuren {
   const chatThreads = useSlice('chatThreads');
   const joinRequests = useSlice('joinRequests');
   const users = useSlice('users');
+  const groups = useSlice('groups');
 
   return useMemo(() => {
     const ich = users.find((u) => u.id === CURRENT_USER_ID);
+
+    // Die Erbfolge wird NICHT hier gerechnet, sondern von `nachfolgerId()` aus
+    // `groups/gruppe.ts` — dieselbe Funktion, die auch der Verlassen-Dialog benutzt
+    // (harte Regel 33). Zwei Rechnungen für „wer erbt" wären zwei Gelegenheiten,
+    // dem Nutzer verschiedene Namen zu nennen.
+    const meine = groups.filter((g) => g.creatorId === CURRENT_USER_ID);
+    const erbeId = meine.length > 0 ? nachfolgerId(meine[0], CURRENT_USER_ID) : null;
+
     return {
       posts: posts.filter((p) => p.authorId === CURRENT_USER_ID).length,
       chats: chatThreads.filter((t) => t.participantIds.includes(CURRENT_USER_ID)).length,
       anfragen: joinRequests.filter((a) => a.fromUserId === CURRENT_USER_ID).length,
       follower: ich?.followerIds.length ?? 0,
       folgt: ich?.followingIds.length ?? 0,
+      gruppenAlsGruender: meine.length,
+      nachfolgerName: users.find((u) => u.id === erbeId)?.displayName ?? null,
     };
-  }, [posts, chatThreads, joinRequests, users]);
+  }, [posts, chatThreads, joinRequests, users, groups]);
 }

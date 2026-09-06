@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
+import { loeschFolgen } from '@/features/safety/konto';
 import { useMeineSpuren } from '@/features/safety/hooks';
 import { useCurrentUser } from '@/features/social/hooks';
 import { colors, danger, spacing } from '@/theme';
@@ -90,15 +91,20 @@ export default function AccountLoeschenScreen() {
 
       {/* Was mit den ANDEREN passiert, steht extra. Es ist der Teil, an den man beim
           Löschen zuletzt denkt — und der Einzige, den man hinterher nicht mehr
-          richtigstellen kann. */}
+          richtigstellen kann.
+
+          Die Sätze kommen aus `loeschFolgen()` neben der Regel und stehen NICHT hier
+          im JSX (harte Regel 17, dieselbe Bauart wie `blockFolgen()`). Bis zum
+          2026-09-06 standen sie hier — und behaupteten „die Nachrichten bleiben bei
+          den anderen stehen", also Möglichkeit B, während Ian A gewählt hat. Ein fest
+          getippter Satz ändert sich nicht mit, wenn jemand die Regel ändert. */}
       <SsCard>
         <SsText variant="bodyStrong">Was die anderen merken</SsText>
-        <SsText variant="body" color={colors.inkSoft}>
-          Deine Posts verschwinden aus dem Feed, auch die, für die schon jemand zugesagt
-          hat. In laufenden Chats steht statt deines Namens „Gelöschtes Konto" — die
-          Nachrichten selbst bleiben bei den anderen stehen, du kannst sie nicht aus
-          deren Verlauf herauslöschen.
-        </SsText>
+        {loeschFolgen(spuren.gruppenAlsGruender, spuren.nachfolgerName).map((satz) => (
+          <SsText key={satz} variant="body" color={colors.inkSoft}>
+            {satz}
+          </SsText>
+        ))}
       </SsCard>
 
       {schritt === 'info' ? (
