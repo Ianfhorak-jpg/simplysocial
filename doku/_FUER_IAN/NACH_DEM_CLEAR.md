@@ -3,18 +3,60 @@
 > Diese Datei steht hier, weil der Chat nach dem `/clear` weg ist — der Text darin
 > also auch. Hier findest du ihn wieder.
 >
-> Stand: **06.09.2026.** **Phase 0 bis 18d sind fertig und online** — damit ist
-> **alles gebaut, was Christoph, Leopold und Daria am 02.09. gesagt haben**: die Emojis
-> raus (14), Altersgruppe und Filter (15), Direktnachrichten (16) und Gruppen (17).
-> **Was Leopold am 03.09. beim wirklichen Benutzen gefunden hat, ist auch zu** (18a),
-> **dein Jahrgangs-Balken steht** (18b), **deine Chat-Liste ist aufgeräumt** (18c) und
-> **die App warnt jetzt vor Doppel-Verabredungen** (18d — Leopolds letzter Punkt).
+> Stand: **06.09.2026, nachmittags.** **SimplySocial ist seit heute eine echte
+> iPhone-App.** Sie startet auf einem iPhone-Simulator, alle Symbole zeichnen, alles
+> sitzt richtig. Was noch fehlt, ist der Build auf **dein** Handy — dafür brauche ich
+> dich (siehe unten). Davor sind Phase 0 bis 18d fertig und online.
 >
-> **Die Zeile, die hier gewartet hat, hast du am 06.09. beantwortet** — `zaehltAlsTermin()`,
-> „erst, wenn wirklich jemand dabei ist". Dafür wartet jetzt **eine andere Sache**:
-> die **Farbe der Landing-Page**, siehe unten.
+> **Leopolds Karten-Idee ist durchgesprochen und aufgeschrieben** — vier Entscheidungen
+> von dir stehen fest, gebaut ist sie noch nicht. Sie kommt als Nächstes.
 
 ---
+
+## Zuerst: was ich von dir brauche, damit es weitergeht
+
+**1. Die App auf DEIN iPhone.** Bis jetzt läuft sie auf einem simulierten iPhone am Mac.
+Das beantwortet „sieht sie richtig aus" — aber nicht „fühlt sie sich richtig an". Der
+Wischstapel, die Tastatur im Chat und der Jahrgangs-Balken sind **mit einem Mausklick
+nicht prüfbar**; dafür braucht es einen Finger.
+
+Dazu muss dein Gerät einmal bei Apple angemeldet werden, und dafür brauche ich deinen
+**Apple-Login** — den ich nicht haben kann und nicht haben soll. Der Weg ist:
+
+```bash
+cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
+npx eas-cli build --profile development --platform ios
+```
+
+Das fragt dich nach deiner Apple-ID und führt dich durch die Geräte-Registrierung. Alles
+andere ist vorbereitet: Bundle-ID, `eas.json`, das EAS-Projekt und die Zertifikate legt
+EAS selbst an. **Sag mir Bescheid, wenn du dabei irgendwo hängst** — dann gehen wir es
+zusammen durch.
+
+**2. Schau dir die Symbole an.** Auf dem simulierten iPhone sehen sie aus wie im
+Browser. Ob sie auf einem echten Bildschirm zu blass sind, kannst nur du sagen — das ist
+die Frage, die seit Phase 14 offen ist.
+
+---
+
+## Was gerade fertig geworden ist (Phase 19)
+
+**Der Plan sah einen Cloud-Build vor, der auf deinen Apple-Login gewartet hätte.** Es
+gab einen Weg daran vorbei: Ein Build für den **Simulator** braucht keine Anmeldung bei
+Apple — Zertifikate verlangt Apple nur für echte Geräte. Damit konnte die halbe Frage
+heute beantwortet werden statt erst, wenn du Zeit hast.
+
+Was jetzt belegt ist (Bilder liegen als `p19-ios-*.png` im Projektordner):
+- **Alle geprüften Symbole zeichnen** — der Tausch war eine einzige Datei, wie seit
+  Wochen angekündigt. Kein Bildschirm wurde angefasst.
+- Oben und unten sitzt alles richtig (Notch, Home-Balken).
+- Der Doppel-Hinweis („du bist da schon verabredet") funktioniert auch als echte App.
+
+Ein Fehler ist dabei fast unsichtbar geblieben: Der erste Build meldete „2 Fehler" —
+und keinen Grund, weil mein eigener Aufruf genau die Zeilen weggeworfen hatte, in denen
+die Gründe standen. Der zweite Lauf ging ohne jede Änderung durch.
+
+
 
 ## Zuerst: schau dir die drei Farben an
 

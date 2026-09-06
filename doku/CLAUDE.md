@@ -787,7 +787,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    `scripts/doku.sh`, aufgerufen von `.git/hooks/pre-commit`, damit die Kopie nicht
    still veraltet wie `landing/stil.css` (Regel 13). **Der Hook wird nicht
    mitversioniert**: nach einem frischen Clone neu anlegen, Anleitung in
-   `doku/LIESMICH.md`.
+   `doku/LIESMICH.md`. **Und die Falle im Hook selbst (2026-09-06, zweimal
+   hineingetappt):** Wurde NUR die Doku außerhalb des Repos geändert, bricht `git
+   commit` mit „nothing to commit" ab — Git prüft die Staging-Area, BEVOR der
+   pre-commit-Hook läuft, und der Hook füllt sie erst. Dann `npm run doku && git add -A
+   && git commit`.
 
 36. **Was über dem Wischstapel liegen soll, geht durch `WischStapel.blatt` — nie über
    den Stapelbereich im Screen.** Der Screen weiß nicht, wo die Karten aufhören und

@@ -182,8 +182,10 @@ meiste davon ist meine Arbeit. **Das hier ist die Liste dessen, was nur du kanns
 damit dich nichts überrascht.
 
 ### Bald, in Phase 19 (aufs Handy)
-- **Dein iPhone einmal anmelden.** Für einen Test-Build muss dein Gerät bei Apple
-  registriert werden. Ist ein Klick auf einem Link, den ich dir schicke.
+- **Dein iPhone einmal anmelden — das ist jetzt dran.** Die App läuft seit dem
+  06.09. auf einem *simulierten* iPhone; für dein echtes braucht Apple eine
+  Registrierung, und die geht nur mit deinem Apple-Login. Befehl und Ablauf stehen in
+  `NACH_DEM_CLEAR.md` ganz oben. Alles andere ist vorbereitet.
 - ~~**Der Name der App bei Apple wird festgelegt**~~ ✅ **erledigt am 06.09.2026:**
   Du hast `at.simplysocial.app` bestätigt. Der Wert steht jetzt in der App und ist ab
   der ersten Einreichung bei Apple für immer festgelegt. (`at.` weil die App aus Wien
@@ -262,6 +264,22 @@ den Rat hast, ersetzen wir den Kasten durch den echten Text, und die Stelle daf�
 schon.
 
 ---
+
+## 🟢 Leopolds Karten-Idee — entschieden, noch nicht gebaut (06.09.2026)
+
+Eine **Wien-Karte** als dritte Ansicht neben Stapel und Liste: 23 Bezirksflächen,
+eingefärbt danach, wo gerade etwas los ist; antippen zeigt die Aktivitäten darunter.
+**Du hast vier Sachen entschieden**, sie stehen ausführlich in PLAN.md (Phase 19b).
+
+Die wichtigste war deine eigene Idee und besser als mein Vorschlag: **erst die
+Bezirksflächen, eine echte Landkarte mit Stecknadeln vielleicht später** — wenn Leute
+die App wirklich benutzen. Der Grund, warum das klug ist: Eine Stecknadel verrät nicht
+„1220", sondern die genaue Parkbank um 17:00. Das gehört nicht auf einen Bildschirm,
+den Fremde sehen.
+
+**Was noch nichts kostet und trotzdem gut wäre:** Frag Leopold, ob er die Karte so
+meinte — Flächen pro Bezirk, oder hatte er Punkte im Kopf? Er hat die Idee gehabt, seine
+Antwort ist mehr wert als unsere Vermutung.
 
 ## 🟡 Braucht dich, aber hat noch Zeit
 
