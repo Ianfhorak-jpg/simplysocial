@@ -2485,6 +2485,55 @@ den Build erst dann noch einmal machen, wenn alle Native-Bausteine beisammen sin
 
 ---
 
+### Phase 19b — Die Wien-Karte ⬜ *(Leopolds Idee, spezifiziert am 2026-09-06)*
+
+> **Woher sie kommt.** Leopold hat sich eine Karte gewünscht, auf der man sieht, wo
+> gerade etwas los ist — „klein anfangen, nur Wien" (Ians Zusatz). Es ist die zweite
+> Idee von ihm, die aus dem BENUTZEN kommt und nicht aus dem Anschauen.
+
+**Sie steht hier und nicht bei den Phasen 20/21, weil sie reine Oberfläche auf
+vorhandenen Daten ist — das Backend macht sie um keinen Handgriff leichter.** Und sie
+ist das erste Stück, das `react-native-svg` aus Phase 19 wirklich ausnutzt.
+
+#### Warum das überhaupt billig ist
+
+**An jedem Post steht seit Phase 2 `district: '1070'`** — die zweite und dritte Ziffer
+der Postleitzahl IST die Bezirksnummer. Die Daten für die Karte liegen seit vier Wochen
+da, sie werden nur nie als Fläche gezeigt. **Kein Feld kommt dazu, keins ändert sich.**
+
+#### Ians achtundzwanzigste bis einunddreißigste Entscheidung (alle 2026-09-06)
+
+| Frage | Entscheidung | Verworfen — und warum |
+|---|---|---|
+| Welche Karte? | **Gezeichnete Bezirksflächen. „Erst A, später vielleicht B"** | Echte Landkarte mit Stecknadeln: braucht `react-native-maps` (neuer Native-Baustein, auf Web gar nicht), **Koordinaten am Post** (Datenmodell) — und verrät statt „1220" die genaue Parkbank. Das ist die Sorte Auskunft, gegen die harte Regel 47 gebaut ist. **Ians Formulierung ist besser als meine Empfehlung:** B bleibt offen, bis echte Leute die App benutzen. |
+| Wo lebt sie? | **Dritter Umschalter: `Stapel · Liste · Karte`** | Eigener Tab (leert den Hauptfeed — harte Regel 34, dasselbe Argument wie bei Gruppen; und die Tab-Leiste ist auf 360 px schon eng). Nur im Filter (dann ist es ein Filter-Werkzeug, nicht Leopolds „auf die Karte gehen"). |
+| Was tut ein Tipp? | **Karte bleibt stehen, Posts erscheinen darunter** | In die Liste springen (die Karte wäre ein Knopf, und jeder Vergleich kostet einen Rückweg). In den Stapel springen (man sieht nicht mehr, was man gewählt hat). |
+| Posts ohne Bezirk? | **Antippbare Zeile unter der Karte: „2 ohne Bezirk"** | Weglassen (eine Ansicht, die still Posts verschluckt — genau die Sorte Fehler wie die zwei Leer-Zustände vom 03.09.). Überall mitfärben (behauptet Aktivität an 23 Orten, die es nicht gibt). |
+| Einfärben? | **Relativ zum stärksten Bezirk** | Feste Stufen (bei fünf Posts wäre ganz Wien blassgrau). Nur Zahlen (dann ist es eine Tabelle in Kartenform). |
+
+#### Was zu bauen ist
+
+| Baustein | Woher | Anmerkung |
+|---|---|---|
+| 23 Bezirksumrisse als SVG-Pfade | Stadt Wien, `data.gv.at`, GeoJSON → einmal umgerechnet | **Eine Datei**, gebaut wie `theme/icons.ts`: Daten getrennt vom Zeichner. **CC BY** — eine Zeile Namensnennung nötig, kein Geld, keine Erlaubnis. |
+| `SsWienKarte` | neu | Flächen, Farbskala, Antippen. Nach dem Muster von `SsIcon`: ein Raster, eine Regel. |
+| Zählung je Bezirk | **`useBezirkeImFeed` gibt es schon** (Phase 15) | ⚠️ **Nicht danebenbauen.** Der Haken schaltet beim Zählen genau den Bezirksfilter aus und lässt alle anderen gelten — sonst sperrt sich die Karte nach dem ersten Tipp selbst ein (die Phase-15-Falle). |
+| Regel-Datei `features/posts/karte.ts` | neu | Wie `wisch.ts`, `filter.ts`, `kollision.ts`: Die Farbskala und „was heißt viel los" gehören dorthin, nicht in den Screen. |
+
+#### Drei Dinge, die beim Bauen schiefgehen werden
+
+1. **`SsSegment` mit DREI Beschriftungen auf 360 px.** „Sta…" (Phase 11) und
+   „Jeder kann anfr…" (Phase 18a) waren dieselbe Falle mit zwei verschiedenen Ursachen.
+   Drei Wörter statt zwei ist die dritte Gelegenheit. **Vor dem Einbau auf 360 × 600
+   nachmessen**, nicht nur auf 390 × 844.
+2. **Farbe allein ist keine Auskunft.** Wer die Karte nur einfärbt, gibt Menschen mit
+   Farbsehschwäche gar nichts — und der Kontrast zwischen „2 Posts" und „3 Posts" ist
+   ohnehin kaum zu sehen. **Die Zahl gehört in die Fläche**, wo sie hineinpasst.
+3. **Eine Karte hat ein Kaltstart-Problem, das eine Liste nicht hat.** Ein leerer Feed
+   zeigt einen Satz und einen Ausweg (`LeererFeed`, seit dem 03.09.). Eine leere Karte
+   zeigt **23 graue Flächen** — sie sieht nicht leer aus, sondern kaputt. Es braucht
+   denselben Satz und denselben Ausweg wie die Liste, nur über der Karte.
+
 ### Phase 20 — Das Backend: Supabase ⬜
 
 **Ians Entscheidung vom 2026-09-06.** Der Punkt stand seit dem 2026-08-31 in Abschnitt 8

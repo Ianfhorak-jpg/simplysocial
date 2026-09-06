@@ -204,6 +204,16 @@ SafeArea stimmt oben und unten, Deep Links funktionieren nativ. Belege liegen al
 Apple-Login) und der Gesten-Durchgang. **Ein Mausklick am Simulator ist keine
 Gestenprüfung** — Wischstapel, Tastatur im Chat und der Jahrgangs-Balken sind unbelegt.
 
+🗺️ **Neu und spezifiziert (2026-09-06): Phase 19b — die Wien-Karte.** Leopolds zweite
+Idee aus dem BENUTZEN. Eine dritte Ansicht neben Stapel und Liste: 23 gezeichnete
+Bezirksflächen, eingefärbt nach „wie viel ist hier los", Tippen zeigt die Posts darunter.
+**Sie ist billig, weil an jedem Post seit Phase 2 `district: '1070'` steht** — die
+Bezirksnummer liegt in der Postleitzahl, kein Feld kommt dazu. Vier Entscheidungen von
+Ian stehen in PLAN.md, Phase 19b; die wichtigste ist seine eigene Formulierung: **erst
+die Bezirksflächen, echte Karte mit Stecknadeln erst, wenn Leute die App benutzen** —
+denn ein Pin verrät statt „1220" die genaue Parkbank (harte Regel 47). Gebaut wird sie
+NACH Phase 19 und VOR dem Backend, weil sie reine Oberfläche auf vorhandenen Daten ist.
+
 🔜 **Daneben weiter: wieder herzeigen.** Am 2026-09-02 haben die drei Mitgründer den
 Prototyp am Handy durchgeklickt. Ihr Urteil zur Sache war gut (Leopold: „für die
 Aktivitäten-Funktion sehr gut, an sich funktioniert es"), die Kritik betraf das
