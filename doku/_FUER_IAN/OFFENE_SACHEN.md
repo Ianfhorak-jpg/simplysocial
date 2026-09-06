@@ -191,6 +191,17 @@ damit dich nichts überrascht.
   der ersten Einreichung bei Apple für immer festgelegt. (`at.` weil die App aus Wien
   ist und `simplysocial.at` auf deiner Domain-Liste steht.)
 
+### Neu seit 06.09.2026 — für die echte Apple-Karte (19d)
+- **Ein MapKit-JS-Schlüssel aus deinem Apple-Developer-Account.** Du wolltest statt der
+  gezeichneten Karte die echte von Apple — das ist gebaut, sobald der Schlüssel da ist.
+  Ohne ihn gibt es die Apple-Karte nur auf dem iPhone und **im Browser gar keine Karte
+  mehr**, also ausgerechnet dort, wo du den Prototyp herzeigst. Zu holen unter
+  *Certificates, Identifiers & Profiles → Maps IDs*; er kommt wie jeder Schlüssel in die
+  Shell-Umgebung, **nie in den Code**.
+- **Das hat Zeit, bis du willst.** Die Karte funktioniert ohne ihn weiter — seit dem
+  06.09. springen die Aktivitäten eines Bezirks als kleine Blase heraus, wenn du ihn
+  antippst (das war deine andere Rückmeldung, und die brauchte nichts von dir).
+
 ### In Phase 20 (Backend)
 - **Ein Supabase-Konto anlegen** (gratis, mit deiner E-Mail). Die Zugangsschlüssel
   kommen dann in die Shell-Umgebung, **nie in den Code** — das ist die feste Regel aus
