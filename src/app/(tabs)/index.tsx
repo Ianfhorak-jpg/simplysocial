@@ -14,9 +14,9 @@ import {
   SsScreen,
   SsJahrgangBalken,
   SsScrollReihe,
+  SsKarte,
   SsSegment,
   SsText,
-  SsWienKarte,
 } from '@/components/ui';
 import { FILTER_EGAL, jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
 import { BRAND } from '@/config/brand';
@@ -510,7 +510,7 @@ function KarteAnsicht({
   return (
     <>
       <View style={styles.karteBereich}>
-        <SsWienKarte
+        <SsKarte
           zaehlung={zaehlung}
           gewaehlt={gewaehlt}
           maxHoehe={Math.min(KARTE_MAX_HOEHE, fensterHoehe * KARTE_ANTEIL)}

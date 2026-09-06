@@ -5,7 +5,7 @@ import { SsText } from './ui';
 import type { FeedEintrag } from '@/features/posts/hooks';
 import { BLASE_MAX, blaseAlleText } from '@/features/posts/karte';
 import { nachStartzeit } from '@/features/posts/sort';
-import type { KartenAnker } from '@/components/ui/SsWienKarte';
+import type { KartenAnker } from '@/components/ui/karte-typen';
 import { kurzStart } from '@/lib/zeit';
 import { categoryColors, colors, radius } from '@/theme';
 

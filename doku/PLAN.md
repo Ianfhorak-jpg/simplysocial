@@ -2802,7 +2802,7 @@ einer Zeile ist auch nicht neu — die Chat-Liste macht es seit 18c genauso.
 
 ---
 
-### Phase 19d — Die echte Apple-Karte ⬜ *(Ians Entscheidung, gegen meine Empfehlung)*
+### Phase 19d — Die echte Apple-Karte · **19d-1 ✅ (2026-09-06)** · 19d-2 ⬜ *(Ians Entscheidung, gegen meine Empfehlung)*
 
 > **Ians fünfunddreißigste Entscheidung, 2026-09-06.** Gefragt war, wie weit „wie Apple
 > Karten" gehen soll. Angeboten hatte ich drei Wege; **empfohlen hatte ich den
@@ -2881,10 +2881,10 @@ Notbehelf, sondern die Bauart:
 
 | Schritt | Was | Anmerkung |
 |---|---|---|
-| 19d-1a | `npx expo install react-native-maps` | Expo bringt das Config-Plugin mit. **Nur dieser eine neue Baustein**, wie bei `react-native-svg` in Phase 19 |
-| 19d-1b | Neuer Build | Simulator reicht zum Prüfen (Phase-19-Erkenntnis: keine Signatur nötig) |
-| 19d-1c | `SsAppleKarte.native.tsx` | `<MapView>` + `<Polygon>` je Bezirk, Tönung als `fillColor` |
-| 19d-1d | Eine gemeinsame Schnittstelle | **Der eigentliche Entwurf dieser Phase**, siehe unten |
+| 19d-1a ✅ | `npx expo install react-native-maps` | 1.27.2, SDK-57-tauglich. **Nur dieser eine neue Baustein**, wie bei `react-native-svg` in Phase 19 |
+| 19d-1b ✅ | Neuer Build | Beim ERSTEN Versuch durch, 0 Fehler. Simulator, keine Signatur (Phase-19-Erkenntnis) |
+| 19d-1c ✅ | `SsAppleKarte.native.tsx` | `<MapView>` + `<Polygon>` je Bezirk, Zahlen als `<Marker>` (so wandern sie ohne JS mit) |
+| 19d-1d ✅ | Eine gemeinsame Schnittstelle | `components/ui/karte-typen.ts` + die Weiche `SsKarte.tsx` / `SsKarte.native.tsx`. Dazu `lib/karte-geo.ts` — siehe Baubericht |
 | 19d-2a | Maps-ID + Schlüssel bei Apple | **Nur Ian** |
 | 19d-2b | Token-Ausgabe | Supabase Edge Function (Phase 20) |
 | 19d-2c | `SsAppleKarte.web.tsx` | MapKit JS, `mapkit.PolygonOverlay` |
@@ -2943,6 +2943,78 @@ und wie aus einer Geste ein „hier wurde getippt" wird.
 - **Beurteilen, ob es sich richtig anfühlt.** Eine echte Karte unter unseren Flächen
   kann auch unruhig wirken — Straßennamen und Geschäfte konkurrieren mit dem, was die
   App sagen will. Das ist keine Messung, das ist ein Urteil.
+
+---
+
+#### Was beim Bauen herauskam *(19d-1, 2026-09-06)*
+
+**Die iOS-Hälfte läuft.** Unter den Bezirksflächen liegt eine echte Apple-Karte, sie
+öffnet auf ganz Wien, die Auswahl umrandet den richtigen Bezirk und die Blase aus 19c
+hängt unverändert daran. Belege `t01` bis `t04` im Projektordner. **Der Web-Prototyp ist
+unberührt** — 23 SVG-Pfade wie vorher, null MapKit im Bündel, null Konsolenwarnungen.
+
+Sechs Dinge sind wichtiger als das Bild:
+
+1. **Die Geometrie wird UMGERECHNET, nicht ein zweites Mal gespeichert — das ist der
+   Entwurf der Phase.** MapKit rechnet in Grad, `wien-bezirke.ts` steht im Raster. Der
+   naheliegende Weg wäre gewesen, `bezirke-bauen.py` die Punkte zusätzlich in Grad
+   ausgeben zu lassen: dieselben 886 Punkte in zwei Einheiten, und die zweite ist die,
+   die beim nächsten Skriptlauf still veraltet. Die Projektion des Skripts ist flach mit
+   Kosinus-Korrektur und damit **exakt umkehrbar** — **vier Zahlen** (`PROJEKTION`)
+   ersetzen 886 Punkte. Gerechnet wird in `lib/karte-geo.ts`.
+2. **Der Beweis dafür ist ein Ortstest, kein Round-Trip.** Raster → Geo → Raster hätte
+   auch dann bestanden, wenn beide Richtungen denselben Vorzeichenfehler hätten. Geprüft
+   wurde gegen sechs echte Orte: Stephansdom → 1010, Schönbrunn → 1130, Donauturm →
+   1220, Praterstern → 1020, Hauptbahnhof → 1100, Grinzing → 1190. Alle sechs richtig.
+3. **`minZoomLevel` hat den ANFANGSAUSSCHNITT überschrieben — der einzige echte Fehler
+   der Phase.** Mit dem gerechneten Wert 10 öffnete die Karte auf rund einem Drittel von
+   Wien. `react-native-maps` setzt die Zoomstufen auf iOS über `cameraZoomRange` in
+   ENTFERNUNGEN um, und seine Umrechnung liegt gut anderthalb Stufen neben der
+   Lehrbuchformel. Bei 9 passt Wien hinein, bei 10 nicht. **Punkt 4 der Vorhersage war
+   richtig und noch zu milde formuliert:** Die Grenze verschob nicht bloß den erlaubten
+   Bereich, sie bestimmte, was man beim Öffnen sieht.
+4. **Die Obergrenze ist eine Entscheidung geworden, keine Technik.** `APPLE_ZOOM_MAX =
+   15` ist Stadtviertel-Ebene. Weiter hinein wäre möglich und wäre falsch: **Die App
+   kennt keine Koordinaten.** Wer bis auf ein Haus zoomen darf, dem verspricht die Karte
+   eine Genauigkeit, die die Daten nicht haben — harte Regel 47, diesmal gegen den Zoom
+   statt gegen einen Pin.
+5. **Apples Namensnennung ist KEINE Arbeit gewesen.** Vorhergesagt war „Logo und
+   Rechtelink an der Karte, nicht verhandelbar" — MapKit zeichnet beides selbst
+   („Maps · Legal", auf `t01` zu sehen). Sie zusätzlich hinzuschreiben wäre eine zweite,
+   verschiebbare Fassung derselben Pflicht gewesen. Was bleibt, ist `KARTE_QUELLE`: Die
+   **Bezirksflächen** kommen weiter von der Stadt Wien (CC BY 4.0). Zwei Nennungen
+   nebeneinander, weil sie zwei verschiedene Dinge betreffen. **Für MapKit JS in 19d-2
+   gilt das NICHT** — dort ist die Nennung Handarbeit.
+6. **Der eigene `PanResponder` ist weg, und damit ein ganzes Risiko.** MapKit schiebt und
+   zoomt selbst. Der dritte Gesten-Erkenner der App, dessen Verhalten unter einem echten
+   Finger nie geprüft war, existiert auf iOS nicht mehr — im Browser bleibt er.
+
+##### Was NICHT geprüft ist, und warum
+
+**Der Tipp auf die Karte.** Der Simulator lässt sich ohne Bedienungshilfen-Berechtigung
+nicht antippen (`osascript` → Fehler −1719), und die kann nur Ian geben. Geprüft wurde
+stattdessen, was daran hängt und schwerer zu treffen war: `nachRaster` + `bezirkAn` gegen
+sechs echte Orte (Punkt 2), und die Auswahl samt Blase, indem der Bezirksfilter
+vorübergehend auf `1220` gesetzt wurde (`t02` — Donaustadt östlich der Donau umrandet,
+Blase am Beschriftungspunkt, zwei Posts nach Startzeit). **Offen bleibt allein, dass
+MapKits `onPress` die Koordinate liefert** — Standard-API, aber ungeprüft. Es gehört in
+denselben Durchgang wie der Wischstapel und der Jahrgangs-Balken: **auf Ians Gerät.**
+
+##### Zwei Dinge, die man am Bild sieht und die keine Fehler sind
+
+- **Die Zahlen der kleinen Innenbezirke fehlen beim Öffnen.** `zahlPasst` entscheidet
+  unverändert; auf ganz Wien ist die Josefstadt zu klein. Genau dafür gibt es den Zoom.
+- **Die Tönung ist zurückhaltend.** Das ist Ians Entscheidung 36 („zart"), keine
+  schwache Umsetzung. `APPLE_TOENUNG = 0.45` ist die eine Zahl, an der es hängt.
+
+##### Das Wasser-Problem ist da, mild, und bleibt liegen
+
+Vorhergesagt war, dass ein Farbschleier Apples Wasserblau schmutzig macht. Er tut es —
+sichtbar, wo die Donau durch die Donaustadt läuft, aber schwach genug, dass es niemandem
+zuerst auffällt. Der Ausweg (`GRUENGEWOGD`-Maske der Stadt Wien) bleibt **Vorschlag, nicht
+Beschluss**: Er kostet einen zweiten Datensatz, eine zweite Erzeugung und eine zweite
+Kopie derselben Sorte Geometrie — für ein Problem, das Ian am Gerät vielleicht gar nicht
+stört. **Erst schauen lassen, dann bauen.**
 
 ---
 
@@ -3944,35 +4016,35 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
 
 ---
 
-### 35. Was „viel los" heißt — `stufeFuer()` in `features/posts/karte.ts` ⬜
+### 35. Was „viel los" heißt — `stufeFuer()` in `features/posts/karte.ts` ✅
 
-Die Karte färbt vier Stufen, **relativ zum stärksten Bezirk** (deine Entscheidung 32).
-Offen ist die eine Zeile darin: wie aus „2 von 5 Posts" eine Stufe wird.
+> **Ians achtunddreißigste Entscheidung, 2026-09-06: es bleibt bei gleich breiten
+> Stufen.** Die Karte sagt damit weiter, *wo überhaupt etwas ist* — und bleibt im Kopf
+> zurückrechenbar.
 
-Es steht heute ein **Aufrunden** da, und das ist eine Wahl mit einer Folge:
+**Vorher ist etwas herausgekommen, das die Frage selbst verändert hat:** Von den drei
+Möglichkeiten, die hier standen, waren **zwei fast dieselbe.** `Math.ceil(x) - 1` und
+`Math.floor(x)` unterscheiden sich nur, wenn `x` genau eine ganze Zahl trifft — bei
+`hoechst = 5` also bei **null von fünf** möglichen Werten, bei `hoechst = 10` bei einem
+von zehn. „Aufrunden gegen Abrunden" ist keine Aussage über die Karte, sondern eine
+Randkonvention. Das stand hier drei Wochen als echte Wahl.
 
-```ts
-export function stufeFuer(anzahl: number, hoechst: number): number {
-  if (anzahl <= 0) return -1;          // leer: graue Fläche, KEINE Zahl
-  if (hoechst <= 0) return -1;
-  const anteil = anzahl / hoechst;
-  return Math.min(STUFEN.length - 1, Math.ceil(anteil * STUFEN.length) - 1);
-}
-```
+**Die Lehre ist größer als der Punkt:** Wer drei Möglichkeiten aufschreibt, hat sie
+damit noch nicht unterschieden. Nachgerechnet wurde erst, als jemand fragen sollte.
 
-- **Aufrunden** (jetzt): Jeder Bezirk mit mindestens einem Post bekommt mindestens
-  Stufe 1. Der Unterschied „hier war jemand" gegen „hier ist was los" bleibt am unteren
-  Ende sichtbar — genau dort, wo die App die längste Zeit ihres Lebens steht. Der Haken:
-  Bei einem starken Bezirk (10 Posts) sehen 1 und 2 gleich aus wie 3.
-- **Abrunden**: strenger, die Spitze hebt sich klarer ab — und bei fünf Posts fielen
-  alle Einer-Bezirke auf dieselbe blasse Stufe wie… nichts. Das ist der Fall, den
-  `KARTE_LEER` bewusst anders zeichnet.
-- **Logarithmisch**: gerechter bei sehr ungleicher Verteilung (ein Bezirk mit 50, der
-  Rest mit 1–3). Der Preis ist, dass niemand die Karte mehr im Kopf zurückrechnen kann.
+Gegenübergestellt wurden deshalb die drei, die sich wirklich unterscheiden:
 
-**Die Frage ist deine, weil sie die AUSSAGE der Karte bestimmt** und nicht ihr Aussehen:
-Soll sie zeigen, *wo überhaupt etwas ist*, oder *wo am meisten ist*. Fünf Zeilen in
-`karte.ts`; verworfene Möglichkeiten wie üblich in den Kopfkommentar.
+| | heute (stärkster Bezirk: 5) | später (einer zieht davon: 50) |
+|---|---|---|
+| **gleich breite Stufen** ✅ | 5·3·2·1 → alle vier Stufen im Einsatz | 22 Bezirke auf derselben blassen Stufe |
+| logarithmisch | dunkler, 3 und 5 nicht mehr zu trennen | die Mitte bleibt unterscheidbar |
+| nach Rang (je ein Viertel) | immer genau so verteilt | sieht IMMER gleich aus, egal wie viel los ist |
+
+**Den Haken kennt er:** Zieht ein Bezirk wirklich davon, wird die Karte am unteren
+Ende blind. Das ist heute kein Zustand, den es gibt — der stärkste Bezirk hat fünf
+Posts —, und die Korrektur ist eine Zeile. **Der Grund gegen „nach Rang" ist der
+stärkere:** Eine Karte, die immer gleich aussieht, beantwortet die Frage nicht mehr,
+für die es sie gibt.
 
 ## 7. Bewusst NICHT im Prototyp
 
@@ -4162,7 +4234,35 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-06, spätester Eintrag): Phase 19d —
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-06, spätester Eintrag): Phase 20 —
+> das Backend (Supabase).** Der Kartenzweig ist bis auf eine Hälfte zu Ende: **19d-1
+> (iOS) ist gebaut**, 19d-2 (MapKit JS im Browser) wartet bewusst auf Phase 20, weil sie
+> einen Server zum Ausstellen des Tokens braucht. Fünf Dinge, die eine frische Sitzung
+> wissen muss:
+>
+> 1. **Es wartet KEINE Frage auf Ian, aber zwei Handgriffe.** Der eine ist sein
+>    Gerätebuild samt Gesten-Durchgang (offen seit Phase 19, jetzt mit einem Punkt mehr:
+>    ob ein Tipp auf die Apple-Karte den richtigen Bezirk wählt). Der andere ist die
+>    Maps-ID plus privater Schlüssel im Apple-Developer-Konto — **erst für 19d-2**, also
+>    nicht dringend.
+> 2. **Die Karte hat jetzt SIEBEN Dateien, und keine davon ist ein Screen.**
+>    `data/wien-bezirke.ts` (erzeugt) · `features/posts/karte.ts` (Bedeutung) ·
+>    `lib/karte-treffer.ts` (welcher Bezirk unter einem Punkt) · `lib/karte-geo.ts`
+>    (wo eine Fläche auf der ERDE liegt) · `components/ui/karte-typen.ts` (die
+>    gemeinsame Schnittstelle) · `SsWienKarte.tsx` (gezeichnet, Web) ·
+>    `SsAppleKarte.native.tsx` (MapKit, iOS). Die Weiche ist `SsKarte.tsx` /
+>    `SsKarte.native.tsx`; **Screens nehmen nur `SsKarte`.**
+> 3. **`PROJEKTION` in `wien-bezirke.ts` ist der Grund, warum die Geometrie nur EINMAL
+>    dasteht.** Vier Zahlen, exakt umkehrbar. Wer je versucht ist, Geo-Punkte
+>    danebenzuschreiben, liest den Kopf von `lib/karte-geo.ts`.
+> 4. **Zoomstufen von `react-native-maps` sind NICHT die Lehrbuchformel.** Mit
+>    `minZoomLevel={10}` öffnete die Karte auf einem Drittel von Wien; 9 ist gemessen.
+>    Wer die Kartenhöhe oder das Gerät ändert, misst nach — nicht rechnet.
+> 5. **Danach ist es Phase 20, und die ist eine andere Sorte Arbeit.** 19b, 19c und
+>    19d-1 waren alle reine Oberfläche auf Daten, die es seit Phase 2 gibt. Phase 20
+>    ändert, woher die Daten kommen.
+
+> 📎 **Der alte Eintrag, weil er noch Gültiges enthält: Phase 19d —
 > die echte Apple-Karte.** ~~19c~~ ist seit dem 2026-09-06 gebaut (Abschnitt 5b, samt
 > „Was beim Bauen herauskam"). Fünf Dinge, die eine frische Sitzung wissen muss, BEVOR
 > sie anfängt:

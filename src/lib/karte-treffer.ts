@@ -36,8 +36,16 @@ interface Flaeche {
  * und würde eine Freiheit abdecken, die die erzeugte Datei nie benutzt. **Wer den
  * Generator ändert, ändert diese Funktion mit** — deshalb steht der Hinweis in
  * beiden Dateien.
+ *
+ * ── Warum sie seit Phase 19d exportiert ist ───────────────────────────────────
+ * `lib/karte-geo.ts` braucht dieselben Punktlisten, nur in Längen- und Breitengraden
+ * statt im Raster. Ein zweiter Parser daneben wäre die zweite Fassung DERSELBEN
+ * Auskunft — genau das, was `PROJEKTION` in `wien-bezirke.ts` bei den Punkten
+ * vermeidet. Dass die Funktion in dieser Datei wohnt und nicht in `karte-geo.ts`,
+ * hat einen schlichten Grund: Hier war sie zuerst, und sie ist hier auch dann noch
+ * richtig, wenn es die Apple-Karte einmal nicht mehr gibt.
  */
-function ringeAus(d: string): number[][] {
+export function ringeAus(d: string): number[][] {
   const ringe: number[][] = [];
   for (const teil of d.split('M')) {
     if (!teil) continue;

@@ -3,13 +3,15 @@
 > Diese Datei steht hier, weil der Chat nach dem `/clear` weg ist — der Text darin
 > also auch. Hier findest du ihn wieder.
 >
-> Stand: **06.09.2026, nachmittags.** **SimplySocial ist seit heute eine echte
-> iPhone-App.** Sie startet auf einem iPhone-Simulator, alle Symbole zeichnen, alles
-> sitzt richtig. Was noch fehlt, ist der Build auf **dein** Handy — dafür brauche ich
-> dich (siehe unten). Davor sind Phase 0 bis 18d fertig und online.
+> Stand: **06.09.2026, abends.** **SimplySocial ist eine echte iPhone-App — und die
+> Karte ist jetzt eine echte Apple-Karte.** Sie startet auf einem iPhone-Simulator, alle
+> Symbole zeichnen, alles sitzt richtig. Was noch fehlt, ist der Build auf **dein**
+> Handy — dafür brauche ich dich (siehe unten). Phase 0 bis 19d-1 sind fertig.
 >
-> **Leopolds Karten-Idee ist durchgesprochen und aufgeschrieben** — vier Entscheidungen
-> von dir stehen fest, gebaut ist sie noch nicht. Sie kommt als Nächstes.
+> **Leopolds Karten-Idee ist gebaut, in drei Schritten:** die Wien-Karte selbst (19b),
+> die Blase, die beim Antippen eines Bezirks herausspringt (19c), und seit heute Abend
+> die echte Apple-Karte darunter (19d-1). **Alle vier Entscheidungen, die du dazu
+> getroffen hast, stecken drin.**
 
 ---
 
@@ -18,7 +20,12 @@
 **1. Die App auf DEIN iPhone.** Bis jetzt läuft sie auf einem simulierten iPhone am Mac.
 Das beantwortet „sieht sie richtig aus" — aber nicht „fühlt sie sich richtig an". Der
 Wischstapel, die Tastatur im Chat und der Jahrgangs-Balken sind **mit einem Mausklick
-nicht prüfbar**; dafür braucht es einen Finger.
+nicht prüfbar**; dafür braucht es einen Finger. **Seit heute Abend kommt einer dazu:**
+ob ein Tipp auf die Apple-Karte wirklich den Bezirk auswählt, auf den du getippt hast.
+Den konnte ich am Simulator nicht prüfen — der lässt sich ohne eine Berechtigung, die nur
+du geben kannst, gar nicht antippen. Alles, was daran hängt, habe ich anders geprüft
+(die Umrechnung gegen sechs echte Wiener Orte, und die Auswahl samt Blase über einen
+gesetzten Filter). Es fehlt genau der letzte Zentimeter: dein Finger.
 
 Dazu muss dein Gerät einmal bei Apple angemeldet werden, und dafür brauche ich deinen
 **Apple-Login** — den ich nicht haben kann und nicht haben soll. Der Weg ist:
@@ -36,6 +43,33 @@ zusammen durch.
 **2. Schau dir die Symbole an.** Auf dem simulierten iPhone sehen sie aus wie im
 Browser. Ob sie auf einem echten Bildschirm zu blass sind, kannst nur du sagen — das ist
 die Frage, die seit Phase 14 offen ist.
+
+---
+
+## Was heute Abend dazugekommen ist: die echte Apple-Karte (19d-1)
+
+Du wolltest die Karten von Apple, nicht meine gezeichnete. **Auf dem iPhone hast du sie
+jetzt** — Straßen, Donau, Namen, alles echt, und darüber liegen unsere 23 Bezirke als
+zarte Einfärbung. Bilder: `t01-ios-apple-karte.png`, `t02-ios-blase-donaustadt.png`.
+
+Drei Dinge dazu, die du wissen solltest:
+
+- **Im Browser bleibt vorerst die gezeichnete Karte.** Das ist kein halber Job, sondern
+  Absicht: Apple lässt seine Karte im Browser nur mit einem Schlüssel herein, der immer
+  wieder neu ausgestellt werden muss — und ausstellen kann ihn nur ein Server. Den gibt
+  es ab Phase 20. Bis dahin sieht der Prototyp, den du herzeigst, aus wie bisher.
+- **Ein Fehler ist dabei aufgetreten, und er ist lehrreich.** Ich hatte die Zoomgrenzen
+  ausgerechnet statt gemessen — die Karte ging dadurch auf einem *Drittel* von Wien auf
+  statt auf ganz Wien. Behoben, und die Zahl steht jetzt als gemessener Wert im Code, mit
+  dem Grund daneben.
+- **Eines kann nur dein Auge.** Eine echte Karte zeigt Geschäfte und Straßennamen, und
+  die kämpfen mit dem, was die App sagen will. Ich habe die ruhigere Fassung genommen,
+  die Apple selbst dafür anbietet. Zu blass? Sag es, der Rückweg ist ein Wort.
+
+Dazu ist die letzte offene Frage aus dem Plan beantwortet — **du hast entschieden, dass
+die Kartenfarbe bei gleich breiten Stufen bleibt.** Beim Vorbereiten der Frage kam
+heraus, dass zwei der drei Möglichkeiten, die seit Wochen im Plan standen, **fast
+dieselbe Regel** waren. Sie sind jetzt richtig gegenübergestellt.
 
 ---
 

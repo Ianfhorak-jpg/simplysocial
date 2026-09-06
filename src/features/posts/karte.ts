@@ -260,3 +260,118 @@ export const BLASE_REIHENFOLGE: 'naechste' | 'neueste' | 'frei' = 'naechste';
 export function blaseAlleText(gesamt: number): string {
   return `alle ${gesamt} ansehen`;
 }
+
+// ── Die echte Apple-Karte (Phase 19d) ────────────────────────────────────────
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  Ians Entscheidung 36, 2026-09-06: Auf der echten Karte werden die Bezirke ZART
+ *  GETÖNT — je mehr los ist, desto kräftiger.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Gefragt war, wie eine geografische Karte zeigt, wo etwas los ist. Verworfen, mit
+ * Begründung — als Gedächtnis, nicht als Einladung:
+ *   'blasen'  Zahlen-Blasen wie Apples eigene Pins. **Das war meine Empfehlung**: am
+ *             nächsten an Apples Sprache, und sie lösen nebenbei, dass die Zahl im
+ *             7., 8. und 1. Bezirk nicht in die Fläche passt. Ian hat anders
+ *             entschieden, und das wird gebaut, nicht neu verhandelt.
+ *   'beides'  Tönung UND Blasen. Die meiste Auskunft — und das meiste, was
+ *             gleichzeitig um Aufmerksamkeit kämpft.
+ *
+ * **Den Haken kennt er:** Mit dem Tönen bleibt die Zahl IN der Fläche, also bleibt
+ * auch das Problem aus 19b — im 1., 7. und 8. Bezirk erscheint sie erst beim
+ * Hineinzoomen. Eine Blase hätte keinen Platz in der Fläche gebraucht. Das ist der
+ * erste Ort, an dem man nachsieht, falls sich die Karte später „zu leer" anfühlt.
+ */
+export const APPLE_DARSTELLUNG: 'toenen' | 'blasen' | 'beides' = 'toenen';
+
+/**
+ * Wie kräftig die Tönung über der echten Karte ist.
+ *
+ * Auf der gezeichneten Karte sind die Stufen DECKEND — dort gibt es nichts
+ * darunter. Über einer Apple-Karte muss die Straße durchscheinen, sonst hat man
+ * eine graue Fläche gekauft und eine echte Karte bezahlt. Bei 0,45 bleibt die
+ * Reihenfolge der vier Stufen unterscheidbar und der Stadtplan lesbar.
+ *
+ * ⚠️ **Der Haken, der beim Bauen sichtbar wird und noch offen ist:** Ein Farbschleier
+ * macht Apples gesättigtes Wasserblau schmutzig — Donau und Donaukanal sehen dann
+ * nach Fleck aus, nicht nach Auskunft. Der Ausweg wäre, den Schleier nur auf das
+ * LAND zu legen; Apple liefert dafür keine Maske, die Stadt Wien aber schon
+ * (`GRUENGEWOGD`, sieben Flächen). **Vorschlag zum Ausprobieren, nicht beschlossen** —
+ * steht so in PLAN.md, Phase 19d.
+ */
+export const APPLE_TOENUNG = 0.45;
+
+/**
+ * Die Füllfarbe einer Stufe auf der echten Karte — dieselbe Farbe wie auf der
+ * gezeichneten, nur durchscheinend.
+ *
+ * **Warum das hier steht und nicht im Zeichner:** Es gibt ab 19d drei Zeichner und
+ * genau eine Bedeutung von „viel los". Rechnete jeder seine eigene Deckkraft aus,
+ * hätte die App drei Wahrheiten darüber — und auffallen würde es nur dem, der alle
+ * drei nebeneinanderhält.
+ *
+ * `stufe < 0` heißt leer, und über einer echten Karte ist die ehrliche Antwort
+ * darauf **gar keine Fläche**: Auf der gezeichneten Karte steht dort `KARTE_LEER`,
+ * weil es sonst ein Loch gäbe; hier liegt darunter schon ein Stadtplan. Ein grauer
+ * Schleier über einem leeren Bezirk behauptete Auskunft, wo keine ist.
+ */
+export function appleFuellung(stufe: number): string {
+  if (stufe < 0) return 'transparent';
+  const hex = STUFEN[stufe].flaeche;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${APPLE_TOENUNG})`;
+}
+
+/**
+ * Wie weit man auf der Apple-Karte heraus- und hineinzoomen darf.
+ *
+ * **Die Zahlen sind bewusst NICHT `ZOOM_MIN`/`ZOOM_MAX`.** Jene sind ein Faktor auf
+ * unser eigenes Bild, MapKit rechnet in Kamera-Entfernungen — beides gleich zu
+ * nennen wäre eine Scheingenauigkeit. Gemeinsam ist die REGEL, nicht die Zahl.
+ *
+ * ── Und sie sind GEMESSEN, nicht gerechnet (2026-09-06) ──────────────────────
+ * Zuerst stand hier 10, hergeleitet aus der üblichen Formel (Weltbreite
+ * 256 · 2^z Punkte). Auf dem Simulator öffnete die Karte damit auf **rund einem
+ * Drittel** von Wien — `react-native-maps` setzt `minZoomLevel` auf iOS über
+ * `cameraZoomRange` in ENTFERNUNGEN um, und seine Umrechnung liegt gut anderthalb
+ * Stufen neben der Lehrbuchformel. Bei 9 passt ganz Wien hinein, bei 10 nicht.
+ * **Das ist genau die Falle, die in PLAN.md, Phase 19d als Punkt 4 vorhergesagt
+ * war** — nur schärfer: Die Grenze verschob nicht bloß den erlaubten Bereich, sie
+ * überschrieb den ANFANGSAUSSCHNITT.
+ *
+ * `9` heißt: Man kann etwa auf das Doppelte von Wien herauszoomen und nicht weiter.
+ * `15` ist die Stadtviertel-Ebene, und die Obergrenze ist eine Entscheidung, keine
+ * technische Grenze: **Die App kennt keine Koordinaten** (am Post steht nur
+ * `district`). Wer bis auf ein einzelnes Haus hineinzoomen darf, dem verspricht die
+ * Karte eine Genauigkeit, die die Daten nicht haben — harte Regel 47, diesmal nicht
+ * gegen einen Pin, sondern gegen den Zoom.
+ */
+export const APPLE_ZOOM_MIN = 9;
+export const APPLE_ZOOM_MAX = 15;
+
+/**
+ * Welche Sorte Apple-Karte darunter liegt.
+ *
+ * `mutedStandard` ist Apples eigene Fassung für genau diesen Fall: dieselbe Karte,
+ * nur mit zurückgenommenen Farben, damit eine Auflage darüber lesbar bleibt. Ian
+ * wollte „Karten von Apple" — das ist eine, und zwar die, die Apple selbst
+ * empfiehlt, wenn etwas darüberliegt. Sonst kämpfen Straßennamen und Geschäfte mit
+ * dem, was die App sagen will.
+ *
+ * **Falls es ihm zu blass ist, ist der Rückweg ein Wort:** `'standard'`.
+ */
+export const APPLE_KARTE_ART: 'mutedStandard' | 'standard' = 'mutedStandard';
+
+/**
+ * Apples Namensnennung steht NICHT hier — und das ist kein Vergessen.
+ *
+ * MapKit zeichnet Logo und Rechtelink selbst in die Kartenfläche; sie zusätzlich
+ * hinzuschreiben wäre eine zweite, verschiebbare Fassung derselben Pflicht. Was
+ * bleibt, ist `KARTE_QUELLE` oben: Die BEZIRKSFLÄCHEN kommen weiter von der Stadt
+ * Wien (CC BY 4.0), auch wenn der Hintergrund von Apple ist. Beide Nennungen stehen
+ * nebeneinander, weil sie zwei verschiedene Dinge betreffen.
+ */
+export const APPLE_NENNUNG_KOMMT_VON = 'mapkit';

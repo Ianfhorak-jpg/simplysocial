@@ -226,6 +226,43 @@ ausgeschrieben in **PLAN.md, Abschnitt 5b, Phasen 19c und 19d.** Vier Dinge dara
    Reiz**: Wer eine echte Karte sieht, denkt an Stecknadeln, und eine Stecknadel verrät
    statt „1220" die genaue Parkbank um 17:00.
 
+✅ **Phase 19d-1 ist fertig (2026-09-06): unter den Bezirken liegt eine echte
+Apple-Karte.** Ians Entscheidung 35, gegen meine Empfehlung — und sie läuft auf dem
+iPhone-Simulator: Karte öffnet auf ganz Wien, Bezirke zart getönt, Auswahl umrandet,
+Blase aus 19c unverändert daran. **Der Web-Prototyp ist unberührt** (23 SVG-Pfade wie
+vorher, null MapKit im Bündel, null Konsolenwarnungen). Belege `t01`–`t04` im
+Projektordner. Sechs Dinge sind daran wichtiger als das Bild:
+1. **Die Geometrie wird umgerechnet, nicht zweimal gespeichert — das ist der Entwurf
+   der Phase.** MapKit rechnet in Grad, `wien-bezirke.ts` steht im Raster. Der
+   naheliegende Weg (Geo-Punkte ZUSÄTZLICH erzeugen) hätte dieselben 886 Punkte in zwei
+   Einheiten hinterlassen, und die zweite wäre die still veraltende gewesen. Die
+   Projektion des Skripts ist flach mit Kosinus-Korrektur und **exakt umkehrbar**:
+   **vier Zahlen** (`PROJEKTION`) statt 886 Punkte, gerechnet in `lib/karte-geo.ts`.
+2. **Der Beweis ist ein ORTSTEST, kein Round-Trip.** Raster → Geo → Raster hätte auch
+   bei einem beidseitigen Vorzeichenfehler bestanden. Geprüft gegen sechs echte Orte —
+   Stephansdom → 1010, Schönbrunn → 1130, Donauturm → 1220, Praterstern → 1020,
+   Hauptbahnhof → 1100, Grinzing → 1190. Alle sechs richtig.
+3. **`minZoomLevel` hat den ANFANGSAUSSCHNITT überschrieben** — der einzige echte Fehler
+   der Phase. Mit dem gerechneten Wert 10 öffnete die Karte auf einem Drittel von Wien;
+   `react-native-maps` setzt Zoomstufen auf iOS über Kamera-ENTFERNUNGEN um und liegt
+   anderthalb Stufen neben der Lehrbuchformel. **9 ist gemessen, nicht gerechnet.**
+4. **`APPLE_ZOOM_MAX = 15` ist eine Entscheidung, keine Technik.** Die App kennt keine
+   Koordinaten; wer bis auf ein Haus zoomen darf, dem verspricht die Karte eine
+   Genauigkeit, die die Daten nicht haben — harte Regel 47 gegen den Zoom.
+5. **Apples Namensnennung war KEINE Arbeit.** Vorhergesagt als „nicht verhandelbar" —
+   MapKit zeichnet „Maps · Legal" selbst. `KARTE_QUELLE` bleibt trotzdem: Die
+   Bezirksflächen sind weiter von der Stadt Wien (CC BY). Zwei Nennungen, zwei Sachen.
+   **Für MapKit JS (19d-2) gilt das nicht** — dort ist es Handarbeit.
+6. **Der eigene `PanResponder` fällt auf iOS weg.** MapKit schiebt und zoomt selbst —
+   ein Gesten-Erkenner weniger, und ausgerechnet der ungeprüfte.
+
+⚠️ **Was an 19d-1 NICHT geprüft ist: der Tipp auf die Karte.** Der Simulator lässt sich
+ohne Bedienungshilfen-Berechtigung nicht antippen (`osascript` → −1719), und die kann nur
+Ian geben. Geprüft wurde, was daran hängt: die Umrechnung gegen sechs echte Orte, und
+Auswahl samt Blase über einen vorübergehend gesetzten Bezirksfilter (`t02`). Offen ist
+allein, dass MapKits `onPress` die Koordinate liefert. **Gehört in denselben Durchgang
+wie Wischstapel und Jahrgangs-Balken: auf Ians Gerät.**
+
 ✅ **Phase 19c ist fertig (2026-09-06): die Aktivitäten springen aus der Karte.** Ians
 erste von zwei Rückmeldungen zu 19b — bis dahin beantwortete ein Tipp auf die Karte nur
 die halbe Frage, man musste nach UNTEN schauen. Jetzt schwebt über dem angetippten Bezirk
@@ -533,9 +570,13 @@ das heimlich Termine erfindet.
 > **die drei Striche ☰**, nicht ⚙️ — wie er es ursprünglich gesagt hatte. `MEHR_SYMBOL`.
 
 ✅ **Alle Regel-Entscheidungen sind getroffen (Stand 2026-09-06).** Zuletzt die
-dreiunddreißigste: **die Karte lässt sich schieben und zoomen** (`KARTE_GESTE` in
-`features/posts/karte.ts`) — gegen meine Empfehlung „Lupe“, und sein Argument war das
-bessere.
+achtunddreißigste: **die Kartenfarbe bleibt bei gleich breiten Stufen** (`stufeFuer()`
+in `features/posts/karte.ts`, PLAN.md Abschnitt 6, Punkt 35) — die Karte sagt damit
+weiter, *wo überhaupt etwas ist*, und bleibt im Kopf zurückrechenbar. Dabei kam heraus,
+dass zwei der drei angebotenen Möglichkeiten **fast dieselbe Regel** waren; die
+Gegenüberstellung im Plan ist entsprechend berichtigt. Davor die dreiunddreißigste:
+**die Karte lässt sich schieben und zoomen** (`KARTE_GESTE`) — gegen meine Empfehlung
+„Lupe“, und sein Argument war das bessere.
 Die letzte — `zaehltAlsTermin()` in `features/requests/kollision.ts` — hat er an diesem
 Tag beantwortet: **erst, wenn wirklich jemand dabei ist.** Die verworfenen Möglichkeiten
 stehen in allen sieben Regel-Dateien weiter im Kopfkommentar — als Gedächtnis, nicht als
@@ -640,10 +681,12 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 8. **Wieder herzeigen** — die drei haben Phase 13 gesehen, nicht 18a. Läuft neben 9.
 9. **Aufs Gerät** (Phase 19) ← *hier sind wir* — erster EAS-Build, `react-native-svg`,
    Durchgang am iPhone. ~~Wien-Karte (19b)~~ ✅ *2026-09-06*
-9b. **Karte nachbessern** — ~~**19c** (Aktivitäten springen heraus)~~ ✅ *2026-09-06*,
-   danach **19d** (echte Apple-Karte, **braucht Ians Apple-Schlüssel**) ← *hier geht es
-   weiter*. PLAN.md Abschnitt 5b.
-10. **Backend** (Phase 20) — Supabase: Schema, Policies, Anmelden, `store.ts` tauschen
+9b. ~~**Karte nachbessern**~~ — ~~**19c** (Aktivitäten springen heraus)~~ ✅ und
+   ~~**19d-1** (echte Apple-Karte auf iOS)~~ ✅, beide *2026-09-06*. **19d-2** (MapKit JS
+   im Browser) wartet auf Phase 20: Der Token muss von einem Server ausgestellt werden.
+   PLAN.md Abschnitt 5b.
+10. **Backend** (Phase 20) ← *hier geht es weiter* — Supabase: Schema, Policies,
+   Anmelden, `store.ts` tauschen. Danach fällt 19d-2 nebenbei ab.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 
 > Der Plan dazu steht ausgeschrieben in **[PLAN.md, Abschnitt 5b](PLAN.md)**. Die drei
@@ -982,7 +1025,8 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    (18a), nur eingebaut statt vergessen. **Bei jeder neuen Auskunft fragen: Wem gehört
    die Information, aus der sie gerechnet ist?**
 
-48. **Die Wien-Karte besteht aus VIER Dateien, und keine davon ist ein Screen.**
+48. **Die Wien-Karte besteht aus SIEBEN Dateien, und keine davon ist ein Screen.**
+   *(Seit Phase 19d — bis dahin vier.)*
    `data/wien-bezirke.ts` (**erzeugt** — nicht von Hand ändern, `python3
    scripts/bezirke-bauen.py` baut sie neu) · `features/posts/karte.ts` (was eine Farbe
    bedeutet, wie weit man zoomen darf) · `lib/karte-treffer.ts` (welcher Bezirk unter
@@ -991,6 +1035,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Grenzverlauf ist ein Skriptlauf, eine neue Farbe eine Regel-Datei — nie ein Screen.
    **Die Namensnennung (`KARTE_QUELLE`, CC BY 4.0, Stadt Wien) ist Lizenzbedingung** und
    wird IN der Karte gezeichnet, damit sie mitreist.
+   **Seit Phase 19d kommen drei dazu:** `lib/karte-geo.ts` (wo eine Fläche auf der ERDE
+   liegt) · `components/ui/karte-typen.ts` (die gemeinsame Schnittstelle) ·
+   `components/ui/SsAppleKarte.native.tsx` (der zweite Zeichner). Screens nehmen **nur
+   `SsKarte`** — die Weiche `SsKarte.tsx` / `SsKarte.native.tsx` entscheidet, wer
+   zeichnet.
 49. **Ein Kneifen ist NIE ein Tipp — auch wenn sich nichts bewegt hat.**
    `gestureState.dx/dy` misst bei mehreren Fingern den MITTELPUNKT, und der steht beim
    symmetrischen Auseinanderziehen still. Die Bewegungsgrenze aus harter Regel 15 fängt
@@ -1017,6 +1066,24 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    weil `react-native-web` ein geerbtes `box-none` an alle Nachkommen weitergibt außer an
    Text-Knoten. Wie viele Zeilen hineinpassen, rechnet `passform()` aus dem Platz;
    `BLASE_MAX` in `karte.ts` ist die Obergrenze, keine Zusage.
+
+52. **Es gibt mehr als einen Kartenzeichner und GENAU EINE Bedeutung.** Was „viel los"
+   heißt, wie weit man zoomen darf, welche Sorte Karte darunter liegt — alles in
+   `features/posts/karte.ts`; wo eine Fläche auf der Erde liegt, in `lib/karte-geo.ts`;
+   was ein Zeichner können muss, in `components/ui/karte-typen.ts`. Ein Zeichner
+   verantwortet **nur** den Hintergrund, das Zeichnen und wie aus einer Geste ein „hier
+   wurde getippt" wird. Rutscht die Bedeutung in einen Zeichner, hat die App zwei
+   Wahrheiten — und auffallen würde es nur dem, der beide nebeneinanderhält.
+   **Die Plattform-Endung ist dabei Pflicht und kein Stil:** Ein `Platform.OS`-Zweig in
+   EINER Datei importierte `react-native-maps` auch ins Web-Bündel, wo es MapKit nicht
+   gibt. Das ist genau umgekehrt zu `SsIcon` (Regel 24), und der Unterschied ist der
+   Grund: Dort zeichnen beide Zweige dasselbe, hier sind es zwei Bibliotheken.
+53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
+   rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und
+   schreibt sie **nie** ein zweites Mal in den Generator. Die Projektion ist flach mit
+   Kosinus-Korrektur und damit exakt umkehrbar; vier Zahlen ersetzen 886 Punkte. Wer
+   eine Umrechnung prüft, prüft sie gegen **echte Orte** (Stephansdom → 1010) und nicht
+   gegen sich selbst — ein Round-Trip besteht auch bei beidseitig falschem Vorzeichen.
 
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
@@ -1376,6 +1443,27 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   mehr als eine Zeile" war trotzdem falsch, weil sie mit dem ungünstigsten Anker
   gerechnet war und als allgemeine Aussage hergezeigt wurde. Bei einer Spanne immer
   mitsagen: schlechtester Fall oder mittlerer.
+- **Eine Zoomstufe von `react-native-maps` ist nicht die Zoomstufe aus der Formel.**
+  (Phase 19d) `minZoomLevel={10}`, aus der üblichen Rechnung (Weltbreite 256 · 2^z)
+  hergeleitet, ließ die Karte auf **einem Drittel von Wien** aufgehen — die Grenze
+  überschrieb den `initialRegion`. Auf iOS wird sie über `cameraZoomRange` in
+  ENTFERNUNGEN umgesetzt, und die Umrechnung liegt gut anderthalb Stufen daneben. Bei 9
+  passt Wien hinein. **Grenzen einer fremden Kartenbibliothek werden gemessen, nicht
+  gerechnet** — und eine Grenze, die den Anfangszustand verändert, sieht aus wie ein
+  Fehler im eigenen Code.
+- **Drei aufgeschriebene Möglichkeiten sind noch keine drei.** (2026-09-06, Punkt 35)
+  „Aufrunden gegen Abrunden" stand drei Wochen als echte Wahl im Plan. `Math.ceil(x)−1`
+  und `Math.floor(x)` unterscheiden sich aber nur, wenn `x` genau eine ganze Zahl trifft
+  — bei fünf Posts also bei **null von fünf** Werten. Es war eine Randkonvention, keine
+  Aussage über die Karte. **Vor dem Fragen nachrechnen, ob die Möglichkeiten sich
+  wirklich unterscheiden.**
+- **Fast Refresh behält `useState` — ein Anfangswert ändert sich davon nicht.**
+  (Phase 19d) Um die Kartenansicht zu prüfen, wurde `useState<Ansicht>('stapel')` auf
+  `'karte'` gestellt; auf dem Simulator änderte sich nichts, weil Fast Refresh den
+  Zustand rettet. Es braucht `terminate` + `pgrep` + `launch` (dieselbe Falle wie in
+  Phase 19). Und: Der Simulator lässt sich ohne Bedienungshilfen-Berechtigung gar nicht
+  antippen — **einen Zustand, den man nicht ertippen kann, setzt man vorübergehend im
+  Code und nimmt ihn nachweislich zurück** (`git diff` lesen, nicht erinnern).
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

@@ -14,65 +14,16 @@ import {
   stufeFuer,
 } from '@/features/posts/karte';
 import { bezirkAn } from '@/lib/karte-treffer';
+import type { KartenAnker, SsKarteProps } from './karte-typen';
 import { colors } from '@/theme';
 
 /**
- * Wo ein Bezirk gerade auf dem Schirm liegt — alles in Bildpunkten, relativ zur
- * linken oberen Ecke der Kartenfläche.
- *
- * Gebraucht wird das seit Phase 19c von der Blase, die über dem gewählten Bezirk
- * schwebt. **Sie hängt am Bezirk und nicht am Finger** (Ians Rückmeldung sagte „über
- * dem Klick", gemeint ist aber der Bezirk): Der Anker sitzt auf dem
- * Beschriftungspunkt aus `wien-bezirke.ts`, dem Punkt mit dem größten Abstand zum
- * Rand. Das ist zugleich die stabile Wahl — zweimal denselben Bezirk antippen ergibt
- * zweimal dieselbe Stelle, auch wenn man einmal die Mitte und einmal den Zipfel trifft.
+ * Die Props sind seit Phase 19d **nicht mehr die dieses Bausteins**, sondern die
+ * aller Kartenzeichner — sie stehen in `karte-typen.ts`, samt der Begründung, warum
+ * sie keinem einzelnen Zeichner gehören. `SsWienKarteProps` bleibt als Name stehen,
+ * damit im Zeichner selbst zu lesen ist, was er bekommt.
  */
-export interface KartenAnker {
-  /** Der Punkt, auf den die Spitze zeigt. */
-  x: number;
-  y: number;
-  /** Wie viel Platz über bzw. unter dem Anker frei ist, bis die Karte zu Ende ist. */
-  platzOben: number;
-  platzUnten: number;
-  /** Die Kartenfläche selbst — die Blase darf nicht breiter werden. */
-  breite: number;
-  hoehe: number;
-}
-
-export interface SsWienKarteProps {
-  /** Wie viele Posts je Bezirks-PLZ. Fehlt einer, ist er leer. */
-  zaehlung: Readonly<Record<string, number>>;
-  /** Welcher Bezirk ist gewählt — `null` heißt „ganz Wien". */
-  gewaehlt: string | null;
-  /** Ein Tipp auf eine Fläche. `null`, wenn jemand ins Umland tippt. */
-  onWaehlen: (plz: string | null) => void;
-  /**
-   * Höchste Höhe in Bildpunkten. Ohne sie nimmt die Karte bei Handybreite 255 px
-   * und lässt der Liste darunter auf einem 600-px-Schirm fast nichts — Ians
-   * Entscheidung 30 sagt aber ausdrücklich „Posts erscheinen DARUNTER". Wird sie
-   * wirksam, schrumpft die Karte als Ganzes und bleibt mittig; sie wird nie
-   * beschnitten.
-   */
-  maxHoehe?: number;
-  /**
-   * Was über dem gewählten Bezirk schweben soll — seit Phase 19c die `KartenBlase`.
-   *
-   * ── Warum ein Slot und nicht der Inhalt selbst ───────────────────────────────
-   * Dasselbe Muster wie `WischStapel.blatt` (harte Regel 36) und aus demselben
-   * Grund: Der Screen weiß, WAS über der Karte stehen soll, aber nicht, WO der
-   * Bezirk nach Schieben und Zoomen liegt — das weiß nur dieser Baustein. Und die
-   * Karte darf nichts von Posts wissen, sonst wäre sie kein `ui/`-Baustein mehr.
-   *
-   * ── Warum der Slot NICHT in der Kartenfläche hängt ───────────────────────────
-   * Die Fläche hat `overflow: hidden` (sonst ragt die gezoomte Karte über ihren
-   * Platz) und einen `PanResponder`, der jede Berührung beim Beginn beansprucht
-   * (`onStartShouldSetPanResponder: () => true`). Ein Kind darin wäre halb
-   * abgeschnitten und nicht antippbar. Der Slot liegt deshalb als GESCHWISTER
-   * darüber, deckungsgleich, mit `pointerEvents="box-none"` — was neben der Blase
-   * liegt, fällt weiter auf die Karte durch.
-   */
-  blase?: (anker: KartenAnker) => ReactNode;
-}
+export type SsWienKarteProps = SsKarteProps;
 
 /**
  * Die Wien-Karte — 23 Bezirksflächen, eingefärbt nach „wie viel ist hier los".

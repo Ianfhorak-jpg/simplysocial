@@ -149,6 +149,7 @@ def main():
     spanne_lon = (max(p[0] for p in alle) - lon0) * k
     massstab = BREITE / spanne_lon
     hoehe = round((lat1 - min(p[1] for p in alle)) * massstab, 1)
+    verzerrung = (1 / k - 1) * 100  # nur für den Kommentar in der Ausgabe
 
     zeilen, roh, fein = [], 0, 0
     for f in feats:
@@ -238,6 +239,39 @@ export interface BezirkFlaeche {{
 /** Das Raster, in dem alle Pfade unten liegen. */
 export const KARTE_BREITE = {BREITE:g};
 export const KARTE_HOEHE = {hoehe:g};
+
+/**
+ * Wie aus einer Rasterstelle wieder ein Ort auf der Erde wird.
+ *
+ * ── Warum vier Zahlen und nicht 886 Punkte ein zweites Mal ──────────────────
+ * Seit Phase 19d gibt es einen ZWEITEN Zeichner: Auf iOS liegen die Bezirke als
+ * Polygone auf einer echten Apple-Karte, und MapKit rechnet in Längen- und
+ * Breitengraden. Die Umrisse oben stehen aber im Raster.
+ *
+ * Der naheliegende Weg wäre gewesen, die Geo-Punkte ZUSÄTZLICH zu speichern —
+ * dieselben Punkte ein zweites Mal, in einer zweiten Einheit. Dann gäbe es zwei
+ * Fassungen derselben Geometrie, und die zweite wäre die, die beim nächsten
+ * Skriptlauf jemand vergisst. Dieselbe Überlegung wie bei `landing/stil.css`
+ * (harte Regel 13), nur diesmal vermeidbar: Die Projektion ist eine flache
+ * Rechnung mit Kosinus-Korrektur (Entscheidung 1 im Kopf des Skripts) und damit
+ * **exakt umkehrbar**.
+ *
+ *     lon = lon0 + x / (k · massstab)
+ *     lat = lat1 − y / massstab
+ *
+ * Gerechnet wird das in `lib/karte-geo.ts`; hier stehen nur die Zahlen, wie
+ * überall in dieser Datei.
+ */
+export const PROJEKTION = {{
+  /** Westlichster Längengrad Wiens — der linke Rand des Rasters (x = 0). */
+  lon0: {lon0!r},
+  /** Nördlichster Breitengrad — der OBERE Rand (y = 0; y wächst nach unten). */
+  lat1: {lat1!r},
+  /** cos(mittlere Breite). Ohne ihn wäre Wien um {verzerrung:.0f} % zu breit. */
+  k: {k!r},
+  /** Rastereinheiten je Grad (nach der Kosinus-Korrektur). */
+  massstab: {massstab!r},
+}};
 
 export const BEZIRKE: readonly BezirkFlaeche[] = [
 '''

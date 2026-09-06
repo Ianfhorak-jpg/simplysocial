@@ -52,6 +52,39 @@ export interface BezirkFlaeche {
 export const KARTE_BREITE = 1000;
 export const KARTE_HOEHE = 776.7;
 
+/**
+ * Wie aus einer Rasterstelle wieder ein Ort auf der Erde wird.
+ *
+ * ── Warum vier Zahlen und nicht 886 Punkte ein zweites Mal ──────────────────
+ * Seit Phase 19d gibt es einen ZWEITEN Zeichner: Auf iOS liegen die Bezirke als
+ * Polygone auf einer echten Apple-Karte, und MapKit rechnet in Längen- und
+ * Breitengraden. Die Umrisse oben stehen aber im Raster.
+ *
+ * Der naheliegende Weg wäre gewesen, die Geo-Punkte ZUSÄTZLICH zu speichern —
+ * dieselben Punkte ein zweites Mal, in einer zweiten Einheit. Dann gäbe es zwei
+ * Fassungen derselben Geometrie, und die zweite wäre die, die beim nächsten
+ * Skriptlauf jemand vergisst. Dieselbe Überlegung wie bei `landing/stil.css`
+ * (harte Regel 13), nur diesmal vermeidbar: Die Projektion ist eine flache
+ * Rechnung mit Kosinus-Korrektur (Entscheidung 1 im Kopf des Skripts) und damit
+ * **exakt umkehrbar**.
+ *
+ *     lon = lon0 + x / (k · massstab)
+ *     lat = lat1 − y / massstab
+ *
+ * Gerechnet wird das in `lib/karte-geo.ts`; hier stehen nur die Zahlen, wie
+ * überall in dieser Datei.
+ */
+export const PROJEKTION = {
+  /** Westlichster Längengrad Wiens — der linke Rand des Rasters (x = 0). */
+  lon0: 16.18183038,
+  /** Nördlichster Breitengrad — der OBERE Rand (y = 0; y wächst nach unten). */
+  lat1: 48.32266666,
+  /** cos(mittlere Breite). Ohne ihn wäre Wien um 50 % zu breit. */
+  k: 0.666268500065024,
+  /** Rastereinheiten je Grad (nach der Kosinus-Korrektur). */
+  massstab: 3793.171719168709,
+};
+
 export const BEZIRKE: readonly BezirkFlaeche[] = [
   { plz: '1010', nr: 1, name: 'Innere Stadt', label: { x: 472, y: 437, r: 26 },
     d: 'M475,463 485,467 492,464 503,450 513,428 511,420 500,421 492,418 476,395 451,413 441,411 438,431 439,439 465,467Z' },

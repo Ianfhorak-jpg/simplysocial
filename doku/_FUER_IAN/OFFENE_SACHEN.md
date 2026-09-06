@@ -191,16 +191,29 @@ damit dich nichts überrascht.
   der ersten Einreichung bei Apple für immer festgelegt. (`at.` weil die App aus Wien
   ist und `simplysocial.at` auf deiner Domain-Liste steht.)
 
-### Neu seit 06.09.2026 — für die echte Apple-Karte (19d)
-- **Ein MapKit-JS-Schlüssel aus deinem Apple-Developer-Account.** Du wolltest statt der
-  gezeichneten Karte die echte von Apple — das ist gebaut, sobald der Schlüssel da ist.
-  Ohne ihn gibt es die Apple-Karte nur auf dem iPhone und **im Browser gar keine Karte
-  mehr**, also ausgerechnet dort, wo du den Prototyp herzeigst. Zu holen unter
-  *Certificates, Identifiers & Profiles → Maps IDs*; er kommt wie jeder Schlüssel in die
+### Neu seit 06.09.2026 — die echte Apple-Karte (19d)
+
+✅ **Die Hälfte davon ist fertig.** Auf dem iPhone liegt seit dem 06.09. eine **echte
+Apple-Karte** unter den Bezirken — genau das, was du wolltest. Sie öffnet auf ganz Wien,
+die Bezirke sind zart eingefärbt, und wenn einer ausgewählt ist, springt die Blase mit den
+Aktivitäten wie vorher heraus. Bilder: `t01-ios-apple-karte.png` und
+`t02-ios-blase-donaustadt.png` im Projektordner.
+
+- **Im Browser bleibt vorerst die gezeichnete Karte, und das ist Absicht.** *(Hier stand
+  bis zum 06.09. etwas Falsches: „im Browser gar keine Karte mehr". Das war der
+  Planungsstand, nicht das Gebaute — so weit ist es nie gekommen.)* Apple lässt seine
+  Karte im Browser nur mit einem **Schlüssel, der regelmäßig neu ausgestellt werden
+  muss**, und ausstellen kann ihn nur ein Server. Einen Server gibt es ab Phase 20.
+  Bis dahin sieht der Prototyp aus wie bisher — es fehlt dir also nichts.
+- **Was ich trotzdem irgendwann von dir brauche: eine Maps-ID und einen privaten
+  Schlüssel** aus deinem Apple-Developer-Konto (*Certificates, Identifiers & Profiles →
+  Maps IDs*). Kostet nichts, dauert ein paar Minuten. **Aber erst zusammen mit Phase 20**
+  — vorher könnte ich damit nichts anfangen. Er kommt wie jeder Schlüssel in die
   Shell-Umgebung, **nie in den Code**.
-- **Das hat Zeit, bis du willst.** Die Karte funktioniert ohne ihn weiter — seit dem
-  06.09. springen die Aktivitäten eines Bezirks als kleine Blase heraus, wenn du ihn
-  antippst (das war deine andere Rückmeldung, und die brauchte nichts von dir).
+- **Und eines kann nur dein Auge:** Ob sich die echte Karte richtig anfühlt. Sie zeigt
+  jetzt Straßen, Geschäfte und Namen — das kann auch unruhig wirken neben dem, was die
+  App sagen will. Ich habe die ruhigere Fassung genommen, die Apple selbst dafür anbietet;
+  wenn sie dir zu blass ist, ist der Rückweg ein Wort im Code.
 
 ### In Phase 20 (Backend)
 - **Ein Supabase-Konto anlegen** (gratis, mit deiner E-Mail). Die Zugangsschlüssel
