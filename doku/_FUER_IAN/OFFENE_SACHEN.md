@@ -3,8 +3,61 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 06.09.2026 (Phase 18a bis 18d fertig — einladen, Jahrgang, Chat-Liste,
-> nicht zwei Sachen gleichzeitig. **Es wartet keine Programmier-Entscheidung mehr.**)
+> Stand: 06.09.2026 — **der Prototyp ist fertig, der Weg zur echten App ist geplant.**
+> Drei Entscheidungen von dir sind eingearbeitet (Supabase · erst aufs Handy · drei
+> Anmeldewege). **Neu und dringend: Punkt 0 gleich hier drunter.**
+
+---
+
+## 🔴 0. NEU und zeitkritisch — Apple hat diesen Monat die Regeln geändert
+
+**Kurz:** Apple fragt seit Juli 2026 bei jeder App, ob Leute darin fremde Inhalte in
+einem Feed sehen. Ab **September 2026** — also ab jetzt — ist die Antwort Pflicht, sonst
+darf man gar nicht einreichen.
+
+**Bei SimplySocial ist die Antwort ja.** Ein Feed mit Posts von anderen ist genau das,
+was gemeint ist. Die Folge: **Die App bekommt mindestens „13+".** Das kann man nicht
+wegverhandeln und es ist auch nichts Schlimmes — Instagram und TikTok stehen viel höher.
+
+**Warum es trotzdem hier steht und nicht nur in PLAN.md:** Apples „13+" ist eine
+Ladenschild-Einstufung, **keine Rechtsberatung**. Es sagt, ab wann Apple die App
+anzeigt. Es sagt nichts darüber, was in Österreich gilt, wenn 16-Jährige über eine App
+Treffen mit Fremden ausmachen. **Das ist weiter Punkt 1**, und Apples Neuerung macht ihn
+dringender: Beim Einreichen musst du eine Zahl hinschreiben, und du solltest vorher mit
+einem Erwachsenen geredet haben, ob sie stimmt.
+
+---
+
+## ✅ Erledigt am 06.09.2026 — drei Entscheidungen, die den ganzen Rest formen
+
+Ich habe dir drei Fragen gestellt, bevor irgendein Code geschrieben wurde. Das war
+Absicht: Alle drei sind später teuer zu ändern.
+
+**1. Die Datenbank: Supabase.** Der Grund in einem Bild — deine wichtigste Regel ist
+„wer darf welchen Post sehen" (öffentlich / nur Follower / nur meine Gruppe, und
+Blockierte sehen nichts). Bei Firebase kann der Server so eine Regel **nicht anwenden**:
+Er kann eine Anfrage nur ganz erlauben oder ganz ablehnen, nicht einzelne Posts
+aussortieren. Man müsste in jeden Post hineinschreiben, wer ihn sehen darf — und das bei
+jedem Folgen, Entfolgen und Blockieren neu ausrechnen. Bei Supabase ist es **ein Satz**,
+und der Server macht den Rest. *Der Haken, den du kennst: Die Gratis-Version schläft
+nach 7 stillen Tagen ein und muss aufgeweckt werden. Ab dem echten Start kostet die
+Version ohne Schlaf 25 $/Monat.*
+
+**2. Erst aufs Handy, dann das Backend.** Ab jetzt gibt es zwei offene Fragen: *Läuft
+die App auf einem iPhone?* und *Läuft sie mit echten Daten?* Wenn beides gleichzeitig
+neu ist, weiß man bei keinem Fehler, woher er kommt — genau das hat bei ACTA die teuren
+Tage gekostet. Getrennt kostet es einen Nachmittag mehr.
+
+**3. Anmelden: E-Mail-Code UND Google UND Apple.** **Hier hast du gegen meinen Vorschlag
+entschieden, und du hattest recht.** Ich wollte nur den E-Mail-Code — weniger zu bauen,
+weniger, was kaputtgeht. Dein Argument war besser: Wer beim allerersten Öffnen erst sein
+Postfach aufmachen muss, kommt zur Hälfte nicht zurück. Und ausgerechnet am Anfang, wo
+der Feed noch leer ist, verträgt die App das am wenigsten.
+
+*Eine Folge davon solltest du wissen:* Sobald Google dabei ist, **verlangt Apple**, dass
+„Anmelden mit Apple" auch da ist. Das hast du ohnehin gewählt, also kostet es nichts
+extra — aber es legt eine Reihenfolge fest: Apple muss fertig sein, bevor Google
+live geht. Andersherum lehnt Apple die App ab.
 
 ---
 
@@ -122,9 +175,53 @@ bedeutet, steht gleich unten bei Punkt 1 — es macht ihn dringender.
 
 ---
 
+## 🟠 Was auf dich zukommt, wenn die echte App gebaut wird
+
+Der Plan für Backend, iPhone-Build und App Store steht (PLAN.md, Abschnitt 5b). Das
+meiste davon ist meine Arbeit. **Das hier ist die Liste dessen, was nur du kannst** —
+damit dich nichts überrascht.
+
+### Bald, in Phase 19 (aufs Handy)
+- **Dein iPhone einmal anmelden.** Für einen Test-Build muss dein Gerät bei Apple
+  registriert werden. Ist ein Klick auf einem Link, den ich dir schicke.
+- **Der Name der App bei Apple wird festgelegt** — technisch `at.simplysocial.app`.
+  **Der ist nach der ersten Einreichung nie wieder änderbar.** Sag Bescheid, wenn dir
+  etwas anderes lieber ist; danach ist es zu spät.
+
+### In Phase 20 (Backend)
+- **Ein Supabase-Konto anlegen** (gratis, mit deiner E-Mail). Die Zugangsschlüssel
+  kommen dann in die Shell-Umgebung, **nie in den Code** — das ist die feste Regel aus
+  dem Hauptordner.
+- **Ein Google-Konto für den Google-Login freischalten.** Dauert zehn Minuten und
+  braucht deinen Namen, weil es dein Projekt ist.
+- **Geldfrage: Supabase Pro, 25 $/Monat.** Erst nötig, wenn die Gratis-Version stört —
+  sie schläft nach 7 stillen Tagen ein. Solange ihr testet, reicht Aufwecken. **Ab dem
+  Tag, an dem echte Leute die App benutzen, willst du das nicht mehr riskieren.**
+
+### In Phase 21 (App Store)
+- **Die Rechtstexte.** Siehe Punkt 1 gleich hier drunter — das ist der große.
+- **Der Text im Store.** Beschreibung, Schlagworte, was die App ist. **Das kann ich
+  vorschlagen, aber es ist eure Stimme, nicht meine.**
+- **Screenshots.** Apple will Bilder aus der App. Die mache ich, aber du wählst aus.
+- **Ein Testzugang für Apple.** Ein Prüfer bei Apple muss sich anmelden können, ohne
+  deine E-Mail zu haben. Dafür legen wir ein Extra-Konto an. *Das ist der Punkt, den
+  fast alle vergessen und an dem die meisten Apps beim ersten Mal abgelehnt werden.*
+- **Wer betreibt die App offiziell?** Steht schon bei Punkt 1 — aber im Store steht ein
+  Name öffentlich da, und der muss stimmen.
+
+---
+
 ## 🔴 Wichtig, bevor die App über euren Freundeskreis hinausgeht
 
 ### 1. Rechtliches — hol dir erwachsenen Rat
+
+> ⏫ **Seit 06.09.2026 ist das der dringendste Punkt in dieser Datei.** Nicht weil sich
+> etwas an ihm geändert hätte, sondern weil er jetzt einen Termin hat: Beim Einreichen
+> im App Store musst du eine Altersfreigabe angeben (Punkt 0), und einen Rechtstext
+> hochladen. Beides ohne erwachsenen Rat wäre Raten. **Fang mit deinen Eltern an, bevor
+> Phase 20 fertig ist** — dann steht die Antwort da, wenn sie gebraucht wird, statt den
+> Start zu blockieren.
+
 Du bist 16 und baust eine App, die **Fremde zusammenbringt, die sich dann wirklich
 treffen**. Das ist kein Hobbyprojekt mehr. Vier Punkte, die geklärt sein müssen:
 

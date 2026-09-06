@@ -35,6 +35,37 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+🚀 **Der Weg zur echten App ist geplant (2026-09-06): PLAN.md, Abschnitt 5b, Phasen 19
+bis 21.** Bis hierher war jede Phase eine Verbesserung an etwas, das schon lief; ab hier
+sind es drei Dinge, die es noch nicht gibt. **Ians drei Entscheidungen dazu, alle vor dem
+ersten Handgriff getroffen:**
+
+1. **Supabase, nicht Firebase.** Es hängt an einer einzigen Eigenschaft: Die zentrale
+   Regel dieser App („wer sieht welchen Post") ist ein **Zeilenfilter**, und Firestore
+   kann keinen — dort gilt *„security rules are not filters"*: Eine Abfrage wird gegen
+   ihre MÖGLICHE Ergebnismenge geprüft und schlägt ganz fehl, wenn ein einziges Dokument
+   darunter verboten wäre. Der Ausweg wäre, die Erlaubten-Liste in jeden Post zu
+   kopieren — **die Regel läge dann IN den Daten**, das Gegenteil der harten Regeln 17,
+   32 und 46. Eine Postgres-Policy filtert Zeilen und bleibt EINE Regel an EINER Stelle.
+   *Nebenbefund:* Firebase-Speicher für Bilder ist seit dem 2026-02-03 nicht mehr gratis
+   — Darias Profilbilder wären dort sofort ein Kostenpunkt gewesen.
+2. **Gerät VOR Backend.** Es gibt ab jetzt zwei offene Fragen — läuft die App auf einem
+   iPhone, und läuft sie mit echten Daten. Zusammen beantwortet, hat jeder Fehler zwei
+   mögliche Ursachen. Das ist die Lage, aus der bei ACTA die teuren Tage wurden.
+   **Deshalb kommt auch nur `react-native-svg` in den ersten Build**, nicht gleich alle
+   vier Native-Bausteine: Vier neue auf einmal heben denselben Nutzen wieder auf.
+3. **Drei Anmeldewege: E-Mail-Code, Google, Apple** — *gegen* meine Empfehlung, und sein
+   Argument ist das bessere: Reibung beim Anmelden trifft ausgerechnet den Kaltstart.
+   Die Folge ist eine Reihenfolge, keine Extraarbeit: Sobald Google dabei ist, ist
+   „Anmelden mit Apple" nach Richtlinie 4.8 **Pflicht** — also muss Apple fertig sein,
+   bevor Google live geht.
+
+⚠️ **Zeitkritisch und von aussen gekommen:** Apples neue Pflichtfrage zur Altersfreigabe
+(nutzergenerierte Inhalte in einem Feed) ist **ab September 2026 verpflichtend** — also
+jetzt. SimplySocial ist genau die gemeinte App, die Antwort ist ja, und daraus folgt
+**mindestens 13+**. Das ist eine Feststellung, keine Wahl — und es macht die offene
+Rechtsfrage in `_FUER_IAN/OFFENE_SACHEN.md` (Punkt 1) dringender, nicht lockerer.
+
 ✅ **Phase 18d ist fertig (2026-09-05): nicht zwei Sachen gleichzeitig.** Leopolds
 letzter offener Wunsch — und der erste Eingriff, bei dem eine Regel eine **Lücke im
 Datenmodell** überbrücken musste. Fünf Dinge sind daran wichtiger als der Hinweiskasten:
@@ -148,7 +179,7 @@ daran wichtiger als der Regler:
   `User.jahrgang: number`, und am Post ein Union `{ kind: 'egal' } | { kind: 'spanne'; … }`.
   **Offen bleibt, was am Profil steht** (Jahrgang, Alter, oder weiter ein grobes Band).
 
-🔜 **Als Nächstes: wieder herzeigen.** Am 2026-09-02 haben die drei Mitgründer den
+🔜 **Als Nächstes: Phase 19 — und daneben wieder herzeigen.** Am 2026-09-02 haben die drei Mitgründer den
 Prototyp am Handy durchgeklickt. Ihr Urteil zur Sache war gut (Leopold: „für die
 Aktivitäten-Funktion sehr gut, an sich funktioniert es"), die Kritik betraf das
 Aussehen: **„schaut noch bisschen nach AI aus, wegen den Emojis"** (Christoph) — **das
@@ -470,8 +501,14 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    ~~Direktnachrichten~~ · ~~Gruppen~~ · ~~in Gruppen einladen~~ · ~~Jahrgang~~ ·
    ~~Chat-Liste~~ ·
    ~~nicht 2 Sachen gleichzeitig~~
-8. **Wieder herzeigen** ← *hier sind wir* — die drei haben Phase 13 gesehen, nicht 18a
-9. Danach: echtes Backend, EAS-Build, App Store
+8. **Wieder herzeigen** — die drei haben Phase 13 gesehen, nicht 18a. Läuft neben 9.
+9. **Aufs Gerät** (Phase 19) ← *hier sind wir* — erster EAS-Build, `react-native-svg`,
+   Durchgang am iPhone
+10. **Backend** (Phase 20) — Supabase: Schema, Policies, Anmelden, `store.ts` tauschen
+11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
+
+> Der Plan dazu steht ausgeschrieben in **[PLAN.md, Abschnitt 5b](PLAN.md)**. Die drei
+> Wahlen darin sind seit dem 2026-09-06 entschieden.
 
 ## Stack
 

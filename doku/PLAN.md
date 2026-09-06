@@ -1099,10 +1099,19 @@ ohne einen Bildschirm, den man einmal sieht und nie wieder.
   `naechsteHalbeStunde()` in `lib/zeit.ts`, von beiden benutzt.
 
 ### Später (nicht diese Woche)
-- Echtes Backend (Firebase oder Supabase — noch nicht entschieden)
-- Login / Registrierung
-- Push-Nachrichten
-- EAS-Build, TestFlight, App Store
+
+> ✅ **Seit dem 2026-09-06 ist das kein Sammelbecken mehr, sondern ein Plan:**
+> **Abschnitt 5b, Phasen 19 bis 21.** Die drei offenen Wahlen darin sind entschieden —
+> Supabase, Gerät vor Backend, drei Anmeldewege.
+
+- ~~Echtes Backend (Firebase oder Supabase — noch nicht entschieden)~~ → **Supabase**,
+  Phase 20. Der Grund ist eine einzige Eigenschaft: Firestore-Regeln filtern keine
+  Zeilen, Postgres-Policies schon — und die zentrale Regel dieser App IST ein
+  Zeilenfilter.
+- ~~Login / Registrierung~~ → Phase 20.3, Ians Entscheidung 35.
+- **Push-Nachrichten** — weiter offen und bewusst nicht in 19–21. Sie brauchen einen
+  Grund („jemand hat zugesagt"), und den gibt es erst, wenn echte Leute posten.
+- ~~EAS-Build, TestFlight, App Store~~ → Phasen 19 und 21.
 
 ---
 
@@ -2177,6 +2186,490 @@ absichtlich kein `style` — der Abstand kommt weiter vom `gap` des Scroll-Inhal
 
 ---
 
+## 5b. Der Weg zur echten App — Phasen 19 bis 21
+
+> **Geplant am 2026-09-06.** Bis hierher war jede Phase eine Verbesserung an etwas, das
+> schon lief. Ab hier sind es drei Dinge, die es noch NICHT gibt: die App auf einem
+> Gerät, echte Daten und ein Eintrag im Store. Alle drei sind groß, und der häufigste
+> Fehler ist, sie gleichzeitig anzufangen.
+
+**Drei Entscheidungen von Ian, alle am 2026-09-06, alle vor dem ersten Handgriff:**
+
+| Frage | Entscheidung | Folge |
+|---|---|---|
+| Welche Datenbank? | **Supabase** | Die Sichtbarkeits-Regel steht als EINE Regel auf dem Server. Abschnitt 20.2. |
+| Womit anfangen? | **Erst aufs Gerät** | Phase 19 vor Phase 20 — damit beim ersten Fehler nur EINE Sache neu ist. |
+| Wie anmelden? | **E-Mail-Code UND Google UND Apple** | Ians siebenundzwanzigste Entscheidung, Abschnitt 6, Punkt 35. Macht „Anmelden mit Apple" zur Pflicht. |
+
+**Warum die Reihenfolge die wichtigste der drei ist.** Es gibt ab jetzt zwei offene
+Fragen: *Läuft die App auf einem iPhone?* und *Läuft sie mit echten Daten?* Beantwortet
+man sie zusammen, hat jeder Fehler zwei mögliche Ursachen, und man kann keine davon
+ausschließen. Das ist die Lage, aus der bei ACTA die teuren Tage geworden sind. Getrennt
+kostet es einen Nachmittag mehr und einen Build von fünfzehn.
+
+---
+
+### Phase 19 — Aufs Gerät: der erste echte Build ⬜
+
+**Ziel:** SimplySocial läuft auf Ians iPhone, mit den Fake-Daten von heute. Kein
+Backend, kein Login — nur die Frage, was ein echtes Gerät anders macht als ein Browser.
+
+#### Was heute schon sicher kaputt ist
+
+**Die 41 Symbole sind auf iOS leere Kreise.** Das ist keine Überraschung und kein
+Versehen, sondern harte Regel 24: `SsIcon` zeichnet `<svg>`, und das gibt es auf Native
+nicht. Der Platzhalter ist absichtlich sichtbar. **Der Weg heraus ist EINE Datei** —
+`components/ui/SsIcon.tsx` —, weil Pfaddaten (`theme/icons.ts`) und Zeichner genau dafür
+getrennt liegen. Kein Screen wird angefasst.
+
+#### Was heute überraschend gut steht — nachgeprüft, nicht gehofft
+
+`grep -rn "document\.\|window\.\|navigator\." src/` liefert außerhalb von `+html.tsx`
+**elf** Treffer, und **jeder einzelne** steht hinter einem `Platform.OS !== 'web'`:
+`_layout.tsx` (Startfläche und Tab-Titel), `PrototypHinweis` und `WischStapel`
+(`sessionStorage`). Die App startet also nicht in einen weißen Bildschirm. Das ist der
+Ertrag von harter Regel 1, drei Wochen später eingelöst.
+
+#### Was niemand vorher wissen kann — und genau deshalb der Build
+
+- **Der Wischstapel unter einem echten Finger.** Der `PanResponder` ist gegen
+  Maus-Ereignisse gebaut worden. Ein iOS-Finger liefert andere Zeitabstände, und
+  `onPanResponderTerminationRequest` (Phase 11) hat auf Native einen zweiten Gegner:
+  die Zurück-Wischgeste vom Bildschirmrand.
+- **`NOTBREITE` darf nicht greifen.** Der Rückfall gegen die gemessene Breite null
+  (2026-09-03) ist für den Web-Export da. Springt er auf dem Gerät an, liegen die Karten
+  wieder schief — und diesmal ohne `dist/index.html` zum Vergleichen.
+- **Reanimated 4 mit der neuen Architektur.** `react-native-worklets` ist ein
+  Native-Baustein. Im Browser läuft er als JavaScript, auf dem Gerät als echter Code.
+- **Die SafeArea unten.** Der ganze Höhen-Nachtrag vom 2026-09-06 ist Web-Logik
+  (`visualViewport`). Auf Native macht das `react-native-safe-area-context`, also ein
+  völlig anderer Mechanismus für dasselbe Problem. Beides muss stimmen, keins hilft dem
+  anderen.
+- **Die Tastatur im Chat.** Harte Regel 9 (Eingabe fest unten) ist im Browser geprüft.
+  Auf iOS schiebt die Tastatur die Ansicht, und `KeyboardAvoidingView` verhält sich auf
+  iOS anders als auf Android.
+
+#### 19.1 — `app.json` ergänzen ⬜
+
+Heute fehlt **`ios.bundleIdentifier` komplett**. `eas build:configure` würde einen
+erfinden. Selbst setzen, und zwar bewusst:
+
+```json
+"ios": {
+  "bundleIdentifier": "at.simplysocial.app",
+  "supportsTablet": false,
+  "icon": "./assets/expo.icon"
+}
+```
+
+> ⚠️ **Der Bundle Identifier ist nach der ersten Einreichung nicht mehr änderbar.** Er
+> ist die Identität der App bei Apple, für immer. Umgekehrte Domain-Schreibweise ist die
+> Konvention; `at.` passt, weil die App aus Wien kommt und die Domain `simplysocial.at`
+> ohnehin auf Ians Liste steht (`OFFENE_SACHEN.md`, Punkt 5b).
+>
+> `supportsTablet: false` ist ebenfalls eine Entscheidung: Die App ist `orientation:
+> portrait` und für eine Hand gebaut. Ein iPad-Ja bedeutet zusätzlich einen eigenen
+> Screenshot-Satz für den Store und einen Review, der auf einem iPad stattfindet.
+
+`experiments.baseUrl: "/simplysocial"` bleibt unangetastet — das ist **web-only** und
+betrifft nur GitHub Pages. Wer es für den Build entfernt, macht die Landing-Adresse
+kaputt.
+
+#### 19.2 — `eas.json` anlegen ⬜
+
+Gibt es heute nicht. Drei Profile, und der Unterschied ist nicht kosmetisch:
+
+| Profil | Wofür | Besonderheit |
+|---|---|---|
+| `development` | Ians Gerät, zum Entwickeln | `developmentClient: true` — die App lädt den Code vom Mac, man muss also **nicht für jede Änderung neu bauen** |
+| `preview` | Die drei Mitgründer | Fertiges Bündel, kein Mac nötig. Läuft ohne Store. |
+| `production` | TestFlight und Store | Was eingereicht wird |
+
+**Der Unterschied, den man beim ersten Mal falsch versteht:** Ein `development`-Build
+ist eine *Hülle*. Man baut ihn EINMAL und lädt danach den JavaScript-Code hinein. Neu
+gebaut werden muss er nur, wenn ein **Native-Baustein** dazukommt — genau die ACTA-Falle
+aus CLAUDE.md. Deshalb steht 19.3 vor 19.4.
+
+#### 19.3 — `react-native-svg` einbauen ⬜
+
+```bash
+npx expo install react-native-svg
+```
+
+Dann in `SsIcon.tsx` den Native-Zweig ersetzen: `<Svg>`/`<Path>` statt `<svg>`/`<path>`,
+dieselben Pfadstrings, dieselben Props. **Der Web-Zweig bleibt, wie er ist** — dort
+braucht es die Bibliothek nicht, und `react-dom` zeichnet ein echtes `<svg>`.
+
+> **Warum das VOR dem ersten Build passiert und nicht danach.** Ein Native-Import, der
+> nach dem Build dazukommt, lässt den bestehenden Dev-Build sofort abstürzen (ACTA).
+> Ein Build mit den Kreisen wäre also einer, den man wegwirft, sobald man die Symbole
+> will — und man will sie sofort, weil ein Durchgang mit 41 leeren Kreisen keine
+> brauchbare Beurteilung des Aussehens ergibt.
+>
+> **Warum trotzdem NUR dieser eine Baustein und nicht gleich alle.** Die
+> Anmelde-Bausteine aus Phase 20 (`expo-apple-authentication`, `expo-auth-session`,
+> `expo-secure-store`) könnte man mit hineinnehmen und einen Build sparen. Das wäre
+> falsch: Der ganze Zweck von „erst aufs Gerät" ist, dass beim ersten Fehler nur EINE
+> Sache neu ist. Vier neue Native-Bausteine auf einmal heben genau das wieder auf.
+
+#### 19.4 — Der Build ⬜
+
+```bash
+npx eas-cli login
+npx eas-cli build --profile development --platform ios
+```
+
+**Voraussetzungen, die alle schon erfüllt sind:** Apple Developer Program (gekauft am
+2026-08-31), `eas-cli` 20.5.0 läuft über `npx`, und **Xcode 26.5 ist installiert**.
+Letzteres ist mehr wert, als es klingt: Mit `--local` baut der Mac selbst, und dann sind
+die **15 Gratis-Builds pro Monat keine Grenze**. Der erste Build geht trotzdem in die
+Cloud — dort legt EAS die Apple-Zertifikate von selbst an, und das ist der Teil, den man
+sich nicht antun muss.
+
+Ians Gerät muss einmalig registriert werden (`eas device:create`) — bei einem
+`development`-Profil führt EAS da durch.
+
+#### 19.5 — Der Durchgang am Gerät ⬜
+
+Dieselbe Sorgfalt wie bei den Web-Durchgängen, aber **die Prüfwerkzeuge von dort gibt es
+hier nicht**: kein `document.elementFromPoint`, kein `scrollWidth > clientWidth`, kein
+`innerText`. Auf dem Gerät zählt das Auge und der Finger. Deshalb: **von jedem Screen
+ein Screenshot**, so wie es die Lehre vom 2026-09-03 verlangt.
+
+Reihenfolge nach Risiko, nicht nach Bildschirm-Reihenfolge:
+
+1. **Der Wischstapel** — ziehen, kreuzen, zurücklegen, die Randgeste provozieren.
+2. **Der Chat mit offener Tastatur** — harte Regel 9.
+3. **Der Erstellen-Screen mit offenem „Mehr einstellen"** — der Sprung zum roten Feld
+   (Regel 37) wartet auf zwei `requestAnimationFrame`; das war auf Web knapp.
+4. **Der Jahrgangs-Balken** — zwei Griffe, ein Finger (Regel 45).
+5. **Die Tab-Leiste über der Home-Anzeige** und die SafeArea unten.
+6. **Die 41 Symbole** — sind sie nach dem Tausch dieselben wie im Browser?
+
+#### 19.6 — Was der Durchgang mit Sicherheit findet ⬜
+
+**Zwei Hinweise kommen auf iOS bei jedem Kaltstart wieder.** `anleitungGesehen()` im
+`WischStapel` und `merken()` im `PrototypHinweis` fallen auf Native beide auf einen
+Merker im Arbeitsspeicher zurück (`gesehenImLauf`), weil es dort kein `sessionStorage`
+gibt. Innerhalb einer Sitzung stimmt das; wer die App schließt und wieder aufmacht,
+bekommt die Anleitungskarte erneut. Im Browser ist das nie aufgefallen, weil ein Tab
+selten wirklich zugeht.
+
+Das ist **kein Fehler im Code**, sondern eine Lücke, die erst auf dem Gerät eine wird —
+und die Reparatur ist wieder ein Native-Baustein (`expo-secure-store` oder
+`AsyncStorage`). Also: **notieren, nicht sofort beheben.** Sie kommt mit Phase 20, wo
+der Baustein ohnehin dazukommt. Genau dafür ist der Durchgang da — Befunde sammeln, und
+den Build erst dann noch einmal machen, wenn alle Native-Bausteine beisammen sind.
+
+---
+
+### Phase 20 — Das Backend: Supabase ⬜
+
+**Ians Entscheidung vom 2026-09-06.** Der Punkt stand seit dem 2026-08-31 in Abschnitt 8
+offen und ist die folgenreichste technische Wahl des Projekts.
+
+#### Warum Supabase und nicht Firebase — die eine Frage, an der es hing
+
+Die zentrale Regel dieser App ist ein **Zeilenfilter**:
+
+> Ich sehe einen Post, wenn er öffentlich ist ODER ich dem Verfasser folge ODER ich in
+> seiner Gruppe bin — und wenn wir uns nicht gegenseitig blockiert haben.
+
+**Firestore kann diese Regel nicht durchsetzen**, und das ist keine Meinung, sondern
+dokumentiertes Verhalten: *„Security rules are not filters."* Eine Abfrage wird gegen
+ihre **mögliche** Ergebnismenge geprüft, nicht gegen die tatsächlichen Zeilen. Könnte
+`posts` auch nur ein Dokument liefern, das ich nicht sehen darf, schlägt die **ganze**
+Abfrage fehl. Der Feed ist damit nicht abfragbar, solange auch nur ein Follower-Post
+darin liegt.
+
+Der übliche Ausweg ist Denormalisierung: an jeden Post eine Liste der Erlaubten
+schreiben und sie bei jedem Folgen, Entfolgen, Blockieren, Beitreten und Austreten neu
+berechnen. **Damit läge die Regel IN den Daten, verteilt über alle Posts** — das genaue
+Gegenteil des Prinzips, nach dem dieses Projekt gebaut ist (harte Regeln 17, 32, 46:
+eine Regel, eine Datei, Screens lesen sie nie).
+
+In Postgres ist dieselbe Regel eine `SELECT`-Policy, und sie **filtert**:
+
+```sql
+create policy "sichtbare_posts" on posts for select using (
+  not exists (select 1 from blocks
+              where (blocker_id = auth.uid() and blocked_id = posts.author_id)
+                 or (blocker_id = posts.author_id and blocked_id = auth.uid()))
+  and (
+       visibility_kind = 'public'
+    or (visibility_kind = 'followers'
+        and exists (select 1 from follows
+                    where follower_id = auth.uid() and followee_id = posts.author_id))
+    or (visibility_kind = 'group'
+        and exists (select 1 from group_members
+                    where group_id = posts.visibility_group_id and user_id = auth.uid()))
+    or author_id = auth.uid()
+  )
+);
+```
+
+Ein schlichtes `select * from posts` liefert danach exakt die erlaubten Zeilen. **Das
+ist dieselbe Bauart wie `features/posts/hooks.ts` heute, nur eine Ebene tiefer** — und
+damit an der Stelle, an der sie auch gegen jemanden hält, der nicht die App benutzt.
+
+**Was dagegen spricht, und es ist echt:**
+
+| | |
+|---|---|
+| **Die Gratis-Stufe schläft nach 7 stillen Tagen ein.** | Ein pausiertes Projekt behält die Daten, aber die App ist tot, bis jemand sie im Dashboard aufweckt. Für eine App, die man herzeigt, ist das der schlimmste denkbare Moment. **Gegenmittel:** vor jedem Herzeigen aufwecken — oder ab dem echten Start Pro, 25 $/Monat, dann fällt die Pause weg. |
+| **Ian kennt Firebase, nicht Postgres.** | Aus ACTA, und das Plugin ist installiert. SQL und RLS sind wirklich mehr zu lernen als Firestore-Regeln. |
+| **Das Datenmodell ist heute dokument-förmig.** | `memberIds`, `followerIds`, `blockedIds` sind Arrays IM Objekt. In Postgres werden daraus eigene Tabellen — ein echter Übersetzungsschritt, siehe 20.1. |
+
+**Was für Supabase zusätzlich spricht, ohne dass danach gefragt war:** Bilder-Speicher
+ist mit 1 GB dabei. Bei Firebase ist Cloud Storage **seit dem 2026-02-03 nicht mehr in
+der Gratis-Stufe** und verlangt auch bei winzigen Mengen ein Zahlungsmittel. Darias
+Wunsch nach Profilbildern (`User.photoUrl?`, seit Phase 15 vorbereitet) wäre damit
+sofort ein Kostenpunkt gewesen.
+
+#### 20.1 — Das Schema, und was auf dem Weg verlorengeht ⬜
+
+Die Übersetzung ist an drei Stellen keine Übersetzung, sondern eine Entscheidung.
+
+**a) Arrays werden Tabellen — und die Reihenfolge wird dabei ehrlich.**
+
+| Heute | In Postgres |
+|---|---|
+| `User.followerIds` / `followingIds` | `follows(follower_id, followee_id)` — eine Zeile statt zwei Listen. **Harte Regel 8 löst sich damit auf**: Die Beziehung stand zweimal im Modell, weil es kein besseres Mittel gab. Jetzt steht sie einmal. |
+| `User.blockedIds` | `blocks(blocker_id, blocked_id)` — **einseitig bleibt einseitig** (Regel 10). Der Blockierte darf die Zeile nicht lesen; das ist eine RLS-Policy, kein Weglassen. |
+| `Group.memberIds` | `group_members(group_id, user_id, joined_at)` |
+| `User.interests` | **bleibt ein Array.** Postgres kann das, und es ist eine Werteliste, keine Beziehung. |
+
+> **Die `memberIds`-Reihenfolge trägt eine Regel** (Regel 33): Die Liste wächst hinten,
+> also erbt der zweite Eintrag die Gruppe, wenn der Gründer geht (`nachfolgerId()`,
+> Ians Entscheidung 13). In einer Tabelle gibt es keine Reihenfolge — sie muss als
+> `joined_at` ausgeschrieben und mit `order by` gelesen werden. **Das ist eine
+> Verbesserung, keine Anpassung:** Heute hängt eine Erbfolge an einer Array-Reihenfolge,
+> die jeder unabsichtlich umsortieren kann. Danach steht sie als Datum da.
+
+**b) Die Union-Typen müssen als `CHECK` neu entstehen — sonst sind sie weg.**
+
+`Visibility` (Phase 17) und `PostAlter` (Phase 18b) sind mit viel Bedacht als
+diskriminierte Unions gebaut worden, damit der Zustand „Gruppen-Post ohne Gruppe"
+**undarstellbar** ist. Eine Tabelle mit `visibility_kind text` und `visibility_group_id
+uuid` kann ihn wieder darstellen — die Garantie überlebt die Reise nicht von selbst:
+
+```sql
+constraint sicht_vollstaendig check (
+  (visibility_kind = 'group') = (visibility_group_id is not null)
+)
+```
+
+> **Das ist die Phase-16-Lehre zum fünften Mal** („wo ein Typ weiter wird, muss die Enge
+> eine Ebene höher neu entstehen"), diesmal an der Grenze zwischen TypeScript und SQL.
+> Ohne den `CHECK` ist der ganze Aufwand von Phase 17 auf der Serverseite verloren, und
+> zwar lautlos.
+
+**c) `Post.district` bleibt `null`-fähig, `User.district` bleibt Pflicht.** Ians
+Entscheidung 9, unverändert — in SQL heißt das `null` erlaubt gegen `not null`. Und:
+**keine Koordinaten-Spalte**, nirgends. Das war Ians eigene Intuition vom August und ist
+datenschutzrechtlich die richtige.
+
+#### 20.2 — Die Regeln auf den Server ⬜
+
+**Was der Browser ausfiltert, hat er vorher heruntergeladen.** Der Satz steht seit
+Phase 2 in PLAN.md und wird hier eingelöst. Jede Regel, die heute in einer Regel-Datei
+lebt, braucht ihr Gegenstück als Policy:
+
+| Regel-Datei | Policy |
+|---|---|
+| `posts/hooks.ts` — Sichtbarkeit | die `select`-Policy oben |
+| `safety/block.ts` — `BLOCK_WIRKUNG` | im `not exists` derselben Policy, **in beide Richtungen** (Regel 10) |
+| `groups/gruppe.ts` — `PRIVAT_SICHT` | eigene Policy auf `group_members`: Name, Kategorie, Bezirk und Anzahl für alle, die **Liste** nur für Mitglieder |
+| `chat/direkt.ts` — `SCHREIB_REGEL` | Policy auf `messages` — gegenseitiges Folgen prüfen, nicht nur den Knopf ausblenden |
+| `requests/kollision.ts` — Regel 47 | **die heikelste.** Die Doppelbuchungs-Warnung rechnet aus fremden Terminen. Auf dem Server heißt das: `zaehltAlsTermin()` darf nur Zeilen sehen, die dem **anfragenden** Nutzer gehören. |
+
+> **Der Prüfstein für diese Phase ist nicht, dass die App läuft.** Sie läuft auch mit
+> offenen Policies. Der Prüfstein ist: **mit dem Zugangsschlüssel eines zweiten Kontos
+> direkt an der Datenbank vorbei versuchen, einen Follower-Post zu lesen.** Was dabei
+> nicht kommt, ist geschützt. Alles andere ist geglaubt.
+
+#### 20.3 — Anmelden ⬜ *(Ians 27. Entscheidung)*
+
+**E-Mail-Code UND Google UND Apple.** Er hat gegen meine Empfehlung entschieden, und die
+Begründung dahinter zählt: Für 16-Jährige ist ein Tipp weniger Reibung als eine
+abgetippte E-Mail-Adresse, und Reibung beim Anmelden ist der Punkt, an dem eine App mit
+leerem Feed verliert.
+
+**Die Folge, die er kennt:** Sobald Google dabei ist, verlangt Apple laut Richtlinie 4.8
+zusätzlich einen Anmeldeweg, der nur Name und E-Mail nimmt und das Verstecken der
+E-Mail-Adresse erlaubt. „Anmelden mit Apple" erfüllt das — und ist damit **Pflicht, nicht
+Zierde**. Weil er Apple ohnehin gewählt hat, entsteht daraus keine Extraarbeit, sondern
+nur eine Reihenfolge: **Apple muss fertig sein, bevor Google live geht.** Umgekehrt wäre
+es eine Ablehnung im Review.
+
+Verworfen ist **nur E-Mail-Code**: Das hätte Richtlinie 4.8 gar nicht erst ausgelöst und
+einen Anmeldeweg statt drei bedeutet — drei zu testen, drei zum Kaputtgehen. Sein
+Gegenargument ist das bessere Produkt, meins der geringere Aufwand.
+
+Native-Bausteine, die dabei dazukommen — **alle vier zusammen, dann ein Build**:
+`expo-apple-authentication` · `expo-auth-session` + `expo-web-browser` (Google) ·
+`expo-secure-store` · `@react-native-async-storage/async-storage`.
+
+> **`CURRENT_USER_ID` ist heute eine Konstante und wird ein Wert, der sich ändert.**
+> Sechs Stellen lesen sie direkt aus `store.ts` — `melden.tsx`, `chats.tsx`,
+> `chat/[id].tsx`, `user/[id]/index.tsx`, `FolgeListe.tsx`, `Profil.tsx`. Dazu liest
+> `post/[id].tsx` `useSlice` direkt.
+>
+> **Der Weg ist, die Konstante ERSATZLOS zu löschen**, nicht sie auf `string | null` zu
+> setzen. Ein `string | null` wäre die `Post.district`-Falle zum fünften Mal: In JSX
+> rendert `null` klaglos als Nichts, und `find(u => u.id === null)` ist gültiger Code.
+> Verschwindet der Export dagegen ganz, schreibt `tsc` die Arbeitsliste — dieselbe
+> Technik wie `IconName` in Phase 14. An ihre Stelle kommt `useCurrentUserId()`, und der
+> ausgeloggte Zustand wird **eine Ebene höher** behandelt: Ein Screen, der einen
+> angemeldeten Nutzer braucht, wird gar nicht erst gezeichnet.
+
+#### 20.4 — `store.ts` austauschen, Teil 1: Lesen ⬜
+
+**Die Zusage aus Phase 1 wird hier eingelöst oder gebrochen.** Im Kopf von `store.ts`
+steht seit dem 2026-08-31: *„Später ersetzt Firestore (oder Supabase) das Innere dieser
+Datei. Die Hooks und damit alle Screens bleiben unverändert."*
+
+Das hält, und zwar überraschend genau: `useSyncExternalStore` bleibt, wo es ist.
+Supabase Realtime meldet Änderungen über einen Kanal, der Kanal ruft `aendern()`, und
+alles darüber merkt nichts. **Die 66 Haken und alle 22 Screens bleiben unangetastet.**
+
+**Was sich trotzdem ändert, und man muss es aussprechen:** Heute liegt der ganze
+Datenbestand im Arbeitsspeicher, weil es vierzehn Posts sind. Mit echten Daten geht das
+nicht mehr — aus dem Speicher wird ein **Zwischenspeicher**, der nur hält, was gerade
+gebraucht wird. Für `useFeed` heißt das: Die Sortier- und Filterarbeit aus
+`posts/sort.ts` und `posts/filter.ts` wandert schrittweise in die Abfrage. **Nicht als
+Erstes** — zuerst wird alles geladen wie bisher, damit man einen Unterschied hat, an dem
+man messen kann.
+
+#### 20.5 — `store.ts` austauschen, Teil 2: Schreiben ⬜
+
+23 Stellen rufen `aendern()`. Bei den meisten ist es eine Zeile mehr. Bei dreien nicht:
+
+> **Harte Regel 6 wird hier von einer Oberflächen-Regel zu einer Daten-Regel.** Heute
+> heißt „was zusammengehört, in EINEM `aendern`", dass React keinen Zwischenzustand
+> zeichnet. Mit einer Datenbank heißt es, dass kein Zwischenzustand **gespeichert
+> bleibt**. `anfrageBestaetigen` ändert Anfrage, Post und Chat; bricht die Verbindung
+> nach dem ersten Schreibvorgang ab, ist die Anfrage bestätigt und der Platz noch frei —
+> und zwar dauerhaft, für alle, bis jemand es von Hand richtet.
+>
+> Die drei betroffenen: `anfrageBestaetigen` · `blockieren` (Ians Entscheidung 7, „alles
+> weg" — löst Chat, Zusage und Platz auf einmal) · `gruppeVerlassen` (mit
+> `nachfolgerId()`). Alle drei werden **eine Postgres-Funktion** und über `rpc()`
+> aufgerufen. Eine Transaktion ist entweder ganz passiert oder gar nicht.
+
+#### 20.6 — Profilbilder ⬜
+
+Darias Wunsch vom 2026-09-02, seit Phase 15 vorbereitet: `User.photoUrl?` gibt es, alle
+elf Aufrufstellen reichen es durch, `SsAvatar` kann es zeichnen. **Es fehlt nur der
+Upload** — und der brauchte genau das, was jetzt da ist.
+
+Was dazugehört und nicht vergessen werden darf: **jemand muss draufschauen können.**
+Sobald Leute Bilder hochladen, laden Leute irgendwann Bilder hoch, die dort nicht
+hingehören — bei einer App mit 16-Jährigen kein Randthema, und Apple fragt im Review
+danach. Mindestens: melden (steht seit Phase 7), löschen können, und eine Adresse, an
+der eine Meldung ankommt.
+
+#### 20.7 — Die Meldungen bekommen einen Leser ⬜
+
+`Report` wird seit Phase 7 gespeichert und von niemandem gelesen. Für Apple 1.2 ist das
+die letzte offene Zusage: **ein Mensch, der Meldungen sieht und handeln kann.** Es
+braucht keine Oberfläche — die Supabase-Tabellenansicht genügt für vier Gründer. Es
+braucht eine **Zusage, wie schnell**, und die gehört in die Nutzungsbedingungen.
+
+#### 20.8 — Was WEGFÄLLT ⬜
+
+- **`features/statisch.ts` gehört gelöscht, nicht angepasst.** Es existiert nur, weil
+  der statische Web-Export für jede dynamische Route beim Bauen alle IDs kennen muss
+  (harte Regel 11). Mit echten Daten gibt es die beim Bauen nicht mehr — und braucht sie
+  auch nicht. Steht so schon in PLAN.md, Phase 8.
+- **`data/mock.ts` wird zu Startdaten**, nicht zu Müll. Die vierzehn Posts sind über
+  Wochen so gebaut worden, dass jede Regel an ihnen sichtbar wird (`p7` ohne Bezirk,
+  `p16` in einer fremden Gruppe, `p18` als Terminkollision). Als Seed für eine leere
+  Datenbank sind sie genau das, was ein Kaltstart braucht. **Harte Regel 12 gilt weiter.**
+
+---
+
+### Phase 21 — In den App Store ⬜
+
+#### 21.1 — Was seit diesem Monat neu ist ⬜
+
+> ⚠️ **Apple hat im Juli 2026 neue Pflichtfragen zur Altersfreigabe eingeführt, und sie
+> sind ab September 2026 verpflichtend** — also ab jetzt, für jede neue App und jedes
+> Update. Gefragt wird, ob die App nutzergenerierte Inhalte über einen Feed verbreitet.
+>
+> **SimplySocial ist genau die App, die gemeint ist.** Die Antwort ist ja, und das
+> Ergebnis ist eine Altersfreigabe von **mindestens 13+**. Das ist keine Wahl, sondern
+> eine Feststellung.
+
+Das macht die rote Frage aus `OFFENE_SACHEN.md` Punkt 1 dringender, nicht lockerer:
+Apples 13+ ist eine **Store-Einstufung**, keine Rechtsberatung. Was in Österreich für
+eine App gilt, die 16-Jährige zu Treffen verabredet, beantwortet weiterhin nur ein
+Erwachsener.
+
+*Nicht betroffen:* Apples „Declared Age Range"-Schnittstelle ist bisher nur dort
+verpflichtend, wo Gesetze es verlangen — Texas, Utah, Louisiana, Australien, Brasilien,
+Singapur. Österreich ist nicht darunter.
+
+#### 21.2 — Rechtstexte ⬜ *(nur Ian, mit erwachsener Hilfe)*
+
+Der rote Kasten in `nutzungsbedingungen.tsx` steht seit Phase 7 bewusst da. Hier wird er
+ersetzt — **oder die App wird nicht eingereicht.** Es braucht Datenschutzerklärung,
+Nutzungsbedingungen, ein Mindestalter und eine Antwort auf die Haftungsfrage. Dazu das
+Häkchen „akzeptiert" beim Anmelden, das ohne Login nie gebaut werden konnte.
+
+#### 21.3 — Das Datenschutz-Etikett ⬜
+
+Apple verlangt eine Aufstellung, welche Daten die App sammelt. **Sie muss stimmen** —
+und sie ist überprüfbar, weil ein Reviewer den Netzwerkverkehr sehen kann. Für
+SimplySocial: E-Mail (Konto), Name, Jahrgang, Bezirk, Chats, Fotos. **Keine
+Koordinaten** — und das ist ein Satz, den man mit Stolz hinschreiben kann, weil er
+seit August wahr ist.
+
+#### 21.4 — TestFlight ⬜
+
+**Der einfachere Weg für die drei Mitgründer**, einfacher als jede Alternative: Wer im
+App-Store-Connect-Team steht, ist *interner* Tester — bis zu 100 Personen, **kein
+Apple-Review nötig**, Installation über die TestFlight-App. Der Umweg über registrierte
+Geräte-Nummern (`ad hoc`) entfällt damit.
+
+```bash
+npx eas-cli build --profile production --platform ios
+npx eas-cli submit --platform ios --latest
+```
+
+#### 21.5 — Einreichen ⬜
+
+Was bei einer App dieser Art erfahrungsgemäß zu Ablehnungen führt — alles vermeidbar:
+
+1. **Kein Demo-Zugang.** Die App liegt hinter einem Login; ein Reviewer kommt ohne
+   Testkonto nicht hinein und lehnt ab. **Das wird am häufigsten vergessen.** Es gehört
+   in das Feld „App Review Information", samt einer Anmeldung, die ohne fremde E-Mail
+   funktioniert.
+2. **1.2 (UGC)** — melden, blockieren, Nutzungsbedingungen, Account löschen. Alle vier
+   stehen seit Phase 7; nach Phase 20 wirken sie auch wirklich.
+3. **4.8 (Login)** — siehe 20.3. Apple muss neben Google stehen.
+4. **5.1.1 (Datensammlung)** — nichts abfragen, was die App nicht braucht. Der Jahrgang
+   ist begründbar, ein Geburtsdatum wäre es nicht — und es gibt keins (Phase 18b).
+5. **Leerer Zustand.** Ein Reviewer öffnet die App in einem leeren Wien. Der Kaltstart
+   (`OFFENE_SACHEN.md`, Punkt 6) ist damit nicht nur ein Marketing-Thema, sondern eine
+   Review-Frage — und `LeererFeed` mit „Etwas posten" (2026-09-03) ist die Antwort.
+
+#### 21.6 — Was das alles kostet ⬜
+
+| Posten | Kosten | Stand |
+|---|---|---|
+| Apple Developer Program | 99 $/Jahr | ✅ bezahlt am 2026-08-31 |
+| EAS Build | 0 € | 15 iOS-Builds/Monat gratis; mit Xcode lokal unbegrenzt |
+| Supabase Gratis-Stufe | 0 € | 500 MB Datenbank, 1 GB Bilder, 50.000 Nutzer/Monat — **schläft nach 7 stillen Tagen** |
+| Supabase Pro | 25 $/Monat | erst nötig, wenn die Pause stört — also ab dem echten Start |
+| `simplysocial.at` | ~15 €/Jahr | offen, Ians Entscheidung (`OFFENE_SACHEN.md` 5b) |
+
+**Für die ersten 200 Leute reicht die Gratis-Stufe.** Der erste Posten, der wirklich
+anfällt, ist Supabase Pro — und der fällt erst an, wenn die App genug benutzt wird, dass
+sieben stille Tage nicht mehr vorkommen. Das ist ein gutes Problem.
+
+---
+
 ## 6. Ian schreibt selbst
 
 Stellen mit echten Trade-offs, an denen Ians Meinung das Produkt formt. Jeweils
@@ -2828,6 +3321,44 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
     stand ein `TODO Ian` mit dem Satz „das ist keine Entscheidung", und genau darauf
     verlässt sich die nächste Sitzung.
 
+
+35. ✅ **Wie sich Leute anmelden** (`src/features/auth/anmelden.ts`, kommt mit Phase 20)
+    — **entschieden am 2026-09-06: E-Mail-Code UND Google UND Apple.** *(Ians
+    siebenundzwanzigste Entscheidung, `ANMELDE_WEGE`.)*
+
+    **Er hat gegen meine Empfehlung entschieden, und das gehört hierher notiert**, weil
+    sein Argument das bessere Produkt beschreibt und meines nur den geringeren Aufwand.
+    Ich hatte „nur E-Mail-Code" vorgeschlagen: ein Weg statt drei, kein Passwort zum
+    Vergessen — und vor allem löst er Apples Richtlinie 4.8 gar nicht erst aus. Seine
+    Gegenrechnung: Für 16-Jährige ist ein Tipp weniger Reibung als eine abgetippte
+    E-Mail-Adresse, und Reibung beim Anmelden ist genau der Punkt, an dem eine App mit
+    noch leerem Feed jemanden verliert. Wer beim ersten Öffnen sein Postfach aufmachen
+    muss, kommt zur Hälfte nicht zurück.
+
+    **Die Folge, die er kennt — und sie ist eine Reihenfolge, keine Extraarbeit.**
+    Sobald Google dabei ist, verlangt Apple laut Richtlinie 4.8 zusätzlich einen
+    Anmeldeweg, der nur Name und E-Mail nimmt und das Verstecken der Adresse erlaubt.
+    „Anmelden mit Apple" erfüllt das und ist damit **Pflicht, nicht Zierde**. Weil er
+    Apple ohnehin gewählt hat, entsteht kein zusätzlicher Baustein — aber eine harte
+    Reihenfolge: **Apple muss fertig und geprüft sein, bevor Google live geht.**
+    Andersherum ist es eine Ablehnung im Review, und zwar eine, die man vorher weiß.
+
+    Verworfen:
+    - **Nur E-Mail-Code.** Ein Weg zu bauen, einer zu testen, einer zum Kaputtgehen, und
+      Richtlinie 4.8 bliebe unberührt. Der Preis ist die Hürde beim allerersten Öffnen —
+      und die trifft ausgerechnet den Kaltstart, also den Moment, den die App am
+      wenigsten verträgt (`OFFENE_SACHEN.md`, Punkt 6).
+    - **Nur Google und Apple, ohne E-Mail.** Verworfen, ohne dass danach gefragt wurde:
+      Wer keines von beiden Konten benutzen will, käme gar nicht hinein. Bei einer App,
+      die im Freundeskreis anfängt, ist ein ausgeschlossener Mensch teurer als ein
+      dritter Anmeldeweg.
+
+    **Den Haken kennt er:** Drei Wege heißen drei Wege, die kaputtgehen können, und sie
+    gehen zu verschiedenen Zeiten kaputt — ein abgelaufener Google-Schlüssel sieht anders
+    aus als ein abgelehnter Apple-Token. Deshalb gehört an jeden Weg eine eigene
+    Fehlermeldung, die sagt, WELCHER nicht ging. Eine gemeinsame Meldung „Anmelden hat
+    nicht geklappt" wäre bei drei Wegen die nutzloseste Auskunft der ganzen App.
+
 ---
 
 ## 7. Bewusst NICHT im Prototyp
@@ -2852,8 +3383,11 @@ Backend jeder Art. Wenn eines davon auftaucht: erst PLAN.md ändern, dann bauen.
 ## 8. Offene Punkte
 
 - **Logo** — der Freund zeichnet, Termin unbekannt. Bis dahin Platzhalter-Wortmarke.
-- **Backend-Wahl** — Firebase (Ian hat Erfahrung aus ACTA, MCP-Plugin installiert) vs.
-  Supabase. Erst entscheiden, wenn der Prototyp steht.
+- ✅ **Backend-Wahl — entschieden am 2026-09-06: Supabase.** Die Begründung steht in
+  Abschnitt 5b, Phase 20, und sie hängt an genau einer Eigenschaft: Firestore prüft eine
+  Abfrage gegen ihre *mögliche* Ergebnismenge („security rules are not filters"), kann
+  den Feed also nicht nach Sichtbarkeit filtern; eine Postgres-Policy tut es. Der
+  bekannte Haken: Die Gratis-Stufe schläft nach 7 stillen Tagen ein.
 - **Recht** — Ian ist 16, die App führt Fremde zusammen. DSGVO, Mindestalter, Haftung.
   Braucht erwachsenen Rat, bevor es über den Freundeskreis hinausgeht.
   Steht in `_FUER_IAN/OFFENE_SACHEN.md`.
@@ -2983,6 +3517,22 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > Alles, was eine frische Sitzung wissen muss, steht in Dateien — nicht im Gespräch.
 
 ### Das Erste, was zu tun ist
+
+> 🚀 **Stand 2026-09-06: Der Weg zur echten App ist geplant — Abschnitt 5b, Phasen 19
+> bis 21.** Das Erste ist damit nicht mehr eine Frage, sondern ein Handgriff:
+> **Phase 19.1**, `ios.bundleIdentifier` in `app.json`. Er fehlt heute komplett, und
+> er ist nach der ersten Store-Einreichung nie wieder änderbar — deshalb steht er vor
+> allem anderen und wird nicht von `eas build:configure` erfunden.
+>
+> Drei Dinge, die eine frische Sitzung wissen muss, bevor sie dort anfängt:
+> 1. **Die Reihenfolge ist eine Entscheidung, kein Zufall.** Gerät VOR Backend, damit
+>    beim ersten Fehler nur EINE Sache neu ist. Wer Phase 20 vorzieht, weil sie
+>    wichtiger klingt, hebt genau den Nutzen auf.
+> 2. **Nur `react-native-svg` kommt in den ersten Build**, nicht gleich alle vier
+>    Native-Bausteine. Aus demselben Grund.
+> 3. **`CURRENT_USER_ID` wird in Phase 20.3 ERSATZLOS gelöscht**, nicht auf
+>    `string | null` gesetzt. Sonst ist es die `Post.district`-Falle zum fünften Mal:
+>    `null` rendert in JSX klaglos als Nichts.
 
 > ⚠️ **Zuerst lesen, wenn am Wischstapel etwas geändert wird:** Am 2026-09-03 hat Ian
 > gemeldet, dass die Karteikarten schief lagen und der „Weg"-Stempel immer sichtbar war.
@@ -3463,7 +4013,9 @@ Leer ist nichts mehr, und **Platzhalter ist seit Phase 6 keiner mehr**.
 
 ### Was als Nächstes anstehen KÖNNTE — entschieden wird es am Feedback
 
-Der Plan ist abgearbeitet. Diese Liste ist ein Vorrat, keine Reihenfolge.
+> **Seit dem 2026-09-06 ist das nur noch der NEBEN-Vorrat.** Der Hauptweg steht in
+> Abschnitt 5b als Phasen 19 bis 21 und ist der Reihe nach abzuarbeiten. Was hier steht,
+> läuft daneben und hängt an Ian, nicht am Code.
 
 - **Eine eigene Domain.** `ianfhorak-jpg.github.io/simplysocial-landing/` sagt man nicht
   am Telefon. `simplysocial.at` kostet rund 15 € im Jahr, und GitHub Pages nimmt eigene
@@ -3475,8 +4027,9 @@ Der Plan ist abgearbeitet. Diese Liste ist ein Vorrat, keine Reihenfolge.
 - **Das Logo.** Der Freund zeichnet es (`OFFENE_SACHEN.md`, Punkt 3). Es wird an ZWEI
   Stellen gebraucht: `config/brand.ts` in der App und die Wortmarke in
   `landing/index.html`. Beide zusammen tauschen.
-- **Das Backend.** Die Naht dafür ist `features/store.ts` und bleibt bis dahin
-  unangetastet. Vorher steht die Wahl an: Firebase oder Supabase (Abschnitt 8).
+- ~~**Das Backend.**~~ → **geplant, Abschnitt 5b, Phase 20.** Die Wahl ist getroffen
+  (Supabase), die Naht `features/store.ts` ist weiterhin die Stelle, an der es andockt —
+  und sie bleibt bis Phase 20.4 unangetastet.
 - **Was die Freunde gesagt haben.** Kommt vor allem anderen — siehe oben.
 
 ### Was der Deploy im Betrieb bedeutet
