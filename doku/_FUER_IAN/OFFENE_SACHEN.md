@@ -265,7 +265,7 @@ schon.
 
 ---
 
-## 🟢 Leopolds Karten-Idee — entschieden, noch nicht gebaut (06.09.2026)
+## 🟢 Leopolds Karten-Idee — ✅ GEBAUT am 06.09.2026
 
 Eine **Wien-Karte** als dritte Ansicht neben Stapel und Liste: 23 Bezirksflächen,
 eingefärbt danach, wo gerade etwas los ist; antippen zeigt die Aktivitäten darunter.
@@ -277,9 +277,29 @@ die App wirklich benutzen. Der Grund, warum das klug ist: Eine Stecknadel verrä
 „1220", sondern die genaue Parkbank um 17:00. Das gehört nicht auf einen Bildschirm,
 den Fremde sehen.
 
+**Sie ist online** — Feed öffnen, oben auf „Karte" tippen. Dazu kam beim Bauen deine
+fünfte Entscheidung: **Hineinzoomen mit zwei Fingern.** Nötig, weil die Josefstadt auf
+einem Handy sonst 14 × 11 Bildpunkte groß ist; ich hatte eine Extra-Karte für die
+Innenbezirke vorgeschlagen, dein Weg war der bessere.
+
 **Was noch nichts kostet und trotzdem gut wäre:** Frag Leopold, ob er die Karte so
 meinte — Flächen pro Bezirk, oder hatte er Punkte im Kopf? Er hat die Idee gehabt, seine
-Antwort ist mehr wert als unsere Vermutung.
+Antwort ist mehr wert als unsere Vermutung. **Jetzt kann er sie ansehen statt sie sich
+vorzustellen**, das macht die Frage leichter zu beantworten.
+
+### 🟢 Eine kleine Frage dazu wartet auf dich: wie stark die Karte einfärbt
+
+Die Karte hat vier Helligkeitsstufen, und der dunkelste Bezirk ist immer der mit den
+meisten Posts (so hast du es entschieden). Offen ist nur, wie großzügig gerundet wird:
+
+- **Wie es jetzt ist (aufgerundet):** Jeder Bezirk, in dem überhaupt etwas los ist,
+  bekommt sichtbar Farbe. Die Karte zeigt vor allem, **wo überhaupt etwas ist**.
+- **Strenger (abgerundet):** Nur der Spitzenreiter sticht heraus, der Rest bleibt blass.
+  Die Karte zeigt dann, **wo am MEISTEN ist**.
+
+Am Anfang, wenn es wenige Posts gibt, spricht viel für die erste Variante — deshalb
+steht sie drin. Wenn du später findest, dass die Karte „zu voll" aussieht, sind es fünf
+Zeilen in einer Datei. Ausgeschrieben in PLAN.md, Abschnitt 6, Punkt 35.
 
 ## 🟡 Braucht dich, aber hat noch Zeit
 

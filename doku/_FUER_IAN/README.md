@@ -177,6 +177,41 @@ am Post steht dann „Wien". Das Zweite war die interessantere Antwort: Gefragt 
 passieren soll, wenn ein zugeklapptes Feld leer ist, und du hast die Frage weggenommen,
 statt sie zu beantworten.
 
+## ✅ Erledigt: die Wien-Karte (06.09.)
+
+**Leopolds Idee, und sie ist drin.** Im Feed gibt es oben jetzt drei Knöpfe statt
+zwei: **Stapel · Liste · Karte**. Auf der Karte siehst du Wien mit allen 23 Bezirken.
+Je dunkler ein Bezirk, desto mehr ist dort gerade los; die Zahl steht in der Fläche.
+Tippst du einen an, stehen seine Posts darunter — **die Karte bleibt dabei stehen**,
+du musst also nicht zurückspringen, um den nächsten Bezirk anzuschauen.
+
+**Es sind die echten Bezirksgrenzen**, nicht gemalte Kästchen — von der Stadt Wien,
+kostenlos und erlaubt. Die Zeile „Bezirksgrenzen: Stadt Wien" unter der Karte muss
+dranbleiben, das ist die Bedingung dafür.
+
+**Du kannst hineinzoomen** — mit zwei Fingern, wie bei Fotos. Das ist deine
+Entscheidung gewesen, und sie war nötig: Die Josefstadt ist auf einem Handy sonst
+**14 mal 11 Bildpunkte** groß, das trifft kein Mensch mit dem Finger. Ich hatte dir
+stattdessen eine kleine Extra-Karte für die Innenbezirke vorgeschlagen; dein Argument
+war besser — von einer Karte erwartet man heute, dass man hineinzoomen kann.
+
+**Zwei Sachen sollst du wissen:**
+
+1. **Ohne Zoom fehlt ausgerechnet die wichtigste Zahl.** Der 7. Bezirk hat gerade die
+   meisten Posts, ist aber so klein, dass die Zahl nicht hineinpasst. Er ist am
+   dunkelsten, mehr sagt die Karte bei voller Ansicht nicht. Erst beim Hineinzoomen
+   steht sie da. Das liegt an Wien und nicht an der App.
+2. **Am Simulator konnte ich die Karte nur ANSCHAUEN, nicht anfassen.** Sie zeichnet
+   auf dem iPhone richtig (Bild `r05-ios-karte.png`), aber ob sich das Zoomen unter
+   deinem Finger gut anfühlt, weißt nur du — das gehört zu demselben Durchgang, der
+   ohnehin auf dein Gerät wartet.
+
+**Eine kleine Frage wartet auf dich**, sie steht in `OFFENE_SACHEN.md`: wie stark die
+Karte einfärben soll. Sie ändert nichts am Aufbau, nur daran, was die Karte betont —
+*wo überhaupt etwas ist* oder *wo am meisten ist*.
+
+---
+
 ## 🔜 Was als Nächstes dran ist: **noch einmal herzeigen**
 
 Christoph, Leopold und Daria haben den Prototyp am 02.09. durchgeklickt. **Die
