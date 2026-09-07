@@ -35,6 +35,40 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+🔜 **Als Nächstes geplant, noch nicht gebaut (2026-09-07): Phase 19e — die Karte wird
+zur App.** Ian hat die fertige Karte BENUTZT und **zehn Entscheidungen** getroffen
+(40–49, PLAN.md Abschnitt 5b). Die Kartenansicht wird **Vollbild mit einem ziehbaren
+Blatt** wie bei Apple Karten, der Schriftzug oben verschwindet, **„Posten" wird ein
+runder Knopf neben dem Umschalter**, und unten kommt eine Liquid-Glass-Leiste. Sechs
+Dinge sind daran wichtiger als das Aussehen:
+1. **Es sind ZWEI Schritte, und das ist die wichtigste Festlegung.** 19e-1 ist reines
+   Design und braucht **keinen Build**; erst 19e-2 bringt `expo-glass-effect`. Zusammen
+   gebaut hätte jeder Fehler mehrere Ursachen — dieselbe Überlegung wie „Gerät vor
+   Backend" und wie die Trennung von 19c und 19d.
+2. **Die teuerste Stelle ist vorab benannt: zwei Gesten-Erkenner übereinander.**
+   `SsWienKarte` beansprucht jede Berührung (`onStartShouldSetPanResponder: () => true`),
+   das Blatt will senkrecht ziehen. Nur der GRIFF zieht, nicht die Fläche — und auf iOS
+   ist die Lage anders als auf Web, weil MapKit seit 19d-1 selbst zeichnet.
+3. **Die Blase aus 19c fällt weg, der Code bleibt stehen.** Sie war die Antwort auf ein
+   Problem, das mit dem Blatt verschwindet (die Liste stand weit unten). `KartenBlase`
+   und der `blase`-Slot bleiben ohne Benutzer im Projekt — geprüfte Arbeit, und die
+   Rechnung „wo liegt ein Bezirk auf dem Schirm" ist nicht trivial.
+4. **Ians Entscheidung 41 ist feiner als seine eigene Vorgabe.** Er sagte „Posten auf die
+   Ebene von Stapel · Liste · Karte". Als viertes FELD wäre es falsch: Die drei wechseln
+   eine Ansicht und bleiben gedrückt, Posten öffnet einen Screen und springt zurück. Ein
+   runder Knopf DANEBEN steht auf derselben Ebene und sagt durch seine Form, dass er
+   etwas anderes tut — **das Muster kommt aus seinem eigenen Screenshot** (BierBuddy).
+5. **Entscheidung 47 ist die einzige gegen meine Empfehlung, und ihr Preis steht dabei.**
+   Der Zähler „Noch 8 Karten" fällt weg — er war die Stütze von Entscheidung 14
+   (Filterfeld überdeckt den Stapel, statt zu schieben). Ohne ihn filtert man blind, bis
+   man zuklappt. Kein Widerspruch, eine Stütze weniger; Korrektur ist eine Zeile.
+6. **Vor Entscheidung 48 wurde harte Regel 22 gelesen, wie sie es verlangt.** Der
+   Prototyp-Hinweis wird ein **Vollbild beim ersten Öffnen** („dass die Leute wirklich
+   draufklicken"). Zwei Fassungen sind schon durchgefallen, ein Vollbild wurde **nie**
+   versucht. Nebengewinn: Danach verdeckt er nie wieder die Tab-Leiste. **Falle:** Auf
+   Native gibt es kein `sessionStorage` — er käme nach jedem Kaltstart wieder. Das
+   Merken gehört deshalb in EINE Funktion, die 20.3 auf `expo-secure-store` umstellt.
+
 ✅ **Phase 20.1 und 20.2 sind fertig (2026-09-06): das Schema und die Regeln auf dem
 Server.** Alles in `simplysocial/supabase/` — und **ohne Supabase-Konto gebaut und
 trotzdem bewiesen.** `bash supabase/pruefen/aufbauen.sh` baut eine Wegwerf-Datenbank
@@ -738,6 +772,9 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 8. **Wieder herzeigen** — die drei haben Phase 13 gesehen, nicht 18a. Läuft neben 9.
 9. **Aufs Gerät** (Phase 19) ← *hier sind wir* — erster EAS-Build, `react-native-svg`,
    Durchgang am iPhone. ~~Wien-Karte (19b)~~ ✅ *2026-09-06*
+9c. **Karte wird zur App** (Phase 19e) ← *hier geht es weiter* — Vollbild-Karte mit
+   ziehbarem Blatt, Kopf weg, Posten umzieht, Liquid Glass. **19e-1 braucht keinen
+   Build.** Dazu der Gerätebuild auf Ians iPhone (gewöhnliche Apple-ID, per Kabel).
 9b. ~~**Karte nachbessern**~~ — ~~**19c** (Aktivitäten springen heraus)~~ ✅ und
    ~~**19d-1** (echte Apple-Karte auf iOS)~~ ✅, beide *2026-09-06*. **19d-2** (MapKit JS
    im Browser) wartet auf Phase 20: Der Token muss von einem Server ausgestellt werden.

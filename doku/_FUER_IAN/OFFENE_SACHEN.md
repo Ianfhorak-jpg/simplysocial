@@ -3,10 +3,74 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 06.09.2026 — **der Prototyp ist fertig, der Weg zur echten App ist geplant.**
+> Stand: 07.09.2026 — **deine Liste steht ganz oben, sortiert nach Aufwand.**
+> Davor: 06.09.2026 — **der Prototyp ist fertig, der Weg zur echten App ist geplant.**
 > Drei Entscheidungen von dir sind eingearbeitet (Supabase · erst aufs Handy · drei
 > Anmeldewege). **Neu und dringend: Punkt 0 gleich hier drunter.** **Neu am 06.09.2026
 > abends: eine Frage zum Kontolöschen, gleich hier drüber — sie ist wie deine Nummer 12.**
+
+---
+
+---
+
+## 🔵 NEU (07.09.2026) — deine Liste, in der Reihenfolge, in der sie dich am wenigsten kostet
+
+Du hast an dem Abend zehn Design-Entscheidungen getroffen (Phase 19e steht fertig im
+Plan). Was jetzt noch von DIR kommen muss — sortiert nach Aufwand, nicht nach Wichtigkeit:
+
+### 1. Die Farbe der Landing-Page · **2 Minuten** 🟢
+Liegt seit dem 06.09. fertig da: `landing-vorschau/` — Olivgrün, Weinrot, Türkis.
+Offen ist **Farbe UND A oder B** (A: auch die sechs Kategoriefarben werden Abstufungen
+der Leitfarbe · B: nur die Marke, Kategorien bleiben bunt). Blockiert sonst still.
+
+### 2. Dein iPhone einmal per Kabel an den Mac · **20 Minuten, gemeinsam** 🟢
+Damit die App wirklich auf deinem Handy läuft. Du hast heute eine **gewöhnliche
+Apple-ID** — das reicht: Die App läuft dann 7 Tage und muss danach neu drauf. Danach
+geht es über WLAN.
+> ⚠️ **Dein eigener Hinweis, notiert:** Im WLAN hängen noch andere Geräte. Ich lasse mir
+> vor dem Installieren den Gerätenamen anzeigen und frage dich, ob es deins ist.
+
+**Wofür:** Wischstapel unter einem echten Finger · Tastatur im Chat · Jahrgangs-Balken
+mit zwei Fingern · ob ein Tipp auf die Apple-Karte den richtigen Bezirk trifft. Das sind
+alles Sachen, die ein Mausklick am Simulator **nicht** beweist.
+
+### 3. Supabase-Konto anlegen · **10 Minuten** 🟡
+Gratis, mit deiner E-Mail. Schema und Regeln sind **schon fertig und geprüft** — es ist
+kein Anfang mehr, sondern ein Einspielen.
+
+### 4. Google-Login — und warum es das überhaupt braucht · **15 Minuten** 🟡
+
+> **Du hast gesagt, du verstehst das nicht ganz. Hier in normalen Worten:**
+>
+> Wenn jemand in deiner App auf „Mit Google anmelden" tippt, springt er kurz zu Google
+> und kommt zurück. Google muss dabei wissen, **wer da fragt** — sonst könnte jede
+> beliebige App sagen „gib mir die Google-Daten von diesem Menschen".
+>
+> Deshalb legst du bei Google einmal ein Projekt an und bekommst eine **Client-ID**: eine
+> lange Zeichenkette, die nichts anderes bedeutet als *„der Fragende ist SimplySocial"*.
+> Die kommt in die App. Ohne sie weigert sich Google, und zwar sofort.
+>
+> Es muss **dein** Konto sein, weil es dein Projekt ist — und weil du später in derselben
+> Konsole stehst, wenn Google fragt, wofür die App Daten will.
+>
+> **Und die Reihenfolge ist nicht verhandelbar:** Sobald Google dabei ist, verlangt Apple
+> laut Richtlinie 4.8 zusätzlich einen Anmeldeweg, der nur Name und E-Mail nimmt und das
+> Verstecken der Adresse erlaubt. „Anmelden mit Apple" erfüllt das. **Also muss Apple
+> fertig sein, BEVOR Google live geht** — sonst ist es eine Ablehnung im Review. Das ist
+> keine Extraarbeit (du wolltest Apple ohnehin), nur eine Reihenfolge.
+
+### 5. Das Logo von deinem Freund · **wartet auf ihn** 🟡
+Kommt noch, du hast es gesagt. Bis dahin steht überall der Platzhalter-Schriftzug.
+> **Wichtig, sobald es da ist:** Es muss an **zwei** Orte — in die App (App-Icon,
+> Startbildschirm) und auf die Landing-Page. Die beiden sind eine Kopie, keine
+> Verbindung (harte Regel 13). Und für den App Store braucht Apple es in einer eigenen
+> Größe ohne Transparenz.
+
+### 6. Apple Developer Program, 99 $/Jahr · **wenn du so weit bist** 🟠
+Du hast gesagt, das kommt bald. Damit ändert sich zweierlei: Der Build läuft dann in der
+Cloud statt per Kabel, die App läuft ein Jahr statt sieben Tage — und **TestFlight** geht,
+also können Christoph, Leopold und Daria die App auf ihre **eigenen** Handys holen. Für
+Phase 21 (App Store) brauchst du es ohnehin.
 
 ---
 

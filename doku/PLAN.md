@@ -3018,6 +3018,216 @@ stört. **Erst schauen lassen, dann bauen.**
 
 ---
 
+### Phase 19e — Die Karte wird zur App ⬜ *(geplant 2026-09-07, zehn Entscheidungen von Ian)*
+
+**Ziel:** Aus der Kartenansicht wird das, was Ian beschrieben hat — *„wenn man auf Karte
+drückt, sieht man wirklich nur die Karte auf dem ganzen Screen, so wie wenn man bei Apple
+auf Karten geht."* Dazu räumt der Start-Bildschirm auf: Der Schriftzug verschwindet,
+„Posten" zieht um, und unten kommt eine Liquid-Glass-Leiste.
+
+**Sie zerfällt in ZWEI Schritte, und das ist die wichtigste Festlegung des Plans:**
+
+| | Was | Neuer Build? |
+|---|---|---|
+| **19e-1** | Das ganze Design: Vollbild-Karte, Blatt, Kopf weg, Posten umziehen, Blase weg, Hinweis als Vollbild | **Nein** — läuft sofort im Browser und im Simulator |
+| **19e-2** | Echtes Liquid Glass (`expo-glass-effect`) | **Ja** — ein einziger neuer Baustein |
+
+> **Warum getrennt (Ians Entscheidung 52):** Phase 19 hat gelehrt, dass nur EIN neuer
+> Native-Baustein auf einmal in einen Build gehört — sonst hat jeder Fehler mehrere
+> mögliche Ursachen. Phase 20.3 bringt vier weitere mit (Anmelden). Alle fünf zusammen
+> wäre genau die Lage, aus der bei ACTA die teuren Tage wurden. Und 19e-1 macht die App
+> schon ohne jeden Build besser.
+
+#### Ians Entscheidungen 40 bis 49 *(2026-09-07)*
+
+**40. Die Karte wird Vollbild, die Liste wird ein ziehbares Blatt.**
+Wie bei Apple Karten: Die Karte füllt den Schirm, unten liegt ein Blatt mit Griff, das
+man auf drei Stufen ziehen kann (zu · halb · ganz). Tippt man einen Bezirk an, fährt es
+auf die mittlere Stufe und zeigt dessen Posts.
+*Verworfen:* nur Karte mit der Blase (auf 360 px passt in die Blase **eine** Zeile —
+gemessen in 19c) und Karte auf 60 % mit fester Liste darunter (die Karte wäre nie frei).
+
+**41. „Posten" ist ein runder Knopf rechts vom Umschalter.**
+Ians Vorgabe war „auf die Ebene von Stapel · Liste · Karte". Als **viertes Feld** im
+Umschalter wäre es aber falsch: Die ersten drei WECHSELN eine Ansicht und bleiben
+gedrückt, „Posten" öffnet einen anderen Screen und springt zurück. Ein runder Knopf
+DANEBEN steht auf derselben Ebene und sagt durch seine Form, dass er etwas anderes tut.
+*Das Muster stammt von Ian selbst* — aus dem BierBuddy-Screenshot, den er geschickt hat:
+vier Punkte in der Leiste, der Einchecken-Knopf als eigener Kreis daneben.
+*Verworfen:* viertes Feld im Umschalter · schwebender Knopf über der Tab-Leiste (die
+Begründung gegen den schwebenden steht seit Phase 12 im Code: Er verdeckt immer genau
+die unterste Karte).
+
+**42. Die Filter leben IM Blatt, nicht über der Karte.**
+Oben im Blatt, gleich über der Liste. Die Karte bleibt damit völlig frei von
+Bedienelementen.
+*Verworfen:* schwebende Pillenreihe über dem oberen Kartenrand (hätte die Karte oben
+angeschnitten) und ein einzelner Filter-Knopf mit Zahl (was gefiltert ist, stünde dann
+nicht mehr da — nur wie VIELE).
+
+**43. Liquid Glass nur auf iOS. Der Browser bleibt schlicht.**
+`expo-glass-effect` ist Apples echtes Glas und braucht **iOS 26+**; auf Web und Android
+fällt es still auf eine gewöhnliche Fläche zurück.
+*Verworfen:* es im Browser mit `backdrop-filter: blur()` nachbauen. **Der Haken ist
+ausgesprochen und angenommen:** Genau die Fassung, die Ian den drei Mitgründern schickt,
+ist damit die schlichtere.
+
+**44. Der Umschalter schwebt über der Karte.**
+Die Karte läuft randlos bis ganz nach oben, Umschalter und Posten-Knopf schweben darüber
+— wie die Suchleiste bei Apple Karten. Auf iOS bekommt diese Pille in 19e-2 echtes Glas.
+*Verworfen:* im Kopf des Blattes (beim Zuziehen wandert der Umschalter mit hinaus) und
+als feste Zeile oben (dann ist die Karte nicht randlos, und genau das war der Wunsch).
+
+**45. Das Blatt zeigt ohne Auswahl ALLE Posts.**
+Kopf: „Ganz Wien · 12 Posts". Nach einem Tipp auf 1070: „1070 Wien · 3 Posts" mit einem
+✕ zum Aufheben.
+*Verworfen:* nur Filter plus „Tippe einen Bezirk an" (ein leeres Blatt beim ersten
+Öffnen sieht aus wie „nichts los") und ein zugezogenes Blatt (dann sind die Filter
+versteckt — und Ian wollte sie ausdrücklich sehen).
+
+**46. Die Sprechblase aus Phase 19c fällt weg.**
+Sie war die Antwort auf ein Problem, das mit dem Blatt verschwindet: Bis heute stand die
+Liste weit unten, also musste die Auswahl OBEN beantwortet werden. Jetzt beantwortet das
+Blatt dieselbe Frage — vollständig statt in einer Zeile.
+> ⚠️ **`KartenBlase` und der `blase`-Slot samt `KartenAnker` bleiben im Code stehen**
+> (harte Regel 51), nur ohne Benutzer. Sie sind geprüfte Arbeit und die Rechnung
+> „wo liegt ein Bezirk auf dem Schirm" ist nicht trivial. Wer sie löscht, wirft sie weg;
+> wer sie stehen lässt, holt sie mit einer Zeile zurück.
+*Verworfen:* Blase nur bei zugezogenem Blatt (zwei Zustände, die einander kennen müssen
+— genau daraus entstehen die Fehler, die man erst am Gerät sieht) und beide gleichzeitig
+(dieselben drei Zeilen zweimal auf dem Schirm).
+
+**47. Der Zähler „Noch 8 Karten" fällt ersatzlos weg.**
+Neben dem Umschalter ist kein Platz mehr, sobald der runde Posten-Knopf dort steht.
+> ⚠️ **Das ist die einzige Entscheidung dieser Runde GEGEN meine Empfehlung, und der
+> Preis ist benannt:** Der Zähler war die Stütze von **Ians Entscheidung 14** — das
+> Filterfeld legt sich über den Stapel, statt zu schieben, und der live mitzählende
+> Zähler war die einzige Rückmeldung, dass gerade gefiltert wird. Ohne ihn filtert man
+> blind, bis man das Feld zuklappt. **Das ist kein Widerspruch zu Entscheidung 14** (das
+> Feld überdeckt weiter), sondern eine Stütze weniger. Was bleibt, ist die Zahl am
+> Filter-Knopf. **Die Korrektur ist eine Zeile:** die Zahl klein unter den Stapel setzen
+> — sie steht als Möglichkeit im Kopf des Screens.
+
+**48. Der Prototyp-Hinweis wird ein Vollbild beim ersten Öffnen.**
+Ians Worte: *„der wird noch größer, dass die Leute wirklich draufklicken auf Okay."*
+Man muss „Verstanden" tippen, um weiterzukommen; danach ist er für die Sitzung weg und
+verdeckt **nie wieder etwas**.
+> **Harte Regel 22 wurde vorher gelesen, wie sie es verlangt.** Zwei Fassungen sind
+> schon durchgefallen: als Ebene OBEN (verdeckte Wortmarke, „Posten" und Umschalter) und
+> oben im Fluss (Ians Urteil am Handy: *„oben ist es schwieriger zu verstehen"*). **Ein
+> Vollbild wurde nie versucht** — das ist also ein neuer Weg, keine Wiederholung. Es
+> löst außerdem einen dokumentierten Nebeneffekt: Bisher verdeckte der Hinweis dauerhaft
+> die Tab-Leiste (in Phase 13 als „zwei verdeckte Knöpfe" gemessen und damals bewusst
+> hingenommen). Nach einem Vollbild ist nichts mehr verdeckt.
+>
+> ⚠️ **Die bekannte Falle dazu:** Auf Native gibt es kein `sessionStorage` (Vorhersage
+> 19.6, am 2026-09-06 bestätigt) — der Hinweis käme nach JEDEM Kaltstart wieder, und als
+> Vollbild wäre das viel lästiger als als Leiste. Gelöst wird das erst mit
+> `expo-secure-store` in Phase 20.3. **Deshalb muss das Merken in EINER Funktion sitzen**
+> (`schonGesehen()` / `merken()`), damit dort später nur der Speicher getauscht wird.
+
+**49. Ein Tipp auf denselben Bezirk hebt die Auswahl wieder auf.**
+Ians Ausgangspunkt: *„wenn man dann noch mal auf diesen Bezirk klickt, dass es dann
+weggeht, weil das kann echt stören."* Heute klebt eine einmal getroffene Auswahl.
+Zusätzlich ein ✕ im Blatt-Kopf, weil ein zweiter Tipp auf einen 14 × 11 px großen Bezirk
+(die Josefstadt, gemessen in 19b) nicht zuverlässig zu treffen ist.
+> **Harte Regel 50 gilt weiter:** Was auf der Karte gewählt ist, IST der Bezirksfilter —
+> es gibt keinen zweiten Zustand daneben. Das Aufheben setzt also `filter.bezirk` auf
+> `{ kind: 'alle' }`, nicht eine eigene Variable.
+
+**Bestätigt, aber nicht geändert:** Der **Stapel bleibt der Start** (er stellt eine
+Frage, die Karte beantwortet nur eine — und beim Kaltstart zeigt eine Karte fast nur
+leeres Wien). **Alle drei Ansichten bleiben** (eine Karte im Feed ist ein ANGEBOT mit
+„Bin dabei", eine Zeile im Blatt ist ein WEG — harte Regel 42, zwei Detailgrade für zwei
+Fragen). Der **Schriftzug „SimplySocial" verschwindet** vom Start-Bildschirm; er steht
+nur dort (nachgesehen), die anderen Tabs haben eigene Titel, die bleiben.
+
+#### 19e-1 — Das Design, ohne neuen Build ⬜
+
+**Was angefasst wird:**
+
+1. **`app/(tabs)/index.tsx`** — `styles.kopf` mit Wortmarke und „Posten"-Knopf fällt
+   weg. `KARTE_ANTEIL = 0.28` fällt weg. Die `ansichtZeile` wird zu einer schwebenden
+   Leiste, wenn `ansicht === 'karte'`, und bleibt sonst eine gewöhnliche Zeile.
+2. **Ein neuer Baustein `components/ui/SsBlatt.tsx`** — das ziehbare Blatt mit drei
+   Raststufen. Er gehört zu den Bausteinen und nicht in den Screen (harte Regel 7 sinngemäß),
+   weil ihn später auch andere Screens brauchen könnten.
+3. **`SsKarte`** bekommt eine Prop für „randlos" — der Slot `blase` bleibt, wird nur
+   nicht mehr befüllt.
+4. **`components/PrototypHinweis.tsx`** — aus der Leiste wird ein Vollbild. Der
+   Dateikopf bekommt die vierte Fassung samt Begründung in die Liste.
+
+**Drei Fallen, die vorher benannt sind:**
+
+> **a) Zwei Gesten-Erkenner übereinander — die teuerste Stelle der Phase.**
+> `SsWienKarte` hat einen `PanResponder` mit `onStartShouldSetPanResponder: () => true`
+> — er beansprucht **jede** Berührung. Das Blatt braucht auch eine senkrechte Zug-Geste.
+> Das ist dieselbe Familie wie harte Regel 44 (Regler in einer ScrollReihe) und wie die
+> Phase-11-Falle (`onPanResponderTerminationRequest`). **Der Griff des Blattes ist der
+> einzige Ort, an dem gezogen werden darf** — nicht die ganze Blattfläche —, damit sich
+> die beiden nie um dieselbe Berührung streiten.
+> Und: **auf iOS zeichnet MapKit selbst und bringt eigene Gesten mit** (seit 19d-1 fällt
+> der eigene `PanResponder` dort weg). Es sind also **zwei verschiedene Lagen** auf Web
+> und auf iOS — beide prüfen, nicht eine.
+
+> **b) Vollbild heißt, aus `SsScreen` auszubrechen.** Der Screen bringt Seitenrand und
+> `edges={['top']}` mit (ACTA-Falle: sonst doppelter Inset und ein toter schwarzer
+> Balken). Eine randlose Karte muss unter die Statusleiste laufen, die schwebende
+> Umschalter-Pille aber NICHT. Der Sicherheitsabstand wandert also vom Screen an die
+> Pille.
+
+> **c) Die Höhen des Blattes hängen am Schirm, nicht an festen Zahlen.** Die Lehre aus
+> 19b, wörtlich: Mit festen 230 px bekam die Liste auf 390 × 844 gute 266 px und auf
+> **360 × 600 genau 22 px**. Die drei Raststufen sind deshalb Anteile.
+
+**Geprüft wird auf 360 × 600 UND 390 × 844**, mit dem Raster aus Abschnitt 9b
+(Überquellen, `elementFromPoint`, `scrollWidth > clientWidth`) und mit echten
+Touch-Ereignissen für das Blatt — ein `click` löst keine Zug-Geste aus (Phase-18b-Lehre,
+dritte Fassung).
+
+#### 19e-2 — Liquid Glass, ein Baustein, ein Build ⬜
+
+`expo-glass-effect` — `GlassView` und `GlassContainer`, dazu `isLiquidGlassAvailable()`
+und `isGlassEffectAPIAvailable()`. **Beide Prüfungen sind Pflicht**, nicht Zierde: Die
+Doku nennt iOS-26-Beta-Fassungen, in denen die API fehlt und der Aufruf **abstürzt**.
+
+Glas bekommen: die Tab-Leiste unten, die schwebende Umschalter-Pille und der Kopf des
+Blattes. Auf Web und Android fällt alles drei auf die heutigen Flächen zurück — das ist
+Entscheidung 43 und kein Mangel.
+
+> **Die Bauart ist schon entschieden und heißt `SsKarte`, nicht `SsIcon`.** Harte Regel
+> 52: Zeichnen zwei Zweige DASSELBE, ist es eine Datei mit einer Verzweigung (`SsIcon`).
+> Sind es zwei verschiedene Bibliotheken oder eine, die es auf der anderen Plattform gar
+> nicht gibt, sind es **Plattform-Endungen** — sonst landet `expo-glass-effect` im
+> Web-Bündel, wo es nichts zu tun hat.
+
+#### Der Gerätebuild, parallel ⬜ *(braucht Ian einmal persönlich)*
+
+Ian hat **heute nur eine gewöhnliche Apple-ID**, das Developer-Programm kommt später.
+Damit ist der Weg **nicht** EAS, sondern lokal:
+
+```bash
+npx expo run:ios --device
+```
+
+- iPhone **einmal per Kabel** an den Mac, danach geht es über WLAN.
+- Auf dem iPhone einmal „Vertrauen" bestätigen (Einstellungen → Allgemein → VPN & Geräteverwaltung).
+- Die App läuft dann **7 Tage** und muss danach neu installiert werden — das ist die
+  Grenze der gratis Apple-ID, kein Fehler.
+- ⚠️ **Ians eigener Hinweis:** Im WLAN hängen mehrere Geräte. Vor dem Installieren
+  `xcrun devicectl list devices` lesen und den Namen bestätigen lassen — **nicht das
+  erstbeste Gerät nehmen.**
+
+**Wofür der Build da ist** (offen seit Phase 19, jetzt mit zwei Punkten mehr): der
+Wischstapel unter einem echten Finger · die Tastatur im Chat · der Jahrgangs-Balken mit
+zwei Fingern · ob ein Tipp auf die Apple-Karte den richtigen Bezirk wählt · **und neu:
+ob sich Blatt und Karte um dieselbe Berührung streiten.**
+
+Sobald das Developer-Programm da ist, wird daraus EAS und TestFlight — dann können auch
+Christoph, Leopold und Daria die App auf ihre eigenen Handys holen.
+
+---
+
 ### Phase 20 — Das Backend: Supabase · **20.1 ✅ · 20.2 ✅ (2026-09-06)** · 20.3–20.8 ⬜
 
 **Ians Entscheidung vom 2026-09-06.** Der Punkt stand seit dem 2026-08-31 in Abschnitt 8
@@ -4365,8 +4575,38 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-06 abends, spätester Eintrag):
-> Phase 20.3 — Anmelden.** 20.1 (Schema) und 20.2 (Regeln) sind **gebaut und geprüft**,
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-07, spätester Eintrag): Phase 19e-1 —
+> das Design.** Ian hat am 2026-09-07 die fertige Karte BENUTZT und zehn Entscheidungen
+> getroffen (40 bis 49, Abschnitt 5b, Phase 19e). Sechs Dinge, die eine frische Sitzung
+> wissen muss:
+>
+> 1. **19e-1 braucht KEINEN neuen Build und geht sofort.** Vollbild-Karte mit ziehbarem
+>    Blatt, Kopf weg, „Posten" als runder Knopf neben den Umschalter, Blase aus 19c raus,
+>    Prototyp-Hinweis als Vollbild. Erst **19e-2** bringt mit `expo-glass-effect` einen
+>    Baustein und einen Build — bewusst getrennt (Phase-19-Lehre: nur EINER auf einmal).
+> 2. **Die teuerste Stelle ist im Voraus benannt: zwei Gesten-Erkenner übereinander.**
+>    `SsWienKarte` beansprucht mit `onStartShouldSetPanResponder: () => true` jede
+>    Berührung; das Blatt will senkrecht ziehen. Nur der GRIFF des Blattes zieht, nicht
+>    die Fläche. Und auf iOS ist die Lage anders als auf Web, weil MapKit seit 19d-1
+>    selbst zeichnet — **beide prüfen.**
+> 3. **`KartenBlase` und der `blase`-Slot bleiben im Code stehen, ohne Benutzer.**
+>    Entscheidung 46 nimmt sie aus der Anzeige, nicht aus dem Projekt. Es ist geprüfte
+>    Arbeit, und die Rechnung „wo liegt ein Bezirk auf dem Schirm" ist nicht trivial.
+> 4. **Entscheidung 47 ist die einzige gegen meine Empfehlung, und ihr Preis steht
+>    dabei:** Der Zähler „Noch 8 Karten" war die Stütze von Entscheidung 14 (Filterfeld
+>    überdeckt den Stapel). Ohne ihn filtert man blind, bis man zuklappt. Die Korrektur
+>    ist eine Zeile und steht im Plan.
+> 5. **Harte Regel 22 wurde vor Entscheidung 48 gelesen, wie sie es verlangt.** Zwei
+>    Fassungen des Prototyp-Hinweises sind schon durchgefallen; ein Vollbild wurde nie
+>    versucht. **Das Merken muss in EINER Funktion sitzen** — auf Native gibt es kein
+>    `sessionStorage`, also käme er sonst nach jedem Kaltstart wieder, und als Vollbild
+>    wäre das viel schlimmer als als Leiste. Getauscht wird der Speicher in 20.3.
+> 6. **Danach: der Gerätebuild, dann Phase 20.3.** Ian hat heute nur eine gewöhnliche
+>    Apple-ID — also `npx expo run:ios --device` mit Kabel, nicht EAS. Er hat selbst
+>    gewarnt: im WLAN hängen fremde Geräte, **vor dem Installieren den Gerätenamen
+>    bestätigen lassen.**
+
+> 📎 **Der vorige Eintrag, weil er weiter gilt: Phase 20.3 — Anmelden.** 20.1 (Schema) und 20.2 (Regeln) sind **gebaut und geprüft**,
 > siehe Abschnitt 5b, „Was beim Bauen von 20.1 und 20.2 herauskam". Sechs Dinge, die
 > eine frische Sitzung wissen muss:
 >
