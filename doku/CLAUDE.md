@@ -144,15 +144,28 @@ Sechs Dinge sind daran wichtiger als das Aussehen:
    sofort „1020 Wien · 1 Post". **Vierte Fassung der Phase-18b-Lehre, diesmal andersherum:
    Die Prüfgeste war nicht zu grob, sondern zu sauber.**
 6. **Der Preis von Entscheidung 47 ist jetzt sichtbar, und er trifft nur den STAPEL.**
-   Dort sind bei aufgeklapptem Filter auf 360 × 600 „Alter egal" und „Bestimmte
-   Jahrgänge" von den Stapel-Knöpfen verdeckt — **gegengeprüft auf HEAD, dort genauso**,
-   also älter als diese Phase. Neu ist, dass mit dem Zähler die einzige Rückmeldung
-   wegfiel, dass gerade gefiltert wird. In der KARTE besteht das Problem nicht: Dort
-   fährt das Blatt auf und die Liste steht daneben. Korrektur ist eine Zeile, sie steht
-   im Kopf von `(tabs)/index.tsx`.
+   Ohne den Zähler fiel die einzige Rückmeldung weg, dass gerade gefiltert wird. In der
+   KARTE besteht das Problem nicht: Dort fährt das Blatt auf und die Liste steht
+   daneben. Korrektur ist eine Zeile, sie steht im Kopf von `(tabs)/index.tsx`.
+   ❌ **Der zweite Teil dieses Befunds war FALSCH und ist am 2026-09-07 zurückgenommen:**
+   Hier stand, „Alter egal" und „Bestimmte Jahrgänge" seien auf 360 × 600 „von den
+   Stapel-Knöpfen verdeckt". **Sie sind es nicht — sie sind herausgescrollt.**
+   Nachgemessen: Das Blatt zeigt 232 px, der Filterinhalt ist 296 px hoch, **64 px
+   Überhang**; der Knopf sitzt bei y = 421, die Blattkante bei 410. Nach dem Scrollen
+   trifft `elementFromPoint` ihn frei. Auf 390 × 844 ist der Überhang **0**. Und die
+   weiche Kante, die genau das anzeigt, **war die ganze Zeit da** (`Blatt` in
+   `WischStapel.tsx`, y = 382, 28 px, 7 Streifen — „Jahrgang" blendet sichtbar aus).
+   **Es gibt hier nichts zu reparieren.** Die Fehldiagnose kam von `elementFromPoint`:
+   Es meldet, WAS an einem Punkt liegt, nicht WARUM der Knopf nicht dort ist — die
+   Falle steht seit dem 2026-09-03 in der Fallen-Liste und hat trotzdem wieder
+   zugeschlagen. **Wer eine Überdeckung misst, misst als Zweites `scrollHeight` gegen
+   `clientHeight`.**
 
-🔜 **Was jetzt dran ist: der Gerätedurchgang, dann 19e-2 (Liquid Glass).** `npm run
-deploy` ist noch NICHT gelaufen — die Live-Seite zeigt weiter 19d.
+✅ **`npm run deploy` ist am 2026-09-07 gelaufen — die Live-Seite zeigt jetzt 19e**
+(Ians Entscheidung an dem Abend). Belegt auf der echten Adresse, 360 × 600: Der
+Prototyp-Hinweis deckt 600 von 600 px (Vollbild, Entscheidung 48), die Tab-Leiste
+steht als Kapsel bei x = 16, 328 breit, 56 hoch, 12 px über dem Rand — genau die Maße
+aus `lib/tabs.ts`.
 
 ✅ **Phase 20.1 und 20.2 sind fertig (2026-09-06): das Schema und die Regeln auf dem
 Server.** Alles in `simplysocial/supabase/` — und **ohne Supabase-Konto gebaut und
@@ -1811,6 +1824,72 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   nichts — ein Aufruf, der nichts bewirkt, sieht aus wie einer, der gar nicht
   stattfindet. Dazu: **`fitToCoordinates` zählt `mapPadding` NICHT mit** (beides
   zusammen zoomt auf halb Niederösterreich hinaus), `setRegion` schon.
+- **`npx expo run:ios` gibt EXIT 0 zurück, auch wenn `xcodebuild` darunter gescheitert
+  ist.** (2026-09-07, Gerätebuild) Der Aufruf endete mit 0, und im Protokoll stand
+  `xcodebuild: error: Timed out waiting for all destinations…`. **Das ist die
+  Phase-19-Lehre in schärferer Form:** Dort warf `tail` die Fehlerzeilen weg, hier lügt
+  der Rückgabewert selbst. Ein Build gilt erst als gelaufen, wenn
+  `grep -cE "error:|BUILD FAILED"` über das GANZE Protokoll null ergibt — nicht, wenn
+  die Shell 0 sagt. (Zweimal am selben Abend zugeschlagen: das zweite Mal bei einem
+  falschen `-workspace`-Pfad, auch dort EXIT 0.)
+- **Die Team-ID steht im OU-Feld, nicht in der Klammer.** (2026-09-07)
+  `security find-identity` zeigt `Apple Development: ian.fhorak@gmail.com (27A3U8F4TS)`
+  — die Klammer ist die **Zertifikats**-ID. Die Team-ID ist `OU` aus dem Subject:
+  `openssl x509 -noout -subject` → `OU=5TQTMP2L2H`. Wer die Klammer nimmt, bekommt einen
+  Signing-Fehler, der wie ein Projektfehler aussieht. `O=Ian Faye horak` (eine Person,
+  keine Firma) ist der Beleg, dass es ein **Personal Team** ist — daher die 7 Tage.
+- **`ios/` ist git-ignoriert (CNG) — was dort eingetragen wird, ist flüchtig.**
+  (2026-09-07) `DEVELOPMENT_TEAM = 5TQTMP2L2H` und `CODE_SIGN_STYLE = Automatic` stehen
+  in `ios/SimplySocial.xcodeproj/project.pbxproj`, an beiden Stellen (Debug und
+  Release). **Ein `expo prebuild --clean` wirft sie weg**, und der nächste Gerätebuild
+  scheitert dann an etwas, das schon einmal gelöst war. Wer den Ordner neu erzeugt,
+  setzt beide Zeilen wieder.
+- **`CoreDeviceError 12040` heißt fast immer: Das Handy ist GESPERRT — nicht, dass Xcode
+  zu alt ist.** (2026-09-07, und ich bin selbst darauf hereingefallen) Die Meldung lautet
+  `The developer disk image could not be mounted on this device (CoreDeviceError 12040)`
+  und nennt keinen Grund. Ians iPhone läuft auf **iOS 26.6**, Xcode ist **26.5 (Build
+  17F42)**, das vorhandene Disk-Image trägt genau diese Build-Nummer — **daraus habe ich
+  „Gerät neuer als Xcode" geschlossen, und das war falsch.** Der echte Grund steht erst
+  in der Detailausgabe von `xcrun devicectl device install app`:
+  `kAMDMobileImageMounterDeviceLocked: The device is locked.`
+  **Der Denkfehler ist der lehrreiche Teil:** Eine Zeile darüber stand `Acquired tunnel
+  connection to device`, und `developerModeStatus: enabled` — daraus schien zu folgen,
+  dass das Gerät offen ist. **Ein Tunnel braucht VERTRAUEN, kein entsperrtes Display.**
+  Das sind zwei verschiedene Zustände, und nur einer davon steht in der Ausgabe.
+  Merksätze: **`expo run:ios` zeigt nur die generische Hülle** — für den echten Grund
+  `devicectl` direkt aufrufen und die ganze Ausgabe lesen. Und: **Ein iPhone sperrt sich
+  während des Installierens wieder zu.** Vor dem Versuch die automatische Sperre auf
+  „Nie" stellen; eine Wiederholschleife im Sekundentakt gewinnt das Rennen nicht
+  zuverlässig (30 Versuche, kein Treffer).
+- **Das Disk-Image braucht man zum DEBUGGEN, nicht zum INSTALLIEREN — und für einen
+  Gestentest ist ein RELEASE-Build ohnehin der richtige.** (2026-09-07) Gegen
+  `-destination 'generic/platform=iOS'` bauen (braucht kein verbundenes Gerät und läuft
+  durch, während das Handy weggelegt ist), dann mit `xcrun devicectl device install app`
+  aufspielen. Der Release-Build hat sein JavaScript eingebacken, läuft also **ohne Kabel
+  und ohne Mac** — genau das, was man jemandem in die Hand drückt. Ein Debug-Build holt
+  sein JS live vom Metro-Server und ist dafür der schlechtere.
+  ⚠️ **Nicht bewiesen ist damit, ob iOS 26.6 mit Xcode 26.5 wirklich funktioniert** —
+  die Installation ist an der Sperre gescheitert, bevor es sich zeigen konnte. Wer es
+  wieder versucht: erst entsperren, dann urteilen.
+- **Eine WEB-Einstellung hat den iOS-Release-Build zerlegt — und im Debug fällt so etwas
+  nie auf.** (2026-09-07, der teuerste Fund des Abends) `experiments.baseUrl:
+  "/simplysocial"` in `app.json` ist der GitHub-Pages-Unterordner; ohne ihn bleibt die
+  Seite weiß, `deploy.sh` prüft ihn deshalb. **Metro stellt dieselbe `baseUrl` aber auch
+  beim iOS-Embed allen Asset-Pfaden voran.** Im App-Bundle entsteht dadurch ein Ordner
+  `simplysocial/` — und der kollidiert mit der Binärdatei `SimplySocial`, weil macOS
+  Groß- und Kleinschreibung **nicht** unterscheidet. Der Build stirbt mit `ENOTDIR: not
+  a directory, mkdir …/SimplySocial.app/simplysocial/assets/…`, **nach** dem erfolgreichen
+  Bündeln (`iOS Bundled 8894ms (1343 modules)`), im Schritt „Copying 22 asset files".
+  **Der Debug-Build sieht das nie**, weil er keine Assets einbackt — das JS kommt live
+  vom Metro-Server. Deshalb lief der Simulator-Build vom 2026-09-06 sauber und der erste
+  RELEASE-Build ist gescheitert; **auch der App-Store-Build in Phase 21 wäre daran
+  gescheitert.** Behoben mit `app.config.js`: `app.json` behält den Wert (lesbar, und
+  `deploy.sh` grept ihn), die Config nimmt ihn für alles heraus, was nicht Web ist.
+  **Die Ursache war ohne Xcode zu beweisen** — `expo export:embed` mit `--assets-dest`
+  in einen Testordner, einmal mit und einmal ohne `baseUrl`: 15 Sekunden statt 15
+  Minuten Build. Und die Deploy-Sicherung prüft jetzt das **Ergebnis**
+  (`"/simplysocial/_expo/` in `dist/index.html`), nicht mehr nur die Absicht in
+  `app.json`: Die Wahrheit steht seit diesem Tag in einer zweiten Datei.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

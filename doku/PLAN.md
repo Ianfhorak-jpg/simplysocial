@@ -3230,14 +3230,37 @@ nur dort (nachgesehen), die anderen Tabs haben eigene Titel, die bleiben.
 
 Belege: `v01`–`v09` im Projektordner.
 
-> ⚠️ **Ein Befund, der NICHT aus dieser Phase stammt und trotzdem hierher gehört:**
-> Im **Stapel** mit aufgeklapptem Filter sind „Alter egal" und „Bestimmte Jahrgänge"
-> auf 360 × 600 von den Stapel-Knöpfen verdeckt. **Gegengeprüft auf HEAD — dort
-> genauso**, also älter als 19e-1. Der Slot begrenzt korrekt (harte Regel 36), der
-> Inhalt ist schlicht höher als der Platz. Neu ist nur, dass es jetzt mehr weh tut:
-> Mit dem Zähler aus Entscheidung 47 fiel die einzige Rückmeldung weg, dass gerade
-> gefiltert wird. **In der Kartenansicht besteht das Problem nicht** — dort fährt das
-> Blatt auf, und die Liste steht daneben. Beleg: `v10-HEAD-stapel-filter-360.png`.
+> ❌ **Dieser Befund ist am 2026-09-07 nachgemessen und ZURÜCKGENOMMEN. Hier stand:**
+> *„Im Stapel mit aufgeklapptem Filter sind ‚Alter egal' und ‚Bestimmte Jahrgänge' auf
+> 360 × 600 von den Stapel-Knöpfen verdeckt."* **Sie sind nicht verdeckt — sie sind
+> herausgescrollt, und die Kante, die genau das anzeigt, war die ganze Zeit da.**
+>
+> | | gemessen auf 360 × 600 | auf 390 × 844 |
+> |---|---|---|
+> | Blatt sichtbar (`clientHeight`) | 232 px | 296 px |
+> | Filterinhalt (`scrollHeight`) | 296 px | 296 px |
+> | **Überhang** | **64 px** | **0** |
+> | „Alter egal" | y = 421, Blattkante 410 | y = 421, sichtbar |
+> | nach `scrollTop = scrollHeight` | `elementFromPoint` trifft ihn **frei** | — |
+> | weiche Kante (`Blatt` in `WischStapel.tsx`) | steht, y = 382, 28 px, 7 Streifen | steht nicht (richtig: nichts abgeschnitten) |
+>
+> **Der Satz „der Slot begrenzt korrekt, der Inhalt ist höher als der Platz" war schon
+> damals richtig — nur die Folgerung daraus war falsch.** Harte Regel 36 hält, der
+> ScrollView scrollt, und `untenAb` schaltet die Kante genau dann ein, wenn etwas
+> fehlt: Auf dem kleinen Schirm blendet „Jahrgang" sichtbar aus, auf dem großen ist
+> keine Kante da, weil nichts abgeschnitten ist. Beleg: `aa01-blatt-kante-360.png`.
+>
+> **Woher der Irrtum kam, ist das Lehrreiche:** `elementFromPoint` an der Mitte des
+> Knopfes meldete „Weg" — den Stapel-Knopf. Das liest sich wie „verdeckt", heißt aber
+> nur *an dieser Stelle liegt etwas anderes*. Warum der Knopf nicht dort ist, sagt es
+> nicht. **Wer eine Überdeckung misst, misst als Zweites `scrollHeight` gegen
+> `clientHeight`** — sonst hält man jedes herausgescrollte Element für verdeckt.
+>
+> **Was von dem Befund BLEIBT**, ist der andere, unabhängige Teil: Mit dem Zähler aus
+> Entscheidung 47 fiel die einzige Rückmeldung weg, dass gerade gefiltert wird. Das
+> ist kein Fehler, sondern der benannte Preis einer Entscheidung — die mögliche
+> Korrektur steht weiter im Kopf von `(tabs)/index.tsx`. **In der Kartenansicht
+> besteht auch das nicht**, dort fährt das Blatt auf und die Liste steht daneben.
 
 > 📏 **Eine Messnotiz, die beim nächsten Gestentest Zeit spart:** Ein `mouse.down`
 > gefolgt von `mouse.up` **ohne jede Bewegung dazwischen** löst im Prüfbrowser keinen
@@ -4799,8 +4822,45 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-07, spätester Eintrag): der
-> GERÄTEDURCHGANG — und der ist jetzt das EINZIGE, was noch offen ist.** Phase 19e ist
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-07 spätabends, SPÄTESTER Eintrag): die
+> App auf Ians iPhone installieren. Sie ist FERTIG GEBAUT und wartet nur darauf, dass
+> das Handy entsperrt ist.** Fünf Dinge, die eine frische Sitzung wissen muss:
+>
+> 1. **Der Release-Build läuft und liegt fertig da** — `BUILD SUCCEEDED`, 48 MB,
+>    `main.jsbundle` (3 MB) eingebacken. Er liegt im Scratchpad der Sitzung und ist
+>    damit **weg**; neu bauen mit:
+>    ```
+>    xcodebuild -workspace ios/SimplySocial.xcworkspace -scheme SimplySocial \
+>      -configuration Release -destination 'generic/platform=iOS' \
+>      -derivedDataPath <ordner> -allowProvisioningUpdates
+>    xcrun devicectl device install app --device <udid> <ordner>/Build/Products/Release-iphoneos/SimplySocial.app
+>    ```
+>    **Warum Release und nicht `expo run:ios --device`:** Der Release-Build braucht kein
+>    verbundenes Gerät (`generic/platform=iOS`) und hat sein JavaScript eingebacken —
+>    die App läuft danach **ohne Kabel und ohne Mac**. Genau das, was man jemandem in
+>    die Hand drückt. Für den Gestentest ist das die richtige Fassung.
+> 2. **Woran es gescheitert ist: das Handy war gesperrt.** `CoreDeviceError 12040`
+>    („developer disk image could not be mounted") nennt den Grund nicht; er steht erst
+>    in der Detailausgabe von `devicectl`: `kAMDMobileImageMounterDeviceLocked`.
+>    **Ich habe daraus zuerst falsch geschlossen, Xcode 26.5 sei zu alt für iOS 26.6** —
+>    weil `Acquired tunnel connection to device` eine Zeile darüber stand. Ein Tunnel
+>    braucht VERTRAUEN, kein entsperrtes Display. **Vor dem nächsten Versuch: Auto-Sperre
+>    auf „Nie".** Eine Schleife im Sekundentakt gewinnt das Rennen nicht (30 Versuche,
+>    kein Treffer). Ob 26.6 mit Xcode 26.5 wirklich läuft, ist damit **weiter offen**.
+> 3. **Signatur und Team stehen** — `DEVELOPMENT_TEAM = 5TQTMP2L2H` und
+>    `CODE_SIGN_STYLE = Automatic` in beiden Konfigurationen der pbxproj, Zertifikat
+>    `Apple Development: ian.fhorak@gmail.com`, Personal Team (7 Tage). **`ios/` ist
+>    git-ignoriert** — ein `expo prebuild --clean` wirft beide Zeilen weg.
+> 4. **Ein Fehler, der ALLE künftigen Release-Builds getroffen hätte, ist behoben:**
+>    `experiments.baseUrl` (die GitHub-Pages-Einstellung) landete auch in den
+>    iOS-Asset-Pfaden und kollidierte dort mit der App-Binärdatei. Neu ist
+>    `app.config.js`; die ganze Begründung steht in dieser Datei. **Ohne sie wäre auch
+>    der App-Store-Build in Phase 21 gescheitert**, und zwar erst dort.
+> 5. **Die Prüfliste für Ian liegt fertig in `_FUER_IAN/HANDY_DURCHGANG.md`** — sechs
+>    Punkte, in seiner Sprache, mit der Begründung, warum jeder nur am Gerät zu
+>    beantworten ist.
+>
+> 📎 **Der vorige Eintrag, weil er weiter gilt: der GERÄTEDURCHGANG.** Phase 19e ist
 > ganz fertig, 19e-1 und 19e-2 (Abschnitt 5b). Sieben Dinge, die eine frische Sitzung
 > wissen muss:
 >
@@ -4840,16 +4900,21 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 >    lassen.** Offen sind: Wischstapel unter einem Finger · Tastatur im Chat ·
 >    Jahrgangs-Balken mit zwei Fingern · Tipp auf die Apple-Karte · **ob sich Blatt und
 >    Karte auf iOS um dieselbe Berührung streiten** · und neu: wie sich Glas anfühlt.
-> 7. **`npm run deploy` ist weiter NICHT gelaufen** — die Live-Seite zeigt 19d. Das ist
->    eine Entscheidung, keine Vergesslichkeit: Auf der öffentlichen Adresse zeigt Ian
->    den Prototyp herum, und 19e war bis heute auf keinem echten Gerät. Der Quellcode
->    ist gepusht (harte Regel 35).
+> 7. ✅ **`npm run deploy` ist am 2026-09-07 gelaufen — die Live-Seite zeigt jetzt 19e.**
+>    Bis dahin stand hier „bewusst nicht gelaufen, weil 19e auf keinem echten Gerät
+>    war"; **Ian hat es an dem Abend entschieden**, und am selben Abend kam das Gerät
+>    dazu. Auf der echten Adresse nachgemessen (360 × 600): Prototyp-Hinweis deckt
+>    600 von 600 px (Vollbild, Entscheidung 48), Tab-Kapsel bei x = 16, 328 breit,
+>    56 hoch, 12 px über dem Rand — die Maße aus `lib/tabs.ts`. Der Quellcode ist
+>    gepusht (harte Regel 35); der Deploy ersetzt das nicht.
 >
-> 📎 **Ein Befund liegt weiter offen und ist ÄLTER als 19e:** Im Stapel mit
-> aufgeklapptem Filter sind „Alter egal" und „Bestimmte Jahrgänge" auf 360 × 600 von
-> den Stapel-Knöpfen verdeckt — gegengeprüft auf HEAD, dort genauso. **Die Korrektur
-> ist eine Zeile** (Zähler klein unter den Stapel), und sie steht im Kopf von
-> `(tabs)/index.tsx`.
+> ❌ **Der „offene Befund" von gestern ist am 2026-09-07 nachgemessen und KEINER.**
+> „Alter egal" und „Bestimmte Jahrgänge" sind auf 360 × 600 nicht verdeckt, sondern
+> **herausgescrollt** (64 px Überhang), und die weiche Kante, die das anzeigt, war
+> immer da. Zahlen und die Lehre stehen bei Phase 19e in Abschnitt 5b. **Hier nur das
+> Wichtige für die nächste Sitzung: Es gibt dort nichts zu reparieren.** Was bleibt,
+> ist der benannte Preis von Entscheidung 47 (keine Rückmeldung im Stapel, dass
+> gefiltert wird) — eine mögliche Zeile, kein Fehler.
 
 > 📎 **Der vorige Eintrag, weil er noch Gültiges enthält: der Stand nach 19e-1**
 > (Abschnitt 5b, Phase 19e). Sechs Dinge, die eine frische Sitzung wissen muss:

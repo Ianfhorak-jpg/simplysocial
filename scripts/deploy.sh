@@ -32,11 +32,25 @@ npx tsc --noEmit
 
 echo "→ Bauen"
 rm -rf dist
-npx expo export --platform web
+# SS_WEB_EXPORT sagt `app.config.js`, dass die baseUrl gesetzt werden soll. Seit dem
+# 2026-09-07 steht sie NICHT mehr unbedingt in der Config: Metro stellt sie sonst auch
+# den iOS-Asset-Pfaden voran, und dort kollidiert der Ordner `simplysocial/` mit der
+# Binärdatei `SimplySocial` (macOS unterscheidet die Groß-/Kleinschreibung nicht).
+# Die Begründung steht ganz in `app.config.js`.
+SS_WEB_EXPORT=1 npx expo export --platform web
 
 # public/.nojekyll wird mitkopiert; ohne sie verschluckt Jekyll den _expo/-Ordner
 # und die Seite lädt kein einziges Skript.
 test -f dist/.nojekyll || { echo "ABBRUCH: dist/.nojekyll fehlt." >&2; exit 1; }
+
+# Die Prüfung oben liest app.json, die Wahrheit steht aber seit dem 2026-09-07 in
+# `app.config.js` — also wird hier das ERGEBNIS geprüft, nicht die Absicht. Ohne
+# baseUrl lädt das gebaute HTML seine Skripte von "/" und die Seite bleibt weiß.
+grep -q '"/simplysocial/_expo/' dist/index.html || {
+  echo "ABBRUCH: dist/index.html lädt nicht aus /simplysocial/ — baseUrl kam nicht an." >&2
+  echo "         Prüfen: app.config.js (SS_WEB_EXPORT) und app.json." >&2
+  exit 1
+}
 
 echo "→ Hochladen"
 TMP="$(mktemp -d)"
