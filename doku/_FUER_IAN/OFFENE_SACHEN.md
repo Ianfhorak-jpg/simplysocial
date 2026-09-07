@@ -25,12 +25,36 @@ Liegt seit dem 06.09. fertig da: `landing-vorschau/` — Olivgrün, Weinrot, Tü
 Offen ist **Farbe UND A oder B** (A: auch die sechs Kategoriefarben werden Abstufungen
 der Leitfarbe · B: nur die Marke, Kategorien bleiben bunt). Blockiert sonst still.
 
-### 2. Dein iPhone einmal per Kabel an den Mac · **20 Minuten, gemeinsam** 🟢
+### 2. Handy entsperrt hinlegen · **2 Minuten** 🟢
+> 🔄 **Am 07.09. abends fast geschafft — die App ist FERTIG GEBAUT.** Dein iPhone war
+> angesteckt, die Signatur stimmt, der Build lief durch (48 MB, alles eingebacken).
+> Gescheitert ist nur das Aufspielen, und zwar an der **Bildschirmsperre**: Ein iPhone
+> lässt keine App installieren, solange es zu ist, und deins hat sich immer wieder
+> zugesperrt, bevor die Installation durch war (30 Versuche).
+>
+> **Was du beim nächsten Mal machst — mehr nicht:**
+> 1. Handy per Kabel anstecken
+> 2. Einstellungen → Anzeige & Helligkeit → **Automatische Sperre → „Nie"**
+> 3. Bescheid sagen. Der Rest läuft von allein, ca. 5 Minuten.
+>
+> Danach stell die Auto-Sperre ruhig wieder zurück.
+
 Damit die App wirklich auf deinem Handy läuft. Du hast heute eine **gewöhnliche
-Apple-ID** — das reicht: Die App läuft dann 7 Tage und muss danach neu drauf. Danach
-geht es über WLAN.
-> ⚠️ **Dein eigener Hinweis, notiert:** Im WLAN hängen noch andere Geräte. Ich lasse mir
-> vor dem Installieren den Gerätenamen anzeigen und frage dich, ob es deins ist.
+Apple-ID** — das reicht: Die App läuft dann 7 Tage und muss danach neu drauf. Sie läuft
+dann **ohne Kabel und ohne dass der Mac an ist** — du kannst sie also herumzeigen.
+
+> 🟢 **Und eine gute Nachricht, die dabei herauskam:** Beim ersten echten Bauen ist ein
+> Fehler aufgeflogen, der sonst erst beim **App Store** aufgefallen wäre (Phase 21) —
+> eine Einstellung, die nur für die Web-Seite gedacht war, hat die iPhone-Fassung
+> kaputtgemacht. Ist behoben. Du musstest dafür nichts tun.
+
+> ✅ **Dein eigener Hinweis — erledigt am 07.09.:** Im WLAN hängen fremde Geräte, also
+> sollte ich vor dem Installieren den Gerätenamen zeigen und nachfragen. Habe ich:
+> „iPhon", iPhone 16, iOS 26.6 — du hast bestätigt, dass es deins ist. **Bleibt so:**
+> Bei jedem neuen Gerät wird wieder gefragt.
+
+**Was dann zu prüfen ist, steht fertig in `_FUER_IAN/HANDY_DURCHGANG.md`** — sechs
+Punkte zum Durchgehen.
 
 **Wofür:** Wischstapel unter einem echten Finger · Tastatur im Chat · Jahrgangs-Balken
 mit zwei Fingern · ob ein Tipp auf die Apple-Karte den richtigen Bezirk trifft · ob sich
