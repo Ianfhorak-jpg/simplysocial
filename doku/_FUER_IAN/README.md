@@ -4,6 +4,30 @@
 
 ---
 
+## 🆕 Neu am 07.09.2026 — die Karte ist jetzt die App
+
+Deine zehn Entscheidungen vom selben Abend sind gebaut, bis auf eine:
+
+- Tippst du auf **Karte**, füllt sie jetzt den **ganzen Bildschirm**, und die Liste
+  liegt in einem **Blatt, das du hochziehen kannst** — wie bei Apple Karten. Drei
+  Stufen: zu, halb, ganz.
+- Der Schriftzug **SimplySocial oben ist weg** (dafür ist Platz für die Karte da).
+- **„Posten" ist ein runder Knopf** rechts neben Stapel · Liste · Karte.
+- **Tippst du denselben Bezirk noch einmal an, geht die Auswahl wieder weg** — das war
+  dein Punkt, dass das sonst stört. Es gibt zusätzlich ein **✕** oben im Blatt.
+- Der **Prototyp-Hinweis ist jetzt ein Vollbild** beim ersten Öffnen. Man muss
+  „Verstanden" drücken; danach verdeckt er nie wieder etwas.
+
+**Was noch fehlt: das echte Glas** (Liquid Glass). Das braucht einen neuen Build und
+kommt als eigener Schritt — bewusst getrennt, damit ein Fehler nicht zwei Ursachen hat.
+
+> ⚠️ **Die Online-Adresse zeigt das noch NICHT.** Ich habe absichtlich nicht
+> hochgeladen: Der Prototyp-Link ist der, den du herumschickst, und ob deine
+> Mitgründer die neue Fassung sehen sollen, entscheidest du. **Sag ein Wort, dann
+> läuft `npm run deploy`** — das dauert zwei Minuten.
+
+---
+
 ## 🔗 Beides ist online
 
 ### Die Landing-Page

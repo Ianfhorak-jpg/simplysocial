@@ -69,6 +69,40 @@ export interface SsKarteProps {
    */
   maxHoehe?: number;
   /**
+   * Die Karte füllt den ganzen Platz, den sie bekommt — Phase 19e, Ians
+   * Entscheidung 40 und 44: *„wenn man auf Karte drückt, sieht man wirklich nur die
+   * Karte auf dem ganzen Screen."*
+   *
+   * Ohne das nimmt die Karte ihre eigene Höhe aus dem Seitenverhältnis von Wien und
+   * steht als ein Element unter anderen im Fluss — so war sie von 19b bis 19d. Mit
+   * `fuellt` ist sie der Hintergrund, über dem alles andere schwebt. `maxHoehe`
+   * wird dann nicht gelesen: Zwei Regeln für dieselbe Höhe wären eine zu viel.
+   */
+  fuellt?: boolean;
+  /**
+   * Wie viele Bildpunkte unten von etwas anderem verdeckt sind — seit Phase 19e vom
+   * Blatt.
+   *
+   * **Das ist keine Kosmetik, sondern der Unterschied zwischen „Wien ist zu sehen"
+   * und „die südliche Hälfte liegt hinter dem Blatt".** Eine Vollbild-Karte, die
+   * Wien in der Mitte des SCHIRMS zentriert, zeigt es zur Hälfte unter einem Blatt,
+   * das die halbe Höhe einnimmt. Gezählt wird deshalb der freie Streifen darüber.
+   *
+   * Der Wert wechselt beim EINRASTEN des Blattes und nicht während des Ziehens —
+   * sonst rechnete bei jedem Fingerbreit jemand 23 Flächen neu.
+   */
+  randUnten?: number;
+  /**
+   * Dasselbe für oben: die Höhe der schwebenden Leiste mit Umschalter und
+   * „Posten"-Knopf (Ians Entscheidung 44).
+   *
+   * Wien wird zwischen `randOben` und `randUnten` zentriert. Ohne den oberen Wert
+   * läuft die Stadt unter die Pille — sichtbar wäre das nur an einem Schirm, auf dem
+   * gerade ein Bezirk dort oben liegt, und genau solche Fehler findet man erst am
+   * Gerät.
+   */
+  randOben?: number;
+  /**
    * Was über dem gewählten Bezirk schweben soll — seit Phase 19c die `KartenBlase`.
    *
    * ── Warum ein Slot und nicht der Inhalt selbst ───────────────────────────────

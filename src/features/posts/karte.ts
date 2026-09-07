@@ -352,6 +352,34 @@ export function appleFuellung(stufe: number): string {
 export const APPLE_ZOOM_MIN = 9;
 export const APPLE_ZOOM_MAX = 15;
 
+// ── Wie viel ein Blatt von der Karte verdecken darf (Phase 19e) ──────────────
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  Ab wann die Karte NICHT mehr kleiner wird, obwohl das Blatt weiter aufgeht.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Seit Ians Entscheidung 40 liegt über der Karte ein ziehbares Blatt, und die Karte
+ * zeichnet Wien in den freien Streifen DARÜBER — sonst läge die halbe Stadt dahinter
+ * (siehe `randUnten` in `components/ui/karte-typen.ts`).
+ *
+ * ── Der Befund, aus dem diese Zahl kommt, ist gemessen ────────────────────────
+ * Ohne Grenze schrumpfte Wien beim Aufziehen auf die oberste Stufe auf **44 px
+ * Höhe** (360 × 600, am 2026-09-07 nachgemessen) — ein Fleck. Schlimmer als klein
+ * ist dabei, dass die Karte bei JEDEM Zug am Griff ihren Maßstab wechselt: Man zieht
+ * eine Liste hoch und die Stadt darunter zappelt.
+ *
+ * Ab dieser Grenze läuft die Karte lieber HINTER das Blatt, statt weiter zu
+ * schrumpfen. Sichtbar ist davon nichts — was verdeckt ist, ist verdeckt —, aber der
+ * Maßstab bleibt stehen, und beim Zuziehen wächst die Karte wieder auf den vollen
+ * Platz.
+ *
+ * `0.5` ist die mittlere Raststufe des Blattes. Das ist kein Zufall und auch keine
+ * Kopplung: Es ist die Stufe, auf der das Blatt aufschlägt — also der Maßstab, den
+ * jemand als ersten sieht und wiedererkennt.
+ */
+export const KARTE_MIN_BAND = 0.5;
+
 /**
  * Welche Sorte Apple-Karte darunter liegt.
  *

@@ -1,6 +1,7 @@
 /** Ein Import für alle Bausteine: `import { SsButton, SsCard } from '@/components/ui'`. */
 export * from './SsAvatar';
 export * from './SsBack';
+export * from './SsBlatt';
 export * from './SsButton';
 export * from './SsCard';
 export * from './SsChip';

@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SsButton, SsIcon, SsText } from '@/components/ui';
-import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
+import { accent, colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
 
 /**
  * Der Satz, den jeder braucht, der den Link bekommt — einmal, dann nie wieder.
@@ -30,26 +30,37 @@ import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
  * liefern damit beide „nichts" — identisch, kein Mismatch —, und der Balken kommt
  * einen Wimpernschlag später dazu.
  *
- * ── Warum er UNTEN liegt und überdeckt (Ian, 2026-09-02) ──────────────────────
- * Er hat drei Fassungen erlebt, und die Begründung hat sich dabei zweimal gedreht —
- * deshalb steht sie hier ganz:
+ * ── Die vier Fassungen, und warum diese (Ian, 2026-09-02 und 2026-09-07) ─────
+ * Er hat vier Fassungen erlebt, und die Begründung hat sich dabei zweimal gedreht —
+ * deshalb steht sie hier ganz. **Wer ihn wieder umbaut, liest zuerst diese Liste**
+ * (harte Regel 22), sonst landet er bei einer, die schon durchgefallen ist:
  *   1. Als Ebene über der App OBEN. Falsch: Verdeckt waren Wortmarke, „Posten" und
  *      der Umschalter — genau das, was man beim Herzeigen zuerst sieht.
  *   2. Im Fluss ganz oben, den Inhalt nach unten schiebend. Technisch sauber, aber
  *      Ians Urteil am Handy: **„oben ist es schwieriger zu verstehen."** Ein Kasten,
  *      der oben mitläuft, liest sich wie eine Kopfzeile der App — also wie etwas, das
  *      dazugehört, statt wie eine Ansage über sie.
- *   3. Jetzt: eine Leiste UNTEN über der App, wie eine Cookie-Abfrage, mit einem
- *      richtigen Knopf statt einem ✕. Das Muster kennt jeder, und es sagt von selbst,
- *      dass es etwas Vorübergehendes ist, das man wegdrückt.
+ *   3. Eine Leiste UNTEN über der App, wie eine Cookie-Abfrage. Sie war ein Jahr
+ *      lang richtig und hatte einen dokumentierten Preis: Sie verdeckte dauerhaft
+ *      die Tab-Leiste (in Phase 13 als „zwei verdeckte Knöpfe" gemessen und damals
+ *      bewusst hingenommen).
+ *   4. **Jetzt: ein Vollbild beim ersten Öffnen** — Ians Entscheidung 48, seine
+ *      Worte: *„der wird noch größer, dass die Leute wirklich draufklicken auf
+ *      Okay."* Man muss „Verstanden" tippen, um weiterzukommen.
  *
- * Der Einwand aus Fassung 1 gilt weiter — er wird nur anders beantwortet: Verdeckt ist
- * jetzt die Tab-Leiste, und die ist als einzige Stelle verkraftbar, weil man sie
- * ohnehin erst braucht, nachdem man den Feed gesehen hat. **Wer das wieder umbaut,
- * liest zuerst diese Liste**, sonst landet er bei einer der zwei Fassungen, die schon
- * durchgefallen sind.
+ * **Das ist keine Wiederholung von Fassung 1.** Die war eine Ebene, die einen Teil
+ * der App verdeckte und den Rest zeigte — man konnte daran vorbeisehen und
+ * weiterklicken. Ein Vollbild verdeckt ALLES und danach NICHTS: Der Preis von
+ * Fassung 3 fällt damit weg, die Tab-Leiste ist nie wieder verdeckt.
  *
- * ── Warum `insets.bottom` und nicht `insets.top` ──────────────────────────────
+ * ── Warum ein Vollbild und trotzdem kein `Modal` ──────────────────────────────
+ * `Modal` aus React Native ist auf Web eine eigene Ebene mit eigener Größenlogik und
+ * bringt auf iOS eine eigene Präsentation mit — für einen Kasten, der einmal je
+ * Sitzung erscheint, ist das eine Bauart mehr, die auf zwei Plattformen verschieden
+ * ist. Diese Fläche liegt schlicht im Wurzel-Layout ÜBER der Bühne (`_layout.tsx`)
+ * und fängt jede Berührung ab, weil sie nichts durchlässt.
+ *
+ * ── Warum `insets` auf allen vier Seiten ──────────────────────────────────────
  * Seit die Leiste unten sitzt, zählt der untere Sicherheitsabstand: die Streifen-Geste
  * am iPhone und die Navigationsleiste auf Android. Seit `app/+html.tsx` steht auch
  * `viewport-fit=cover` im HTML — vorher lieferte `env(safe-area-inset-*)` im Browser
@@ -65,7 +76,24 @@ import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
 
 const SCHLUESSEL = 'ss_hinweis_weg';
 
-/** Merker für native und für den Fall, dass der Browser den Speicher verweigert. */
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  DAS MERKEN STEHT AN GENAU EINER STELLE — und das ist kein Zufall.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * `schonGesehen()` und `merken()` sind die einzigen zwei Funktionen, die wissen, WO
+ * gespeichert wird. Der Grund ist eine bekannte, noch offene Falle:
+ *
+ * **Auf Native gibt es kein `sessionStorage`** (Vorhersage 19.6, am 2026-09-06 auf
+ * dem Simulator bestätigt). Der Merker `weggeklickt` lebt nur, solange die App
+ * läuft — nach jedem echten Kaltstart käme der Hinweis wieder. Als Leiste war das
+ * lästig, **als Vollbild ist es eine Wand vor jeder Sitzung**.
+ *
+ * Gelöst wird es in Phase 20.3 mit `expo-secure-store`, das ohnehin für die
+ * Anmeldung dazukommt. **Dort wird dann nur der Speicher getauscht** — zwei
+ * Funktionsrümpfe, kein Screen. Wer die Prüfung stattdessen in die Komponente
+ * schreibt, macht aus dem Tausch eine Suche.
+ */
 let weggeklickt = false;
 
 function schonGesehen(): boolean {
@@ -99,25 +127,30 @@ export function PrototypHinweis() {
   if (!sichtbar) return null;
 
   return (
-    <View style={[styles.huelle, { paddingBottom: insets.bottom + spacing.sm }]}>
+    <View
+      style={[
+        styles.huelle,
+        {
+          paddingTop: insets.top + spacing.lg,
+          paddingBottom: insets.bottom + spacing.lg,
+        },
+      ]}>
       <View style={styles.kasten}>
-        {/* Seit Phase 14 ein gezeichnetes Icon statt 🧪. Der Grund, aus dem der
-            Kommentar hier ueberhaupt stand, ist damit weg: Emojis brachten je nach
-            Geraet ihre eigene Breite mit und klebten mal am Wort, mal nicht. Ein
-            Icon ist ueberall gleich breit, der Abstand kommt aus `gap`. Der Titel
-            ist einzeilig, deshalb ist `center` hier richtig; bei zwei Zeilen saesse
-            das Icon an der zweiten (ACTA-Falle aus Phase 12). */}
-        <View style={styles.titelZeile}>
-          <SsIcon name="kolben" size={16} color={colors.ink} />
-          <SsText variant="label">Das hier ist ein Prototyp</SsText>
-        </View>
-        <SsText variant="caption" color={colors.inkSoft}>
+        {/* Das Symbol steht groß und allein über dem Titel, nicht klein daneben:
+            Auf einem Vollbild ist eine Zeile mit einem 16-px-Icon eine Kopfzeile,
+            und genau danach soll es nicht aussehen (Fassung 2 in der Liste oben). */}
+        <SsIcon name="kolben" size={44} color={accent.base} />
+        <SsText variant="heading" center>
+          Das hier ist ein Prototyp
+        </SsText>
+        <SsText variant="body" center color={colors.inkSoft}>
           Alle Namen, Posts und Chats sind erfunden. Es gibt keinen Login — du bist
           gerade Ian. Neuladen setzt alles zurück.
         </SsText>
         <SsButton
           label="Verstanden"
           block
+          size="lg"
           onPress={() => {
             merken();
             setSichtbar(false);
@@ -132,14 +165,21 @@ export function PrototypHinweis() {
 const styles = StyleSheet.create({
   // Ausgeschriebene Kanten statt `absoluteFill`: Das ist eine registrierte Style-ID
   // und lässt sich nicht mit eigenen Werten mischen (ACTA-Falle, siehe CLAUDE.md).
-  // `top` bleibt frei — die Leiste ist nur so hoch, wie ihr Inhalt braucht.
+  // Seit Entscheidung 48 ist auch `top` gesetzt — die Fläche deckt ALLES ab, und
+  // genau daran hängt, dass man „Verstanden" wirklich drückt.
   huelle: {
     position: 'absolute',
     left: 0,
     right: 0,
+    top: 0,
     bottom: 0,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
+    justifyContent: 'center',
+    // Der Grund liegt unter einem Schleier statt hinter einer weißen Wand: Man sieht,
+    // dass die App dahinter schon da ist — sonst liest sich das Vollbild wie ein
+    // Ladebildschirm, und darauf wartet man, statt zu tippen.
+    backgroundColor: 'rgba(23, 25, 28, 0.55)',
   },
   kasten: {
     width: '100%',
@@ -148,15 +188,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.line,
-    padding: spacing.lg,
-    gap: spacing.xs,
-    // Der Schatten trägt hier Bedeutung und ist keine Zier: Die Leiste liegt ÜBER der
-    // App und muss sich von ihr abheben, sonst liest man sie als Teil des Feeds. Es
-    // ist die einzige Stelle mit Schatten — überall sonst genügt die Grundfläche.
-    boxShadow: '0 -6px 24px rgba(23, 25, 28, 0.14)',
+    padding: spacing.xl,
+    gap: spacing.md,
+    alignItems: 'center',
+    // Der Schatten trägt Bedeutung und ist keine Zier: Der Kasten liegt ÜBER der App
+    // und muss sich von ihr abheben. Seit Entscheidung 48 fällt er nach ALLEN Seiten
+    // — der alte Wert warf ihn nur nach oben, weil der Kasten damals am unteren Rand
+    // klebte und unten gar nichts zu beschatten war.
+    boxShadow: '0 8px 32px rgba(23, 25, 28, 0.24)',
   },
-  // `sm` und nicht `xs`: Mit 4 px gemessen klebte das Emoji optisch am Wort — eine
-  // Emoji-Glyphe bringt rechts kaum eigenen Weißraum mit, anders als ein Buchstabe.
-  titelZeile: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  knopf: { marginTop: spacing.sm },
+  knopf: { marginTop: spacing.sm, alignSelf: 'stretch' },
 });

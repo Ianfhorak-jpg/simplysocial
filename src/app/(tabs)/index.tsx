@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { FlatList, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AntwortLeiste } from '@/components/AntwortLeiste';
-import { KartenBlase } from '@/components/KartenBlase';
 import { PostCard } from '@/components/PostCard';
 import { WischStapel, anleitungGesehen, anleitungMerken } from '@/components/WischStapel';
 import {
+  SsBlatt,
   SsButton,
   SsChip,
   SsIcon,
@@ -17,16 +18,15 @@ import {
   SsKarte,
   SsSegment,
   SsText,
+  type BlattStufe,
 } from '@/components/ui';
 import { FILTER_EGAL, jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
-import { BRAND } from '@/config/brand';
 import { useCurrentUser } from '@/features/social/hooks';
 import {
   BEZIRK_ALLE,
   BEZIRK_OHNE,
   WANN_LABELS,
   WANN_ORDER,
-  type BezirkFilter,
 } from '@/features/posts/filter';
 import { bezirkPostText, ohneBezirkText } from '@/features/posts/karte';
 import {
@@ -48,7 +48,7 @@ import {
   type WischRichtung,
 } from '@/features/posts/wisch';
 import { anfrageSenden } from '@/features/requests/hooks';
-import { CATEGORY_ORDER, categoryColors, colors, radius, spacing } from '@/theme';
+import { accent, CATEGORY_ORDER, categoryColors, colors, DEPTH, radius, spacing } from '@/theme';
 
 /**
  * Der Feed — der erste Screen der App und der einzige, den man täglich sieht.
@@ -90,31 +90,44 @@ import { CATEGORY_ORDER, categoryColors, colors, radius, spacing } from '@/theme
  * Ergebnis sehen und sofort weiterfiltern — ein Filter, den man erst wieder
  * hochscrollen muss, wird nicht benutzt. Im Stapel gilt dasselbe doppelt: dort
  * scrollt gar nichts.
+ *
+ * ── Seit Phase 19e: die Karte ist ein anderer Screen ──────────────────────────
+ * Ians Entscheidung 40: *„wenn man auf Karte drückt, sieht man wirklich nur die
+ * Karte auf dem ganzen Screen."* Deshalb hat dieser Screen jetzt **zwei Bäume** und
+ * nicht mehr eine Ansicht unter dreien:
+ *
+ *   Stapel und Liste   ein gewöhnlicher `SsScreen` mit Zeilen untereinander
+ *   Karte              Vollbild ohne `SsScreen`, mit einem ziehbaren Blatt darüber
+ *
+ * **Der Zustand ist trotzdem EINER** — dieselben sechs Filter, derselbe Feed,
+ * dieselbe Auswahl (harte Regel 26 und 50). Wer von der Karte auf die Liste
+ * umschaltet, findet seinen Bezirk wieder. Das ist der ganze Grund, warum die Karte
+ * hier drin bleibt und kein vierter Tab wird.
+ *
+ * Was dabei WEGGEFALLEN ist, steht hier, weil es sonst niemand mehr findet:
+ *   • Der Schriftzug „SimplySocial" oben. Er stand nur auf diesem Screen; die
+ *     anderen Tabs haben eigene Titel. Ians Entscheidung, damit die Karte randlos
+ *     nach oben laufen kann.
+ *   • Der Zähler „Noch 8 Karten" neben dem Umschalter — Ians Entscheidung 47, die
+ *     einzige dieser Runde gegen meine Empfehlung. **Der Preis ist benannt:** Er
+ *     war die Stütze von Entscheidung 14 (das Filterfeld überdeckt den Stapel,
+ *     statt zu schieben) und die einzige Rückmeldung, dass gerade gefiltert wird.
+ *     Ohne ihn filtert man im STAPEL blind, bis man zuklappt; in der Karte nicht,
+ *     dort steht die Liste im Blatt daneben. **Die Korrektur wäre eine Zeile:**
+ *     `kartenZahl(karten.length)` klein unter den Stapel, statt neben den
+ *     Umschalter — dort ist Platz, seit „Posten" ein runder Knopf ist.
  */
 
 type Ansicht = 'stapel' | 'liste' | 'karte';
 
 /**
- * Wie hoch die Karte höchstens werden darf — als ANTEIL am Schirm, nicht als feste
- * Zahl.
+ * Wie weit das Blatt aufschlägt, wenn man die Karte öffnet.
  *
- * Das ist nachgemessen und nicht geschätzt. Über der Karte stehen Kopf, Umschalter,
- * Suchzeile und Kategorien: zusammen **235 px, unabhängig von der Schirmhöhe**.
- * Eine feste Kartenhöhe von 230 px ließ deshalb auf 390 × 844 eine gute Liste
- * (266 px) und auf **360 × 600 genau 22 px** — einen blauen Streifen. Dabei ist
- * „Posts erscheinen darunter" genau Ians Entscheidung 30; eine Ansicht, die sie
- * nur auf großen Geräten einlöst, löst sie nicht ein.
- *
- * 28 % ergibt 168 px auf 600 (Liste 137), 187 auf 667 und die vollen 230 auf 844.
- * Die Obergrenze bleibt, weil eine Karte, die die halbe App füllt, aus dem Feed
- * eine Kartenansicht mit Anhang macht.
- *
- * `useWindowDimensions` statt `onLayout`: Die Schirmhöhe steht beim ersten Rendern
- * schon fest. Gemessen käme sie auf Web erst NACH dem Zeichnen (2026-09-03) — die
- * Karte würde bei jedem Umschalten sichtbar zusammenspringen.
+ * `halb` und nicht `zu`: Ians Entscheidung 45 — ein zugezogenes Blatt versteckt die
+ * Filter, und die wollte er ausdrücklich sehen. `ganz` wäre das Gegenteil des
+ * Wunsches, die Karte zu sehen.
  */
-const KARTE_ANTEIL = 0.28;
-const KARTE_MAX_HOEHE = 230;
+const BLATT_START: BlattStufe = 'halb';
 
 export default function FeedScreen() {
   const [ansicht, setAnsicht] = useState<Ansicht>('stapel');
@@ -254,85 +267,114 @@ export default function FeedScreen() {
     />
   ) : null;
 
+  /**
+   * Suchzeile und Kategorien werden EINMAL gebaut und in beiden Bäumen eingehängt —
+   * im Screen für Stapel und Liste, im Blatt für die Karte (Ians Entscheidung 42:
+   * die Filter leben IM Blatt, damit die Karte frei von Bedienelementen bleibt).
+   *
+   * Zwei gleich aussehende Kopien wären der schnellste Weg dahin, dass die Karte
+   * eines Tages einen Filter weniger hat als die Liste — und auffallen würde es nur
+   * dem, der umschaltet (dieselbe Überlegung wie bei `useStapel`, harte Regel 16).
+   */
+  const sucheZeile = (
+    <View style={styles.sucheZeile}>
+      <SsInput
+        value={filter.suche}
+        onChangeText={(t) => setzen('suche', t)}
+        onClear={() => setzen('suche', '')}
+        placeholder="Suchen — Tennis, lernen, Kaffee …"
+        icon="lupe"
+        style={styles.sucheFeld}
+      />
+      <FilterKnopf
+        offen={filterOffen}
+        anzahl={anzahlFilter}
+        umschalten={() => setFilterOffen((o) => !o)}
+      />
+    </View>
+  );
+
+  // Die Kategorien bleiben IMMER sichtbar und wandern nicht mit in den
+  // Filterbereich. Sie sind der meistbenutzte Filter, und sie sind das
+  // Erkennungszeichen der App — sechs Farben, die sonst nirgends vorkommen.
+  // Eingeklappt wäre der Feed eine Liste ohne Gesicht.
+  const chipZeile = (
+    <SsScrollReihe style={styles.chipZeile} contentContainerStyle={styles.chipInhalt}>
+      <SsChip
+        label="Alle"
+        selected={filter.kategorie === 'alle'}
+        onPress={() => setzen('kategorie', 'alle')}
+      />
+      {CATEGORY_ORDER.map((k) => (
+        <SsChip
+          key={k}
+          category={k}
+          selected={filter.kategorie === k}
+          onPress={() => setzen('kategorie', filter.kategorie === k ? 'alle' : k)}
+        />
+      ))}
+    </SsScrollReihe>
+  );
+
+  /**
+   * Der Umschalter und der runde „Posten"-Knopf — Ians Entscheidung 41.
+   *
+   * Seine Vorgabe war „Posten auf die Ebene von Stapel · Liste · Karte". Als
+   * VIERTES FELD im Umschalter wäre das falsch gewesen: Die ersten drei wechseln
+   * eine Ansicht und bleiben gedrückt, „Posten" öffnet einen anderen Screen und
+   * springt zurück. Ein runder Knopf DANEBEN steht auf derselben Ebene und sagt
+   * durch seine Form, dass er etwas anderes tut. **Das Muster stammt von Ian
+   * selbst** — aus dem BierBuddy-Screenshot, den er geschickt hat.
+   *
+   * Auch diese Zeile gibt es nur einmal: In der Kartenansicht schwebt sie über der
+   * Karte (Entscheidung 44), sonst steht sie im Fluss.
+   */
+  const ansichtZeile = (schwebend: boolean) => (
+    <>
+      <SsSegment<Ansicht>
+        value={ansicht}
+        onChange={setAnsicht}
+        style={[styles.ansicht, schwebend && styles.ansichtSchwebend]}
+        options={[
+          { wert: 'stapel', label: 'Stapel' },
+          { wert: 'liste', label: 'Liste' },
+          { wert: 'karte', label: 'Karte' },
+        ]}
+      />
+      <PostenKnopf />
+    </>
+  );
+
+  // ── Die Kartenansicht: ein eigener Baum (Phase 19e) ─────────────────────────
+  if (ansicht === 'karte') {
+    return (
+      <KarteVollbild
+        zaehlung={proBezirk}
+        ohneBezirk={ohneBezirk}
+        filter={filter}
+        setzen={setzen}
+        eintraege={eintraege}
+        filterAktiv={filterAktiv}
+        zuruecksetzen={zuruecksetzen}
+        filterOffen={filterOffen}
+        filterFeld={filterFeld}
+        sucheZeile={sucheZeile}
+        chipZeile={chipZeile}
+        ansichtZeile={ansichtZeile}
+      />
+    );
+  }
+
   return (
     // `keyboard` steht hier wegen der Antwort-Leiste: Sie klebt am unteren Rand, und
     // auf iOS läge sie sonst unter der Tastatur. Fest gesetzt und nicht umgeschaltet
     // — ein Wechsel würde den ganzen Inhalt neu einhängen und mitten in der
     // Wischbewegung den Stapel zurücksetzen.
     <SsScreen tabScreen keyboard contentStyle={styles.seite}>
-      <View style={styles.kopf}>
-        <View style={styles.marke}>
-          <SsText variant="title">
-            {BRAND.wordmark.first}
-            <SsText variant="title" color={categoryColors.creative.base}>
-              {BRAND.wordmark.second}
-            </SsText>
-          </SsText>
-          <SsText variant="caption" color={colors.inkSoft}>
-            {BRAND.city}
-          </SsText>
-        </View>
-        {/* Der Weg zum Posten steht im Kopf und nicht als schwebender Knopf über der
-            Liste: ein schwebender Knopf verdeckt immer genau die Karte, die man
-            gerade lesen will — und unten ist schon die Tab-Leiste. */}
-        <SsButton label="Posten" icon="stift" onPress={() => router.push('/create')} />
-      </View>
+      <View style={styles.ansichtZeile}>{ansichtZeile(false)}</View>
 
-      {/* Die Zeile verdient ihre Höhe zweimal: links der Umschalter, rechts die
-          Zahl. Gerade im Stapel ist "wie viel kommt noch" die Frage, die man sich
-          nach der zweiten Karte stellt — ohne Antwort fühlt sich jeder Stapel
-          unendlich oder gleich zu Ende an. */}
-      <View style={styles.ansichtZeile}>
-        <SsSegment<Ansicht>
-          value={ansicht}
-          onChange={setAnsicht}
-          style={styles.ansicht}
-          options={[
-            { wert: 'stapel', label: 'Stapel' },
-            { wert: 'liste', label: 'Liste' },
-            { wert: 'karte', label: 'Karte' },
-          ]}
-        />
-        <SsText variant="caption" color={colors.inkSoft}>
-          {ansicht === 'stapel' ? kartenZahl(karten.length) : postZahl(eintraege.length)}
-        </SsText>
-      </View>
-
-      <View style={styles.sucheZeile}>
-        <SsInput
-          value={filter.suche}
-          onChangeText={(t) => setzen('suche', t)}
-          onClear={() => setzen('suche', '')}
-          placeholder="Suchen — Tennis, lernen, Kaffee …"
-          icon="lupe"
-          style={styles.sucheFeld}
-        />
-        <FilterKnopf
-          offen={filterOffen}
-          anzahl={anzahlFilter}
-          umschalten={() => setFilterOffen((o) => !o)}
-        />
-      </View>
-
-      {/* Die Kategorien bleiben IMMER sichtbar und wandern nicht mit in den
-          Filterbereich. Sie sind der meistbenutzte Filter, und sie sind das
-          Erkennungszeichen der App — sechs Farben, die sonst nirgends vorkommen.
-          Eingeklappt wäre der Feed eine Liste ohne Gesicht. */}
-      <SsScrollReihe style={styles.chipZeile} contentContainerStyle={styles.chipInhalt}>
-        <SsChip
-          label="Alle"
-          selected={filter.kategorie === 'alle'}
-          onPress={() => setzen('kategorie', 'alle')}
-        />
-        {CATEGORY_ORDER.map((k) => (
-          <SsChip
-            key={k}
-            category={k}
-            selected={filter.kategorie === k}
-            onPress={() => setzen('kategorie', filter.kategorie === k ? 'alle' : k)}
-          />
-        ))}
-      </SsScrollReihe>
+      {sucheZeile}
+      {chipZeile}
 
       {/* Im Fluss, wo darunter etwas scrollt. Im Stapel liegt dasselbe Feld weiter
           unten als Blatt über den Karten — Begründung bei `filterFeld` oben. */}
@@ -340,18 +382,7 @@ export default function FeedScreen() {
         <View style={styles.filterImFluss}>{filterFeld}</View>
       ) : null}
 
-      {ansicht === 'karte' ? (
-        <KarteAnsicht
-          zaehlung={proBezirk}
-          ohneBezirk={ohneBezirk}
-          bezirk={filter.bezirk}
-          setzen={setzen}
-          eintraege={eintraege}
-          filterAktiv={filterAktiv}
-          zuruecksetzen={zuruecksetzen}
-          zurListe={() => setAnsicht('liste')}
-        />
-      ) : ansicht === 'liste' ? (
+      {ansicht === 'liste' ? (
         <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
       ) : stapelLeer ? (
         // Ians Regel, Phase 11: Am Ende des Stapels steht keine leere Fläche,
@@ -412,14 +443,32 @@ export default function FeedScreen() {
   );
 }
 
-/** "Noch 7 Karten" · "Noch 1 Karte" · "Durch". Einzahl und Mehrzahl an einer Stelle. */
-function kartenZahl(anzahl: number): string {
-  if (anzahl === 0) return 'Durch';
-  return anzahl === 1 ? 'Noch 1 Karte' : `Noch ${anzahl} Karten`;
-}
-
-function postZahl(anzahl: number): string {
-  return anzahl === 1 ? '1 Post' : `${anzahl} Posts`;
+/**
+ * „Posten" als runder Knopf — Ians Entscheidung 41.
+ *
+ * ── Warum kein `SsButton` ────────────────────────────────────────────────────
+ * Der bringt einen Text mit, und genau der soll hier weg: Ein Kreis mit einem
+ * Symbol steht neben dem Umschalter, ohne ihn schmaler zu machen. Die Signatur der
+ * App kommt trotzdem mit — der harte Rand unten und der Versatz beim Drücken
+ * (`DEPTH`, PLAN.md Abschnitt 3), damit er sich anfühlt wie jeder andere Knopf.
+ *
+ * ── Warum `stift` und nicht `plus` ───────────────────────────────────────────
+ * Weil es in dieser App überall der Stift ist: `StapelDurch`, `LeererFeed` und der
+ * frühere Kopf tragen alle „Posten" mit `stift`. Ein Plus wäre für sich genommen
+ * verständlicher, aber es wäre das zweite Zeichen für dieselbe Sache — und wer den
+ * Kreis einmal gedrückt hat, weiß es ohnehin. Der `accessibilityLabel` sagt es
+ * jenen, die das Symbol nicht sehen.
+ */
+function PostenKnopf() {
+  return (
+    <Pressable
+      onPress={() => router.push('/create')}
+      accessibilityRole="button"
+      accessibilityLabel="Posten"
+      style={({ pressed }) => [styles.posten, pressed && styles.postenGedrueckt]}>
+      <SsIcon name="stift" size={20} color={accent.onBase} />
+    </Pressable>
+  );
 }
 
 /** Die Liste — bis Phase 11 der ganze Screen, jetzt eine von zwei Ansichten. */
@@ -452,14 +501,29 @@ function FeedListe({
 }
 
 /**
- * Die dritte Ansicht: Wien als Karte.
+ * Die dritte Ansicht: Wien als Karte — seit Phase 19e im Vollbild.
  *
  * Phase 19b, aus Leopolds Wunsch. **Sie ist kein eigener Ort** — dieselben Posts,
  * dieselben sechs Filter, nur nach Bezirken angeordnet (harte Regel 16, dieselbe
- * Begründung wie beim Stapel). Der Umschalter oben hat deshalb eine dritte Stufe
- * bekommen und die Tab-Leiste keinen vierten Tab: Ein eigener Tab hätte den
- * Hauptfeed geleert, und ein leerer Hauptfeed ist am Anfang das größere Problem
- * (dasselbe Argument wie bei den Gruppen, harte Regel 34).
+ * Begründung wie beim Stapel). Der Umschalter hat deshalb eine dritte Stufe bekommen
+ * und die Tab-Leiste keinen vierten Tab: Ein eigener Tab hätte den Hauptfeed
+ * geleert, und ein leerer Hauptfeed ist am Anfang das größere Problem (dasselbe
+ * Argument wie bei den Gruppen, harte Regel 34).
+ *
+ * ── Was Phase 19e daran geändert hat, und warum ───────────────────────────────
+ * Bis 19d war die Karte ein Element im Fluss: 28 % der Schirmhöhe, darunter eine
+ * Zeile und darunter die Liste. Ians Urteil nach dem BENUTZEN war eindeutig — er
+ * wollte die Karte sehen, nicht ein Kartenfeld. Jetzt füllt sie den Schirm, und die
+ * Liste liegt in einem ziehbaren Blatt darüber (Entscheidung 40).
+ *
+ * ── Warum das Blatt und nicht mehr die Sprechblase (Entscheidung 46) ──────────
+ * Die Blase aus 19c war die Antwort auf ein Problem, das mit dem Blatt verschwindet:
+ * Die Liste stand weit unten, also musste die Auswahl OBEN beantwortet werden. Jetzt
+ * beantwortet das Blatt dieselbe Frage — vollständig statt in einer Zeile, und auf
+ * 360 px passte in die Blase gemessen genau EINE.
+ * **`KartenBlase` und der `blase`-Slot bleiben trotzdem im Projekt stehen** (harte
+ * Regel 51), nur ohne Benutzer: Sie sind geprüfte Arbeit, und die Rechnung „wo liegt
+ * ein Bezirk auf dem Schirm" ist nicht trivial. Ein Aufruf holt sie zurück.
  *
  * ── Der Tipp setzt den GANZ NORMALEN Bezirksfilter ───────────────────────────
  * Und das ist der Grund, warum die Karte so billig war: Es gibt keinen zweiten
@@ -471,34 +535,66 @@ function FeedListe({
  * Eine Karte ohne Posts ist nicht leer, sie ist 23 graue Flächen — sie sieht kaputt
  * aus, nicht ruhig. Und stünde `LeererFeed` darunter, hätte der Screen wieder zwei
  * Antworten auf dieselbe Frage (die Lehre vom 2026-09-03 mit `StapelDurch`).
- * Deshalb: nichts da, keine Karte, nur der Satz mit dem Ausweg.
+ * Deshalb: nichts da, keine Karte, nur der Satz mit dem Ausweg — der Umschalter
+ * schwebt trotzdem darüber, sonst käme man nicht mehr weg.
  */
-function KarteAnsicht({
+function KarteVollbild({
   zaehlung,
   ohneBezirk,
-  bezirk,
+  filter,
   setzen,
   eintraege,
   filterAktiv,
   zuruecksetzen,
-  zurListe,
+  filterOffen,
+  filterFeld,
+  sucheZeile,
+  chipZeile,
+  ansichtZeile,
 }: {
   zaehlung: Record<string, number>;
   ohneBezirk: number;
-  bezirk: BezirkFilter;
+  filter: FeedFilter;
   setzen: <K extends keyof FeedFilter>(feld: K, wert: FeedFilter[K]) => void;
   eintraege: FeedEintrag[];
   filterAktiv: boolean;
   zuruecksetzen: () => void;
-  /** „alle 5 ansehen" in der Blase. Siehe dort, warum es NICHT die Blase schließt. */
-  zurListe: () => void;
+  filterOffen: boolean;
+  filterFeld: ReactNode;
+  sucheZeile: ReactNode;
+  chipZeile: ReactNode;
+  ansichtZeile: (schwebend: boolean) => ReactNode;
 }) {
-  const { height: fensterHoehe } = useWindowDimensions();
-  const nichtsDa = Object.keys(zaehlung).length === 0 && ohneBezirk === 0;
-  if (nichtsDa) {
-    return <LeererFeed filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />;
-  }
+  const insets = useSafeAreaInsets();
+  const bezirk = filter.bezirk;
 
+  /**
+   * Wie viel von der Karte das Blatt gerade verdeckt.
+   *
+   * **Das ist keine Kosmetik.** Ohne diese Zahl zentriert die Karte Wien in der
+   * Mitte des SCHIRMS, und die südliche Hälfte liegt hinter dem Blatt. Sie kommt vom
+   * Blatt selbst und wechselt nur beim EINRASTEN — während des Ziehens rechnete
+   * sonst bei jedem Fingerbreit jemand 23 Flächen neu.
+   */
+  const [blattRand, setBlattRand] = useState(0);
+
+  /**
+   * Wie viel die schwebende Leiste oben belegt — **gemessen, nicht gerechnet.**
+   *
+   * Sie ist die Höhe des Umschalters plus der Sicherheitsabstand darüber, und
+   * beides hängt am Gerät. Der Wert geht an ZWEI Stellen: Die Karte zentriert Wien
+   * darunter (`randOben`), und das Blatt fährt nicht weiter auf (`maxOben`). Genau
+   * das war am 2026-09-07 der Fehler — mit einem reinen Anteil lag der Blattkopf
+   * hinter der Pille.
+   */
+  const [leisteHoehe, setLeisteHoehe] = useState(0);
+  const leisteBelegt = leisteHoehe > 0 ? insets.top + spacing.sm + leisteHoehe + spacing.sm : 0;
+  // `useCallback`, damit das Blatt nicht bei jedem Rendern eine neue Funktion sieht.
+  const blattGezogen = useCallback((_stufe: BlattStufe, sichtbar: number) => {
+    setBlattRand(sichtbar);
+  }, []);
+
+  const nichtsDa = Object.keys(zaehlung).length === 0 && ohneBezirk === 0;
   const gewaehlt = bezirk.kind === 'einer' ? bezirk.plz : null;
   const ueberschrift =
     bezirk.kind === 'einer'
@@ -507,63 +603,116 @@ function KarteAnsicht({
         ? `Ohne Bezirk · ${bezirkPostText(eintraege.length)}`
         : `Ganz Wien · ${bezirkPostText(eintraege.length)}`;
 
+  /**
+   * Ians Entscheidung 49: **Ein Tipp auf denselben Bezirk hebt die Auswahl auf.**
+   *
+   * Seine Worte: *„wenn man dann noch mal auf diesen Bezirk klickt, dass es dann
+   * weggeht, weil das kann echt stören."* Bis 19d klebte eine einmal getroffene
+   * Auswahl — der Kommentar an dieser Stelle argumentierte sogar dafür („auf einer
+   * Karte heißt nochmal draufdrücken *genauer hinsehen*"). Das war nicht falsch
+   * gedacht, aber es hat den Fall übersehen, den Ian beim BENUTZEN traf: Man
+   * kommt ohne Umweg nicht mehr zu ganz Wien zurück.
+   *
+   * Das ✕ im Blattkopf gibt es zusätzlich und nicht ersatzweise: Ein zweiter Tipp
+   * auf einen 14 × 11 px großen Bezirk (die Josefstadt, gemessen in 19b) ist nicht
+   * zuverlässig zu treffen.
+   *
+   * **Harte Regel 50 gilt weiter:** Was gewählt ist, IST der Bezirksfilter — das
+   * Aufheben setzt `filter.bezirk`, nicht eine eigene Variable daneben.
+   */
+  const bezirkTippen = (plz: string | null) =>
+    setzen('bezirk', plz === null || plz === gewaehlt ? BEZIRK_ALLE : { kind: 'einer', plz });
+
   return (
-    <>
-      <View style={styles.karteBereich}>
-        <SsKarte
-          zaehlung={zaehlung}
-          gewaehlt={gewaehlt}
-          maxHoehe={Math.min(KARTE_MAX_HOEHE, fensterHoehe * KARTE_ANTEIL)}
-          // Ein Tipp ins Umland kommt als `null` und hebt die Auswahl auf. Das ist
-          // die einzige Stelle, an der man ohne Umweg wieder ganz Wien sieht — ein
-          // zweiter Tipp auf denselben Bezirk tut das absichtlich NICHT: Auf einer
-          // Karte ist „nochmal draufdrücken" das Zeichen für „genauer hinsehen",
-          // nicht für „abwählen".
-          onWaehlen={(plz) =>
-            setzen('bezirk', plz === null ? BEZIRK_ALLE : { kind: 'einer', plz })
-          }
-          /**
-           * Phase 19c: Was in dem Bezirk los ist, springt über ihm heraus — bis dahin
-           * musste man dafür nach UNTEN schauen, und die Karte beantwortete nur die
-           * halbe Frage.
-           *
-           * **Ein leerer Bezirk bekommt gar keine Blase.** Tippt man den 8. an und
-           * dort liegt nichts, wäre eine Blase mit „nichts" ein Klick, der bestraft
-           * wird; die Zeile unter der Karte sagt weiter „1080 Wien · 0 Posts". Das ist
-           * dieselbe Überlegung wie bei `StapelDurch` (harte Regel 41): Kein zweiter
-           * Kasten, der dasselbe noch einmal sagt.
-           */
-          blase={(anker) =>
-            eintraege.length === 0 ? null : (
-              <KartenBlase
-                anker={anker}
-                eintraege={eintraege}
-                onPost={(id) => router.push({ pathname: '/post/[id]', params: { id } })}
-                onAlle={zurListe}
-              />
-            )
-          }
-        />
-      </View>
-
-      <View style={styles.karteZeile}>
-        <SsText variant="label" numberOfLines={1} style={styles.karteTitel}>
-          {ueberschrift}
-        </SsText>
-        {/* Posts ohne Bezirksangabe haben auf einer Karte keinen Ort. Sie hier
-            wegzulassen hieße, dass die Ansicht still Posts verschluckt — Ians
-            Entscheidung 31. Die Zeile steht nur da, wenn es welche gibt. */}
-        {ohneBezirk > 0 ? (
-          <SsChip
-            label={ohneBezirkText(ohneBezirk)}
-            selected={bezirk.kind === 'ohne'}
-            onPress={() => setzen('bezirk', bezirk.kind === 'ohne' ? BEZIRK_ALLE : BEZIRK_OHNE)}
+    // KEIN `SsScreen`: Der bringt Seitenrand und `edges={['top']}` mit, und genau
+    // die stehen einer randlosen Karte im Weg (Ians Entscheidung 44). Der
+    // Sicherheitsabstand wandert deshalb an die schwebende Leiste — sie ist das
+    // einzige hier, das ihn braucht.
+    <View style={styles.vollbild}>
+      {nichtsDa ? (
+        <LeererFeed filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
+      ) : (
+        <>
+          <SsKarte
+            zaehlung={zaehlung}
+            gewaehlt={gewaehlt}
+            onWaehlen={bezirkTippen}
+            fuellt
+            randUnten={blattRand}
+            randOben={leisteBelegt}
           />
-        ) : null}
-      </View>
 
-      <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
-    </>
+          <SsBlatt
+            start={BLATT_START}
+            maxOben={leisteBelegt}
+            // Der aufgeklappte Filterbereich ist rund 250 px hoch und passt bei halb
+            // offenem Blatt nicht hinein — er würde am `overflow: hidden` des
+            // Blattes abgeschnitten. Nebenbefund: Damit kostet der weggefallene
+            // Zähler (Entscheidung 47) hier gar nichts, weil beim Filtern die ganze
+            // Liste danebensteht.
+            mindestens={filterOffen ? 'ganz' : undefined}
+            onStufe={blattGezogen}
+            kopf={
+              <View style={styles.blattKopf}>
+                <SsText variant="label" numberOfLines={1} style={styles.blattTitel}>
+                  {ueberschrift}
+                </SsText>
+                {bezirk.kind !== 'alle' ? (
+                  <Pressable
+                    onPress={() => setzen('bezirk', BEZIRK_ALLE)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Bezirks-Auswahl aufheben"
+                    hitSlop={12}
+                    style={styles.blattWeg}>
+                    <SsIcon name="kreuz" size={16} color={colors.inkSoft} />
+                  </Pressable>
+                ) : null}
+              </View>
+            }>
+            {sucheZeile}
+            {chipZeile}
+            {filterOffen ? <View style={styles.filterImFluss}>{filterFeld}</View> : null}
+
+            {/* Posts ohne Bezirksangabe haben auf einer Karte keinen Ort. Sie hier
+                wegzulassen hieße, dass die Ansicht still Posts verschluckt — Ians
+                Entscheidung 31. Die Zeile steht bei den anderen Filtern statt im
+                Kopf: Dort hätte „3 Posts ohne Bezirk" neben der Überschrift und dem
+                ✕ auf 360 px keinen Platz.
+
+                **Und sie steht nur bei ZUGEKLAPPTEM Filter da.** Ist er offen,
+                enthält seine Bezirksreihe dieselbe Stufe schon („Ohne Bezirk") — der
+                Chip wäre eine Dopplung, und auf 360 × 600 war er am 2026-09-07
+                genau die eine Zeile, die unten aus dem Blatt hinausragte. */}
+            {ohneBezirk > 0 && !filterOffen ? (
+              <View style={styles.blattOhne}>
+                <SsChip
+                  label={ohneBezirkText(ohneBezirk)}
+                  selected={bezirk.kind === 'ohne'}
+                  onPress={() =>
+                    setzen('bezirk', bezirk.kind === 'ohne' ? BEZIRK_ALLE : BEZIRK_OHNE)
+                  }
+                />
+              </View>
+            ) : null}
+
+            <FeedListe
+              eintraege={eintraege}
+              filterAktiv={filterAktiv}
+              zuruecksetzen={zuruecksetzen}
+            />
+          </SsBlatt>
+        </>
+      )}
+
+      {/* Der Umschalter schwebt über der Karte (Entscheidung 44) — wie die
+          Suchleiste bei Apple Karten. Auf iOS bekommt diese Pille in 19e-2 echtes
+          Glas; bis dahin ist sie eine gewöhnliche helle Fläche mit Schatten. */}
+      <View
+        style={[styles.schwebeLeiste, { top: insets.top + spacing.sm }]}
+        onLayout={(e) => setLeisteHoehe(e.nativeEvent.layout.height)}>
+        {ansichtZeile(true)}
+      </View>
+    </View>
   );
 }
 
@@ -953,40 +1102,57 @@ function LeererFeed({
 
 const styles = StyleSheet.create({
   seite: { paddingHorizontal: 0 },
-  kopf: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
-  },
-  marke: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
 
-  // Die Mindestbreite ist keine Kosmetik, sondern die Reparatur einer Falle:
-  // `flex: 1` heißt in React Native `flexBasis: 0` (im Browser wäre es `auto`). Die
-  // Hälften von `SsSegment` melden damit Breite null an. Als einziges Kind einer
-  // Spalte wird das Segment trotzdem auf volle Breite gestreckt — in dieser ZEILE
-  // hier gibt es nichts, was es streckt, und es fiel auf seine Polsterung zusammen:
-  // aus „Stapel" wurde „Sta…".
+  // `flex: 1` gibt dem Umschalter den Rest der Zeile, die Mindestbreite ist der
+  // Boden darunter. Beides zusammen ist die Reparatur einer Falle: `flex: 1` heißt
+  // in React Native `flexBasis: 0` (im Browser wäre es `auto`). Die Hälften von
+  // `SsSegment` melden damit Breite null an, und wo nichts sie streckt, fällt das
+  // Segment auf seine Polsterung zusammen — aus „Stapel" wurde „Sta…".
   //
-  // Seit Phase 19b sind es DREI Stufen, und die Zahl ist nachgemessen statt geraten:
-  // Die Zeile hat 328 px, rechts steht im Stapel höchstens „Noch 12 Karten" (84 px),
-  // dazwischen 12 px Lücke — also bleiben 232. `flex: 1` teilt gleichmäßig, der
-  // längste Text („Stapel", 47 px) bekommt somit ein Drittel. Damit das nicht auf
-  // den Zehntelpixel aufgeht, ist zugleich der Innenabstand in `SsSegment` von 12
-  // auf 8 gefallen.
-  ansicht: { minWidth: 232 },
+  // Die 232 sind nachgemessen und stehen seit Phase 19e günstiger da: Die Zeile hat
+  // auf 360 px 328, rechts sitzt jetzt der runde Knopf (44 px) statt eines Zählers
+  // (84 px), dazwischen 12 px Lücke — es bleiben **272**. `flex: 1` teilt sie zu
+  // dritt, der längste Text („Stapel", 47 px) bekommt also 90 statt 77.
+  ansicht: { flex: 1, minWidth: 232 },
+  // Über der Karte braucht der Umschalter eine Kante, sonst verschwimmt eine helle
+  // Fläche auf hellen Bezirken. Der Schatten ist dabei kein Schmuck, sondern die
+  // Aussage „das hier liegt darüber" — dieselbe Begründung wie beim Blatt und beim
+  // Prototyp-Hinweis. **In 19e-2 wird genau diese Fläche zu echtem Glas.**
+  ansichtSchwebend: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    boxShadow: '0 4px 16px rgba(23, 25, 28, 0.16)',
+  },
 
   ansichtZeile: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
+
+  /**
+   * Der runde „Posten"-Knopf. Die Höhe von 44 ist Apples Mindestmaß für ein
+   * Berührungsziel und zugleich die Höhe des Umschalters daneben — der harte Rand
+   * unten kommt oben drauf, wie bei jedem `SsButton`.
+   */
+  posten: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: accent.base,
+    borderBottomWidth: DEPTH,
+    borderColor: accent.deep,
+    cursor: 'pointer',
+  },
+  // Rand weg (−4), Margin dazu (+4): Die Höhe bleibt gleich, der Knopf sitzt
+  // sichtbar tiefer. Dieselbe Rechnung wie in `SsButton`, damit sich beide gleich
+  // anfühlen.
+  postenGedrueckt: { borderBottomWidth: 0, marginTop: DEPTH },
 
   // ── Phase 15: Suche und Filter ──────────────────────────────────────────
   sucheZeile: {
@@ -1065,12 +1231,28 @@ const styles = StyleSheet.create({
 
   stapelBereich: { flex: 1, paddingHorizontal: spacing.lg },
 
-  // Die Karte ist fest, die Liste darunter scrollt — „Karte bleibt stehen, Posts
-  // erscheinen darunter" (Ians Entscheidung 30). Deshalb KEIN gemeinsamer
-  // ScrollView: Ein Gesten-Erkenner auf der Karte und ein senkrechter Scroll
-  // darüber streiten sich sonst um jede Berührung (harte Regel 44).
-  karteBereich: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
-  karteZeile: {
+  // ── Phase 19e: die Karte im Vollbild ────────────────────────────────────
+  // Kein Seitenrand, keine SafeArea, kein `maxWidth`: Die Karte läuft bis an jede
+  // Kante. Was Abstand braucht, holt ihn sich selbst (die schwebende Leiste den
+  // oberen, das Blatt seinen eigenen).
+  vollbild: { flex: 1, backgroundColor: colors.bg },
+
+  // Die Pille schwebt über der Karte und liegt deshalb absolut. `left`/`right`
+  // statt einer Breite: So bleibt sie auf jedem Schirm gleich weit von den Kanten,
+  // und der Umschalter darin bekommt seine Breite wie im Fluss.
+  schwebeLeiste: {
+    position: 'absolute',
+    left: spacing.lg,
+    right: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    // Die Leiste selbst fängt nichts ab, ihre Kinder schon — ein Tipp DANEBEN geht
+    // an die Karte darunter. Im `style`, nie als Prop (ACTA-Falle).
+    pointerEvents: 'box-none',
+  },
+
+  blattKopf: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1078,10 +1260,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
   },
-  // `flexShrink: 1` und nicht `flex: 1`: Die Überschrift soll nachgeben, wenn die
-  // Pille daneben Platz braucht — aber sie soll den Platz nicht ERZWINGEN, wenn
-  // keine Pille da ist (harte Regel 43, die Kehrseite).
-  karteTitel: { flexShrink: 1 },
+  // `flexShrink: 1` und nicht `flex: 1`: Die Überschrift soll nachgeben, wenn das ✕
+  // daneben Platz braucht — aber sie soll den Platz nicht ERZWINGEN, wenn keines da
+  // ist (harte Regel 43, die Kehrseite).
+  blattTitel: { flexShrink: 1 },
+  blattWeg: { cursor: 'pointer' },
+  blattOhne: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
 
   listeAussen: { flex: 1 },
   // `flexGrow: 1` am Inhalt, damit der leere Zustand die volle Höhe bekommt und

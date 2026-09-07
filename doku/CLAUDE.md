@@ -35,39 +35,55 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
-🔜 **Als Nächstes geplant, noch nicht gebaut (2026-09-07): Phase 19e — die Karte wird
-zur App.** Ian hat die fertige Karte BENUTZT und **zehn Entscheidungen** getroffen
-(40–49, PLAN.md Abschnitt 5b). Die Kartenansicht wird **Vollbild mit einem ziehbaren
-Blatt** wie bei Apple Karten, der Schriftzug oben verschwindet, **„Posten" wird ein
-runder Knopf neben dem Umschalter**, und unten kommt eine Liquid-Glass-Leiste. Sechs
-Dinge sind daran wichtiger als das Aussehen:
-1. **Es sind ZWEI Schritte, und das ist die wichtigste Festlegung.** 19e-1 ist reines
-   Design und braucht **keinen Build**; erst 19e-2 bringt `expo-glass-effect`. Zusammen
-   gebaut hätte jeder Fehler mehrere Ursachen — dieselbe Überlegung wie „Gerät vor
-   Backend" und wie die Trennung von 19c und 19d.
-2. **Die teuerste Stelle ist vorab benannt: zwei Gesten-Erkenner übereinander.**
-   `SsWienKarte` beansprucht jede Berührung (`onStartShouldSetPanResponder: () => true`),
-   das Blatt will senkrecht ziehen. Nur der GRIFF zieht, nicht die Fläche — und auf iOS
-   ist die Lage anders als auf Web, weil MapKit seit 19d-1 selbst zeichnet.
-3. **Die Blase aus 19c fällt weg, der Code bleibt stehen.** Sie war die Antwort auf ein
-   Problem, das mit dem Blatt verschwindet (die Liste stand weit unten). `KartenBlase`
-   und der `blase`-Slot bleiben ohne Benutzer im Projekt — geprüfte Arbeit, und die
-   Rechnung „wo liegt ein Bezirk auf dem Schirm" ist nicht trivial.
-4. **Ians Entscheidung 41 ist feiner als seine eigene Vorgabe.** Er sagte „Posten auf die
-   Ebene von Stapel · Liste · Karte". Als viertes FELD wäre es falsch: Die drei wechseln
-   eine Ansicht und bleiben gedrückt, Posten öffnet einen Screen und springt zurück. Ein
-   runder Knopf DANEBEN steht auf derselben Ebene und sagt durch seine Form, dass er
-   etwas anderes tut — **das Muster kommt aus seinem eigenen Screenshot** (BierBuddy).
-5. **Entscheidung 47 ist die einzige gegen meine Empfehlung, und ihr Preis steht dabei.**
-   Der Zähler „Noch 8 Karten" fällt weg — er war die Stütze von Entscheidung 14
-   (Filterfeld überdeckt den Stapel, statt zu schieben). Ohne ihn filtert man blind, bis
-   man zuklappt. Kein Widerspruch, eine Stütze weniger; Korrektur ist eine Zeile.
-6. **Vor Entscheidung 48 wurde harte Regel 22 gelesen, wie sie es verlangt.** Der
-   Prototyp-Hinweis wird ein **Vollbild beim ersten Öffnen** („dass die Leute wirklich
-   draufklicken"). Zwei Fassungen sind schon durchgefallen, ein Vollbild wurde **nie**
-   versucht. Nebengewinn: Danach verdeckt er nie wieder die Tab-Leiste. **Falle:** Auf
-   Native gibt es kein `sessionStorage` — er käme nach jedem Kaltstart wieder. Das
-   Merken gehört deshalb in EINE Funktion, die 20.3 auf `expo-secure-store` umstellt.
+✅ **Phase 19e-1 ist fertig (2026-09-07): die Karte IST jetzt die App.** Ian hatte die
+fertige Karte BENUTZT und **zehn Entscheidungen** getroffen (40–49, PLAN.md Abschnitt 5b).
+Gebaut ist alles außer dem Glas: Die Kartenansicht ist **Vollbild mit einem ziehbaren
+Blatt** wie bei Apple Karten, der Schriftzug oben ist weg, **„Posten" ist ein runder
+Knopf neben dem Umschalter**, die Blase aus 19c ist aus der Anzeige, und der
+Prototyp-Hinweis ist ein Vollbild. **Kein neuer Baustein von außen, kein neuer Build** —
+genau deshalb war das der erste Schritt. Belege `v01`–`v10` im Projektordner.
+Sechs Dinge sind daran wichtiger als das Aussehen:
+1. **Die im Voraus als teuerste benannte Stelle hält — und sie ist GEMESSEN, nicht
+   angeschaut.** `SsWienKarte` beansprucht jede Berührung
+   (`onStartShouldSetPanResponder: () => true`), das Blatt will senkrecht ziehen. Nur der
+   GRIFF zieht. Nachgewiesen mit echten Zeigergesten: Zug auf der Karte verschiebt die
+   Karte und lässt den Griff bei y = 288 stehen; Zug am Griff bringt ihn auf y = 74 und
+   lässt die Karten-Transformation aufs Zeichen genau unverändert. **Auf iOS ist die Lage
+   eine andere** (MapKit bringt eigene Gesten mit) — ungeprüft, gehört auf Ians Gerät.
+2. **„Anteile statt Zahlen" war zur Hälfte falsch, und die Hälfte kostete zwei Fehler.**
+   Der Plan sagte, die drei Raststufen seien Anteile (Lehre aus 19b). Richtig ist: Was
+   oben und unten schon STEHT, ist keine Frage des Schirms. `zu` ist der **gemessene
+   Blattkopf**, `ganz` ist durch die **gemessene schwebende Leiste** gedeckelt — ohne
+   diesen Deckel fuhr das Blatt unter die Pille, Griff und Überschrift lagen dahinter.
+   Nur `halb` ist ein reiner Anteil geblieben.
+3. **Wien schrumpfte beim Aufziehen auf 44 px.** Weil die Karte in den freien Streifen
+   zeichnet, wurde der Streifen beim Aufziehen winzig — und die Stadt wechselte bei JEDEM
+   Zug am Griff ihren Maßstab. `KARTE_MIN_BAND = 0.5` in `features/posts/karte.ts`: Ab da
+   läuft die Karte lieber HINTER das Blatt. **Die Zahl steht in der Regel-Datei, nicht im
+   Zeichner** — es gibt zwei Zeichner und eine Bedeutung (harte Regel 52).
+4. **Zwei Größen, die fast gleich heißen: `randUnten` und `freiUnten`.** Die eine sagt,
+   wo das Blatt anfängt; die andere ist die Geometrie nach dem Deckel aus Punkt 3. Die
+   Lizenzzeile muss dem BLATT ausweichen, nicht der Geometrie — sonst läge sie bei
+   aufgezogenem Blatt dahinter, **und eine Nennung, die niemand sehen kann, ist keine.**
+   Der Fehler war im nativen Zeichner schon eingebaut und nur beim NACHLESEN zu finden,
+   nicht am Bild.
+5. **Ein „Fehler", der keiner war, kostete den längsten Umweg der Phase.** Der erste
+   Tippversuch auf einen Bezirk tat nichts, und das sah nach einer durch `fuellt`
+   kaputten Trefferrechnung aus. Sie war unversehrt: Ein `mouse.down` gefolgt von
+   `mouse.up` **ohne jede Bewegung dazwischen** löst keinen `onPanResponderRelease` aus.
+   Mit einem Ein-Pixel-Ruck — was ein echter Finger immer tut — wählte derselbe Punkt
+   sofort „1020 Wien · 1 Post". **Vierte Fassung der Phase-18b-Lehre, diesmal andersherum:
+   Die Prüfgeste war nicht zu grob, sondern zu sauber.**
+6. **Der Preis von Entscheidung 47 ist jetzt sichtbar, und er trifft nur den STAPEL.**
+   Dort sind bei aufgeklapptem Filter auf 360 × 600 „Alter egal" und „Bestimmte
+   Jahrgänge" von den Stapel-Knöpfen verdeckt — **gegengeprüft auf HEAD, dort genauso**,
+   also älter als diese Phase. Neu ist, dass mit dem Zähler die einzige Rückmeldung
+   wegfiel, dass gerade gefiltert wird. In der KARTE besteht das Problem nicht: Dort
+   fährt das Blatt auf und die Liste steht daneben. Korrektur ist eine Zeile, sie steht
+   im Kopf von `(tabs)/index.tsx`.
+
+🔜 **Was jetzt dran ist: der Gerätedurchgang, dann 19e-2 (Liquid Glass).** `npm run
+deploy` ist noch NICHT gelaufen — die Live-Seite zeigt weiter 19d.
 
 ✅ **Phase 20.1 und 20.2 sind fertig (2026-09-06): das Schema und die Regeln auf dem
 Server.** Alles in `simplysocial/supabase/` — und **ohne Supabase-Konto gebaut und
@@ -772,9 +788,14 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 8. **Wieder herzeigen** — die drei haben Phase 13 gesehen, nicht 18a. Läuft neben 9.
 9. **Aufs Gerät** (Phase 19) ← *hier sind wir* — erster EAS-Build, `react-native-svg`,
    Durchgang am iPhone. ~~Wien-Karte (19b)~~ ✅ *2026-09-06*
-9c. **Karte wird zur App** (Phase 19e) ← *hier geht es weiter* — Vollbild-Karte mit
-   ziehbarem Blatt, Kopf weg, Posten umzieht, Liquid Glass. **19e-1 braucht keinen
-   Build.** Dazu der Gerätebuild auf Ians iPhone (gewöhnliche Apple-ID, per Kabel).
+9c. **Karte wird zur App** (Phase 19e) — ~~**19e-1**: Vollbild-Karte, ziehbares Blatt,
+   Kopf weg, Posten als runder Knopf, Hinweis als Vollbild~~ ✅ *2026-09-07, ohne Build*.
+   **19e-2** (Liquid Glass, `expo-glass-effect`) offen — ein Baustein, ein Build.
+9d. **Aufs echte Gerät** ← *hier geht es weiter* — `npx expo run:ios --device` auf Ians
+   iPhone (gewöhnliche Apple-ID, per Kabel, 7 Tage gültig). Offen sind: Wischstapel
+   unter einem Finger, Tastatur im Chat, Jahrgangs-Balken mit zwei Fingern, Tipp auf die
+   Apple-Karte — **und neu: ob sich Blatt und Karte auf iOS um dieselbe Berührung
+   streiten.**
 9b. ~~**Karte nachbessern**~~ — ~~**19c** (Aktivitäten springen heraus)~~ ✅ und
    ~~**19d-1** (echte Apple-Karte auf iOS)~~ ✅, beide *2026-09-06*. **19d-2** (MapKit JS
    im Browser) wartet auf Phase 20: Der Token muss von einem Server ausgestellt werden.
@@ -905,10 +926,16 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    `#ss-start` bleibt trotzdem — aber als das, was es ist: eine Abdeckung für den
    ersten Bildaufbau, kein Ersatz für richtige Werte. **Wer hier etwas baut, das beim
    Bauen keine Größe hat, sorgt dafür, dass der Ruhezustand auch OHNE Messung stimmt.**
-22. **Der Prototyp-Hinweis liegt UNTEN und überdeckt.** Ians Urteil am Handy vom
-   2026-09-02: oben war er schwerer zu verstehen. Drei Fassungen sind durch, alle drei
-   samt Begründung im Kopf von `components/PrototypHinweis.tsx` — **wer ihn verschiebt,
-   liest die Liste zuerst**, sonst landet er bei einer, die schon durchgefallen ist.
+22. **Der Prototyp-Hinweis ist ein VOLLBILD beim ersten Öffnen.** *(Seit dem
+   2026-09-07, Ians Entscheidung 48 — davor eine Leiste unten, davor zwei Fassungen
+   oben.)* **Vier** Fassungen sind durch, alle vier samt Begründung im Kopf von
+   `components/PrototypHinweis.tsx` — **wer ihn verschiebt, liest die Liste zuerst**,
+   sonst landet er bei einer, die schon durchgefallen ist. Das Vollbild ist keine
+   Wiederholung von Fassung 1: Die verdeckte einen TEIL der App und ließ sich
+   übersehen; ein Vollbild verdeckt alles und danach nichts — der dokumentierte Preis
+   von Fassung 3 (dauerhaft verdeckte Tab-Leiste) fällt damit weg. **Das Merken sitzt
+   in EINER Funktion** (`schonGesehen()` / `merken()`), weil es auf Native kein
+   `sessionStorage` gibt: In Phase 20.3 wird dort nur der Speicher getauscht.
 23. **Es gibt keine Emojis in der Oberfläche — Icons kommen aus `theme/icons.ts`.**
    Ein Icon allein ist `<SsIcon name="…">`, ein Icon neben Text ist `<SsIconText>`
    (nie beides von Hand nebeneinanderstellen: Der Baustein bringt den Versatz mit, der
@@ -1152,7 +1179,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Ohne sie zeigte die Karte nach dem ersten Tipp eine einzige eingefärbte Fläche in
    einem grauen Wien.
 51. **Was über der Karte schweben soll, geht durch `SsWienKarte.blase` — nie als Kind
-   der Kartenfläche.** Dasselbe Muster wie `WischStapel.blatt` (harte Regel 36) und aus
+   der Kartenfläche.** *(Seit Phase 19e steht dieser Slot LEER — Ians Entscheidung 46:
+   Das Blatt beantwortet dieselbe Frage vollständig, wofür die Blase eine Zeile hatte.
+   `KartenBlase`, der Slot und `KartenAnker` bleiben trotzdem im Projekt: geprüfte
+   Arbeit, und die Rechnung „wo liegt ein Bezirk auf dem Schirm" ist nicht trivial. Ein
+   Aufruf holt sie zurück. Wer sie löscht, wirft sie weg.)* Dasselbe Muster wie `WischStapel.blatt` (harte Regel 36) und aus
    zwei Gründen, die beide erst am Gerät auffallen: Die Fläche hat `overflow: hidden`
    (die Blase wäre halb abgeschnitten) und einen `PanResponder` mit
    `onStartShouldSetPanResponder: () => true` (sie wäre nicht antippbar). Der Slot bekommt
@@ -1221,6 +1252,28 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Test, der nur „ist fehlgeschlagen" abfragt, prüft zu wenig: Er muss `SQLSTATE =
    '42501'` verlangen, sonst zählt ein Insert, der an einem CHECK scheitert, als „von
    RLS abgewiesen".
+
+59. **Am Blatt zieht NUR der Griff.** *(Phase 19e.)* `SsBlatt` liegt über einem
+   Kartenzeichner, und der beansprucht mit `onStartShouldSetPanResponder: () => true`
+   jede Berührung. Zwei Erkenner übereinander, die beide ziehen wollen, streiten sich
+   um jeden Finger, und wer gewinnt, hängt an der Reihenfolge im Baum — dieselbe
+   Familie wie harte Regel 44 und die Phase-11-Falle. **Der Ausweg ist keine
+   Aushandlung, sondern eine Fläche:** Der Körper des Blattes hat gar keinen Erkenner.
+   Wer ihm später einen gibt, macht aus einer klaren Trennung eine Aushandlung — und
+   die verhält sich auf Web und auf iOS verschieden, weil dort MapKit seit 19d-1 eigene
+   Gesten mitbringt. **Auf iOS ist das ungeprüft**, es gehört in den Gerätedurchgang.
+60. **Was oben und unten schon STEHT, wird gemessen — nur der Rest ist ein Anteil.**
+   *(Phase 19e, die Berichtigung der 19b-Lehre.)* Die Raststufen des Blattes hängen am
+   Schirm (`BLATT_STUFEN`), aber `zu` ist der **gemessene Blattkopf** und `ganz` ist
+   durch die **gemessene schwebende Leiste** gedeckelt (`maxOben`); dieselbe Zahl geht
+   als `randOben` an die Karte, damit Wien zwischen Leiste und Blatt zentriert wird.
+   Ohne den Deckel fuhr das Blatt unter die Pille. Eine feste Leiste ist auf 552 px ein
+   anderer Anteil als auf 844, ihre Höhe dagegen überall dieselbe — **die Lehre aus 19b
+   gilt für Flächen, die den Rest bekommen, nicht für Dinge, die schon da sind.**
+   Dazu: `randUnten` (wo das Blatt anfängt) und `freiUnten`/`verdeckt` (die Geometrie
+   nach `KARTE_MIN_BAND`) sind ZWEI Größen. Lizenzzeile und „Ganz Wien"-Knopf weichen
+   dem BLATT aus, die Kartengeometrie folgt dem Deckel. Die Verwechslung ist nicht zu
+   sehen, nur zu lesen.
 
 53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
    rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und
@@ -1608,6 +1661,27 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   Phase 19). Und: Der Simulator lässt sich ohne Bedienungshilfen-Berechtigung gar nicht
   antippen — **einen Zustand, den man nicht ertippen kann, setzt man vorübergehend im
   Code und nimmt ihn nachweislich zurück** (`git diff` lesen, nicht erinnern).
+- **Ein Klick OHNE jede Bewegung ist im Prüfbrowser kein Tipp.** (Phase 19e-1,
+  2026-09-07) `mouse.down` gefolgt von `mouse.up` an derselben Stelle löst keinen
+  `onPanResponderRelease` aus — der erste Tippversuch auf einen Bezirk tat nichts, und
+  das sah nach einer durch `fuellt` kaputten Trefferrechnung aus. Sie war unversehrt:
+  Mit einem Ein-Pixel-Ruck dazwischen (was ein echter Finger immer tut) wählte derselbe
+  Punkt sofort den richtigen Bezirk. **Vierte Fassung der Phase-18b-Lehre, und diesmal
+  andersherum** — nicht „ein `click` ist zu grob für eine Geste", sondern „eine Geste
+  ohne Bewegung ist zu sauber für den Erkenner".
+- **Ein Anteil kann nicht ausweichen, ein gemessener Deckel schon.** (Phase 19e-1) Die
+  oberste Raststufe des Blattes stand als 0,92 der Höhe da — auf 552 px ist das etwas
+  anderes als auf 844, und die schwebende Leiste darüber ist auf beiden gleich hoch. Das
+  Blatt fuhr darunter, Griff und Überschrift lagen dahinter. Im Code sieht man so etwas
+  nie, am Screenshot sofort. **Wer einen Anteil vergibt, fragt: gibt es an dieser Kante
+  etwas Festes? Dann gehört dorthin ein gemessener Deckel, kein zweiter Anteil.**
+- **Zwei Größen mit fast gleichem Namen sind der Fehler, den man nur beim Lesen
+  findet.** (Phase 19e-1) `randUnten` ist, wo das Blatt anfängt; `verdeckt` ist die
+  Geometrie nach einem Deckel. Beide sind Zahlen in Bildpunkten, beide betreffen
+  „unten", und der Unterschied fällt an keinem Screenshot auf: Die Lizenzzeile lag mit
+  dem falschen Wert bei aufgezogenem Blatt dahinter — also genau dann, wenn kaum jemand
+  hinsieht. **Beim Einführen einer abgeleiteten Größe beide benennen und danebenschreiben,
+  wer welche braucht.**
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

@@ -18,11 +18,12 @@ import { colors } from '@/theme';
  * Kopfzeile von React Navigation sieht auf Web und iOS unterschiedlich aus; bei einem
  * Prototyp, der auf beidem gleich wirken soll, ist das der falsche Ausgangspunkt.
  *
- * `PrototypHinweis` liegt seit dem 2026-09-02 als Leiste UNTEN über der App, wie eine
- * Cookie-Abfrage — Ians Rückmeldung: oben war er schwerer zu verstehen. Er gilt auf
- * jedem Screen, weil ab Phase 8 jede Adresse die erste sein kann, die jemand öffnet
- * (CLAUDE.md, Regel 5). Er rendert sich nur im Browser und nur einmal je Sitzung;
- * beide Begründungen stehen in der Datei selbst.
+ * `PrototypHinweis` ist seit dem 2026-09-07 ein VOLLBILD beim ersten Öffnen (Ians
+ * Entscheidung 48) — vorher eine Leiste unten, davor zwei Fassungen oben. Alle vier
+ * stehen samt Begründung in der Datei; wer ihn verschiebt, liest zuerst diese Liste
+ * (harte Regel 22). Er gilt auf jedem Screen, weil ab Phase 8 jede Adresse die erste
+ * sein kann, die jemand öffnet (CLAUDE.md, Regel 5), und er rendert sich nur im
+ * Browser und nur einmal je Sitzung.
  *
  * `startFlaecheWeg` blendet die Fläche aus `app/+html.tsx` aus. Das ist die zweite
  * Hälfte des Fixes gegen den halb fertigen Stapel beim Öffnen — die erste Hälfte
@@ -44,8 +45,10 @@ export default function RootLayout() {
             }}
           />
         </View>
-        {/* NACH der Bühne und damit darüber: Die Leiste überdeckt unten, statt den
-            Inhalt zu schieben — sonst wackelt beim Wegdrücken der ganze Bildschirm. */}
+        {/* NACH der Bühne und damit darüber: Das Vollbild überdeckt, statt den Inhalt
+            zu schieben — sonst wackelt beim Wegdrücken der ganze Bildschirm. Und es
+            liegt ÜBER der Tab-Leiste, was seit Entscheidung 48 kein Preis mehr ist,
+            sondern der Zweck: Man kommt nur mit „Verstanden" weiter. */}
         <PrototypHinweis />
       </View>
     </SafeAreaProvider>

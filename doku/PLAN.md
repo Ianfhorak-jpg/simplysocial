@@ -3018,7 +3018,7 @@ stört. **Erst schauen lassen, dann bauen.**
 
 ---
 
-### Phase 19e — Die Karte wird zur App ⬜ *(geplant 2026-09-07, zehn Entscheidungen von Ian)*
+### Phase 19e — Die Karte wird zur App 🟡 *(19e-1 fertig 2026-09-07, 19e-2 offen)*
 
 **Ziel:** Aus der Kartenansicht wird das, was Ian beschrieben hat — *„wenn man auf Karte
 drückt, sieht man wirklich nur die Karte auf dem ganzen Screen, so wie wenn man bei Apple
@@ -3029,7 +3029,7 @@ auf Karten geht."* Dazu räumt der Start-Bildschirm auf: Der Schriftzug verschwi
 
 | | Was | Neuer Build? |
 |---|---|---|
-| **19e-1** | Das ganze Design: Vollbild-Karte, Blatt, Kopf weg, Posten umziehen, Blase weg, Hinweis als Vollbild | **Nein** — läuft sofort im Browser und im Simulator |
+| **19e-1** ✅ | Das ganze Design: Vollbild-Karte, Blatt, Kopf weg, Posten umziehen, Blase weg, Hinweis als Vollbild | **Nein** — läuft sofort im Browser und im Simulator |
 | **19e-2** | Echtes Liquid Glass (`expo-glass-effect`) | **Ja** — ein einziger neuer Baustein |
 
 > **Warum getrennt (Ians Entscheidung 52):** Phase 19 hat gelehrt, dass nur EIN neuer
@@ -3142,48 +3142,110 @@ leeres Wien). **Alle drei Ansichten bleiben** (eine Karte im Feed ist ein ANGEBO
 Fragen). Der **Schriftzug „SimplySocial" verschwindet** vom Start-Bildschirm; er steht
 nur dort (nachgesehen), die anderen Tabs haben eigene Titel, die bleiben.
 
-#### 19e-1 — Das Design, ohne neuen Build ⬜
+#### 19e-1 — Das Design, ohne neuen Build ✅ *(fertig 2026-09-07)*
 
-**Was angefasst wird:**
+**Was angefasst wurde:**
 
-1. **`app/(tabs)/index.tsx`** — `styles.kopf` mit Wortmarke und „Posten"-Knopf fällt
-   weg. `KARTE_ANTEIL = 0.28` fällt weg. Die `ansichtZeile` wird zu einer schwebenden
-   Leiste, wenn `ansicht === 'karte'`, und bleibt sonst eine gewöhnliche Zeile.
-2. **Ein neuer Baustein `components/ui/SsBlatt.tsx`** — das ziehbare Blatt mit drei
-   Raststufen. Er gehört zu den Bausteinen und nicht in den Screen (harte Regel 7 sinngemäß),
-   weil ihn später auch andere Screens brauchen könnten.
-3. **`SsKarte`** bekommt eine Prop für „randlos" — der Slot `blase` bleibt, wird nur
-   nicht mehr befüllt.
-4. **`components/PrototypHinweis.tsx`** — aus der Leiste wird ein Vollbild. Der
-   Dateikopf bekommt die vierte Fassung samt Begründung in die Liste.
+1. **`src/app/(tabs)/index.tsx`** — `styles.kopf` mit Wortmarke und „Posten"-Knopf ist
+   weg, `KARTE_ANTEIL`/`KARTE_MAX_HOEHE` sind weg, der Zähler ist weg
+   (Entscheidung 47). Der Screen hat jetzt **zwei Bäume**: einen gewöhnlichen
+   `SsScreen` für Stapel und Liste, und `KarteVollbild` ohne `SsScreen`. Suchzeile,
+   Kategorien und Umschalter werden EINMAL gebaut und in beide eingehängt — zwei
+   Kopien wären der schnellste Weg dahin, dass die Karte eines Tages einen Filter
+   weniger hat als die Liste.
+2. **`src/components/ui/SsBlatt.tsx`** — neu, das ziehbare Blatt mit drei Raststufen.
+3. **`SsKarte`** hat `fuellt`, `randUnten` und `randOben` bekommen; der Slot `blase`
+   steht unbenutzt weiter da (Entscheidung 46, harte Regel 51).
+4. **`src/components/PrototypHinweis.tsx`** — aus der Leiste ist ein Vollbild
+   geworden, die vierte Fassung steht mit Begründung im Dateikopf.
+5. **`src/features/posts/karte.ts`** — `KARTE_MIN_BAND` ist dazugekommen, siehe
+   Befund 2.
 
-**Drei Fallen, die vorher benannt sind:**
+**Die drei vorher benannten Fallen — was daraus geworden ist:**
 
-> **a) Zwei Gesten-Erkenner übereinander — die teuerste Stelle der Phase.**
-> `SsWienKarte` hat einen `PanResponder` mit `onStartShouldSetPanResponder: () => true`
-> — er beansprucht **jede** Berührung. Das Blatt braucht auch eine senkrechte Zug-Geste.
-> Das ist dieselbe Familie wie harte Regel 44 (Regler in einer ScrollReihe) und wie die
-> Phase-11-Falle (`onPanResponderTerminationRequest`). **Der Griff des Blattes ist der
-> einzige Ort, an dem gezogen werden darf** — nicht die ganze Blattfläche —, damit sich
-> die beiden nie um dieselbe Berührung streiten.
-> Und: **auf iOS zeichnet MapKit selbst und bringt eigene Gesten mit** (seit 19d-1 fällt
-> der eigene `PanResponder` dort weg). Es sind also **zwei verschiedene Lagen** auf Web
-> und auf iOS — beide prüfen, nicht eine.
+> **a) Zwei Gesten-Erkenner übereinander: gehalten, und zwar gemessen.**
+> Der Griff ist der einzige Ort mit einem Erkenner. Nachgewiesen mit echten
+> Zeigergesten auf 360 × 600: Ein Zug auf der Karte verschiebt die Karte
+> (`matrix(1.12, …, −21.3, −16.5)`) und lässt den Griff bei y = 288 stehen; ein Zug am
+> Griff bringt ihn auf y = 74 und lässt die Karten-Transformation **auf das Zeichen
+> genau** unverändert. **Auf iOS ist die Lage eine andere** (MapKit bringt eigene
+> Gesten mit) — das bleibt für den Gerätedurchgang offen.
 
-> **b) Vollbild heißt, aus `SsScreen` auszubrechen.** Der Screen bringt Seitenrand und
-> `edges={['top']}` mit (ACTA-Falle: sonst doppelter Inset und ein toter schwarzer
-> Balken). Eine randlose Karte muss unter die Statusleiste laufen, die schwebende
-> Umschalter-Pille aber NICHT. Der Sicherheitsabstand wandert also vom Screen an die
-> Pille.
+> **b) Vollbild heißt, aus `SsScreen` auszubrechen: so gebaut.** `KarteVollbild` ist
+> ein blanker `View` mit `flex: 1`; der Sicherheitsabstand sitzt an der schwebenden
+> Leiste (`insets.top`), nicht mehr am Screen.
 
-> **c) Die Höhen des Blattes hängen am Schirm, nicht an festen Zahlen.** Die Lehre aus
-> 19b, wörtlich: Mit festen 230 px bekam die Liste auf 390 × 844 gute 266 px und auf
-> **360 × 600 genau 22 px**. Die drei Raststufen sind deshalb Anteile.
+> **c) Die Höhen hängen am Schirm: ja — aber nicht alle drei.** Das war die
+> Vorhersage, und sie war zur Hälfte falsch. **Eine der drei Stufen ist ein Anteil,
+> zwei Grenzen sind gemessen**, und beide Male aus demselben Grund: Was oben und unten
+> schon steht, ist keine Frage des Schirms.
+>   • `zu` ist die **gemessene Höhe des Blattkopfes** — ein Kopf ist eine Zeile Text
+>     mit einem Griff, kein Anteil.
+>   • `ganz` ist `min(0,92 × Höhe, Höhe − maxOben)`, wobei `maxOben` die **gemessene
+>     schwebende Leiste** ist. Siehe Befund 1.
+>   • Nur `halb` ist ein reiner Anteil geblieben.
 
-**Geprüft wird auf 360 × 600 UND 390 × 844**, mit dem Raster aus Abschnitt 9b
-(Überquellen, `elementFromPoint`, `scrollWidth > clientWidth`) und mit echten
-Touch-Ereignissen für das Blatt — ein `click` löst keine Zug-Geste aus (Phase-18b-Lehre,
-dritte Fassung).
+**Vier Befunde, alle erst am Bild oder an der Messung sichtbar:**
+
+1. **Mit `ganz` als reinem Anteil fuhr das Blatt UNTER die schwebende Pille.** Griff
+   und Überschrift „Ganz Wien · 15 Posts" lagen dahinter, und die Lizenzzeile blitzte
+   daneben durch. Der Anteil 0,92 ist auf 552 px eine andere Zahl als auf 844, die
+   Leiste dagegen ist überall gleich hoch. **Die Karte hat daraufhin `randOben`
+   bekommen** — Wien wird jetzt zwischen Leiste und Blatt zentriert, nicht im ganzen
+   Fenster. Nach dem Fix: Leiste endet bei y = 49, Griff sitzt bei y = 75.
+2. **Ohne Grenze schrumpfte Wien beim Aufziehen auf 44 px Höhe.** Gemessen auf
+   360 × 600. Schlimmer als klein ist dabei, dass die Karte bei JEDEM Zug am Griff
+   ihren Maßstab wechselt — man zieht eine Liste hoch und die Stadt zappelt.
+   `KARTE_MIN_BAND = 0.5` in `features/posts/karte.ts`: Ab da läuft die Karte lieber
+   HINTER das Blatt, statt weiter zu schrumpfen. **Die Zahl steht in der Regel-Datei
+   und nicht im Zeichner** (harte Regel 52) — es gibt zwei Zeichner und eine
+   Bedeutung.
+3. **Zwei Größen, die fast gleich heißen und Verschiedenes bedeuten.** `randUnten` ist,
+   wo das Blatt wirklich anfängt; `freiUnten` (bzw. `verdeckt` auf iOS) ist die
+   Geometrie nach dem Deckel aus Befund 2. Die Lizenzzeile und der „Ganz Wien"-Knopf
+   müssen dem BLATT ausweichen und nicht der Geometrie — mit dem gedeckelten Wert
+   lägen sie bei aufgezogenem Blatt dahinter, und eine Nennung, die niemand sehen
+   kann, ist keine. **Der Fehler wäre nicht zu sehen gewesen, sondern nur zu lesen**;
+   er war im nativen Zeichner schon eingebaut und ist beim Nachlesen aufgefallen.
+4. **Der „ohne Bezirk"-Chip ragte bei offenem Filter unten aus dem Blatt.** Auf
+   360 × 600 fehlten fünf Pixel. Der Ausweg war nicht mehr Platz, sondern die
+   Feststellung, dass es **eine Dopplung** war: Der aufgeklappte Filterbereich hat
+   „Ohne Bezirk" in seiner Bezirksreihe längst. Der Chip im Blatt ist die Abkürzung
+   für den ZUGEKLAPPTEN Zustand — und steht jetzt nur dort.
+
+**Was geprüft ist (360 × 600 und 390 × 844, beides im Browser):**
+
+| Prüfung | Ergebnis |
+|---|---|
+| Raster aus Abschnitt 9b: Überquellen, `elementFromPoint`, `scrollWidth > clientWidth` | kein abgeschnittener Text, kein verdeckter Knopf, keine Icon-Namen als Text |
+| Konsole | 0 Warnungen, 0 Fehler |
+| Blatt ziehen (echte Zeigergesten, viele Moves) | halb → ganz → zu, rastet auf allen drei Stufen ein |
+| Karte gegen Blatt (Falle a) | getrennt, siehe oben |
+| Tipp auf einen Bezirk | „1020 Wien · 1 Post", Auswahl-Umriss erscheint |
+| **Entscheidung 49**: zweiter Tipp auf denselben Bezirk | hebt auf → „Ganz Wien · 15 Posts" |
+| ✕ im Blattkopf | hebt auf |
+| Filter öffnen | Blatt fährt auf `ganz`, alle vier Filterreihen im Bild |
+| **Entscheidung 48**: Prototyp-Vollbild | fängt jede Berührung ab — auch auf der Tab-Leiste (`elementFromPoint` bei y = 578) |
+| `tsc --noEmit` · eslint | sauber; 76 Meldungen statt 78 auf HEAD, alle 70 Fehler sind die bekannte `react-hooks/refs`-Altlast |
+
+Belege: `v01`–`v09` im Projektordner.
+
+> ⚠️ **Ein Befund, der NICHT aus dieser Phase stammt und trotzdem hierher gehört:**
+> Im **Stapel** mit aufgeklapptem Filter sind „Alter egal" und „Bestimmte Jahrgänge"
+> auf 360 × 600 von den Stapel-Knöpfen verdeckt. **Gegengeprüft auf HEAD — dort
+> genauso**, also älter als 19e-1. Der Slot begrenzt korrekt (harte Regel 36), der
+> Inhalt ist schlicht höher als der Platz. Neu ist nur, dass es jetzt mehr weh tut:
+> Mit dem Zähler aus Entscheidung 47 fiel die einzige Rückmeldung weg, dass gerade
+> gefiltert wird. **In der Kartenansicht besteht das Problem nicht** — dort fährt das
+> Blatt auf, und die Liste steht daneben. Beleg: `v10-HEAD-stapel-filter-360.png`.
+
+> 📏 **Eine Messnotiz, die beim nächsten Gestentest Zeit spart:** Ein `mouse.down`
+> gefolgt von `mouse.up` **ohne jede Bewegung dazwischen** löst im Prüfbrowser keinen
+> `onPanResponderRelease` aus — der erste Tippversuch auf einen Bezirk sah deshalb aus,
+> als sei die Trefferrechnung durch `fuellt` kaputt. Sie war es nicht: Mit einem
+> Ein-Pixel-Ruck (was ein echter Finger immer tut) wählte derselbe Punkt sofort den
+> richtigen Bezirk. **Das ist die vierte Fassung der Phase-18b-Lehre** — und diesmal
+> war die Prüfgeste nicht zu grob, sondern zu sauber.
 
 #### 19e-2 — Liquid Glass, ein Baustein, ein Build ⬜
 
@@ -4575,36 +4637,40 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-07, spätester Eintrag): Phase 19e-1 —
-> das Design.** Ian hat am 2026-09-07 die fertige Karte BENUTZT und zehn Entscheidungen
-> getroffen (40 bis 49, Abschnitt 5b, Phase 19e). Sechs Dinge, die eine frische Sitzung
-> wissen muss:
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-07, spätester Eintrag): der
+> GERÄTEDURCHGANG, dann 19e-2.** **19e-1 ist fertig und im Browser belegt**
+> (Abschnitt 5b, Phase 19e). Sechs Dinge, die eine frische Sitzung wissen muss:
 >
-> 1. **19e-1 braucht KEINEN neuen Build und geht sofort.** Vollbild-Karte mit ziehbarem
->    Blatt, Kopf weg, „Posten" als runder Knopf neben den Umschalter, Blase aus 19c raus,
->    Prototyp-Hinweis als Vollbild. Erst **19e-2** bringt mit `expo-glass-effect` einen
->    Baustein und einen Build — bewusst getrennt (Phase-19-Lehre: nur EINER auf einmal).
-> 2. **Die teuerste Stelle ist im Voraus benannt: zwei Gesten-Erkenner übereinander.**
->    `SsWienKarte` beansprucht mit `onStartShouldSetPanResponder: () => true` jede
->    Berührung; das Blatt will senkrecht ziehen. Nur der GRIFF des Blattes zieht, nicht
->    die Fläche. Und auf iOS ist die Lage anders als auf Web, weil MapKit seit 19d-1
->    selbst zeichnet — **beide prüfen.**
-> 3. **`KartenBlase` und der `blase`-Slot bleiben im Code stehen, ohne Benutzer.**
->    Entscheidung 46 nimmt sie aus der Anzeige, nicht aus dem Projekt. Es ist geprüfte
->    Arbeit, und die Rechnung „wo liegt ein Bezirk auf dem Schirm" ist nicht trivial.
-> 4. **Entscheidung 47 ist die einzige gegen meine Empfehlung, und ihr Preis steht
->    dabei:** Der Zähler „Noch 8 Karten" war die Stütze von Entscheidung 14 (Filterfeld
->    überdeckt den Stapel). Ohne ihn filtert man blind, bis man zuklappt. Die Korrektur
->    ist eine Zeile und steht im Plan.
-> 5. **Harte Regel 22 wurde vor Entscheidung 48 gelesen, wie sie es verlangt.** Zwei
->    Fassungen des Prototyp-Hinweises sind schon durchgefallen; ein Vollbild wurde nie
->    versucht. **Das Merken muss in EINER Funktion sitzen** — auf Native gibt es kein
->    `sessionStorage`, also käme er sonst nach jedem Kaltstart wieder, und als Vollbild
->    wäre das viel schlimmer als als Leiste. Getauscht wird der Speicher in 20.3.
-> 6. **Danach: der Gerätebuild, dann Phase 20.3.** Ian hat heute nur eine gewöhnliche
->    Apple-ID — also `npx expo run:ios --device` mit Kabel, nicht EAS. Er hat selbst
->    gewarnt: im WLAN hängen fremde Geräte, **vor dem Installieren den Gerätenamen
->    bestätigen lassen.**
+> 1. **Was 19e-1 gebracht hat, steht in Abschnitt 5b mit vier Befunden und einer
+>    Prüftabelle.** Kurz: Vollbild-Karte, ziehbares Blatt (`components/ui/SsBlatt.tsx`,
+>    neu), Kopf weg, „Posten" als runder Knopf, Blase aus der Anzeige, Prototyp-Hinweis
+>    als Vollbild. `npm run deploy` ist **noch nicht gelaufen** — die Live-Seite zeigt
+>    weiter 19d.
+> 2. **Die teuerste Stelle hält auf Web und ist auf iOS UNGEPRÜFT.** Griff gegen Karte
+>    ist mit echten Zeigergesten getrennt nachgewiesen (Zahlen in Abschnitt 5b). Auf
+>    iOS zeichnet MapKit selbst und bringt eigene Gesten mit — **das ist eine andere
+>    Lage, keine Wiederholung.** Sie gehört in denselben Durchgang wie Wischstapel,
+>    Tastatur, Jahrgangs-Balken und der Tipp auf die Apple-Karte.
+> 3. **Der Gerätebuild ist der nächste Handgriff und braucht Ian einmal persönlich.**
+>    Er hat heute nur eine gewöhnliche Apple-ID — also `npx expo run:ios --device` mit
+>    Kabel, nicht EAS. Er hat selbst gewarnt: im WLAN hängen fremde Geräte, **vor dem
+>    Installieren `xcrun devicectl list devices` lesen und den Namen bestätigen
+>    lassen.**
+> 4. **19e-2 ist danach, und es ist EIN Baustein:** `expo-glass-effect`, mit BEIDEN
+>    Prüfungen (`isLiquidGlassAvailable()` und `isGlassEffectAPIAvailable()` — die Doku
+>    nennt iOS-26-Beta-Fassungen, in denen der Aufruf abstürzt). Glas bekommen: die
+>    Tab-Leiste, die schwebende Umschalter-Pille (`styles.ansichtSchwebend`, dort steht
+>    es im Kommentar) und der Kopf des Blattes. **Plattform-Endung, kein
+>    `Platform.OS`-Zweig** (harte Regel 52).
+> 5. **Ein Befund liegt offen und ist ÄLTER als 19e-1:** Im Stapel mit aufgeklapptem
+>    Filter sind „Alter egal" und „Bestimmte Jahrgänge" auf 360 × 600 verdeckt —
+>    gegengeprüft auf HEAD, dort genauso. Neu ist nur, dass Entscheidung 47 die einzige
+>    Rückmeldung weggenommen hat, dass gefiltert wird. **Die Korrektur ist eine Zeile**
+>    (Zähler klein unter den Stapel), und sie steht im Kopf von `(tabs)/index.tsx`.
+> 6. **Das Merken des Prototyp-Hinweises sitzt in EINER Funktion**, wie Entscheidung 48
+>    es verlangt (`schonGesehen()` / `merken()`). Auf Native gibt es kein
+>    `sessionStorage`, also käme das Vollbild nach jedem Kaltstart wieder. **In 20.3
+>    wird dort nur der Speicher getauscht** — zwei Funktionsrümpfe, kein Screen.
 
 > 📎 **Der vorige Eintrag, weil er weiter gilt: Phase 20.3 — Anmelden.** 20.1 (Schema) und 20.2 (Regeln) sind **gebaut und geprüft**,
 > siehe Abschnitt 5b, „Was beim Bauen von 20.1 und 20.2 herauskam". Sechs Dinge, die

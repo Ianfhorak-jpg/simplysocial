@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { G, Path, Text as SvgText } from 'react-native-svg';
 
@@ -6,6 +6,7 @@ import { SsText } from './SsText';
 import { BEZIRKE, KARTE_BREITE, KARTE_HOEHE } from '@/data/wien-bezirke';
 import {
   KARTE_LEER,
+  KARTE_MIN_BAND,
   KARTE_QUELLE,
   STUFEN,
   TIPP_WEG_MAX,
@@ -68,6 +69,9 @@ export type SsWienKarteProps = SsKarteProps;
 /** Breite, mit der gerechnet wird, solange nichts gemessen ist. Siehe Falle 2. */
 const NOTBREITE = 328;
 
+/** Dasselbe für die Höhe — gebraucht erst, seit die Karte auch füllen kann (19e). */
+const NOTHOEHE = 480;
+
 /** Die Zahl in der Fläche, in Bildpunkten — unabhängig vom Zoom. */
 const ZAHL_PX = 11;
 
@@ -77,17 +81,67 @@ const FUGE = 2.5;
 /** Der Umriss um den gewählten Bezirk. Dicker als die Fuge, sonst sieht man ihn nicht. */
 const AUSWAHL_STRICH = 6;
 
-export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }: SsWienKarteProps) {
-  const [gemessen, setGemessen] = useState(0);
-  const platz = gemessen || NOTBREITE;
+export function SsWienKarte({
+  zaehlung,
+  gewaehlt,
+  onWaehlen,
+  maxHoehe,
+  fuellt,
+  randUnten = 0,
+  randOben = 0,
+  blase,
+}: SsWienKarteProps) {
+  const [gemessen, setGemessen] = useState({ breite: 0, hoehe: 0 });
+
+  /**
+   * Das FENSTER — die Fläche, die der Zeichner bekommt.
+   *
+   * Seit Phase 19e ist das nicht mehr dasselbe wie die Karte: Mit `fuellt` ist das
+   * Fenster der ganze Schirm, die Karte selbst bleibt aber im Seitenverhältnis von
+   * Wien und liegt zentriert darin. Vorher fielen beide zusammen, deshalb gab es nur
+   * einen Satz Zahlen.
+   */
+  const fensterB = gemessen.breite || NOTBREITE;
+  const fensterH = fuellt ? gemessen.hoehe || NOTHOEHE : 0;
+
+  /**
+   * Der freie Streifen: was vom Fenster übrig bleibt, wenn oben eine Leiste schwebt
+   * und unten ein Blatt liegt. Wien wird DARIN zentriert und nicht im ganzen Fenster
+   * — sonst läge die südliche Hälfte hinter dem Blatt und der Norden unter der
+   * Pille (siehe `randOben`/`randUnten` in `karte-typen.ts`).
+   *
+   * `KARTE_MIN_BAND` ist der Boden: Ab da läuft die Karte lieber HINTER das Blatt,
+   * statt weiter zu schrumpfen. Die Begründung samt gemessener Zahl steht bei der
+   * Konstanten in `features/posts/karte.ts` — hier wird sie nur angewandt.
+   */
+  const freiUnten = Math.min(
+    randUnten,
+    Math.max(0, fensterH - randOben - fensterH * KARTE_MIN_BAND),
+  );
+  const band = Math.max(fensterH - randOben - freiUnten, 1);
+
   // Wien ist breiter als hoch (1000 : 777). Passt die Höhe nicht, wird die Breite
   // zurückgerechnet statt zu beschneiden — eine halbe Donaustadt sähe nach Fehler aus.
-  const breite = maxHoehe
-    ? Math.min(platz, (maxHoehe * KARTE_BREITE) / KARTE_HOEHE)
-    : platz;
+  const hoehenGrenze = fuellt ? band : maxHoehe;
+  const breite = hoehenGrenze
+    ? Math.min(fensterB, (hoehenGrenze * KARTE_BREITE) / KARTE_HOEHE)
+    : fensterB;
   const hoehe = (breite * KARTE_HOEHE) / KARTE_BREITE;
   /** Wie viele Bildpunkte eine Rastereinheit bei dieser Breite ist. */
   const proEinheit = breite / KARTE_BREITE;
+
+  /**
+   * Wo die Mitte der Karte im Fenster liegt — in Bildpunkten.
+   *
+   * **Die eine Zahl, an der beide Rechnungen hängen** (ein Tipp nach innen, der
+   * Anker nach außen). Ohne `fuellt` ist sie einfach die Fenstermitte, weil Karte
+   * und Fenster deckungsgleich sind; mit `fuellt` ist sie die Mitte des freien
+   * Streifens. Sie steht als EIN Wert da, damit die beiden Rechnungen nicht
+   * auseinanderlaufen können — genau die Sorte Fehler, die man erst nach dem ersten
+   * Zoom sieht.
+   */
+  const mitteX = fuellt ? fensterB / 2 : breite / 2;
+  const mitteY = fuellt ? randOben + band / 2 : hoehe / 2;
 
   // Die Anzeige läuft über `Animated` (kein Rendern während der Geste), der
   // logische Zustand liegt daneben im Ref — die Handler brauchen ihn zum Rechnen
@@ -125,10 +179,10 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }: 
   const zustand = useRef({ zoom: 1, x: 0, y: 0 });
   // Maße und `onWaehlen` gehören MIT ins Ref: Ein `PanResponder` wird einmal gebaut
   // und sähe sonst für immer die Werte des ersten Renderns.
-  const masse = useRef({ breite, hoehe, proEinheit, onWaehlen });
+  const masse = useRef({ breite, hoehe, proEinheit, mitteX, mitteY, onWaehlen });
   useEffect(() => {
-    masse.current = { breite, hoehe, proEinheit, onWaehlen };
-  }, [breite, hoehe, proEinheit, onWaehlen]);
+    masse.current = { breite, hoehe, proEinheit, mitteX, mitteY, onWaehlen };
+  }, [breite, hoehe, proEinheit, mitteX, mitteY, onWaehlen]);
 
   const responder = useMemo(() => {
     /**
@@ -260,15 +314,27 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }: 
         blaseDeckkraft.setValue(1);
         setSicht({ ...zustand.current });
         if (mehrfingrig || gewandert > TIPP_WEG_MAX) return;
-        // Ein Tipp. `locationX/Y` liegt relativ zur Karten-Fläche; daraus wird die
-        // Stelle im Raster, indem man die Ansicht rückwärts rechnet: erst das
-        // Schieben abziehen, dann um die Mitte herausskalieren, dann in Einheiten.
-        const { breite: w, hoehe: h, proEinheit: pe, onWaehlen: waehlen } = masse.current;
+        // Ein Tipp. `locationX/Y` liegt relativ zum FENSTER; daraus wird die Stelle
+        // im Raster, indem man die Ansicht rückwärts rechnet: erst das Schieben
+        // abziehen, dann um die Mitte herausskalieren, dann in Einheiten.
+        //
+        // Seit Phase 19e sind Fenster und Karte nicht mehr dasselbe: Der Bezugspunkt
+        // im Fenster ist `mitteX/mitteY`, der in der Karte ihre halbe Größe. Ohne
+        // `fuellt` fallen beide zusammen — die Formel ist dieselbe geblieben, nur
+        // ausgeschrieben.
+        const {
+          breite: w,
+          hoehe: h,
+          proEinheit: pe,
+          mitteX: mx,
+          mitteY: my,
+          onWaehlen: waehlen,
+        } = masse.current;
         const { zoom, x: tx, y: ty } = zustand.current;
         const px = evt.nativeEvent.locationX;
         const py = evt.nativeEvent.locationY;
-        const kx = (px - w / 2 - tx) / zoom + w / 2;
-        const ky = (py - h / 2 - ty) / zoom + h / 2;
+        const kx = (px - mx - tx) / zoom + w / 2;
+        const ky = (py - my - ty) / zoom + h / 2;
         waehlen(bezirkAn(kx / pe, ky / pe));
       },
 
@@ -377,11 +443,27 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }: 
    */
   const anker: KartenAnker | null = (() => {
     if (!gewaehltePfad) return null;
-    const x = (gewaehltePfad.label.x * proEinheit - breite / 2) * sicht.zoom + breite / 2 + sicht.x;
-    const y = (gewaehltePfad.label.y * proEinheit - hoehe / 2) * sicht.zoom + hoehe / 2 + sicht.y;
-    if (x < 0 || x > breite || y < 0 || y > hoehe) return null;
-    return { x, y, platzOben: y, platzUnten: hoehe - y, breite, hoehe };
+    const x = (gewaehltePfad.label.x * proEinheit - breite / 2) * sicht.zoom + mitteX + sicht.x;
+    const y = (gewaehltePfad.label.y * proEinheit - hoehe / 2) * sicht.zoom + mitteY + sicht.y;
+    // Der Platz, den die Blase hat, ist der des FENSTERS — nicht der der Karte.
+    const platzB = fuellt ? fensterB : breite;
+    const platzH = fuellt ? band : hoehe;
+    if (x < 0 || x > platzB || y < 0 || y > platzH) return null;
+    return { x, y, platzOben: y, platzUnten: platzH - y, breite: platzB, hoehe: platzH };
   })();
+
+  /**
+   * Wo Lizenzzeile und „Ganz Wien" sitzen — über dem Blatt, aber nie hinter der
+   * schwebenden Leiste.
+   *
+   * **Das ist NICHT dasselbe wie `freiUnten`, und die Verwechslung wäre nicht zu
+   * sehen, sondern nur zu lesen:** `freiUnten` ist Geometrie (wo Wien sitzt),
+   * `randUnten` ist, wo das Blatt wirklich anfängt. Die Nennung muss dem BLATT
+   * ausweichen — mit dem gedeckelten Wert läge sie bei aufgezogenem Blatt dahinter,
+   * und eine Nennung, die niemand sehen kann, ist keine. Nach oben ist Schluss unter
+   * der Leiste: Dort blitzte sie am 2026-09-07 hinter der Pille durch.
+   */
+  const fussHoehe = Math.min(randUnten, Math.max(0, fensterH - randOben - 20));
 
   const blaseInhalt = blase && anker ? blase(anker) : null;
 
@@ -426,25 +508,44 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }: 
   );
 
   return (
-    <View style={styles.rahmen}>
-      <View style={[styles.flaeche, { width: breite, height: hoehe }]}>
+    <View style={[styles.rahmen, fuellt && styles.rahmenVoll]}>
+      <View
+        style={[
+          styles.flaeche,
+          fuellt ? styles.flaecheVoll : { width: breite, height: hoehe },
+        ]}>
         <View
           ref={rahmen}
-          style={[styles.fenster, { height: hoehe, width: breite }]}
-          onLayout={(e) => setGemessen(e.nativeEvent.layout.width)}
+          style={[styles.fenster, fuellt ? styles.fensterVoll : { height: hoehe, width: breite }]}
+          onLayout={(e) =>
+            setGemessen({
+              breite: e.nativeEvent.layout.width,
+              hoehe: e.nativeEvent.layout.height,
+            })
+          }
           {...responder.panHandlers}>
-          <Animated.View
-            style={{
-              transform: [
-                { translateX: schiebenX },
-                { translateY: schiebenY },
-                { scale: zoomWert },
-              ],
-            }}>
-            <Svg width={breite} height={hoehe} viewBox={`0 0 ${KARTE_BREITE} ${KARTE_HOEHE}`}>
-              <G>{inhalt}</G>
-            </Svg>
-          </Animated.View>
+          {/* Ohne `fuellt` ist das Fenster genau so groß wie die Karte, und diese
+              Hülle liegt bündig darauf. Mit `fuellt` schiebt sie Wien in die Mitte
+              des freien Streifens — dieselben zwei Zahlen (`mitteX`/`mitteY`), aus
+              denen auch der Tipp und der Anker gerechnet werden. */}
+          <View
+            style={[
+              styles.mitte,
+              { left: mitteX - breite / 2, top: mitteY - hoehe / 2, width: breite, height: hoehe },
+            ]}>
+            <Animated.View
+              style={{
+                transform: [
+                  { translateX: schiebenX },
+                  { translateY: schiebenY },
+                  { scale: zoomWert },
+                ],
+              }}>
+              <Svg width={breite} height={hoehe} viewBox={`0 0 ${KARTE_BREITE} ${KARTE_HOEHE}`}>
+                <G>{inhalt}</G>
+              </Svg>
+            </Animated.View>
+          </View>
         </View>
 
         {/* Die Blase — GESCHWISTER der Kartenfläche, nicht ihr Kind. Warum, steht bei
@@ -460,8 +561,15 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }: 
 
       {/* Die Namensnennung liegt IN der Karte und nicht daneben im Screen — sie ist
           Bedingung der Lizenz (CC BY), und was neben einem Baustein steht, bleibt beim
-          nächsten Umbau liegen. So reist sie mit, wohin die Karte auch kommt. */}
-      <SsText variant="caption" color={colors.inkSoft} style={styles.quelle}>
+          nächsten Umbau liegen. So reist sie mit, wohin die Karte auch kommt.
+
+          Mit `fuellt` steht sie ÜBER der Karte statt darunter, und zwar oberhalb von
+          `randUnten`: Sonst läge die Lizenzzeile hinter dem Blatt, und eine Nennung,
+          die niemand sehen kann, ist keine. */}
+      <SsText
+        variant="caption"
+        color={colors.inkSoft}
+        style={[styles.quelle, fuellt && [styles.quelleVoll, { bottom: fussHoehe + 4 }]]}>
         {KARTE_QUELLE}
       </SsText>
 
@@ -469,7 +577,7 @@ export function SsWienKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }: 
           schon ganz Wien zeigt, sieht aus wie ein kaputter Knopf. */}
       {verschoben ? (
         <Pressable
-          style={styles.zurueck}
+          style={[styles.zurueck, fuellt && { bottom: fussHoehe + 22 }]}
           // Der Knopf ist 26 px hoch — unter Apples 44. Statt ihn aufzublasen und
           // damit die Karte zu verdecken, vergrößert `hitSlop` nur die empfindliche
           // Fläche. Das ist genau der Fall, für den es die Prop gibt.
@@ -495,11 +603,18 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
   },
+  /** Mit `fuellt` nimmt die Karte allen Platz, den sie bekommt — Phase 19e. */
+  rahmenVoll: { flex: 1, alignSelf: 'stretch' },
   quelle: { fontSize: 10, lineHeight: 14, paddingTop: 2 },
+  quelleVoll: { position: 'absolute', left: 8, paddingTop: 0 },
   /** Karte und Blase liegen deckungsgleich übereinander — dafür braucht es einen
       gemeinsamen Bezugsrahmen. Ohne ihn müsste die Blase im `rahmen` positioniert
       werden, und der ist bei schmaler Karte breiter als sie (`alignItems: 'center'`). */
   flaeche: { position: 'relative' },
+  flaecheVoll: { flex: 1, alignSelf: 'stretch' },
+  fensterVoll: { flex: 1, alignSelf: 'stretch' },
+  /** Wien in der Mitte des freien Streifens — nur mit `fuellt` überhaupt versetzt. */
+  mitte: { position: 'absolute' },
   // `StyleSheet.absoluteFillObject` gibt es in React Native 0.86 nicht mehr (ACTA).
   ueberKarte: {
     position: 'absolute',

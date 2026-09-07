@@ -9,6 +9,7 @@ import {
   APPLE_KARTE_ART,
   APPLE_ZOOM_MAX,
   APPLE_ZOOM_MIN,
+  KARTE_MIN_BAND,
   KARTE_QUELLE,
   STUFEN,
   appleFuellung,
@@ -73,7 +74,16 @@ const AUSWAHL_STRICH = 3;
  */
 const MARKER_AUFNAHME_MS = 600;
 
-export function SsAppleKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }: SsKarteProps) {
+export function SsAppleKarte({
+  zaehlung,
+  gewaehlt,
+  onWaehlen,
+  maxHoehe,
+  fuellt,
+  randUnten = 0,
+  randOben = 0,
+  blase,
+}: SsKarteProps) {
   const karte = useRef<MapView>(null);
   const [platz, setPlatz] = useState({ breite: 0, hoehe: 0 });
 
@@ -106,10 +116,32 @@ export function SsAppleKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }:
   const [aufnahme, setAufnahme] = useState(true);
 
   const breite = platz.breite;
-  const hoehe = Math.min(
-    (breite * KARTE_HOEHE) / KARTE_BREITE,
-    maxHoehe ?? Number.POSITIVE_INFINITY,
-  );
+  /**
+   * Mit `fuellt` (Phase 19e) nimmt die Karte den ganzen Platz und ihre Höhe kommt
+   * aus der Messung — nicht mehr aus dem Seitenverhältnis von Wien. Das ist der
+   * ganze Unterschied zwischen „ein Element im Fluss" und „der Hintergrund, über dem
+   * alles schwebt".
+   */
+  const hoehe = fuellt
+    ? platz.hoehe
+    : Math.min((breite * KARTE_HOEHE) / KARTE_BREITE, maxHoehe ?? Number.POSITIVE_INFINITY);
+
+  /**
+   * Wie viel unten wirklich abgezogen wird — gedeckelt durch `KARTE_MIN_BAND`.
+   * Dieselbe Regel und dieselbe Konstante wie beim gezeichneten Zeichner: Ab der
+   * Grenze läuft die Karte hinter das Blatt, statt ihren Ausschnitt weiter
+   * zusammenzuziehen. **Die Bedeutung steht in `karte.ts`, nicht hier** (harte
+   * Regel 52) — sonst hätte die App zwei Wahrheiten, eine je Zeichner.
+   */
+  const verdeckt = Math.min(randUnten, Math.max(0, hoehe - randOben - hoehe * KARTE_MIN_BAND));
+  /** Über dem Blatt, aber nie hinter der schwebenden Leiste — siehe `fussHoehe` im
+   *  gezeichneten Zeichner, dieselbe Rechnung und derselbe Grund. */
+  const fussHoehe = Math.min(randUnten, Math.max(0, hoehe - randOben - 20));
+  // **`verdeckt` und `randUnten` sind NICHT dasselbe, und die Verwechslung wäre
+  // nicht zu sehen, sondern nur zu lesen:** `verdeckt` ist die Geometrie (wo Wien
+  // sitzt), `randUnten` ist, wo das Blatt wirklich anfängt. Die Lizenzzeile und der
+  // „Ganz Wien"-Knopf richten sich nach dem BLATT — mit dem gedeckelten Wert lägen
+  // sie bei ganz aufgezogenem Blatt dahinter.
 
   /** Der stärkste Bezirk — er bekommt die dunkelste Fläche (Ians Entscheidung 32). */
   const hoechst = useMemo(
@@ -208,9 +240,9 @@ export function SsAppleKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }:
   const blaseInhalt = blase && anker ? blase(anker) : null;
 
   return (
-    <View style={styles.rahmen}>
+    <View style={[styles.rahmen, fuellt && styles.rahmenVoll]}>
       <View
-        style={[styles.flaeche, { height: hoehe }]}
+        style={[styles.flaeche, fuellt ? styles.flaecheVoll : { height: hoehe }]}
         onLayout={(e) =>
           setPlatz({ breite: e.nativeEvent.layout.width, hoehe: e.nativeEvent.layout.height })
         }>
@@ -221,6 +253,16 @@ export function SsAppleKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }:
           provider={PROVIDER_DEFAULT}
           mapType={APPLE_KARTE_ART}
           initialRegion={WIEN_REGION}
+          /**
+           * Der Streifen unten, der vom Blatt verdeckt ist (Phase 19e).
+           *
+           * MapKit rechnet den Ausschnitt danach: Wien wird über dem Blatt zentriert
+           * statt in der Mitte des Schirms — und `pointForCoordinate` antwortet
+           * weiter richtig, weil dieselbe Ansicht rechnet. **Genau deshalb steht hier
+           * `mapPadding` und keine eigene Verschiebung:** Eine nachgebaute wäre eine
+           * zweite Wahrheit neben MapKits eigener (harte Regel 52).
+           */
+          mapPadding={{ top: randOben, right: 0, bottom: verdeckt, left: 0 }}
           // Die beiden Zahlen sind auf dem Simulator gemessen, nicht gerechnet —
           // die Begründung steht bei ihnen in `karte.ts`. Mit 10 öffnete die Karte
           // auf einem Drittel von Wien.
@@ -301,7 +343,7 @@ export function SsAppleKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }:
         {/* Steht nur da, wenn er etwas tut. */}
         {verschoben ? (
           <Pressable
-            style={styles.zurueck}
+            style={[styles.zurueck, fuellt && { bottom: fussHoehe + 22 }]}
             hitSlop={10}
             onPress={() => karte.current?.animateToRegion(WIEN_REGION, 300)}>
             <SsText variant="caption" color={colors.surface}>
@@ -314,7 +356,10 @@ export function SsAppleKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }:
       {/* Apples eigene Namensnennung zeichnet MapKit selbst in die Fläche. Diese
           Zeile betrifft etwas anderes: Die BEZIRKSGRENZEN kommen weiter von der
           Stadt Wien (CC BY 4.0), auch wenn der Hintergrund von Apple ist. */}
-      <SsText variant="caption" color={colors.inkSoft} style={styles.quelle}>
+      <SsText
+        variant="caption"
+        color={colors.inkSoft}
+        style={[styles.quelle, fuellt && [styles.quelleVoll, { bottom: fussHoehe + 4 }]]}>
         {KARTE_QUELLE}
       </SsText>
     </View>
@@ -323,8 +368,14 @@ export function SsAppleKarte({ zaehlung, gewaehlt, onWaehlen, maxHoehe, blase }:
 
 const styles = StyleSheet.create({
   rahmen: { position: 'relative' },
+  /** Mit `fuellt` nimmt die Karte allen Platz, den sie bekommt — Phase 19e. */
+  rahmenVoll: { flex: 1, alignSelf: 'stretch' },
   flaeche: { position: 'relative', overflow: 'hidden' },
+  flaecheVoll: { flex: 1, alignSelf: 'stretch' },
   quelle: { fontSize: 10, lineHeight: 14, paddingTop: 2, textAlign: 'center' },
+  // Über der Karte statt darunter — und oberhalb des Blattes, sonst wäre die
+  // Lizenzzeile verdeckt. Apples eigene Nennung zeichnet MapKit selbst.
+  quelleVoll: { position: 'absolute', left: 8, paddingTop: 0, textAlign: 'left' },
   zahl: { fontWeight: '600' },
   // `StyleSheet.absoluteFillObject` gibt es in React Native 0.86 nicht mehr (ACTA).
   ueberKarte: {
