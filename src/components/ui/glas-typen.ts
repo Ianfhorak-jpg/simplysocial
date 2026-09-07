@@ -21,11 +21,13 @@ import { colors } from '@/theme';
  * einem von ihnen, wäre dieser der heimliche Maßstab, und die zwei Flächen liefen
  * beim nächsten Farbwechsel auseinander.
  *
- * ── Glas ersetzt die FLÄCHE, nicht den Rahmen ─────────────────────────────────
- * `SsGlas` bringt genau eine Eigenschaft mit: den Untergrund. Radius, Kante,
- * Schatten, Polsterung und `flex` kommen vom Aufrufer und gelten in **beiden**
- * Zweigen. Das ist der Grund, warum der Umbau keinen einzigen Stil verdoppelt hat:
- * Eine Pille bleibt dieselbe Pille, sie steht nur auf einem anderen Grund.
+ * ── Was `SsGlas` mitbringt und was der Aufrufer mitbringt ─────────────────────
+ * `SsGlas` verantwortet den **Untergrund samt seiner Kante**: auf iOS 26 das Glas,
+ * das seine helle Kante selbst zeichnet, sonst die helle Fläche — und, wenn die
+ * Fläche `schwebt`, die 1-px-Linie und den Schatten, die dort das Gleiche sagen.
+ * Der Aufrufer bringt nur Geometrie mit: Radius, Polsterung, `flex`, Position.
+ * **Warum das nicht andersherum geht, steht bei `glasSchwebt`** — es ist die
+ * Berichtigung, die aus Ians Rückmeldung zur ersten Fassung kam.
  *
  * ── Warum Plattform-Endungen und kein `Platform.OS`-Zweig ─────────────────────
  * Harte Regel 52. `expo-glass-effect` bringt zwar selbst einen Rückfall für Web
@@ -37,13 +39,36 @@ import { colors } from '@/theme';
 /**
  * Der Untergrund, wo es kein Glas gibt: dieselbe helle Fläche, die die App seit
  * Phase 1 überall benutzt.
- *
- * **Bewusst nur die Farbe.** Kante und Schatten gehören dem Aufrufer — sonst bekäme
- * die Tab-Leiste den Schatten der Umschalter-Pille, und niemand fände heraus, woher.
  */
 export const glasErsatz = StyleSheet.create({
   flaeche: { backgroundColor: colors.surface },
 }).flaeche;
+
+/**
+ * Was eine SCHWEBENDE Fläche zusätzlich braucht — **aber nur dort, wo es kein Glas
+ * gibt.**
+ *
+ * ── Die Berichtigung vom 2026-09-07 (Ians Rückmeldung zur ersten Glas-Fassung) ──
+ * Zuerst stand hier: „Glas ersetzt die Fläche, nicht den Rahmen" — Kante und
+ * Schatten kamen vom Aufrufer und galten in BEIDEN Zweigen. Am Bild war das falsch:
+ * Echtes Liquid Glass bringt seine eigene helle Kante mit und wirft keinen
+ * Schlagschatten. Eine 1-px-Linie plus Schatten darüber macht daraus wieder eine
+ * Karte mit unscharfem Hintergrund — genau der Eindruck, den Ian als *„sieht noch
+ * nicht so gut aus"* beschrieben hat.
+ *
+ * **Kante und Schatten sind also nicht Zierde, sondern der ERSATZ für das, was Glas
+ * selbst mitbringt.** Deshalb stehen sie hier und werden im Glas-Zweig weggelassen.
+ * Und deshalb sind sie an einer Prop und nicht immer an: Der Blattkopf schwebt
+ * nicht, er sitzt oben in einem Blatt, das seine eigene Kante und seinen eigenen
+ * Schatten schon hat.
+ */
+export const glasSchwebt = StyleSheet.create({
+  ersatz: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    boxShadow: '0 4px 16px rgba(23, 25, 28, 0.16)',
+  },
+}).ersatz;
 
 /**
  * Welches Farbschema das Glas annimmt — **`light`, nicht `auto`.**
@@ -66,8 +91,13 @@ export const GLAS_STIL = 'regular' as const;
 export interface SsGlasProps {
   children?: ReactNode;
   /**
-   * Alles Geometrische: Radius, Kante, Schatten, Polsterung, `flex`. Gilt in
-   * beiden Zweigen gleich — siehe „Glas ersetzt die Fläche, nicht den Rahmen".
+   * Die Fläche steht frei über etwas anderem — die Tab-Kapsel und die
+   * Umschalter-Pille tun das, der Blattkopf nicht.
+   *
+   * Wirkt **nur im Rückfall**: Dort bekommt sie Kante und Schatten, damit man ihr
+   * ansieht, dass sie darüberliegt. Echtes Glas sagt das von selbst.
    */
+  schwebt?: boolean;
+  /** Nur Geometrie: Radius, Polsterung, `flex`, Position. */
   style?: StyleProp<ViewStyle>;
 }

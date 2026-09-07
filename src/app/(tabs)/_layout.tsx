@@ -1,10 +1,12 @@
 import { Tabs } from 'expo-router/js-tabs';
 import { StyleSheet, type ColorValue } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SsGlas, SsIcon } from '@/components/ui';
+import { TAB_KAPSEL_HOEHE, TAB_KAPSEL_SEITE, tabKapselUnten } from '@/lib/tabs';
 import { useMeineEinladungen, useOffeneGruppenAnfragen } from '@/features/groups/hooks';
 import { useOffeneAnfragen } from '@/features/requests/hooks';
-import { colors, spacing, status, type } from '@/theme';
+import { colors, radius, status, type } from '@/theme';
 import type { IconName } from '@/theme/icons';
 
 /**
@@ -28,12 +30,15 @@ import type { IconName } from '@/theme/icons';
  * SDK 57 als veraltet markiert, und nur der Unterweg gibt `BottomTabBarHeightContext`
  * her (siehe `lib/tabs.ts`).
  *
- * ── Seit Phase 19e-2: die Leiste SCHWEBT ──────────────────────────────────────
- * Ians Entscheidung 43 gibt ihr auf iOS 26 echtes Liquid Glass. Damit Glas etwas
- * zu brechen hat, muss darunter etwas liegen — also nimmt die Leiste keinen Platz
- * mehr im Layout weg (`position: 'absolute'`), und der Screen reicht bis an die
- * Unterkante. **Auf der Karte ist das der ganze Gewinn:** Wien läuft unter der
- * Leiste durch, statt an ihr aufzuhören.
+ * ── Seit Phase 19e-2: die Leiste ist eine freistehende KAPSEL ─────────────────
+ * Ians Entscheidung 43 gibt ihr auf iOS 26 echtes Liquid Glass — und sein Vorbild
+ * liegt als Bild im Projekt (`vorbild-liquid-glass-bierbuddy.png`). Die erste
+ * Fassung war eine Leiste über die ganze Breite mit Trennlinie oben, also die
+ * gewohnte iOS-Leiste mit Glas dahinter; sein Urteil war *„noch nicht wie ich es
+ * dir gezeigt habe"*. **Der Unterschied ist nicht der Effekt, sondern die Form:**
+ * eine Kapsel mit Abstand zu allen vier Kanten, voll gerundet, ohne Linie. Glas
+ * braucht Rand, nicht nur Hintergrund — erst wenn Inhalt daneben UND darunter
+ * durchläuft, sieht man, dass es bricht. Die Maße stehen in `lib/tabs.ts`.
  *
  * Der Preis steht an EINER Stelle und heißt `useTabRand()`: Was fest steht, weicht
  * der Leiste aus (`SsScreen` setzt einen Rand), was scrollt, scrollt darunter
@@ -42,6 +47,8 @@ import type { IconName } from '@/theme/icons';
  * Verschieden ist nur, was man sieht (Entscheidung 43).
  */
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+  const kapselUnten = tabKapselUnten(insets.bottom);
   const offene = useOffeneAnfragen();
   // Seit Phase 17 zählt die Zahl BEIDE Sorten. Zwei getrennte Zahlen an einem Tab
   // gibt es nicht, und zwei Tabs wären genau die zweite Mechanik, die Ians
@@ -62,11 +69,15 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.ink,
         tabBarInactiveTintColor: colors.inkSoft,
-        tabBarStyle: styles.leiste,
-        // Der Untergrund der Leiste — auf iOS 26 echtes Glas, sonst dieselbe helle
-        // Fläche wie bisher. Er liegt HINTER den Symbolen; deshalb ist es ein
-        // eigener Slot und nicht einfach eine Hintergrundfarbe am `tabBarStyle`.
-        tabBarBackground: () => <SsGlas style={styles.glas} />,
+        tabBarStyle: [
+          styles.leiste,
+          { left: TAB_KAPSEL_SEITE, right: TAB_KAPSEL_SEITE, bottom: kapselUnten },
+        ],
+        // Der Untergrund der Kapsel — auf iOS 26 echtes Glas, sonst eine helle
+        // Fläche mit Kante und Schatten (`schwebt`). Er liegt HINTER den Symbolen;
+        // deshalb ist es ein eigener Slot und nicht eine Hintergrundfarbe am
+        // `tabBarStyle`.
+        tabBarBackground: () => <SsGlas schwebt style={styles.glas} />,
         tabBarLabelStyle: styles.beschriftung,
         tabBarItemStyle: styles.eintrag,
       }}>
@@ -108,18 +119,26 @@ function symbol(name: IconName) {
 }
 
 const styles = StyleSheet.create({
-  // Seit Phase 19e-2 schwebend: kein Platz im Layout, keine eigene Farbe — die
-  // kommt aus `tabBarBackground`. Die Kante bleibt, sie ist auch auf Glas die
-  // Auskunft „hier hört die App auf".
+  // Die Kapsel: Abstand zu allen vier Kanten, voll gerundet, KEINE Trennlinie —
+  // siehe den Kopfkommentar und `lib/tabs.ts`. Die Farbe kommt aus
+  // `tabBarBackground`, deshalb steht hier nur Geometrie.
+  //
+  // `paddingBottom: 0` ist kein Schönheitsfehler: Die Leiste legt sonst den unteren
+  // Sicherheitsabstand selbst noch einmal drauf, und die Kapsel wäre 34 px zu hoch.
+  // `overflow: 'hidden'` beschneidet das Glas auf die Rundung.
   leiste: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+    height: TAB_KAPSEL_HOEHE,
+    borderRadius: radius.pill,
     backgroundColor: 'transparent',
-    borderTopColor: colors.line,
-    borderTopWidth: 1,
-    paddingTop: spacing.xs,
+    borderTopWidth: 0,
+    // KEINE eigene Polsterung: Die Kapsel hat eine feste Höhe, und die Leiste legt
+    // sonst oben ihren Abstand und unten den Sicherheitsabstand noch einmal drauf —
+    // dann ragen Symbol und Beschriftung unten aus der Rundung heraus und
+    // `overflow: 'hidden'` schneidet sie ab. Genau so passiert, siehe `z01`.
+    paddingTop: 0,
+    paddingBottom: 0,
+    overflow: 'hidden',
     // Android zeichnet sonst einen eigenen Schlagschatten unter die Leiste, und
     // der steht dann auf dem Inhalt, der jetzt darunter durchläuft.
     elevation: 0,
@@ -127,7 +146,9 @@ const styles = StyleSheet.create({
   // Ausgeschriebene Kanten statt `absoluteFill`: registrierte Style-ID, die sich
   // nicht mischen lässt (ACTA-Falle).
   glas: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-  eintrag: { paddingVertical: spacing.xs },
+  // Auch hier keine senkrechte Polsterung — die Höhe kommt von der Kapsel, und die
+  // Leiste zentriert ihre Einträge darin.
+  eintrag: { paddingVertical: 0 },
   beschriftung: { ...type.caption, fontWeight: '700' },
   zahl: { backgroundColor: status.danger, color: colors.surface, fontSize: 11, fontWeight: '700' },
 });

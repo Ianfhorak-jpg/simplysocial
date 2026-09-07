@@ -1,7 +1,13 @@
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { View } from 'react-native';
 
-import { GLAS_FARBSCHEMA, GLAS_STIL, glasErsatz, type SsGlasProps } from './glas-typen';
+import {
+  GLAS_FARBSCHEMA,
+  GLAS_STIL,
+  glasErsatz,
+  glasSchwebt,
+  type SsGlasProps,
+} from './glas-typen';
 
 /**
  * Die iOS-Fassung: echtes Liquid Glass — Phase 19e-2, Ians Entscheidung 43.
@@ -35,11 +41,13 @@ import { GLAS_FARBSCHEMA, GLAS_STIL, glasErsatz, type SsGlasProps } from './glas
  */
 const GLAS_DA = isGlassEffectAPIAvailable() && isLiquidGlassAvailable();
 
-export function SsGlas({ children, style }: SsGlasProps) {
-  if (!GLAS_DA) return <View style={[glasErsatz, style]}>{children}</View>;
+export function SsGlas({ children, schwebt, style }: SsGlasProps) {
+  if (!GLAS_DA) return <View style={[glasErsatz, schwebt && glasSchwebt, style]}>{children}</View>;
 
-  // KEIN `glasErsatz` darunter: Eine deckende Fläche hinter dem Glas ist genau das,
-  // was es zu sehen geben soll — dann wäre das Glas eine teure weiße Fläche.
+  // KEIN `glasErsatz` und KEIN `glasSchwebt`: Eine deckende Fläche hinter dem Glas
+  // ist genau das, was es zu sehen geben soll, und Kante und Schatten bringt es
+  // selbst mit. Beides darüberzulegen war die erste Fassung — und der Grund, warum
+  // Ian sagte, es sehe noch nicht aus wie sein Vorbild.
   return (
     <GlassView style={style} glassEffectStyle={GLAS_STIL} colorScheme={GLAS_FARBSCHEMA}>
       {children}

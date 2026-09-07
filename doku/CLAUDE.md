@@ -35,11 +35,37 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+🔁 **Nachgebessert am selben Abend (2026-09-07), nach Ians Urteil über die erste
+Fassung: *„noch nicht wie ich es dir gezeigt habe … sieht echt noch nicht so gut aus".***
+**Sein Vorbild liegt jetzt als Bild im Projekt: `vorbild-liquid-glass-bierbuddy.png`** —
+derselbe Screenshot, aus dem schon Entscheidung 41 kam. Drei Dinge waren falsch, und
+keines davon war der Effekt:
+1. **Die FORM der Tab-Leiste.** Erste Fassung: volle Breite, unten bündig, Trennlinie
+   oben — die gewohnte iOS-Leiste mit Glas dahinter. Vorbild: eine **freistehende
+   Kapsel** mit Abstand zu allen vier Kanten, voll gerundet, ohne Linie. **Glas braucht
+   Rand, nicht nur Hintergrund:** Was an drei Kanten am Schirm klebt, sieht aus wie eine
+   getönte Leiste; erst wenn Inhalt daneben UND darunter durchläuft, sieht man, dass es
+   bricht. Maße in `src/lib/tabs.ts`, gemessen am Vorbild (16 pt Seitenrand, 56 pt hoch,
+   ~24 pt über dem unteren Rand).
+2. **Kante und Schatten lagen AUF dem Glas.** Regel 61 sagte zuerst „Glas ersetzt die
+   Fläche, nicht den Rahmen" — am Bild war das falsch. Echtes Liquid Glass zeichnet
+   seine helle Kante selbst und wirft keinen Schlagschatten; eine 1-px-Linie plus
+   Schatten darüber macht daraus wieder eine Karte mit unscharfem Hintergrund. **Kante
+   und Schatten sind der ERSATZ für das, was Glas mitbringt** — jetzt in `glasSchwebt`
+   und nur im Rückfall.
+3. **Das Blatt war halb Glas, halb Weiß.** Nur der Kopf war verglast, direkt darunter
+   begann die deckende Liste — die Naht lief quer durchs Bild. Jetzt ist das ganze Blatt
+   EIN Material, wie bei Apple Karten. Der Preis ist angenommen: Die Liste liegt auf
+   mattiertem Glas; `regular` ist dick genug, dass der Text steht.
+
+Belege: `z02`/`z03` (iOS), `z01`/`z04`/`z05` (Web). Nachgemessen auf 360 × 600 und
+390 × 844, alle vier Tabs: kein verdeckter Knopf, kein Überlauf.
+
 ✅ **Phase 19e-2 ist fertig (2026-09-07): Liquid Glass — und OHNE neuen Build.**
-Glas haben **die Tab-Leiste, die schwebende Umschalter-Pille und der Kopf des Blattes**;
+Glas haben **die Tab-Leiste (als Kapsel), die schwebende Umschalter-Pille und das ganze
+Blatt**;
 auf Web und Android steht überall dieselbe helle Fläche wie vorher (Ians Entscheidung
-43). Belegt auf **iOS 26.5 im Simulator** und auf Web (360 × 600 und 390 × 844), Belege
-`y01`–`y05` und `x01`. Sieben Dinge sind daran wichtiger als der Effekt:
+43). Belegt auf **iOS 26.5 im Simulator** und auf Web (360 × 600 und 390 × 844). Sieben Dinge sind daran wichtiger als der Effekt:
 1. **Der Baustein war schon da — es gab nichts zu installieren.**
    `expo-glass-effect@57.0.1` liegt seit Phase 19 in `node_modules`, weil **`expo-router`
    57 selbst davon abhängt**. Autolinking hat es mitgenommen, es steht in
@@ -1321,31 +1347,45 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    dem BLATT aus, die Kartengeometrie folgt dem Deckel. Die Verwechslung ist nicht zu
    sehen, nur zu lesen.
 
-61. **Glas ersetzt die FLÄCHE, nicht den Rahmen.** *(Phase 19e-2.)* `SsGlas` bringt
-   genau eine Eigenschaft mit — den Untergrund: auf iOS 26 echtes Liquid Glass, sonst
-   `glasErsatz` aus `components/ui/glas-typen.ts`. Radius, Kante, Schatten, Polsterung
-   und `flex` kommen vom Aufrufer und gelten in **beiden** Zweigen. Wer Kante oder
-   Schatten in den Rückfall schreibt, vererbt sie an jede Glasfläche der App — die
-   Tab-Leiste bekäme den Schatten der Umschalter-Pille, und niemand fände heraus, woher.
+61. **Glas bringt seine eigene Kante mit — Kante und Schatten sind der ERSATZ, wo
+   keines ist.** *(Phase 19e-2, berichtigt am 2026-09-07 nach Ians Rückmeldung.)*
+   `SsGlas` verantwortet den Untergrund **samt Kante**: auf iOS 26 echtes Liquid
+   Glass, sonst `glasErsatz` — und bei `schwebt` zusätzlich die 1-px-Linie und den
+   Schatten aus `glasSchwebt`. Der Aufrufer bringt **nur Geometrie** mit (Radius,
+   Polsterung, `flex`, Position). Die erste Fassung machte es andersherum: Kante und
+   Schatten kamen vom Aufrufer und lagen auch AUF dem Glas — daraus wird wieder eine
+   Karte mit unscharfem Hintergrund, und genau das meinte Ian mit *„sieht noch nicht
+   so gut aus"*. `schwebt` setzt, wer frei über etwas anderem liegt (Tab-Kapsel,
+   Umschalter-Pille); wer in einer Fläche sitzt, die ihre Kante schon hat, nicht.
    **Zwei Prüfungen sind Pflicht** (`isGlassEffectAPIAvailable()` UND
    `isLiquidGlassAvailable()`): Es gibt iOS-26-Beta-Fassungen, in denen die API fehlt
-   und der Aufruf abstürzt. Und: `opacity: 0` am Glas oder an einem Elternteil schaltet
-   den Effekt ab — zum Einblenden `glassEffectStyle` mit `animate` nehmen.
-   **Plattform-Endung, kein `Platform.OS`-Zweig** — aber aus einem anderen Grund als bei
-   `SsKarte`: `expo-glass-effect` steckt über `expo-router` ohnehin schon im Web-Bündel;
-   was nicht ins Web darf, ist der `requireNativeViewManager`-Aufruf beim Laden.
-62. **Die Tab-Leiste SCHWEBT, und was fest steht, weicht ihr aus.** *(Phase 19e-2.)*
-   Seit die Leiste Glas trägt, nimmt sie keinen Platz mehr im Layout weg — sonst hätte
-   das Glas nichts zu brechen. Wie hoch sie ist, sagt **`useTabRand()`**
-   (`src/lib/tabs.ts`), und zwar 0, wo keine Leiste ist; gefragt wird nie
-   `useBottomTabBarHeight()`, der wirft außerhalb einer Tab-Leiste, und `SsScreen` steht
-   auf jedem Screen. Die Regel steht in `SsScreen` und heißt: **Was scrollt, scrollt
-   unter das Glas. Was fest steht, weicht ihm aus.** Beim `scroll`-Zweig wandert die
-   Leistenhöhe in den Scroll-INHALT, beim festen Zweig begrenzt sie die FLÄCHE — und
-   zwar als `marginBottom`, weil dort absolut positionierte Kinder liegen (Antwort-
-   Leiste, Wischkarten) und **Yoga die Polsterung des Elternteils anrechnet, der Browser
-   aber nicht**. Was über der Karte liegt, weicht ihr ebenfalls aus (`SsBlatt.unten`);
-   die Karte selbst tut es NICHT — dass Wien unter der Leiste durchläuft, ist der Sinn.
+   und der Aufruf abstürzt. Und: `opacity: 0` am Glas oder an einem Elternteil
+   schaltet den Effekt ab — zum Einblenden `glassEffectStyle` mit `animate` nehmen.
+   **Plattform-Endung, kein `Platform.OS`-Zweig** — aber aus einem anderen Grund als
+   bei `SsKarte`: `expo-glass-effect` steckt über `expo-router` ohnehin schon im
+   Web-Bündel; was nicht ins Web darf, ist der `requireNativeViewManager`-Aufruf beim
+   Laden des Moduls.
+62. **Glas braucht RAND, nicht nur Hintergrund — die Tab-Leiste ist eine
+   freistehende Kapsel.** *(Phase 19e-2.)* **Ians Vorbild liegt als Bild im Projekt:
+   `vorbild-liquid-glass-bierbuddy.png`** — derselbe Screenshot, aus dem
+   Entscheidung 41 kommt. Die erste Fassung war eine Leiste über die ganze Breite mit
+   Trennlinie oben, also die gewohnte iOS-Leiste mit Glas dahinter; sein Urteil war
+   *„noch nicht wie ich es dir gezeigt habe"*. Eine Fläche, die an drei Kanten am
+   Schirm klebt, sieht aus wie eine getönte Leiste — **erst wenn Inhalt daneben UND
+   darunter durchläuft, sieht man, dass sie bricht.** Die Maße stehen in
+   `src/lib/tabs.ts` (`TAB_KAPSEL_HOEHE`, `TAB_KAPSEL_SEITE`, `tabKapselUnten()`) und
+   nirgends sonst: Drei Stellen brauchen sie — die Leiste, jeder Screen darüber
+   (`SsScreen`) und das Blatt auf der Karte (`SsBlatt.unten`).
+   **Dasselbe gilt für das Blatt: es ist EIN Material.** Erst war nur sein Kopf aus
+   Glas, und die Naht zur deckenden Liste lief quer durchs Bild. Wer eine Fläche
+   teilweise verglast, bekommt zwei Materialien, die einander widersprechen.
+   **Was fest steht, weicht der Kapsel aus** (`useTabRand()`, siehe `SsScreen`):
+   *Was scrollt, scrollt unter das Glas; was fest steht, weicht ihm aus.* Beim
+   `scroll`-Zweig wandert die Höhe in den Scroll-INHALT, beim festen Zweig begrenzt
+   sie die FLÄCHE — und zwar als `marginBottom`, weil dort absolut positionierte
+   Kinder liegen (Antwort-Leiste, Wischkarten) und **Yoga die Polsterung des
+   Elternteils anrechnet, der Browser aber nicht**. Die Karte weicht NICHT aus: Dass
+   Wien unter der Kapsel durchläuft, ist der Sinn.
 
 53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
    rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und

@@ -312,13 +312,20 @@ export function SsBlatt({
             transform: [{ translateY: Animated.subtract(hoehe, sichtbar) }],
           },
         ]}>
-        {/* Der Kopf ist auf iOS 26 aus echtem Glas (Phase 19e-2, Ians
+        {/* Das GANZE Blatt ist auf iOS 26 aus echtem Glas (Phase 19e-2, Ians
             Entscheidung 43) — darunter liegt die Karte, also gibt es hier wirklich
             etwas zu brechen. Überall sonst ist es dieselbe helle Fläche wie bisher.
 
-            Und er ist die eine Stelle, die gemessen wird: Griff plus Titelzeile
-            zusammen ergeben die unterste Raststufe (siehe `kopf` oben). */}
-        <SsGlas style={styles.kopfGlas}>
+            **Erst war nur der KOPF aus Glas, und das war sichtbar falsch:** Direkt
+            darunter begann die deckende Liste, und die Naht zwischen den zwei
+            Materialien lief quer durchs Blatt. Ein Blatt ist EIN Ding — bei Apple
+            Karten auch. Der Preis ist bekannt und angenommen: Die Liste liegt damit
+            auf mattiertem Glas statt auf Weiß; `regular` ist dick genug, dass der
+            Text steht (die dünne Stufe `clear` wäre es nicht, siehe `GLAS_STIL`).
+
+            Der Kopf bleibt trotzdem die eine Stelle, die GEMESSEN wird: Griff plus
+            Titelzeile zusammen ergeben die unterste Raststufe (siehe `kopf`). */}
+        <SsGlas style={styles.blattGlas}>
           <View
             onLayout={(e) => setKopfHoehe(e.nativeEvent.layout.height)}
             style={styles.kopfInhalt}>
@@ -327,9 +334,9 @@ export function SsBlatt({
             </View>
             {kopf}
           </View>
-        </SsGlas>
 
-        <View style={[styles.koerper, { height: koerperHoehe }]}>{children}</View>
+          <View style={{ height: koerperHoehe }}>{children}</View>
+        </SsGlas>
       </Animated.View>
     </View>
   );
@@ -371,11 +378,8 @@ const styles = StyleSheet.create({
   // Der Radius steht hier NOCH EINMAL, obwohl das Blatt `overflow: 'hidden'` hat:
   // Auf iOS ist das Glas eine native Ansicht, und die schneidet der Elternteil
   // nicht zuverlässig auf seine Rundung zurecht.
-  kopfGlas: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl },
+  blattGlas: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl },
   kopfInhalt: { width: '100%' },
-  // Der Körper ist die deckende Fläche der Liste. Sie steht hier und nicht am
-  // Blatt, damit das Glas oben etwas zu zeigen hat.
-  koerper: { backgroundColor: colors.surface },
   // Der Griff ist der EINZIGE Ort mit einem Gesten-Erkenner. Die Fläche ist
   // absichtlich höher als der Strich darin: Ein 5 px hoher Balken ist kein Ziel für
   // einen Daumen, 28 px sind eines.

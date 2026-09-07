@@ -3254,10 +3254,52 @@ Belege: `v01`–`v09` im Projektordner.
 nennt iOS-26-Beta-Fassungen, in denen die API fehlt und der Aufruf **abstürzt**
 (expo/expo#40911).
 
-Glas bekommen haben: **die Tab-Leiste unten, die schwebende Umschalter-Pille und der
-Kopf des Blattes.** Auf Web und Android fällt alles drei auf die heutige helle Fläche
+Glas bekommen haben: **die Tab-Leiste unten (als freistehende Kapsel), die schwebende
+Umschalter-Pille und das ganze Blatt.** Auf Web und Android fällt alles drei auf die heutige helle Fläche
 zurück — das ist Entscheidung 43 und kein Mangel. Belegt auf **iOS 26.5 (Simulator)**
 und auf Web (360 × 600 und 390 × 844). Belege `y01`–`y05` und `x01` im Projektordner.
+
+> 🔁 **Nachgebessert am selben Abend, und das ist der wichtigere Teil dieser Phase.**
+> Ian hat die erste Fassung gesehen: *„noch nicht wie ich es dir gezeigt habe … sieht
+> echt noch nicht so gut aus."* **Sein Vorbild liegt jetzt als Bild im Projekt —
+> `vorbild-liquid-glass-bierbuddy.png`**, derselbe BierBuddy-Screenshot, aus dem schon
+> Entscheidung 41 kam (runder Knopf neben der Leiste). Drei Dinge waren falsch, und
+> **keines davon war der Effekt:**
+>
+> **a) Die FORM der Tab-Leiste — der größte Unterschied.**
+> Erste Fassung: volle Breite, unten bündig, Trennlinie oben. Also die gewohnte
+> iOS-Leiste, nur mit Glas dahinter. Vorbild: eine **freistehende Kapsel**, Abstand zu
+> allen vier Kanten, voll gerundet, keine Linie.
+> **Der Satz dahinter: Glas braucht RAND, nicht nur Hintergrund.** Eine Fläche, die an
+> drei Kanten am Schirm klebt, sieht aus wie eine getönte Leiste — erst wenn Inhalt
+> **daneben UND darunter** durchläuft, sieht man, dass sie bricht. Am Vorbild
+> abgelesen und auf das Raster der App gerundet: 16 pt Seitenrand, 56 pt hoch, ~24 pt
+> über dem unteren Rand, Radius = halbe Höhe. Die Maße stehen in `src/lib/tabs.ts`,
+> weil DREI Stellen sie brauchen (die Leiste, `SsScreen`, `SsBlatt.unten`) — eine
+> geschätzte Höhe an einer davon ist der Grund, warum eine Zeile hinter der Leiste
+> landet.
+>
+> **b) Kante und Schatten lagen AUF dem Glas.** Der erste Entwurf hatte die Regel
+> „Glas ersetzt die Fläche, nicht den Rahmen" — Kante und Schatten kamen vom Aufrufer
+> und galten in beiden Zweigen. Am Bild ist das falsch: Echtes Liquid Glass zeichnet
+> seine helle Kante selbst und wirft keinen Schlagschatten. Eine 1-px-Linie plus
+> Schatten darüber macht daraus wieder **eine Karte mit unscharfem Hintergrund** —
+> genau der Eindruck, den Ian beschrieben hat. **Kante und Schatten sind also nicht
+> Zierde, sondern der ERSATZ für das, was Glas mitbringt**: jetzt in `glasSchwebt`,
+> hinter der Prop `schwebt`, und nur im Rückfall gezeichnet. (Harte Regel 61 ist
+> entsprechend berichtigt — sie war zwei Stunden alt.)
+>
+> **c) Das Blatt war halb Glas, halb Weiß.** Verglast war nur der Kopf; direkt darunter
+> begann die deckende Liste, und die Naht zwischen den zwei Materialien lief quer
+> durchs Bild. Ein Blatt ist EIN Ding, bei Apple Karten auch. Jetzt umschließt eine
+> `SsGlas` Kopf und Körper. Der Preis ist benannt und angenommen: Die Liste liegt auf
+> mattiertem Glas statt auf Weiß — `regular` ist dick genug, dass der Text steht, die
+> dünne Stufe `clear` wäre es nicht.
+>
+> **Die Lehre über die drei Punkte hinweg:** Bei einem Material-Effekt ist das
+> Ergebnis nicht der Effekt, sondern **die Form, die man ihm gibt**. Alle drei Fehler
+> waren im Code unsichtbar und auf dem ersten Screenshot sofort zu sehen — und Ian hat
+> sie gesehen, bevor ich sie gesucht habe. Belege: `z01`–`z05`.
 
 **Was angefasst wurde:**
 
@@ -3265,7 +3307,9 @@ und auf Web (360 × 600 und 390 × 844). Belege `y01`–`y05` und `x01` im Proje
    (`glasErsatz`), `GLAS_FARBSCHEMA`, `GLAS_STIL`, die Schnittstelle. Dieselbe Bauart
    wie `karte-typen.ts` neben den zwei Kartenzeichnern (harte Regel 52).
 2. **`components/ui/SsGlas.tsx` / `SsGlas.native.tsx`** — neu, die zwei Zeichner.
-3. **`lib/tabs.ts`** — neu, `useTabRand()`: wie hoch die Tab-Leiste ist, 0 wo keine ist.
+3. **`lib/tabs.ts`** — neu: die Maße der Kapsel (`TAB_KAPSEL_HOEHE`,
+   `TAB_KAPSEL_SEITE`, `tabKapselUnten()`) und `useTabRand()` — wie viel unten belegt
+   ist, 0 wo keine Leiste ist.
 4. **`(tabs)/_layout.tsx`** — die Leiste schwebt (`position: 'absolute'`), ihr
    Untergrund kommt aus `tabBarBackground`. Import von `expo-router/js-tabs` statt
    `expo-router` (dort ist er veraltet, und nur der Unterweg gibt den Kontext her).
@@ -4766,11 +4810,17 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 >    kompiliert. Wer wieder einen Native-Baustein braucht, schaut **zuerst nach, ob er
 >    schon da ist** (`grep` in `Podfile.lock`, `strings` auf dem Binary) — das spart
 >    einen halben Tag.
-> 2. **Glas läuft, belegt auf iOS 26.5 im Simulator** (`y01`): Die Apple-Karte scheint
->    durch die Umschalter-Pille, durch den Blattkopf und durch die Tab-Leiste. Auf Web
+> 2. **Glas läuft, belegt auf iOS 26.5 im Simulator** (`z03`): Die Apple-Karte scheint
+>    durch die Umschalter-Pille, durch das ganze Blatt und durch die Tab-Kapsel. Auf Web
 >    steht überall dieselbe helle Fläche wie vorher (Ians Entscheidung 43).
-> 3. **Die Tab-Leiste SCHWEBT jetzt** (`position: 'absolute'`), weil Glas etwas
->    braucht, das darunter durchläuft. Der Preis steht an einer Stelle und heißt
+>    **Die erste Fassung hat Ian abgelehnt, und sein Vorbild liegt jetzt im Projekt:
+>    `vorbild-liquid-glass-bierbuddy.png`.** Was daran falsch war, steht in Abschnitt 5b
+>    unter „Nachgebessert am selben Abend" — kurz: die FORM (Kapsel statt Leiste), Kante
+>    und Schatten lagen auf dem Glas, und das Blatt war halb Glas, halb Weiß.
+>    **Wer hier weiterarbeitet, legt das Vorbild daneben, bevor er etwas ändert.**
+> 3. **Die Tab-Leiste ist eine freistehende KAPSEL** (`position: 'absolute'`, 16 pt
+>    Seitenrand, 56 pt hoch, ~24 pt über dem Rand — `lib/tabs.ts`), weil Glas etwas
+>    braucht, das daneben UND darunter durchläuft. Der Preis steht an einer Stelle und heißt
 >    `useTabRand()` (`lib/tabs.ts`): *Was scrollt, scrollt unter das Glas; was fest
 >    steht, weicht ihm aus* (`SsScreen`). Wer einen neuen Tab-Screen baut, bekommt das
 >    geschenkt — wer daneben baut, legt seine unterste Zeile hinter die Leiste.

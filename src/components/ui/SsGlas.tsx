@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 
-import { glasErsatz, type SsGlasProps } from './glas-typen';
+import { glasErsatz, glasSchwebt, type SsGlasProps } from './glas-typen';
 
 /**
  * Eine Fläche, die auf iOS 26 aus echtem Glas ist — **das hier ist die
@@ -16,6 +16,6 @@ import { glasErsatz, type SsGlasProps } from './glas-typen';
  * Web-Rückfall mitbringt: Ein Import, der auf Web nichts tut, gehört nicht ins
  * Web-Bündel (harte Regel 52).
  */
-export function SsGlas({ children, style }: SsGlasProps) {
-  return <View style={[glasErsatz, style]}>{children}</View>;
+export function SsGlas({ children, schwebt, style }: SsGlasProps) {
+  return <View style={[glasErsatz, schwebt && glasSchwebt, style]}>{children}</View>;
 }

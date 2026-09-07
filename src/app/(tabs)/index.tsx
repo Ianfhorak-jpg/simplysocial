@@ -357,7 +357,7 @@ export default function FeedScreen() {
         // Über der Karte steht die Pille auf Glas (Phase 19e-2, Entscheidung 43).
         // Der Umschalter darin gibt seine eigene Fläche ab — zwei Untergründe
         // übereinander wären einer zu viel, und der obere wäre der deckende.
-        <SsGlas style={[styles.ansicht, styles.ansichtSchwebend]}>
+        <SsGlas schwebt style={[styles.ansicht, styles.ansichtSchwebend]}>
           {umschalter(styles.ansichtImGlas)}
         </SsGlas>
       ) : (
@@ -1161,12 +1161,11 @@ const styles = StyleSheet.create({
   // Fläche auf hellen Bezirken. Der Schatten ist dabei kein Schmuck, sondern die
   // Aussage „das hier liegt darüber" — dieselbe Begründung wie beim Blatt und beim
   // Prototyp-Hinweis. **In 19e-2 wird genau diese Fläche zu echtem Glas.**
-  ansichtSchwebend: {
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.pill,
-    boxShadow: '0 4px 16px rgba(23, 25, 28, 0.16)',
-  },
+  // Nur noch Geometrie: Kante und Schatten kommen aus `SsGlas` mit `schwebt` — und
+  // dort auch nur, wo es KEIN Glas gibt. Echtes Glas bringt seine eigene helle Kante
+  // mit; eine 1-px-Linie plus Schlagschatten darüber macht daraus wieder eine Karte
+  // mit unscharfem Hintergrund (Ians Rückmeldung, 2026-09-07).
+  ansichtSchwebend: { borderRadius: radius.pill },
   // Der Umschalter IM Glas: keine eigene Fläche, keine eigene Kante — beides
   // gehört jetzt der Glas-Pille darum. Die Polsterung behält er, sonst kleben die
   // drei Stufen am Rand.
