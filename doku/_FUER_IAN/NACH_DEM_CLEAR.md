@@ -3,10 +3,25 @@
 > Diese Datei steht hier, weil der Chat nach dem `/clear` weg ist — der Text darin
 > also auch. Hier findest du ihn wieder.
 >
-> Stand: **06.09.2026, abends.** **SimplySocial ist eine echte iPhone-App — und die
-> Karte ist jetzt eine echte Apple-Karte.** Sie startet auf einem iPhone-Simulator, alle
-> Symbole zeichnen, alles sitzt richtig. Was noch fehlt, ist der Build auf **dein**
-> Handy — dafür brauche ich dich (siehe unten). Phase 0 bis 19d-1 sind fertig.
+> Stand: **07.09.2026, abends.** **Die Karte IST jetzt die App, und sie hat Liquid
+> Glass.** Vollbild-Karte, ein Blatt, das man hochziehen kann, „Posten" als runder Knopf
+> — und seit heute Abend sind Tab-Leiste, Umschalter-Pille und Blatt auf iOS 26 aus
+> echtem Glas: Die Karte scheint durch. Phase 0 bis 19e sind fertig.
+>
+> **Zwei Sachen von heute Abend, die du wissen solltest:**
+> - **Das Glas hat nichts extra gekostet.** Es sah nach einem neuen Baustein und einem
+>   neuen Build aus; das Stück Apple-Technik dafür lag durch ein anderes Paket schon in
+>   der App. Reine Programmierarbeit.
+> - **Deine Rückmeldung („noch nicht wie ich es dir gezeigt habe") war der ganze
+>   Unterschied.** Falsch war nicht der Effekt, sondern die Form: Die Leiste war eine
+>   Leiste über die ganze Breite statt einer freistehenden Kapsel wie in deinem
+>   BierBuddy-Bild. **Das Bild liegt jetzt im Projekt** (`vorbild-liquid-glass-
+>   bierbuddy.png`) und ist in den Regeln verlinkt — die nächste Sitzung sieht es,
+>   bevor sie etwas anfasst.
+>
+> **Die Live-Seite zeigt das alles noch NICHT** (sie steht auf dem Stand von 19d). Das
+> ist Absicht: Dort zeigst du den Prototyp herum, und 19e war bis jetzt auf keinem
+> echten Gerät. Sag Bescheid, wenn sie live soll.
 >
 > **Leopolds Karten-Idee ist gebaut, in drei Schritten:** die Wien-Karte selbst (19b),
 > die Blase, die beim Antippen eines Bezirks herausspringt (19c), und seit heute Abend
@@ -17,7 +32,9 @@
 
 ## Zuerst: was ich von dir brauche, damit es weitergeht
 
-**1. Die App auf DEIN iPhone.** Bis jetzt läuft sie auf einem simulierten iPhone am Mac.
+**1. Die App auf DEIN iPhone.** *(Seit dem 07.09. kommt ein Punkt dazu: wie sich das
+Glas unter einem Finger anfühlt — am Simulator sieht man es, anfassen kann man es dort
+nicht.)* Bis jetzt läuft sie auf einem simulierten iPhone am Mac.
 Das beantwortet „sieht sie richtig aus" — aber nicht „fühlt sie sich richtig an". Der
 Wischstapel, die Tastatur im Chat und der Jahrgangs-Balken sind **mit einem Mausklick
 nicht prüfbar**; dafür braucht es einen Finger. **Seit heute Abend kommt einer dazu:**
