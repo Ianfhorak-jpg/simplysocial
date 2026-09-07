@@ -3018,7 +3018,7 @@ stört. **Erst schauen lassen, dann bauen.**
 
 ---
 
-### Phase 19e — Die Karte wird zur App 🟡 *(19e-1 fertig 2026-09-07, 19e-2 offen)*
+### Phase 19e — Die Karte wird zur App ✅ *(19e-1 und 19e-2 fertig, beide 2026-09-07)*
 
 **Ziel:** Aus der Kartenansicht wird das, was Ian beschrieben hat — *„wenn man auf Karte
 drückt, sieht man wirklich nur die Karte auf dem ganzen Screen, so wie wenn man bei Apple
@@ -3030,7 +3030,7 @@ auf Karten geht."* Dazu räumt der Start-Bildschirm auf: Der Schriftzug verschwi
 | | Was | Neuer Build? |
 |---|---|---|
 | **19e-1** ✅ | Das ganze Design: Vollbild-Karte, Blatt, Kopf weg, Posten umziehen, Blase weg, Hinweis als Vollbild | **Nein** — läuft sofort im Browser und im Simulator |
-| **19e-2** | Echtes Liquid Glass (`expo-glass-effect`) | **Ja** — ein einziger neuer Baustein |
+| **19e-2** ✅ | Echtes Liquid Glass (`expo-glass-effect`) | ~~**Ja** — ein einziger neuer Baustein~~ **Nein.** Das Paket lag schon da: `expo-router` 57 hängt selbst davon ab, Autolinking hat es mitgenommen, und es ist seit dem 19d-1-Build einkompiliert (siehe 19e-2, Befund 1) |
 
 > **Warum getrennt (Ians Entscheidung 52):** Phase 19 hat gelehrt, dass nur EIN neuer
 > Native-Baustein auf einmal in einen Build gehört — sonst hat jeder Fehler mehrere
@@ -3247,21 +3247,139 @@ Belege: `v01`–`v09` im Projektordner.
 > richtigen Bezirk. **Das ist die vierte Fassung der Phase-18b-Lehre** — und diesmal
 > war die Prüfgeste nicht zu grob, sondern zu sauber.
 
-#### 19e-2 — Liquid Glass, ein Baustein, ein Build ⬜
+#### 19e-2 — Liquid Glass ✅ *(fertig 2026-09-07 — und OHNE neuen Build)*
 
-`expo-glass-effect` — `GlassView` und `GlassContainer`, dazu `isLiquidGlassAvailable()`
-und `isGlassEffectAPIAvailable()`. **Beide Prüfungen sind Pflicht**, nicht Zierde: Die
-Doku nennt iOS-26-Beta-Fassungen, in denen die API fehlt und der Aufruf **abstürzt**.
+`expo-glass-effect` — `GlassView`, dazu `isLiquidGlassAvailable()` und
+`isGlassEffectAPIAvailable()`. **Beide Prüfungen sind Pflicht**, nicht Zierde: Die Doku
+nennt iOS-26-Beta-Fassungen, in denen die API fehlt und der Aufruf **abstürzt**
+(expo/expo#40911).
 
-Glas bekommen: die Tab-Leiste unten, die schwebende Umschalter-Pille und der Kopf des
-Blattes. Auf Web und Android fällt alles drei auf die heutigen Flächen zurück — das ist
-Entscheidung 43 und kein Mangel.
+Glas bekommen haben: **die Tab-Leiste unten, die schwebende Umschalter-Pille und der
+Kopf des Blattes.** Auf Web und Android fällt alles drei auf die heutige helle Fläche
+zurück — das ist Entscheidung 43 und kein Mangel. Belegt auf **iOS 26.5 (Simulator)**
+und auf Web (360 × 600 und 390 × 844). Belege `y01`–`y05` und `x01` im Projektordner.
 
-> **Die Bauart ist schon entschieden und heißt `SsKarte`, nicht `SsIcon`.** Harte Regel
-> 52: Zeichnen zwei Zweige DASSELBE, ist es eine Datei mit einer Verzweigung (`SsIcon`).
-> Sind es zwei verschiedene Bibliotheken oder eine, die es auf der anderen Plattform gar
-> nicht gibt, sind es **Plattform-Endungen** — sonst landet `expo-glass-effect` im
-> Web-Bündel, wo es nichts zu tun hat.
+**Was angefasst wurde:**
+
+1. **`components/ui/glas-typen.ts`** — neu, die geteilte Bedeutung: der Rückfall
+   (`glasErsatz`), `GLAS_FARBSCHEMA`, `GLAS_STIL`, die Schnittstelle. Dieselbe Bauart
+   wie `karte-typen.ts` neben den zwei Kartenzeichnern (harte Regel 52).
+2. **`components/ui/SsGlas.tsx` / `SsGlas.native.tsx`** — neu, die zwei Zeichner.
+3. **`lib/tabs.ts`** — neu, `useTabRand()`: wie hoch die Tab-Leiste ist, 0 wo keine ist.
+4. **`(tabs)/_layout.tsx`** — die Leiste schwebt (`position: 'absolute'`), ihr
+   Untergrund kommt aus `tabBarBackground`. Import von `expo-router/js-tabs` statt
+   `expo-router` (dort ist er veraltet, und nur der Unterweg gibt den Kontext her).
+5. **`SsScreen.tsx`** — die eine Regel dafür, siehe Befund 3.
+6. **`SsBlatt.tsx`** — Glaskopf, neue Prop `unten`, und zwei Berichtigungen (Befunde 4
+   und 5).
+7. **`(tabs)/index.tsx`** — die Pille liegt in einer `SsGlas`, `unten={tabRand}` am
+   Blatt, `randUnten={blattRand + tabRand}` an der Karte.
+
+**Sieben Befunde. Der erste hat die Phase halbiert, der letzte hat sie fast verlängert:**
+
+> **1. Der Baustein war schon da — es gab NICHTS zu bauen.** `expo-glass-effect@57.0.1`
+> liegt seit Phase 19 in `node_modules`: **`expo-router` 57 hängt selbst davon ab.**
+> Autolinking hat es mitgenommen, es steht in `ios/Podfile.lock`, und `strings` auf dem
+> Binary vom 2026-09-06 findet `ExpoGlassEffect` und `GlassEffectModule`. Der native
+> Teil ist seit dem 19d-1-Build einkompiliert. **Die Zeile „19e-2 · Neuer Build? Ja" in
+> der Tabelle oben war falsch** — die ganze Phase ist eine JS-Änderung. Nachgetragen ist
+> das Paket trotzdem in `package.json`: Wer sich auf die Abhängigkeit einer Abhängigkeit
+> verlässt, verliert sie beim nächsten Patch von expo-router, ohne es zu merken.
+
+> **2. Glas ersetzt die FLÄCHE, nicht den Rahmen — und deshalb kostet es keinen
+> doppelten Stil.** `SsGlas` bringt genau eine Eigenschaft mit: den Untergrund. Radius,
+> Kante, Schatten, Polsterung und `flex` kommen vom Aufrufer und gelten in **beiden**
+> Zweigen. Der erste Entwurf hatte Kante und Schatten im Rückfall — damit hätte die
+> Tab-Leiste den Schatten der Umschalter-Pille geerbt, und niemand hätte gefunden, woher.
+
+> **3. Echtes Glas braucht etwas dahinter — das ist der wirkliche Preis der Phase.**
+> Eine Tab-Leiste, unter der nichts durchläuft, bricht nichts; sie wäre eine teure helle
+> Fläche. Also nimmt sie keinen Platz mehr im Layout weg. Damit reicht jeder Tab-Screen
+> bis an die Unterkante des Fensters, und ohne Zutun läge seine unterste Zeile dahinter.
+> **Die Regel dagegen ist EINE und steht in `SsScreen`:**
+>
+>   *Was scrollt, scrollt unter das Glas. Was fest steht, weicht ihm aus.*
+>
+> Beim `scroll`-Zweig wandert die Leistenhöhe in den Scroll-INHALT, beim festen Zweig
+> begrenzt sie die FLÄCHE — sonst lägen Stapel-Knöpfe und Antwort-Leiste dahinter.
+> **Und zwar als `marginBottom`, nicht `paddingBottom`:** In beiden Fällen liegen dort
+> absolut positionierte Kinder, und *Yoga rechnet die Polsterung des Elternteils bei
+> absoluten Kindern an, der Browser macht es andersherum* (die Falle steht seit Phase 11
+> im Kommentar von `(tabs)/index.tsx`). Ein Rand AUSSEN ist auf beiden Plattformen
+> derselbe. **Nachgemessen auf 360 × 600 und 390 × 844, alle vier Tabs plus Karte plus
+> Stapel-mit-Filter: kein Knopf in der Leistenzone**, und auf dem ganz
+> heruntergescrollten Profil endet „Einstellungen" 92 px über der Leiste.
+
+> **4. Eine Berichtigung aus 19e-1: bei zugezogenem Blatt stand nur der GRIFF da.**
+> `zu` ist „der gemessene Blattkopf" — gemessen wurde aber nur der `kopf`-Knoten,
+> während darüber noch die 28 px Griff-Fläche gezeichnet werden. Sichtbar waren damit
+> genau diese 28 px, und die Titelzeile („Ganz Wien · 15 Posts"), die laut Prop-Doku
+> *„auch bei zugezogenem Blatt zu sehen sein soll"*, lag darunter abgeschnitten. Der
+> `onLayout` sitzt jetzt an der Glasfläche, die Griff UND Kopf umfasst — **eine Messung
+> statt einer Addition, die jemand vergessen kann.** Nachgemessen: Griff bei y = 508,
+> Titel-Unterkante 544, Tab-Leiste ab 551.
+
+> **5. Ein Zug am Griff markierte im Browser den Text ringsum blau.** Die Geste beginnt
+> auf dem Griff, und Chrome fängt dort eine Auswahl an. `userSelect: 'none'` — dieselbe
+> Zeile und derselbe Grund wie an der Blase in 19c. Am Gerät sieht man es nie, im
+> Prototyp bei jedem Ziehen. Nachher: `getSelection()` leer nach Zug hinunter UND hinauf.
+
+> **6. Ein „Fehler", der keiner war — und der teuerste Umweg der Phase.** Auf dem
+> Simulator öffnet die Karte mit viel Umland: Korneuburg, Klosterneuburg, Gerasdorf,
+> und Wiens Süden liegt hinter dem Blatt. Das sah nach einem Fehler in `initialRegion`
+> aus (einmal beim Einhängen gelesen, als noch nichts gemessen war). **Vier Versuche
+> und die Rechnung sagen: es stimmt so.** `KARTE_MIN_BAND = 0.5` lässt die Karte
+> ausdrücklich HINTER das Blatt laufen, statt weiter zu schrumpfen (Befund 2 aus
+> 19e-1) — `verdeckt` ist deshalb auf 360 px gedeckelt, während das Blatt bei 463 px
+> anfängt. Wien wird in den gedeckelten Streifen eingepasst, ist dort breitenbegrenzt
+> (Seitenverhältnis 1,29 gegen ein hochkantes Fenster) und lässt oben und unten Luft.
+> Genau dasselbe steht auf Web: SVG von y = 72 bis 352, Blattkante bei 275.
+> **Der spekulative Fix ist zurückgenommen** (`git checkout` auf
+> `SsAppleKarte.native.tsx`), weil er dasselbe Bild erzeugte wie vorher. Zwei Sachen
+> sind aus dem Umweg trotzdem zu behalten:
+> - **`fitToCoordinates` und `animateToRegion` verpuffen still vor `onMapReady`.** Ein
+>   Aufruf, der nichts tut, sieht genauso aus wie ein Aufruf, der nicht stattfindet —
+>   das kostete zwei Durchgänge. Wer die Kamera je wirklich setzen muss, braucht das
+>   Flag.
+> - **`fitToCoordinates` zählt `mapPadding` NICHT mit, `setRegion` schon.** Mit
+>   `edgePadding = verdeckt + Luft` zoomte die Karte auf halb Niederösterreich hinaus,
+>   weil beide Polsterungen zusammenkamen.
+>
+> **Die Lehre: ein Bild, das falsch aussieht, ist noch kein Fehler.** Vor dem Reparieren
+> die Regel nachrechnen, die das Bild erzeugt — hier stand sie seit einem Tag als
+> benannte Konstante da.
+
+> **7. Das Web-Bündel wächst um 15.402 B (+0,36 %) — und das Paket war schon drin.**
+> Gemessen gegen HEAD (4.230.145 → 4.245.547 B). Im Bündel steht
+> `isLiquidGlassAvailable()` an einer Stelle, die niemand hier geschrieben hat: in
+> **expo-routers eigenem `NativeStackNavigator`**. Damit gilt die in harter Regel 52
+> genannte BEGRÜNDUNG für Plattform-Endungen hier nicht („sonst landet es im
+> Web-Bündel") — die Endung bleibt trotzdem richtig, aus dem anderen Grund: Der
+> native Zweig ruft `requireNativeViewManager` beim Laden des Moduls, und das darf im
+> Browser nie passieren. Der größere Teil der 15 kB ist ohnehin der Wechsel des
+> `Tabs`-Imports auf `expo-router/js-tabs`, das die ganze bottom-tabs-Sammlung
+> mitexportiert.
+
+**Was geprüft ist:**
+
+| Prüfung | Ergebnis |
+|---|---|
+| iOS 26.5, Simulator: Glas an allen drei Flächen | Karte scheint durch Pille, Blattkopf und Tab-Leiste (`y01`) |
+| Web 360 × 600 und 390 × 844: Rückfall | unverändert wie vor der Phase (`y03`–`y05`) |
+| Leistenzone: alle vier Tabs, Karte, Stapel-mit-Filter, beide Größen | kein Knopf dahinter |
+| Profil ganz heruntergescrollt | „Einstellungen" 92 px über der Leiste |
+| Blatt: `zu` → Kopf ganz sichtbar (Befund 4) | Titel-Unterkante 544, Leiste ab 551 |
+| Blatt: `ganz` → nicht unter die Pille (19e-1 hält) | Pille endet 49, Griff bei 75 |
+| Ziehen am Griff, echte Zeigergesten | rastet auf allen drei Stufen, keine Textmarkierung |
+| Konsole | keine Warnung, kein Fehler aus dem App-Code |
+| `tsc --noEmit` · eslint | sauber; 76 Meldungen wie auf HEAD, alle die bekannte `react-hooks/refs`-Altlast |
+
+> ⚠️ **Was NICHT geprüft ist und in den Gerätedurchgang gehört:** wie sich Glas unter
+> einem echten Finger anfühlt (der Simulator zeigt es, er lässt sich aber nicht
+> antippen), ob `isGlassEffectAPIAvailable()` auf Ians iOS-Fassung anders antwortet als
+> auf 26.5 — und weiter offen aus 19e-1: **ob sich Blatt und Apple-Karte auf iOS um
+> dieselbe Berührung streiten.**
+
 
 #### Der Gerätebuild, parallel ⬜ *(braucht Ian einmal persönlich)*
 
@@ -4638,7 +4756,52 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
 > 🔜 **Das Erste, was zu tun ist (Stand 2026-09-07, spätester Eintrag): der
-> GERÄTEDURCHGANG, dann 19e-2.** **19e-1 ist fertig und im Browser belegt**
+> GERÄTEDURCHGANG — und der ist jetzt das EINZIGE, was noch offen ist.** Phase 19e ist
+> ganz fertig, 19e-1 und 19e-2 (Abschnitt 5b). Sieben Dinge, die eine frische Sitzung
+> wissen muss:
+>
+> 1. **19e-2 hat keinen Build gebraucht, und das ist der wichtigste Satz hier.**
+>    `expo-glass-effect` lag schon in `node_modules` — **`expo-router` 57 hängt selbst
+>    davon ab.** Es steht in `ios/Podfile.lock` und ist seit dem 19d-1-Build ins Binary
+>    kompiliert. Wer wieder einen Native-Baustein braucht, schaut **zuerst nach, ob er
+>    schon da ist** (`grep` in `Podfile.lock`, `strings` auf dem Binary) — das spart
+>    einen halben Tag.
+> 2. **Glas läuft, belegt auf iOS 26.5 im Simulator** (`y01`): Die Apple-Karte scheint
+>    durch die Umschalter-Pille, durch den Blattkopf und durch die Tab-Leiste. Auf Web
+>    steht überall dieselbe helle Fläche wie vorher (Ians Entscheidung 43).
+> 3. **Die Tab-Leiste SCHWEBT jetzt** (`position: 'absolute'`), weil Glas etwas
+>    braucht, das darunter durchläuft. Der Preis steht an einer Stelle und heißt
+>    `useTabRand()` (`lib/tabs.ts`): *Was scrollt, scrollt unter das Glas; was fest
+>    steht, weicht ihm aus* (`SsScreen`). Wer einen neuen Tab-Screen baut, bekommt das
+>    geschenkt — wer daneben baut, legt seine unterste Zeile hinter die Leiste.
+> 4. **Zwei Berichtigungen aus 19e-1 stecken darin:** Bei zugezogenem Blatt stand nur
+>    der Griff da (die Titelzeile lag abgeschnitten darunter), und ein Zug am Griff
+>    markierte im Browser den Text ringsum blau. Beides gemessen behoben, Zahlen in
+>    Abschnitt 5b.
+> 5. **Ein Umweg, der KEIN Fehler war, steht dort ausführlich (Befund 6): der
+>    Kartenausschnitt auf iOS.** Viel Umland, Wiens Süden hinter dem Blatt — das ist
+>    `KARTE_MIN_BAND = 0.5`, das die Karte ausdrücklich hinter das Blatt laufen lässt.
+>    Der spekulative Fix ist zurückgenommen. **Wer das Bild trotzdem ändern will,
+>    ändert die Konstante — nicht den Zeichner.**
+> 6. **Der Gerätebuild ist der nächste Handgriff und braucht Ian einmal persönlich.**
+>    Er hat heute nur eine gewöhnliche Apple-ID — also `npx expo run:ios --device` mit
+>    Kabel, nicht EAS. Er hat selbst gewarnt: im WLAN hängen fremde Geräte, **vor dem
+>    Installieren `xcrun devicectl list devices` lesen und den Namen bestätigen
+>    lassen.** Offen sind: Wischstapel unter einem Finger · Tastatur im Chat ·
+>    Jahrgangs-Balken mit zwei Fingern · Tipp auf die Apple-Karte · **ob sich Blatt und
+>    Karte auf iOS um dieselbe Berührung streiten** · und neu: wie sich Glas anfühlt.
+> 7. **`npm run deploy` ist weiter NICHT gelaufen** — die Live-Seite zeigt 19d. Das ist
+>    eine Entscheidung, keine Vergesslichkeit: Auf der öffentlichen Adresse zeigt Ian
+>    den Prototyp herum, und 19e war bis heute auf keinem echten Gerät. Der Quellcode
+>    ist gepusht (harte Regel 35).
+>
+> 📎 **Ein Befund liegt weiter offen und ist ÄLTER als 19e:** Im Stapel mit
+> aufgeklapptem Filter sind „Alter egal" und „Bestimmte Jahrgänge" auf 360 × 600 von
+> den Stapel-Knöpfen verdeckt — gegengeprüft auf HEAD, dort genauso. **Die Korrektur
+> ist eine Zeile** (Zähler klein unter den Stapel), und sie steht im Kopf von
+> `(tabs)/index.tsx`.
+
+> 📎 **Der vorige Eintrag, weil er noch Gültiges enthält: der Stand nach 19e-1**
 > (Abschnitt 5b, Phase 19e). Sechs Dinge, die eine frische Sitzung wissen muss:
 >
 > 1. **Was 19e-1 gebracht hat, steht in Abschnitt 5b mit vier Befunden und einer

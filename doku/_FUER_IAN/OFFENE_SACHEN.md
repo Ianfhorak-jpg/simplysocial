@@ -3,7 +3,9 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 07.09.2026 — **deine Liste steht ganz oben, sortiert nach Aufwand.**
+> Stand: 07.09.2026 (abends) — **deine Liste steht ganz oben, sortiert nach Aufwand.**
+> Neu an dem Abend: Das Liquid Glass ist gebaut (Punkt 2 hat dadurch eine Zeile mehr) —
+> **es kam keine neue Aufgabe für dich dazu.**
 > Davor: 06.09.2026 — **der Prototyp ist fertig, der Weg zur echten App ist geplant.**
 > Drei Entscheidungen von dir sind eingearbeitet (Supabase · erst aufs Handy · drei
 > Anmeldewege). **Neu und dringend: Punkt 0 gleich hier drunter.** **Neu am 06.09.2026
@@ -31,8 +33,15 @@ geht es über WLAN.
 > vor dem Installieren den Gerätenamen anzeigen und frage dich, ob es deins ist.
 
 **Wofür:** Wischstapel unter einem echten Finger · Tastatur im Chat · Jahrgangs-Balken
-mit zwei Fingern · ob ein Tipp auf die Apple-Karte den richtigen Bezirk trifft. Das sind
+mit zwei Fingern · ob ein Tipp auf die Apple-Karte den richtigen Bezirk trifft · ob sich
+das ziehbare Blatt und die Karte um denselben Finger streiten · **und seit dem 07.09.:
+wie sich das Liquid Glass anfühlt** (Tab-Leiste, Umschalter-Pille, Blattkopf sind jetzt
+echtes Glas — am Simulator sieht man es, anfassen kann man es dort nicht). Das sind
 alles Sachen, die ein Mausklick am Simulator **nicht** beweist.
+
+> 🟢 **Eine gute Nachricht dazu:** Das Glas hat **keinen neuen Baustein und keinen neuen
+> Build** gekostet — das Stück Apple-Technik dafür lag durch ein anderes Paket schon in
+> der App drin. Es war reine Programmierarbeit, du musst dafür nichts tun.
 
 ### 3. Supabase-Konto anlegen · **10 Minuten** 🟡
 Gratis, mit deiner E-Mail. Schema und Regeln sind **schon fertig und geprüft** — es ist

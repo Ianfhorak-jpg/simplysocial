@@ -1,7 +1,7 @@
-import { Tabs } from 'expo-router';
+import { Tabs } from 'expo-router/js-tabs';
 import { StyleSheet, type ColorValue } from 'react-native';
 
-import { SsIcon } from '@/components/ui';
+import { SsGlas, SsIcon } from '@/components/ui';
 import { useMeineEinladungen, useOffeneGruppenAnfragen } from '@/features/groups/hooks';
 import { useOffeneAnfragen } from '@/features/requests/hooks';
 import { colors, spacing, status, type } from '@/theme';
@@ -23,7 +23,23 @@ import type { IconName } from '@/theme/icons';
  * ── Warum die klassischen `Tabs` und nicht `NativeTabs` ───────────────────────
  * `NativeTabs` aus dem SDK-57-Template wird auf Web durch eine zweite, separate
  * Implementierung ersetzt — zwei Tab-Leisten, die man doppelt pflegt. Entschieden
- * in Phase 0 (PLAN.md).
+ * in Phase 0 (PLAN.md). Der Import kommt seit Phase 19e-2 aus `expo-router/js-tabs`
+ * statt aus `expo-router`: Dasselbe Modul, aber der Weg über `expo-router` ist in
+ * SDK 57 als veraltet markiert, und nur der Unterweg gibt `BottomTabBarHeightContext`
+ * her (siehe `lib/tabs.ts`).
+ *
+ * ── Seit Phase 19e-2: die Leiste SCHWEBT ──────────────────────────────────────
+ * Ians Entscheidung 43 gibt ihr auf iOS 26 echtes Liquid Glass. Damit Glas etwas
+ * zu brechen hat, muss darunter etwas liegen — also nimmt die Leiste keinen Platz
+ * mehr im Layout weg (`position: 'absolute'`), und der Screen reicht bis an die
+ * Unterkante. **Auf der Karte ist das der ganze Gewinn:** Wien läuft unter der
+ * Leiste durch, statt an ihr aufzuhören.
+ *
+ * Der Preis steht an EINER Stelle und heißt `useTabRand()`: Was fest steht, weicht
+ * der Leiste aus (`SsScreen` setzt einen Rand), was scrollt, scrollt darunter
+ * durch. Ohne das läge die unterste Karte jedes Screens hinter der Leiste — auf
+ * Web genauso wie auf iOS, denn die Geometrie ist auf beiden Plattformen dieselbe.
+ * Verschieden ist nur, was man sieht (Entscheidung 43).
  */
 export default function TabsLayout() {
   const offene = useOffeneAnfragen();
@@ -47,6 +63,10 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.ink,
         tabBarInactiveTintColor: colors.inkSoft,
         tabBarStyle: styles.leiste,
+        // Der Untergrund der Leiste — auf iOS 26 echtes Glas, sonst dieselbe helle
+        // Fläche wie bisher. Er liegt HINTER den Symbolen; deshalb ist es ein
+        // eigener Slot und nicht einfach eine Hintergrundfarbe am `tabBarStyle`.
+        tabBarBackground: () => <SsGlas style={styles.glas} />,
         tabBarLabelStyle: styles.beschriftung,
         tabBarItemStyle: styles.eintrag,
       }}>
@@ -88,12 +108,25 @@ function symbol(name: IconName) {
 }
 
 const styles = StyleSheet.create({
+  // Seit Phase 19e-2 schwebend: kein Platz im Layout, keine eigene Farbe — die
+  // kommt aus `tabBarBackground`. Die Kante bleibt, sie ist auch auf Glas die
+  // Auskunft „hier hört die App auf".
   leiste: {
-    backgroundColor: colors.surface,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
     borderTopColor: colors.line,
     borderTopWidth: 1,
     paddingTop: spacing.xs,
+    // Android zeichnet sonst einen eigenen Schlagschatten unter die Leiste, und
+    // der steht dann auf dem Inhalt, der jetzt darunter durchläuft.
+    elevation: 0,
   },
+  // Ausgeschriebene Kanten statt `absoluteFill`: registrierte Style-ID, die sich
+  // nicht mischen lässt (ACTA-Falle).
+  glas: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   eintrag: { paddingVertical: spacing.xs },
   beschriftung: { ...type.caption, fontWeight: '700' },
   zahl: { backgroundColor: status.danger, color: colors.surface, fontSize: 11, fontWeight: '700' },

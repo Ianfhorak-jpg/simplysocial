@@ -1,6 +1,13 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import {
+  FlatList,
+  Pressable,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AntwortLeiste } from '@/components/AntwortLeiste';
@@ -10,6 +17,7 @@ import {
   SsBlatt,
   SsButton,
   SsChip,
+  SsGlas,
   SsIcon,
   SsInput,
   SsScreen,
@@ -48,6 +56,7 @@ import {
   type WischRichtung,
 } from '@/features/posts/wisch';
 import { anfrageSenden } from '@/features/requests/hooks';
+import { useTabRand } from '@/lib/tabs';
 import { accent, CATEGORY_ORDER, categoryColors, colors, DEPTH, radius, spacing } from '@/theme';
 
 /**
@@ -329,18 +338,31 @@ export default function FeedScreen() {
    * Auch diese Zeile gibt es nur einmal: In der Kartenansicht schwebt sie über der
    * Karte (Entscheidung 44), sonst steht sie im Fluss.
    */
+  const umschalter = (style: StyleProp<ViewStyle>) => (
+    <SsSegment<Ansicht>
+      value={ansicht}
+      onChange={setAnsicht}
+      style={style}
+      options={[
+        { wert: 'stapel', label: 'Stapel' },
+        { wert: 'liste', label: 'Liste' },
+        { wert: 'karte', label: 'Karte' },
+      ]}
+    />
+  );
+
   const ansichtZeile = (schwebend: boolean) => (
     <>
-      <SsSegment<Ansicht>
-        value={ansicht}
-        onChange={setAnsicht}
-        style={[styles.ansicht, schwebend && styles.ansichtSchwebend]}
-        options={[
-          { wert: 'stapel', label: 'Stapel' },
-          { wert: 'liste', label: 'Liste' },
-          { wert: 'karte', label: 'Karte' },
-        ]}
-      />
+      {schwebend ? (
+        // Über der Karte steht die Pille auf Glas (Phase 19e-2, Entscheidung 43).
+        // Der Umschalter darin gibt seine eigene Fläche ab — zwei Untergründe
+        // übereinander wären einer zu viel, und der obere wäre der deckende.
+        <SsGlas style={[styles.ansicht, styles.ansichtSchwebend]}>
+          {umschalter(styles.ansichtImGlas)}
+        </SsGlas>
+      ) : (
+        umschalter(styles.ansicht)
+      )}
       <PostenKnopf />
     </>
   );
@@ -566,6 +588,15 @@ function KarteVollbild({
   ansichtZeile: (schwebend: boolean) => ReactNode;
 }) {
   const insets = useSafeAreaInsets();
+  /**
+   * Wie hoch die schwebende Tab-Leiste ist (Phase 19e-2).
+   *
+   * Sie nimmt seit dem Glas keinen Platz mehr im Layout weg — **und genau das ist
+   * hier der Gewinn:** Die Karte läuft unter ihr durch, statt an ihr aufzuhören.
+   * Das Blatt darf das nicht, sein Griff wäre sonst unerreichbar; deshalb geht die
+   * Zahl an zwei Stellen hin, mit zwei verschiedenen Bedeutungen (siehe unten).
+   */
+  const tabRand = useTabRand();
   const bezirk = filter.bezirk;
 
   /**
@@ -630,7 +661,12 @@ function KarteVollbild({
     // einzige hier, das ihn braucht.
     <View style={styles.vollbild}>
       {nichtsDa ? (
-        <LeererFeed filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
+        // Ohne den Rand stünde der Ausweg-Knopf hinter der schwebenden Leiste:
+        // Der leere Zustand zentriert sich in seinem Platz, und der reicht seit
+        // Phase 19e-2 bis an die Unterkante des Fensters.
+        <View style={[styles.vollbildLeer, { marginBottom: tabRand }]}>
+          <LeererFeed filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
+        </View>
       ) : (
         <>
           <SsKarte
@@ -638,13 +674,20 @@ function KarteVollbild({
             gewaehlt={gewaehlt}
             onWaehlen={bezirkTippen}
             fuellt
-            randUnten={blattRand}
+            // Von unten verdeckt ist BEIDES: das Blatt und die Leiste darunter.
+            // Wien wird zwischen dem freien Streifen zentriert, und die
+            // Lizenzzeile weicht derselben Summe aus — sonst läge die Nennung
+            // hinter dem Glas, und eine Nennung, die niemand sehen kann, ist keine.
+            randUnten={blattRand + tabRand}
             randOben={leisteBelegt}
           />
 
           <SsBlatt
             start={BLATT_START}
             maxOben={leisteBelegt}
+            // Das Blatt hört ÜBER der Leiste auf. Die Karte darunter tut das
+            // nicht — dort ist das Durchlaufen der Sinn der Sache.
+            unten={tabRand}
             // Der aufgeklappte Filterbereich ist rund 250 px hoch und passt bei halb
             // offenem Blatt nicht hinein — er würde am `overflow: hidden` des
             // Blattes abgeschnitten. Nebenbefund: Damit kostet der weggefallene
@@ -1121,8 +1164,13 @@ const styles = StyleSheet.create({
   ansichtSchwebend: {
     borderWidth: 1,
     borderColor: colors.line,
+    borderRadius: radius.pill,
     boxShadow: '0 4px 16px rgba(23, 25, 28, 0.16)',
   },
+  // Der Umschalter IM Glas: keine eigene Fläche, keine eigene Kante — beides
+  // gehört jetzt der Glas-Pille darum. Die Polsterung behält er, sonst kleben die
+  // drei Stufen am Rand.
+  ansichtImGlas: { backgroundColor: 'transparent', borderWidth: 0 },
 
   ansichtZeile: {
     flexDirection: 'row',
@@ -1236,6 +1284,7 @@ const styles = StyleSheet.create({
   // Kante. Was Abstand braucht, holt ihn sich selbst (die schwebende Leiste den
   // oberen, das Blatt seinen eigenen).
   vollbild: { flex: 1, backgroundColor: colors.bg },
+  vollbildLeer: { flex: 1 },
 
   // Die Pille schwebt über der Karte und liegt deshalb absolut. `left`/`right`
   // statt einer Breite: So bleibt sie auf jedem Schirm gleich weit von den Kanten,

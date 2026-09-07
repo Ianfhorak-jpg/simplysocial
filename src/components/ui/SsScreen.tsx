@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useTabRand } from '@/lib/tabs';
 import { colors, MAX_CONTENT_WIDTH, spacing } from '@/theme';
 
 export interface SsScreenProps {
@@ -59,6 +60,26 @@ export interface SsScreenProps {
  * Dazu kommt ein fester Grundabstand: ein Button, der exakt an der Unterkante
  * klebt, ist am Handy kaum zu treffen — und wenn die Browser-Leiste ein Stück
  * überlappt, gar nicht mehr.
+ *
+ * ── Seit Phase 19e-2: die Tab-Leiste nimmt keinen Platz mehr weg ──────────────
+ * Sie schwebt, damit ihr Glas etwas zu brechen hat (`(tabs)/_layout.tsx`). Ein
+ * Tab-Screen reicht deshalb bis an die Unterkante des Fensters, und ohne Zutun
+ * läge seine unterste Zeile dahinter. Die Regel dagegen ist eine einzige und steht
+ * hier:
+ *
+ *   **Was scrollt, scrollt unter das Glas. Was fest steht, weicht ihm aus.**
+ *
+ * Also: beim `scroll`-Zweig wandert die Leistenhöhe in den SCROLL-INHALT (das
+ * letzte Element fährt sauber darunter durch und ist trotzdem ganz erreichbar),
+ * beim festen Zweig begrenzt sie die FLÄCHE (sonst lägen die Stapel-Knöpfe und die
+ * Antwort-Leiste dahinter — beide stehen unten und scrollen nie).
+ *
+ * ── Warum `marginBottom` und nicht `paddingBottom` ────────────────────────────
+ * Weil im festen Zweig absolut positionierte Kinder darin liegen (die Antwort-
+ * Leiste, die Wischkarten). **Yoga rechnet die Polsterung des Elternteils bei
+ * absoluten Kindern an, der Browser macht es andersherum** — dieselbe Falle, die
+ * in `(tabs)/index.tsx` schon einmal kommentiert steht. Ein Rand AUSSEN ist auf
+ * beiden Plattformen derselbe.
  */
 export function SsScreen({
   children,
@@ -70,6 +91,9 @@ export function SsScreen({
   contentStyle,
 }: SsScreenProps) {
   const insets = useSafeAreaInsets();
+  // 0, wo keine Tab-Leiste ist — also auf allen Screens außerhalb von `(tabs)`.
+  const tabRand = useTabRand();
+  const leiste = tabScreen ? tabRand : 0;
 
   // Beim Scrollen übernimmt der Inhalt den unteren Abstand selbst (siehe oben).
   const kanten: ('top' | 'bottom')[] = tabScreen || scroll ? ['top'] : ['top', 'bottom'];
@@ -78,7 +102,9 @@ export function SsScreen({
     return (
       <SafeAreaView style={[styles.safe, style]} edges={kanten}>
         <Tastatur an={keyboard}>
-          <View style={[styles.content, styles.fill, contentStyle]}>{children}</View>
+          <View style={[styles.content, styles.fill, contentStyle, { marginBottom: leiste }]}>
+            {children}
+          </View>
         </Tastatur>
       </SafeAreaView>
     );
@@ -93,7 +119,9 @@ export function SsScreen({
           contentContainerStyle={[
             styles.content,
             contentStyle,
-            { paddingBottom: insets.bottom + spacing.xxxl },
+            // Auf einem Tab-Screen steckt der untere Sicherheitsabstand schon in
+            // der Leistenhöhe — beide zu addieren gäbe 34 px Luft zu viel.
+            { paddingBottom: (tabScreen ? leiste : insets.bottom) + spacing.xxxl },
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>

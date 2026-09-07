@@ -35,6 +35,49 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 19e-2 ist fertig (2026-09-07): Liquid Glass — und OHNE neuen Build.**
+Glas haben **die Tab-Leiste, die schwebende Umschalter-Pille und der Kopf des Blattes**;
+auf Web und Android steht überall dieselbe helle Fläche wie vorher (Ians Entscheidung
+43). Belegt auf **iOS 26.5 im Simulator** und auf Web (360 × 600 und 390 × 844), Belege
+`y01`–`y05` und `x01`. Sieben Dinge sind daran wichtiger als der Effekt:
+1. **Der Baustein war schon da — es gab nichts zu installieren.**
+   `expo-glass-effect@57.0.1` liegt seit Phase 19 in `node_modules`, weil **`expo-router`
+   57 selbst davon abhängt**. Autolinking hat es mitgenommen, es steht in
+   `ios/Podfile.lock`, und `strings` findet `ExpoGlassEffect` im Binary vom 2026-09-06.
+   **Der Plan sagte „Neuer Build? Ja" — falsch.** Eingetragen ist das Paket trotzdem in
+   `package.json`: Wer sich auf die Abhängigkeit einer Abhängigkeit verlässt, verliert
+   sie beim nächsten Patch, ohne es zu merken.
+2. **Glas ersetzt die FLÄCHE, nicht den Rahmen.** `SsGlas` bringt genau eine Eigenschaft
+   mit — den Untergrund. Radius, Kante, Schatten und `flex` kommen vom Aufrufer und
+   gelten in beiden Zweigen. Deshalb hat der Umbau keinen einzigen Stil verdoppelt.
+3. **Echtes Glas braucht etwas dahinter, und DAS ist der Preis der Phase: die
+   Tab-Leiste schwebt jetzt.** Damit reicht jeder Tab-Screen bis an die Unterkante des
+   Fensters. Die Regel dagegen ist EINE und steht in `SsScreen`: *Was scrollt, scrollt
+   unter das Glas; was fest steht, weicht ihm aus* (`useTabRand()` in `lib/tabs.ts`).
+   Als `marginBottom`, nicht `paddingBottom` — dort liegen absolut positionierte Kinder,
+   und Yoga rechnet die Polsterung des Elternteils an, der Browser nicht.
+4. **Zwei Berichtigungen aus 19e-1 fielen dabei an.** Bei zugezogenem Blatt stand nur
+   der **Griff** da: `zu` war der gemessene `kopf`-Knoten, die 28 px Griff darüber zählten
+   nicht mit — die Titelzeile lag abgeschnitten darunter. Jetzt misst der `onLayout` die
+   Glasfläche, die beides umfasst: **eine Messung statt einer Addition, die jemand
+   vergessen kann.** Und ein Zug am Griff markierte im Browser den Text ringsum blau
+   (`userSelect: 'none'`, wie an der Blase in 19c).
+5. **Der teuerste Umweg war ein „Fehler", der keiner ist.** Auf iOS öffnet die Karte mit
+   viel Umland und Wiens Süden hinter dem Blatt. Vier Versuche später: Das ist
+   `KARTE_MIN_BAND = 0.5`, das die Karte ausdrücklich hinter das Blatt laufen lässt,
+   statt weiter zu schrumpfen — auf Web steht dasselbe (SVG bis y = 352, Blattkante 275).
+   Der spekulative Fix ist zurückgenommen. **Ein Bild, das falsch aussieht, ist noch kein
+   Fehler: vorher die Regel nachrechnen, die es erzeugt.**
+6. **Zwei Sachen aus dem Umweg sind trotzdem zu behalten:** `fitToCoordinates` und
+   `animateToRegion` **verpuffen still vor `onMapReady`** (ein Aufruf, der nichts tut,
+   sieht aus wie einer, der nicht stattfindet), und `fitToCoordinates` zählt `mapPadding`
+   **nicht** mit, `setRegion` schon.
+7. **Das Web-Bündel wächst um 15.402 B (+0,36 %) — und das Paket war schon drin**,
+   über expo-routers eigenen `NativeStackNavigator`. Die in harter Regel 52 genannte
+   Begründung für Plattform-Endungen greift hier also nicht; die Endung bleibt trotzdem
+   richtig, aus dem anderen Grund: Der native Zweig ruft `requireNativeViewManager` beim
+   Laden, und das darf im Browser nie passieren.
+
 ✅ **Phase 19e-1 ist fertig (2026-09-07): die Karte IST jetzt die App.** Ian hatte die
 fertige Karte BENUTZT und **zehn Entscheidungen** getroffen (40–49, PLAN.md Abschnitt 5b).
 Gebaut ist alles außer dem Glas: Die Kartenansicht ist **Vollbild mit einem ziehbaren
@@ -788,14 +831,17 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 8. **Wieder herzeigen** — die drei haben Phase 13 gesehen, nicht 18a. Läuft neben 9.
 9. **Aufs Gerät** (Phase 19) ← *hier sind wir* — erster EAS-Build, `react-native-svg`,
    Durchgang am iPhone. ~~Wien-Karte (19b)~~ ✅ *2026-09-06*
-9c. **Karte wird zur App** (Phase 19e) — ~~**19e-1**: Vollbild-Karte, ziehbares Blatt,
-   Kopf weg, Posten als runder Knopf, Hinweis als Vollbild~~ ✅ *2026-09-07, ohne Build*.
-   **19e-2** (Liquid Glass, `expo-glass-effect`) offen — ein Baustein, ein Build.
-9d. **Aufs echte Gerät** ← *hier geht es weiter* — `npx expo run:ios --device` auf Ians
-   iPhone (gewöhnliche Apple-ID, per Kabel, 7 Tage gültig). Offen sind: Wischstapel
-   unter einem Finger, Tastatur im Chat, Jahrgangs-Balken mit zwei Fingern, Tipp auf die
-   Apple-Karte — **und neu: ob sich Blatt und Karte auf iOS um dieselbe Berührung
-   streiten.**
+9c. ~~**Karte wird zur App** (Phase 19e)~~ ✅ *beide Teile am 2026-09-07, beide ohne
+   Build:* ~~**19e-1**: Vollbild-Karte, ziehbares Blatt, Kopf weg, Posten als runder
+   Knopf, Hinweis als Vollbild~~ · ~~**19e-2**: Liquid Glass an Tab-Leiste, Pille und
+   Blattkopf~~ — der Baustein lag schon in `node_modules`, siehe oben.
+9d. **Aufs echte Gerät** ← *hier geht es weiter, und es ist das Einzige, was an Phase 19
+   noch offen ist* — `npx expo run:ios --device` auf Ians iPhone (gewöhnliche Apple-ID,
+   per Kabel, 7 Tage gültig). Offen sind: Wischstapel unter einem Finger, Tastatur im
+   Chat, Jahrgangs-Balken mit zwei Fingern, Tipp auf die Apple-Karte, **ob sich Blatt
+   und Karte auf iOS um dieselbe Berührung streiten** — und neu: wie sich das Glas unter
+   einem Finger anfühlt und ob `isGlassEffectAPIAvailable()` auf seiner iOS-Fassung
+   genauso antwortet wie auf 26.5.
 9b. ~~**Karte nachbessern**~~ — ~~**19c** (Aktivitäten springen heraus)~~ ✅ und
    ~~**19d-1** (echte Apple-Karte auf iOS)~~ ✅, beide *2026-09-06*. **19d-2** (MapKit JS
    im Browser) wartet auf Phase 20: Der Token muss von einem Server ausgestellt werden.
@@ -1275,6 +1321,32 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    dem BLATT aus, die Kartengeometrie folgt dem Deckel. Die Verwechslung ist nicht zu
    sehen, nur zu lesen.
 
+61. **Glas ersetzt die FLÄCHE, nicht den Rahmen.** *(Phase 19e-2.)* `SsGlas` bringt
+   genau eine Eigenschaft mit — den Untergrund: auf iOS 26 echtes Liquid Glass, sonst
+   `glasErsatz` aus `components/ui/glas-typen.ts`. Radius, Kante, Schatten, Polsterung
+   und `flex` kommen vom Aufrufer und gelten in **beiden** Zweigen. Wer Kante oder
+   Schatten in den Rückfall schreibt, vererbt sie an jede Glasfläche der App — die
+   Tab-Leiste bekäme den Schatten der Umschalter-Pille, und niemand fände heraus, woher.
+   **Zwei Prüfungen sind Pflicht** (`isGlassEffectAPIAvailable()` UND
+   `isLiquidGlassAvailable()`): Es gibt iOS-26-Beta-Fassungen, in denen die API fehlt
+   und der Aufruf abstürzt. Und: `opacity: 0` am Glas oder an einem Elternteil schaltet
+   den Effekt ab — zum Einblenden `glassEffectStyle` mit `animate` nehmen.
+   **Plattform-Endung, kein `Platform.OS`-Zweig** — aber aus einem anderen Grund als bei
+   `SsKarte`: `expo-glass-effect` steckt über `expo-router` ohnehin schon im Web-Bündel;
+   was nicht ins Web darf, ist der `requireNativeViewManager`-Aufruf beim Laden.
+62. **Die Tab-Leiste SCHWEBT, und was fest steht, weicht ihr aus.** *(Phase 19e-2.)*
+   Seit die Leiste Glas trägt, nimmt sie keinen Platz mehr im Layout weg — sonst hätte
+   das Glas nichts zu brechen. Wie hoch sie ist, sagt **`useTabRand()`**
+   (`src/lib/tabs.ts`), und zwar 0, wo keine Leiste ist; gefragt wird nie
+   `useBottomTabBarHeight()`, der wirft außerhalb einer Tab-Leiste, und `SsScreen` steht
+   auf jedem Screen. Die Regel steht in `SsScreen` und heißt: **Was scrollt, scrollt
+   unter das Glas. Was fest steht, weicht ihm aus.** Beim `scroll`-Zweig wandert die
+   Leistenhöhe in den Scroll-INHALT, beim festen Zweig begrenzt sie die FLÄCHE — und
+   zwar als `marginBottom`, weil dort absolut positionierte Kinder liegen (Antwort-
+   Leiste, Wischkarten) und **Yoga die Polsterung des Elternteils anrechnet, der Browser
+   aber nicht**. Was über der Karte liegt, weicht ihr ebenfalls aus (`SsBlatt.unten`);
+   die Karte selbst tut es NICHT — dass Wien unter der Leiste durchläuft, ist der Sinn.
+
 53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
    rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und
    schreibt sie **nie** ein zweites Mal in den Generator. Die Projektion ist flach mit
@@ -1682,6 +1754,23 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   dem falschen Wert bei aufgezogenem Blatt dahinter — also genau dann, wenn kaum jemand
   hinsieht. **Beim Einführen einer abgeleiteten Größe beide benennen und danebenschreiben,
   wer welche braucht.**
+- **Ein Native-Baustein ist vielleicht schon da.** (Phase 19e-2) `expo-glass-effect`
+  musste nie installiert werden: **`expo-router` 57 hängt selbst davon ab**, Autolinking
+  nimmt jedes Expo-Modul aus `node_modules` mit, und es war seit dem 19d-1-Build ins
+  Binary kompiliert. Aus „ein Baustein, ein Build" wurde eine reine JS-Änderung. **Vor
+  dem Einplanen eines Builds nachsehen:** `grep` in `ios/Podfile.lock` und `strings` auf
+  `…app/SimplySocial.debug.dylib`.
+- **Ein Bild, das falsch aussieht, ist noch kein Fehler.** (Phase 19e-2) Die Apple-Karte
+  öffnet auf dem Simulator mit viel Umland und Wiens Süden hinter dem Blatt — das sah
+  nach einem kaputten `initialRegion` aus und kostete vier Versuche. Es ist
+  `KARTE_MIN_BAND = 0.5`, das die Karte ausdrücklich hinter das Blatt laufen lässt; auf
+  Web steht dasselbe Bild. **Vor dem Reparieren die Regel nachrechnen, die das Bild
+  erzeugt** — hier stand sie seit einem Tag als benannte Konstante da.
+- **Kamerabefehle an `react-native-maps` verpuffen still vor `onMapReady`.**
+  (Phase 19e-2) `animateToRegion` und `fitToCoordinates` tun vorher nichts und melden
+  nichts — ein Aufruf, der nichts bewirkt, sieht aus wie einer, der gar nicht
+  stattfindet. Dazu: **`fitToCoordinates` zählt `mapPadding` NICHT mit** (beides
+  zusammen zoomt auf halb Niederösterreich hinaus), `setRegion` schon.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

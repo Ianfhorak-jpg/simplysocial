@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, PanResponder, Platform, StyleSheet, View } from 'react-native';
 
+import { SsGlas } from './SsGlas';
+
 import { colors, MAX_CONTENT_WIDTH, radius } from '@/theme';
 
 /**
@@ -68,8 +70,16 @@ const SCHWUNG = 0.4;
 
 export interface SsBlattProps {
   /**
-   * Der Kopf: Griff, Titelzeile, alles, was auch bei zugezogenem Blatt zu sehen
-   * sein soll. **Seine gemessene Höhe IST die unterste Raststufe.**
+   * Der Kopf: Titelzeile und alles, was auch bei zugezogenem Blatt zu sehen sein
+   * soll. Der Griff darüber gehört dazu — **gemessen wird beides zusammen, und
+   * diese Höhe IST die unterste Raststufe.**
+   *
+   * ⚠️ **Das war in 19e-1 ein Fehler und ist am 2026-09-07 berichtigt:** Gemessen
+   * wurde nur dieser Knoten, der Griff (28 px) aber mitgezeichnet. Bei zugezogenem
+   * Blatt blieb deshalb genau der Griff stehen und die Titelzeile lag darunter
+   * abgeschnitten — die Stufe hieß „zu" und zeigte weniger, als sie versprach. Der
+   * `onLayout` sitzt jetzt an der Glasfläche, die Griff UND Kopf umfasst; damit
+   * gibt es weiterhin EINE Messung und keine Addition, die jemand vergessen kann.
    */
   kopf: ReactNode;
   /** Der Körper — bekommt genau die Höhe, die die aktuelle Stufe hergibt. */
@@ -100,6 +110,16 @@ export interface SsBlattProps {
    * zweiter Zustand**, sie ist eine Bitte — das Ziehen bleibt ungeteilt hier.
    */
   mindestens?: BlattStufe;
+  /**
+   * Wie viele Bildpunkte unten schon belegt sind — seit Phase 19e-2 die
+   * schwebende Tab-Leiste (`useTabRand()`).
+   *
+   * **Dieselbe Unterscheidung wie `maxOben`, nur andersherum**: Was dort steht,
+   * ist gemessen und kein Anteil. Ohne diesen Wert säße das zugezogene Blatt genau
+   * hinter der Leiste — der Griff wäre unerreichbar, und zwar erst auf einem Gerät
+   * mit Home-Anzeige (34 px Sicherheitsabstand) und nicht im Browser.
+   */
+  unten?: number;
   /** Wird beim Einrasten gerufen — nicht während des Ziehens. */
   onStufe?: (stufe: BlattStufe, sichtbar: number) => void;
 }
@@ -113,6 +133,7 @@ export function SsBlatt({
   start = 'halb',
   maxOben = 0,
   mindestens,
+  unten = 0,
   onStufe,
 }: SsBlattProps) {
   const [platz, setPlatz] = useState(0);
@@ -280,7 +301,9 @@ export function SsBlatt({
     // `box-none`: Diese Schicht selbst fängt nichts ab, ihre Kinder schon — was
     // neben dem Blatt liegt, kommt weiter bei der Karte an. Im `style`, nie als
     // Prop (ACTA-Falle).
-    <View style={styles.huelle} onLayout={(e) => setPlatz(e.nativeEvent.layout.height)}>
+    <View
+      style={[styles.huelle, { bottom: unten }]}
+      onLayout={(e) => setPlatz(e.nativeEvent.layout.height)}>
       <Animated.View
         style={[
           styles.blatt,
@@ -289,13 +312,24 @@ export function SsBlatt({
             transform: [{ translateY: Animated.subtract(hoehe, sichtbar) }],
           },
         ]}>
-        <View ref={griff} style={styles.griffFlaeche} {...responder.panHandlers}>
-          <View style={styles.griff} />
-        </View>
+        {/* Der Kopf ist auf iOS 26 aus echtem Glas (Phase 19e-2, Ians
+            Entscheidung 43) — darunter liegt die Karte, also gibt es hier wirklich
+            etwas zu brechen. Überall sonst ist es dieselbe helle Fläche wie bisher.
 
-        <View onLayout={(e) => setKopfHoehe(e.nativeEvent.layout.height)}>{kopf}</View>
+            Und er ist die eine Stelle, die gemessen wird: Griff plus Titelzeile
+            zusammen ergeben die unterste Raststufe (siehe `kopf` oben). */}
+        <SsGlas style={styles.kopfGlas}>
+          <View
+            onLayout={(e) => setKopfHoehe(e.nativeEvent.layout.height)}
+            style={styles.kopfInhalt}>
+            <View ref={griff} style={styles.griffFlaeche} {...responder.panHandlers}>
+              <View style={styles.griff} />
+            </View>
+            {kopf}
+          </View>
+        </SsGlas>
 
-        <View style={{ height: koerperHoehe }}>{children}</View>
+        <View style={[styles.koerper, { height: koerperHoehe }]}>{children}</View>
       </Animated.View>
     </View>
   );
@@ -321,7 +355,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     maxWidth: MAX_CONTENT_WIDTH,
-    backgroundColor: colors.surface,
+    // KEINE eigene Farbe mehr seit Phase 19e-2: Der Kopf bringt seine mit (Glas
+    // oder helle Fläche), der Körper darunter seine. Eine deckende Fläche hier
+    // läge HINTER dem Glas und machte es zu einer teuren weißen Fläche.
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     borderTopWidth: 1,
@@ -332,10 +368,28 @@ const styles = StyleSheet.create({
     // wie beim Prototyp-Hinweis — es sind die einzigen zwei Stellen mit Schatten.
     boxShadow: '0 -6px 24px rgba(23, 25, 28, 0.14)',
   },
+  // Der Radius steht hier NOCH EINMAL, obwohl das Blatt `overflow: 'hidden'` hat:
+  // Auf iOS ist das Glas eine native Ansicht, und die schneidet der Elternteil
+  // nicht zuverlässig auf seine Rundung zurecht.
+  kopfGlas: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl },
+  kopfInhalt: { width: '100%' },
+  // Der Körper ist die deckende Fläche der Liste. Sie steht hier und nicht am
+  // Blatt, damit das Glas oben etwas zu zeigen hat.
+  koerper: { backgroundColor: colors.surface },
   // Der Griff ist der EINZIGE Ort mit einem Gesten-Erkenner. Die Fläche ist
   // absichtlich höher als der Strich darin: Ein 5 px hoher Balken ist kein Ziel für
   // einen Daumen, 28 px sind eines.
-  griffFlaeche: { height: 28, alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
+  griffFlaeche: {
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    // Ohne das markiert ein Zug am Griff im Browser den Text ringsum blau — die
+    // Geste beginnt auf diesem Knoten, und Chrome fängt dort eine Auswahl an.
+    // Dieselbe Zeile und derselbe Grund wie an der Blase in Phase 19c; auf dem
+    // Gerät sieht man es nie, im Prototyp bei jedem Ziehen.
+    userSelect: 'none',
+  },
   griff: {
     width: 36,
     height: 5,
