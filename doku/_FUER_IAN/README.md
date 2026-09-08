@@ -4,6 +4,47 @@
 
 ---
 
+## 📱 Die neue Fassung ist auf deinem iPhone (08.09.2026, nachts)
+
+**Frisch installiert und startbereit** — `SimplySocial`, wieder eine Release-Fassung:
+läuft ohne Kabel und ohne dass der Mac an ist. Die 7 Tage fangen von vorne an.
+
+**Und die Web-Adresse ist auch aktuell:** https://ianfhorak-jpg.github.io/simplysocial/
+
+---
+
+## 🆕 Neu am 08.09.2026, nachts — die App zeigt, was in deiner Nähe ist
+
+Zwei Sachen, und die zweite ist die größere Änderung seit Monaten.
+
+### 1. Unten stehen keine Wörter mehr
+
+Nur noch die vier Zeichen — Haus, Hand, Sprechblase, Person. Wie du es gesagt hast.
+
+> Kleine Anmerkung, weil es dir vielleicht auffällt: Auf **deinem eigenen Vorbildbild**
+> (dem Bier-Screenshot) stehen die Wörter noch da — und das dritte ist schon
+> abgeschnitten („Ma…"). Genau das ist das beste Argument dafür, sie wegzulassen.
+
+### 2. Der Feed sortiert ab jetzt nach ENTFERNUNG
+
+Du hast gesagt: *„Bezirk ist too viel, das sieht echt nicht gut aus"* — und dass man
+seinen Bezirk einmal angibt und die App dann von dort aus nach außen zeigt.
+
+**Genau das macht sie jetzt:**
+- **Der Bezirks-Filter ist weg.** Ersatzlos. Es gibt nichts mehr einzustellen.
+- Oben im Feed steht, was bei dir um die Ecke ist, unten das andere Ende der Stadt.
+- **Dein Bezirk steht in den Einstellungen**, ganz oben. Tipp drauf, wähl einen
+  anderen — der Feed sortiert sich sofort um. *Probier das aus, es ist der schnellste
+  Weg zu sehen, was die Regel tut.*
+
+> ⚠️ **Eine deiner alten Entscheidungen wird davon abgelöst, und ich habe vorher
+> gefragt statt es einfach zu machen:** Am 31.08. hattest du entschieden, dass im Feed
+> **das Neueste** oben steht. Das gilt jetzt nur noch als *zweite* Regel — innerhalb
+> desselben Bezirks. Der Haken, den du gekannt hast: Ein frischer Post vom anderen
+> Ende von Wien kommt bei dir nicht mehr nach oben.
+
+---
+
 ## 🆕 Neu am 08.09.2026 — weniger sehen
 
 Dein Satz nach dem Durchgang am Handy war *„nur das, was sie in diesem Moment auch

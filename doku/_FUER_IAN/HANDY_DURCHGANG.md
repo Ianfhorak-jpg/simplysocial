@@ -1,4 +1,28 @@
-# Der Durchgang am Handy — sechs Sachen, die nur du prüfen kannst
+# Der Durchgang am Handy
+
+## 🔵 DURCHGANG 2 — die Fassung vom 08.09.2026 nachts ist drauf
+
+> Frisch installiert, wieder 7 Tage gültig. **Fünf Sachen, und nur die ersten zwei
+> sind neu** — die anderen drei sind Auslegungen von mir, die auf dein Urteil warten.
+> Nichts davon blockiert etwas; alle sind in einer Minute zurückgedreht.
+
+| # | Was anschauen | Die Frage an dich |
+|---|---------------|-------------------|
+| 1 | **Die Leiste unten** | Findest du dich ohne die Wörter zurecht? Ist ein Zeichen dabei, bei dem du raten musst? |
+| 2 | **Der Feed (Startbildschirm)** | Steht oben wirklich, was bei dir in der Nähe ist? Und: Geh in **Einstellungen → Dein Bezirk**, stell einen anderen ein, komm zurück — dreht sich die Reihenfolge so, wie du es erwartest? |
+| 3 | **Ein Post (draufklicken)** | Der Kategorie-Chip („Sport") steht **neben** dem Zurück-Pfeil, nicht darüber. Und die **Notiz der Person liegt hinter „Mehr ansehen"**. Beides ist meine Auslegung von *„alles untereinander"* — passt es, oder anders? |
+| 4 | **Karte → auf einen Bezirk tippen** | Es poppt eine Blase auf. Ein Tipp auf eine **Zeile** führt zum Post; ein Tipp auf **„alle 4 ansehen"** unten zieht das Blatt hoch. Du hattest gesagt *„wenn's mehrere sind, kann man draufklicken — dann kommt das Blatt"*. Ist es so gemeint gewesen? |
+| 5 | **Das Glas** (Leiste + Blatt auf der Karte) | Beim letzten Mal: *„sieht noch gar nicht danach aus"*. Die Form ist seither geändert — das Blatt geht jetzt bis ganz nach unten, die Leiste liegt darauf. Besser? |
+
+**Wenn dir etwas auffällt: mach einen Screenshot.** Und sag dazu, ob er von *heute
+nacht* ist — beim letzten Mal habe ich eine Stunde an einem Fehler gesucht, den es
+schon nicht mehr gab, weil das Bild eine ältere Fassung zeigte.
+
+---
+
+## 📗 Durchgang 1 (07./08.09.2026) — erledigt, bleibt als Gedächtnis
+
+### Sechs Sachen, die nur du prüfen konntest
 
 > Stand: 07.09.2026 abends. Die App ist auf deinem iPhone („iPhon", iPhone 16).
 > **Das ist eine Release-Fassung**: Sie läuft ohne Kabel und ohne dass der Mac an ist.
