@@ -874,15 +874,14 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    Build:* ~~**19e-1**: Vollbild-Karte, ziehbares Blatt, Kopf weg, Posten als runder
    Knopf, Hinweis als Vollbild~~ · ~~**19e-2**: Liquid Glass an Tab-Leiste, Pille und
    Blattkopf~~ — der Baustein lag schon in `node_modules`, siehe oben.
-9d. **Aufs echte Gerät** — ✅ **die App IST seit dem 2026-09-08 auf Ians iPhone
-   installiert** (`at.simplysocial.app`, Release-Build, JavaScript eingebacken, läuft
+9d. **Aufs echte Gerät** — ✅ **die App LÄUFT seit dem 2026-09-08 auf Ians iPhone** (`at.simplysocial.app`, Release-Build, JavaScript eingebacken, läuft
    ohne Kabel und ohne Mac, 7 Tage gültig). Gebaut wird **nicht** mit `expo run:ios`,
    sondern mit `xcodebuild -destination 'generic/platform=iOS'` und
    `-derivedDataPath ~/Library/Developer/Xcode/DerivedData/SimplySocial-geraet`
    (**außerhalb von iCloud** — siehe Fallen-Liste), dann
-   `xcrun devicectl device install app`. ← *Hier geht es weiter:* Ian muss am Gerät
-   einmal den Entwickler bestätigen (Einstellungen → Allgemein → VPN &
-   Geräteverwaltung), danach der Durchgang aus `_FUER_IAN/HANDY_DURCHGANG.md`. Offen
+   `xcrun devicectl device install app`. Den Entwickler hat Ian am Gerät bestätigt
+   (Einstellungen → Allgemein → VPN & Geräteverwaltung) — ohne das startet sie nicht.
+   ← *Hier geht es weiter:* der Durchgang aus `_FUER_IAN/HANDY_DURCHGANG.md`. Offen
    sind: Wischstapel unter einem Finger, Tastatur im
    Chat, Jahrgangs-Balken mit zwei Fingern, Tipp auf die Apple-Karte, **ob sich Blatt
    und Karte auf iOS um dieselbe Berührung streiten** — und neu: wie sich das Glas unter

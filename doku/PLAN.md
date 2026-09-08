@@ -4822,19 +4822,22 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-08, SPÄTESTER Eintrag): Ian muss am
-> iPhone einmal den Entwickler bestätigen — die App ist INSTALLIERT.** Danach der
-> Durchgang aus `_FUER_IAN/HANDY_DURCHGANG.md`. Fünf Dinge, die eine frische Sitzung
-> wissen muss:
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-08, SPÄTESTER Eintrag): der
+> Gerätedurchgang mit Ian — `_FUER_IAN/HANDY_DURCHGANG.md`, sechs Punkte. Die App
+> LÄUFT auf seinem iPhone.** Fünf Dinge, die eine frische Sitzung wissen muss:
 >
-> 1. **Installiert ist sie** — `App installed: at.simplysocial.app`, Release-Build,
->    48 MB, signiert (`Apple Development: ian.fhorak@gmail.com`, Personal Team, **7 Tage**).
->    Sie startet noch nicht: `FBSOpenApplicationServiceErrorDomain error 1` →
->    *„profile has not been explicitly trusted by the user"*. Das ist **kein Fehler sondern
->    Apples Absicht** — das Vertrauen muss ein Mensch am Gerät geben:
->    Einstellungen → Allgemein → VPN & Geräteverwaltung → das Profil antippen → vertrauen.
->    Starten danach mit `xcrun devicectl device process launch --device <udid>
->    at.simplysocial.app`.
+> 1. **Sie läuft** — `App installed: at.simplysocial.app`, dann `Launched application`,
+>    Prozess lebt (PID gegen `devicectl device info processes` geprüft). Release-Build,
+>    48 MB, `main.jsbundle` 3,0 MB eingebacken, signiert (`Apple Development:
+>    ian.fhorak@gmail.com`, Personal Team, **7 Tage**). **Der letzte Schritt war Ians:**
+>    Ein erster Start scheiterte mit `FBSOpenApplicationServiceErrorDomain error 1` →
+>    *„profile has not been explicitly trusted by the user"*. Das ist **kein Fehler,
+>    sondern Apples Absicht** — Einstellungen → Allgemein → VPN & Geräteverwaltung →
+>    Profil antippen → vertrauen. Danach `xcrun devicectl device process launch
+>    --device <udid> at.simplysocial.app`.
+>    **Offen ist der Durchgang selbst:** Wischstapel, Tastatur im Chat,
+>    Jahrgangs-Regler, Tipp auf die Apple-Karte, **Blatt gegen Karte** (der kritische)
+>    und wie das Glas auf iOS 26.6 aussieht.
 > 2. **Der Bauplatz darf NICHT in iCloud liegen — und das hat einen ganzen Build
 >    gekostet.** `C.C.Projekts_Ian` liegt auf dem Schreibtisch, den iCloud verwaltet;
 >    iCloud hängt an Framework-Ordner `com.apple.FinderInfo`, und `codesign` bricht dann

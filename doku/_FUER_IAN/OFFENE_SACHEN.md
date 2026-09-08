@@ -3,8 +3,8 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 08.09.2026 — **die App ist auf deinem iPhone installiert.** Es fehlt ein
-> einziger Handgriff, und er dauert eine Minute: Punkt 2 gleich hier unten.
+> Stand: 08.09.2026 — **die App LÄUFT auf deinem iPhone.** Jetzt bist du dran:
+> der Durchgang, Punkt 2 gleich hier unten.
 > Davor: 07.09.2026 (abends) — **deine Liste steht ganz oben, sortiert nach Aufwand.**
 > Neu an dem Abend: Das Liquid Glass ist gebaut (Punkt 2 hat dadurch eine Zeile mehr) —
 > **es kam keine neue Aufgabe für dich dazu.**
@@ -27,21 +27,21 @@ Liegt seit dem 06.09. fertig da: `landing-vorschau/` — Olivgrün, Weinrot, Tü
 Offen ist **Farbe UND A oder B** (A: auch die sechs Kategoriefarben werden Abstufungen
 der Leitfarbe · B: nur die Marke, Kategorien bleiben bunt). Blockiert sonst still.
 
-### 2. Am iPhone den Entwickler bestätigen · **1 Minute** 🟢
-> ✅ **Am 08.09.2026 installiert — die App IST auf deinem iPhone.** Der Build lief
-> durch, das Aufspielen auch (`App installed: at.simplysocial.app`). Es fehlt genau
-> ein Handgriff, und den kann nur ein Mensch am Gerät machen:
+### 2. Der Durchgang am Handy · **15 Minuten** 🟢 ← *das ist jetzt dran*
+> ✅ **Am 08.09.2026 erledigt: Die App LÄUFT auf deinem iPhone.** Aufgespielt,
+> Entwickler bestätigt, gestartet (`Launched application with at.simplysocial.app`).
+> Sie läuft **ohne Kabel und ohne Mac** — du kannst sie mitnehmen und herzeigen.
+> Sie gilt **7 Tage** (gewöhnliche Apple-ID), dann muss sie neu drauf; das ist kein
+> Fehler.
 >
-> **Einstellungen → Allgemein → VPN & Geräteverwaltung → „Apple Development:
-> ian.fhorak@gmail.com" → vertrauen.**
+> **Was jetzt von dir kommt: die sechs Punkte in `HANDY_DURCHGANG.md`.** Das sind
+> genau die Sachen, die am Mac prinzipiell nicht zu prüfen waren, weil eine Maus
+> keinen zweiten Finger hat. Der wichtigste ist **Punkt 5** — ob sich in der
+> Kartenansicht das Blatt und die Apple-Karte um denselben Finger streiten. Wenn
+> irgendwo etwas hakt, dann dort.
 >
-> Vorher startet die App nicht — iOS sagt dann *„profile has not been explicitly
-> trusted by the user"*. Das ist Absicht von Apple: Eine App, die nicht aus dem App
-> Store kommt, soll nicht dadurch startfähig werden, dass jemand ein Kabel ansteckt.
-> Danach läuft sie **ohne Kabel und ohne Mac** — du kannst sie mitnehmen und herzeigen.
-> Sie gilt **7 Tage** (Personal Team), dann neu aufspielen.
->
-> Danach: der Durchgang in `HANDY_DURCHGANG.md`, sechs Punkte.
+> Zu jedem Punkt reicht „geht" oder was schiefgeht. Bei Gesten ist ein kurzes Video
+> mehr wert als eine Beschreibung.
 
 <details><summary>Was am 07.09. schiefging (erledigt, zum Nachlesen)</summary>
 
