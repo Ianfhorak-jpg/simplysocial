@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useSichtText } from '@/components/SichtMarke';
 import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsIcon, SsInput, SsScreen, SsText } from '@/components/ui';
@@ -40,6 +40,30 @@ export function generateStaticParams(): Array<{ id: string }> {
  * Treffpunkt, Können-Niveau, die ganze Notiz und die Sichtbarkeit. Genau die Dinge,
  * die man erst wissen will, wenn man ernsthaft überlegt — im Feed wären sie Ballast.
  *
+ * ── Seit Phase 19f liegen genau die hinter „Mehr ansehen" (Entscheidung 51) ───
+ * Ians Satz nach dem ersten Durchgang am eigenen Handy: *„Sport, Zurück, Sport,
+ * Tennis spielen — alles untereinander."* Der Screen baute jede Angabe ZWEIZEILIG
+ * (erst das Wort „Wann", darunter „heute 22:00") und das sechsmal untereinander in
+ * einer Karte, darüber ein Krümelpfad aus Kategorie-Chip und Titel, darüber noch
+ * einmal das Wort „Zurück".
+ *
+ * Er hat aus drei Vorschauen die radikalste gewählt: **Titel, Person, Knopf.**
+ * Alles andere klappt auf. Das ist harte Regel 63 an ihrem ersten großen Screen —
+ * *ein Bildschirm zeigt nur, was für die Entscheidung HIER nötig ist*, und die
+ * Entscheidung hier heißt „geh ich hin?".
+ *
+ * **Der Haken ist benannt und angenommen, und er ist der Grund für die leise
+ * Zeile:** An Zeit und Ort entscheidet man das ja gerade. Sie verschwinden deshalb
+ * NICHT, sie werden leise — `heute 22:00 · 1220 Wien` klein unter dem Knopf. Das
+ * ist die Grenze aus Entscheidung 50 (*„wenn die Person etwas wissen will, dann
+ * soll's auch einfach für sie sein"*): Wer die zwei Zahlen braucht, tippt nicht.
+ *
+ * Was AUFKLAPPT, ist damit alles, was man erst wissen will, wenn man schon fast
+ * zugesagt hat: Treffpunkt, Können, Für wen, Plätze, Sichtbarkeit, die Notiz des
+ * Verfassers und wann gepostet wurde. Wann und Wo stehen dort NICHT noch einmal —
+ * sie stehen schon in der leisen Zeile, und dieselbe Angabe zweimal ist genau das,
+ * was Ian aufgefallen ist.
+ *
  * ── Warum "Bin dabei" keinen Platz belegt ─────────────────────────────────────
  * Der Verfasser bestätigt zuerst (PLAN.md, Abschnitt 1). Das ist gleichzeitig das
  * Sicherheitsversprechen der App — man entscheidet selbst, wen man trifft — und der
@@ -63,6 +87,12 @@ export default function PostDetailScreen() {
   const blockiert = useIstBlockiert(eintrag?.author.id);
   const meldung = useMeineMeldung('post', id);
   const [nachricht, setNachricht] = useState('');
+  /**
+   * Ist „Mehr ansehen" aufgeklappt? Zu beim Aufschlagen — wie „Mehr einstellen"
+   * beim Posten (Phase 12) und der Filterbereich im Feed (Phase 15). Dieselbe
+   * Bauart dreimal, weil es dieselbe Frage dreimal ist.
+   */
+  const [mehr, setMehr] = useState(false);
   // Vor dem frühen Ausstieg weiter unten: Haken laufen immer, nie bedingt.
   const sichtText = useSichtText(
     eintrag?.post.visibility,
@@ -89,12 +119,18 @@ export default function PostDetailScreen() {
 
   return (
     <SsScreen scroll keyboard contentStyle={styles.seite}>
-      <SsBack />
-
-      <View style={styles.titelBlock}>
+      {/* Pfeil und Kategorie in EINER Zeile — das ist die Antwort auf „alles
+          untereinander". Der Chip bleibt, und das ist eine Entscheidung mit einem
+          Grund: Die sechs Kategoriefarben sind das Erkennungszeichen der App
+          (Phase 14), und der Chip ist die einzige Stelle des Screens, die sie noch
+          trägt. Weggenommen ist die ZEILE, die er verbraucht hat, nicht die
+          Auskunft. */}
+      <View style={styles.kopfZeile}>
+        <SsBack />
         <SsChip category={post.category} />
-        <SsText variant="title">{post.title}</SsText>
       </View>
+
+      <SsText variant="title">{post.title}</SsText>
 
       {/* Seit Phase 6 führt die Verfasser-Karte aufs Profil. Das ist der Weg, auf dem
           man vor dem „Bin dabei" nachsehen kann, mit wem man es zu tun hat — genau die
@@ -117,60 +153,6 @@ export default function PostDetailScreen() {
           </SsText>
         ) : null}
       </SsCard>
-
-      <SsCard>
-        <Zeile icon="uhr" label="Wann" wert={startOderSeit(post.startsAt)} />
-        <Trenner />
-        <Zeile icon="pin" label="Wo" wert={ortText(post.district)} />
-        <Trenner />
-        <Zeile
-          icon="fahne"
-          label="Treffpunkt"
-          wert={post.meetingPoint ?? 'Machen wir im Chat aus'}
-          leise={!post.meetingPoint}
-        />
-        <Trenner />
-        <Zeile icon="ziel" label="Können" wert={LEVEL_LABELS[post.level]} />
-        {/* Nur, wenn der Verfasser wirklich eingeschränkt hat. Eine Zeile „Für wen:
-            Für alle" wäre an jedem zweiten Post eine Zeile, die nichts sagt — und
-            genau dadurch übersieht man sie dort, wo sie etwas sagt. Dieselbe Regel
-            wie bei „Sichtbar für" weiter unten. */}
-        {post.alter.kind !== 'egal' ? (
-          <>
-            <Trenner />
-            <Zeile icon="person" label="Für wen" wert={alterAmDetail(post.alter)} />
-          </>
-        ) : null}
-        <Trenner />
-        <Zeile
-          icon="personen"
-          label="Plätze"
-          wert={frei > 0 ? `${frei} von ${post.spotsTotal} frei` : `Alle ${post.spotsTotal} vergeben`}
-        />
-        {sichtText ? (
-          <>
-            <Trenner />
-            <Zeile
-              icon={post.visibility.kind === 'group' ? 'personen' : 'schloss'}
-              label="Sichtbar für"
-              wert={sichtText}
-            />
-          </>
-        ) : null}
-      </SsCard>
-
-      {post.note ? (
-        <SsCard style={{ backgroundColor: palette.soft, borderColor: palette.soft }}>
-          <SsText variant="caption" color={palette.onSoft}>
-            {author.displayName} schreibt
-          </SsText>
-          <SsText variant="body">{post.note}</SsText>
-        </SsCard>
-      ) : null}
-
-      <SsText variant="caption" color={colors.inkSoft} center>
-        Gepostet {vergangen(post.createdAt)}
-      </SsText>
 
       <View style={styles.aktion}>
         {blockiert ? (
@@ -278,6 +260,83 @@ export default function PostDetailScreen() {
         )}
       </View>
 
+      {/* Ians Entscheidung 51: Zeit und Ort bleiben, aber leise. An ihnen
+          entscheidet man „geh ich hin?" — sie wegzuräumen wäre genau der Fehler,
+          vor dem der zweite Halbsatz von Entscheidung 50 warnt. Ein Mittelpunkt
+          statt zwei Zeilen: `heute 22:00 · 1220 Wien`. */}
+      <SsText variant="caption" color={colors.inkSoft} center>
+        {startOderSeit(post.startsAt)} · {ortText(post.district)}
+      </SsText>
+
+      {/* Derselbe Kniff wie „Mehr einstellen" beim Posten (Phase 12) — bis auf
+          eines: Dort klappt ein FORMULAR auf, hier nur Text. Deshalb braucht es
+          hier keine Absicherung wie die Live-Vorschau (harte Regel 18); es kann
+          nichts still gesetzt werden, was man nicht sieht. */}
+      <Pressable
+        onPress={() => setMehr((m) => !m)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: mehr }}
+        style={({ pressed }) => [styles.mehrKnopf, pressed && styles.mehrGedrueckt]}>
+        <SsText variant="label" color={colors.inkSoft}>
+          {mehr ? 'Weniger' : 'Mehr ansehen'}
+        </SsText>
+        <SsIcon name={mehr ? 'chevronUnten' : 'chevronRechts'} size={16} color={colors.inkSoft} />
+      </Pressable>
+
+      {mehr ? (
+        <View style={styles.mehrBereich}>
+          <SsCard>
+            <Zeile
+              icon="fahne"
+              label="Treffpunkt"
+              wert={post.meetingPoint ?? 'Machen wir im Chat aus'}
+              leise={!post.meetingPoint}
+            />
+            <Trenner />
+            <Zeile icon="ziel" label="Können" wert={LEVEL_LABELS[post.level]} />
+            {/* Nur, wenn der Verfasser wirklich eingeschränkt hat. Eine Zeile „Für wen:
+                Für alle" wäre an jedem zweiten Post eine Zeile, die nichts sagt — und
+                genau dadurch übersieht man sie dort, wo sie etwas sagt. Dieselbe Regel
+                wie bei „Sichtbar für" weiter unten. */}
+            {post.alter.kind !== 'egal' ? (
+              <>
+                <Trenner />
+                <Zeile icon="person" label="Für wen" wert={alterAmDetail(post.alter)} />
+              </>
+            ) : null}
+            <Trenner />
+            <Zeile
+              icon="personen"
+              label="Plätze"
+              wert={frei > 0 ? `${frei} von ${post.spotsTotal} frei` : `Alle ${post.spotsTotal} vergeben`}
+            />
+            {sichtText ? (
+              <>
+                <Trenner />
+                <Zeile
+                  icon={post.visibility.kind === 'group' ? 'personen' : 'schloss'}
+                  label="Sichtbar für"
+                  wert={sichtText}
+                />
+              </>
+            ) : null}
+          </SsCard>
+
+          {post.note ? (
+            <SsCard style={{ backgroundColor: palette.soft, borderColor: palette.soft }}>
+              <SsText variant="caption" color={palette.onSoft}>
+                {author.displayName} schreibt
+              </SsText>
+              <SsText variant="body">{post.note}</SsText>
+            </SsCard>
+          ) : null}
+
+          <SsText variant="caption" color={colors.inkSoft} center>
+            Gepostet {vergangen(post.createdAt)}
+          </SsText>
+        </View>
+      ) : null}
+
       {/* Ganz unten und leise — wie am Profil. „Melden" ist die seltenste Handlung
           des Screens; sie soll auffindbar sein, ohne neben „Bin dabei" um
           Aufmerksamkeit zu konkurrieren. Beim eigenen Post steht sie gar nicht da:
@@ -368,7 +427,25 @@ function NichtGefunden() {
 const styles = StyleSheet.create({
   seite: { gap: spacing.md, paddingTop: spacing.sm },
 
-  titelBlock: { gap: spacing.sm },
+  // Pfeil links, Kategorie rechts daneben — `alignItems: 'center'` richtet den Chip
+  // auf die Mitte der 44 px hohen Trefferfläche des Pfeils aus, nicht auf seine
+  // Oberkante.
+  kopfZeile: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+
+  mehrKnopf: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    // Grosszuegig, weil der Knopf keine eigene Flaeche hat: Ohne Rahmen ist die
+    // Polsterung die ganze Trefferflaeche.
+    paddingVertical: spacing.sm,
+    cursor: 'pointer',
+  },
+  mehrGedrueckt: { opacity: 0.6 },
+  // Derselbe Abstand wie zwischen den Kacheln der Seite (`seite.gap`), damit das
+  // Aufgeklappte nicht enger sitzt als alles darueber.
+  mehrBereich: { gap: spacing.md },
 
   person: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   personText: { flex: 1, gap: 2 },

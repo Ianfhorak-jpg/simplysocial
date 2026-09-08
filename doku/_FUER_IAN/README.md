@@ -4,6 +4,43 @@
 
 ---
 
+## 🆕 Neu am 08.09.2026 — weniger sehen
+
+Dein Satz nach dem Durchgang am Handy war *„nur das, was sie in diesem Moment auch
+wirklich braucht"*. Sechs Sachen daraus sind gebaut:
+
+- **Der Post-Screen ist aufgeräumt.** Oben Pfeil und Kategorie in EINER Zeile, dann der
+  Titel, dann die Person, dann der Knopf. Zeit und Ort stehen klein unter dem Knopf,
+  alles Übrige hinter **„Mehr ansehen"**. **Neu ist damit auch etwas, das du nicht
+  verlangt hast:** Der Screen passt jetzt auf einen Bildschirm — vorher musstest du
+  IMMER scrollen, um „Bin dabei" zu sehen.
+- **„Zurück" ist nur noch der Pfeil**, auf allen Screens. Die Fläche zum Antippen ist
+  trotzdem so groß wie vorher (44 × 44, Apples Mindestmaß) — sie ist nur unsichtbar.
+- **Der Filter-Knopf hat kein Wort mehr**, nur das Zeichen. Die **Zahl daneben bleibt**:
+  ohne sie merkt man nicht, dass ein Filter läuft, und hält den Feed für kaputt.
+- **Stapel · Liste · Karte sind drei Zeichen** statt drei Wörtern.
+- **Im Chat springt die Ansicht ans Ende**, sobald du ins Eingabefeld tippst. Das war
+  der einzige echte Bedienfehler aus deinem Durchgang.
+- **Die Gruppen sind vom Profil ins Chats-Register gewandert** (oben rechts) — *„das
+  hat eigentlich nix mit dem Profil zu tun, sondern eher mit dem Chatten."*
+
+> ❓ **Zwei Sachen habe ich innerhalb deiner Entscheidung selbst entschieden. Schau sie
+> dir an, beide sind in einer Minute zurückgedreht:**
+> 1. **Der Kategorie-Chip („Sport") ist geblieben** — aber neben dem Pfeil statt
+>    darüber. Dein Satz war „alles untereinander", und ich habe das *untereinander* als
+>    den Punkt gelesen, nicht das *Sport*. Die sechs Farben sind das Gesicht der App.
+> 2. **Die Notiz des Verfassers** („Lea schreibt: Hab zwei Schläger dabei…") liegt jetzt
+>    hinter „Mehr ansehen". Das ist die strenge Lesart von „Titel, Person, Knopf" — aber
+>    es ist auch das Persönlichste am Post. Sag, wenn sie wieder nach vorn soll.
+>
+> Die Bilder dazu heißen `ab01-post-zu-360.png` und `ab02-post-mehr-360.png` und liegen
+> im Projektordner eine Ebene über diesem.
+
+> ⚠️ **Die Online-Adresse zeigt das noch NICHT.** Wie beim letzten Mal nicht
+> hochgeladen — **sag ein Wort, dann läuft `npm run deploy`.**
+
+---
+
 ## 🆕 Neu am 07.09.2026 — die Karte ist jetzt die App
 
 Deine zehn Entscheidungen vom selben Abend sind gebaut, bis auf eine:

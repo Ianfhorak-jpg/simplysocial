@@ -5,6 +5,23 @@
 > Nach **7 Tagen** läuft sie ab und muss neu drauf — das liegt an der gewöhnlichen
 > Apple-ID, nicht an einem Fehler.
 
+> ## ✅ ERLEDIGT am 08.09.2026 — du hast alle sechs durchgespielt
+>
+> | # | Was | Dein Urteil |
+> |---|-----|-------------|
+> | 1 | Wischstapel | ✅ „super, funktioniert gut" |
+> | 2 | Tastatur im Chat | 🟡 sprang nicht ans Ende — **am selben Tag behoben (Phase 19f)** |
+> | 3 | Jahrgangs-Regler | ✅ „das ist gut" |
+> | 4 | Karte antippen | ✅ trifft, auch nach Zoomen |
+> | 5 | Blatt gegen Karte | ✅ **kein Gestenstreit** — die als kritisch benannte Stelle ist unkritisch |
+> | 6 | Liquid Glass | ❌ „sieht noch gar nicht danach aus" → **Phase 19g** |
+>
+> **Diese Liste ist abgearbeitet — nichts davon musst du noch einmal machen.** Was
+> daraus geworden ist, steht in `README.md` (19f, gebaut) und im PLAN.md, Abschnitt 5b
+> (19g und 19h, geplant). Die Datei bleibt als Gedächtnis stehen.
+
+---
+
 ## Warum das nicht am Simulator geht
 
 Am Simulator klickt man mit der Maus. Ein Mausklick ist **eine** Berührung, ohne Druck,

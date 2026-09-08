@@ -75,6 +75,12 @@ export default function ChatScreen() {
   // (`theme/colors.ts`), deshalb braucht keine Stelle darunter einen Sonderfall.
   const palette = post ? categoryColors[post.category] : accent;
 
+  /**
+   * Ans Ende springen. An EINER Stelle, weil drei Anlässe darauf zeigen: neuer
+   * Inhalt, neue Flächenhöhe (Tastatur) und der Fokus selbst.
+   */
+  const nachUnten = (weich: boolean) => listeRef.current?.scrollToEnd({ animated: weich });
+
   const senden = () => {
     if (!entwurf.trim()) return;
     nachrichtSenden(thread.id, entwurf);
@@ -116,7 +122,13 @@ export default function ChatScreen() {
         // Immer unten anfangen und unten bleiben: Das Neueste ist im Chat das
         // Wichtigste, und niemand liest einen Verlauf von oben nach unten durch.
         // `animated: false`, damit es beim Öffnen nicht sichtbar hinunterfährt.
-        onContentSizeChange={() => listeRef.current?.scrollToEnd({ animated: false })}
+        onContentSizeChange={() => nachUnten(false)}
+        // Ians Entscheidung 55 (Phase 19f): Beim Antippen des Eingabefelds fährt
+        // die Tastatur hoch, `SsScreen keyboard` polstert unten — und die LISTE
+        // wird dadurch kürzer. Ihr INHALT ändert sich dabei nicht, deshalb schweigt
+        // `onContentSizeChange` und die letzten Nachrichten rutschen aus dem Bild.
+        // Was sich ändert, ist die Fläche, und die meldet sich hier.
+        onLayout={() => nachUnten(false)}
         ListEmptyComponent={<NochStill name={gegenueber.displayName} direkt={!post} />}
       />
 
@@ -148,6 +160,11 @@ export default function ChatScreen() {
             placeholder={`Nachricht an ${gegenueber.displayName}`}
             maxLength={500}
             onSubmitEditing={senden}
+            // Der Fokus kommt VOR der fertig hochgefahrenen Tastatur — dieser Sprung
+            // allein reicht deshalb nicht, `onLayout` an der Liste holt hinterher
+            // nach. Er ist trotzdem richtig: Ohne ihn steht die Liste bis zum Ende
+            // der Tastatur-Animation sichtbar falsch.
+            onFocus={() => nachUnten(true)}
             style={styles.feld}
           />
           {/* Zwei Zweige statt zusammengebauter Props: `SsButton` erlaubt eine

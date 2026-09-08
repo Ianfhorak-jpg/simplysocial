@@ -35,6 +35,44 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 19f ist fertig (2026-09-08): weniger sehen — und ohne neuen Build.**
+Ians Grundsatz (Entscheidung 50, harte Regel 63) angewandt auf die sechs Screens, die
+er nach dem Durchgang am eigenen Handy genannt hat: Entscheidungen 51–56. Belege
+`ab01`–`ab08`, nachgemessen auf 360 × 600 und 390 × 844. Sechs Dinge sind daran
+wichtiger als das Aufräumen:
+1. **Der Post-Screen passt jetzt auf EINEN Bildschirm — vorher nie.** Zugeklappt
+   600 von 600 px, aufgeklappt 1041. Bis heute musste man in jedem Fall scrollen, um
+   „Bin dabei" zu sehen. **Das ist der eigentliche Ertrag und war nicht angekündigt:**
+   Gemeint war „weniger sehen", herausgekommen ist „nicht mehr scrollen müssen für
+   das, weswegen man da ist".
+2. **Zeit und Ort sind NICHT weg, sie sind leise** — `Heute 21:30 · 1220 Wien` unter
+   dem Knopf. An ihnen entscheidet man „geh ich hin?", und der zweite Halbsatz von
+   Entscheidung 50 ist genauso verbindlich wie der erste. Im Aufgeklappten stehen sie
+   **nicht noch einmal**: dieselbe Angabe zweimal ist genau das, was Ian aufgefallen ist.
+3. **Zwei Auslegungen innerhalb von Entscheidung 51 sind meine und warten auf sein
+   Urteil** (blockieren nichts): Der Kategorie-Chip ist geblieben, aber in der ZEILE
+   des Pfeils — sein Satz war *„alles untereinander"*, das Wort *untereinander* ist der
+   Befund. Und die **Notiz des Verfassers liegt hinter „Mehr ansehen"** — die wörtliche
+   Lesart von *Titel, Person, Knopf*, und die Stelle, an der ich am wenigsten sicher
+   bin. **Er urteilt am Bild: `ab01`/`ab02` herzeigen.**
+4. **`onFocus` allein hätte Entscheidung 55 nicht erledigt.** Beim Antippen des Feldes
+   ändert sich der INHALT der Liste nicht, nur das FENSTER darauf — `onContentSizeChange`
+   schweigt zu Recht. Und der Fokus kommt VOR der fertig hochgefahrenen Tastatur.
+   Deshalb zwei Anlässe auf eine Funktion (`nachUnten()`): `onFocus` springt sofort,
+   `onLayout` an der Liste holt nach, wenn die Fläche wirklich kürzer ist.
+5. **Der Beweis dafür wäre fast an einem verstellten Messgerät gescheitert.** Ein
+   `browser_resize` auf 360 × 420 bewirkte **gar nichts** — die App misst ihre Höhe seit
+   dem 2026-09-06 über `visualViewport`, und Playwrights Viewport-Wechsel löst dessen
+   `resize` nicht aus. Erst `--ss-hoehe` von Hand gesetzt: sichtbare Fläche 386 → 206,
+   Liste sprang ans Ende. **Zweite Fassung der 19b-Lehre.**
+6. **Entscheidung 52 kostet Trefferfläche, und die ist bezahlt statt behauptet.** Aus
+   Pfeil-plus-Wort wären 22 × 22 pt geworden — ein Viertel von Apples Mindestmaß.
+   `SsBack` ist jetzt auf **allen 14 Screens als 44 × 44 nachgemessen**, und der Pfeil
+   sitzt darin **links ausgerichtet statt zentriert**: So bleibt er in einer Flucht mit
+   dem Inhalt, und die Fläche wächst nach rechts und unten. Ein zentrierter Pfeil hätte
+   einen negativen Rand gegen `SsScreen` gebraucht — schon einmal schiefgegangen
+   (Phase 12).
+
 ✅ **Die App LÄUFT auf Ians iPhone, und der erste Durchgang mit einem echten Finger ist
 gemacht (2026-09-08).** `at.simplysocial.app`, Release-Build, ohne Kabel und ohne Mac,
 7 Tage gültig. Vier Dinge sind daran wichtiger als die Installation:
@@ -935,8 +973,9 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    PLAN.md Abschnitt 5b) ← *hier geht es weiter*. Vier von sechs Punkten hielten, auch
    die beiden, die im Browser prinzipiell nicht zu prüfen waren (Wischstapel unter
    einem Finger · **kein Gestenstreit zwischen Blatt und Apple-Karte**). Offen ist,
-   was er gesehen hat: **19f** „Weniger sehen" (Post-Screen, Zurück-Pfeil,
-   Filter-Symbol, Umschalter, Tastatur im Chat, Gruppe-erstellen ins Chats-Register) ·
+   was er gesehen hat: ~~**19f** „Weniger sehen" (Post-Screen, Zurück-Pfeil,
+   Filter-Symbol, Umschalter, Tastatur im Chat, Gruppe-erstellen ins Chats-Register)~~
+   ✅ *2026-09-08, ohne neuen Build* ·
    **19g** „Die Karte fertig machen" (Glas-FORM, Blase zurück, Apple-Nennung, Ganz
    Wien, Übergänge, zwei Kartenfehler) · **19h** „Nähe statt Filter"
    (Heimatbezirk ohne Build, Standort mit). **19f und 19g brauchen keinen neuen
@@ -986,6 +1025,12 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    `router.back()`. Auf Web kann jeder Screen direkt per Link geöffnet werden — dann gibt
    es kein Zurück, und der Knopf tut sichtbar nichts. Ab Phase 8 ist das der Normalfall.
    Seit Phase 3 gibt es dafür den Baustein `<SsBack />` — den nehmen, nicht selbst bauen.
+   **Seit Phase 19f trägt er kein Wort mehr, nur den Pfeil** (Ians Entscheidung 52).
+   Die `label`-Prop gibt es weiter, sie ist jetzt das `accessibilityLabel` — ein Knopf
+   ohne Namen ist für VoiceOver ein Knopf ohne Funktion. **Und die Fläche ist der
+   Preis dafür:** 44 × 44 pt sind Apples Mindestmaß, ein nackter Pfeil misst 22. Wer
+   an dem Baustein etwas ändert, misst die Fläche nach — sie ist die einzige, die die
+   ganze App auf einmal verliert.
 6. **Was zusammengehört, in EINEM `aendern`.** `anfrageBestaetigen` ändert Anfrage, Post
    und Chat in einem Aufruf; `nachrichtSenden` (Phase 5) die Nachricht und das
    `lastMessageAt` am Faden. Zwei getrennte Aufrufe hätten dazwischen einen Zustand, in
@@ -1996,6 +2041,22 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   `grep -E "BUILD SUCCEEDED"` — **die Anwesenheit des Erfolgs, nicht die Abwesenheit von
   Fehlern.** Wer den Grund sucht, greppt zusätzlich nach `failed with a nonzero exit
   code` und liest die Zeilen DAVOR.
+- **Ein Viewport-Wechsel im Prüfbrowser ist KEIN Tastatur-Test — die App merkt ihn
+  nicht.** (Phase 19f, 2026-09-08) Seit dem Fix vom 2026-09-06 nimmt die App ihre Höhe
+  aus `window.visualViewport` und schreibt sie in `--ss-hoehe`. Playwrights
+  `setViewportSize` löst dessen `resize`-Ereignis **nicht** aus: `window.innerHeight`
+  meldet brav 420, `--ss-hoehe` steht weiter auf 600, und die Liste rührt sich nicht.
+  Der erste Befund war deshalb „`onLayout` feuert nicht" — falsch, es gab nichts zu
+  feuern. Mit `document.documentElement.style.setProperty('--ss-hoehe', '420px')` war
+  die Tastatur echt nachgestellt (sichtbare Fläche 386 → 206) und die Liste sprang ans
+  Ende. **Wer eine Größenänderung prüft, prüft zuerst, ob die App sie überhaupt
+  mitbekommen hat** — dieselbe Sorte Fehler wie der hängengebliebene Seitenzoom in 19b.
+- **`scrollToEnd` landet in diesem Projekt 16 px vor dem rechnerischen Ende, und das
+  ist richtig so.** (Phase 19f) Gemessen: Inhalt 534, Fläche 386, rechnerisches Maximum
+  148 — angefahren wird 132. Die Differenz ist exakt das `paddingBottom` des
+  `contentContainer`. Die letzte Nachricht steht dadurch bündig am unteren Rand statt
+  16 px darüber. **Wichtig ist nicht die Zahl, sondern dass Öffnen und Fokussieren
+  dieselbe Stelle anfahren** — eine Abweichung dazwischen wäre der Fehler gewesen.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

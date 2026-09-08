@@ -343,10 +343,20 @@ export default function FeedScreen() {
       value={ansicht}
       onChange={setAnsicht}
       style={style}
+      // Ians Entscheidung 54 (Phase 19f): drei Zeichen statt drei Woerter. Er hatte
+      // den Stapel zuerst als Vollbild beschrieben („alles weg, nur Zurueck-Pfeil,
+      // Karten und die Leiste unten") und auf die Frage, wie man dann zur Karte
+      // kommt, die vorsichtigste der drei Moeglichkeiten gewaehlt: Der Umschalter
+      // bleibt, er wird nur leiser.
+      //
+      // `label` bleibt stehen und ist nicht tot — SsSegment macht daraus das
+      // `accessibilityLabel`. **Nebengewinn:** Damit ist das „Sta…"-Problem zum
+      // vierten Mal erledigt (Phase 11, 18a, 19b), diesmal endgueltig — ein Zeichen
+      // kann nicht abgeschnitten werden.
       options={[
-        { wert: 'stapel', label: 'Stapel' },
-        { wert: 'liste', label: 'Liste' },
-        { wert: 'karte', label: 'Karte' },
+        { wert: 'stapel', label: 'Stapel', icon: 'stapel' },
+        { wert: 'liste', label: 'Liste', icon: 'liste' },
+        { wert: 'karte', label: 'Karte', icon: 'karte' },
       ]}
     />
   );
@@ -873,9 +883,17 @@ function FilterKnopf({
         pressed && styles.filterKnopfGedrueckt,
       ]}>
       <SsIcon name="regler" size={18} color={hervor ? colors.bg : colors.ink} />
-      <SsText variant="label" color={hervor ? colors.bg : colors.ink}>
-        {anzahl > 0 ? `Filter · ${anzahl}` : 'Filter'}
-      </SsText>
+      {/* Ians Entscheidung 53 (Phase 19f): Das WORT „Filter" faellt weg, die ZAHL
+          bleibt. Das ist die Grenze aus Entscheidung 50 in ihrer ersten Anwendung
+          — was der Regler tut, sagt sein Zeichen; dass gerade drei Filter gesetzt
+          sind, sagt nichts ausser dieser Zahl. Ohne sie ist ein vergessener Filter
+          der schnellste Weg zu einem Feed, den jemand fuer kaputt haelt (harte
+          Regel 26, Phase 15). */}
+      {anzahl > 0 ? (
+        <SsText variant="label" color={colors.bg}>
+          {anzahl}
+        </SsText>
+      ) : null}
     </Pressable>
   );
 }
@@ -1217,9 +1235,16 @@ const styles = StyleSheet.create({
   filterKnopf: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    justifyContent: 'center',
+    gap: spacing.xs,
     // Dieselbe Höhe wie ein `SsInput`: 12 oben und unten plus 20 Zeilenhöhe.
     paddingVertical: spacing.md,
+    // Seit Entscheidung 53 steht hier kein Wort mehr, sondern ein Zeichen und
+    // manchmal eine einstellige Zahl. `minWidth` statt fester Breite: Mit Zahl ist
+    // der Knopf ein paar Punkte breiter, und das ist richtig so — er soll auffallen,
+    // wenn ein Filter läuft. 44 ist Apples Mindestmaß für eine Trefferfläche; die
+    // Höhe kommt über die Polsterung ohnehin darüber.
+    minWidth: 44,
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,

@@ -130,6 +130,29 @@ export default function ChatsScreen() {
     <SsScreen tabScreen contentStyle={styles.seite}>
       <View style={styles.kopf}>
         <SsText variant="title">Chats</SsText>
+        {/* Ians Entscheidung 56 (Phase 19f): Der Weg zu den Gruppen lag am Profil
+            und liegt jetzt hier — *„das hat eigentlich nix mit dem Profil zu tun,
+            sondern eher mit dem Chatten."*
+
+            ⚠️ Das beruehrt harte Regel 34 und ist ausdruecklich geprueft (harte
+            Regel 58): Regel 34 sagt „der Weg liegt am Profil, nicht in der
+            Tab-Leiste" — ihr GRUND war aber, dass eine Gruppe **kein eigener Ort**
+            wird, weil ein eigener Tab den Hauptfeed leert. Ein Knopf in einer
+            Kopfzeile schafft weder Tab noch Feed. Der Grund ueberlebt unveraendert,
+            nur der Wortlaut ist nachgezogen.
+
+            Er fuehrt auf `/gruppen` und nicht direkt auf `/gruppe/neu`: „Gruppe
+            erstellen" ist dort das erste Element, und es ist gleichzeitig der
+            einzige Weg zu den Gruppen, in denen man schon ist. Direkt aufs
+            Formular waere ein Knopf, der die Liste unerreichbar macht. */}
+        <Pressable
+          onPress={() => router.push('/gruppen')}
+          accessibilityRole="button"
+          accessibilityLabel="Gruppen"
+          hitSlop={spacing.sm}
+          style={({ pressed }) => [styles.gruppenKnopf, pressed && styles.kopfGedrueckt]}>
+          <SsIcon name="personen" size={22} color={colors.ink} />
+        </Pressable>
       </View>
 
       <SectionList
@@ -282,7 +305,28 @@ function NochKeinChat() {
 
 const styles = StyleSheet.create({
   seite: { paddingHorizontal: 0 },
-  kopf: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.md },
+  kopf: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+  },
+  // 44 x 44 wie beim Zurueck-Pfeil (Apples Mindestmass) — und aus demselben Grund
+  // NICHT zentriert, sondern buendig: `alignItems: 'flex-end'` legt das 22 px breite
+  // Zeichen genau auf die Kante der Kopfzeilen-Polsterung, in eine Flucht mit dem
+  // Titel links. Die zusaetzliche Flaeche waechst nach innen, wo Platz ist. Ein
+  // negativer Rand waere die Alternative gewesen und in diesem Projekt schon einmal
+  // schiefgegangen (Phase 12).
+  gruppenKnopf: {
+    width: 44,
+    height: 44,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    cursor: 'pointer',
+  },
+  kopfGedrueckt: { opacity: 0.6 },
 
   listeAussen: { flex: 1 },
   // Kein `paddingHorizontal` mehr: Die Zeilen gehen über die volle Breite, so wie in

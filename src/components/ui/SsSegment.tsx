@@ -1,12 +1,22 @@
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
 
 import { colors, radius, spacing } from '@/theme';
+import type { IconName } from '@/theme/icons';
 
 export interface SsSegmentOption<T> {
   wert: T;
   label: string;
+  /**
+   * Statt der Beschriftung ein Zeichen — Phase 19f, Ians Entscheidung 54.
+   *
+   * `label` bleibt trotzdem Pflicht und verschwindet nicht: Es wird zum
+   * `accessibilityLabel`. Ein Knopf ohne Namen ist für VoiceOver ein Knopf ohne
+   * Funktion, und beim App-Store-Review ist das kein Detail.
+   */
+  icon?: IconName;
 }
 
 export interface SsSegmentProps<T> {
@@ -46,14 +56,19 @@ export function SsSegment<T extends string | number | boolean>({
             onPress={() => onChange(o.wert)}
             accessibilityRole="button"
             accessibilityState={{ selected: aktiv }}
+            accessibilityLabel={o.label}
             style={({ pressed }) => [
               styles.haelfte,
               aktiv && styles.haelfteAktiv,
               pressed && !aktiv && styles.haelfteGedrueckt,
             ]}>
-            <SsText variant="label" center color={aktiv ? colors.surface : colors.inkSoft} numberOfLines={1}>
-              {o.label}
-            </SsText>
+            {o.icon ? (
+              <SsIcon name={o.icon} size={19} color={aktiv ? colors.surface : colors.inkSoft} />
+            ) : (
+              <SsText variant="label" center color={aktiv ? colors.surface : colors.inkSoft} numberOfLines={1}>
+                {o.label}
+              </SsText>
+            )}
           </Pressable>
         );
       })}
@@ -73,6 +88,10 @@ const styles = StyleSheet.create({
   },
   haelfte: {
     flex: 1,
+    // Die Icon-Fassung (Entscheidung 54) zentriert ihr Zeichen — ohne das klebt es
+    // links, weil ein `SsIcon` anders als ein `SsText center` keine Breite füllt.
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: spacing.sm,
     // 8 statt 12 seit Phase 19b, und das ist eine Messung: Mit DREI Stufen
     // („Stapel · Liste · Karte") passt die Leiste auf einem 360-px-Schirm neben

@@ -58,6 +58,19 @@ export interface SsInputProps {
    * damit harte Regel 6 (neue Felder sind SsInput) nicht am ersten Sonderfall bricht.
    */
   onSubmitEditing?: () => void;
+  /**
+   * Wird gerufen, wenn das Feld den Fokus bekommt — Phase 19f, Ians Entscheidung 55.
+   *
+   * Gebraucht wird es bisher nur vom Chat: Beim Antippen des Feldes fährt die
+   * Tastatur hoch, der Verlauf darüber wird kürzer, und die letzten Nachrichten
+   * rutschen aus dem Bild. Das ist kein Fall für `onContentSizeChange` — der
+   * INHALT ändert sich dabei nicht, nur das Fenster darauf.
+   *
+   * Als Prop und nicht als eigener `TextInput` im Screen, damit harte Regel 6
+   * („neue Felder sind SsInput") nicht am nächsten Sonderfall bricht. Der eigene
+   * Fokus-Zustand des Bausteins bleibt davon unberührt.
+   */
+  onFocus?: () => void;
   autoFocus?: boolean;
   style?: StyleProp<ViewStyle>;
   inputStyle?: StyleProp<TextStyle>;
@@ -94,6 +107,7 @@ export function SsInput({
   onClear,
   error,
   onSubmitEditing,
+  onFocus,
   autoFocus,
   style,
   inputStyle,
@@ -120,7 +134,10 @@ export function SsInput({
         <TextInput
           value={value}
           onChangeText={onChangeText}
-          onFocus={() => setFokus(true)}
+          onFocus={() => {
+            setFokus(true);
+            onFocus?.();
+          }}
           onBlur={() => setFokus(false)}
           placeholder={placeholder}
           placeholderTextColor={colors.inkSoft}

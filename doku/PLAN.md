@@ -3531,7 +3531,7 @@ Als harte Regel 63 in `CLAUDE.md` und als Gedächtnis über Sitzungen hinaus abg
 
 ---
 
-### Phase 19f — Weniger sehen ⬜ *(kein neuer Baustein, kein neuer Build)*
+### Phase 19f — Weniger sehen ✅ *(gebaut am 2026-09-08, ohne neuen Build)*
 
 Der Grundsatz, angewandt auf die Screens, die Ian genannt hat. **Reine Oberfläche auf
 vorhandenen Daten** — deshalb steht sie vorn.
@@ -3583,6 +3583,93 @@ Chatten."*
 > Ein Knopf in der Kopfzeile des Chats-Registers schafft **weder Tab noch Feed**. Der
 > Grund überlebt also unverändert, nur der Satz muss nachgezogen werden. **Das ist kein
 > stilles Überschreiben, sondern der Fall, für den Regel 58 gebaut ist.**
+
+---
+
+#### Was beim Bauen von 19f herauskam (2026-09-08)
+
+**Alle sechs Entscheidungen sind gebaut, kein neuer Baustein von außen, kein neuer
+Build.** Belege `ab01`–`ab08` im Projektordner, nachgemessen auf 360 × 600 und
+390 × 844. Typecheck sauber, `eslint` ohne neuen Befund (die vier bestehenden sind
+älter), keine Konsolenwarnung. Sieben Dinge sind daran wichtiger als das Aufräumen:
+
+1. **Der Post-Screen passt jetzt auf EINEN Bildschirm — das war vorher nicht so.**
+   Auf 360 × 600 stand er zugeklappt bei 600 von 600 px; aufgeklappt sind es 1041.
+   Vorher musste man in jedem Fall scrollen, um „Bin dabei" zu sehen. **Das ist der
+   eigentliche Ertrag von Entscheidung 51**, und er war im Voraus nicht angekündigt:
+   Gemeint war „weniger sehen", herausgekommen ist „nicht mehr scrollen müssen für
+   das, weswegen man da ist".
+
+2. **Zwei Stellen musste ich innerhalb von Entscheidung 51 selbst entscheiden — sie
+   stehen hier, damit Ian sie überstimmen kann.**
+   - **Der Kategorie-Chip ist geblieben**, aber in derselben ZEILE wie der Pfeil.
+     Ians Satz war *„Sport, Zurück, Sport, Tennis spielen — alles untereinander"* —
+     das Wort *untereinander* ist der Befund, nicht das Wort *Sport*. Die sechs
+     Kategoriefarben sind seit Phase 14 das Erkennungszeichen der App, und der Chip
+     ist auf diesem Screen die einzige Stelle, die noch eine trägt. Weggenommen ist
+     die Zeile, die er verbraucht hat.
+   - **Die Notiz des Verfassers („Lea schreibt: Hab zwei Schläger dabei…") liegt
+     jetzt hinter „Mehr ansehen".** Das ist die wörtliche Lesart von *Titel, Person,
+     Knopf* — und die Stelle, an der ich am wenigsten sicher bin: Eine Notiz ist das
+     Persönlichste am Post und könnte genau das sein, was jemanden zusagen lässt.
+     Sie zurückzuholen ist ein Verschieben um vier Zeilen.
+
+3. **Was NICHT hinter „Mehr ansehen" liegt, ist der Beweis dafür, dass die Grenze aus
+   Entscheidung 50 ernst gemeint ist.** Zeit und Ort stehen als eine leise Zeile unter
+   dem Knopf (`Heute 21:30 · 1220 Wien`) — an ihnen entscheidet man ja gerade. Und im
+   Aufgeklappten stehen sie **nicht noch einmal**: Dieselbe Angabe zweimal ist genau
+   das, was Ian aufgefallen ist.
+
+4. **Der Beweis für Entscheidung 55 wäre fast an einem verstellten Messgerät
+   gescheitert.** Ein `browser_resize` auf 360 × 420 bewirkte **gar nichts** — die App
+   misst ihre Höhe seit dem 2026-09-06 über `window.visualViewport`, und Playwrights
+   Viewport-Wechsel löst dessen `resize`-Ereignis nicht aus; `--ss-hoehe` stand weiter
+   auf 600 px. Erst das Setzen der CSS-Variablen von Hand hat die Tastatur echt
+   nachgestellt: sichtbare Fläche **386 → 206 px**, und die Liste sprang von 0 auf ans
+   Ende. **Zweite Fassung der 19b-Lehre — vor der Fehlersuche im eigenen Code prüfen,
+   ob das Messgerät verstellt ist.**
+
+5. **`onFocus` allein hätte Entscheidung 55 NICHT erledigt, und das ist der lehrreiche
+   Teil.** Beim Antippen des Feldes ändert sich der **Inhalt** der Liste nicht, nur das
+   **Fenster** darauf — `onContentSizeChange` schweigt also zu Recht. Der Fokus kommt
+   außerdem VOR der fertig hochgefahrenen Tastatur. Deshalb tun es zwei Handgriffe:
+   `onFocus` springt sofort (sonst steht die Liste eine Animation lang sichtbar
+   falsch), `onLayout` an der Liste holt nach, wenn die Fläche wirklich kürzer ist.
+   Beide rufen dieselbe Funktion `nachUnten()` — drei Anlässe, eine Stelle.
+
+6. **Entscheidung 52 kostet Trefferfläche, und die ist bezahlt statt behauptet.** Aus
+   Pfeil-plus-Wort (rund 90 × 26 pt) wären 22 × 22 geworden — ein Viertel von Apples
+   Mindestmaß. `SsBack` ist jetzt **44 × 44 auf allen 14 Screens nachgemessen**, und
+   der Pfeil sitzt darin **links oben ausgerichtet statt zentriert**: So bleibt er in
+   einer Flucht mit dem Inhalt darunter, und die Fläche wächst nach rechts und unten,
+   wo Platz ist. Ein zentrierter Pfeil hätte einen negativen Rand gegen den Seitenrand
+   von `SsScreen` gebraucht — und genau das ist in Phase 12 schon einmal
+   schiefgegangen. Derselbe Bau beim Gruppen-Knopf im Chats-Register (rechtsbündig,
+   44 × 44, rechte Kante bei genau 16 px).
+
+7. **Der Umschalter aus Entscheidung 54 brauchte drei Icons, die es nicht gab** —
+   `stapel`, `liste`, `karte` in `theme/icons.ts`. `liste` ist bewusst **nicht** `menu`:
+   Die drei Striche bedeuten in dieser App seit dem 2026-09-02 „Mehr einstellen" (Ians
+   Wahl). Dasselbe Zeichen für zwei Dinge ist genau die Unschärfe, gegen die eine
+   Icon-Datei gebaut ist. **In der Werkstatt (`/bausteine`) tauchten alle drei von
+   selbst auf**, weil die Galerie aus `Object.keys(ICONS)` liest — das ist der Ertrag
+   der Trennung Daten/Zeichner aus Phase 14, drei Wochen später eingelöst.
+
+**Zwei Sachen sind ausdrücklich NICHT angefasst worden:**
+- **Das Nachrichtenfeld über „Bin dabei" steht weiter offen.** Nach Entscheidung 50
+  wäre der Gedanke naheliegend, es erst nach dem Zusagen zu zeigen — wie die
+  Antwort-Leiste im Wischstapel (Entscheidung 8). Das ist aber eine SIEBTE
+  Entscheidung und stand in keinem Plan; sie gehört Ian, nicht mir.
+- **Die Höhe des Umschalters bleibt 35 pt** und damit unter Apples 44. Das ist so seit
+  Phase 19b und war nie Teil einer Rückmeldung; hier eine Zahl zu ändern, hieße die
+  Kapsel-Form aus 19e-2 anzufassen — und die steht in 19g ohnehin zur Debatte.
+
+**Harte Regel 34 ist nachgezogen, nicht überschrieben** (harte Regel 58): Ihr Wortlaut
+sagte *„der Weg zu `/gruppen` liegt am Profil"*, ihr GRUND war *„eine Gruppe wird kein
+eigener Ort"*. Ein Knopf in einer Kopfzeile schafft weder Tab noch Feed — der Grund
+überlebt unverändert. Der Knopf führt auf `/gruppen` und **nicht** direkt auf
+`/gruppe/neu`: „Gruppe erstellen" ist dort das erste Element, und die Liste ist der
+einzige Weg zu den Gruppen, in denen man schon ist.
 
 ---
 
@@ -5083,8 +5170,35 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-08 abends, SPÄTESTER Eintrag):
-> Phase 19f bauen — „Weniger sehen".** Der Gerätedurchgang IST gemacht, Ians Feedback
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-08 spätabends, SPÄTESTER Eintrag):
+> Phase 19g — „Die Karte fertig machen".** ✅ **19f ist gebaut** (alle sechs
+> Entscheidungen 51–56, ohne neuen Build; Belege `ab01`–`ab08`, Einzelheiten in
+> Abschnitt 5b unter „Was beim Bauen von 19f herauskam"). Fünf Dinge, die eine frische
+> Sitzung zuerst wissen muss:
+>
+> - **Zwei Stellen aus 19f warten auf Ians Urteil, keine davon blockiert:** der
+>   Kategorie-Chip steht jetzt in der Zeile des Zurück-Pfeils statt darüber, und die
+>   **Notiz des Verfassers liegt hinter „Mehr ansehen"**. Beides sind meine
+>   Auslegungen innerhalb seiner Entscheidung 51, beide in einer Minute rückgängig.
+>   **Er urteilt am Bild — `ab01-post-zu-360.png` und `ab02-post-mehr-360.png`
+>   herzeigen, nicht beschreiben.**
+> - **Harte Regel 63 steht weiter über allem**, und ihre zweite Richtung ist die
+>   ungewohnte: Sie bremst, was noch nicht gebaut ist. In 19g heißt das, dass eine
+>   neue Bedienfläche auf der Karte begründen muss, warum sie im Weg stehen darf.
+> - **Das Liquid Glass ist echt und sieht trotzdem falsch aus.** Nicht die Technik
+>   anfassen (das ist gemessen), sondern die FORM — die Kollision Blatt gegen
+>   schwebende Tab-Kapsel. Zwei Auswege stehen in 19g, meine Empfehlung ist (b);
+>   **als Vorschau bauen, nicht als Tatsache.**
+> - **Auf einen Screenshot wird gewartet:** „Karte nach oben wischen sieht komisch
+>   aus". Ohne das Bild wird daran nicht gearbeitet — ein Bild, das falsch aussieht,
+>   ist noch kein Fehler (die Lehre aus 19e-2).
+> - **Der Bauplatz gehört außerhalb von iCloud** (`-derivedDataPath
+>   ~/Library/Developer/Xcode/DerivedData/SimplySocial-geraet`), sonst scheitert
+>   `codesign`. Erst nötig, wenn wieder ein Gerätebuild ansteht — 19g braucht keinen.
+>
+> ---
+>
+> 📎 **Stand davor (erledigt): Phase 19f bauen — „Weniger sehen".** Der Gerätedurchgang IST gemacht, Ians Feedback
 > steht ausgeschrieben in Abschnitt 5b (Phasen 19f, 19g, 19h; zwölf Entscheidungen,
 > 50–61). **19f und 19g brauchen keinen neuen Baustein und keinen neuen Build.**
 > Vier Dinge, die eine frische Sitzung zuerst wissen muss:

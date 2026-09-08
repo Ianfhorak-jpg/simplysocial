@@ -237,6 +237,41 @@ export const ICONS = {
   /** Plus. */
   plus: { striche: ['M12 4.8v14.4', 'M4.8 12h14.4'] },
 
+  // ── Die drei Ansichten (Phase 19f, Ians Entscheidung 54) ──────────────────
+  // Der Umschalter „Stapel · Liste · Karte" trägt seit 19f keine Wörter mehr, nur
+  // diese drei Motive. Sie müssen sich deshalb OHNE Beschriftung unterscheiden —
+  // das ist eine schärfere Anforderung als bei jedem anderen Icon der App, wo
+  // immer noch Text danebensteht. Getrennt gehalten sind sie über die FORM, nicht
+  // über Feinheiten: eine Fläche mit Ecke dahinter, drei Zeilen mit Punkten, ein
+  // gefaltetes Blatt mit Knicken.
+  //
+  // `liste` ist bewusst NICHT `menu`: Die drei Striche bedeuten in dieser App seit
+  // dem 2026-09-02 „Mehr einstellen" (Ians Wahl). Dasselbe Zeichen für zwei Dinge
+  // ist genau die Sorte Unschärfe, gegen die eine Icon-Datei gebaut ist.
+
+  /** Zwei Karteikarten übereinander — der Wischstapel. */
+  stapel: {
+    striche: [
+      'M5.4 8.6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z',
+      'M8.2 5.8h8a2 2 0 0 1 2 2v8',
+    ],
+  },
+
+  /** Aufzählung — die Liste. */
+  liste: {
+    striche: ['M9 7.4h10.6', 'M9 12h10.6', 'M9 16.6h10.6'],
+    flaechen: [punkt(5.2, 7.4), punkt(5.2, 12), punkt(5.2, 16.6)],
+  },
+
+  /** Gefaltete Landkarte — die Wien-Karte. */
+  karte: {
+    striche: [
+      'M9 4.4 L3.6 6.8v12.8L9 17.2l6 2.4 5.4-2.4V4.4L15 6.8z',
+      'M9 4.4v12.8',
+      'M15 6.8v12.8',
+    ],
+  },
+
   // ── Richtungen ────────────────────────────────────────────────────────────
   // Vorher standen hier Schriftzeichen: › ▾ ▸ ← →. Die sind keine Emojis und waren
   // deshalb nicht Teil von Christophs Kritik — aber sie sind in der Systemschrift
