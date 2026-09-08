@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { CURRENT_USER_ID, aendern, useSlice } from '../store';
 
+import { istWienerBezirk } from '@/lib/bezirk';
 import type { User } from '@/types/models';
 
 /**
@@ -64,6 +65,27 @@ export function folgen(id: string): void {
 
 export function entfolgen(id: string): void {
   aendern((alt) => ({ users: mitFolgeKante(alt.users, CURRENT_USER_ID, id, false) }));
+}
+
+/**
+ * Den eigenen Heimatbezirk setzen — seit Phase 19h, Ians Entscheidung 64.
+ *
+ * ── Warum das überhaupt eine Einstellung ist ──────────────────────────────────
+ * Seit Entscheidung 63 bestimmt der Bezirk die REIHENFOLGE des Feeds (`sort.ts`).
+ * Eine Regel, die man nicht sehen und nicht verstellen kann, lässt sich am Gerät
+ * auch nicht beurteilen — man müsste den Code lesen, um zu merken, dass sie wirkt.
+ * Im fertigen Produkt fragt danach das Anmelden (Phase 20.3, *„man gibt am Anfang
+ * seinen Bezirk an"*); bis dahin ist die Einstellung der einzige Weg dorthin.
+ *
+ * Ungültige Postleitzahlen werden still verworfen statt geworfen: Der Aufrufer ist
+ * eine Auswahl aus `BEZIRKS_LISTE`, kann also gar nichts Falsches schicken — und
+ * ein Absturz an dieser Stelle wäre teurer als ein Klick, der nichts tut.
+ */
+export function bezirkSetzen(plz: string): void {
+  if (!istWienerBezirk(plz)) return;
+  aendern((alt) => ({
+    users: alt.users.map((u) => (u.id === CURRENT_USER_ID ? { ...u, district: plz } : u)),
+  }));
 }
 
 /** Setzt die Kante `vonId → zuId` auf an oder aus und pflegt dabei beide Seiten. */

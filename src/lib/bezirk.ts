@@ -1,3 +1,5 @@
+import { BEZIRKE } from '@/data/wien-bezirke';
+
 /**
  * Wiener Bezirke.
  *
@@ -15,6 +17,27 @@
 export function istWienerBezirk(text: string): boolean {
   return /^1(0[1-9]|1\d|2[0-3])0$/.test(text.trim());
 }
+
+/**
+ * Alle 23 Bezirke, in ihrer Nummernreihenfolge — Postleitzahl und Name.
+ *
+ * ── Warum die Liste hier steht und nicht im Screen ────────────────────────────
+ * Sie stammt aus `data/wien-bezirke.ts`, und die Datei ist **erzeugt** (harte
+ * Regel 48). Ein Screen, der direkt hineingreift, hängt am Ausgabeformat eines
+ * Python-Skripts; hier steht die eine Übersetzung von „Kartendaten" nach „Liste
+ * zum Auswählen". Dieselbe Bauart wie `ortText()` darunter.
+ *
+ * ── Warum ALLE 23 und nicht nur die mit Posts ─────────────────────────────────
+ * Beim FILTER war das umgekehrt richtig: Dort zeigte `useBezirkeImFeed` nur, wo
+ * gerade etwas los ist, weil 20 leere Pillen 20 Sackgassen sind (Phase-15-Falle).
+ * Hier ist die Frage eine andere — man WOHNT in genau einem Bezirk, und keiner
+ * davon ist eine Sackgasse. Wer in Liesing wohnt, muss Liesing wählen können, auch
+ * wenn dort gerade niemand etwas postet.
+ */
+export const BEZIRKS_LISTE: readonly { plz: string; name: string }[] = BEZIRKE.map((b) => ({
+  plz: b.plz,
+  name: b.name,
+}));
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════

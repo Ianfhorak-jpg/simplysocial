@@ -78,6 +78,76 @@ export const WIEN_REGION = {
   longitudeDelta: KARTE_BREITE / (k * massstab),
 };
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  WIE WEIT ZWEI BEZIRKE AUSEINANDERLIEGEN — Phase 19h
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Seit Ians Entscheidung 63 bestimmt die Entfernung die Reihenfolge im Feed. Die
+ * Regel dazu steht in `features/posts/sort.ts`; hier steht nur die Rechnung, denn
+ * „wie weit ist das?" ist eine Frage an die Erde und keine an den Feed.
+ *
+ * ── Warum das fast geschenkt ist ──────────────────────────────────────────────
+ * `PROJEKTION` trägt die Kosinus-Korrektur bereits IN sich (`k`). Im Raster ist ein
+ * Schritt nach rechts damit genauso lang wie einer nach unten — die Fläche ist
+ * winkeltreu genug, dass `Math.hypot` reicht. Mit rohen Längen- und Breitengraden
+ * ginge das nicht: 0,01° Länge sind in Wien nur 74 % von 0,01° Breite, und es
+ * bräuchte die Haversine-Formel. **Der Umweg über das Raster ist hier der kürzere.**
+ *
+ * ── Was als „Mitte" eines Bezirks gilt ────────────────────────────────────────
+ * Der Beschriftungspunkt (`label`), also der Punkt mit dem größten Abstand zum
+ * Rand. Nicht der Schwerpunkt — und das ist ein Vorteil: Bei den gebogenen Bezirken
+ * (13., 21., 22.) liegt der Schwerpunkt teilweise gar nicht IN der Fläche (Lehre
+ * aus 19b), und eine Entfernung, gemessen ab einem Punkt im Nachbarbezirk, wäre
+ * eine falsche Auskunft. Genauigkeit ist trotzdem keine zu erwarten: **Das ist eine
+ * Übersichtskarte, keine Vermessung** — die Antwort auf „ist das bei mir um die
+ * Ecke oder am anderen Ende der Stadt?" trägt sie, mehr nicht.
+ *
+ * ── Die bekannte Schwäche, nachgemessen und angenommen ────────────────────────
+ * Bei den großen Flächenbezirken liegt der innerste Punkt im Grünen und nicht dort,
+ * wo Leute wohnen: Hietzings Mitte sitzt im Lainzer Tiergarten, und von Neubau aus
+ * kommen dadurch **8,7 km** heraus — vom Bahnhof Hietzing wären es rund 5. Der 13.,
+ * 21., 22. und 23. werden also systematisch zu weit gemessen.
+ *
+ * **Angenommen, weil die Zahl nirgends steht.** Sie geht ausschließlich in eine
+ * REIHENFOLGE ein (`sort.ts`), und die Ordnung stimmt trotzdem: Hietzing ist von
+ * Neubau aus wirklich weiter weg als die Josefstadt, egal ob 5 oder 8,7 km. Sobald
+ * eine Entfernung ANGEZEIGT werden soll („4 km entfernt"), ist dieser Absatz die
+ * Stelle, an der jemand zuerst nachrechnen muss — dann trägt die Zahl plötzlich ein
+ * Versprechen, das sie heute nicht abgibt.
+ */
+
+/** Meter je Breitengrad. Auf der Kugel überall gleich, anders als beim Längengrad. */
+const METER_JE_GRAD = 111_320;
+
+/**
+ * Wie viele Meter eine Rastereinheit ist — rund **29 m**.
+ *
+ * (Der erzeugte Kopf von `wien-bezirke.ts` sagt „rund 20 m"; das ist eine grobe
+ * Angabe aus dem Skript. Gerechnet: 111 320 / 3793,17 = 29,3. Nachprüfbar an der
+ * Kartenhöhe — 776,7 Einheiten sind 22,8 km, und Wien ist von Nord nach Süd
+ * tatsächlich rund 22,4 km lang.)
+ */
+export const METER_JE_EINHEIT = METER_JE_GRAD / massstab;
+
+/** plz → Mitte im Raster. Einmal beim Laden gebaut, wie `BEZIRKE_GEO` unten. */
+const MITTEN = new Map(BEZIRKE.map((b) => [b.plz, b.label]));
+
+/**
+ * Luftlinie zwischen zwei Bezirksmitten, in Metern — oder **null**, wenn eine der
+ * beiden Postleitzahlen kein Wiener Bezirk ist.
+ *
+ * `null` und nicht `Infinity`: Ein unbekannter Bezirk ist keine große Entfernung,
+ * sondern eine fehlende Auskunft. Was daraus folgt, entscheidet der Aufrufer —
+ * `sort.ts` tut das sichtbar über `OHNE_BEZIRK_POSITION`.
+ */
+export function bezirksAbstandMeter(a: string, b: string): number | null {
+  const pa = MITTEN.get(a);
+  const pb = MITTEN.get(b);
+  if (!pa || !pb) return null;
+  return Math.hypot(pa.x - pb.x, pa.y - pb.y) * METER_JE_EINHEIT;
+}
+
 /** Ein Bezirk als Geo-Polygone. Mehrere Ringe kommen vor, sobald der Generator ein
  *  Multipolygon liefert (heute hat kein Wiener Bezirk eines). */
 export interface BezirkGeo {

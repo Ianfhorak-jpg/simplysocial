@@ -41,7 +41,6 @@ import { bezirkPostText, ohneBezirkText } from '@/features/posts/karte';
 import {
   FILTER_LEER,
   aktiveFilter,
-  useBezirkeImFeed,
   useBezirksZaehlung,
   useFeed,
   useStapel,
@@ -154,7 +153,6 @@ export default function FeedScreen() {
 
   const eintraege = useFeed(filter);
   const stapel = useStapel(filter);
-  const bezirke = useBezirkeImFeed(filter);
   // Phase 19b. Dieselbe Zählung speist Karte UND Filter-Pillen — die Regel „beim
   // Zählen wird genau der Bezirksfilter ausgeschaltet" steht damit an EINER Stelle
   // (`useBezirksZaehlung`), nicht zweimal fast gleich.
@@ -269,8 +267,6 @@ export default function FeedScreen() {
     <FilterBereich
       filter={filter}
       setzen={setzen}
-      bezirke={bezirke}
-      ohneBezirk={ohneBezirk}
       aktiv={filterAktiv}
       zuruecksetzen={zuruecksetzen}
       meinJahrgang={ich.jahrgang}
@@ -982,17 +978,12 @@ function FilterKnopf({
 function FilterBereich({
   filter,
   setzen,
-  bezirke,
-  ohneBezirk,
   aktiv,
   zuruecksetzen,
   meinJahrgang,
 }: {
   filter: FeedFilter;
   setzen: <K extends keyof FeedFilter>(feld: K, wert: FeedFilter[K]) => void;
-  bezirke: string[];
-  /** Wie viele Posts gerade GAR keinen Bezirk haben — Phase 19b. */
-  ohneBezirk: number;
   aktiv: boolean;
   zuruecksetzen: () => void;
   /** Nur für den VORSCHLAG beim Einschalten des Reglers, nicht für die Regel. */
@@ -1025,45 +1016,41 @@ function FilterBereich({
         ))}
       </FilterGruppe>
 
-      {/* Nur die Bezirke, in denen gerade wirklich etwas los ist (`useBezirkeImFeed`).
-          Eine Reihe mit allen 23 wäre zu 20 Teilen eine Sackgasse. */}
-      <FilterGruppe
-        titel="Bezirk"
-        hinweis={bezirke.length === 0 ? 'gerade nichts mit Bezirk' : undefined}>
-        <SsChip
-          label="Überall"
-          selected={filter.bezirk.kind === 'alle'}
-          onPress={() => setzen('bezirk', BEZIRK_ALLE)}
-        />
-        {bezirke.map((b) => (
-          <SsChip
-            key={b}
-            label={b}
-            selected={filter.bezirk.kind === 'einer' && filter.bezirk.plz === b}
-            onPress={() =>
-              setzen(
-                'bezirk',
-                filter.bezirk.kind === 'einer' && filter.bezirk.plz === b
-                  ? BEZIRK_ALLE
-                  : { kind: 'einer', plz: b },
-              )
-            }
-          />
-        ))}
-        {/* Seit Phase 19b eine eigene Stufe und keine Lücke mehr: Posts, bei denen
-            niemand einen Bezirk angegeben hat. Sie steht nur da, wenn es welche
-            gibt — eine Pille, die immer null Ergebnisse liefert, ist eine
-            Sackgasse wie die 23 leeren Bezirke daneben. */}
-        {ohneBezirk > 0 ? (
-          <SsChip
-            label="Ohne Bezirk"
-            selected={filter.bezirk.kind === 'ohne'}
-            onPress={() =>
-              setzen('bezirk', filter.bezirk.kind === 'ohne' ? BEZIRK_ALLE : BEZIRK_OHNE)
-            }
-          />
-        ) : null}
-      </FilterGruppe>
+      {/* ── Der Bezirks-Filter ist seit Phase 19h WEG ─────────────────────────
+          Ians Entscheidung 63: *„Bezirk ist too viel, das sieht echt nicht gut
+          aus."* Hier stand eine Reihe mit „Überall", jedem Bezirk, in dem gerade
+          etwas los ist, und „Ohne Bezirk". Sie ist ersatzlos gestrichen — die Nähe
+          erledigt die Aufgabe jetzt ohne einen Handgriff: Der Feed steht ohnehin
+          von der eigenen Haustür aus sortiert da (`sort.ts`).
+
+          ── Was NICHT gestrichen ist, und warum ────────────────────────────────
+          `filter.bezirk` selbst. Harte Regel 50 sagt: Was auf der KARTE gewählt
+          ist, IST der Bezirksfilter — es gibt keinen zweiten Zustand daneben. Ein
+          Tipp auf die Karte setzt ihn also weiter, und er überlebt das Umschalten
+          auf Stapel oder Liste.
+
+          Genau daraus folgt die Zeile unten. Ohne sie käme man in einen Zustand,
+          den man nur noch mit „Alle Filter zurücksetzen" verlässt — also mit dem
+          Holzhammer, der auch Suche und Jahrgang wegwirft. **Das ist die Grenze in
+          Ians Entscheidung 50** („wenn die Person etwas wissen will, dann soll's
+          auch einfach für sie sein"): Wegräumen darf nicht heißen, dass ein
+          Zustand ohne Ausweg entsteht. Deshalb steht hier keine Auswahl, sondern
+          eine RÜCKNAHME — und nur dann, wenn es etwas zurückzunehmen gibt. */}
+      {filter.bezirk.kind !== 'alle' ? (
+        <FilterGruppe titel="Von der Karte" reihe={false}>
+          <View style={styles.filterPillen}>
+            <SsChip
+              label={
+                filter.bezirk.kind === 'einer'
+                  ? `Nur ${filter.bezirk.plz} Wien`
+                  : 'Nur ohne Bezirk'
+              }
+              selected
+              onPress={() => setzen('bezirk', BEZIRK_ALLE)}
+            />
+          </View>
+        </FilterGruppe>
+      ) : null}
 
       {/* Seit Phase 18b ein Schiebe-Balken statt einer Pillenreihe — Ians
           Entscheidung 17: „mehr als Jahrgang brauchen wir nicht."

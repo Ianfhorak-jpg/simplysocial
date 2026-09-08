@@ -6,7 +6,7 @@ import { SsGlas, SsIcon } from '@/components/ui';
 import { TAB_KAPSEL_HOEHE, TAB_KAPSEL_SEITE, tabKapselUnten } from '@/lib/tabs';
 import { useMeineEinladungen, useOffeneGruppenAnfragen } from '@/features/groups/hooks';
 import { useOffeneAnfragen } from '@/features/requests/hooks';
-import { colors, radius, status, type } from '@/theme';
+import { colors, radius, status } from '@/theme';
 import type { IconName } from '@/theme/icons';
 
 /**
@@ -40,12 +40,42 @@ import type { IconName } from '@/theme/icons';
  * braucht Rand, nicht nur Hintergrund — erst wenn Inhalt daneben UND darunter
  * durchläuft, sieht man, dass es bricht. Die Maße stehen in `lib/tabs.ts`.
  *
+ * ── Seit Phase 19h: die Kapsel trägt KEINE Wörter mehr ───────────────────────
+ * Ians Entscheidung 62 vom 2026-09-08: *„unten soll der Text auch weg, also Start,
+ * Anfragen …"* — vier Symbole, sonst nichts. Das ist harte Regel 63 angewandt auf
+ * die Leiste selbst: Ein Tab-Wort trägt zu keiner Entscheidung bei, die man auf
+ * diesem Bildschirm trifft; es sagt nur noch einmal, was das Symbol schon sagt.
+ *
+ * **Bemerkenswert ist, wogegen die Entscheidung geht:** Auf seinem eigenen Vorbild
+ * (`vorbild-liquid-glass-bierbuddy.png`, Grundlage von Entscheidung 41 und 43)
+ * stehen die Wörter sehr wohl da — „Home · Ma… · Stats · Me", das dritte davon
+ * schon abgeschnitten. Entscheidung 50 ist einen Tag jünger und die allgemeinere;
+ * sie gewinnt. Das abgeschnittene „Ma…" ist nebenbei das beste Argument dafür.
+ *
+ * **Der Preis ist derselbe wie bei Entscheidung 52** (`SsBack` trägt seit 19f nur
+ * noch den Pfeil): Ein Symbol ohne Text hat für einen Screenreader keinen Namen
+ * mehr. Deshalb steht an jedem Tab ein `tabBarAccessibilityLabel` — und das ist
+ * nicht vorsorglich, sondern nachgesehen: `BottomTabBar.js` setzt einen Ersatz
+ * („Start, tab, 1 of 4") **nur auf iOS**; im Browser bleibt der Knopf ohne Namen.
+ * `title` bleibt trotzdem stehen, denn den liest `tabTitel()` in `app/_layout.tsx`
+ * für den Fenstertitel aus.
+ *
  * Der Preis steht an EINER Stelle und heißt `useTabRand()`: Was fest steht, weicht
  * der Leiste aus (`SsScreen` setzt einen Rand), was scrollt, scrollt darunter
  * durch. Ohne das läge die unterste Karte jedes Screens hinter der Leiste — auf
  * Web genauso wie auf iOS, denn die Geometrie ist auf beiden Plattformen dieselbe.
  * Verschieden ist nur, was man sieht (Entscheidung 43).
  */
+/**
+ * Wie groß ein Tab-Symbol ist.
+ *
+ * Bis Phase 19h waren es 22 pt, weil darunter noch ein Wort stand und beides
+ * zusammen in die 56 pt hohe Kapsel musste. Ohne das Wort ist Platz — und ein
+ * Symbol, das allein für seinen Tab einsteht, darf ihn auch ausfüllen. 26 pt ist
+ * Apples eigenes Maß für eine Tab-Leiste ohne Beschriftung.
+ */
+const TAB_SYMBOL = 26;
+
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const kapselUnten = tabKapselUnten(insets.bottom);
@@ -78,14 +108,20 @@ export default function TabsLayout() {
         // deshalb ist es ein eigener Slot und nicht eine Hintergrundfarbe am
         // `tabBarStyle`.
         tabBarBackground: () => <SsGlas schwebt style={styles.glas} />,
-        tabBarLabelStyle: styles.beschriftung,
+        // Entscheidung 62: keine Wörter in der Kapsel. Der Titel bleibt als
+        // `title` erhalten (Fenstertitel auf Web) — nur gezeichnet wird er nicht.
+        tabBarShowLabel: false,
         tabBarItemStyle: styles.eintrag,
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Start', tabBarIcon: symbol('haus') }} />
+      <Tabs.Screen
+        name="index"
+        options={{ title: 'Start', tabBarAccessibilityLabel: 'Start', tabBarIcon: symbol('haus') }}
+      />
       <Tabs.Screen
         name="requests"
         options={{
           title: 'Anfragen',
+          tabBarAccessibilityLabel: 'Anfragen',
           tabBarIcon: symbol('hand'),
           // Die Zahl macht sichtbar, dass jemand wartet — das ist der Punkt, an dem
           // die App etwas von einem will, und der Grund, sie wieder aufzumachen.
@@ -93,8 +129,22 @@ export default function TabsLayout() {
           tabBarBadgeStyle: styles.zahl,
         }}
       />
-      <Tabs.Screen name="chats" options={{ title: 'Chats', tabBarIcon: symbol('sprechblase') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profil', tabBarIcon: symbol('person') }} />
+      <Tabs.Screen
+        name="chats"
+        options={{
+          title: 'Chats',
+          tabBarAccessibilityLabel: 'Chats',
+          tabBarIcon: symbol('sprechblase'),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profil',
+          tabBarAccessibilityLabel: 'Profil',
+          tabBarIcon: symbol('person'),
+        }}
+      />
     </Tabs>
   );
 }
@@ -114,7 +164,7 @@ function symbol(name: IconName) {
   // laut Typ aber auch ein undurchsichtiger Plattform-Wert sein. Der Zweig kostet
   // nichts und erspart ein `as string`, das beim nächsten RN-Update still bricht.
   return ({ color }: { color: ColorValue }) => (
-    <SsIcon name={name} size={22} color={typeof color === 'string' ? color : colors.inkSoft} />
+    <SsIcon name={name} size={TAB_SYMBOL} color={typeof color === 'string' ? color : colors.inkSoft} />
   );
 }
 
@@ -149,6 +199,5 @@ const styles = StyleSheet.create({
   // Auch hier keine senkrechte Polsterung — die Höhe kommt von der Kapsel, und die
   // Leiste zentriert ihre Einträge darin.
   eintrag: { paddingVertical: 0 },
-  beschriftung: { ...type.caption, fontWeight: '700' },
   zahl: { backgroundColor: status.danger, color: colors.surface, fontSize: 11, fontWeight: '700' },
 });

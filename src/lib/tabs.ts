@@ -34,9 +34,15 @@ import { spacing } from '@/theme';
  */
 
 /**
- * Wie hoch die Kapsel ist. Fest und nicht gemessen: Sie enthält Symbol plus
- * Beschriftung, und beides hat eine feste Größe — anders als der Blattkopf, der
- * einen Text mit unbekannter Länge trägt (harte Regel 60).
+ * Wie hoch die Kapsel ist. Fest und nicht gemessen: Sie enthält nur Symbole, und
+ * die haben eine feste Größe — anders als der Blattkopf, der einen Text mit
+ * unbekannter Länge trägt (harte Regel 60).
+ *
+ * **Der Wert bleibt bei 56, obwohl seit Phase 19h die Beschriftung fehlt.** Das ist
+ * Absicht: Ians Entscheidung 62 nimmt die WÖRTER weg, nicht die Form — die Kapsel
+ * ist dieselbe wie auf seinem Vorbild, und eine flachere Leiste wäre eine zweite,
+ * ungefragte Änderung. Der frei gewordene Platz geht ans Symbol (`TAB_SYMBOL` in
+ * `(tabs)/_layout.tsx`, 22 → 26).
  */
 export const TAB_KAPSEL_HOEHE = 56;
 

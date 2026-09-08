@@ -3995,7 +3995,7 @@ abgeschnittener Text, das Blatt bei `zu` sauber geklippt). `npx tsc --noEmit` sa
 
 ---
 
-### Phase 19h — Nähe statt Filter ⬜ *(Teil 1 ohne Build, Teil 2 mit)*
+### Phase 19h — Nähe statt Filter · **19h-1 ✅ (2026-09-08, ohne Build) · 19h-2 ⬜**
 
 **Entscheidung 61 — der Heimatbezirk ist die Grundlage, der Standort kommt optional
 dazu.** Ian über den Bezirks-Filter: *„Bezirk ist too viel, das sieht echt nicht gut
@@ -4015,6 +4015,122 @@ man sich immer weiter."*
 
 **Die Suche bleibt vorerst**, aber kleiner (*„das lassen wir mal … oder vielleicht schon,
 aber einfach kleiner"*). Das ist ausdrücklich keine feste Entscheidung.
+
+#### Was beim Bauen von 19h-1 herauskam (2026-09-08)
+
+Belege `ad01`–`ad10` im Projektordner, nachgemessen auf 360 × 600 und 390 × 844.
+**Drei neue Entscheidungen von Ian, alle an diesem Abend** — und die mittlere ist die
+folgenreichste des ganzen Projekts seit Phase 2.
+
+---
+
+**Entscheidung 62 — die Tab-Leiste trägt keine Wörter mehr.** *„unten soll der Text
+auch weg, also Start, Anfragen …"* Vier Symbole, sonst nichts (`tabBarShowLabel:
+false`, `TAB_SYMBOL` 22 → 26). Zwei Dinge sind daran wichtiger als der Handgriff:
+
+1. **Die Entscheidung geht gegen sein EIGENES Vorbild.** Auf
+   `vorbild-liquid-glass-bierbuddy.png` — der Grundlage von Entscheidung 41 und 43 —
+   stehen die Wörter sehr wohl da: „Home · Ma… · Stats · Me", das dritte davon schon
+   abgeschnitten. Entscheidung 50 ist einen Tag jünger und die allgemeinere, also
+   gewinnt sie. **Das abgeschnittene „Ma…" ist nebenbei das beste Argument dafür.**
+2. **Der Preis ist gemessen, nicht vermutet.** Ein Symbol ohne Wort hat für einen
+   Screenreader keinen Namen. Nachgesehen in `expo-router`s `BottomTabBar.js`: Der
+   eingebaute Ersatz („Start, tab, 1 of 4") entsteht **nur auf iOS**, im Browser
+   bleibt der Knopf namenlos. Deshalb steht an jedem Tab ein
+   `tabBarAccessibilityLabel` — dieselbe Bauart wie `SsBack` seit Entscheidung 52.
+   Nachgeprüft im DOM: vier `role="tab"`, sichtbarer Text leer, `aria-label` gesetzt,
+   Trefferfläche **82 × 56 pt** und alle vier frei (Apples Mindestmaß ist 44 × 44).
+
+---
+
+**Entscheidung 63 — die Reihenfolge des Feeds ist die Entfernung.** Das ist die
+Ausführung von Entscheidung 61, und sie **ersetzt Entscheidung 1 („das Neueste
+zuerst") vom 2026-08-31**. Gefragt wurde vorher, nach harter Regel 58 — eine neue
+Entscheidung überschreibt keine alte Regel-Datei, ohne dass jemand gefragt hat, und
+`sort.ts` trägt seit dem ersten Tag „nicht ohne Rückfrage umstellen". Drei Lesarten
+seines Satzes *„und dann entfernt man sich immer weiter"* lagen ihm vor:
+
+| | | |
+|---|---|---|
+| **(a)** | Umkreis, der beim Durchwischen mitwächst; innerhalb bleibt das Neueste oben | **meine Empfehlung** — Entscheidung 1 bliebe unangetastet |
+| **(b)** | ✅ **die Reihenfolge selbst**: das Nächste oben, das Weiteste unten | seine Wahl |
+| **(c)** | beides zusammen: Ringe UND innerhalb nach Entfernung | Entscheidung 1 gälte nirgends mehr |
+
+**Den Haken kennt er, er stand in der Frage:** Ein frisch geposteter Post aus 1220
+kommt bei jemandem aus 1070 nie mehr nach oben — genau der Haken, gegen den
+Entscheidung 1 gebaut war („postet überhaupt jemand"). Was ihn kleiner macht: Die
+Liste ist kurz, und Wien ist an der weitesten Stelle 29 km breit.
+
+**Was von Entscheidung 1 bleibt, ist mehr, als es klingt:** Sie ist die **zweite
+Stufe**. Bei gleicher Entfernung steht weiter das Neueste oben — und gleiche
+Entfernung heißt in der Praxis *derselbe Bezirk*. Genau dort, wo man am ehesten
+hingeht, gilt seine alte Regel unverändert. Sichtbar im Beleg: vier 1070er Posts
+untereinander, nach dem Neuesten sortiert.
+
+Vier Befunde aus dem Bauen:
+
+1. **Die Rechnung war fast geschenkt, und der Grund ist die Projektion aus 19d.**
+   `PROJEKTION` trägt die Kosinus-Korrektur schon in sich, also ist ein Schritt nach
+   rechts im Raster genauso lang wie einer nach unten — `Math.hypot` reicht, keine
+   Haversine-Formel. Eine Rastereinheit sind **29,35 m** (gegengerechnet: 776,7
+   Einheiten Kartenhöhe = 22,8 km, Wien ist nord-süd 22,4 km lang). *Nebenbefund: Der
+   erzeugte Kopf von `wien-bezirke.ts` sagt „rund 20 m" — das ist eine grobe Angabe
+   aus dem Skript und um ein Drittel daneben.*
+2. **Ein ungenutzter Parameter ist einer, den nie jemand geprüft hat.**
+   `useProfilPosts` reichte seit Phase 6 `meinBezirk: person.district` durch — den
+   Bezirk der ANGESCHAUTEN Person. Folgenlos, solange `vergleichePosts` seinen
+   Kontext gar nicht las (er hieß dort `_ctx`, und der Unterstrich war das
+   Warnzeichen). Ab dieser Phase wären Leas Posts nach der Entfernung von *Leas*
+   Wohnung sortiert gewesen. Berichtigt, bevor es jemand sehen konnte.
+3. **Die bekannte Ungenauigkeit ist gemessen und angenommen.** Als Bezirksmitte dient
+   der Beschriftungspunkt (`label`) — der innerste Punkt der Fläche, nicht der
+   Schwerpunkt. Bei den großen Flächenbezirken liegt der im Grünen: Hietzings Mitte
+   sitzt im Lainzer Tiergarten, von Neubau aus kommen **8,7 km** heraus statt rund 5.
+   **Angenommen, weil die Zahl nirgends steht** — sie geht nur in eine REIHENFOLGE
+   ein, und die stimmt trotzdem. *Sobald jemand eine Entfernung anzeigen will („4 km
+   entfernt"), ist dieser Absatz die Stelle, an der zuerst nachgerechnet werden muss.*
+   Der Schwerpunkt wäre der falsche Ausweg: Bei den gebogenen Bezirken (13., 21., 22.)
+   liegt er teilweise gar nicht IN der Fläche (Lehre aus 19b).
+4. **Belegt wurde es durch UMSTELLEN, nicht durch Hinschauen.** Aus 1070 heraus:
+   1070 ×4 → 1060 → 1040 → 1030 → 1020 → 1170 → 1190. Nach dem Umstellen auf 1220:
+   1220 ×2 → 1020 → 1030 → 1040 → 1070 ×4 → 1060 → 1190 → 1100. Beide Folgen gegen
+   die gerechneten Kilometer gehalten, beide monoton steigend. **Ein Sortierer, den
+   man nur in einer Stellung sieht, ist nicht geprüft** — er könnte auch nach etwas
+   ganz anderem sortieren, das zufällig gleich aussieht.
+
+---
+
+**Entscheidung 64 — der Heimatbezirk steht in den Einstellungen.** Ganz oben, vor
+allem anderen: Es ist die einzige Einstellung, die verändert, was man SIEHT. Im
+fertigen Produkt fragt danach das Anmelden (20.3, *„man gibt am Anfang seinen Bezirk
+an"*); bis dahin ist diese Zeile der einzige Weg dorthin. **Ohne sie wäre
+Entscheidung 63 am Gerät gar nicht zu beurteilen** — man müsste den Code lesen, um zu
+merken, dass die Regel wirkt. Alle 23 Bezirke stehen zur Wahl, und das ist kein
+Widerspruch zur Phase-15-Falle („eine Reihe mit allen 23 wäre zu 20 Teilen eine
+Sackgasse"): Beim FILTER war das richtig, hier ist die Frage eine andere — man wohnt
+in genau einem Bezirk, und keiner davon ist eine Sackgasse.
+
+---
+
+**Was NICHT gestrichen wurde, und warum:** `filter.bezirk` selbst. Harte Regel 50
+sagt, was auf der Karte gewählt ist, IST der Bezirksfilter — ein Tipp auf die Karte
+setzt ihn weiter, und er überlebt das Umschalten auf Stapel oder Liste. Ohne einen
+Ausweg käme man damit in einen Zustand, den nur noch „Alle Filter zurücksetzen"
+verlässt, also der Holzhammer, der auch Suche und Jahrgang wegwirft. **Das ist die
+Grenze in Entscheidung 50** (*„wenn die Person etwas wissen will, dann soll's auch
+einfach für sie sein"*): Wegräumen darf keinen Zustand ohne Ausweg erzeugen. Im
+Filterblatt steht deshalb keine Auswahl mehr, sondern eine **Rücknahme** — „Von der
+Karte · Nur 1100 Wien" —, und nur dann, wenn es etwas zurückzunehmen gibt (`ad10`).
+
+**`useBezirkeImFeed` ruft seitdem niemand mehr auf und bleibt trotzdem stehen** —
+dieselbe Überlegung wie bei der Kartenblase (harte Regel 51): Sie wurde in 19e-1 aus
+der Anzeige genommen, elf Tage später hat ein Aufruf sie zurückgeholt, und weil
+niemand sie gelöscht hatte, war es wirklich nur ein Aufruf.
+
+**Nachgemessen:** Web 360 × 600 und 390 × 844 — kein abgeschnittener Text
+(`scrollWidth > clientWidth` über alle Blattknoten), alle vier Tab-Knöpfe frei
+(`elementFromPoint`), `npx tsc --noEmit` sauber. **19h-2 (`expo-location`) ist
+unberührt und braucht weiter einen neuen Build.**
 
 ---
 
@@ -4413,6 +4529,15 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
    Absenden über dem Tennis in zwei Stunden. Falls sich das im Betrieb beißt, steht die
    Korrektur als zwei Zeilen im Kopf der Datei (`heuteZuerst` davorschalten) — das wäre
    eine Verfeinerung, keine Abkehr. **Nicht ohne Rückfrage umstellen.**
+
+   🔁 **Am 2026-09-08 ERSETZT — Ians Entscheidung 63: nach ENTFERNUNG** (Phase 19h-1,
+   Abschnitt 5b). Der Feed sortiert von der eigenen Haustür aus nach außen. Das war
+   eine echte Rückfrage nach harter Regel 58 und nicht eine stille Änderung: Drei
+   Lesarten lagen ihm vor, er hat die stärkste gewählt, gegen meine Empfehlung.
+   **Entscheidung 1 ist damit nicht weg, sondern die zweite Stufe** — bei gleicher
+   Entfernung, also im selben Bezirk, steht weiter das Neueste oben. Der alte Haken
+   ist geblieben und hat einen neuen bekommen: Ein frischer Post vom anderen Ende der
+   Stadt kommt nicht mehr nach oben. **Beides weiter nicht ohne Rückfrage ändern.**
 
 2. ✅ **Wann ein Post verschwindet** (`src/features/posts/lifecycle.ts`) —
    **entschieden am 2026-08-31: bis zum Ende des Tages, und der Poster darf wählen.**
@@ -5365,8 +5490,38 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-08 spätabends, SPÄTESTER Eintrag):
-> Phase 19g — „Die Karte fertig machen".** ✅ **19f ist gebaut** (alle sechs
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-08 nachts, SPÄTESTER Eintrag):
+> Phase 19h-2 — „der Standort", ODER Phase 20.3 — „Anmelden".** ✅ **19h-1 ist
+> gebaut** (Entscheidungen 62, 63, 64 — ohne neuen Build; Belege `ad01`–`ad10`,
+> Einzelheiten in Abschnitt 5b unter „Was beim Bauen von 19h-1 herauskam"). Fünf
+> Dinge, die eine frische Sitzung zuerst wissen muss:
+>
+> - **Die Reihenfolge des Feeds ist seit heute die ENTFERNUNG** (Entscheidung 63,
+>   `features/posts/sort.ts`) — sie hat Entscheidung 1 vom ersten Projekttag
+>   abgelöst, nach ausdrücklicher Rückfrage (harte Regel 58). Wer daran etwas
+>   ändert, liest zuerst den Kopf der Datei: **Entscheidung 1 ist nicht gelöscht,
+>   sie ist die zweite Stufe.** Beide tragen weiter „nicht ohne Rückfrage".
+> - **Der Bezirks-Filter ist weg, `filter.bezirk` ist es NICHT.** Die Karte setzt
+>   ihn weiter (harte Regel 50); im Filterblatt steht statt einer Auswahl nur noch
+>   eine Rücknahme, und die nur, wenn etwas zu widerrufen ist. Wer die Pillenreihe
+>   „vermisst", hat Entscheidung 63 nicht gelesen.
+> - **Der Heimatbezirk steht in `/einstellungen`, ganz oben** (Entscheidung 64) —
+>   und er ist im Prototyp der EINZIGE Weg, die Nähe-Regel überhaupt auszuprobieren.
+>   In Phase 20.3 fragt danach das Anmelden; die Einstellung bleibt trotzdem.
+> - **19h-2 (`expo-location`) ist unberührt und braucht einen neuen Build** —
+>   Erlaubnis-Dialog, ein Eintrag in Apples Datenschutz-Angaben, und harte Regel 47
+>   wird dort scharf: Ein Standort darf die Reihenfolge bestimmen, er darf nirgends
+>   stehen. **Weil ein Build ansteht: Bauplatz außerhalb von iCloud**
+>   (`-derivedDataPath ~/Library/Developer/Xcode/DerivedData/SimplySocial-geraet`),
+>   sonst scheitert `codesign`.
+> - **Zwei Auslegungen aus 19f/19g warten weiter auf Ians Urteil, keine blockiert:**
+>   Kategorie-Chip und Verfasser-Notiz am Post-Screen (`ab01`/`ab02`), und ob eine
+>   ZEILE der Kartenblase das Blatt öffnen soll oder nur die Fußzeile (`ac05`/`ac06`).
+>   **Er urteilt am Bild, nicht an einer Beschreibung.**
+>
+> ---
+>
+> 📎 **Stand davor (erledigt): Phase 19g — „Die Karte fertig machen".** ✅ **19f ist gebaut** (alle sechs
 > Entscheidungen 51–56, ohne neuen Build; Belege `ab01`–`ab08`, Einzelheiten in
 > Abschnitt 5b unter „Was beim Bauen von 19f herauskam"). Fünf Dinge, die eine frische
 > Sitzung zuerst wissen muss:

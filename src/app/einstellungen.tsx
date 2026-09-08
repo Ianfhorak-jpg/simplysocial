@@ -1,9 +1,12 @@
 import { router, type Href } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { SsAvatar, SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
+import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { entblocken, useBlockierte } from '@/features/safety/hooks';
+import { bezirkSetzen, useCurrentUser } from '@/features/social/hooks';
+import { BEZIRKS_LISTE } from '@/lib/bezirk';
 import { colors, danger, radius, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
 
@@ -33,12 +36,61 @@ import type { IconName } from '@/theme/icons';
  */
 export default function EinstellungenScreen() {
   const blockierte = useBlockierte();
+  const ich = useCurrentUser();
+  /** Die 23 Bezirke stehen zugeklappt — harte Regel 63. */
+  const [bezirkOffen, setBezirkOffen] = useState(false);
 
   return (
     <SsScreen scroll contentStyle={styles.seite}>
       <SsBack />
 
       <SsText variant="title">Einstellungen</SsText>
+
+      {/* ── Ganz oben, und das ist die Aussage ────────────────────────────────
+          Es ist die einzige Einstellung, die verändert, was man SIEHT: Seit
+          Ians Entscheidung 63 sortiert der Feed von hier aus nach außen. Alles
+          darunter ist Verwaltung. */}
+      <View style={styles.block}>
+        <SsText variant="label" color={colors.inkSoft}>
+          Dein Bezirk
+        </SsText>
+
+        <Pressable
+          onPress={() => setBezirkOffen((o) => !o)}
+          accessibilityRole="button"
+          accessibilityLabel={`Dein Bezirk: ${ich.district} Wien. Zum Ändern antippen.`}
+          style={({ pressed }) => [styles.zeile, pressed && styles.zeileGedrueckt]}>
+          <View style={styles.zeileIcon}>
+            <SsIcon name="pin" size={20} color={colors.ink} />
+          </View>
+          <View style={styles.zeileText}>
+            <SsText variant="bodyStrong">{ich.district} Wien</SsText>
+            {/* Der Satz sagt, was die Einstellung TUT — sonst wäre sie eine
+                Angabe über einen selbst, und niemand käme auf die Idee, dass
+                davon die Reihenfolge des Feeds abhängt. */}
+            <SsText variant="caption" color={colors.inkSoft}>
+              Von hier aus sortiert dein Feed nach außen
+            </SsText>
+          </View>
+          <SsIcon name={bezirkOffen ? 'chevronUnten' : 'chevronRechts'} size={18} color={colors.inkSoft} />
+        </Pressable>
+
+        {bezirkOffen ? (
+          <View style={styles.bezirke}>
+            {BEZIRKS_LISTE.map((b) => (
+              <SsChip
+                key={b.plz}
+                label={b.plz}
+                selected={ich.district === b.plz}
+                onPress={() => {
+                  bezirkSetzen(b.plz);
+                  setBezirkOffen(false);
+                }}
+              />
+            ))}
+          </View>
+        ) : null}
+      </View>
 
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
@@ -175,6 +227,11 @@ function Zeile({
 const styles = StyleSheet.create({
   seite: { gap: spacing.lg, paddingTop: spacing.sm },
   block: { gap: spacing.sm },
+
+  // Umbrechendes Pillenfeld statt einer waagrechten Reihe: 23 Bezirke in EINER
+  // Zeile hieße scrollen, um Liesing zu finden — und man sucht hier genau einen
+  // bestimmten, nicht „irgendeinen".
+  bezirke: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 
   person: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   personText: { flex: 1, minWidth: 0, gap: 2 },

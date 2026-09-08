@@ -231,6 +231,18 @@ export function useFeed(filter: FeedFilter): FeedEintrag[] {
  * Alle ANDEREN Filter gelten weiter, und das ist Absicht: Wer auf „Sport" steht,
  * soll die Bezirke sehen, in denen Sport stattfindet, nicht die mit Kaffee.
  */
+/*
+ * ⚠️ **Seit Phase 19h ruft diesen Haken niemand mehr auf.** Ians Entscheidung 63
+ * hat die Bezirks-Pillenreihe im Filterblatt gestrichen, und sie war die einzige
+ * Stelle, die ihn brauchte.
+ *
+ * Er bleibt trotzdem stehen — dieselbe Überlegung wie bei der Kartenblase
+ * (harte Regel 51): Sie wurde in 19e-1 aus der Anzeige genommen, elf Tage später
+ * hat ein Aufruf sie zurückgeholt, und weil niemand sie gelöscht hatte, war es
+ * wirklich nur ein Aufruf. **Wer eine geprüfte Arbeit ausbaut, löscht sie nicht.**
+ * Was in ihm steckt, ist außerdem eine Falle, die sich sonst jemand neu einfängt:
+ * Ein Filter, der seine eigene Auswahlliste füttert, sperrt sich selbst ein.
+ */
 export function useBezirkeImFeed(filter: FeedFilter): string[] {
   const { proBezirk } = useBezirksZaehlung(filter);
   // Aufsteigend. Postleitzahlen sind alle vierstellig, deshalb sortiert die
@@ -440,9 +452,15 @@ export function useProfilPosts(userId: string | undefined): ProfilPosts {
 
     // Dieselbe Reihenfolge wie im Feed — ein Profil ist ein Feed mit nur einem
     // Verfasser, und zwei Reihenfolgen für dieselbe Sache müsste man erklären.
+    //
+    // ⚠️ Hier stand bis Phase 19h `person.district` — der Bezirk der ANGESCHAUTEN
+    // Person. Das war folgenlos, solange `vergleichePosts` seinen Kontext gar nicht
+    // las (er hieß dort `_ctx`); seit Entscheidung 63 wären Leas Posts nach der
+    // Entfernung von LEAS Wohnung sortiert gewesen. Sortiert wird für den, der
+    // schaut. **Ein ungenutzter Parameter ist einer, den nie jemand geprüft hat.**
     return {
       eintraege: eintraege.sort((a, b) =>
-        vergleichePosts(a.post, b.post, { jetzt, meinBezirk: person.district }),
+        vergleichePosts(a.post, b.post, { jetzt, meinBezirk: ich?.district ?? '' }),
       ),
       verborgen,
     };

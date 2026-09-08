@@ -35,6 +35,49 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 19h-1 ist fertig (2026-09-08): Nähe statt Filter — und wieder ohne neuen
+Build.** Drei neue Entscheidungen von Ian (62, 63, 64), Belege `ad01`–`ad10`. Fünf Dinge
+sind wichtiger als der gestrichene Filter:
+
+1. **Die Reihenfolge des Feeds ist ab heute die ENTFERNUNG — und das ersetzt die ERSTE
+   Entscheidung des Projekts.** Ians 63.: *„Bezirk ist too viel, das sieht echt nicht gut
+   aus"* → gar kein Filter, sondern von der eigenen Haustür aus nach außen. **Gefragt
+   statt geraten** (harte Regel 58): `sort.ts` trägt seit dem 2026-08-31 „das Neueste
+   zuerst" und „nicht ohne Rückfrage umstellen". Drei Lesarten lagen ihm vor, er nahm
+   die stärkste — gegen meine Empfehlung. **Entscheidung 1 ist trotzdem nicht weg,
+   sondern die zweite Stufe:** Bei gleicher Entfernung — also im selben Bezirk — steht
+   weiter das Neueste oben. Genau dort, wo man am ehesten hingeht, gilt sie unverändert.
+2. **Ein Sortierer, den man nur in EINER Stellung sieht, ist nicht geprüft.** Belegt
+   wurde durch Umstellen: aus 1070 heraus 1070 ×4 → 1060 → 1040 → 1030 → 1020 → 1170;
+   nach dem Wechsel auf 1220 dreht sich alles um (1220 ×2 → 1020 → 1030 → 1040 → 1070
+   ×4). Beide Folgen gegen die gerechneten Kilometer gehalten, beide monoton steigend.
+   Eine einzelne Ansicht hätte auch zu einer ganz anderen Regel gepasst.
+3. **Ein ungenutzter Parameter ist einer, den nie jemand geprüft hat.**
+   `useProfilPosts` reichte seit Phase 6 den Bezirk der ANGESCHAUTEN Person als
+   `meinBezirk` durch. Folgenlos, solange `vergleichePosts` seinen Kontext ignorierte
+   (er hieß dort `_ctx` — **der Unterstrich war das Warnzeichen**). Ab dieser Phase
+   wären Leas Posts nach der Entfernung von *Leas* Wohnung sortiert gewesen.
+4. **Die Rechnung war fast geschenkt, weil 19d sie vorbereitet hat.** `PROJEKTION`
+   trägt die Kosinus-Korrektur in sich, also reicht `Math.hypot` im Raster — keine
+   Haversine-Formel. Eine Rastereinheit sind **29,35 m**, gegengerechnet an Wiens
+   echter Nord-Süd-Ausdehnung. Die bekannte Ungenauigkeit ist gemessen und angenommen:
+   Hietzings Mitte liegt im Lainzer Tiergarten (8,7 km statt 5 von Neubau) — **folgenlos,
+   solange die Zahl nirgends steht**, weil nur die Ordnung zählt.
+5. **Entscheidung 62 geht gegen Ians EIGENES Vorbild, und die neuere Regel gewinnt.**
+   *„unten soll der Text auch weg, also Start, Anfragen …"* — auf
+   `vorbild-liquid-glass-bierbuddy.png` stehen die Tab-Wörter sehr wohl da, das dritte
+   („Ma…") schon abgeschnitten. Das ist selbst das beste Argument. Der Preis ist
+   nachgesehen, nicht vermutet: `expo-router` setzt einen Screenreader-Ersatznamen
+   **nur auf iOS**, im Browser bleibt der Knopf namenlos — deshalb trägt jeder Tab ein
+   `tabBarAccessibilityLabel` (wie `SsBack` seit Entscheidung 52). Nachgemessen:
+   82 × 56 pt, alle vier frei.
+
+❗ **Was dabei NICHT gestrichen wurde: `filter.bezirk`.** Die Karte setzt ihn weiter
+(harte Regel 50). Im Filterblatt steht statt der Auswahl nur noch eine **Rücknahme**
+(„Von der Karte · Nur 1100 Wien"), und nur, wenn es etwas zurückzunehmen gibt — sonst
+käme man in einen Zustand, den bloß noch „Alle Filter zurücksetzen" verlässt. **Das ist
+die Grenze in Entscheidung 50**, zweiter Halbsatz.
+
 ✅ **Phase 19g ist fertig (2026-09-08): die Karte fertig gemacht — und wieder ohne
 neuen Build.** Gearbeitet wurde diesmal nicht am Screenshot, sondern **am laufenden
 iPhone-Simulator** (iOS 26.5, Debug-Build mit Metro: jede Änderung eine Sekunde später
@@ -1057,8 +1100,10 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    ✅ *2026-09-08, ohne neuen Build* ·
    ~~**19g** „Die Karte fertig machen" (Glas-FORM, Blase zurück, Apple-Nennung, Ganz
    Wien, Übergänge, zwei Kartenfehler)~~ ✅ *2026-09-08, ohne neuen Build* ·
-   **19h** „Nähe statt Filter" (Heimatbezirk ohne Build, Standort mit)
-   ← *hier geht es weiter*. **Von den zwei Kartenfehlern war einer keiner** (der 14.
+   ~~**19h-1** „Nähe statt Filter" (Heimatbezirk, Reihenfolge nach Entfernung,
+   Bezirks-Filter weg, Tab-Wörter weg)~~ ✅ *2026-09-08, ohne neuen Build* ·
+   **19h-2** „Standort" (`expo-location`, braucht einen Build) ← *hier geht es weiter,
+   wahlweise gleich Phase 20.3*. **Von den zwei Kartenfehlern war einer keiner** (der 14.
    Bezirk stimmt, gegen die amtlichen Daten nachgerechnet) und einer gehörte einer
    älteren Fassung (der Filter-Knopf, erledigt durch 19f).
 10. **Backend** (Phase 20) ← *hier sind wir* — ~~Schema (20.1)~~ ✅ · ~~Policies
@@ -1230,7 +1275,13 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    In der Kopie stehen nur die sieben Icons, die die Seite braucht.
 
 26. **Ein neuer Feed-Filter geht über `FeedFilter` und `features/posts/filter.ts`** —
-   nie als eigener `useState` im Screen. Zwei Gründe, und beide fallen erst später auf:
+   nie als eigener `useState` im Screen. **Und seit Entscheidung 63 (2026-09-08) muss
+   ein neuer Filter zusätzlich begründen, warum er überhaupt dasteht:** Der
+   Bezirks-Filter ist gestrichen, weil die Reihenfolge seine Aufgabe ohne einen
+   Handgriff erledigt (`sort.ts`). Das ist harte Regel 63 in ihrer zweiten Richtung —
+   sie bremst, was noch nicht gebaut ist. `filter.bezirk` selbst BLEIBT, weil die
+   Karte ihn setzt (Regel 50); was im Filterblatt steht, ist seither keine Auswahl
+   mehr, sondern eine Rücknahme, und die nur, wenn es etwas zurückzunehmen gibt. Zwei Gründe, und beide fallen erst später auf:
    Was in `FeedFilter` steht, gilt automatisch in BEIDEN Ansichten (Stapel und Liste,
    Regel 16); und die Bedeutung einer Pille („was heißt *diese Woche*?") lebt sonst
    mitten in 600 Zeilen Oberfläche und ist beim nächsten Umbau weg. Zum Zurücksetzen
@@ -1632,6 +1683,18 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    nicht am verschobenen Kasten. Dasselbe gilt für den Untergrund: Die Glasfläche
    bekommt `flex: 1`, damit sie **während** des Ziehens mitwächst — der Inhalt tut es
    nicht, die sichtbare Fläche schon.
+
+65. **Die Reihenfolge des Feeds ist die ENTFERNUNG — und `sort.ts` trägt ZWEI
+   Entscheidungen von Ian, nicht eine.** *(Entscheidung 63, 2026-09-08.)* Erste Stufe
+   ist die Nähe zum eigenen Bezirk (`nachEntfernung`), zweite Stufe das Neueste
+   (`nachErstellung`, Entscheidung 1 vom 2026-08-31). Die zweite ist nicht der
+   Restposten der ersten: Alle Posts eines Bezirks teilen sich eine Entfernung, also
+   entscheidet sie den häufigen Fall — genau dort, wo man am ehesten hingeht.
+   **Beide tragen „nicht ohne Rückfrage".** Wer eine dritte Regel davorschaltet,
+   fragt vorher; wer die Entfernung ANZEIGEN will, liest zuerst den Absatz über die
+   Bezirksmitten in `lib/karte-geo.ts` — die Zahl ist heute nur für eine Ordnung gut
+   genug, nicht für eine Auskunft. Ein Post ohne Bezirk hat keine Entfernung; wo er
+   landet, sagt `OHNE_BEZIRK_POSITION` und nicht ein `if` in der Vergleichsfunktion.
 
 53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
    rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und
@@ -2211,6 +2274,30 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   danach stimmen Tippen und Ziehen aufs Pixel. Gezogen wird mit **echter Bewegung**
   dazwischen (Phase-19e-1-Lehre) und nicht zu langsam: Ein zäher Zug öffnet das
   React-Native-Entwicklermenü.
+- **Ein ungenutzter Parameter ist einer, den nie jemand geprüft hat.** (Phase 19h-1,
+  2026-09-08) `useProfilPosts` reichte seit Phase 6 `meinBezirk: person.district` in
+  die Sortierung — den Bezirk der ANGESCHAUTEN Person statt des eigenen. Vier Wochen
+  lang folgenlos, weil `vergleichePosts` den Kontext gar nicht las; der Parameter hieß
+  dort `_ctx`, **und genau der Unterstrich war das Warnzeichen**. Sobald die Funktion
+  ihn benutzte, war der Fehler sofort wirksam. Wer einen Parameter „für später" in
+  einer Signatur stehen lässt, prüft beim ersten echten Gebrauch JEDE Aufrufstelle
+  nach — der Compiler schweigt, die Typen stimmen ja.
+- **Ein Sortierer, den man nur in EINER Stellung sieht, ist nicht geprüft.**
+  (Phase 19h-1) Der Feed sah aus 1070 heraus richtig sortiert aus — er hätte aber
+  genauso nach der Postleitzahl aufsteigend sortiert sein können, das Bild wäre fast
+  dasselbe gewesen. Der Beleg ist erst das UMSTELLEN: Aus 1220 dreht sich die Folge
+  vollständig um. **Bei jeder Regel, die von einem Wert abhängt, den Wert ändern und
+  ein zweites Mal messen** — und beide Folgen gegen die gerechneten Zahlen halten.
+- **Ein echtes Neuladen setzt den Prototyp-Speicher zurück, eine Client-Navigation
+  nicht.** (Phase 19h-1) `browser_navigate` auf eine ANDERE Adresse lädt die Seite
+  wirklich neu, und `data/store.ts` lebt im Arbeitsspeicher: Ein gerade umgestellter
+  Heimatbezirk war damit wieder weg, und die Prüfung zeigte den alten Zustand. Zu
+  erkennen daran, dass der Prototyp-Hinweis wieder aufpoppt. Wer einen ZUSTAND prüft,
+  klickt sich durch die Oberfläche (Tab → Screen → zurück) statt zu navigieren.
+  **Das ist das Gegenstück zur 18d-Falle**: Dort überlebte ein Zustand ein
+  `browser_navigate` auf DIESELBE Adresse, weil Expo Router daraus eine
+  Client-Navigation macht. Beide Male ist die Frage dieselbe — hat die App gerade neu
+  gestartet oder nicht?
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

@@ -1,10 +1,11 @@
+import { bezirksAbstandMeter } from '@/lib/karte-geo';
 import type { Post } from '@/types/models';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
  *  WAS STEHT IM FEED GANZ OBEN?
- *  Entschieden von Ian am 2026-08-31 (PLAN.md, Abschnitt 6.1). Die drei Möglichkeiten
- *  bleiben unten stehen — mit dem, was für und gegen sie sprach.
+ *  Entschieden von Ian am 2026-08-31 (Entscheidung 1) — und am 2026-09-08 ERSETZT
+ *  durch seine Entscheidung 63 (PLAN.md, Abschnitt 5b, Phase 19h).
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * Das ist keine Kleinigkeit. Was oben steht, wird gesehen; was auf Platz zwölf steht,
@@ -30,28 +31,49 @@ import type { Post } from '@/types/models';
  *      Haken: Allein reicht das nie — innerhalb des Bezirks braucht es trotzdem eine
  *      Reihenfolge. Das ist eher ein VORSORTIERER, den man mit 1 oder 2 kombiniert.
  *
- * Es gibt keine richtige Antwort. Kombinationen sind erlaubt und meistens besser als
- * eine einzelne Regel — die Bausteine unten sind so gebaut, dass man sie aneinander-
- * hängen kann: die erste Regel, die nicht 0 sagt, gewinnt.
- *
- * ── Ians Entscheidung, 2026-08-31: DAS NEUESTE ZUERST. ───────────────────────
+ * ── Ians Entscheidung, 2026-08-31: DAS NEUESTE ZUERST ────────────────────────
  * Möglichkeit 2. Der Feed verhält sich damit wie Instagram: Wer etwas postet, steht
  * oben und wird gesehen — und das ist es, was eine App am Anfang braucht. Bei fünfzig
  * Leuten aus einer Schule ist das Problem nicht "zu viele Posts", sondern "postet
  * überhaupt jemand". Eine Reihenfolge, die das Posten belohnt, arbeitet dagegen an.
  *
- * Den Haken hat Ian gekannt und in Kauf genommen: Ein Post für ein Konzert in drei
- * Wochen steht direkt nach dem Absenden über dem Tennis, das in zwei Stunden anfängt.
- * Er rutscht zwar mit jedem neueren Post nach unten — aber in dem Moment, in dem er
- * frisch ist, drängt er sich vor.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  ── Ians Entscheidung 63, 2026-09-08: NACH ENTFERNUNG. ──────────────────────
+ * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Falls sich das im echten Betrieb beißt, ist die Korrektur zwei Zeilen und KEINE
- * Abkehr von der Entscheidung — heutige Sachen zuerst, innerhalb davon weiter das
- * Neueste:
+ * Möglichkeit 3, und zwar als HAUPTregel statt als Vorsortierer. Sie kommt aus dem
+ * Durchgang am eigenen Handy und richtet sich zuerst gegen etwas anderes — den
+ * Bezirks-Filter: *„Bezirk ist too viel, das sieht echt nicht gut aus."* Sein
+ * Gegenentwurf war kein besserer Filter, sondern **gar keiner**: Man gibt seinen
+ * Bezirk einmal an, und die App zeigt von dort aus nach außen — *„und dann entfernt
+ * man sich immer weiter."*
  *
- *     const heute = heuteZuerst(a, b, ctx.jetzt);
- *     if (heute !== 0) return heute;
- *     return nachErstellung(a, b);
+ * **Das ersetzt Entscheidung 1, und es ist nicht still passiert.** Ihm wurden am
+ * 2026-09-08 drei Lesarten seines Satzes vorgelegt (harte Regel 58: eine neue
+ * Entscheidung überschreibt keine alte Regel-Datei, ohne dass jemand gefragt hat),
+ * und er hat die stärkste gewählt — gegen meine Empfehlung:
+ *
+ *   (a) ein Umkreis, der beim Durchwischen mitwächst; innerhalb bleibt das Neueste
+ *       oben. Meine Empfehlung, weil Entscheidung 1 dabei unangetastet bliebe.
+ *   (b) ✅ **die Reihenfolge selbst**: das Nächste ganz oben, das Weiteste unten.
+ *   (c) beides zusammen — Ringe UND innerhalb nach Entfernung.
+ *
+ * **Den Haken kennt er, er stand in der Frage:** Ein frisch geposteter Post aus 1220
+ * kommt bei jemandem aus 1070 nie mehr nach oben. Das ist genau der Haken, gegen den
+ * Entscheidung 1 gebaut war („postet überhaupt jemand"). Was ihn kleiner macht: Die
+ * Liste ist kurz und Wien ist an der weitesten Stelle 29 km breit — „ganz unten"
+ * heißt hier nicht „nie", sondern „drei Wischer später".
+ *
+ * ── Was von Entscheidung 1 BLEIBT, und das ist mehr, als es klingt ────────────
+ * Sie ist nicht weg, sie ist die **zweite Stufe**: Bei gleicher Entfernung steht
+ * weiter das Neueste oben. Und gleiche Entfernung heißt in der Praxis **derselbe
+ * Bezirk** — die Posts, die einem am nächsten sind, sind also weiter nach dem
+ * Neuesten sortiert. Genau dort, wo man am ehesten hingeht, gilt seine alte Regel
+ * unverändert.
+ *
+ * Die Bausteine unten sind so gebaut, dass man sie aneinanderhängen kann: die erste
+ * Regel, die nicht 0 sagt, gewinnt. Ein Zurück auf Entscheidung 1 ist eine Zeile in
+ * `vergleichePosts`, kein Umbau.
  */
 
 /** Was die Sortierung über den Betrachter wissen darf. */
@@ -62,8 +84,37 @@ export interface SortKontext {
   meinBezirk: string;
 }
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  WO EIN POST OHNE BEZIRK LANDET
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Seit dem 2026-09-02 darf ein Post keinen Bezirk haben (Ians Entscheidung 9,
+ * `BEZIRK_FREIWILLIG`). Für eine Reihenfolge nach Entfernung ist das eine Lücke:
+ * „Donauinsel spazieren" hat keine.
+ *
+ * Gewählt ist `'ans-ende'`, und der Grund ist **Übereinstimmung mit einer Regel, die
+ * es schon gibt**: `passtZumBezirk()` in `filter.ts` wirft so einen Post bei einem
+ * Bezirksfilter ebenfalls heraus, mit der ausgeschriebenen Begründung, dass ein Post
+ * ohne Ortsangabe kein Versprechen über den Ort macht. Eine Sortierung nach Nähe
+ * beantwortet dieselbe Frage — sie kann keine Nähe behaupten, wo keine angegeben ist.
+ *
+ * Verworfen, mit Begründung — als Gedächtnis, nicht als Einladung:
+ *   'nach-vorn'  Sie stünden immer oben. Das belohnt das WEGLASSEN des Bezirks: Wer
+ *                den Ort offen lässt, bekommt den besten Platz. Bei einer App, die
+ *                Leute an einen Ort bringen soll, die falsche Richtung.
+ *   'mitte'      Die halbe Stadtbreite als Ersatzwert (≈ 15 km). Klingt fair und ist
+ *                eine erfundene Zahl — sie behauptet eine Entfernung, die niemand
+ *                angegeben hat, und der Feed sähe je nach Wohnbezirk anders sortiert
+ *                aus, ohne dass es dafür Daten gäbe.
+ *
+ * **Der bekannte Preis** steht schon in `app/create.tsx`: Lassen viele das Feld leer,
+ * sammeln sich ihre Posts unten. Die Korrektur ist ein Wort.
+ */
+export const OHNE_BEZIRK_POSITION: 'ans-ende' | 'nach-vorn' | 'mitte' = 'ans-ende';
+
 // ── Bausteine ────────────────────────────────────────────────────────────────
-// Alle drei geben die Vergleichszahl zurück, die `Array.sort` erwartet:
+// Alle geben die Vergleichszahl zurück, die `Array.sort` erwartet:
 //   negativ  → a steht VOR b        0 → unentschieden        positiv → a steht NACH b
 
 /** Was früher losgeht, steht oben. */
@@ -90,14 +141,51 @@ export function heuteZuerst(a: Post, b: Post, jetzt: Date): number {
 }
 
 /**
+ * Wie weit ein Post von mir weg ist, in Metern — **null**, wenn er keinen Bezirk hat
+ * oder der Bezirk unbekannt ist.
+ *
+ * Der eigene Bezirk ergibt **0**, nicht „ungefähr null": `bezirksAbstandMeter` misst
+ * dann eine Mitte gegen sich selbst. Alle Posts aus dem eigenen Bezirk sind damit
+ * gleich weit weg und fallen an die zweite Stufe — das ist die Stelle, an der
+ * Entscheidung 1 weiterlebt.
+ */
+export function entfernungMeter(post: Post, meinBezirk: string): number | null {
+  if (post.district === null) return null;
+  return bezirksAbstandMeter(meinBezirk, post.district);
+}
+
+/**
+ * Was näher ist, steht oben — Ians Entscheidung 63.
+ *
+ * Posts ohne Entfernung behandelt `OHNE_BEZIRK_POSITION`. Zwei davon sind
+ * untereinander unentschieden (0), damit die nächste Stufe greift und sie nicht in
+ * einer zufälligen Reihenfolge stehen bleiben.
+ */
+export function nachEntfernung(a: Post, b: Post, meinBezirk: string): number {
+  const ea = entfernungMeter(a, meinBezirk);
+  const eb = entfernungMeter(b, meinBezirk);
+  if (ea === null && eb === null) return 0;
+  if (ea === null) return OHNE_BEZIRK_POSITION === 'nach-vorn' ? -1 : 1;
+  if (eb === null) return OHNE_BEZIRK_POSITION === 'nach-vorn' ? 1 : -1;
+  return ea - eb;
+}
+
+/**
  * Die Reihenfolge des Feeds — Ians Regel (siehe Kopf dieser Datei).
  *
- * `ctx` wird noch nicht gebraucht, bleibt aber in der Signatur: die Alternativen oben
- * brauchen `jetzt` bzw. `meinBezirk`, und eine Signatur zu ändern ist teurer, als ein
+ * Zwei Stufen, und beide sind seine Entscheidungen: erst die Entfernung
+ * (Entscheidung 63), bei Gleichstand das Neueste (Entscheidung 1). Gleichstand ist
+ * dabei der häufige Fall und nicht der Ausnahmefall — alle Posts aus einem Bezirk
+ * teilen sich eine Entfernung.
+ *
+ * `ctx.jetzt` wird weiterhin nicht gebraucht, bleibt aber in der Signatur: die
+ * Alternativen oben brauchen es, und eine Signatur zu ändern ist teurer, als ein
  * Feld ungenutzt zu lassen.
  *
  * @returns negativ = a steht vor b · 0 = unentschieden · positiv = a steht nach b
  */
-export function vergleichePosts(a: Post, b: Post, _ctx: SortKontext): number {
+export function vergleichePosts(a: Post, b: Post, ctx: SortKontext): number {
+  const weite = nachEntfernung(a, b, ctx.meinBezirk);
+  if (weite !== 0) return weite;
   return nachErstellung(a, b);
 }
