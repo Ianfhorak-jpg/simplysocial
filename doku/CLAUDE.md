@@ -35,6 +35,38 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Die App LÄUFT auf Ians iPhone, und der erste Durchgang mit einem echten Finger ist
+gemacht (2026-09-08).** `at.simplysocial.app`, Release-Build, ohne Kabel und ohne Mac,
+7 Tage gültig. Vier Dinge sind daran wichtiger als die Installation:
+1. **Die beiden Fragen, die im Browser prinzipiell nicht zu stellen waren, sind beide
+   gut ausgegangen.** Der Wischstapel verwechselt Tipp und Wisch auch unter einem
+   echten Finger nicht, und **die als kritisch benannte Stelle ist unkritisch**: MapKit
+   und das Blatt streiten sich auf iOS *nicht* um dieselbe Berührung. Harte Regel 59
+   (der Blattkörper bekommt gar keinen Erkenner) hat getragen, ohne dass jemand
+   verhandeln musste.
+2. **Das Liquid Glass ist ECHT — und sieht trotzdem falsch aus.** Gemessen statt
+   vermutet: Ian hat geprüft, ob die Karte unter der Tab-Leiste durchscheint, und sie
+   tut es; das Bundle trägt kein `UIDesignRequiresCompatibility`, gebaut ist gegen das
+   iOS-26.5-SDK. **Es ist eine Formfrage, zum zweiten Mal nach 19e-2** — und die Ursache
+   ist eine Kollision zweier eigener Entscheidungen aus derselben Nacht: Das Blatt weicht
+   der schwebenden Tab-Kapsel aus (Regel 62) und **endet dadurch mitten im Bild**. Bei
+   Apple Karten gibt es den Fall nicht, dort ist gar keine Tab-Leiste.
+3. **Ians Entscheidung 50 steht über allem, was danach kommt** — als harte Regel 63:
+   *Ein Bildschirm zeigt nur, was für die Entscheidung HIER nötig ist.* Sie nimmt weg,
+   was dasteht, **und bremst, was noch nicht gebaut ist**. Die Grenze steht im zweiten
+   Halbsatz und ist genauso verbindlich: Wegräumen darf nicht heißen, dass man zweimal
+   tippt für das, weswegen man gekommen ist.
+4. **Der Bauplatz darf nicht in iCloud liegen — und dieser Fehler war meiner.** Ich
+   hatte ihn vom Zwischenspeicher in den Projektordner verlegt, damit die fertige App
+   die Sitzung überlebt; der Schreibtisch wird von iCloud verwaltet, iCloud hängt an
+   Framework-Ordner `com.apple.FinderInfo`, und `codesign` bricht dann ab. Gemessen:
+   nach dem Löschen ist das Attribut in fünf Sekunden zurück. **Ein Ortswechsel ist eine
+   Änderung, auch wenn keine Zeile Code anders ist.** Einzelheiten in der Fallen-Liste.
+
+📋 **Daraus kommen drei Phasen, alle in PLAN.md Abschnitt 5b: 19f · 19g · 19h.**
+Zwölf neue Entscheidungen von Ian (50–61). **19f und 19g brauchen keinen neuen Baustein
+und keinen neuen Build** — deshalb stehen sie vor 19h-2 und vor dem Backend.
+
 🔁 **Nachgebessert am selben Abend (2026-09-07), nach Ians Urteil über die erste
 Fassung: *„noch nicht wie ich es dir gezeigt habe … sieht echt noch nicht so gut aus".***
 **Sein Vorbild liegt jetzt als Bild im Projekt: `vorbild-liquid-glass-bierbuddy.png`** —
@@ -891,6 +923,16 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    ~~**19d-1** (echte Apple-Karte auf iOS)~~ ✅, beide *2026-09-06*. **19d-2** (MapKit JS
    im Browser) wartet auf Phase 20: Der Token muss von einem Server ausgestellt werden.
    PLAN.md Abschnitt 5b.
+9e. **Ians Durchgang ist gemacht — und daraus kommen drei Phasen** (2026-09-08,
+   PLAN.md Abschnitt 5b) ← *hier geht es weiter*. Vier von sechs Punkten hielten, auch
+   die beiden, die im Browser prinzipiell nicht zu prüfen waren (Wischstapel unter
+   einem Finger · **kein Gestenstreit zwischen Blatt und Apple-Karte**). Offen ist,
+   was er gesehen hat: **19f** „Weniger sehen" (Post-Screen, Zurück-Pfeil,
+   Filter-Symbol, Umschalter, Tastatur im Chat, Gruppe-erstellen ins Chats-Register) ·
+   **19g** „Die Karte fertig machen" (Glas-FORM, Blase zurück, Apple-Nennung, Ganz
+   Wien, Übergänge, zwei Kartenfehler) · **19h** „Nähe statt Filter"
+   (Heimatbezirk ohne Build, Standort mit). **19f und 19g brauchen keinen neuen
+   Baustein und keinen neuen Build.**
 10. **Backend** (Phase 20) ← *hier sind wir* — ~~Schema (20.1)~~ ✅ · ~~Policies
    (20.2)~~ ✅ *beide 2026-09-06, ohne Konto gebaut und mit 18 Angriffen belegt* ·
    **Anmelden (20.3)** ← *hier geht es weiter, und das braucht Ians Konten* ·
@@ -1123,7 +1165,12 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    `/gruppe/[id]` ist kein Widerspruch dazu — sie zeigt dieselben Posts, die im
    Hauptfeed ohnehin stehen, so wie ein Profil auch. Ein eigener TAB hätte den
    Hauptfeed geleert, und ein leerer Hauptfeed ist am Anfang das größere Problem. Der
-   Weg zu `/gruppen` liegt deshalb am Profil, nicht in der Tab-Leiste.
+   Weg zu `/gruppen` liegt deshalb **nicht** in der Tab-Leiste — **seit Ians
+   Entscheidung 56 (2026-09-08) aber in der Kopfzeile des Chats-Registers statt am
+   Profil**: *„das hat eigentlich nix mit dem Profil zu tun, sondern eher mit dem
+   Chatten."* Der GRUND der Regel überlebt das unverändert — ein Knopf in einer
+   Kopfzeile schafft weder Tab noch Feed; nur der Wortlaut musste nachgezogen werden.
+   Genau der Fall, für den harte Regel 58 gebaut ist.
 
 35. **`npm run deploy` ist KEINE Sicherung — es schiebt nur `gh-pages`.** Der Zweig
    trägt das gebaute, minifizierte Bündel; `main` mit dem Quellcode fasst das Skript
@@ -1406,6 +1453,22 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Elternteils anrechnet, der Browser aber nicht**. Die Karte weicht NICHT aus: Dass
    Wien unter der Kapsel durchläuft, ist der Sinn.
 
+63. **Ein Bildschirm zeigt nur, was für die Entscheidung HIER nötig ist.**
+   *(Ians Entscheidung 50 vom 2026-09-08, nach dem ersten Durchgang am eigenen
+   Handy — er hat sie ausdrücklich zum Merken gegeben: „das soll eigentlich immer so
+   sein".)* Sie steht über den anderen Regeln, weil sie sagt, wofür die App da ist:
+   **Man macht sie impulsiv auf und wischt, bis etwas kommt** — ausdrücklich nicht wie
+   beim Shoppen, wo man erst einen Riesenfilter baut und dann zwei Sachen sieht.
+   Die Regel wirkt in **zwei** Richtungen, und die zweite ist die ungewohnte: Sie nimmt
+   weg, was dasteht, UND sie bremst, was noch nicht gebaut ist — ein neuer Filter, ein
+   neuer Umschalter, eine neue Einstellung muss ab jetzt begründen, warum sie im Weg
+   stehen darf. **Die Grenze steht im zweiten Halbsatz und ist genauso verbindlich:**
+   *„Wenn die Person etwas wissen will, dann soll's auch einfach für sie sein."*
+   Wegräumen darf nicht heißen, dass man zweimal tippt für das, weswegen man gekommen
+   ist — deshalb fällt am Filter-Knopf das WORT weg und der Zähler nicht (harte
+   Regel 26), und deshalb verschwinden Zeit und Ort am Post-Screen nicht, sondern
+   werden leise. **Bei jedem Wegnehmen mitprüfen, welche Entscheidung der Screen
+   trägt.**
 53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
    rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und
    schreibt sie **nie** ein zweites Mal in den Generator. Die Projektion ist flach mit

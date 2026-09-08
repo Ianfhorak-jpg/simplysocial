@@ -3475,6 +3475,200 @@ Christoph, Leopold und Daria die App auf ihre eigenen Handys holen.
 
 ---
 
+### Der Durchgang am eigenen Handy — was er ergeben hat (2026-09-08)
+
+Ian hat die App auf seinem iPhone 16 (iOS 26.6) durchgespielt. **Das ist der erste
+Durchgang mit einem echten Finger überhaupt** — alles davor war Maus am Mac oder
+Simulator. Die sechs Punkte aus `_FUER_IAN/HANDY_DURCHGANG.md`:
+
+| # | Was | Ergebnis |
+|---|-----|----------|
+| 1 | Wischstapel | ✅ **„super, funktioniert gut"** — die Phase-11-Trennung Tipp/Wisch hält unter einem Finger |
+| 2 | Tastatur im Chat | 🟡 geht, aber die Ansicht springt nicht ans Ende |
+| 3 | Jahrgangs-Regler | ✅ **„das ist gut"** — auch das Griffpaar aus 18b hält |
+| 4 | Karte antippen | ✅ trifft, auch nach Zoomen und Schieben |
+| 5 | Blatt gegen Karte | ✅ **kein Gestenstreit** — Karte schieben geht, das Blatt zieht am Griff |
+| 6 | Liquid Glass | ❌ **„sieht noch gar nicht danach aus"** |
+
+**Zwei davon sind Antworten auf Fragen, die im Browser prinzipiell nicht zu stellen
+waren** — und beide sind gut ausgegangen: Der Wischstapel verwechselt Tipp und Wisch
+auch mit einem echten Finger nicht (harte Regel 15 hält), und **die als kritisch
+benannte Stelle ist unkritisch**: MapKit und das Blatt streiten sich auf iOS *nicht*
+um dieselbe Berührung. Die Vorsichtsmaßnahme aus harter Regel 59 — der Blattkörper
+bekommt gar keinen Erkenner — hat also getragen, ohne dass jemand verhandeln musste.
+
+**Punkt 6 ist der wichtigste Befund, und er ist gemessen statt vermutet.** Ian hat auf
+Nachfrage geprüft, ob die Karte unter der Tab-Leiste durchscheint: **sie tut es.** Damit
+steht fest, dass **echtes Apple-Glas läuft** — `isGlassEffectAPIAvailable()` und
+`isLiquidGlassAvailable()` sagen beide ja, das Bundle trägt **kein**
+`UIDesignRequiresCompatibility`, gebaut ist gegen das iOS-26.5-SDK. **Es ist also keine
+Technikfrage, sondern eine Formfrage** — zum zweiten Mal nach 19e-2, nur an einer
+anderen Fläche. *(Und das ist genau der Grund, warum diese eine Ja/Nein-Frage vor dem
+Plan stand: Wäre die Antwort „blickdicht" gewesen, wäre die ganze Phase eine andere.)*
+
+---
+
+### Ians Grundsatz — Entscheidung 50, und sie steht über allen anderen
+
+> **„Wir wollen, dass die Person nicht alles auf einmal sieht, sondern nur das, was sie
+> in diesem Moment auch wirklich braucht. Und wenn die Person etwas wissen will, dann
+> soll's auch einfach für sie sein."** — *„das soll eigentlich immer so sein"*
+
+Das ist keine Bemerkung zu einem Screen, sondern seine Antwort auf die Frage, wofür die
+App da ist: **Man macht sie impulsiv auf und wischt, bis etwas kommt** — ausdrücklich
+*nicht* wie beim Shoppen, wo man erst einen Filter baut und dann zwei Sachen sieht.
+
+Deshalb wirkt der Satz in **zwei Richtungen**, und die zweite ist die ungewohnte:
+1. Er **nimmt weg**, was auf einem Bildschirm steht, ohne dort gebraucht zu werden.
+2. Er **bremst**, was noch gar nicht gebaut ist. Ein neuer Filter, ein neuer Umschalter,
+   eine neue Einstellung muss ab jetzt begründen, warum sie im Weg stehen darf.
+
+**Die Grenze steht im zweiten Halbsatz** und ist genauso verbindlich: *Wegräumen darf
+nicht heißen, dass man zweimal tippt für das, weswegen man gekommen ist.* Bei jedem
+Wegnehmen also mitprüfen, welche Entscheidung der Screen eigentlich trägt.
+
+Als harte Regel 63 in `CLAUDE.md` und als Gedächtnis über Sitzungen hinaus abgelegt.
+
+---
+
+### Phase 19f — Weniger sehen ⬜ *(kein neuer Baustein, kein neuer Build)*
+
+Der Grundsatz, angewandt auf die Screens, die Ian genannt hat. **Reine Oberfläche auf
+vorhandenen Daten** — deshalb steht sie vorn.
+
+**Entscheidung 51 — der Post-Screen zeigt Titel, Person, Knopf.** Ian hat aus drei
+Vorschauen die radikalste gewählt. Heute baut `app/post/[id].tsx` jede Angabe
+**zweizeilig** (erst das Wort „Wann", darunter „heute 22:00") und das viermal
+untereinander in einer Karte — dazu oben ein Krümelpfad aus Kategorie-Chip und Titel,
+über dem noch einmal „Zurück" steht. Seine Worte: *„Sport, Zurück, Sport, Tennis
+spielen — alles untereinander."*
+
+> **Der Haken ist benannt und angenommen:** An Zeit und Ort entscheidet man „geh ich
+> hin?". Deshalb verschwinden sie **nicht**, sie werden leise: In der Vorschau, die er
+> gewählt hat, steht unter dem Knopf klein `heute 22:00 · 1220 Wien` und darunter
+> „Mehr ansehen ⌄". **Das ist Teil der Entscheidung, nicht meine Auslegung** — er hat
+> das Bild gewählt, auf dem es so steht.
+
+**Entscheidung 52 — „Zurück" ist ein Pfeil ohne Wort.** Betrifft `SsBack` und damit
+jeden Screen auf einmal (harte Regel 5). Zu prüfen ist dabei die Trefferfläche: Ein
+Pfeil allein ist kleiner als Pfeil-plus-Wort, und 44 × 44 pt sind Apples Mindestmaß.
+
+**Entscheidung 53 — der Filter-Knopf ist ein Symbol, kein Wort.** Das Wort „Filter"
+fällt weg. Der **Zähler daneben bleibt** — er ist kein Schmuck (harte Regel 26,
+Phase 15): Ohne ihn ist ein vergessener Filter der schnellste Weg zu einem Feed, den
+jemand für kaputt hält. *Das ist die Grenze aus Entscheidung 50 in ihrer ersten
+Anwendung: Das Wort ist entbehrlich, die Rückmeldung nicht.*
+
+**Entscheidung 54 — der Umschalter bleibt, aber nur als Symbole.** Ian hatte den Stapel
+als Vollbild beschrieben („alles weg, nur Zurück-Pfeil, Karten und die Leiste unten").
+Auf die Frage, wie man dann zur Karte kommt, hat er **die vorsichtigste der drei
+Möglichkeiten gewählt**: Stapel · Liste · Karte bleiben umschaltbar, die Pille
+schrumpft auf drei Symbole ohne Beschriftung. Verworfen: Karte als Start und Stapel als
+Vollbild darin, und die Umkehrung davon. **Nebengewinn:** Das erledigt zum vierten Mal
+das „Sta…"-Problem (Phase 11, 18a, 19b) — ein Symbol kann nicht abgeschnitten werden.
+
+**Entscheidung 55 — beim Antippen des Eingabefelds bleibt der Chat unten.** Heute
+scrollt die Ansicht beim Öffnen der Tastatur nicht mit ans Ende; man muss selbst
+runterwischen, um die letzten Nachrichten zu sehen. Das ist der einzige echte
+Bedienfehler aus den Punkten 1–5.
+
+**Entscheidung 56 — „Gruppe erstellen" zieht ins Chats-Register, oben rechts.** Ians
+Begründung: *„das hat eigentlich nix mit dem Profil zu tun, sondern eher mit dem
+Chatten."*
+
+> ⚠️ **Berührt harte Regel 34 — und deshalb hier ausdrücklich geprüft (harte Regel 58).**
+> Regel 34 sagt: *„Der Weg zu `/gruppen` liegt am Profil, nicht in der Tab-Leiste."*
+> Ihr **Grund** war aber ein anderer als ihr Wortlaut: Eine Gruppe soll **kein eigener
+> Ort** werden — kein eigener Tab, kein eigener Feed, weil das den Hauptfeed leert.
+> Ein Knopf in der Kopfzeile des Chats-Registers schafft **weder Tab noch Feed**. Der
+> Grund überlebt also unverändert, nur der Satz muss nachgezogen werden. **Das ist kein
+> stilles Überschreiben, sondern der Fall, für den Regel 58 gebaut ist.**
+
+---
+
+### Phase 19g — Die Karte fertig machen ⬜ *(kein neuer Baustein, kein neuer Build)*
+
+Hier liegt Ians stärkste Formulierung: *„Bitte wirklich Liquid Glass machen, dass es
+genauso aussieht wie das Original. Ganz wichtig."*
+
+**Der Befund vorweg: das Glas IST echt** (siehe oben). Was fehlt, ist die Form — und
+die Ursache ist eine **Kollision zweier eigener Entscheidungen aus derselben Nacht**:
+
+> 19e-1 hat das Blatt gebaut, das unten am Bildschirm sitzt. 19e-2 hat die Tab-Leiste
+> zu einer **freistehenden Kapsel** gemacht, die 24 pt über dem unteren Rand schwebt —
+> und `SsBlatt.unten` weicht ihr aus (harte Regel 62: *was fest steht, weicht ihm aus*).
+> **Damit endet das Blatt mitten im Bild**, und darunter läuft die Karte weiter. Genau
+> das meint Ian mit *„unten ist es so abgeschnitten … das sieht echt scheiße aus"*.
+> Bei Apple Karten gibt es diesen Fall nicht: Dort läuft das Blatt bis an die Unterkante
+> und es gibt **gar keine Tab-Leiste**.
+>
+> **Zwei Auswege, und sie schließen einander aus:**
+> **(a)** Das Blatt läuft bis zur Unterkante, die Kapsel schwebt darauf — Glas auf Glas.
+> Nah am Vorbild, aber zwei Glasflächen übereinander sind genau das, wovor die Doku von
+> `expo-glass-effect` warnt (sie summieren sich zu Milch).
+> **(b)** Das Blatt läuft bis zur Unterkante und die Kapsel wird **Teil des Blattes**,
+> wie bei „Wo ist?" — dort sitzen die Register IM Blatt.
+> **Meine Empfehlung ist (b)**, weil sie ohne Glas-auf-Glas auskommt und die Kapsel
+> mitfährt statt zu schweben. **Das ist aber eine Formfrage, und Ian urteilt am Bild** —
+> gebaut wird sie als Vorschau, nicht als Tatsache.
+
+**Entscheidung 57 — die Blase kommt zurück.** Ian: *„Wenn man auf einen Bezirk klickt,
+sollten über dem Finger die verschiedenen Posts kommen. Und wenn's mehrere sind, kann
+man draufklicken — dann kommt das Blatt und man kann sich's genau anschauen."*
+**Das ist wörtlich `KartenBlase` aus Phase 19c**, die Entscheidung 46 aus der Anzeige
+genommen hatte. **Sie ist noch da** — harte Regel 51 sagt seit dem 2026-09-07: *„Ein
+Aufruf holt sie zurück. Wer sie löscht, wirft sie weg."* Genau dieser Fall ist jetzt
+eingetreten, elf Tage später. Es bleibt trotzdem Arbeit: Der Weg *Blase → Blatt* ist neu.
+
+**Entscheidung 58 — Apples Nennung steht direkt über dem Blatt und ist immer sichtbar.**
+Heute weicht die Zeile dem Blatt aus (harte Regel 60) und wandert dabei. Ian will sie
+**fest über der Blattkante**, mitfahrend. Das ist keine Geschmacksfrage: Eine
+Namensnennung, die niemand sieht, ist keine — und MapKits Nennung ist Lizenzbedingung.
+
+**Entscheidung 59 — „Ganz Wien" verschwindet, wenn das Blatt aufgezogen ist.** Sein
+Argument ist das Prinzip aus Entscheidung 50: Wer gerade eine Liste liest, braucht den
+Knopf nicht, der die Karte zurücksetzt.
+
+**Entscheidung 60 — Übergänge poppen leicht auf.** *„Es ist ja jetzt eigentlich instant
+— vielleicht, dass es so rauspoppt, so eine leichte Transition, die man fast gar nicht
+merkt."* Gilt für Blase, Blatt-Rastung und das Umschalten der Ansicht. `Animated` reicht,
+kein neuer Baustein (harte Regel: Native-Module bleiben draußen, ACTA-Falle).
+
+**Dazu zwei Fehler, die keine Entscheidung brauchen:**
+- 🐞 **Die Bezirksgrenzen sind ungleich, der 14. sieht kaputt aus.** Ians Worte: *„diese
+  schwarzen Linien sind nicht immer gleich, beim Vierzehnten sieht's ganz komisch aus."*
+  Verdacht: ein Rest aus der Vereinfachung in 19b (118.683 Punkte → 886). **Nicht raten
+  — gegen die amtlichen Daten nachrechnen**, der Generator liegt als Skript vor.
+- 🐞 **Die Karte nach oben wischen sieht komisch aus.** Ian schickt einen Screenshot;
+  **ohne ihn wird daran nicht gearbeitet.** Ein Bild, das falsch aussieht, ist noch kein
+  Fehler (die Lehre aus 19e-2, `KARTE_MIN_BAND`) — erst recht keiner, den man ohne das
+  Bild sucht.
+
+---
+
+### Phase 19h — Nähe statt Filter ⬜ *(Teil 1 ohne Build, Teil 2 mit)*
+
+**Entscheidung 61 — der Heimatbezirk ist die Grundlage, der Standort kommt optional
+dazu.** Ian über den Bezirks-Filter: *„Bezirk ist too viel, das sieht echt nicht gut
+aus."* Sein Gegenentwurf ist kein besserer Filter, sondern **gar keiner**: Man gibt am
+Anfang seinen Bezirk an, und die App zeigt von dort aus nach außen — *„und dann entfernt
+man sich immer weiter."*
+
+**Das zerfällt in zwei Schritte, und die Trennung ist dieselbe wie „Gerät vor Backend":**
+- **19h-1 (ohne Build):** `User.district` gibt es seit Phase 2, es ist Pflichtfeld. Aus
+  Bezirksnummern eine Nachbarschaft zu machen ist reine Rechnung — die Mittelpunkte
+  liegen seit 19b in `data/wien-bezirke.ts`, und seit 19d-1 lassen sie sich über
+  `PROJEKTION` in echte Koordinaten umrechnen (harte Regel 53). **Kein neues Feld.**
+- **19h-2 (neuer Baustein, neuer Build):** `expo-location`. Erlaubnis-Dialog, ein
+  Eintrag in Apples Datenschutz-Angaben, und **harte Regel 47 wird hier scharf**: Was
+  die App über den Aufenthalt einer Person weiß, sagt sie nur dieser Person. Ein
+  Standort darf die Reihenfolge im Feed bestimmen — er darf nirgends stehen.
+
+**Die Suche bleibt vorerst**, aber kleiner (*„das lassen wir mal … oder vielleicht schon,
+aber einfach kleiner"*). Das ist ausdrücklich keine feste Entscheidung.
+
+---
+
 ### Phase 20 — Das Backend: Supabase · **20.1 ✅ · 20.2 ✅ (2026-09-06)** · 20.3–20.8 ⬜
 
 **Ians Entscheidung vom 2026-09-06.** Der Punkt stand seit dem 2026-08-31 in Abschnitt 8
@@ -4822,9 +5016,31 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-08, SPÄTESTER Eintrag): der
-> Gerätedurchgang mit Ian — `_FUER_IAN/HANDY_DURCHGANG.md`, sechs Punkte. Die App
-> LÄUFT auf seinem iPhone.** Fünf Dinge, die eine frische Sitzung wissen muss:
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-08 abends, SPÄTESTER Eintrag):
+> Phase 19f bauen — „Weniger sehen".** Der Gerätedurchgang IST gemacht, Ians Feedback
+> steht ausgeschrieben in Abschnitt 5b (Phasen 19f, 19g, 19h; zwölf Entscheidungen,
+> 50–61). **19f und 19g brauchen keinen neuen Baustein und keinen neuen Build.**
+> Vier Dinge, die eine frische Sitzung zuerst wissen muss:
+>
+> - **Harte Regel 63 (Ians Entscheidung 50) steht über allem, was jetzt kommt:** Ein
+>   Bildschirm zeigt nur, was für die Entscheidung HIER nötig ist — und die Regel
+>   BREMST auch, was noch nicht gebaut ist. Vor jedem neuen Element fragen, ob es im
+>   Weg stehen darf.
+> - **Das Liquid Glass ist echt und sieht trotzdem falsch aus.** Nicht die Technik
+>   anfassen (das ist gemessen), sondern die FORM — die Kollision Blatt gegen
+>   schwebende Tab-Kapsel, siehe 19g. Zwei Auswege stehen dort, meine Empfehlung ist
+>   (b); **Ian urteilt am Bild, also als Vorschau bauen, nicht als Tatsache.**
+> - **Auf einen Screenshot wird gewartet:** „Karte nach oben wischen sieht komisch aus".
+>   Ohne das Bild wird daran nicht gearbeitet — ein Bild, das falsch aussieht, ist noch
+>   kein Fehler (die Lehre aus 19e-2).
+> - **Der Bauplatz gehört außerhalb von iCloud** (`-derivedDataPath
+>   ~/Library/Developer/Xcode/DerivedData/SimplySocial-geraet`), sonst scheitert
+>   `codesign`. Die Befehle stehen im Eintrag darunter.
+>
+> ---
+>
+> 📎 **Stand 2026-09-08 nachmittags (erledigt): die App auf Ians iPhone bekommen.**
+> Fünf Dinge, die dabei herauskamen:
 >
 > 1. **Sie läuft** — `App installed: at.simplysocial.app`, dann `Launched application`,
 >    Prozess lebt (PID gegen `devicectl device info processes` geprüft). Release-Build,
