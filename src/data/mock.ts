@@ -671,6 +671,36 @@ export const posts: Post[] = [
     status: 'open',
     createdAt: vorStunden(1),
   },
+  {
+    // ── Phase 19g: der VIERTE Post im 7. Bezirk ──────────────────────────────
+    // Ians Entscheidung 57 bringt die Sprechblase zurueck, und mit ihr den Weg
+    // Blase -> Blatt: Die Zeile „alle 4 ansehen" steht nur da, wenn NICHT alles in
+    // die Blase passt (`BLASE_MAX` = 3). Bis hierher hatte kein Bezirk mehr als
+    // drei Posts — die Zeile waere auf einem grossen Handy nie erschienen, und
+    // damit der ganze Weg unsichtbar geblieben.
+    //
+    // **Dritte Fassung der Lehre aus 18c/18d:** Nach dem Bauen nicht fragen „laeuft
+    // der Code?", sondern „welche Daten bringen ihn zum Sprechen?" — und wenn es
+    // keine gibt, welche dazuschreiben.
+    //
+    // `bald()` und keine feste Uhrzeit, aus demselben Grund wie bei p18: Eine feste
+    // Zeit waere abends von selbst in die Vergangenheit gerutscht.
+    id: 'p19',
+    authorId: 'u_mira',
+    category: 'creative',
+    title: 'Im Museumsquartier zeichnen',
+    district: '1070',
+    startsAt: bald(3, '16:30'),
+    level: 'any',
+    alter: { kind: 'egal' },
+    spotsTotal: 4,
+    spotsFilled: 1,
+    note: 'Ich nehm Blöcke und Stifte mit, du brauchst nichts können.',
+    meetingPoint: 'MQ, Haupthof bei den Enzis',
+    visibility: { kind: 'public' },
+    status: 'open',
+    createdAt: vorStunden(3),
+  },
 ];
 
 // ── Anfragen ─────────────────────────────────────────────────────────────────

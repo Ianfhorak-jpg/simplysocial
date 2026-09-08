@@ -111,15 +111,30 @@ export interface SsBlattProps {
    */
   mindestens?: BlattStufe;
   /**
-   * Wie viele Bildpunkte unten schon belegt sind — seit Phase 19e-2 die
-   * schwebende Tab-Leiste (`useTabRand()`).
+   * Wie viele Bildpunkte unten von etwas Schwebendem belegt sind — seit Phase 19e-2
+   * die Tab-Kapsel (`useTabRand()`).
    *
-   * **Dieselbe Unterscheidung wie `maxOben`, nur andersherum**: Was dort steht,
-   * ist gemessen und kein Anteil. Ohne diesen Wert säße das zugezogene Blatt genau
-   * hinter der Leiste — der Griff wäre unerreichbar, und zwar erst auf einem Gerät
-   * mit Home-Anzeige (34 px Sicherheitsabstand) und nicht im Browser.
+   * ⚠️ **Die Bedeutung hat sich am 2026-09-08 geändert, und das ist Phase 19g.**
+   * Vorher hörte das Blatt ÜBER der Kapsel auf (`bottom: unten` an der Hülle). Das
+   * war die wörtliche Anwendung von harter Regel 62 — *was fest steht, weicht dem
+   * Glas aus* — und am Gerät sah es falsch aus: Das Blatt endete mitten im Bild,
+   * darunter lief wieder Karte, und die Kapsel schwebte dazwischen. Drei Materialien
+   * auf 60 Punkten. Ians Worte: *„unten ist es so abgeschnitten … das sieht echt
+   * scheiße aus."*
+   *
+   * **Jetzt reicht das Blatt bis an die Unterkante und die Kapsel liegt DARAUF.**
+   * Der Wert bleibt trotzdem nötig, nur an einer anderen Stelle: Er ist der Sockel,
+   * den die unterste Raststufe zusätzlich zum Kopf bekommt. Ohne ihn läge der Griff
+   * bei zugezogenem Blatt hinter der Kapsel — genau der Fehler, gegen den die alte
+   * Fassung gebaut war. **Was scrollt, scrollt unter das Glas; was fest steht,
+   * weicht ihm aus** gilt damit unverändert: Der Sockel ist das Ausweichen, und das
+   * Material darunter ist kein Ausweichen, sondern der Grund, warum die Kapsel
+   * etwas zum Brechen hat.
+   *
+   * Wer Inhalt hat, der nicht scrollt und unten sitzt, polstert ihn selbst um
+   * diesen Wert — das Blatt tut es nicht für ihn (harte Regel 62, `SsScreen`).
    */
-  unten?: number;
+  fuss?: number;
   /** Wird beim Einrasten gerufen — nicht während des Ziehens. */
   onStufe?: (stufe: BlattStufe, sichtbar: number) => void;
 }
@@ -133,12 +148,24 @@ export function SsBlatt({
   start = 'halb',
   maxOben = 0,
   mindestens,
-  unten = 0,
+  fuss = 0,
   onStufe,
 }: SsBlattProps) {
   const [platz, setPlatz] = useState(0);
   const [kopfHoehe, setKopfHoehe] = useState(0);
   const [stufe, setStufe] = useState<BlattStufe>(start);
+  /**
+   * Ob gerade jemand am Griff zieht — Phase 19g.
+   *
+   * Der Körper ist im Ruhezustand genau so hoch wie die Stufe hergibt (siehe unten,
+   * „Warum der Körper eine feste Höhe bekommt"). Beim Hochziehen aus `zu` heraus ist
+   * er damit **null hoch**, während die Glasfläche schon wächst: Man zieht ein leeres
+   * Blatt auf und der Inhalt erscheint erst beim Loslassen. Deshalb bekommt der
+   * Körper während der Geste die Höhe der obersten Stufe. Das sind **zwei** Layouts
+   * je Zug (Anfassen und Einrasten), nicht sechzig je Sekunde — die Begründung von
+   * damals bleibt also gültig, sie war nur einen Fall zu eng gefasst.
+   */
+  const [ziehen, setZiehen] = useState(false);
 
   const hoehe = platz || NOTHOEHE;
   const kopfMass = kopfHoehe || NOTKOPF;
@@ -153,13 +180,16 @@ export function SsBlatt({
   const stufenHoehen = useMemo(() => {
     const halb = hoehe * BLATT_STUFEN.halb;
     return {
-      zu: Math.min(kopfMass, halb - 1),
+      // Kopf PLUS Sockel: Das Blatt reicht bis an die Unterkante, also liegen die
+      // untersten `fuss` Punkte hinter der Tab-Kapsel. Ohne den Aufschlag wäre bei
+      // zugezogenem Blatt genau der Griff dahinter (siehe `fuss`).
+      zu: Math.min(kopfMass + fuss, halb - 1),
       halb,
       // Der Anteil sagt, wie weit das Blatt aufgehen SOLL; der Deckel sagt, wo etwas
       // anderes schon steht. Es gewinnt der kleinere — siehe `maxOben`.
       ganz: Math.min(hoehe * BLATT_STUFEN.ganz, hoehe - maxOben),
     } as Record<BlattStufe, number>;
-  }, [hoehe, kopfMass, maxOben]);
+  }, [hoehe, kopfMass, maxOben, fuss]);
 
   /**
    * Die sichtbare Höhe als `Animated.Value` — während des Ziehens rendert damit
@@ -188,10 +218,32 @@ export function SsBlatt({
    * das Ziel — die Feder wäre jedes Mal übersprungen und das Blatt spränge, statt zu
    * gleiten.
    */
+  const ersteMessung = useRef(true);
   useEffect(() => {
     const ziel = stufenHoehen[stufeJetzt.current];
     jetzt.current = ziel;
-    sichtbar.setValue(ziel);
+    if (ersteMessung.current) {
+      // **Ians Entscheidung 60 (Phase 19g):** *„vielleicht, dass es so rauspoppt, so
+      // eine leichte Transition, die man fast gar nicht merkt."* Beim Umschalten auf
+      // die Karte fuhr das Blatt bisher schlagartig da — es war einfach vorhanden.
+      // Jetzt kommt es von unten herauf.
+      //
+      // ── Warum das Aufziehen und nicht ein Einblenden ─────────────────────────
+      // Harte Regel 61: **`opacity` unter 1 schaltet echtes Liquid Glass ab.** Ein
+      // Einblenden des Blattes hätte also ein Blatt ohne Glas eingeblendet und am
+      // Ende hart umgeschaltet — genau die Sorte Übergang, die schlechter ist als
+      // gar keiner. Eine Verschiebung berührt den Effekt nicht.
+      ersteMessung.current = false;
+      sichtbar.setValue(0);
+      Animated.spring(sichtbar, {
+        toValue: ziel,
+        useNativeDriver: false,
+        bounciness: 2,
+        speed: 14,
+      }).start();
+    } else {
+      sichtbar.setValue(ziel);
+    }
     // Auch das ist eine Auskunft: Die Karte darunter muss wissen, wie viel von ihr
     // verdeckt ist, und beim ERSTEN Messen hat noch niemand gezogen. Ohne diese
     // Zeile bekäme sie ihren Wert erst, wenn jemand das Blatt anfasst.
@@ -220,6 +272,7 @@ export function SsBlatt({
         speed: 14,
       }).start();
       setStufe(ziel);
+      setZiehen(false);
       masse.current.onStufe?.(ziel, h[ziel]);
     },
     [sichtbar],
@@ -265,6 +318,7 @@ export function SsBlatt({
 
       onPanResponderGrant: () => {
         basis = jetzt.current;
+        setZiehen(true);
       },
       onPanResponderMove: (_e, geste) => {
         const h = masse.current.stufenHoehen;
@@ -295,14 +349,25 @@ export function SsBlatt({
     knoten.style.touchAction = 'none';
   }, []);
 
-  const koerperHoehe = Math.max(0, stufenHoehen[stufe] - kopfMass);
+  /**
+   * Wie hoch der Körper ist.
+   *
+   * Sonst „was die Stufe zeigt, minus Kopf" — **mit einer Ausnahme, und die ist
+   * die Definition der Stufe selbst:** `zu` ist Kopf PLUS Sockel, und der Sockel
+   * ist die Fläche hinter der Tab-Kapsel. Zöge man dort den Kopf allein ab, stünden
+   * genau `fuss` Punkte Suchzeile hinter und unter der Kapsel — sichtbar am unteren
+   * Rand, wo das Blatt eigentlich zu ist. **`zu` heißt zu.**
+   */
+  const zeigt = ziehen ? stufenHoehen.ganz : stufenHoehen[stufe];
+  const koerperHoehe =
+    !ziehen && stufe === 'zu' ? 0 : Math.max(0, zeigt - kopfMass);
 
   return (
     // `box-none`: Diese Schicht selbst fängt nichts ab, ihre Kinder schon — was
     // neben dem Blatt liegt, kommt weiter bei der Karte an. Im `style`, nie als
     // Prop (ACTA-Falle).
     <View
-      style={[styles.huelle, { bottom: unten }]}
+      style={styles.huelle}
       onLayout={(e) => setPlatz(e.nativeEvent.layout.height)}>
       <Animated.View
         style={[
@@ -335,7 +400,13 @@ export function SsBlatt({
             {kopf}
           </View>
 
-          <View style={{ height: koerperHoehe }}>{children}</View>
+          {/* `overflow: 'hidden'` ist der zweite Teil des 19g-Fundes: Ein
+              React-Native-`View` klippt seine Kinder NICHT von sich aus. Bei
+              zugezogenem Blatt ist diese Höhe null, und ohne die Zeile lagen
+              Suchzeile, Kategorien und Liste ohne jeden Untergrund auf der nackten
+              Karte — genau das, was auf Ians Bild wie ein durchsichtiges Blatt
+              aussah. Die Höhe allein reicht nicht, sie muss auch gelten. */}
+          <View style={[styles.koerper, { height: koerperHoehe }]}>{children}</View>
         </SsGlas>
       </Animated.View>
     </View>
@@ -353,6 +424,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     pointerEvents: 'box-none',
+    // **Hier wird geklippt, und zwar seit dem 2026-09-08 (Phase 19g).** Das Blatt
+    // ist `height: hoehe` und wird nach UNTEN geschoben — sein unteres Ende liegt
+    // damit immer außerhalb dieses Kastens, und ohne diese Zeile zeichnet es dort
+    // weiter: über die Tab-Kapsel und bis an den Bildschirmrand. Der `overflow` am
+    // Blatt selbst hilft nicht, er klippt auf DESSEN Kasten, und darin liegt alles
+    // ordnungsgemäß drin. Geklippt werden muss auf die Höhe, die man SIEHT.
+    overflow: 'hidden',
   },
   // KEIN `left/right: 0`: Ein absolutes Kind ohne waagrechte Kanten richtet sich
   // nach dem `alignItems` des Elternteils — nur so greift `maxWidth` und das Blatt
@@ -378,7 +456,12 @@ const styles = StyleSheet.create({
   // Der Radius steht hier NOCH EINMAL, obwohl das Blatt `overflow: 'hidden'` hat:
   // Auf iOS ist das Glas eine native Ansicht, und die schneidet der Elternteil
   // nicht zuverlässig auf seine Rundung zurecht.
-  blattGlas: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl },
+  // `flex: 1`: Das Glas füllt das GANZE Blatt und nicht nur seinen Inhalt. Vorher
+  // war es genau so hoch wie Kopf plus Körper — beim Ziehen wächst aber die sichtbare
+  // Fläche, nicht der Inhalt, und darunter kam die Karte zum Vorschein. Was zu viel
+  // ist, klippt die Hülle weg (siehe dort).
+  blattGlas: { flex: 1, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl },
+  koerper: { overflow: 'hidden' },
   kopfInhalt: { width: '100%' },
   // Der Griff ist der EINZIGE Ort mit einem Gesten-Erkenner. Die Fläche ist
   // absichtlich höher als der Strich darin: Ein 5 px hoher Balken ist kein Ziel für

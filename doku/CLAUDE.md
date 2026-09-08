@@ -35,6 +35,74 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 19g ist fertig (2026-09-08): die Karte fertig gemacht — und wieder ohne
+neuen Build.** Gearbeitet wurde diesmal nicht am Screenshot, sondern **am laufenden
+iPhone-Simulator** (iOS 26.5, Debug-Build mit Metro: jede Änderung eine Sekunde später
+sichtbar). Belege `ac01`–`ac09`. Acht Dinge sind wichtiger als die Liste der
+Entscheidungen:
+
+1. **Fast alles, was Ian aufgezählt hat, war EIN Fehler — und ein anderer als der
+   vermutete.** Bei zugezogenem Blatt ist `koerperHoehe` null, und **ein
+   React-Native-`View` klippt seine Kinder nicht** (`overflow: visible` ist die
+   Voreinstellung). Suchzeile, Kategorien und Liste liefen aus dem Blatt heraus und
+   wurden **ohne Untergrund auf die nackte Karte gezeichnet**; die Glasfläche endete
+   nach dem Kopf. Daraus folgt seine ganze Liste: „unten abgeschnitten", Text quer
+   durch die Liste, Apple-Nennung und CC-BY-Zeile „hinter" dem Blatt, der weiße
+   Balken unter dem Suchtext. **Reproduziert (`ac01`) und behoben (`ac02`).**
+   **Damit ist der 19g-Befund „das Blatt ist DURCHSICHTIG" zurückgenommen:**
+   `GLAS_STIL = regular` trägt den Text, nachgemessen bei halb offenem Blatt.
+   Das `overflow` am Blatt selbst half nicht — es klippt auf DESSEN Kasten, und darin
+   liegt alles ordnungsgemäß. **Geklippt werden muss auf die Höhe, die man SIEHT.**
+2. **Ians Screenshot zeigte eine ÄLTERE Fassung, und das erledigt einen der zwei
+   „handfesten Layout-Fehler" von selbst.** Der Umschalter trägt darauf noch WÖRTER
+   und der Filter-Knopf noch das Wort „Filter" — beides hat Phase 19f am selben Tag
+   ersetzt. Der Knopf lag nicht auf der Suchzeile, er war der ALTE (109 pt breit
+   gegen heute 44). **Wer einen Screenshot bekommt, fragt zuerst, welche Fassung
+   darauf zu sehen ist.**
+3. **Die Formfrage ist am Bild entschieden: (a), nicht meine Empfehlung (b).** Das
+   Blatt läuft bis an die Unterkante, die Tab-Kapsel liegt **darauf**. (b) scheidet
+   praktisch aus — die Kapsel gehört allen vier Tabs. Und **„Glas auf Glas wird
+   Milch" hat sich am Gerät nicht bestätigt**; die Sorge war begründet, aber sie war
+   eine Vermutung. `SsBlatt.unten` heißt jetzt `fuss` und ist der **Sockel der
+   untersten Raststufe**, damit der Griff nicht hinter der Kapsel liegt.
+4. **Der teuerste Fund erklärt „es ist noch zu viel auf dem Bildschirm":
+   `minZoomLevel` riss die Karte eine Sekunde nach jedem Einpassen wieder auf.**
+   `react-native-maps` erzwingt die Grenze auf iOS über eine **eigene** Nachrechnung
+   (`applyLegacyZoomConstrains`), **die `mapPadding` nicht kennt**. Der richtige
+   Ausschnitt ergab über die volle Höhe gerechnet 8,97, die Grenze stand auf 9. Am
+   Bild sah das wie ein falscher `initialRegion` aus — **entschieden hat die
+   Zahlenfolge im Protokoll** (0,5641 → eine Sekunde später 2,2032).
+5. **Der 14. Bezirk ist in Ordnung — die Vermutung im Plan ist WIDERLEGT.** Gegen die
+   amtlichen Daten nachgerechnet: Purkersdorf, Mauerbach und Gablitz liegen in beiden
+   Fassungen außerhalb, Wolfersberg, Hadersdorf und Hütteldorf in beiden innerhalb,
+   die Bounding-Box weicht um 12 Meter ab. **Er sah komisch aus, weil die Karte
+   viermal zu weit heraus stand** (Punkt 4). Zweite Fassung der 19e-2-Lehre: Ein
+   Bild, das falsch aussieht, ist noch kein Fehler.
+6. **Entscheidung 58 kollidiert mit MapKit, und die Nennung gewinnt.** `mapPadding`
+   ist EIN Regler für ZWEI Fragen — wo Wien sitzt und wo Apples Nennung sitzt. Mit
+   dem alten Wert lag sie bei halb offenem Blatt 122 pt DAHINTER; solange das Blatt
+   durchsichtig war, hielt man das für einen Schönheitsfehler. Jetzt folgt die
+   Polsterung dem Blatt (`NENNUNG_MIN_KARTE` als Untergrenze).
+7. **Die Blase ist zurück (Entscheidung 57), und harte Regel 51 hat sich bezahlt
+   gemacht** — *„Ein Aufruf holt sie zurück"*, elf Tage später eingetreten. Zwei
+   Dinge waren trotzdem Arbeit: Der **Anker** rechnete seinen Platz gegen den
+   Bildrand statt gegen den freien Streifen zwischen Leiste und Blatt (in BEIDEN
+   Zeichnern berichtigt), und ein **leerer Bezirk** bekam eine leere Blase. Der Weg
+   **Blase → Blatt** ist neu: „alle 4 ansehen" zieht das Blatt auf — und **ohne einen
+   vierten Post im 7. Bezirk (`p19`) wäre er unsichtbar geblieben**, weil kein Bezirk
+   mehr als drei Posts hatte (dritte Fassung der 18c/18d-Lehre).
+8. **Entscheidung 60 hat eine Grenze, und sie steht in den eigenen Regeln.** Blatt
+   fährt herauf, Blase poppt aus dem Bezirk, Ausschnitt wechselt in 280 ms. **Die
+   Ansicht als Ganzes wird NICHT eingeblendet:** Harte Regel 61 sagt, `opacity` unter
+   1 schaltet echtes Liquid Glass ab — es wäre ein Blatt OHNE Glas eingeblendet und
+   am Ende hart umgeschaltet worden.
+
+❓ **Eine Auslegung wartet auf Ian** (blockiert nichts): Sein Satz *„wenn's mehrere
+sind, kann man draufklicken — dann kommt das Blatt"* lässt offen, ob **eine Zeile**
+der Blase das Blatt öffnet oder nur die Fußzeile. Gebaut ist: Zeile → Post-Detail
+(das ist 19c, von ihm abgenommen), Fußzeile → Blatt. **Er urteilt am Bild: `ac05`
+und `ac06` herzeigen.**
+
 ✅ **Phase 19f ist fertig (2026-09-08): weniger sehen — und ohne neuen Build.**
 Ians Grundsatz (Entscheidung 50, harte Regel 63) angewandt auf die sechs Screens, die
 er nach dem Durchgang am eigenen Handy genannt hat: Entscheidungen 51–56. Belege
@@ -82,7 +150,18 @@ gemacht (2026-09-08).** `at.simplysocial.app`, Release-Build, ohne Kabel und ohn
    und das Blatt streiten sich auf iOS *nicht* um dieselbe Berührung. Harte Regel 59
    (der Blattkörper bekommt gar keinen Erkenner) hat getragen, ohne dass jemand
    verhandeln musste.
-2. **Das Liquid Glass ist ECHT — und das Blatt ist DURCHSICHTIG.** Ians Screenshot
+2. ❌ **Dieser Punkt war FALSCH und ist am 2026-09-08 in Phase 19g zurückgenommen.**
+   Er steht als Gedächtnis hier — die Diagnose war plausibel, gemessen und trotzdem
+   daneben. **Das Blatt war nicht durchsichtig, es war bei zugezogenem Blatt gar nicht
+   da:** `koerperHoehe` ist dort null, und ein React-Native-`View` klippt seine Kinder
+   nicht (harte Regel 64). Was auf Ians Bild „durch die Liste" zu lesen war, war die
+   Karte selbst — die Liste lag daneben, ohne Untergrund. `GLAS_STIL = regular` trägt
+   den Text; nachgemessen bei halb offenem Blatt. **Die Lehre ist nicht, dass ich
+   schlecht gemessen hätte, sondern WAS ich gemessen habe:** Ich habe geprüft, ob die
+   Karte durchscheint (sie tut es), und daraus geschlossen, das Blatt sei zu dünn.
+   Die Frage „steht an dieser Stelle überhaupt Blatt?" wurde nie gestellt.
+   Der ursprüngliche Wortlaut:
+   **Das Liquid Glass ist ECHT — und das Blatt ist DURCHSICHTIG.** Ians Screenshot
    (`fehler-blatt-glas-393x852.png`, ausgemessen in PLAN.md 5b/19g) zeigt Achau,
    Laxenburg und Baden **quer durch die Liste hindurch**. Der Fehler ist meiner:
    19e-2 entschied *„das Blatt ist EIN Material"* mit dem Preis *„`regular` ist dick
@@ -976,10 +1055,12 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    was er gesehen hat: ~~**19f** „Weniger sehen" (Post-Screen, Zurück-Pfeil,
    Filter-Symbol, Umschalter, Tastatur im Chat, Gruppe-erstellen ins Chats-Register)~~
    ✅ *2026-09-08, ohne neuen Build* ·
-   **19g** „Die Karte fertig machen" (Glas-FORM, Blase zurück, Apple-Nennung, Ganz
-   Wien, Übergänge, zwei Kartenfehler) · **19h** „Nähe statt Filter"
-   (Heimatbezirk ohne Build, Standort mit). **19f und 19g brauchen keinen neuen
-   Baustein und keinen neuen Build.**
+   ~~**19g** „Die Karte fertig machen" (Glas-FORM, Blase zurück, Apple-Nennung, Ganz
+   Wien, Übergänge, zwei Kartenfehler)~~ ✅ *2026-09-08, ohne neuen Build* ·
+   **19h** „Nähe statt Filter" (Heimatbezirk ohne Build, Standort mit)
+   ← *hier geht es weiter*. **Von den zwei Kartenfehlern war einer keiner** (der 14.
+   Bezirk stimmt, gegen die amtlichen Daten nachgerechnet) und einer gehörte einer
+   älteren Fassung (der Filter-Knopf, erledigt durch 19f).
 10. **Backend** (Phase 20) ← *hier sind wir* — ~~Schema (20.1)~~ ✅ · ~~Policies
    (20.2)~~ ✅ *beide 2026-09-06, ohne Konto gebaut und mit 18 Angriffen belegt* ·
    **Anmelden (20.3)** ← *hier geht es weiter, und das braucht Ians Konten* ·
@@ -1370,11 +1451,16 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Ohne sie zeigte die Karte nach dem ersten Tipp eine einzige eingefärbte Fläche in
    einem grauen Wien.
 51. **Was über der Karte schweben soll, geht durch `SsWienKarte.blase` — nie als Kind
-   der Kartenfläche.** *(Seit Phase 19e steht dieser Slot LEER — Ians Entscheidung 46:
-   Das Blatt beantwortet dieselbe Frage vollständig, wofür die Blase eine Zeile hatte.
-   `KartenBlase`, der Slot und `KartenAnker` bleiben trotzdem im Projekt: geprüfte
-   Arbeit, und die Rechnung „wo liegt ein Bezirk auf dem Schirm" ist nicht trivial. Ein
-   Aufruf holt sie zurück. Wer sie löscht, wirft sie weg.)* Dasselbe Muster wie `WischStapel.blatt` (harte Regel 36) und aus
+   der Kartenfläche.** *(Entscheidung 46 nahm die Blase in 19e-1 aus der Anzeige,
+   **Entscheidung 57 hat sie am 2026-09-08 zurückgeholt.** Der Satz, der hier seit dem
+   2026-09-07 stand — „Ein Aufruf holt sie zurück. Wer sie löscht, wirft sie weg" —
+   hat sich nach elf Tagen bezahlt gemacht: Es war wirklich ein Aufruf. **Wer eine
+   geprüfte Arbeit ausbaut, löscht sie nicht.**)*
+   **Der Anker rechnet gegen den FREIEN STREIFEN, nicht gegen den Bildrand** (19g):
+   Im Vollbild steht oben die schwebende Leiste und unten das Blatt; `platzOben` und
+   `platzUnten` sind der Platz dazwischen. Und ein Bezirk **ohne Posts bekommt keine
+   Blase** — sonst steht ein weißer Balken mit Pfeil über der Stadt, und die Antwort
+   „hier ist nichts los" stünde zweimal da. Dasselbe Muster wie `WischStapel.blatt` (harte Regel 36) und aus
    zwei Gründen, die beide erst am Gerät auffallen: Die Fläche hat `overflow: hidden`
    (die Blase wäre halb abgeschnitten) und einen `PanResponder` mit
    `onStartShouldSetPanResponder: () => true` (sie wäre nicht antippbar). Der Slot bekommt
@@ -1505,6 +1591,17 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Kinder liegen (Antwort-Leiste, Wischkarten) und **Yoga die Polsterung des
    Elternteils anrechnet, der Browser aber nicht**. Die Karte weicht NICHT aus: Dass
    Wien unter der Kapsel durchläuft, ist der Sinn.
+   ⚠️ **Und das BLATT weicht seit Phase 19g auch nicht mehr aus.** Bis dahin hörte es
+   über der Kapsel auf — die wörtliche Anwendung dieser Regel, und am Gerät sah sie
+   falsch aus: Das Blatt endete mitten im Bild, darunter lief wieder Karte, die
+   Kapsel schwebte dazwischen. Drei Materialien auf 60 Punkten, Ians *„unten ist es
+   so abgeschnitten"*. Jetzt reicht es bis an die Unterkante und die Kapsel liegt
+   **darauf**. Der Grund der Regel überlebt das unverändert: `SsBlatt.fuss` ist der
+   **Sockel der untersten Raststufe**, damit der Griff nicht hinter der Kapsel liegt
+   — das IST das Ausweichen —, und die Liste darin bekommt `paddingBottom` in Höhe
+   der Kapsel, am Scroll-INHALT. **Glas auf Glas ist dabei am Gerät nachgesehen und
+   in Ordnung** (`ac02`, `ac07`); die Warnung der `expo-glass-effect`-Doku war eine
+   Vermutung, jetzt ist es eine Messung.
 
 63. **Ein Bildschirm zeigt nur, was für die Entscheidung HIER nötig ist.**
    *(Ians Entscheidung 50 vom 2026-09-08, nach dem ersten Durchgang am eigenen
@@ -1522,6 +1619,20 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Regel 26), und deshalb verschwinden Zeit und Ort am Post-Screen nicht, sondern
    werden leise. **Bei jedem Wegnehmen mitprüfen, welche Entscheidung der Screen
    trägt.**
+64. **Ein React-Native-`View` klippt seine Kinder NICHT — geklippt wird auf die Höhe,
+   die man SIEHT.** *(Phase 19g, und es war die Ursache für fast alles, was Ian am
+   Blatt aufgezählt hat.)* `overflow: visible` ist die Voreinstellung; ein Kasten mit
+   `height: 0` zeichnet seinen Inhalt trotzdem, einfach daneben. Beim zugezogenen
+   Blatt lagen so Suchzeile, Kategorien und Liste **ohne jeden Untergrund auf der
+   nackten Karte** — und es sah aus wie ein durchsichtiges Blatt.
+   **Der zweite Teil ist der lehrreichere:** Das Blatt HAT ein `overflow: 'hidden'`,
+   und es half nicht. Es klippt auf DESSEN Kasten, und der ist die volle
+   Containerhöhe — darin lag alles ordnungsgemäß drin. Wer eine Fläche verschiebt und
+   nur einen Teil zeigt, klippt **an der Grenze des Gezeigten** (hier: `styles.huelle`),
+   nicht am verschobenen Kasten. Dasselbe gilt für den Untergrund: Die Glasfläche
+   bekommt `flex: 1`, damit sie **während** des Ziehens mitwächst — der Inhalt tut es
+   nicht, die sichtbare Fläche schon.
+
 53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
    rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und
    schreibt sie **nie** ein zweites Mal in den Generator. Die Projektion ist flach mit
@@ -2057,6 +2168,49 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   `contentContainer`. Die letzte Nachricht steht dadurch bündig am unteren Rand statt
   16 px darüber. **Wichtig ist nicht die Zahl, sondern dass Öffnen und Fokussieren
   dieselbe Stelle anfahren** — eine Abweichung dazwischen wäre der Fehler gewesen.
+- **`minZoomLevel` wird in `react-native-maps` auf iOS NACHGERECHNET — und die
+  Rechnung kennt `mapPadding` nicht.** (Phase 19g, 2026-09-08) Nicht MapKits
+  `cameraZoomRange` erzwingt die Grenze, sondern `applyLegacyZoomConstrains` in
+  `AIRMapManager.m`: Es läuft nach JEDER Ausschnittsänderung, rechnet aus
+  `frame.size.width` und `region.span` eine Zoomstufe (`getZoomLevel`) und setzt den
+  Ausschnitt **hart neu**, wenn sie unter der Grenze liegt — über die volle
+  Kartenfläche, ohne Polsterung. Sobald ein Blatt unten Platz wegnimmt, wird Wien in
+  einen schmalen Streifen eingepasst; über die ganze Höhe gerechnet ist das eine
+  KLEINERE Stufe, obwohl auf dem Schirm nichts kleiner wird. Gemessen: 8,97 gegen
+  eine Grenze von 9 — die Bibliothek riss die Karte **eine Sekunde später** wieder
+  auf und zeigte halb Niederösterreich. **Am Bild sah das nach einem falschen
+  `initialRegion` aus und stand als solcher im Plan.** Entschieden hat die
+  Zahlenfolge im Protokoll: 0,5641 richtig, eine Sekunde später 2,2032. **Wer eine
+  Kamera-Grenze setzt, prüft sie mit der Polsterung, die später wirklich anliegt.**
+- **`isGesture` gibt es in `react-native-maps` nur für Google Maps.** (Phase 19g)
+  Steht in der Typdatei, in drei Kommentaren, und beantwortet die Frage „hat jemand
+  die Karte selbst angefasst?" auf Apple nicht. Ersatz ist `onPanDrag` (echter
+  Erkenner an der Karte); ein reines Kneifen ohne Schieben bleibt damit unerkannt,
+  und das ist der benannte Preis. **Nachgesehen, nicht vermutet** — es sah aus wie
+  die naheliegende Lösung.
+- **„Steht die Karte auf ihrem Grundausschnitt?" ist NICHT dieselbe Frage wie „hat
+  jemand sie angefasst?"** (Phase 19g) Der Vergleich mit `WIEN_REGION` ist für den
+  „Ganz Wien"-Knopf richtig und als Bedingung fürs EINPASSEN falsch: Solange Wien
+  noch nicht eingepasst IST, steht der Ausschnitt daneben — die Bedingung wäre genau
+  dann erfüllt, wenn sie es nicht sein darf, und das Einpassen fände nie statt. Auf
+  Ians Bild sieht man dieselbe Ursache von der anderen Seite: Der „Ganz Wien"-Knopf
+  stand da, ohne dass er die Karte angefasst hatte. **Eine abgeleitete Bedingung, die
+  ihre eigene Wirkung mitmisst, ist keine.**
+- **Ein Screenshot trägt eine FASSUNG, und die ist erst einmal unbekannt.** (Phase
+  19g) Zwei der gemeldeten Punkte betrafen den Umschalter und den Filter-Knopf — beide
+  waren auf Ians Bild noch die Fassung VOR Phase 19f, die am selben Tag ersetzt wurde.
+  Nachgemessen: Der Knopf war 109 pt breit, heute 44. **Wer einen Screenshot bekommt,
+  liest zuerst ab, was darauf schon anders ist als im Code**, sonst repariert er
+  etwas, das es nicht mehr gibt.
+- **Der Simulator lässt sich fernsteuern — die Umrechnung misst man an einer Fläche,
+  die in BEIDEN Bildern vorkommt.** (Phase 19g) `xcrun simctl io … screenshot` liefert
+  das Geräte­bild, `screencapture -R` das Fenster; dazwischen liegen Titelleiste,
+  Rahmen und ein Maßstab. Der Rahmen täuscht (er ist an den Ecken gerundet und außen
+  liegt Fensterschatten); belastbar ist eine **helle Fläche, die in beiden Bildern
+  steht** — hier der weiße Prototyp-Kasten. Zwei Ecken geben Maßstab und Ursprung,
+  danach stimmen Tippen und Ziehen aufs Pixel. Gezogen wird mit **echter Bewegung**
+  dazwischen (Phase-19e-1-Lehre) und nicht zu langsam: Ein zäher Zug öffnet das
+  React-Native-Entwicklermenü.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

@@ -447,9 +447,23 @@ export function SsWienKarte({
     const y = (gewaehltePfad.label.y * proEinheit - hoehe / 2) * sicht.zoom + mitteY + sicht.y;
     // Der Platz, den die Blase hat, ist der des FENSTERS — nicht der der Karte.
     const platzB = fuellt ? fensterB : breite;
-    const platzH = fuellt ? band : hoehe;
-    if (x < 0 || x > platzB || y < 0 || y > platzH) return null;
-    return { x, y, platzOben: y, platzUnten: platzH - y, breite: platzB, hoehe: platzH };
+    const platzH = fuellt ? fensterH : hoehe;
+    // ⚠️ **Phase 19g:** `x`/`y` und `hoehe` sind Fensterkoordinaten — die Blase liegt
+    // in einer Schicht über der GANZEN Fläche. Der PLATZ ist etwas anderes: oben
+    // steht die schwebende Leiste, unten das Blatt. Vorher stand hier `band` als
+    // Höhe, und damit rechnete die Blase ihre Unterkante gegen einen Nullpunkt, den
+    // es in ihrer Schicht gar nicht gibt.
+    const obenAus = fuellt ? randOben : 0;
+    const untenAus = platzH - (fuellt ? randUnten : 0);
+    if (x < 0 || x > platzB || y < obenAus || y > untenAus) return null;
+    return {
+      x,
+      y,
+      platzOben: y - obenAus,
+      platzUnten: untenAus - y,
+      breite: platzB,
+      hoehe: platzH,
+    };
   })();
 
   /**

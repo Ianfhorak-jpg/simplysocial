@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AntwortLeiste } from '@/components/AntwortLeiste';
+import { KartenBlase } from '@/components/KartenBlase';
 import { PostCard } from '@/components/PostCard';
 import { WischStapel, anleitungGesehen, anleitungMerken } from '@/components/WischStapel';
 import {
@@ -508,10 +509,17 @@ function FeedListe({
   eintraege,
   filterAktiv,
   zuruecksetzen,
+  randUnten = 0,
 }: {
   eintraege: FeedEintrag[];
   filterAktiv: boolean;
   zuruecksetzen: () => void;
+  /**
+   * Zusätzlicher Platz unter der letzten Karte — im Blatt auf der Karte die Höhe
+   * der schwebenden Tab-Kapsel (Phase 19g). Am Scroll-INHALT, nicht an der Fläche:
+   * Der Inhalt soll unter dem Glas durchlaufen, nur nicht darunter enden.
+   */
+  randUnten?: number;
 }) {
   return (
     <FlatList
@@ -525,7 +533,7 @@ function FeedListe({
       )}
       ItemSeparatorComponent={() => <View style={styles.luecke} />}
       style={styles.listeAussen}
-      contentContainerStyle={styles.liste}
+      contentContainerStyle={[styles.liste, randUnten > 0 && { paddingBottom: randUnten }]}
       showsVerticalScrollIndicator={false}
       ListEmptyComponent={<LeererFeed filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />}
     />
@@ -548,14 +556,24 @@ function FeedListe({
  * wollte die Karte sehen, nicht ein Kartenfeld. Jetzt füllt sie den Schirm, und die
  * Liste liegt in einem ziehbaren Blatt darüber (Entscheidung 40).
  *
- * ── Warum das Blatt und nicht mehr die Sprechblase (Entscheidung 46) ──────────
- * Die Blase aus 19c war die Antwort auf ein Problem, das mit dem Blatt verschwindet:
- * Die Liste stand weit unten, also musste die Auswahl OBEN beantwortet werden. Jetzt
- * beantwortet das Blatt dieselbe Frage — vollständig statt in einer Zeile, und auf
- * 360 px passte in die Blase gemessen genau EINE.
- * **`KartenBlase` und der `blase`-Slot bleiben trotzdem im Projekt stehen** (harte
- * Regel 51), nur ohne Benutzer: Sie sind geprüfte Arbeit, und die Rechnung „wo liegt
- * ein Bezirk auf dem Schirm" ist nicht trivial. Ein Aufruf holt sie zurück.
+ * ── Die Blase war weg und ist wieder da (Entscheidung 46, dann 57) ───────────
+ * In 19e-1 nahm Entscheidung 46 die Blase aus der Anzeige: Das Blatt beantworte
+ * dieselbe Frage vollständig. Am 2026-09-08, nach dem Durchgang am eigenen Handy,
+ * hat Ian sie zurückgeholt (Entscheidung 57): *„Wenn man auf einen Bezirk klickt,
+ * sollten über dem Finger die verschiedenen Posts kommen. Und wenn's mehrere sind,
+ * kann man draufklicken — dann kommt das Blatt und man kann sich's genau anschauen."*
+ *
+ * **Der Weg BLASE → BLATT ist das Neue daran**, und er ist der Grund, warum die
+ * beiden Entscheidungen einander nicht widersprechen: Die Blase ist die kurze
+ * Antwort am Ort des Fingers, das Blatt die lange. In 19c führte „alle 3 ansehen" in
+ * die LISTENANSICHT — das war richtig, solange es kein Blatt gab.
+ *
+ * **Zurückgeholt hat es EIN Aufruf**, genau wie harte Regel 51 es am 2026-09-07
+ * versprochen hat: *„Ein Aufruf holt sie zurück. Wer sie löscht, wirft sie weg."*
+ * Elf Tage später ist der Fall eingetreten. Was trotzdem Arbeit war: Der Anker
+ * rechnete seinen freien Platz gegen die ganze Kartenfläche statt gegen den freien
+ * Streifen zwischen Leiste und Blatt — im Vollbild ist das ein Unterschied, und
+ * solange der Slot leer stand, fiel er niemandem auf.
  *
  * ── Der Tipp setzt den GANZ NORMALEN Bezirksfilter ───────────────────────────
  * Und das ist der Grund, warum die Karte so billig war: Es gibt keinen zweiten
@@ -620,6 +638,20 @@ function KarteVollbild({
   const [blattRand, setBlattRand] = useState(0);
 
   /**
+   * Eine EINMALIGE Bitte an das Blatt, mindestens so weit aufzugehen — Phase 19g,
+   * für den Weg Blase → Blatt (Ians Entscheidung 57).
+   *
+   * ── Warum ein Zustand, der sich selbst zurücknimmt ───────────────────────────
+   * `SsBlatt.mindestens` ist bewusst keine Steuerung von außen, sondern eine Bitte
+   * (siehe dort): Sie wirkt, wenn sie sich ÄNDERT. Bliebe „ganz" stehen, wäre die
+   * zweite Bitte keine Änderung mehr und das Blatt bliebe unten, wo der Nutzer es
+   * hingezogen hat. Deshalb setzt `blattGezogen` sie zurück, sobald das Blatt
+   * gerastet ist. **Das Ziehen bleibt ungeteilt beim Blatt** — hier steht nie eine
+   * zweite Stufe daneben, die auseinanderlaufen könnte.
+   */
+  const [wunsch, setWunsch] = useState<BlattStufe | null>(null);
+
+  /**
    * Wie viel die schwebende Leiste oben belegt — **gemessen, nicht gerechnet.**
    *
    * Sie ist die Höhe des Umschalters plus der Sicherheitsabstand darüber, und
@@ -633,6 +665,8 @@ function KarteVollbild({
   // `useCallback`, damit das Blatt nicht bei jedem Rendern eine neue Funktion sieht.
   const blattGezogen = useCallback((_stufe: BlattStufe, sichtbar: number) => {
     setBlattRand(sichtbar);
+    // Die Bitte ist erfüllt, sobald das Blatt irgendwo gerastet ist — siehe `wunsch`.
+    setWunsch(null);
   }, []);
 
   const nichtsDa = Object.keys(zaehlung).length === 0 && ohneBezirk === 0;
@@ -684,26 +718,49 @@ function KarteVollbild({
             gewaehlt={gewaehlt}
             onWaehlen={bezirkTippen}
             fuellt
-            // Von unten verdeckt ist BEIDES: das Blatt und die Leiste darunter.
-            // Wien wird zwischen dem freien Streifen zentriert, und die
-            // Lizenzzeile weicht derselben Summe aus — sonst läge die Nennung
-            // hinter dem Glas, und eine Nennung, die niemand sehen kann, ist keine.
-            randUnten={blattRand + tabRand}
+            // Seit Phase 19g ist das EINE Zahl statt einer Summe: Das Blatt
+            // reicht bis an die Unterkante, die Kapsel liegt darauf. Was von
+            // unten verdeckt ist, ist also genau die sichtbare Blatthöhe — und
+            // die schließt den Sockel hinter der Kapsel schon ein.
+            randUnten={blattRand}
             randOben={leisteBelegt}
+            // Ians Entscheidung 57. Der Slot liegt als Geschwister ÜBER der
+            // Kartenfläche (harte Regel 51) — die Karte selbst weiß nichts von
+            // Posts, sie gibt nur her, wo der Bezirk gerade liegt.
+            blase={(anker) =>
+              // Ein leerer Bezirk bekommt KEINE Blase — sonst steht ein weißer
+              // Balken mit Pfeil über der Stadt, der nichts sagt. Die Antwort auf
+              // „hier ist nichts los" gibt der Blattkopf („1090 Wien · 0 Posts")
+              // und der leere Zustand darunter; zwei Antworten auf dieselbe Frage
+              // wären eine zu viel (die Lehre vom 2026-09-03).
+              eintraege.length === 0 ? null : (
+              <KartenBlase
+                anker={anker}
+                eintraege={eintraege}
+                onPost={(id) => router.push({ pathname: '/post/[id]', params: { id } })}
+                // *„dann kommt das Blatt und man kann sich's genau anschauen"* —
+                // nicht mehr der Wechsel in die Listenansicht wie in 19c. `ganz`
+                // und nicht `halb`: Wer „genau anschauen" tippt, will lesen.
+                onAlle={() => setWunsch('ganz')}
+              />
+              )
+            }
           />
 
           <SsBlatt
             start={BLATT_START}
             maxOben={leisteBelegt}
-            // Das Blatt hört ÜBER der Leiste auf. Die Karte darunter tut das
-            // nicht — dort ist das Durchlaufen der Sinn der Sache.
-            unten={tabRand}
+            // ⚠️ Seit Phase 19g: **Das Blatt hört NICHT mehr über der Kapsel auf,
+            // es läuft bis an die Unterkante und die Kapsel liegt darauf.** Der
+            // Wert ist jetzt der Sockel der untersten Raststufe, damit der Griff
+            // nicht hinter der Kapsel landet — Begründung bei `SsBlatt.fuss`.
+            fuss={tabRand}
             // Der aufgeklappte Filterbereich ist rund 250 px hoch und passt bei halb
             // offenem Blatt nicht hinein — er würde am `overflow: hidden` des
             // Blattes abgeschnitten. Nebenbefund: Damit kostet der weggefallene
             // Zähler (Entscheidung 47) hier gar nichts, weil beim Filtern die ganze
             // Liste danebensteht.
-            mindestens={filterOffen ? 'ganz' : undefined}
+            mindestens={wunsch ?? (filterOffen ? 'ganz' : undefined)}
             onStufe={blattGezogen}
             kopf={
               <View style={styles.blattKopf}>
@@ -748,10 +805,15 @@ function KarteVollbild({
               </View>
             ) : null}
 
+            {/* Der Sockel wandert in den SCROLL-INHALT, nicht in die Fläche —
+                harte Regel 62, wörtlich dieselbe Unterscheidung wie in `SsScreen`:
+                *Was scrollt, scrollt unter das Glas.* Ohne ihn liegt die letzte
+                Karte hinter der Tab-Kapsel und man bekommt sie nicht hervor. */}
             <FeedListe
               eintraege={eintraege}
               filterAktiv={filterAktiv}
               zuruecksetzen={zuruecksetzen}
+              randUnten={tabRand}
             />
           </SsBlatt>
         </>

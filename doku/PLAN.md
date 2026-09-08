@@ -3673,7 +3673,7 @@ einzige Weg zu den Gruppen, in denen man schon ist.
 
 ---
 
-### Phase 19g — Die Karte fertig machen ⬜ *(kein neuer Baustein, kein neuer Build)*
+### Phase 19g — Die Karte fertig machen ✅ *(gebaut am 2026-09-08, ohne neuen Build)*
 
 Hier liegt Ians stärkste Formulierung: *„Bitte wirklich Liquid Glass machen, dass es
 genauso aussieht wie das Original. Ganz wichtig."*
@@ -3797,6 +3797,201 @@ kein neuer Baustein (harte Regel: Native-Module bleiben draußen, ACTA-Falle).
   **ohne ihn wird daran nicht gearbeitet.** Ein Bild, das falsch aussieht, ist noch kein
   Fehler (die Lehre aus 19e-2, `KARTE_MIN_BAND`) — erst recht keiner, den man ohne das
   Bild sucht.
+
+
+#### Was beim Bauen von 19g herauskam (2026-09-08)
+
+**Der Kern der Phase steht in einem Satz: Fast alles, was Ian aufgezählt hat, war
+EIN Fehler — und es war ein anderer als der, den dieser Plan vermutet hat.**
+
+Gearbeitet wurde diesmal nicht am Bild, sondern **am laufenden iPhone-Simulator**
+(iOS 26.5, iPhone 17 Pro, Debug-Build mit Metro — also jede Änderung eine Sekunde
+später sichtbar, ohne neuen Build). Belege `ac01`–`ac09` im Projektordner.
+
+---
+
+**1. Ian benutzte eine ÄLTERE Fassung, als sein Bild entstand — und das war der
+erste Fund.** Auf `fehler-blatt-glas-393x852.png` trägt der Umschalter noch die
+WÖRTER „Stapel · Liste · Karte" und der Filter-Knopf noch das Wort „Filter".
+Entscheidung 53 und 54 (Phase 19f) haben beides am selben Tag ersetzt. **Damit
+erledigt sich der erste der beiden „handfesten Layout-Fehler" oben von selbst:** Der
+Filter-Knopf lag nicht auf der Suchzeile, er war der ALTE, breite Knopf — nachgemessen
+109 pt breit gegen heute 44. Auf dem heutigen Build sitzen Feld und Knopf in einer
+Zeile. **Wer einen Screenshot bekommt, fragt zuerst, welche Fassung darauf zu sehen
+ist.**
+
+**2. Das Blatt war nicht durchsichtig — es war bei zugezogenem Blatt GAR NICHT DA.**
+Das ist die eigentliche Ursache, und sie ist reproduziert (`ac01`, dasselbe Bild wie
+Ians, erzeugt durch Zuziehen des Blattes):
+
+> Bei der Stufe `zu` ist `koerperHoehe` gleich **null**. Ein React-Native-`View`
+> **klippt seine Kinder nicht** — `overflow: visible` ist die Voreinstellung. Suchzeile,
+> Kategorien und Liste liefen also aus dem Blatt heraus und wurden **ohne jeden
+> Untergrund auf die nackte Karte gezeichnet**. Die Glasfläche war nur so hoch wie
+> Kopf plus Körper, endete also nach dem Kopf; darunter lag Karte.
+
+Daraus folgt Ians ganze Liste ohne weitere Ursache: das „unten abgeschnitten", der
+Text quer durch die Liste (das war die Karte selbst), die Apple-Nennung und die
+CC-BY-Zeile „hinter" dem Blatt (sie lagen daneben), und der weiße Balken unter dem
+Suchtext (das Feld, halb im Nichts).
+
+**Die 19e-2-Entscheidung „das Blatt ist EIN Material" war also richtig; falsch war
+die Annahme, das Glas sei zu dünn.** Nachgemessen bei halb offenem Blatt (`ac03`):
+Der Text steht, die Karte darunter ist zu Farbe verwischt. `GLAS_STIL` bleibt
+`regular` — die im Plan vorgeschlagene Stellschraube (1) wurde **nicht** gebraucht.
+
+Behoben mit drei Zeilen in `SsBlatt`, und jede beantwortet eine andere Frage:
+- `styles.huelle` bekommt `overflow: 'hidden'` — das Blatt zeichnet nie unter seine
+  Unterkante. *(Das `overflow` am Blatt selbst half nicht: Es klippt auf DESSEN
+  Kasten, und darin liegt alles ordnungsgemäß. Geklippt werden muss auf die Höhe,
+  die man SIEHT.)*
+- Die Glasfläche bekommt `flex: 1` — sie füllt immer das ganze Blatt, auch **während**
+  des Ziehens, wo die sichtbare Fläche wächst und der Inhalt nicht.
+- Der Körper bekommt `overflow: 'hidden'` und bei `zu` die Höhe null. **`zu` heißt zu.**
+
+Dazu ein vierter Punkt, der erst beim Ausprobieren auffiel: Zieht man aus `zu` nach
+oben, wuchs ein LEERES Blatt und der Inhalt erschien erst beim Loslassen. Der Körper
+bekommt deshalb **während der Geste** die Höhe der obersten Stufe (`ziehen`) — zwei
+Layouts je Zug statt sechzig je Sekunde, die Begründung von 19e-1 bleibt gültig, sie
+war nur einen Fall zu eng gefasst.
+
+**3. Die Formfrage ist entschieden, und zwar am Bild: (a), nicht (b).** Das Blatt
+läuft bis an die Unterkante, die Tab-Kapsel liegt **darauf**. Beide oben genannten
+Wege wurden gebaut und angeschaut:
+- **(b) „Kapsel im Blatt" scheidet praktisch aus** — die Kapsel gehört allen vier
+  Tabs, nicht nur der Karte. Sie in ein Blatt zu verlegen, das es nur auf einem
+  Screen gibt, hieße zwei Tab-Leisten zu bauen.
+- **Die Sorge „Glas auf Glas wird Milch" hat sich am Gerät NICHT bestätigt** (`ac02`,
+  `ac07`): Die Kapsel steht sauber lesbar auf dem Blatt. Sie war begründet, aber sie
+  war eine Vermutung; jetzt ist sie gemessen.
+
+Der Preis war eine neue Prop: `SsBlatt.unten` ist zu **`SsBlatt.fuss`** geworden.
+Vorher hörte das Blatt über der Kapsel auf; jetzt ist der Wert der **Sockel der
+untersten Raststufe**, damit der Griff bei zugezogenem Blatt nicht dahinter liegt.
+Harte Regel 62 gilt unverändert — der Sockel IST das Ausweichen —, und was scrollt,
+scrollt unter das Glas: Die Liste im Blatt bekommt `paddingBottom` in Höhe der
+Kapsel, am Scroll-INHALT und nicht an der Fläche.
+
+**4. Entscheidung 58 kollidiert mit MapKit, und die Nennung gewinnt.** MapKit
+zeichnet Logo und Rechtelink selbst — an den unteren Rand seines gepolsterten
+Bereichs. Es gibt also **einen** Regler (`mapPadding`) für **zwei** Fragen: wo Wien
+sitzt und wo die Nennung sitzt. Bis heute folgte die Polsterung `KARTE_MIN_BAND`;
+nachgerechnet lag Apples Nennung bei halb offenem Blatt **122 Punkte hinter der
+Blattkante**. Solange das Blatt durchsichtig war, sah das nach einem
+Schönheitsfehler aus — mit deckendem Blatt wäre die Nennung schlicht **weg**, und
+das ist eine Lizenzfrage. Die Polsterung folgt jetzt dem Blatt (`NENNUNG_MIN_KARTE`
+als Untergrenze); bei ganz aufgezogenem Blatt ist von der Karte nur ein Streifen da,
+dort darf die Nennung mit ihr verschwinden.
+
+**5. Der teuerste Fund der Phase, und er erklärt Ians „zu viel auf dem Bildschirm":
+`minZoomLevel` hat die Karte eine Sekunde nach jedem Einpassen wieder aufgerissen.**
+
+`react-native-maps` erzwingt diese Grenze auf iOS **nicht** über MapKits
+`cameraZoomRange`, sondern über eine eigene Nachrechnung: `applyLegacyZoomConstrains`
+läuft nach JEDER Ausschnittsänderung, rechnet aus Kartenbreite und `region.span` eine
+Zoomstufe und setzt den Ausschnitt hart neu, wenn sie unter der Grenze liegt
+(`AIRMapManager.m`, `getZoomLevel`). **Diese Rechnung kennt `mapPadding` nicht.**
+Gemessen im Protokoll:
+
+```
+region 0.5641   ← richtig eingepasst, Wien füllt den freien Streifen
+region 2.2032   ← eine Sekunde später, viermal so weit heraus
+```
+
+Der richtige Ausschnitt ergibt über die volle Kartenhöhe gerechnet **8,97**, die
+Grenze stand auf **9**. `APPLE_ZOOM_MIN` ist deshalb auf **8** gesenkt — mit Abstand,
+weil jede künftige Änderung an der Polsterung die gerechnete Stufe mitverschiebt.
+**Am Bild war das nicht zu sehen**, es sah aus wie ein falscher `initialRegion` und
+steht oben genau so im Plan; entschieden hat es die Zahlenfolge.
+
+Dazu kommt ein Effekt, der Wien beim Aufschlagen **neu einpasst**, sobald sich die
+Polsterung ändert (`animateToRegion`, 280 ms — Entscheidung 60). Ohne ihn zoomt
+MapKit beim ersten Setzen des Blattrands heraus, und die Wirkung multipliziert sich.
+Er läuft nur, solange niemand die Karte selbst angefasst hat.
+
+**6. „Hat jemand die Karte angefasst?" darf NICHT aus dem Ausschnitt kommen.** Der
+naheliegende Weg war `verschoben` — dieselbe Frage, die den „Ganz Wien"-Knopf
+einblendet. Als Bedingung fürs Einpassen ist sie falsch: Solange Wien noch nicht
+richtig eingepasst IST, steht der Ausschnitt weit daneben, die Bedingung ist also
+genau dann erfüllt, wenn sie es nicht sein darf — und das Einpassen fände nie statt.
+**Auf Ians Bild sieht man dieselbe Ursache von der anderen Seite: Der „Ganz
+Wien"-Knopf stand da, ohne dass er die Karte angefasst hatte.** Jetzt meldet
+`onPanDrag` echte Finger. (`isGesture` an `onRegionChange` wäre die direktere
+Auskunft — die gibt es in `react-native-maps` **nur für Google Maps**, nachgesehen in
+der Typdatei, nicht vermutet.) Der benannte Preis: Ein reines Kneifen ohne jedes
+Schieben bleibt unerkannt.
+
+**7. Der 14. Bezirk ist in Ordnung — die Vermutung oben ist WIDERLEGT.** Der Plan
+verdächtigte die Vereinfachung aus 19b und verlangte, gegen die amtlichen Daten
+nachzurechnen. Genau das ist geschehen: Die 3 MB von data.wien.gv.at geladen, den
+14. Bezirk projiziert und Punkt für Punkt gegen `wien-bezirke.ts` gehalten.
+
+| Ort | amtlich | erzeugt |
+|-----|---------|---------|
+| Purkersdorf | außerhalb | außerhalb |
+| Mauerbach | außerhalb | außerhalb |
+| Gablitz | außerhalb | außerhalb |
+| Wolfersberg | innerhalb | innerhalb |
+| Hadersdorf | innerhalb | innerhalb |
+| Hütteldorf | innerhalb | innerhalb |
+
+Die Bounding-Box weicht um **0,4 Rastereinheiten** ab, das sind rund **12 Meter**.
+Am Gerät liegt der Umriss auf Apples eigener Stadtgrenze (`ac03`, westlicher
+Ausschnitt). **Der Bezirk sah komisch aus, weil die Karte viermal zu weit heraus
+stand** — bei diesem Maßstab fällt der lange dünne Westzipfel zu einem Klumpen
+zusammen, und Purkersdorfs Beschriftung rutscht darüber. Mit Punkt 5 ist es weg.
+**Das ist die Lehre aus 19e-2 zum zweiten Mal: Ein Bild, das falsch aussieht, ist
+noch kein Fehler.**
+
+**8. Die Blase ist zurück (Entscheidung 57) — und harte Regel 51 hat sich bezahlt
+gemacht.** Sie sagte am 2026-09-07: *„Ein Aufruf holt sie zurück. Wer sie löscht,
+wirft sie weg."* Elf Tage später ist der Fall eingetreten, und es war wirklich ein
+Aufruf. Zwei Dinge waren trotzdem Arbeit:
+- **Der Anker rechnete gegen die falsche Fläche.** Er nahm den Platz bis zum
+  Bildrand; im Vollbild ist das falsch, denn oben steht die Leiste und unten das
+  Blatt. In BEIDEN Zeichnern berichtigt. Solange der Slot leer stand, fiel es
+  niemandem auf.
+- **Ein leerer Bezirk bekam eine leere Blase** — ein weißer Balken mit Pfeil über der
+  Stadt. Jetzt bekommt er keine; die Antwort „hier ist nichts los" gibt der Blattkopf.
+
+**Der Weg Blase → Blatt ist neu und Ians eigentlicher Wunsch:** „alle 4 ansehen"
+zieht das Blatt auf `ganz` (`ac05` → `ac06`), statt wie in 19c in die Listenansicht
+zu wechseln. Technisch ist das eine **einmalige Bitte**, die sich selbst zurücknimmt:
+`SsBlatt.mindestens` wirkt, wenn es sich ÄNDERT — bliebe „ganz" stehen, käme die
+zweite Bitte nicht an.
+
+> ❓ **Eine Auslegung ist meine und wartet auf Ians Urteil** (blockiert nichts): Sein
+> Satz *„wenn's mehrere sind, kann man draufklicken — dann kommt das Blatt"* lässt
+> offen, ob **eine Zeile** der Blase das Blatt öffnen soll oder nur die Fußzeile.
+> Gebaut ist: Zeile → Post-Detail (das ist 19c, von ihm abgenommen), Fußzeile →
+> Blatt. **Er urteilt am Bild: `ac05` und `ac06` herzeigen.**
+
+**9. Ohne einen vierten Post im 7. Bezirk wäre der ganze Weg unsichtbar geblieben.**
+Die Fußzeile „alle N ansehen" steht nur da, wenn NICHT alles in die Blase passt
+(`BLASE_MAX` = 3) — und kein Bezirk hatte mehr als drei Posts. Auf einem großen Handy
+wäre die Zeile nie erschienen. `p19` in `mock.ts` ist die **dritte Fassung der Lehre
+aus 18c/18d**: Nach dem Bauen nicht fragen „läuft der Code?", sondern „welche Daten
+bringen ihn zum Sprechen?"
+
+**10. Entscheidung 60 hat eine Grenze, und sie steht in den eigenen Regeln.** Das
+Blatt fährt beim Öffnen der Karte jetzt von unten herauf, die Blase poppt aus dem
+angetippten Bezirk heraus (Ursprung an der Spitze — skalierte sie um ihre Mitte,
+zeigte sie einen Wimpernschlag lang auf den falschen Ort), und der Kartenausschnitt
+wechselt in 280 ms. **Was NICHT eingeblendet wird, ist die Ansicht als Ganzes:**
+harte Regel 61 sagt, `opacity` unter 1 schaltet echtes Liquid Glass ab. Ein
+Einblenden hätte also ein Blatt OHNE Glas eingeblendet und am Ende hart umgeschaltet
+— ein Übergang, der schlechter ist als gar keiner. Verschieben und Skalieren berühren
+den Effekt nicht, Deckkraft schon.
+
+**11. Was NICHT bearbeitet wurde, und warum:** *„Die Karte nach oben wischen sieht
+komisch aus."* Ohne Ians Screenshot wird daran nicht gearbeitet — so steht es oben,
+und Punkt 7 ist der Beleg dafür, dass die Regel richtig ist.
+
+**Nachgemessen:** iOS 402 × 874 (alle drei Raststufen, Blase, Blase → Blatt), Web
+360 × 600 und 390 × 844 (Stapel · Liste · Karte, alle vier Tab-Knöpfe frei, kein
+abgeschnittener Text, das Blatt bei `zu` sauber geklippt). `npx tsc --noEmit` sauber.
+
+---
 
 ---
 

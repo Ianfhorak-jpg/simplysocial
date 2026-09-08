@@ -9,8 +9,10 @@ import {
   APPLE_KARTE_ART,
   APPLE_ZOOM_MAX,
   APPLE_ZOOM_MIN,
-  KARTE_MIN_BAND,
   KARTE_QUELLE,
+  NENNUNG_MIN_KARTE,
+  UEBERGANG_MS,
+  ZURUECK_KNOPF_BEI_GANZ,
   STUFEN,
   appleFuellung,
   stufeFuer,
@@ -114,6 +116,30 @@ export function SsAppleKarte({
   const blaseDeckkraft = useRef(new Animated.Value(1)).current;
 
   const [aufnahme, setAufnahme] = useState(true);
+  /**
+   * Ob MapKit schon steht. **Kamerabefehle verpuffen davor still** (Lehre aus
+   * 19e-2) — ein Aufruf, der nichts tut, sieht aus wie einer, der nicht stattfindet.
+   */
+  const [bereit, setBereit] = useState(false);
+  /**
+   * Hat jemand die Karte selbst in die Hand genommen?
+   *
+   * ── Warum das ein eigenes Merkmal ist und nicht aus `region` folgt ───────────
+   * Naheliegend wäre, den Ausschnitt mit `WIEN_REGION` zu vergleichen. Genau das tut
+   * `verschoben` unten, und für den KNOPF ist es richtig. Als Gegenfrage zu „darf ich
+   * neu einpassen?" ist es falsch: Solange Wien noch nicht richtig eingepasst IST,
+   * steht der Ausschnitt weit daneben — die Bedingung wäre also genau dann erfüllt,
+   * wenn sie es nicht sein darf, und die Einpassung fände nie statt. **Auf Ians Bild
+   * sieht man dieselbe Ursache von der anderen Seite: Der „Ganz Wien"-Knopf stand
+   * da, ohne dass er die Karte angefasst hatte.**
+   *
+   * `onPanDrag` ist auf iOS ein eigener Erkenner an der Karte und meldet nur echte
+   * Finger. `isGesture` an `onRegionChange` wäre die direktere Auskunft — die gibt es
+   * in `react-native-maps` **nur für Google Maps** (nachgesehen in der Typdatei).
+   * Ein reines Kneifen ohne jedes Schieben bleibt damit unerkannt; das ist der
+   * benannte Preis, und er ist klein.
+   */
+  const eigen = useRef(false);
 
   const breite = platz.breite;
   /**
@@ -133,7 +159,20 @@ export function SsAppleKarte({
    * zusammenzuziehen. **Die Bedeutung steht in `karte.ts`, nicht hier** (harte
    * Regel 52) — sonst hätte die App zwei Wahrheiten, eine je Zeichner.
    */
-  const verdeckt = Math.min(randUnten, Math.max(0, hoehe - randOben - hoehe * KARTE_MIN_BAND));
+  /**
+   * Wie viel MapKit unten aussparen soll.
+   *
+   * ⚠️ **Seit Phase 19g folgt das dem BLATT und nicht mehr `KARTE_MIN_BAND`** — Ians
+   * Entscheidung 58. Der Grund steht bei `NENNUNG_MIN_KARTE`: `mapPadding` ist EIN
+   * Regler für zwei Fragen (wo Wien sitzt, wo Apples Nennung sitzt), und die Nennung
+   * ist Lizenzbedingung. Mit dem alten, gedeckelten Wert saß sie bei halb offenem
+   * Blatt 122 Punkte HINTER der Blattkante — solange das Blatt durchsichtig war,
+   * hat man das für einen Schönheitsfehler gehalten.
+   *
+   * `KARTE_MIN_BAND` gilt weiter, aber nur noch dort, wo es hingehört: im
+   * gezeichneten Zeichner, dessen Maßstab wirklich am freien Streifen hängt.
+   */
+  const verdeckt = Math.min(randUnten, Math.max(0, hoehe - randOben - NENNUNG_MIN_KARTE));
   /** Über dem Blatt, aber nie hinter der schwebenden Leiste — siehe `fussHoehe` im
    *  gezeichneten Zeichner, dieselbe Rechnung und derselbe Grund. */
   const fussHoehe = Math.min(randUnten, Math.max(0, hoehe - randOben - 20));
@@ -186,6 +225,12 @@ export function SsAppleKarte({
     return () => clearTimeout(t);
   }, [zahlenSchluessel]);
 
+  /** Steht die Karte noch auf ihrem Grundausschnitt „ganz Wien"? */
+  const verschoben =
+    Math.abs(region.latitude - WIEN_REGION.latitude) > WIEN_REGION.latitudeDelta * 0.04 ||
+    Math.abs(region.longitude - WIEN_REGION.longitude) > WIEN_REGION.longitudeDelta * 0.04 ||
+    region.longitudeDelta < WIEN_REGION.longitudeDelta * 0.85;
+
   /**
    * Wo der gewählte Bezirk gerade auf dem Schirm liegt.
    *
@@ -205,23 +250,64 @@ export function SsAppleKarte({
     }
     try {
       const p = await karte.current.pointForCoordinate(ziel.mitte);
-      if (p.x < 0 || p.x > breite || p.y < 0 || p.y > hoehe) {
+      // ⚠️ **Der freie Streifen, nicht die ganze Fläche** (Phase 19g). Die Karte ist
+      // seit 19e Vollbild: Oben liegt die schwebende Leiste, unten das Blatt. Ein
+      // Anker darunter zeigt auf etwas, das man nicht sieht, und der Platz über ihm
+      // ist nicht der bis zum Bildrand, sondern der bis zur Leiste. Solange der Slot
+      // leer stand (Entscheidung 46), fiel das niemandem auf.
+      const obenAus = randOben;
+      const untenAus = hoehe - randUnten;
+      if (p.x < 0 || p.x > breite || p.y < obenAus || p.y > untenAus) {
         // Aus dem Bild geschoben. Eine Sprechblase, deren Spitze außerhalb sitzt,
         // zeigt auf nichts — dieselbe Entscheidung wie in `SsWienKarte`.
         setAnker(null);
         return;
       }
-      setAnker({ x: p.x, y: p.y, platzOben: p.y, platzUnten: hoehe - p.y, breite, hoehe });
+      setAnker({
+        x: p.x,
+        y: p.y,
+        platzOben: p.y - obenAus,
+        platzUnten: untenAus - p.y,
+        breite,
+        hoehe,
+      });
     } catch {
       // `pointForCoordinate` kann fehlschlagen, solange die native Ansicht noch
       // nicht steht. Keine Blase ist der harmlosere Zustand von beiden.
       setAnker(null);
     }
-  }, [gewaehlt, breite, hoehe]);
+  }, [gewaehlt, breite, hoehe, randOben, randUnten]);
 
   useEffect(() => {
     void ankerHolen();
   }, [ankerHolen, region]);
+
+  /**
+   * Wien neu in den freien Streifen einpassen, wenn sich die Polsterung ändert —
+   * Phase 19g, und es beantwortet zwei von Ians Punkten mit einer Zeile.
+   *
+   * ── Warum das überhaupt sein muss ────────────────────────────────────────────
+   * **MapKit ZOOMT, wenn `mapPadding` sich ändert.** Es hält den zuletzt gesetzten
+   * Ausschnitt im nutzbaren Rechteck; wird das Rechteck kleiner, geht die Karte
+   * heraus. Beim Aufschlagen passiert das zweimal hintereinander (erst ohne Blatt,
+   * dann mit), und die Wirkung multipliziert sich: Auf dem Simulator standen danach
+   * **Brünn, Bratislava und St. Pölten** im Bild und Wien war ein Fleck. Genau das
+   * meint Ian mit *„es ist noch zu viel auf dem Bildschirm"*.
+   *
+   * ── Warum nur, wenn niemand die Karte angefasst hat ──────────────────────────
+   * Hat jemand geschoben, gehört ihm die Ansicht — sie hier zurückzusetzen wäre, ihm
+   * die Karte aus der Hand zu nehmen. Warum das an `eigen` hängt und nicht an
+   * `verschoben`, steht oben bei `eigen`.
+   *
+   * ── Warum `animateToRegion` und nicht `fitToCoordinates` ─────────────────────
+   * `fitToCoordinates` zählt `mapPadding` **nicht** mit (Lehre aus 19e-2) — es
+   * würde genau den Fehler machen, den dieser Effekt behebt. Und die 280 ms sind
+   * Ians Entscheidung 60: *„eine leichte Transition, die man fast gar nicht merkt."*
+   */
+  useEffect(() => {
+    if (!bereit || eigen.current) return;
+    karte.current?.animateToRegion(WIEN_REGION, UEBERGANG_MS);
+  }, [bereit, verdeckt, randOben]);
 
   const tippen = useCallback(
     (koordinate: { latitude: number; longitude: number }) => {
@@ -232,12 +318,19 @@ export function SsAppleKarte({
   );
 
   const gewaehltGeo = flaechen.find((f) => f.plz === gewaehlt);
-  const verschoben =
-    Math.abs(region.latitude - WIEN_REGION.latitude) > WIEN_REGION.latitudeDelta * 0.04 ||
-    Math.abs(region.longitude - WIEN_REGION.longitude) > WIEN_REGION.longitudeDelta * 0.04 ||
-    region.longitudeDelta < WIEN_REGION.longitudeDelta * 0.85;
 
   const blaseInhalt = blase && anker ? blase(anker) : null;
+
+  /**
+   * Ob unter der schwebenden Leiste noch genug Karte übrig ist, dass ein Knopf
+   * darauf sinnvoll ist — Ians Entscheidung 59 (`ZURUECK_KNOPF_BEI_GANZ`).
+   *
+   * Gemessen wird am selben Streifen wie die Nennung und nicht an der Raststufe des
+   * Blattes: Der Zeichner kennt keine Raststufen, er kennt nur, wie viel von ihm
+   * verdeckt ist (harte Regel 52).
+   */
+  const knopfPlatz =
+    ZURUECK_KNOPF_BEI_GANZ || hoehe - randOben - randUnten > NENNUNG_MIN_KARTE;
 
   return (
     <View style={[styles.rahmen, fuellt && styles.rahmenVoll]}>
@@ -272,6 +365,11 @@ export function SsAppleKarte({
           pitchEnabled={false}
           showsCompass={false}
           toolbarEnabled={false}
+          onMapReady={() => setBereit(true)}
+          // Ab hier gehört die Ansicht dem Finger — siehe `eigen`.
+          onPanDrag={() => {
+            eigen.current = true;
+          }}
           onRegionChange={() => blaseDeckkraft.setValue(0)}
           onRegionChangeComplete={(r) => {
             blaseDeckkraft.setValue(1);
@@ -340,12 +438,18 @@ export function SsAppleKarte({
           </Animated.View>
         ) : null}
 
-        {/* Steht nur da, wenn er etwas tut. */}
-        {verschoben ? (
+        {/* Steht nur da, wenn er etwas tut — und seit Phase 19g auch nur dann,
+            wenn überhaupt noch Karte zu sehen ist (Ians Entscheidung 59). */}
+        {verschoben && knopfPlatz ? (
           <Pressable
             style={[styles.zurueck, fuellt && { bottom: fussHoehe + 22 }]}
             hitSlop={10}
-            onPress={() => karte.current?.animateToRegion(WIEN_REGION, 300)}>
+            onPress={() => {
+              // Der Knopf gibt die Karte zurück — danach passt sie sich wieder von
+              // selbst ein, wenn das Blatt seine Stufe wechselt.
+              eigen.current = false;
+              karte.current?.animateToRegion(WIEN_REGION, UEBERGANG_MS);
+            }}>
             <SsText variant="caption" color={colors.surface}>
               Ganz Wien
             </SsText>

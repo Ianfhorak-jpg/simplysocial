@@ -349,7 +349,37 @@ export function appleFuellung(stufe: number): string {
  * Karte eine Genauigkeit, die die Daten nicht haben — harte Regel 47, diesmal nicht
  * gegen einen Pin, sondern gegen den Zoom.
  */
-export const APPLE_ZOOM_MIN = 9;
+export const APPLE_ZOOM_MIN = 8;
+
+/*
+ * ⚠️ **Am 2026-09-08 von 9 auf 8 gesenkt, und die Begründung ist der Fund der
+ * Phase 19g** — sie erklärt zugleich, warum die Karte auf Ians Gerät mit Stockerau
+ * und Baden aufging (*„es ist noch zu viel auf dem Bildschirm"*).
+ *
+ * `react-native-maps` erzwingt diese Grenze auf iOS nicht über MapKits
+ * `cameraZoomRange`, sondern über eine EIGENE Nachrechnung: `applyLegacyZoomConstrains`
+ * läuft nach JEDER Ausschnittsänderung, rechnet aus der Kartenbreite und
+ * `region.span` eine Zoomstufe und setzt den Ausschnitt hart neu, wenn sie unter der
+ * Grenze liegt (`AIRMapManager.m`, `getZoomLevel`). **Diese Rechnung kennt
+ * `mapPadding` nicht.**
+ *
+ * Damit kollidiert sie mit Ians Entscheidung 58: Sobald das Blatt unten Platz
+ * wegnimmt, wird Wien in einen schmalen Streifen eingepasst — über die GANZE
+ * Kartenfläche gerechnet ist das eine kleinere Zoomstufe, obwohl auf dem Schirm
+ * nichts kleiner wird. Gemessen: Bei halb offenem Blatt ergibt der richtige
+ * Ausschnitt **8,97**, die Grenze stand auf 9. Die Bibliothek hat ihn also jedes Mal
+ * eine Sekunde später wieder aufgerissen — auf einen Zoom-9-Ausschnitt über die
+ * volle Höhe, und der zeigt halb Niederösterreich.
+ *
+ * **Das war nicht zu sehen, sondern nur zu messen:** Am Bild sah es aus wie ein
+ * falscher `initialRegion`, und genau als solcher stand es im Plan („dritter
+ * Befund"). Die Zahlenfolge im Protokoll — 0,5641 richtig, eine Sekunde später
+ * 2,2032 — hat es entschieden.
+ *
+ * 8 heißt rund 82 km Breite, also knapp das Dreifache von Wien. Der Abstand zu 8,97
+ * ist Absicht: Jede künftige Änderung an der Polsterung verschiebt die gerechnete
+ * Stufe mit.
+ */
 export const APPLE_ZOOM_MAX = 15;
 
 // ── Wie viel ein Blatt von der Karte verdecken darf (Phase 19e) ──────────────
@@ -379,6 +409,56 @@ export const APPLE_ZOOM_MAX = 15;
  * jemand als ersten sieht und wiedererkennt.
  */
 export const KARTE_MIN_BAND = 0.5;
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  Wie viel Karte übrig bleiben muss, damit Apples Nennung noch Platz hat
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * **Ians Entscheidung 58 (2026-09-08):** Die Nennung steht direkt über der
+ * Blattkante und fährt mit. Auf seinem Bild lag sie MITTEN im Blatt und schien
+ * hindurch — solange das Blatt deckte, war sie richtig platziert; seit 19g deckt
+ * es, und dann wäre sie schlicht verschwunden.
+ *
+ * ── Warum das keine Geschmacksfrage ist ───────────────────────────────────────
+ * MapKit zeichnet Logo und Rechtelink SELBST, und zwar an den unteren Rand seines
+ * gepolsterten Bereichs (`mapPadding`). Es gibt also genau EINEN Regler für zwei
+ * Fragen: wo Wien sitzt und wo die Nennung sitzt. **Die Nennung gewinnt** — sie ist
+ * Lizenzbedingung, Wiens Lage ist eine Vorliebe.
+ *
+ * Diese Zahl ist die Untergrenze: So viel Karte muss über dem Blatt stehen bleiben,
+ * sonst hört das Mitfahren auf. Bei ganz aufgezogenem Blatt ist von der Karte
+ * ohnehin nur ein Streifen da — dort ist die Karte nicht mehr „dargestellt", und
+ * die Nennung darf mit ihr verschwinden.
+ */
+export const NENNUNG_MIN_KARTE = 96;
+
+/**
+ * Ob der „Ganz Wien"-Knopf auch bei ganz aufgezogenem Blatt dasteht.
+ *
+ * **Ians Entscheidung 59 (2026-09-08): nein.** Sein Argument ist Entscheidung 50 —
+ * wer gerade eine Liste liest, braucht den Knopf nicht, der die Karte zurücksetzt.
+ * Auf seinem Bild schimmerte er ohnehin durchs Blatt; jetzt läge er dahinter, und
+ * ein Knopf, den man nicht sieht, ist einer, den man nicht wegbekommt.
+ */
+export const ZURUECK_KNOPF_BEI_GANZ = false;
+
+/**
+ * Wie lang ein Übergang auf der Karte dauert, in Millisekunden.
+ *
+ * **Ians Entscheidung 60 (2026-09-08):** *„Es ist ja jetzt eigentlich instant —
+ * vielleicht, dass es so rauspoppt, so eine leichte Transition, die man fast gar
+ * nicht merkt."* Der zweite Halbsatz ist die Vorgabe, nicht der erste: Es soll
+ * nicht auffallen, es soll nur nicht springen.
+ *
+ * 280 ms sind Apples eigene Größenordnung für eine Ansichtsänderung. Kürzer wirkt
+ * wie ein Sprung, länger fühlt sich zäh an — und auf der Karte hängt daran mehr als
+ * Schönheit: Ein Ausschnittwechsel ohne Bewegung sieht aus wie ein Bildfehler.
+ *
+ * Die Zahl steht hier und nicht bei einem Zeichner, weil sie an mehreren Stellen
+ * gebraucht wird (Einpassen, „Ganz Wien", Blase) — harte Regel 52.
+ */
+export const UEBERGANG_MS = 280;
 
 /**
  * Welche Sorte Apple-Karte darunter liegt.

@@ -3,59 +3,56 @@
 > Diese Datei steht hier, weil der Chat nach dem `/clear` weg ist — der Text darin
 > also auch. Hier findest du ihn wieder.
 >
-> Stand: **07.09.2026, abends.** **Die Karte IST jetzt die App, und sie hat Liquid
-> Glass.** Vollbild-Karte, ein Blatt, das man hochziehen kann, „Posten" als runder Knopf
-> — und seit heute Abend sind Tab-Leiste, Umschalter-Pille und Blatt auf iOS 26 aus
-> echtem Glas: Die Karte scheint durch. Phase 0 bis 19e sind fertig.
+> Stand: **08.09.2026, abends.** **Die Karte ist fertig — und zwar die Punkte, die du
+> nach deinem Durchgang am eigenen Handy aufgezählt hast.** Phase 0 bis 19g sind fertig.
 >
-> **Zwei Sachen von heute Abend, die du wissen solltest:**
-> - **Das Glas hat nichts extra gekostet.** Es sah nach einem neuen Baustein und einem
->   neuen Build aus; das Stück Apple-Technik dafür lag durch ein anderes Paket schon in
->   der App. Reine Programmierarbeit.
-> - **Deine Rückmeldung („noch nicht wie ich es dir gezeigt habe") war der ganze
->   Unterschied.** Falsch war nicht der Effekt, sondern die Form: Die Leiste war eine
->   Leiste über die ganze Breite statt einer freistehenden Kapsel wie in deinem
->   BierBuddy-Bild. **Das Bild liegt jetzt im Projekt** (`vorbild-liquid-glass-
->   bierbuddy.png`) und ist in den Regeln verlinkt — die nächste Sitzung sieht es,
->   bevor sie etwas anfasst.
+> **Das Wichtigste in einem Satz: Fast alles, was dir aufgefallen ist, war EIN Fehler
+> — und ein anderer, als ich zuerst gedacht habe.**
 >
-> **Die Live-Seite zeigt das alles noch NICHT** (sie steht auf dem Stand von 19d). Das
-> ist Absicht: Dort zeigst du den Prototyp herum, und 19e war bis jetzt auf keinem
-> echten Gerät. Sag Bescheid, wenn sie live soll.
+> Ich hatte geschrieben, das Blatt (die weiße Fläche über der Karte) sei zu
+> durchsichtig. Das war falsch. **Wenn das Blatt zugezogen war, war es unten schlicht
+> nicht da:** Suchfeld, Kategorien und Liste wurden ohne Untergrund direkt auf die
+> Karte gemalt. Was du „quer durch die Liste" gelesen hast, war die Karte selbst.
+> Daraus kam auch alles andere — das „unten abgeschnitten", die Apple-Zeile und die
+> Quellenangabe, die im Weg standen, und der weiße Balken unter dem Suchtext.
+> **Ist behoben, und das Blatt geht jetzt bis ganz nach unten**, die Leiste mit
+> Start/Anfragen/Chats/Profil liegt darauf.
 >
-> **Leopolds Karten-Idee ist gebaut, in drei Schritten:** die Wien-Karte selbst (19b),
-> die Blase, die beim Antippen eines Bezirks herausspringt (19c), und seit heute Abend
-> die echte Apple-Karte darunter (19d-1). **Alle vier Entscheidungen, die du dazu
-> getroffen hast, stecken drin.**
+> **Drei Sachen, die du wissen solltest:**
+> - **Dein Screenshot war von einer älteren Fassung.** Zwei deiner Punkte (der
+>   Filter-Knopf und der Umschalter oben) waren an dem Abend schon repariert — du
+>   hattest den Build von davor am Handy. Kein Problem, nur gut zu wissen: **Wenn du
+>   was schickst, sag dazu, wie alt der Build ist.**
+> - **Der 14. Bezirk ist NICHT kaputt.** Ich habe die amtlichen Bezirksgrenzen der
+>   Stadt Wien geladen und Punkt für Punkt nachgerechnet: Purkersdorf und Mauerbach
+>   liegen richtig draußen, die Abweichung ist 12 Meter. Er sah nur komisch aus, weil
+>   die Karte **viermal zu weit heraus** stand — genau dein „es ist noch zu viel auf
+>   dem Bildschirm". Das war ein echter Fehler und ist weg: Wien füllt jetzt die
+>   Karte.
+> - **Die Sprechblase ist zurück** (dein Wunsch): Tippst du einen Bezirk an, springen
+>   die Aktivitäten über dem Finger heraus. Steht dort „alle 4 ansehen", zieht ein
+>   Tipp darauf das Blatt ganz auf.
+>
+> **Eine Frage habe ich an dich, und du beantwortest sie am besten am Bild** (die
+> Bilder heißen `ac05-…` und `ac06-…` im Projektordner): Wenn in der Blase mehrere
+> Aktivitäten stehen und du auf **eine Zeile** tippst — soll dann die Aktivität
+> aufgehen (so ist es jetzt) oder das Blatt? Beides ist eine Zeile Arbeit.
+>
+> **Die Live-Seite zeigt das alles noch NICHT.** Sag Bescheid, wenn sie live soll.
 
 ---
 
 ## Zuerst: was ich von dir brauche, damit es weitergeht
 
-**1. Die App auf DEIN iPhone.** *(Seit dem 07.09. kommt ein Punkt dazu: wie sich das
-Glas unter einem Finger anfühlt — am Simulator sieht man es, anfassen kann man es dort
-nicht.)* Bis jetzt läuft sie auf einem simulierten iPhone am Mac.
-Das beantwortet „sieht sie richtig aus" — aber nicht „fühlt sie sich richtig an". Der
-Wischstapel, die Tastatur im Chat und der Jahrgangs-Balken sind **mit einem Mausklick
-nicht prüfbar**; dafür braucht es einen Finger. **Seit heute Abend kommt einer dazu:**
-ob ein Tipp auf die Apple-Karte wirklich den Bezirk auswählt, auf den du getippt hast.
-Den konnte ich am Simulator nicht prüfen — der lässt sich ohne eine Berechtigung, die nur
-du geben kannst, gar nicht antippen. Alles, was daran hängt, habe ich anders geprüft
-(die Umrechnung gegen sechs echte Wiener Orte, und die Auswahl samt Blase über einen
-gesetzten Filter). Es fehlt genau der letzte Zentimeter: dein Finger.
+**1. ✅ Erledigt — die App läuft auf deinem iPhone.** Seit dem 08.09. Was jetzt statt
+dessen ansteht: **noch einmal durchgehen.** Die Karte ist geändert, das Blatt geht bis
+nach unten, die Blase ist zurück. Schau dir an, ob es sich richtig anfühlt — vor allem:
+- das Blatt hoch- und runterziehen (rastet es sauber ein?),
+- einen Bezirk antippen (kommt die Blase da, wo dein Finger war?),
+- und ob die Leiste unten auf dem Blatt noch gut lesbar ist.
 
-Dazu muss dein Gerät einmal bei Apple angemeldet werden, und dafür brauche ich deinen
-**Apple-Login** — den ich nicht haben kann und nicht haben soll. Der Weg ist:
-
-```bash
-cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
-npx eas-cli build --profile development --platform ios
-```
-
-Das fragt dich nach deiner Apple-ID und führt dich durch die Geräte-Registrierung. Alles
-andere ist vorbereitet: Bundle-ID, `eas.json`, das EAS-Projekt und die Zertifikate legt
-EAS selbst an. **Sag mir Bescheid, wenn du dabei irgendwo hängst** — dann gehen wir es
-zusammen durch.
+Der Build auf deinem Handy ist **7 Tage gültig** — danach muss er neu drauf. Sag
+Bescheid, wenn du eine frische Fassung willst.
 
 **2. Schau dir die Symbole an.** Auf dem simulierten iPhone sehen sie aus wie im
 Browser. Ob sie auf einem echten Bildschirm zu blass sind, kannst nur du sagen — das ist

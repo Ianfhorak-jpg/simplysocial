@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { SsText } from './ui';
 
@@ -138,6 +139,35 @@ export function KartenBlase({
     </View>
   );
 
+  /**
+   * Das Aufpoppen — **Ians Entscheidung 60 (Phase 19g).** Seine Worte: *„Es ist ja
+   * jetzt eigentlich instant — vielleicht, dass es so rauspoppt, so eine leichte
+   * Transition, die man fast gar nicht merkt."*
+   *
+   * ── Warum der Ursprung an der SPITZE liegt ───────────────────────────────────
+   * `transformOrigin` sitzt dort, wo der Pfeil den Bezirk berührt. Skaliert die
+   * Blase um ihre Mitte, wandert die Spitze beim Wachsen über die Karte und zeigt
+   * einen Wimpernschlag lang auf den falschen Ort. So wächst sie aus dem
+   * angetippten Bezirk heraus — was Ian mit „rauspoppen" gemeint hat.
+   *
+   * `useNativeDriver` geht hier: Es sind Deckkraft und Skalierung, keine Maße. Und
+   * es ist KEIN Glas beteiligt (harte Regel 61) — die Blase ist eine helle Fläche
+   * mit Schatten und darf eingeblendet werden.
+   */
+  const auf = useRef(new Animated.Value(0)).current;
+  // Neu ansetzen, sobald sie auf einen anderen Bezirk zeigt: `key` am Aufrufer wäre
+  // die Alternative, aber dann verlöre die Blase bei jedem Zoom ihren Zustand.
+  const bezirkSchluessel = sichtbar.map((e) => e.post.id).join(',');
+  useEffect(() => {
+    auf.setValue(0);
+    Animated.spring(auf, {
+      toValue: 1,
+      useNativeDriver: true,
+      bounciness: 6,
+      speed: 20,
+    }).start();
+  }, [auf, bezirkSchluessel]);
+
   const spitze = (
     <View
       style={[nachOben ? styles.spitzeUnten : styles.spitzeOben, { marginLeft: spitzeLinks }]}
@@ -145,10 +175,16 @@ export function KartenBlase({
   );
 
   return (
-    <View
+    <Animated.View
       style={[
         styles.halter,
-        { left: links, width: breite },
+        {
+          left: links,
+          width: breite,
+          opacity: auf,
+          transform: [{ scale: auf.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
+          transformOrigin: [spitzeLinks + PFEIL, nachOben ? '100%' : 0, 0],
+        },
         // Nach oben: Unterkante = Anker. Nach unten: Oberkante = Anker. Beides ohne
         // die Höhe zu kennen — sie ergibt sich aus dem Inhalt, und eine gerechnete
         // Höhe wäre beim nächsten Textwechsel falsch.
@@ -156,7 +192,7 @@ export function KartenBlase({
       ]}>
       {nachOben ? koerper : spitze}
       {nachOben ? spitze : koerper}
-    </View>
+    </Animated.View>
   );
 }
 
