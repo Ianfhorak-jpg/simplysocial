@@ -4822,9 +4822,54 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-07 spätabends, SPÄTESTER Eintrag): die
-> App auf Ians iPhone installieren. Sie ist FERTIG GEBAUT und wartet nur darauf, dass
-> das Handy entsperrt ist.** Fünf Dinge, die eine frische Sitzung wissen muss:
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-08, SPÄTESTER Eintrag): Ian muss am
+> iPhone einmal den Entwickler bestätigen — die App ist INSTALLIERT.** Danach der
+> Durchgang aus `_FUER_IAN/HANDY_DURCHGANG.md`. Fünf Dinge, die eine frische Sitzung
+> wissen muss:
+>
+> 1. **Installiert ist sie** — `App installed: at.simplysocial.app`, Release-Build,
+>    48 MB, signiert (`Apple Development: ian.fhorak@gmail.com`, Personal Team, **7 Tage**).
+>    Sie startet noch nicht: `FBSOpenApplicationServiceErrorDomain error 1` →
+>    *„profile has not been explicitly trusted by the user"*. Das ist **kein Fehler sondern
+>    Apples Absicht** — das Vertrauen muss ein Mensch am Gerät geben:
+>    Einstellungen → Allgemein → VPN & Geräteverwaltung → das Profil antippen → vertrauen.
+>    Starten danach mit `xcrun devicectl device process launch --device <udid>
+>    at.simplysocial.app`.
+> 2. **Der Bauplatz darf NICHT in iCloud liegen — und das hat einen ganzen Build
+>    gekostet.** `C.C.Projekts_Ian` liegt auf dem Schreibtisch, den iCloud verwaltet;
+>    iCloud hängt an Framework-Ordner `com.apple.FinderInfo`, und `codesign` bricht dann
+>    ab mit *„resource fork, Finder information, or similar detritus not allowed"*.
+>    **Wegräumen hilft nicht** — gemessen: `xattr -c`, und nach fünf Sekunden ist das
+>    Attribut wieder da. Deshalb:
+>    ```
+>    D=~/Library/Developer/Xcode/DerivedData/SimplySocial-geraet
+>    xcodebuild -workspace <abs>/ios/SimplySocial.xcworkspace -scheme SimplySocial \
+>      -configuration Release -destination 'generic/platform=iOS' \
+>      -derivedDataPath "$D" -allowProvisioningUpdates
+>    xcrun devicectl device install app --device <udid> "$D"/Build/Products/Release-iphoneos/SimplySocial.app
+>    ```
+>    Die QUELLEN dürfen in iCloud bleiben: `rsync -a` kopiert auf macOS keine
+>    erweiterten Attribute — die Markierung entsteht am ZIELORT. **Der Fehler war
+>    hausgemacht:** Am Vortag lag der Bauplatz unter `/private/tmp` und lief durch; ich
+>    habe ihn in den Projektordner verlegt, damit die App die Sitzung überlebt, und
+>    genau diese „Verbesserung" hat ihn zerlegt.
+> 3. **iOS 26.6 und Xcode 26.5 passen zusammen — die Frage von gestern ist beantwortet.**
+>    `xcrun devicectl device info ddiServices --device <udid>` meldet `buildUpdate: 17F42`,
+>    `contentIsCompatible: true`, `isUsable: true`. Derselbe Aufruf ist **der beste
+>    Sperr-Test**: Das Disk-Image mountet nur bei offenem Display, ein Tunnel dagegen
+>    braucht nur Vertrauen — genau die Unterscheidung, an der die Fehldiagnose vom
+>    07.09. hing.
+> 4. **`grep "error:"` reicht nicht, um einen Build zu beurteilen.** Der codesign-Fehler
+>    stand als nackter Satz im Protokoll, gefolgt von `Command PhaseScriptExecution
+>    failed with a nonzero exit code` — **mitten drin**, und `xcodebuild` gab trotzdem
+>    EXIT 0 zurück. Der belastbare Test ist die ANWESENHEIT von `BUILD SUCCEEDED`.
+> 5. **Drei Zustände, die man nicht verwechseln darf**, alle drei an diesem Abend einzeln
+>    getroffen: *gepaart* (Kabel-Vertrauen) · *entsperrt* (Display offen, nötig fürs
+>    Disk-Image) · *Profil bestätigt* (nötig zum Starten). Jeder meldet sich mit einer
+>    anderen Meldung, und keine davon nennt ihren Grund.
+
+> 📎 **Stand 2026-09-07 spätabends (überholt, siehe den Eintrag darüber): die App auf
+> Ians iPhone installieren.** Fünf Dinge, die damals offen waren:
 >
 > 1. **Der Release-Build läuft und liegt fertig da** — `BUILD SUCCEEDED`, 48 MB,
 >    `main.jsbundle` (3 MB) eingebacken. Er liegt im Scratchpad der Sitzung und ist
@@ -4846,7 +4891,10 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 >    weil `Acquired tunnel connection to device` eine Zeile darüber stand. Ein Tunnel
 >    braucht VERTRAUEN, kein entsperrtes Display. **Vor dem nächsten Versuch: Auto-Sperre
 >    auf „Nie".** Eine Schleife im Sekundentakt gewinnt das Rennen nicht (30 Versuche,
->    kein Treffer). Ob 26.6 mit Xcode 26.5 wirklich läuft, ist damit **weiter offen**.
+>    kein Treffer). ✅ **Am 2026-09-08 beantwortet:** `devicectl device info ddiServices`
+>    meldet `buildUpdate: 17F42`, `contentIsCompatible: true`, `isUsable: true` — 26.6 und
+>    Xcode 26.5 passen zusammen, die Sperre war der einzige Grund. Derselbe Aufruf ist
+>    zugleich der beste Sperr-Test: Das Disk-Image mountet nur bei offenem Display.
 > 3. **Signatur und Team stehen** — `DEVELOPMENT_TEAM = 5TQTMP2L2H` und
 >    `CODE_SIGN_STYLE = Automatic` in beiden Konfigurationen der pbxproj, Zertifikat
 >    `Apple Development: ian.fhorak@gmail.com`, Personal Team (7 Tage). **`ios/` ist

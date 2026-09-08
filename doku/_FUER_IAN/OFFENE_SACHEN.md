@@ -3,7 +3,9 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 07.09.2026 (abends) — **deine Liste steht ganz oben, sortiert nach Aufwand.**
+> Stand: 08.09.2026 — **die App ist auf deinem iPhone installiert.** Es fehlt ein
+> einziger Handgriff, und er dauert eine Minute: Punkt 2 gleich hier unten.
+> Davor: 07.09.2026 (abends) — **deine Liste steht ganz oben, sortiert nach Aufwand.**
 > Neu an dem Abend: Das Liquid Glass ist gebaut (Punkt 2 hat dadurch eine Zeile mehr) —
 > **es kam keine neue Aufgabe für dich dazu.**
 > Davor: 06.09.2026 — **der Prototyp ist fertig, der Weg zur echten App ist geplant.**
@@ -25,7 +27,24 @@ Liegt seit dem 06.09. fertig da: `landing-vorschau/` — Olivgrün, Weinrot, Tü
 Offen ist **Farbe UND A oder B** (A: auch die sechs Kategoriefarben werden Abstufungen
 der Leitfarbe · B: nur die Marke, Kategorien bleiben bunt). Blockiert sonst still.
 
-### 2. Handy entsperrt hinlegen · **2 Minuten** 🟢
+### 2. Am iPhone den Entwickler bestätigen · **1 Minute** 🟢
+> ✅ **Am 08.09.2026 installiert — die App IST auf deinem iPhone.** Der Build lief
+> durch, das Aufspielen auch (`App installed: at.simplysocial.app`). Es fehlt genau
+> ein Handgriff, und den kann nur ein Mensch am Gerät machen:
+>
+> **Einstellungen → Allgemein → VPN & Geräteverwaltung → „Apple Development:
+> ian.fhorak@gmail.com" → vertrauen.**
+>
+> Vorher startet die App nicht — iOS sagt dann *„profile has not been explicitly
+> trusted by the user"*. Das ist Absicht von Apple: Eine App, die nicht aus dem App
+> Store kommt, soll nicht dadurch startfähig werden, dass jemand ein Kabel ansteckt.
+> Danach läuft sie **ohne Kabel und ohne Mac** — du kannst sie mitnehmen und herzeigen.
+> Sie gilt **7 Tage** (Personal Team), dann neu aufspielen.
+>
+> Danach: der Durchgang in `HANDY_DURCHGANG.md`, sechs Punkte.
+
+<details><summary>Was am 07.09. schiefging (erledigt, zum Nachlesen)</summary>
+
 > 🔄 **Am 07.09. abends fast geschafft — die App ist FERTIG GEBAUT.** Dein iPhone war
 > angesteckt, die Signatur stimmt, der Build lief durch (48 MB, alles eingebacken).
 > Gescheitert ist nur das Aufspielen, und zwar an der **Bildschirmsperre**: Ein iPhone
@@ -38,6 +57,8 @@ der Leitfarbe · B: nur die Marke, Kategorien bleiben bunt). Blockiert sonst sti
 > 3. Bescheid sagen. Der Rest läuft von allein, ca. 5 Minuten.
 >
 > Danach stell die Auto-Sperre ruhig wieder zurück.
+
+</details>
 
 Damit die App wirklich auf deinem Handy läuft. Du hast heute eine **gewöhnliche
 Apple-ID** — das reicht: Die App läuft dann 7 Tage und muss danach neu drauf. Sie läuft

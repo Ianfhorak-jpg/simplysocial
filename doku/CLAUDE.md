@@ -874,9 +874,16 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    Build:* ~~**19e-1**: Vollbild-Karte, ziehbares Blatt, Kopf weg, Posten als runder
    Knopf, Hinweis als Vollbild~~ · ~~**19e-2**: Liquid Glass an Tab-Leiste, Pille und
    Blattkopf~~ — der Baustein lag schon in `node_modules`, siehe oben.
-9d. **Aufs echte Gerät** ← *hier geht es weiter, und es ist das Einzige, was an Phase 19
-   noch offen ist* — `npx expo run:ios --device` auf Ians iPhone (gewöhnliche Apple-ID,
-   per Kabel, 7 Tage gültig). Offen sind: Wischstapel unter einem Finger, Tastatur im
+9d. **Aufs echte Gerät** — ✅ **die App IST seit dem 2026-09-08 auf Ians iPhone
+   installiert** (`at.simplysocial.app`, Release-Build, JavaScript eingebacken, läuft
+   ohne Kabel und ohne Mac, 7 Tage gültig). Gebaut wird **nicht** mit `expo run:ios`,
+   sondern mit `xcodebuild -destination 'generic/platform=iOS'` und
+   `-derivedDataPath ~/Library/Developer/Xcode/DerivedData/SimplySocial-geraet`
+   (**außerhalb von iCloud** — siehe Fallen-Liste), dann
+   `xcrun devicectl device install app`. ← *Hier geht es weiter:* Ian muss am Gerät
+   einmal den Entwickler bestätigen (Einstellungen → Allgemein → VPN &
+   Geräteverwaltung), danach der Durchgang aus `_FUER_IAN/HANDY_DURCHGANG.md`. Offen
+   sind: Wischstapel unter einem Finger, Tastatur im
    Chat, Jahrgangs-Balken mit zwei Fingern, Tipp auf die Apple-Karte, **ob sich Blatt
    und Karte auf iOS um dieselbe Berührung streiten** — und neu: wie sich das Glas unter
    einem Finger anfühlt und ob `isGlassEffectAPIAvailable()` auf seiner iOS-Fassung
@@ -1868,9 +1875,14 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   aufspielen. Der Release-Build hat sein JavaScript eingebacken, läuft also **ohne Kabel
   und ohne Mac** — genau das, was man jemandem in die Hand drückt. Ein Debug-Build holt
   sein JS live vom Metro-Server und ist dafür der schlechtere.
-  ⚠️ **Nicht bewiesen ist damit, ob iOS 26.6 mit Xcode 26.5 wirklich funktioniert** —
-  die Installation ist an der Sperre gescheitert, bevor es sich zeigen konnte. Wer es
-  wieder versucht: erst entsperren, dann urteilen.
+  ✅ **Am 2026-09-08 beantwortet: iOS 26.6 und Xcode 26.5 passen zusammen.** Das Gerät
+  sagt es selbst — `xcrun devicectl device info ddiServices` meldet `buildUpdate: 17F42`
+  (genau das Image von Xcode 26.5), dazu `contentIsCompatible: true` und `isUsable: true`.
+  Meine Vermutung von gestern ist damit nicht nur unbelegt, sondern **widerlegt**; die
+  Sperre war der einzige Grund. **Derselbe Aufruf ist der beste SPERR-TEST, den es gibt:**
+  Ein Tunnel braucht Vertrauen, das Disk-Image braucht ein offenes Display — mountet es,
+  ist das Handy offen. Das ist eine Messung an genau der Unterscheidung, an der ich mich
+  gestern verrannt habe.
 - **Eine WEB-Einstellung hat den iOS-Release-Build zerlegt — und im Debug fällt so etwas
   nie auf.** (2026-09-07, der teuerste Fund des Abends) `experiments.baseUrl:
   "/simplysocial"` in `app.json` ist der GitHub-Pages-Unterordner; ohne ihn bleibt die
@@ -1890,6 +1902,30 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   Minuten Build. Und die Deploy-Sicherung prüft jetzt das **Ergebnis**
   (`"/simplysocial/_expo/` in `dist/index.html`), nicht mehr nur die Absicht in
   `app.json`: Die Wahrheit steht seit diesem Tag in einer zweiten Datei.
+- **Der BAUPLATZ darf nicht in iCloud liegen — der Quellcode schon.** (2026-09-08, und
+  der Fehler war meiner) `C.C.Projekts_Ian` liegt auf dem Schreibtisch, und der wird von
+  iCloud verwaltet („Schreibtisch & Dokumente"). iCloud hängt an Ordner das Attribut
+  `com.apple.FinderInfo` — und `codesign` verweigert dann die Unterschrift:
+  `ExpoFileSystem.framework: resource fork, Finder information, or similar detritus not
+  allowed`. **Wegräumen hilft nicht, es kommt zurück:** `xattr -c` gefolgt von einer
+  Messung nach fünf Sekunden zeigt `com.apple.FinderInfo` und `com.apple.fileprovider.fpfs#P`
+  wieder da. Der Ausweg ist ein `-derivedDataPath` **außerhalb** von iCloud
+  (`~/Library/Developer/Xcode/DerivedData/…`); die Quellen dürfen bleiben, wo sie sind,
+  denn **`rsync -a` kopiert auf macOS keine erweiterten Attribute** — die Markierung am
+  gebauten Framework war nicht mitgekommen, sondern am Zielort neu entstanden.
+  **Wie ich hineingeraten bin, ist der lehrreiche Teil:** Am Vortag lief derselbe Build
+  durch, weil er im Sitzungs-Zwischenspeicher unter `/private/tmp` lag. Ich habe ihn
+  danach ausdrücklich in den Projektordner verlegt, *damit die fertige App die Sitzung
+  überlebt* — und genau diese Verbesserung war der Fehler. **Ein Ortswechsel ist eine
+  Änderung, auch wenn keine Zeile Code anders ist.**
+- **Ein gescheiterter Build hat nicht immer eine `error:`-Zeile.** (2026-09-08) Der
+  codesign-Fehler oben stand als nackter Satz im Protokoll, gefolgt von `Command
+  PhaseScriptExecution failed with a nonzero exit code` — **mitten drin**, 30 Zeilen vor
+  dem Ende, und `grep -cE "error:|BUILD FAILED"` zählte trotzdem nur 1 (das `BUILD
+  FAILED` selbst). Die gestrige Regel greift also zu kurz: Der belastbare Test ist
+  `grep -E "BUILD SUCCEEDED"` — **die Anwesenheit des Erfolgs, nicht die Abwesenheit von
+  Fehlern.** Wer den Grund sucht, greppt zusätzlich nach `failed with a nonzero exit
+  code` und liest die Zeilen DAVOR.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)
