@@ -44,13 +44,21 @@ gemacht (2026-09-08).** `at.simplysocial.app`, Release-Build, ohne Kabel und ohn
    und das Blatt streiten sich auf iOS *nicht* um dieselbe Berührung. Harte Regel 59
    (der Blattkörper bekommt gar keinen Erkenner) hat getragen, ohne dass jemand
    verhandeln musste.
-2. **Das Liquid Glass ist ECHT — und sieht trotzdem falsch aus.** Gemessen statt
+2. **Das Liquid Glass ist ECHT — und das Blatt ist DURCHSICHTIG.** Ians Screenshot
+   (`fehler-blatt-glas-393x852.png`, ausgemessen in PLAN.md 5b/19g) zeigt Achau,
+   Laxenburg und Baden **quer durch die Liste hindurch**. Der Fehler ist meiner:
+   19e-2 entschied *„das Blatt ist EIN Material"* mit dem Preis *„`regular` ist dick
+   genug, dass der Text steht"* — **belegt wurde das nur auf `glasErsatz`, also auf
+   einer deckenden Fläche, wo die Frage gar nicht entstehen kann.** Echtes Liquid
+   Glass ist viel durchlässiger. **Daraus folgt fast alles andere ohne weitere
+   Ursache:** Apple-Nennung, CC-BY-Zeile und der „Ganz Wien"-Knopf liegen HINTER dem
+   Blatt und scheinen durch — sie waren richtig platziert, solange es deckte. Gemessen statt
    vermutet: Ian hat geprüft, ob die Karte unter der Tab-Leiste durchscheint, und sie
    tut es; das Bundle trägt kein `UIDesignRequiresCompatibility`, gebaut ist gegen das
-   iOS-26.5-SDK. **Es ist eine Formfrage, zum zweiten Mal nach 19e-2** — und die Ursache
-   ist eine Kollision zweier eigener Entscheidungen aus derselben Nacht: Das Blatt weicht
-   der schwebenden Tab-Kapsel aus (Regel 62) und **endet dadurch mitten im Bild**. Bei
-   Apple Karten gibt es den Fall nicht, dort ist gar keine Tab-Leiste.
+   iOS-26.5-SDK. Dazu die zweite Kollision: Das Blatt weicht der schwebenden Tab-Kapsel
+   aus (Regel 62) und **endet dadurch mitten im Bild** — bei Apple Karten gibt es den
+   Fall nicht, dort ist gar keine Tab-Leiste. **Die Reihenfolge ist trotzdem: erst
+   lesbar, dann schön.**
 3. **Ians Entscheidung 50 steht über allem, was danach kommt** — als harte Regel 63:
    *Ein Bildschirm zeigt nur, was für die Entscheidung HIER nötig ist.* Sie nimmt weg,
    was dasteht, **und bremst, was noch nicht gebaut ist**. Die Grenze steht im zweiten

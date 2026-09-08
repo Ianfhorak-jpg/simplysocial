@@ -3612,6 +3612,73 @@ die Ursache ist eine **Kollision zweier eigener Entscheidungen aus derselben Nac
 > mitfährt statt zu schweben. **Das ist aber eine Formfrage, und Ian urteilt am Bild** —
 > gebaut wird sie als Vorschau, nicht als Tatsache.
 
+#### Ians Screenshot vom 2026-09-08, ausgemessen — EINE Ursache für fast alles
+
+*(iPhone 16, 393 × 852 pt. **Das Bild selbst liegt als `fehler-blatt-glas-393x852.png`
+im Projektordner** — Ian hat es gespeichert, weil der Chat danach gelöscht wurde. Wer
+hier arbeitet, sieht es sich an; die Zahlen unten sind daraus abgelesen.)*
+
+**Das Blatt ist DURCHSICHTIG, und das erklärt fast jede seiner Beschwerden auf einmal.**
+Auf dem Bild liest man **Achau, Himberg, Laxenburg, Gumpoldskirchen, Baden,
+Oberwaltersdorf** — allesamt südlich von Wien — **quer durch das Blatt hindurch**. Die
+Kartenbeschriftungen laufen durch die Liste.
+
+**Der Fehler ist meiner, und er hat einen Namen:** In 19e-2 steht als Punkt 3 die
+Entscheidung *„Das Blatt ist EIN Material"* — mit dem ausdrücklich angenommenen Preis
+*„Die Liste liegt auf mattiertem Glas; `regular` ist dick genug, dass der Text steht."*
+**Genau dieser Satz ist nie auf echtem Glas geprüft worden.** Belegt wurde er auf Web
+und auf `glasErsatz` — also auf einer deckenden hellen Fläche, wo die Frage gar nicht
+entstehen kann. Apples echtes Liquid Glass ist **erheblich durchlässiger** als der
+Ersatz. *(Zweite Fassung der 18d-Lehre: Eine Regel, die nichts vorfindet, sieht aus wie
+eine Regel, die tut — hier war es eine Prüfung, die das Falsche vorfand.)*
+
+**Daraus folgt der Rest ohne weitere Ursache:**
+- **Die Apple-Nennung („Maps · Legal", y ≈ 659 pt) und die CC-BY-Zeile (y ≈ 695 pt)
+  liegen INNERHALB des Blattes** (Oberkante y ≈ 510 pt) und scheinen hindurch. Sie waren
+  richtig platziert, solange das Blatt deckte. **Entscheidung 58 ist damit nicht nur ein
+  Wunsch, sondern eine Lizenzfrage:** Eine Nennung, die hinter Glas mit Text darüber
+  liegt, ist keine.
+- **Der „Ganz Wien"-Knopf (y ≈ 660–685 pt)** liegt ebenfalls hinter dem Blatt — er ist
+  nicht weg, er schimmert durch. Genau deshalb wirkt **Entscheidung 59** („bei
+  aufgezogenem Blatt verschwinden") richtig.
+- **„Unten abgeschnitten"**: Weil das Blatt durchsichtig ist, sieht man seine Unterkante
+  gar nicht — es hört einfach auf. Die Tab-Kapsel (y ≈ 792–836 pt) schwebt darunter, und
+  darunter läuft wieder Karte. Drei Materialien auf 60 pt.
+
+> **Was daraus für 19g folgt — und es ändert die Reihenfolge:** Die Formfrage
+> (Kapsel im Blatt oder darüber) ist **nachrangig**. Zuerst muss das Blatt LESBAR
+> werden. Zwei Stellschrauben, beide ohne neuen Baustein:
+> **(1)** `GLAS_STIL` von `regular` auf einen dichteren Wert, bzw. eine deckende
+> Trägerfläche UNTER der Liste und Glas nur am Kopf — das nimmt Punkt 3 aus 19e-2
+> zurück, und zwar begründet: *Ein Material, durch das man den Untergrund liest, ist
+> für eine Textliste das falsche.*
+> **(2)** Apple selbst macht es so: In Karten ist das Blatt **oben Glas und unten
+> deckend**, sobald Inhalt kommt. Die Naht, die ich in 19e-2 als Fehler beschrieben
+> habe, ist bei Apple keine — sie liegt dort nur an einer anderen Stelle.
+> **Das ist der Punkt, an dem Ian am Bild urteilt.** Als Vorschau bauen, nicht als
+> Tatsache.
+
+**Zwei handfeste Layout-Fehler, am Bild nachgemessen, unabhängig vom Glas:**
+- 🐞 **Der Filter-Knopf liegt AUF der Suchzeile.** Schwarzer Knopf x ≈ 268–377 pt,
+  y ≈ 538–576 pt; die Suchzeile beginnt bei y ≈ 558 pt. Der Platzhalter bricht als
+  „Suchen — Tennis, lernen, k…" ab, und **darunter steht das eigentliche Eingabefeld als
+  leerer weißer Balken** (y ≈ 565–578 pt). Auf 390 × 844 im Browser fällt das nicht auf —
+  ein weiterer Fall von „zwei Stilwerte, die einzeln stimmen".
+- 🐞 **Der 14. Bezirk greift über die Stadtgrenze.** Im Westen deckt die Fläche
+  Purkersdorf und Mauerbach mit ab, also Niederösterreich. Das ist Ians *„beim
+  Vierzehnten sieht's ganz komisch aus"*. Verdacht: die Vereinfachung aus 19b
+  (118.683 → 886 Punkte) hat an einer langen, dünnen Ausbuchtung zu grob gerundet.
+  **Gegen die amtlichen Daten nachrechnen, nicht nach Augenmaß korrigieren** —
+  `scripts/bezirke-bauen.py` liegt vor, und `data/wien-bezirke.ts` ist erzeugt
+  (harte Regel 48: nicht von Hand ändern).
+
+**Und ein dritter Befund, den Ian nicht genannt hat:** Die Karte öffnet auf dem Gerät
+mit **Stockerau, Korneuburg, Schwechat und Baden** im Bild — Wien füllt vielleicht 40 %
+der Höhe. In 19e-2 wurde das als „kein Fehler" abgehakt (`KARTE_MIN_BAND = 0.5` lässt
+die Karte absichtlich hinter das Blatt laufen). **Das war für den Web-Prototyp richtig
+und ist am Gerät trotzdem zu viel** — und es passt zu seinem Satz *„es ist noch zu viel
+auf dem Bildschirm"*. Gehört mit in 19g.
+
 **Entscheidung 57 — die Blase kommt zurück.** Ian: *„Wenn man auf einen Bezirk klickt,
 sollten über dem Finger die verschiedenen Posts kommen. Und wenn's mehrere sind, kann
 man draufklicken — dann kommt das Blatt und man kann sich's genau anschauen."*
