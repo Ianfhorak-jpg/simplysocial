@@ -22,6 +22,20 @@
 Du hast an dem Abend zehn Design-Entscheidungen getroffen (Phase 19e steht fertig im
 Plan). Was jetzt noch von DIR kommen muss — sortiert nach Aufwand, nicht nach Wichtigkeit:
 
+### 0. Bedienungshilfen für den Simulator freigeben · **1 Minute** 🟢 ← *neu am 09.09.*
+
+**Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen** — und dort das
+Terminal (bzw. Claude Code) einschalten.
+
+**Was du davon hast:** Ich kann das simulierte iPhone dann selbst antippen. Heute geht
+das nicht (macOS meldet Fehler −25211), und ich muss alles Anklickbare im Browser
+prüfen und am Simulator nur das ansehen, was ohne Berühren zu sehen ist. Bei allem,
+was mit **Glas, Gesten oder der Apple-Karte** zu tun hat, ist das der Unterschied
+zwischen „belegt" und „vermutlich".
+
+**Was es dich kostet:** nichts außer dem Häkchen. Es betrifft nur deinen eigenen Mac
+und nur, solange du mit mir arbeitest.
+
 ### 1. Die Farbe der Landing-Page · **2 Minuten** 🟢
 Liegt seit dem 06.09. fertig da: `landing-vorschau/` — Olivgrün, Weinrot, Türkis.
 Offen ist **Farbe UND A oder B** (A: auch die sechs Kategoriefarben werden Abstufungen
