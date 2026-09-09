@@ -35,6 +35,25 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+🔴 **OFFENER AUFTRAG (2026-09-09 nachts): Phase 19i — „Der Bezirk als Vollbild, und
+das Glas überall".** Ian hat die 19h-Fassung auf seinem iPhone benutzt, fünf Punkte
+genannt und dann **gecleart**. Der Auftrag steht vollständig in **PLAN.md, Abschnitt
+5b, Phase 19i** (Entscheidungen 65–68) und in `_FUER_IAN/NACH_DEM_CLEAR.md`. Kurz:
+1. **Das Blatt auf der Karte fällt weg** — ein Tipp auf einen Bezirk führt direkt auf
+   ein **Vollbild mit dem Stapel** dieses Bezirks (Entscheidung 65).
+2. **Auf diesem Fenster ist nichts außer Karten und der Bar unten** — Kategorien,
+   Suche, Filter, Posten und der Umschalter sind dort weg. **Nur dort**, der
+   Startbildschirm behält alles (Entscheidung 66).
+3. **Die vier Tab-Icons sitzen zu weit oben** — mein Fehler aus 19h-1, `tabBarShowLabel:
+   false` lässt den Label-Platz stehen (Entscheidung 67).
+4. **Liquid Glass überall**, und **das jetzige ist ihm immer noch keines** — dritte
+   Runde. **Zuerst ein Vorbild anfordern**, dann messen; zweimal lag es an Form und
+   Untergrund, nicht am Effekt (Entscheidung 68).
+⚠️ **Sein Handy bleibt nicht angesteckt** — alles ohne neuen Baustein machbar, geprüft
+wird am Simulator; auf sein Gerät kommt es beim nächsten Anstecken.
+❗ **Die zwei Auslegungsfragen sind VOR dem Clear beantwortet** (Blatt, nicht Blase ·
+nur dieses Fenster) — nicht noch einmal fragen.
+
 ✅ **Phase 19h-1 ist fertig (2026-09-08): Nähe statt Filter — und wieder ohne neuen
 Build.** Drei neue Entscheidungen von Ian (62, 63, 64), Belege `ad01`–`ad10`. Fünf Dinge
 sind wichtiger als der gestrichene Filter:

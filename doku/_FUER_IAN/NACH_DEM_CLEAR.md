@@ -1,5 +1,38 @@
 # Was du nach dem Clear schreiben sollst
 
+## 🔴 STAND 09.09.2026, NACHTS — DAS IST DER AKTUELLE AUFTRAG
+
+> **Du hast am 08./09.09. nachts fünf Sachen aufgezählt, und ich habe sie NICHT mehr
+> gebaut — du wolltest vorher clearen. Alles steht in `PLAN.md`, Abschnitt 5b, als
+> „Phase 19i". Wenn du nach dem Clear nur einen Satz schreiben willst:**
+>
+> ### 👉 „Mach Phase 19i aus PLAN.md."
+>
+> **Das reicht.** Damit nichts verlorengeht, hier trotzdem deine fünf Punkte im
+> Wortlaut, wie du sie gesagt hast:
+>
+> 1. **Das Blatt auf der Karte fällt weg.** Statt hochzuziehen: Tippst du einen
+>    Bezirk an, kommst du **direkt auf ein Vollbild mit dem Stapel** für diesen
+>    Bezirk. *(Von dir bestätigt: es geht um das weiße Panel, nicht um die Blase und
+>    nicht um die Leiste unten.)*
+> 2. **Auf diesem neuen Fenster ist NICHTS außer den Karteikarten und der Bar
+>    unten.** Kategorien („Sport und so") weg, Suchleiste weg, Filter weg, Posten
+>    weg, die drei Icons (Stapel · Liste · Karte) weg. *(Von dir bestätigt: nur auf
+>    diesem Fenster — der Startbildschirm behält alles.)*
+> 3. **Die vier Icons unten in der Bar sitzen zu weit oben**, sie gehören mittig.
+>    *(Das ist ein Fehler, den ich am 08.09. selbst hineingebaut habe, als die
+>    Wörter weggefallen sind.)*
+> 4. **Liquid Glass soll ÜBERALL sein**, nicht nur auf der Kartenansicht.
+> 5. **Das, was da ist, ist immer noch kein richtiges Liquid Glass.**
+>
+> ⚠️ **Und: Dein Handy bleibt nicht angesteckt.** Alles davon geht ohne neuen
+> Baustein, ich baue und prüfe es am Simulator. **Aber auf DEIN Handy kommt es erst,
+> wenn du es wieder ansteckst** — die App dort hat ihren Stand eingebacken. Im
+> Browser (`https://ianfhorak-jpg.github.io/simplysocial/`) siehst du alles außer
+> dem Glas; das gibt es nur auf iOS.
+
+---
+
 > Diese Datei steht hier, weil der Chat nach dem `/clear` weg ist — der Text darin
 > also auch. Hier findest du ihn wieder.
 >

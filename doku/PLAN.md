@@ -4134,6 +4134,104 @@ unberührt und braucht weiter einen neuen Build.**
 
 ---
 
+### Phase 19i — Der Bezirk als Vollbild, und das Glas überall ⬜ *(ohne neuen Build)*
+
+**Ians fünf Punkte vom 09.09.2026 nachts**, nachdem die 19h-Fassung auf seinem iPhone
+lief. Zwei Auslegungsfragen waren dabei offen und sind **vor dem Clear von ihm
+beantwortet** — sie stehen unten bei den Entscheidungen, nicht als Vermutung.
+
+⚠️ **Sein Handy bleibt NICHT angesteckt.** Alle fünf Punkte gehen ohne neuen
+Native-Baustein (`expo-glass-effect` liegt seit 19e-2 im Binary) — gebaut und geprüft
+wird am **Simulator** (iOS 26.5, dort ist echtes Liquid Glass belegt, siehe 19e-2).
+**Auf sein Gerät kommt es erst beim nächsten Anstecken**, weil der Release-Build sein
+JavaScript eingebacken hat.
+
+---
+
+**Entscheidung 65 — das Blatt auf der Karte fällt weg; ein Bezirk ist ein VOLLBILD.**
+*„Die Leiste ist okay, aber würde sie ehrlich gesagt weglassen und es so machen, dass
+man direkt, wenn man auf einen Bezirk draufklickt, auf ein Fenster kommt, auf den
+Stapel."* **Rückgefragt und bestätigt: gemeint ist das weiße Panel (`SsBlatt`)**, nicht
+die Blase und nicht die Tab-Kapsel.
+
+Das ist die vierte Fassung dieses Screens (19e-1 Vollbild+Blatt · 19c Blase · 19g Blatt
+bis zur Unterkante · jetzt). **Was daran zu bedenken ist, bevor jemand anfängt:**
+
+- **Die Blase bleibt** — sie ist Entscheidung 57 und er hat sie ausdrücklich nicht
+  genannt. Der Weg ist damit: Bezirk antippen → Blase; von dort in einen Post ODER
+  über die Fußzeile („alle 4 ansehen") ins neue Vollbild. **Die 19g-Frage, ob eine
+  ZEILE das Blatt öffnet, erledigt sich damit nicht — sie wird zur Frage, ob eine
+  Zeile das Vollbild öffnet.** Weiter offen, weiter am Bild zu entscheiden.
+- **Wo die Filter im Blatt lagen, ist jetzt nichts.** Entscheidung 42 („die Filter
+  leben IM Blatt, damit die Karte frei von Bedienelementen bleibt") verliert ihren
+  Ort. Der Kartenscreen hat danach oben den Umschalter und sonst Karte — was aus
+  Suche und Kategorien auf der KARTE wird, ist die eine offene Frage dieser Phase.
+  *Vorschlag, nicht entschieden:* Sie fallen dort weg; die Karte beantwortet „wo ist
+  was los" ohnehin räumlich, und Regel 63 verlangt eine Begründung für alles, was
+  im Weg steht. Der Startbildschirm behält sie (Entscheidung 66).
+- **`SsBlatt` NICHT löschen** — harte Regel 51, dieselbe Lehre wie bei der Blase:
+  Sie war elf Tage aus der Anzeige und kam mit EINEM Aufruf zurück. Der Baustein
+  bleibt stehen, auch wenn ihn niemand mehr ruft.
+- **`useTabRand()` und harte Regel 62 gelten weiter** — das Vollbild ist ein Screen
+  wie jeder andere: Was scrollt, scrollt unter die Kapsel; was fest steht, weicht ihr
+  aus. Der Wischstapel hat absolut positionierte Kinder, also `marginBottom`.
+
+**Entscheidung 66 — auf diesem Fenster ist nichts außer Karten und der Bar unten.**
+*„Sport und so weg, Suchleiste und Filter weg, Posten weg und drei Icons auch weg —
+also man sollte nur das unten sehen können."* **Rückgefragt und bestätigt: NUR auf
+diesem Fenster.** Der Startbildschirm behält Suche, Kategorien, Filter, Posten und den
+Umschalter.
+
+Das ist harte Regel 63 in Reinform — *ein Bildschirm zeigt nur, was für die
+Entscheidung HIER nötig ist.* Man ist hier, weil man einen Bezirk gewählt hat; die
+Entscheidung lautet „hingehen oder nicht". **Zwei Dinge, die dabei nicht untergehen
+dürfen:**
+- **Man muss wieder herauskommen.** Ein Vollbild ohne Zurück ist eine Sackgasse —
+  `SsBack` (44 × 44, Entscheidung 52) oder ein Wisch. Das ist der zweite Halbsatz von
+  Entscheidung 50 und keine Verhandlungssache.
+- **Man muss sehen, WELCHER Bezirk.** Sonst sind es dieselben Karten wie am Start,
+  nur ohne Bedienung. Eine Zeile („1100 Wien · 3 Posts") ist keine Verletzung von
+  Entscheidung 66 — sie ist die Antwort auf „wo bin ich hier".
+
+**Entscheidung 67 — die vier Icons in der Tab-Kapsel sitzen zu weit oben.** *„Unten
+bei der Bar sind die vier Icons nicht mittig, sondern zu weit oben."* **Das ist ein
+Fehler aus Phase 19h-1**, hineingekommen mit `tabBarShowLabel: false`: Der
+Label-Platz wird weiter gerechnet, das Symbol sitzt in der oberen Hälfte. Zu
+beheben in `(tabs)/_layout.tsx` (`tabBarItemStyle` / `tabBarIconStyle`) — **und
+nachzumessen, nicht anzuschauen:** Mitte des Icons gegen Mitte der 56-pt-Kapsel, auf
+360 × 600 und 390 × 844.
+
+**Entscheidung 68 — Liquid Glass überall, und das jetzige ist noch keines.** *„Liquid
+Glass soll nicht nur bei der Kartenansicht sein, sondern überall — und wie gesagt, das
+du da hast, ist immer noch kein richtiges Liquid Glass."*
+
+**Das ist die dritte Runde an derselben Sache** (19e-2 erste Fassung → Form geändert;
+19g → Blatt bis zur Unterkante), und die ersten beiden Male lag es NICHT am Effekt,
+sondern an Form und Untergrund. **Deshalb zuerst messen, dann ändern:**
+
+1. **Ein Vorbild anfordern, bevor irgendetwas angefasst wird.** Bei Entscheidung 41
+   und 43 war der Screenshot die Entscheidung — `vorbild-liquid-glass-bierbuddy.png`
+   liegt im Projekt und hat zwei Runden lang die Fragen beantwortet, die keine
+   Beschreibung beantworten konnte. **Ohne ein Bild von dem, was er „richtig" nennt,
+   ist das Raten.**
+2. **Prüfen, was der Simulator wirklich zeichnet.** `isGlassEffectAPIAvailable()` UND
+   `isLiquidGlassAvailable()` (harte Regel 61), und ob `GLAS_STIL` = `regular` oder
+   `clear` das ist, was er meint — `clear` ist deutlich durchlässiger und näher an
+   Apples eigenen schwebenden Elementen.
+3. **Die bekannten Abschalter durchgehen:** `opacity` unter 1 an der Fläche oder an
+   einem Elternteil schaltet den Effekt ab (harte Regel 61); ein `tintColor` macht
+   ihn milchig; und **echtes Glas braucht bewegten, kontrastreichen Inhalt
+   dahinter** — auf einer weißen Fläche sieht selbst richtiges Liquid Glass nach
+   nichts aus. Das ist der wahrscheinlichste Grund, warum es „überall" gefordert wird
+   und dort erst recht nicht wirken wird: **Auf den meisten Screens liegt Papierweiß
+   dahinter.**
+4. **„Überall" ist deshalb eine Frage, kein Auftrag mit klarem Ziel.** Was genau soll
+   Glas werden — Karten (`SsCard`), die Kopfzeilen, die Chips, die Antwort-Leiste?
+   Erst Punkt 1 und 3 klären, dann ihm Möglichkeiten am Bild zeigen. **Nicht die ganze
+   App verglasen und hoffen.**
+
+---
+
 ### Phase 20 — Das Backend: Supabase · **20.1 ✅ · 20.2 ✅ (2026-09-06)** · 20.3–20.8 ⬜
 
 **Ians Entscheidung vom 2026-09-06.** Der Punkt stand seit dem 2026-08-31 in Abschnitt 8
@@ -5490,8 +5588,35 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-08 nachts, SPÄTESTER Eintrag):
-> Phase 19h-2 — „der Standort", ODER Phase 20.3 — „Anmelden".** ✅ **19h-1 ist
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-09 nachts, SPÄTESTER Eintrag):
+> Phase 19i — „Der Bezirk als Vollbild, und das Glas überall".** Ians fünf Punkte,
+> nachdem 19h-1 auf seinem iPhone lief; **er hat danach gecleart, der Auftrag steht
+> vollständig in Abschnitt 5b unter Phase 19i.** Sechs Dinge, die eine frische
+> Sitzung zuerst wissen muss:
+>
+> - **Die zwei Auslegungsfragen sind schon beantwortet** — vor dem Clear gefragt: Es
+>   geht um das **Blatt** (`SsBlatt`), nicht um Blase oder Tab-Kapsel; und „nur die
+>   Bar unten" gilt **nur auf dem neuen Bezirks-Vollbild**, nicht am Startbildschirm.
+>   **Nicht noch einmal fragen, das ist erledigt.**
+> - **Sein Handy bleibt nicht angesteckt.** Alles geht ohne neuen Baustein, gebaut und
+>   geprüft wird am Simulator (iOS 26.5). Auf sein Gerät kommt es beim nächsten
+>   Anstecken — der Release-Build hat sein JS eingebacken.
+> - **Beim Glas zuerst ein VORBILD anfordern, bevor irgendetwas angefasst wird.**
+>   Zweimal lag es an Form und Untergrund, nicht am Effekt; beide Male hat erst ein
+>   Screenshot die Frage entschieden. Und der wahrscheinlichste Grund, warum es
+>   „überall" nicht wirken wird, steht schon im Plan: **Glas braucht bewegten Inhalt
+>   dahinter, und auf den meisten Screens liegt Papierweiß.**
+> - **Die zu weit oben sitzenden Tab-Icons sind mein eigener Fehler aus 19h-1**
+>   (`tabBarShowLabel: false` lässt den Label-Platz stehen). Nachmessen, nicht
+>   anschauen.
+> - **`SsBlatt` nicht löschen**, auch wenn es niemand mehr ruft — harte Regel 51.
+> - **Danach offen wie bisher:** 19h-2 (`expo-location`, braucht einen Build) oder
+>   gleich Phase 20.3 (Anmelden). **Weil dann ein Build ansteht: Bauplatz außerhalb
+>   von iCloud** (`-derivedDataPath ~/Library/Developer/Xcode/DerivedData/SimplySocial-geraet`).
+>
+> ---
+>
+> 📎 **Stand davor (erledigt): Phase 19h-1 — „Nähe statt Filter".** ✅ **19h-1 ist
 > gebaut** (Entscheidungen 62, 63, 64 — ohne neuen Build; Belege `ad01`–`ad10`,
 > Einzelheiten in Abschnitt 5b unter „Was beim Bauen von 19h-1 herauskam"). Fünf
 > Dinge, die eine frische Sitzung zuerst wissen muss:
