@@ -1,0 +1,1 @@
+html,body,#root{height:100%}@supports (height:100dvh){html,body,#root{height:100dvh}}html.ss-hoehe-echt,html.ss-hoehe-echt body,html.ss-hoehe-echt #root{height:var(--ss-hoehe)}
