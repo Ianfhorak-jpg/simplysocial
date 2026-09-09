@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   FlatList,
   Pressable,
@@ -15,7 +15,7 @@ import { KartenBlase } from '@/components/KartenBlase';
 import { PostCard } from '@/components/PostCard';
 import { WischStapel, anleitungGesehen, anleitungMerken } from '@/components/WischStapel';
 import {
-  SsBlatt,
+  SsBack,
   SsButton,
   SsChip,
   SsGlas,
@@ -27,17 +27,15 @@ import {
   SsKarte,
   SsSegment,
   SsText,
-  type BlattStufe,
 } from '@/components/ui';
 import { FILTER_EGAL, jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
 import { useCurrentUser } from '@/features/social/hooks';
 import {
   BEZIRK_ALLE,
-  BEZIRK_OHNE,
   WANN_LABELS,
   WANN_ORDER,
 } from '@/features/posts/filter';
-import { bezirkPostText, ohneBezirkText } from '@/features/posts/karte';
+import { bezirkPostText } from '@/features/posts/karte';
 import {
   FILTER_LEER,
   aktiveFilter,
@@ -130,16 +128,48 @@ import { accent, CATEGORY_ORDER, categoryColors, colors, DEPTH, radius, spacing 
 type Ansicht = 'stapel' | 'liste' | 'karte';
 
 /**
- * Wie weit das Blatt aufschlägt, wenn man die Karte öffnet.
+ * Wo bin ich hier? — die eine Zeile, die auf dem Bezirks-Vollbild stehen bleibt.
  *
- * `halb` und nicht `zu`: Ians Entscheidung 45 — ein zugezogenes Blatt versteckt die
- * Filter, und die wollte er ausdrücklich sehen. `ganz` wäre das Gegenteil des
- * Wunsches, die Karte zu sehen.
+ * Ians Entscheidung 66 nimmt von diesem Fenster alles weg außer den Karten und der
+ * Leiste unten. **Diese Zeile ist keine Ausnahme davon, sondern ihre Anwendung:**
+ * Man ist dort, weil man einen Bezirk gewählt hat; ohne den Namen wären es dieselben
+ * Karten wie am Start, nur ohne Bedienung. Sie beantwortet genau die Frage, die der
+ * Bildschirm sonst offenließe.
+ *
+ * Bis Phase 19i stand derselbe Text im Blattkopf. Er ist mitgewandert und nicht neu
+ * erfunden — dieselbe Rechnung, damit Blase, Karte und Vollbild nie verschiedene
+ * Zahlen zeigen.
  */
-const BLATT_START: BlattStufe = 'halb';
+function bezirkUeberschrift(bezirk: FeedFilter['bezirk'], anzahl: number): string {
+  if (bezirk.kind === 'einer') return `${bezirk.plz} Wien · ${bezirkPostText(anzahl)}`;
+  if (bezirk.kind === 'ohne') return `Ohne Bezirk · ${bezirkPostText(anzahl)}`;
+  return `Ganz Wien · ${bezirkPostText(anzahl)}`;
+}
 
 export default function FeedScreen() {
-  const [ansicht, setAnsicht] = useState<Ansicht>('stapel');
+  const [ansicht, setAnsichtRoh] = useState<Ansicht>('stapel');
+
+  /**
+   * Steht gerade das Bezirks-Vollbild da? — **Ians Entscheidung 65** (Phase 19i).
+   *
+   * ── Warum ein Zustand und keine eigene Route ─────────────────────────────────
+   * `/bezirk/[plz]` wäre der erste Gedanke und bricht harte Regel 50: *Was auf der
+   * Karte gewählt ist, IST der Bezirksfilter — es gibt keinen zweiten Zustand
+   * daneben.* Eine Route trüge die Auswahl in der Adresse, und damit gäbe es sie
+   * zweimal. Hier steht sie weiter genau einmal, in `filter.bezirk`; diese Variable
+   * sagt nur, ob das Fenster offen ist, so wie `ansicht` sagt, welche Ansicht dran
+   * ist. (Nebenbei erspart es `generateStaticParams`, harte Regel 11.)
+   *
+   * ── Warum es beim Ansichtswechsel zufällt ────────────────────────────────────
+   * Sonst käme man aus der Liste zurück auf „Karte" und stünde ohne Vorwarnung in
+   * einem Vollbild ohne Karte. Der Bezirksfilter selbst überlebt den Wechsel
+   * weiter — das ist der Teil, den Regel 50 verlangt.
+   */
+  const [bezirkStapel, setBezirkStapel] = useState(false);
+  const setAnsicht = (a: Ansicht) => {
+    setBezirkStapel(false);
+    setAnsichtRoh(a);
+  };
 
   // Seit Phase 15 EIN Objekt statt sechs Einzelwerte. Der Nebeneffekt ist der
   // eigentliche Grund: `useState` gibt dasselbe Objekt zurück, solange niemand es
@@ -374,6 +404,121 @@ export default function FeedScreen() {
     </>
   );
 
+  /**
+   * Der Wischstapel — **einmal gebaut, an zwei Stellen eingehängt** (Phase 19i).
+   *
+   * Am Start steht er unter Umschalter, Suche und Kategorien; im Bezirks-Vollbild
+   * steht er allein. Es sind dieselben Karten aus derselben Quelle: `useStapel`
+   * filtert schon nach `filter.bezirk`, den die Karte gesetzt hat (harte Regel 50),
+   * also muss hier nichts ein zweites Mal gefiltert werden. **Eine zweite Kopie
+   * wäre der schnellste Weg dahin, dass das Vollbild eines Tages andere Karten
+   * zeigt als der Start** — dieselbe Überlegung wie bei `useStapel` selbst
+   * (harte Regel 16).
+   *
+   * `anleitung` bekommt nur der Start: Die Anleitungskarte erklärt das Wischen beim
+   * allerersten Öffnen der App. Im Bezirks-Vollbild ist man schon dreimal
+   * abgebogen — dort wäre sie eine Karte, die im Weg steht (harte Regel 63).
+   */
+  const stapelBaum = (mitAnleitung: boolean) => (
+    <WischStapel
+      eintraege={karten}
+      anleitung={mitAnleitung && anleitung}
+      onAnleitungWeg={() => {
+        anleitungMerken();
+        setAnleitung(false);
+      }}
+      onWeg={gewischt}
+      onAntippen={(e) => router.push({ pathname: '/post/[id]', params: { id: e.post.id } })}
+      fussnote={
+        rueckgaengig ? (
+          <Rueckgaengig
+            eintrag={rueckgaengig}
+            onZurueck={() => {
+              wischRueckgaengig(rueckgaengig.post.id);
+              fristBeenden();
+            }}
+          />
+        ) : undefined
+      }
+      blatt={mitAnleitung ? filterFeld : undefined}
+    />
+  );
+
+  const antwortLeiste = antwortAuf ? (
+    <AntwortLeiste
+      eintrag={antwortAuf}
+      onAbbrechen={() => setAntwortAuf(null)}
+      onSenden={anfrageAbschicken}
+    />
+  ) : null;
+
+  /**
+   * ── Das Bezirks-Vollbild — Ians Entscheidungen 65 und 66 (Phase 19i) ─────────
+   *
+   * *„Würde die Leiste weglassen und es so machen, dass man direkt, wenn man auf
+   * einen Bezirk draufklickt, auf ein Fenster kommt, auf den Stapel."* — und
+   * dazu: *„Sport und so weg, Suchleiste und Filter weg, Posten weg und drei Icons
+   * auch weg — also man sollte nur das unten sehen können."* (Rückgefragt und
+   * bestätigt: **nur auf diesem Fenster**; der Startbildschirm behält alles.)
+   *
+   * Das ist harte Regel 63 in Reinform: Man ist hier, weil man einen Bezirk gewählt
+   * hat, und die Entscheidung lautet „hingehen oder nicht". Suche, Kategorien und
+   * Filter beantworten eine andere Frage — die hat man eine Ebene höher schon
+   * beantwortet.
+   *
+   * **Zwei Dinge stehen trotzdem da, und beide stehen im zweiten Halbsatz von
+   * Entscheidung 50** (*„wenn die Person etwas wissen will, dann soll's auch einfach
+   * für sie sein"*):
+   *   • **Der Zurück-Pfeil.** Ein Vollbild ohne Rückweg ist eine Sackgasse. 44 × 44
+   *     wie überall (Entscheidung 52) — und mit eigenem `onPress`, weil „zurück"
+   *     hier kein Screen-Wechsel ist, sondern das Schließen dieses Zustands.
+   *   • **Die Zeile „1100 Wien · 3 Posts."** Ohne sie sind es dieselben Karten wie
+   *     am Start, nur ohne Bedienung — siehe `bezirkUeberschrift()`.
+   *
+   * `SsScreen tabScreen` bringt den Rest mit, und zwar denselben wie auf jedem
+   * anderen Screen: SafeArea oben, und unten den Abstand zur schwebenden Tab-Kapsel
+   * (harte Regel 62 — *was fest steht, weicht ihr aus*; der Stapel hat absolut
+   * positionierte Kinder, deshalb ist es dort ein `marginBottom`).
+   */
+  if (ansicht === 'karte' && bezirkStapel) {
+    return (
+      <SsScreen tabScreen keyboard contentStyle={styles.seite}>
+        <View style={styles.bezirkKopf}>
+          <SsBack label="Zurück zur Karte" onPress={() => setBezirkStapel(false)} />
+          <SsText variant="label" numberOfLines={1} style={styles.bezirkTitel}>
+            {bezirkUeberschrift(filter.bezirk, eintraege.length)}
+          </SsText>
+        </View>
+
+        <View style={styles.stapelBereich}>
+          {karten.length > 0 ? (
+            stapelBaum(false)
+          ) : (
+            // Kein `StapelDurch`: Das ist eine ÜBERSCHRIFT über einer Liste und
+            // verspricht sie im Text (harte Regel 41) — hier steht keine darunter.
+            // Der Ausweg ist deshalb der Rückweg zur Karte, nicht ein Filter.
+            <View style={styles.leer}>
+              <SsText variant="heading">Hier ist alles durch</SsText>
+              <SsText variant="caption" color={colors.inkSoft} style={styles.bezirkLeerText}>
+                In diesem Bezirk hast du dir alles angesehen. Auf der Karte ist
+                vielleicht nebenan noch etwas los.
+              </SsText>
+              <SsButton
+                label="Zurück zur Karte"
+                icon="karte"
+                variant="ghost"
+                onPress={() => setBezirkStapel(false)}
+                style={styles.leerKnopf}
+              />
+            </View>
+          )}
+        </View>
+
+        {antwortLeiste}
+      </SsScreen>
+    );
+  }
+
   // ── Die Kartenansicht: ein eigener Baum (Phase 19e) ─────────────────────────
   if (ansicht === 'karte') {
     return (
@@ -385,11 +530,8 @@ export default function FeedScreen() {
         eintraege={eintraege}
         filterAktiv={filterAktiv}
         zuruecksetzen={zuruecksetzen}
-        filterOffen={filterOffen}
-        filterFeld={filterFeld}
-        sucheZeile={sucheZeile}
-        chipZeile={chipZeile}
         ansichtZeile={ansichtZeile}
+        oeffneBezirk={() => setBezirkStapel(true)}
       />
     );
   }
@@ -433,41 +575,10 @@ export default function FeedScreen() {
           <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
         </>
       ) : (
-        <View style={styles.stapelBereich}>
-          <WischStapel
-            eintraege={karten}
-            anleitung={anleitung}
-            onAnleitungWeg={() => {
-              anleitungMerken();
-              setAnleitung(false);
-            }}
-            onWeg={gewischt}
-            onAntippen={(e) =>
-              router.push({ pathname: '/post/[id]', params: { id: e.post.id } })
-            }
-            fussnote={
-              rueckgaengig ? (
-                <Rueckgaengig
-                  eintrag={rueckgaengig}
-                  onZurueck={() => {
-                    wischRueckgaengig(rueckgaengig.post.id);
-                    fristBeenden();
-                  }}
-                />
-              ) : undefined
-            }
-            blatt={filterFeld}
-          />
-        </View>
+        <View style={styles.stapelBereich}>{stapelBaum(true)}</View>
       )}
 
-      {antwortAuf ? (
-        <AntwortLeiste
-          eintrag={antwortAuf}
-          onAbbrechen={() => setAntwortAuf(null)}
-          onSenden={anfrageAbschicken}
-        />
-      ) : null}
+      {antwortLeiste}
     </SsScreen>
   );
 }
@@ -592,24 +703,25 @@ function KarteVollbild({
   eintraege,
   filterAktiv,
   zuruecksetzen,
-  filterOffen,
-  filterFeld,
-  sucheZeile,
-  chipZeile,
   ansichtZeile,
+  oeffneBezirk,
 }: {
   zaehlung: Record<string, number>;
+  /**
+   * Wie viele Posts keinen Bezirk haben. Seit Phase 19i wird die Zahl hier nur noch
+   * gebraucht, um zu erkennen, dass überhaupt etwas da ist (`nichtsDa`) — der Chip
+   * dazu ist mit dem Blatt weggefallen. Warum das Ians Entscheidung 31 nicht bricht,
+   * steht im Kopfkommentar dieser Funktion.
+   */
   ohneBezirk: number;
   filter: FeedFilter;
   setzen: <K extends keyof FeedFilter>(feld: K, wert: FeedFilter[K]) => void;
   eintraege: FeedEintrag[];
   filterAktiv: boolean;
   zuruecksetzen: () => void;
-  filterOffen: boolean;
-  filterFeld: ReactNode;
-  sucheZeile: ReactNode;
-  chipZeile: ReactNode;
   ansichtZeile: (schwebend: boolean) => ReactNode;
+  /** Ians Entscheidung 65: Aus der Blase heraus ins Bezirks-Vollbild. */
+  oeffneBezirk: () => void;
 }) {
   const insets = useSafeAreaInsets();
   /**
@@ -624,55 +736,19 @@ function KarteVollbild({
   const bezirk = filter.bezirk;
 
   /**
-   * Wie viel von der Karte das Blatt gerade verdeckt.
-   *
-   * **Das ist keine Kosmetik.** Ohne diese Zahl zentriert die Karte Wien in der
-   * Mitte des SCHIRMS, und die südliche Hälfte liegt hinter dem Blatt. Sie kommt vom
-   * Blatt selbst und wechselt nur beim EINRASTEN — während des Ziehens rechnete
-   * sonst bei jedem Fingerbreit jemand 23 Flächen neu.
-   */
-  const [blattRand, setBlattRand] = useState(0);
-
-  /**
-   * Eine EINMALIGE Bitte an das Blatt, mindestens so weit aufzugehen — Phase 19g,
-   * für den Weg Blase → Blatt (Ians Entscheidung 57).
-   *
-   * ── Warum ein Zustand, der sich selbst zurücknimmt ───────────────────────────
-   * `SsBlatt.mindestens` ist bewusst keine Steuerung von außen, sondern eine Bitte
-   * (siehe dort): Sie wirkt, wenn sie sich ÄNDERT. Bliebe „ganz" stehen, wäre die
-   * zweite Bitte keine Änderung mehr und das Blatt bliebe unten, wo der Nutzer es
-   * hingezogen hat. Deshalb setzt `blattGezogen` sie zurück, sobald das Blatt
-   * gerastet ist. **Das Ziehen bleibt ungeteilt beim Blatt** — hier steht nie eine
-   * zweite Stufe daneben, die auseinanderlaufen könnte.
-   */
-  const [wunsch, setWunsch] = useState<BlattStufe | null>(null);
-
-  /**
    * Wie viel die schwebende Leiste oben belegt — **gemessen, nicht gerechnet.**
    *
    * Sie ist die Höhe des Umschalters plus der Sicherheitsabstand darüber, und
-   * beides hängt am Gerät. Der Wert geht an ZWEI Stellen: Die Karte zentriert Wien
-   * darunter (`randOben`), und das Blatt fährt nicht weiter auf (`maxOben`). Genau
-   * das war am 2026-09-07 der Fehler — mit einem reinen Anteil lag der Blattkopf
-   * hinter der Pille.
+   * beides hängt am Gerät; die Karte zentriert Wien darunter (`randOben`). Bis
+   * Phase 19i ging dieselbe Zahl noch an das Blatt (`maxOben`), damit es nicht
+   * unter die Pille fuhr — das Blatt gibt es nicht mehr, der Grund für die Messung
+   * bleibt.
    */
   const [leisteHoehe, setLeisteHoehe] = useState(0);
   const leisteBelegt = leisteHoehe > 0 ? insets.top + spacing.sm + leisteHoehe + spacing.sm : 0;
-  // `useCallback`, damit das Blatt nicht bei jedem Rendern eine neue Funktion sieht.
-  const blattGezogen = useCallback((_stufe: BlattStufe, sichtbar: number) => {
-    setBlattRand(sichtbar);
-    // Die Bitte ist erfüllt, sobald das Blatt irgendwo gerastet ist — siehe `wunsch`.
-    setWunsch(null);
-  }, []);
 
   const nichtsDa = Object.keys(zaehlung).length === 0 && ohneBezirk === 0;
   const gewaehlt = bezirk.kind === 'einer' ? bezirk.plz : null;
-  const ueberschrift =
-    bezirk.kind === 'einer'
-      ? `${bezirk.plz} Wien · ${bezirkPostText(eintraege.length)}`
-      : bezirk.kind === 'ohne'
-        ? `Ohne Bezirk · ${bezirkPostText(eintraege.length)}`
-        : `Ganz Wien · ${bezirkPostText(eintraege.length)}`;
 
   /**
    * Ians Entscheidung 49: **Ein Tipp auf denselben Bezirk hebt die Auswahl auf.**
@@ -684,9 +760,14 @@ function KarteVollbild({
    * gedacht, aber es hat den Fall übersehen, den Ian beim BENUTZEN traf: Man
    * kommt ohne Umweg nicht mehr zu ganz Wien zurück.
    *
-   * Das ✕ im Blattkopf gibt es zusätzlich und nicht ersatzweise: Ein zweiter Tipp
-   * auf einen 14 × 11 px großen Bezirk (die Josefstadt, gemessen in 19b) ist nicht
-   * zuverlässig zu treffen.
+   * ⚠️ **Seit Phase 19i ist der zweite Tipp der EINZIGE Weg zurück zu ganz Wien.**
+   * Bis dahin stand daneben ein ✕ im Blattkopf, ausdrücklich „zusätzlich und nicht
+   * ersatzweise", weil ein zweiter Tipp auf einen 14 × 11 px großen Bezirk (die
+   * Josefstadt, gemessen in 19b) nicht zuverlässig zu treffen ist. **Das Blatt ist
+   * mit Entscheidung 65 weggefallen, und das ✕ mit ihm** — der Grund für die
+   * Doppelung ist damit nicht erledigt, nur der Ort dafür. Gehört Ian am Bild
+   * vorgelegt: Wenn ihn ein klebender Bezirk stört, ist der Ersatz ein kleines ✕
+   * neben dem Umschalter.
    *
    * **Harte Regel 50 gilt weiter:** Was gewählt ist, IST der Bezirksfilter — das
    * Aufheben setzt `filter.bezirk`, nicht eine eigene Variable daneben.
@@ -714,104 +795,64 @@ function KarteVollbild({
             gewaehlt={gewaehlt}
             onWaehlen={bezirkTippen}
             fuellt
-            // Seit Phase 19g ist das EINE Zahl statt einer Summe: Das Blatt
-            // reicht bis an die Unterkante, die Kapsel liegt darauf. Was von
-            // unten verdeckt ist, ist also genau die sichtbare Blatthöhe — und
-            // die schließt den Sockel hinter der Kapsel schon ein.
-            randUnten={blattRand}
+            // Seit Phase 19i gibt es kein Blatt mehr, das von unten verdeckt —
+            // übrig bleibt die schwebende Tab-Kapsel. Wien wird zwischen ihr und
+            // der Leiste oben zentriert, und **die Apple-Nennung weicht ihr aus**
+            // (`NENNUNG_MIN_KARTE`, Phase 19g): Eine Nennung, die niemand sehen
+            // kann, ist keine. Dass die Karte selbst unter der Kapsel durchläuft,
+            // bleibt gewollt (harte Regel 62, letzter Absatz).
+            randUnten={tabRand}
             randOben={leisteBelegt}
             // Ians Entscheidung 57. Der Slot liegt als Geschwister ÜBER der
             // Kartenfläche (harte Regel 51) — die Karte selbst weiß nichts von
             // Posts, sie gibt nur her, wo der Bezirk gerade liegt.
             blase={(anker) =>
               // Ein leerer Bezirk bekommt KEINE Blase — sonst steht ein weißer
-              // Balken mit Pfeil über der Stadt, der nichts sagt. Die Antwort auf
-              // „hier ist nichts los" gibt der Blattkopf („1090 Wien · 0 Posts")
-              // und der leere Zustand darunter; zwei Antworten auf dieselbe Frage
-              // wären eine zu viel (die Lehre vom 2026-09-03).
+              // Balken mit Pfeil über der Stadt, der nichts sagt. Seit Phase 19i
+              // ist das zugleich die einzige Antwort auf „hier ist nichts los":
+              // Der Blattkopf, der sie vorher auch gab („1090 Wien · 0 Posts"),
+              // ist weg. Eine Antwort ist richtig, zwei wären eine zu viel — die
+              // Lehre vom 2026-09-03.
               eintraege.length === 0 ? null : (
               <KartenBlase
                 anker={anker}
                 eintraege={eintraege}
                 onPost={(id) => router.push({ pathname: '/post/[id]', params: { id } })}
-                // *„dann kommt das Blatt und man kann sich's genau anschauen"* —
-                // nicht mehr der Wechsel in die Listenansicht wie in 19c. `ganz`
-                // und nicht `halb`: Wer „genau anschauen" tippt, will lesen.
-                onAlle={() => setWunsch('ganz')}
+                // **Ians Entscheidung 65 (Phase 19i):** Von hier geht es ins
+                // Bezirks-Vollbild. Dritte Fassung derselben Zeile — 19c wechselte
+                // in die Listenansicht, 19g zog das Blatt auf. Der Bezirksfilter
+                // bleibt in allen dreien stehen (harte Regel 50).
+                onAlle={oeffneBezirk}
               />
               )
             }
           />
 
-          <SsBlatt
-            start={BLATT_START}
-            maxOben={leisteBelegt}
-            // ⚠️ Seit Phase 19g: **Das Blatt hört NICHT mehr über der Kapsel auf,
-            // es läuft bis an die Unterkante und die Kapsel liegt darauf.** Der
-            // Wert ist jetzt der Sockel der untersten Raststufe, damit der Griff
-            // nicht hinter der Kapsel landet — Begründung bei `SsBlatt.fuss`.
-            fuss={tabRand}
-            // Der aufgeklappte Filterbereich ist rund 250 px hoch und passt bei halb
-            // offenem Blatt nicht hinein — er würde am `overflow: hidden` des
-            // Blattes abgeschnitten. Nebenbefund: Damit kostet der weggefallene
-            // Zähler (Entscheidung 47) hier gar nichts, weil beim Filtern die ganze
-            // Liste danebensteht.
-            mindestens={wunsch ?? (filterOffen ? 'ganz' : undefined)}
-            onStufe={blattGezogen}
-            kopf={
-              <View style={styles.blattKopf}>
-                <SsText variant="label" numberOfLines={1} style={styles.blattTitel}>
-                  {ueberschrift}
-                </SsText>
-                {bezirk.kind !== 'alle' ? (
-                  <Pressable
-                    onPress={() => setzen('bezirk', BEZIRK_ALLE)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Bezirks-Auswahl aufheben"
-                    hitSlop={12}
-                    style={styles.blattWeg}>
-                    <SsIcon name="kreuz" size={16} color={colors.inkSoft} />
-                  </Pressable>
-                ) : null}
-              </View>
-            }>
-            {sucheZeile}
-            {chipZeile}
-            {filterOffen ? <View style={styles.filterImFluss}>{filterFeld}</View> : null}
+          {/* ⚠️ **Hier lag bis Phase 19i das Blatt** (`SsBlatt`) — Ians
+              Entscheidung 65 hat es weggenommen: *„Die Leiste ist okay, aber würde
+              sie ehrlich gesagt weglassen und es so machen, dass man direkt, wenn
+              man auf einen Bezirk draufklickt, auf ein Fenster kommt, auf den
+              Stapel."*
 
-            {/* Posts ohne Bezirksangabe haben auf einer Karte keinen Ort. Sie hier
-                wegzulassen hieße, dass die Ansicht still Posts verschluckt — Ians
-                Entscheidung 31. Die Zeile steht bei den anderen Filtern statt im
-                Kopf: Dort hätte „3 Posts ohne Bezirk" neben der Überschrift und dem
-                ✕ auf 360 px keinen Platz.
+              **Mit ihm sind Suche, Kategorien, Filter, die Überschrift, das ✕ und
+              der Chip „3 Posts ohne Bezirk" aus der KARTENANSICHT verschwunden.**
+              Übrig bleibt oben der Umschalter samt Posten-Knopf (sonst käme man
+              nicht mehr von der Karte weg) und sonst Karte.
 
-                **Und sie steht nur bei ZUGEKLAPPTEM Filter da.** Ist er offen,
-                enthält seine Bezirksreihe dieselbe Stufe schon („Ohne Bezirk") — der
-                Chip wäre eine Dopplung, und auf 360 × 600 war er am 2026-09-07
-                genau die eine Zeile, die unten aus dem Blatt hinausragte. */}
-            {ohneBezirk > 0 && !filterOffen ? (
-              <View style={styles.blattOhne}>
-                <SsChip
-                  label={ohneBezirkText(ohneBezirk)}
-                  selected={bezirk.kind === 'ohne'}
-                  onPress={() =>
-                    setzen('bezirk', bezirk.kind === 'ohne' ? BEZIRK_ALLE : BEZIRK_OHNE)
-                  }
-                />
-              </View>
-            ) : null}
+              ── Warum der Chip „ohne Bezirk" ohne Ersatz weggehen darf ───────────
+              Er stand für Ians Entscheidung 31: *eine Ansicht darf nicht still
+              Posts verschlucken.* Das Wort, auf das es ankommt, ist **still** —
+              gemeint war eine LISTE, in der etwas fehlt. Seit 19i gibt es in der
+              Kartenansicht keine Liste mehr, aus der etwas fehlen könnte: Die Karte
+              zeigt Orte, und ein Post ohne Ort hat dort keinen. Vollständig sind
+              Stapel und Liste, und beide sind einen Tipp entfernt — der Umschalter
+              steht darüber. **Es ist trotzdem meine Auslegung und nicht seine
+              Entscheidung; sie gehört ihm am Bild vorgelegt.**
 
-            {/* Der Sockel wandert in den SCROLL-INHALT, nicht in die Fläche —
-                harte Regel 62, wörtlich dieselbe Unterscheidung wie in `SsScreen`:
-                *Was scrollt, scrollt unter das Glas.* Ohne ihn liegt die letzte
-                Karte hinter der Tab-Kapsel und man bekommt sie nicht hervor. */}
-            <FeedListe
-              eintraege={eintraege}
-              filterAktiv={filterAktiv}
-              zuruecksetzen={zuruecksetzen}
-              randUnten={tabRand}
-            />
-          </SsBlatt>
+              `SsBlatt` selbst bleibt stehen und wird NICHT gelöscht — harte Regel 51,
+              dieselbe Lehre wie bei der Blase: Die war elf Tage aus der Anzeige und
+              kam mit EINEM Aufruf zurück. Wer eine geprüfte Arbeit ausbaut, löscht
+              sie nicht. */}
         </>
       )}
 
@@ -1423,4 +1464,19 @@ const styles = StyleSheet.create({
   // SsButton setzt für schmale Knöpfe selbst 'flex-start' und schlägt damit das
   // 'alignItems: center' des leeren Zustands.
   leerKnopf: { marginTop: spacing.md, alignSelf: 'center' },
+
+  // ── Phase 19i: das Bezirks-Vollbild (Ians Entscheidungen 65 und 66) ─────────
+  // Zurück-Pfeil und Bezirksname in EINER Zeile. Mehr steht auf diesem Fenster
+  // nicht — die Karten holen sich den Rest der Höhe über `stapelBereich`.
+  bezirkKopf: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  // `flexShrink: 1` und nicht `flex: 1` — dieselbe Überlegung wie beim alten
+  // Blattkopf: Der Name gibt nach, wenn der Pfeil daneben Platz braucht, erzwingt
+  // ihn aber nicht (harte Regel 43, die Kehrseite).
+  bezirkTitel: { flexShrink: 1 },
+  bezirkLeerText: { maxWidth: 260 },
 });

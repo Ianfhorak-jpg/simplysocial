@@ -43,11 +43,30 @@ const PFEIL = 22;
  *
  * `label` gibt es weiter, aber nur noch für VoiceOver. Ein Knopf ohne Namen ist
  * dort ein Knopf ohne Funktion.
+ *
+ * ── Seit Phase 19i: `onPress` darf überschrieben werden ──────────────────────
+ * Nicht jedes „zurück" ist ein Screen-Wechsel. Das Bezirks-Vollbild (Ians
+ * Entscheidung 65) ist ein ZUSTAND im Feed-Screen und keine eigene Adresse —
+ * dort führt `zurueckOderFeed()` aus der Karte hinaus statt eine Ebene zurück.
+ *
+ * **Harte Regel 5 bleibt damit unangetastet, und zwar absichtlich so gebaut:**
+ * Wer nichts angibt, bekommt weiter `zurueckOderFeed()`. Es gibt keinen zweiten
+ * Zurück-Knopf und keinen Screen, der sich seinen eigenen baut — nur eine Stelle,
+ * an der der Rückweg ein anderer ist, und die sagt es ausdrücklich.
  */
-export function SsBack({ label = 'Zurück', style }: { label?: string; style?: StyleProp<ViewStyle> }) {
+export function SsBack({
+  label = 'Zurück',
+  onPress,
+  style,
+}: {
+  label?: string;
+  /** Nur setzen, wo „zurück" KEIN Screen-Wechsel ist — siehe Kopfkommentar. */
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+}) {
   return (
     <Pressable
-      onPress={zurueckOderFeed}
+      onPress={onPress ?? zurueckOderFeed}
       accessibilityRole="button"
       accessibilityLabel={label}
       // Nach links und oben ist die Fläche zu Ende, weil dort der Seitenrand des

@@ -35,24 +35,71 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
-🔴 **OFFENER AUFTRAG (2026-09-09 nachts): Phase 19i — „Der Bezirk als Vollbild, und
-das Glas überall".** Ian hat die 19h-Fassung auf seinem iPhone benutzt, fünf Punkte
-genannt und dann **gecleart**. Der Auftrag steht vollständig in **PLAN.md, Abschnitt
-5b, Phase 19i** (Entscheidungen 65–68) und in `_FUER_IAN/NACH_DEM_CLEAR.md`. Kurz:
-1. **Das Blatt auf der Karte fällt weg** — ein Tipp auf einen Bezirk führt direkt auf
-   ein **Vollbild mit dem Stapel** dieses Bezirks (Entscheidung 65).
-2. **Auf diesem Fenster ist nichts außer Karten und der Bar unten** — Kategorien,
-   Suche, Filter, Posten und der Umschalter sind dort weg. **Nur dort**, der
-   Startbildschirm behält alles (Entscheidung 66).
-3. **Die vier Tab-Icons sitzen zu weit oben** — mein Fehler aus 19h-1, `tabBarShowLabel:
-   false` lässt den Label-Platz stehen (Entscheidung 67).
-4. **Liquid Glass überall**, und **das jetzige ist ihm immer noch keines** — dritte
-   Runde. **Zuerst ein Vorbild anfordern**, dann messen; zweimal lag es an Form und
-   Untergrund, nicht am Effekt (Entscheidung 68).
-⚠️ **Sein Handy bleibt nicht angesteckt** — alles ohne neuen Baustein machbar, geprüft
-wird am Simulator; auf sein Gerät kommt es beim nächsten Anstecken.
-❗ **Die zwei Auslegungsfragen sind VOR dem Clear beantwortet** (Blatt, nicht Blase ·
-nur dieses Fenster) — nicht noch einmal fragen.
+✅ **Phase 19i ist fertig (2026-09-09): Der Bezirk als Vollbild — und zwei echte
+Ursachen für „das ist kein Liquid Glass".** Ians fünf Punkte vom Durchgang am eigenen
+Handy (Entscheidungen 65–68), gebaut am Simulator und im Browser, **ohne neuen Build**.
+Belege `ae01`–`ae08`. Neun Dinge sind wichtiger als das neue Fenster:
+
+1. **Die Tab-Kapsel klebte auf iOS an BEIDEN Rändern, seit es sie gibt.**
+   `styles.bottom` der Tab-Leiste setzt `start: 0, end: 0`; im `tabBarStyle` stand
+   `left: 16, right: 16`. Das kam SPÄTER im Array und schien zu gewinnen — **aber
+   `start`/`end` und `left`/`right` sind in Yoga zwei verschiedene Eigenschaften, und
+   die richtungsabhängige gewinnt gegen die absolute, unabhängig von der Reihenfolge.**
+   Gemessen auf Ians iPhone und am Simulator: Seitenrand **0 statt 16 pt**.
+2. **Warum es vier Wochen niemand sah, ist der lehrreichere Teil: Auf Web stimmte es.**
+   `react-native-web` macht aus beiden Schreibweisen dieselbe CSS-Eigenschaft, dort
+   gewinnt die spätere. Der 19e-2-Beleg `z01-web-kapsel-360.png` zeigte brav „x = 16,
+   328 breit" — **geprüft wurde genau die Plattform, auf der der Fehler nicht
+   auftritt.** Harte Regel 62 sagt wörtlich, eine Fläche, die an drei Kanten am Schirm
+   klebt, sehe aus wie eine getönte Leiste; **auf dem einzigen Gerät, das echtes Glas
+   zeichnet, war diese Bedingung nie erfüllt.** Zum dritten Mal lag es an der Form.
+3. **Entscheidung 67 stimmt in Rechnung UND Messung.** Symbolrahmen 28 pt
+   (`ICON_SIZE_TALL`), Eintrag `padding: 5`, `justifyContent: 'flex-start'` → Mitte bei
+   5 + 14 = **19** statt **28**, also 9 pt zu hoch; genau 9,0 pt sind auf Ians
+   Screenshot nachgemessen. Nachher **+0,67 pt**. Ein `marginTop` und kein
+   `justifyContent`, weil **die Zahl am Anfragen-Tab mit `top: -3` am Symbolrahmen
+   hängt** und mitwandern muss.
+4. **Die Blasen-Fußzeile hätte den neuen Weg verschlossen — auf Ians eigenem Bild fehlt
+   sie.** *„alle N ansehen"* stand nur, wenn nicht alles in die Blase passte. Solange
+   sie ins Blatt führte, war das richtig (das Blatt ließ sich auch am Griff ziehen);
+   **seit Entscheidung 65 ist sie der einzige Weg ins Vollbild.** Ohne die Änderung wäre
+   der Bezirk mit den WENIGSTEN Posts der einzige gewesen, den man nicht öffnen kann.
+   `IMG_0712.PNG` zeigt genau den Fall: 1140 Wien, zwei Posts, keine Fußzeile.
+5. **Das Glas LÄUFT, und was fehlt, ist Untergrund.** Belegt: Das Blatt nimmt auf der
+   Karte einen Grünstich an (Grün minus Blau **+9,2**) — eine deckende Fläche könnte
+   das nicht. Der Unterschied zum Untergrund beträgt bei Ians Vorbild **33,2**
+   Helligkeitsstufen, bei uns **3,3** (Startbildschirm) bzw. **1,5** (über der hellen
+   Apple-Karte). **Liquid Glass zeigt sich als Unterschied zum Untergrund, und hinter
+   unseren Flächen liegt überall Papierweiß.** „Überall" ist damit keine Bauaufgabe,
+   sondern eine Frage nach dem Untergrund — **Ians Antwort am 2026-09-09: erst
+   anschauen** (`ae01`, `ae06` gegen `ae07`).
+6. **Der Chip „3 Posts ohne Bezirk" fällt weg, und das ist MEINE Auslegung.**
+   Entscheidung 31 verbietet, dass eine Ansicht **still** Posts verschluckt — gemeint
+   war eine LISTE, in der etwas fehlt. Die Kartenansicht hat seit 19i keine Liste mehr;
+   sie zeigt Orte, und ein Post ohne Ort hat dort keinen. **Gehört ihm vorgelegt.**
+7. **Das ✕ ist mit dem Blatt weggefallen, sein GRUND besteht weiter.** Es stand
+   ausdrücklich „zusätzlich und nicht ersatzweise" neben Entscheidung 49, weil ein
+   zweiter Tipp auf einen 14 × 11 px großen Bezirk nicht zuverlässig zu treffen ist.
+   Der Ort ist weg, die Schwierigkeit nicht — Ersatz wäre ein kleines ✕ neben dem
+   Umschalter, eine Zeile.
+8. **Ohne Blatt zeigt die Karte mehr Umland — Geometrie, kein Fehler.** Wien ist breit,
+   der Schirm ist hoch. Solange das Blatt die untere Hälfte deckte, war der freie
+   Streifen breiter als hoch. **Zweite Fassung der 19e-2-Lehre an derselben Karte:**
+   vor dem Reparieren die Regel nachrechnen, die das Bild erzeugt.
+9. **`bezirkStapel` ist ein Zustand und keine Route — wegen harter Regel 50.**
+   `/bezirk/[plz]` trüge die Auswahl in der Adresse, damit stünde sie zweimal da.
+   Und `SsBack` hat ein optionales `onPress` bekommen: **Wer nichts angibt, bekommt
+   weiter `zurueckOderFeed()`**, also bleibt Regel 5 heil.
+
+⚠️ **Der Tipp am Simulator ist NICHT geprüft:** `osascript` verweigert den Hilfszugriff
+(Fehler −25211), und die Berechtigung kann nur Ian geben (Systemeinstellungen →
+Datenschutz → Bedienungshilfen). Alles Interaktive ist deshalb im Browser belegt, wo
+die Geometrie laut 19e-2 dieselbe ist; am Simulator nur, was ohne Berührung erreichbar
+ist.
+
+❓ **Was auf Ians Urteil wartet** (blockiert nichts): das Glas (Punkt 5), der
+weggefallene Ohne-Bezirk-Chip (6), das fehlende ✕ (7) — und weiter die 19g-Frage, ob
+eine ZEILE der Blase das Vollbild öffnen soll statt nur die Fußzeile.
 
 ✅ **Phase 19h-1 ist fertig (2026-09-08): Nähe statt Filter — und wieder ohne neuen
 Build.** Drei neue Entscheidungen von Ian (62, 63, 64), Belege `ad01`–`ad10`. Fünf Dinge
@@ -1121,6 +1168,10 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    Wien, Übergänge, zwei Kartenfehler)~~ ✅ *2026-09-08, ohne neuen Build* ·
    ~~**19h-1** „Nähe statt Filter" (Heimatbezirk, Reihenfolge nach Entfernung,
    Bezirks-Filter weg, Tab-Wörter weg)~~ ✅ *2026-09-08, ohne neuen Build* ·
+   ~~**19i** „Der Bezirk als Vollbild, und das Glas überall" (Blatt weg, Bezirk als
+   Vollbild, Tab-Symbole mittig, zwei Glas-Ursachen)~~ ✅ *2026-09-09, ohne neuen
+   Build* — **die Kapsel klebte auf iOS seit 19e-2 an beiden Rändern, und das war
+   eine der Ursachen für „das ist kein Liquid Glass"** ·
    **19h-2** „Standort" (`expo-location`, braucht einen Build) ← *hier geht es weiter,
    wahlweise gleich Phase 20.3*. **Von den zwei Kartenfehlern war einer keiner** (der 14.
    Bezirk stimmt, gegen die amtlichen Daten nachgerechnet) und einer gehörte einer
@@ -1714,6 +1765,27 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Bezirksmitten in `lib/karte-geo.ts` — die Zahl ist heute nur für eine Ordnung gut
    genug, nicht für eine Auskunft. Ein Post ohne Bezirk hat keine Entfernung; wo er
    landet, sagt `OHNE_BEZIRK_POSITION` und nicht ein `if` in der Vergleichsfunktion.
+
+66. **Ein `start`/`end` schlägt ein `left`/`right`, egal wer später kommt — und Web
+   verrät es nicht.** *(Phase 19i, 2026-09-09.)* In Yoga sind das zwei verschiedene
+   Eigenschaften, und die richtungsabhängige gewinnt. Die Tab-Leiste bringt
+   `start: 0, end: 0` mit; unsere 16 pt standen als `left`/`right` und wirkten auf iOS
+   **vier Wochen lang gar nicht**. Auf `react-native-web` werden beide zur selben
+   CSS-Eigenschaft, dort gewinnt die spätere — **der Beleg im Browser war also richtig
+   und trotzdem wertlos.** Wer die Position einer fremden Komponente überschreibt,
+   liest nach, in welcher Schreibweise sie ihre eigene setzt, und nimmt dieselbe.
+   Die Maße stehen als `TAB_KAPSEL_SEITE_KANTEN` in `lib/tabs.ts`.
+67. **Auf dem Bezirks-Vollbild steht nichts außer Karten, Bar, Zurück und dem
+   Bezirksnamen.** *(Ians Entscheidungen 65 und 66, Phase 19i.)* Ein Tipp auf einen
+   Bezirk führt über die Blase (`alle N ansehen`) in ein Fenster, das nur noch die
+   Frage „hingehen oder nicht" stellt — keine Suche, keine Kategorien, kein Filter,
+   kein Posten, kein Umschalter. **Nur dort:** Der Startbildschirm behält alles, das
+   hat er ausdrücklich bestätigt. Die zwei Dinge, die trotzdem dastehen, sind der
+   zweite Halbsatz von Entscheidung 50 und keine Ausnahme — **ein Vollbild ohne
+   Rückweg ist eine Sackgasse**, und ohne den Bezirksnamen sind es dieselben Karten
+   wie am Start, nur ohne Bedienung. Der Zustand heißt `bezirkStapel` und ist bewusst
+   **keine Route**: `/bezirk/[plz]` trüge die Auswahl in der Adresse, und dann stünde
+   sie zweimal da (harte Regel 50).
 
 53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
    rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und
@@ -2317,6 +2389,34 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   `browser_navigate` auf DIESELBE Adresse, weil Expo Router daraus eine
   Client-Navigation macht. Beide Male ist die Frage dieselbe — hat die App gerade neu
   gestartet oder nicht?
+- **Ein Beleg auf der falschen Plattform ist kein Beleg.** (Phase 19i, 2026-09-09)
+  Die Kapsel-Maße wurden in 19e-2 im Browser nachgemessen (`z01`, „x = 16, 328 breit")
+  — und stimmten dort. Auf iOS klebte die Kapsel an beiden Rändern, weil `start`/`end`
+  ein `left`/`right` schlägt (harte Regel 66). **Vier Wochen unbemerkt, und es war eine
+  der Ursachen dafür, dass Ian zweimal sagte, das sei kein richtiges Liquid Glass.**
+  Wer eine Plattform-Eigenschaft misst, misst sie auf der Plattform, um die es geht —
+  bei Glas ist das nur iOS.
+- **Ein Effekt, der nicht zu sehen ist, ist nicht dasselbe wie ein Effekt, der nicht
+  läuft.** (Phase 19i) Zwei Runden lang stand die Frage „ist das echtes Liquid Glass?"
+  im Raum. Sie ist mit einer Farbmessung zu beantworten: **Das Blatt nimmt auf der
+  Karte einen Grünstich vom Untergrund an (Grün minus Blau +9,2)** — eine deckende
+  Fläche könnte das nicht. Der Effekt lief also. Was fehlte, war Untergrund: 33,2
+  Helligkeitsstufen Unterschied auf Ians Vorbild gegen 1,5 bei uns. **Bei einem
+  Effekt, der vom Untergrund lebt, misst man den Untergrund und nicht den Effekt.**
+- **Der Simulator lässt sich nur mit Bedienungshilfen-Berechtigung antippen.**
+  (Phase 19i) `osascript … click at` scheitert mit **−25211** („keine Berechtigung für
+  den Hilfszugriff"), und die kann nur Ian geben (Systemeinstellungen → Datenschutz →
+  Bedienungshilfen). Das Auslesen der Fenstergeometrie geht trotzdem — **die zwei
+  Rechte sind verschieden, und der Unterschied sieht aus wie ein Zufall.** Der Ausweg
+  ohne Ian: Interaktives im Browser prüfen (die Geometrie ist laut 19e-2 dieselbe), am
+  Simulator nur, was ohne Berührung erreichbar ist, und einen sonst unerreichbaren
+  Zustand **vorübergehend im Code setzen und per `git diff` nachweislich zurücknehmen**
+  (die 19d-Methode).
+- **Fast Refresh übernimmt eine geänderte Position im `tabBarStyle` NICHT.**
+  (Phase 19i) Nach dem Fix an der Kapsel zeigte der Simulator weiterhin Seitenrand 0;
+  erst `terminate` + `launch` brachte die 16 pt. Dieselbe Familie wie „Fast Refresh
+  behält `useState`" (Phase 19d) — **wer eine Layout-Konstante ändert, startet die App
+  neu, bevor er misst.**
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

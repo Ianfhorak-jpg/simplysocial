@@ -1,35 +1,97 @@
 # Was du nach dem Clear schreiben sollst
 
-## 🔴 STAND 09.09.2026, NACHTS — DAS IST DER AKTUELLE AUFTRAG
+## ✅ STAND 09.09.2026, VORMITTAG — PHASE 19i IST FERTIG
 
-> **Du hast am 08./09.09. nachts fünf Sachen aufgezählt, und ich habe sie NICHT mehr
-> gebaut — du wolltest vorher clearen. Alles steht in `PLAN.md`, Abschnitt 5b, als
-> „Phase 19i". Wenn du nach dem Clear nur einen Satz schreiben willst:**
+> **Deine fünf Punkte von letzter Nacht sind gebaut.** Vier davon vollständig, beim
+> fünften (Liquid Glass) habe ich zwei echte Fehler gefunden und behoben — und dann
+> gefragt statt weiterzumachen, weil der Rest deine Entscheidung ist. **Du hast
+> gesagt: erst anschauen.** Genau darum geht es unten.
 >
-> ### 👉 „Mach Phase 19i aus PLAN.md."
->
-> **Das reicht.** Damit nichts verlorengeht, hier trotzdem deine fünf Punkte im
-> Wortlaut, wie du sie gesagt hast:
->
-> 1. **Das Blatt auf der Karte fällt weg.** Statt hochzuziehen: Tippst du einen
->    Bezirk an, kommst du **direkt auf ein Vollbild mit dem Stapel** für diesen
->    Bezirk. *(Von dir bestätigt: es geht um das weiße Panel, nicht um die Blase und
->    nicht um die Leiste unten.)*
-> 2. **Auf diesem neuen Fenster ist NICHTS außer den Karteikarten und der Bar
->    unten.** Kategorien („Sport und so") weg, Suchleiste weg, Filter weg, Posten
->    weg, die drei Icons (Stapel · Liste · Karte) weg. *(Von dir bestätigt: nur auf
->    diesem Fenster — der Startbildschirm behält alles.)*
-> 3. **Die vier Icons unten in der Bar sitzen zu weit oben**, sie gehören mittig.
->    *(Das ist ein Fehler, den ich am 08.09. selbst hineingebaut habe, als die
->    Wörter weggefallen sind.)*
-> 4. **Liquid Glass soll ÜBERALL sein**, nicht nur auf der Kartenansicht.
-> 5. **Das, was da ist, ist immer noch kein richtiges Liquid Glass.**
->
-> ⚠️ **Und: Dein Handy bleibt nicht angesteckt.** Alles davon geht ohne neuen
-> Baustein, ich baue und prüfe es am Simulator. **Aber auf DEIN Handy kommt es erst,
-> wenn du es wieder ansteckst** — die App dort hat ihren Stand eingebacken. Im
-> Browser (`https://ianfhorak-jpg.github.io/simplysocial/`) siehst du alles außer
-> dem Glas; das gibt es nur auf iOS.
+> ⚠️ **Das alles ist NICHT auf deinem Handy.** Der Build dort hat seinen Stand
+> eingebacken. Steck es an, dann kommt es drauf. Im Browser
+> (`https://ianfhorak-jpg.github.io/simplysocial/`) ist es auch noch nicht — sag
+> Bescheid, wenn es live soll.
+
+### Was jetzt anders ist
+
+1. **Tippst du einen Bezirk an, kommt die Sprechblase — und tippst du darin auf
+   „alle 4 ansehen", öffnet sich ein Vollbild nur mit dem Stapel dieses Bezirks.**
+   Das weiße Panel, das man hochziehen musste, ist weg.
+2. **Auf diesem Fenster ist nichts außer den Karteikarten und der Bar unten** — plus
+   ein Zurück-Pfeil und die Zeile „1070 Wien · 4 Posts". Die zwei stehen da, weil du
+   sonst nicht mehr herauskommst und nicht weißt, wo du bist. Kategorien, Suche,
+   Filter, Posten und die drei Icons sind weg. **Nur dort** — der Startbildschirm hat
+   weiter alles.
+3. **Die vier Icons unten sitzen jetzt mittig.** Sie waren 9 Punkte zu hoch, weil der
+   Platz für die weggefallenen Wörter noch mitgerechnet wurde. Mein Fehler von
+   vorgestern, jetzt nachgemessen: 0,7 Punkte daneben statt 9.
+
+### Und jetzt zum Glas — schau dir bitte drei Bilder an
+
+Ich habe **zwei echte Fehler** gefunden, und beide erklären, warum du zweimal gesagt
+hast, das sei kein richtiges Liquid Glass:
+
+**Die Leiste unten klebte auf dem iPhone an beiden Rändern.** Sie sollte 16 Punkte
+Abstand haben und hatte **null** — sie war genau so breit wie der Bildschirm. Und
+Glas lebt davon, dass etwas daneben UND darunter durchläuft; was am Rand klebt, sieht
+aus wie eine getönte Leiste. **Im Browser stimmte es die ganze Zeit**, deshalb ist es
+vier Wochen niemandem aufgefallen — ich hatte es auf der falschen Plattform gemessen.
+
+👉 **`ae01-kapsel-vorher-nachher-ios.png`** — oben alt, unten neu. Das ist der
+Unterschied.
+
+👉 **`ae06-glas-kapsel-auf-karte-ios.png`** gegen **`ae07-vorbild-kapsel-zum-vergleich.png`**
+— unsere Leiste über der Karte, daneben die aus deinem BierBuddy-Screenshot.
+
+**Was ich dabei gemessen habe, und warum ich nicht einfach weitergemacht habe:**
+
+Liquid Glass ist ein Effekt, der vom **Untergrund** lebt. Er zeigt sich als
+Unterschied zu dem, was dahinter liegt:
+
+| | Unterschied zum Untergrund |
+|---|---|
+| Dein Vorbild (BierBuddy, **dunkle** Karte) | **33** Stufen |
+| SimplySocial, Startbildschirm | **3** |
+| SimplySocial, über unserer hellen Karte | **1,5** |
+
+**Der Effekt läuft** — das ist belegt: Das Panel färbt sich über der Karte leicht
+grün ein, und das könnte eine normale weiße Fläche nicht. Aber bei uns liegt hinter
+jeder Glasfläche **Papierweiß**, und Glas nimmt genau diese Helligkeit an. Bei dir im
+Vorbild ist die Karte dunkelblau — daher der starke Effekt.
+
+**Deshalb: „Liquid Glass überall" bringt auf einer weißen App nichts.** Wenn du nach
+den Bildern findest, dass es immer noch nicht passt, ist der nächste Schritt keine
+Glas-Einstellung, sondern eine Frage an den Untergrund — z. B. die Karte im
+Dunkelmodus wie bei BierBuddy. Sag einfach Bescheid.
+
+### Drei Kleinigkeiten, bei denen ich geraten habe — sag, wenn's falsch ist
+
+- **Der Chip „1 Post ohne Bezirk" ist von der Karte verschwunden.** Er saß im weißen
+  Panel, und das gibt es nicht mehr. Meine Überlegung: Eine Karte zeigt Orte, und ein
+  Post ohne Ort hat dort keinen — in Stapel und Liste ist er weiter da. **Das ist
+  meine Auslegung, nicht deine Entscheidung.**
+- **Das ✕ zum Abwählen eines Bezirks ist auch weg** (es saß im Panel). Abwählen geht
+  weiter, indem du denselben Bezirk noch mal antippst. Wenn dich das nervt, bau ich
+  ein kleines ✕ neben den Umschalter — eine Zeile.
+- **Ohne das Panel sieht man mehr Umland auf der Karte** (Baden, Mödling). Das ist
+  kein Fehler: Wien ist breit, dein Bildschirm ist hoch — solange das Panel die untere
+  Hälfte deckte, passte Wien genau in den Rest. Wenn du es enger willst, muss ich Wien
+  oben und unten anschneiden. Deine Entscheidung.
+
+### Eine Frage von vorgestern wartet noch
+
+In der Sprechblase: Wenn du auf **eine Zeile** tippst, geht die Aktivität auf. Soll
+statt dessen das Vollbild aufgehen? Beides ist eine Zeile Arbeit.
+
+### Was ich nicht prüfen konnte, und warum
+
+**Ich kann den Simulator nicht antippen.** macOS verlangt dafür eine Berechtigung, die
+nur du geben kannst: *Systemeinstellungen → Datenschutz & Sicherheit →
+Bedienungshilfen*. Ohne sie habe ich alles Anklickbare im Browser geprüft (das Layout
+ist dort dasselbe) und am Simulator nur das, was ohne Berühren zu sehen ist. Wenn du
+die Berechtigung gibst, prüfe ich künftig direkt auf dem simulierten iPhone.
+
+---
 
 ---
 

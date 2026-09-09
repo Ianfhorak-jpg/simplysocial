@@ -35,7 +35,23 @@ const ZEILE = 30;
 const TRENN = 1;
 /** Innenabstand des Blasenkörpers, oben und unten. */
 const PAD = 6;
-/** Die Fußzeile „alle 5 ansehen" — steht nur da, wenn nicht alles hineinpasst. */
+/**
+ * Die Fußzeile „alle 5 ansehen".
+ *
+ * ⚠️ **Seit Phase 19i steht sie IMMER da, auch wenn alle Posts in die Blase
+ * passen** — und das ist keine Kosmetik, sondern die Bedingung dafür, dass Ians
+ * Entscheidung 65 überhaupt erreichbar ist. Bis dahin war sie an
+ * `sortiert.length > zeigen` gebunden: Bei zwei Posts, die beide hineinpassen,
+ * gab es sie nicht. Solange sie ins Blatt führte, war das richtig — das Blatt
+ * konnte man auch am Griff hochziehen. **Seit das Blatt weg ist, ist sie der
+ * einzige Weg ins Bezirks-Vollbild**, und ohne sie wäre der Bezirk mit den
+ * wenigsten Posts der einzige, den man nicht öffnen kann.
+ *
+ * Der Text „alle 2 ansehen" ist dabei kein Widerspruch, obwohl beide schon
+ * dastehen: **Die Blase ist eine Vorschau (Titel und Zeit), das Vollbild der Ort,
+ * an dem man handelt** — dort liegen die ganzen Karten mit „Bin dabei". *Alle
+ * ansehen* heißt hier *alle richtig ansehen*.
+ */
 const FUSS = 24;
 /** Höhe der Spitze. Die Breite ist doppelt so groß. */
 const PFEIL = 7;
@@ -70,7 +86,8 @@ function passform(anker: KartenAnker, vorhanden: number) {
   let zeigen = Math.min(BLASE_MAX, vorhanden);
   // Mindestens eine Zeile steht immer da: Wer einen Bezirk antippt, in dem etwas
   // los ist, hat eine Antwort verdient — auch auf einem sehr kleinen Schirm.
-  while (zeigen > 1 && koerperHoehe(zeigen, vorhanden > zeigen) > platz) zeigen--;
+  // Die Fußzeile zählt seit Phase 19i IMMER mit — sie steht immer da (siehe `FUSS`).
+  while (zeigen > 1 && koerperHoehe(zeigen, true) > platz) zeigen--;
 
   return { nachOben, zeigen };
 }
@@ -85,7 +102,12 @@ export function KartenBlase({
   /** Alle Posts des angetippten Bezirks — ungeschnitten und in beliebiger Reihenfolge. */
   eintraege: FeedEintrag[];
   onPost: (id: string) => void;
-  /** „alle 5 ansehen" — wechselt in die Listenansicht, der Bezirksfilter bleibt stehen. */
+  /**
+   * „alle 5 ansehen" — öffnet seit Phase 19i das **Bezirks-Vollbild** (Ians
+   * Entscheidung 65). Davor zog es das Blatt auf (19g), davor wechselte es in die
+   * Listenansicht (19c). Der Bezirksfilter bleibt in allen drei Fassungen stehen
+   * (harte Regel 50).
+   */
   onAlle: () => void;
 }) {
   // Ians Entscheidung 37: das zeitlich Nächste zuerst. Der Vergleich kommt aus
@@ -93,7 +115,8 @@ export function KartenBlase({
   const sortiert = [...eintraege].sort((a, b) => nachStartzeit(a.post, b.post));
   const { nachOben, zeigen } = passform(anker, sortiert.length);
   const sichtbar = sortiert.slice(0, zeigen);
-  const mitFuss = sortiert.length > zeigen;
+  // Immer — die Fußzeile ist der einzige Weg ins Bezirks-Vollbild. Siehe `FUSS`.
+  const mitFuss = true;
 
   // Waagrecht: an der Spitze ausrichten, aber nie über den Kartenrand hinaus. Die
   // Spitze wandert dann innerhalb der Blase mit — bei den Randbezirken (1., 23.) ist

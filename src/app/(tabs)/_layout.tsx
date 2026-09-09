@@ -3,7 +3,12 @@ import { StyleSheet, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SsGlas, SsIcon } from '@/components/ui';
-import { TAB_KAPSEL_HOEHE, TAB_KAPSEL_SEITE, tabKapselUnten } from '@/lib/tabs';
+import {
+  TAB_KAPSEL_HOEHE,
+  TAB_KAPSEL_SEITE_KANTEN,
+  TAB_SYMBOL_VERSATZ,
+  tabKapselUnten,
+} from '@/lib/tabs';
 import { useMeineEinladungen, useOffeneGruppenAnfragen } from '@/features/groups/hooks';
 import { useOffeneAnfragen } from '@/features/requests/hooks';
 import { colors, radius, status } from '@/theme';
@@ -99,10 +104,12 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.ink,
         tabBarInactiveTintColor: colors.inkSoft,
-        tabBarStyle: [
-          styles.leiste,
-          { left: TAB_KAPSEL_SEITE, right: TAB_KAPSEL_SEITE, bottom: kapselUnten },
-        ],
+        // ⚠️ `start`/`end`, NICHT `left`/`right` — die Leiste bringt selbst
+        // `start: 0, end: 0` mit, und in Yoga gewinnt die richtungsabhängige
+        // Eigenschaft gegen die absolute, egal wie spät sie im Array steht.
+        // Vier Wochen lang klebte die Kapsel deshalb auf iOS an beiden Rändern.
+        // Die ganze Begründung steht bei `TAB_KAPSEL_SEITE_KANTEN` in `lib/tabs.ts`.
+        tabBarStyle: [styles.leiste, TAB_KAPSEL_SEITE_KANTEN, { bottom: kapselUnten }],
         // Der Untergrund der Kapsel — auf iOS 26 echtes Glas, sonst eine helle
         // Fläche mit Kante und Schatten (`schwebt`). Er liegt HINTER den Symbolen;
         // deshalb ist es ein eigener Slot und nicht eine Hintergrundfarbe am
@@ -112,6 +119,11 @@ export default function TabsLayout() {
         // `title` erhalten (Fenstertitel auf Web) — nur gezeichnet wird er nicht.
         tabBarShowLabel: false,
         tabBarItemStyle: styles.eintrag,
+        // Ians Entscheidung 67: Die Symbole sitzen mittig in der Kapsel, nicht
+        // oben. Warum es ein Versatz sein muss und kein `justifyContent`, steht
+        // bei `TAB_SYMBOL_VERSATZ` in `lib/tabs.ts` — kurz: Die Zahl am
+        // Anfragen-Tab hängt an diesem Rahmen und muss mitwandern.
+        tabBarIconStyle: styles.symbol,
       }}>
       <Tabs.Screen
         name="index"
@@ -199,5 +211,7 @@ const styles = StyleSheet.create({
   // Auch hier keine senkrechte Polsterung — die Höhe kommt von der Kapsel, und die
   // Leiste zentriert ihre Einträge darin.
   eintrag: { paddingVertical: 0 },
+  // Der Ausgleich für den Platz, den die weggefallene Beschriftung hinterlässt.
+  symbol: { marginTop: TAB_SYMBOL_VERSATZ },
   zahl: { backgroundColor: status.danger, color: colors.surface, fontSize: 11, fontWeight: '700' },
 });

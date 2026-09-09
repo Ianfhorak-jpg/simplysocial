@@ -4134,7 +4134,7 @@ unberührt und braucht weiter einen neuen Build.**
 
 ---
 
-### Phase 19i — Der Bezirk als Vollbild, und das Glas überall ⬜ *(ohne neuen Build)*
+### Phase 19i — Der Bezirk als Vollbild, und das Glas überall ✅ *(2026-09-09, ohne neuen Build)*
 
 **Ians fünf Punkte vom 09.09.2026 nachts**, nachdem die 19h-Fassung auf seinem iPhone
 lief. Zwei Auslegungsfragen waren dabei offen und sind **vor dem Clear von ihm
@@ -4229,6 +4229,132 @@ sondern an Form und Untergrund. **Deshalb zuerst messen, dann ändern:**
    Glas werden — Karten (`SsCard`), die Kopfzeilen, die Chips, die Antwort-Leiste?
    Erst Punkt 1 und 3 klären, dann ihm Möglichkeiten am Bild zeigen. **Nicht die ganze
    App verglasen und hoffen.**
+
+---
+
+#### Was beim Bauen von 19i herauskam *(2026-09-09)*
+
+Belege `ae01`–`ae08` im Projektordner. **Gebaut am Simulator (iOS 26.5, Debug-Build mit
+Metro) und im Browser** — Ians Handy war nicht angesteckt, wie angekündigt.
+
+**1. Die Tab-Kapsel klebte auf iOS an BEIDEN Rändern, seit es sie gibt — und das ist
+eine der Ursachen von Entscheidung 68.** `styles.bottom` der Tab-Leiste setzt
+`start: 0, end: 0`; im `tabBarStyle` stand `left: 16, right: 16`. Im Style-Array kam
+das später, also schien es zu gewinnen — **aber `start`/`end` und `left`/`right` sind
+in Yoga zwei verschiedene Eigenschaften, und die richtungsabhängige gewinnt gegen die
+absolute, unabhängig von der Reihenfolge.** Gemessen auf Ians iPhone (`IMG_0713.PNG`)
+und am Simulator: Seitenrand **0 statt 16 pt**, Kapselbreite = Bildschirmbreite.
+
+> **Warum es vier Wochen niemand gesehen hat, ist der lehrreiche Teil:** Auf Web
+> stimmte es. `react-native-web` macht aus beiden Schreibweisen dieselbe
+> CSS-Eigenschaft, dort gewinnt die spätere Angabe — und der 19e-2-Beleg
+> `z01-web-kapsel-360.png` zeigte brav *„x = 16, 328 breit"*. **Geprüft wurde genau
+> die Plattform, auf der der Fehler nicht auftritt.** Harte Regel 62 sagt wörtlich,
+> eine Fläche, die an drei Kanten am Schirm klebt, sehe aus wie eine getönte Leiste;
+> **auf dem einzigen Gerät, das echtes Glas zeichnet, war diese Bedingung nie
+> erfüllt.** Zum dritten Mal lag es an der Form und nicht am Effekt.
+
+**2. Entscheidung 67: Rechnung und Messung decken sich auf 0,7 pt.** Der Symbolrahmen
+ist in `BottomTabItem.js` 28 pt hoch (`ICON_SIZE_TALL`), der Eintrag hat `padding: 5`
+und `justifyContent: 'flex-start'`. In einer 56 pt hohen Kapsel liegt die Symbolmitte
+damit bei 5 + 14 = **19** statt bei **28** — 9 pt zu hoch, und genau 9,0 pt sind auf
+Ians Screenshot nachgemessen. Nach dem Ausgleich: **+0,67 pt** (der Rest ist die
+Asymmetrie der Icon-Tinte, nicht des Rahmens).
+
+> **Warum ein `marginTop` und nicht `justifyContent: 'center'`:** An die Stelle kommt
+> man nicht heran — `tabBarItemStyle` landet auf dem äußeren View, das
+> `justifyContent` sitzt auf dem Knopf darin, und der bekommt sein `flex: 1` von der
+> Leiste. Der andere naheliegende Weg (`height`/`flex` am Symbolrahmen über
+> `tabBarIconStyle`) ist falsch: **Die Zahl am Anfragen-Tab hängt mit `top: -3` an
+> genau diesem Rahmen** und wäre nach oben aus der Kapsel gewandert. Ein `marginTop`
+> ist der einzige Griff, der Symbol und Zahl zusammenhält.
+
+**3. Die Fußzeile der Blase hätte den Weg ins Vollbild verschlossen — auf Ians eigenem
+Screenshot ist sie nicht da.** `mitFuss` hing an `sortiert.length > zeigen`: Bei zwei
+Posts, die beide in die Blase passen, gab es *„alle 2 ansehen"* gar nicht. Solange sie
+ins Blatt führte, war das richtig — das Blatt konnte man auch am Griff hochziehen.
+**Seit Entscheidung 65 ist sie der einzige Weg**, und ohne die Änderung wäre der
+Bezirk mit den WENIGSTEN Posts der einzige gewesen, den man nicht öffnen kann.
+Auf `IMG_0712.PNG` (1140 Wien, zwei Posts) sieht man genau diesen Fall.
+
+> Der Text bleibt *„alle 2 ansehen"*, obwohl beide schon dastehen, und das ist kein
+> Widerspruch: **Die Blase ist eine Vorschau (Titel und Zeit), das Vollbild der Ort,
+> an dem man handelt** — dort liegen die ganzen Karten mit „Bin dabei".
+
+**4. Das Glas LÄUFT — belegt, nicht vermutet.** Auf der Karte nimmt das Blatt einen
+Grünstich vom Untergrund an (Grün minus Blau **+9,2**); eine deckende
+`colors.surface`-Fläche könnte das nicht. Was fehlt, ist nicht der Effekt, sondern
+**Untergrund**:
+
+| | Kapsel hebt sich vom Untergrund ab um |
+|---|---|
+| Ians Vorbild (`vorbild-liquid-glass-bierbuddy.png`, dunkle Karte) | **33,2** Helligkeitsstufen |
+| SimplySocial, Startbildschirm (`IMG_0713.PNG`) | **3,3** |
+| SimplySocial, über der hellen Apple-Karte | **1,5** |
+
+> **Liquid Glass zeigt sich als Unterschied zum Untergrund.** Hinter unseren Flächen
+> liegt überall Papierweiß (248) oder die helle Apple-Karte (233), und das Glas nimmt
+> genau diese Helligkeit an. Auf Ians Vorbild ist die Karte dunkelblau — daher die
+> 33 Stufen. **„Überall" ist damit keine Bauaufgabe, sondern eine Frage nach dem
+> Untergrund.** Vorgelegt am 2026-09-09; **seine Antwort: erst anschauen** (`ae01`
+> Kapsel vorher/nachher, `ae06` gegen `ae07` unsere Kapsel gegen sein Vorbild).
+> Gut möglich, dass die zwei Formfehler oben der ganze Grund waren — es wäre das
+> dritte Mal.
+
+**5. Der Chip „3 Posts ohne Bezirk" fällt ersatzlos weg, und das ist eine AUSLEGUNG.**
+Er stand für Ians Entscheidung 31 — *eine Ansicht darf nicht **still** Posts
+verschlucken.* Das Wort, auf das es ankommt, ist *still*: Gemeint war eine LISTE, in
+der etwas fehlt. Seit 19i gibt es in der Kartenansicht keine Liste mehr, aus der etwas
+fehlen könnte; die Karte zeigt Orte, und ein Post ohne Ort hat dort keinen.
+Vollständig sind Stapel und Liste, beide einen Tipp entfernt. **Gehört ihm trotzdem
+vorgelegt — es ist meine Auslegung, nicht seine Entscheidung.**
+
+**6. Das ✕ ist mit dem Blatt weggefallen, und sein GRUND besteht weiter.** Entscheidung
+49 (zweiter Tipp hebt die Auswahl auf) hatte es ausdrücklich *„zusätzlich und nicht
+ersatzweise"* daneben, weil ein zweiter Tipp auf einen 14 × 11 px großen Bezirk (die
+Josefstadt) nicht zuverlässig zu treffen ist. **Der Ort dafür ist weg, die Schwierigkeit
+nicht.** Wenn ihn ein klebender Bezirk stört, ist der Ersatz ein kleines ✕ neben dem
+Umschalter — eine Zeile. Vermerkt statt still hingenommen.
+
+**7. Ohne Blatt zeigt die Karte MEHR Umland, und das ist Geometrie, kein Fehler.**
+Wien ist breit, ein iPhone-Schirm ist hoch. Solange das Blatt die untere Hälfte deckte,
+war der freie Streifen breiter als hoch und Wien füllte ihn; jetzt füllt Wien die
+Breite (gemessen: bis an beide Kanten) und oben wie unten bleibt Niederösterreich
+stehen. **Vor dem Reparieren die Regel nachrechnen, die das Bild erzeugt** — die
+19e-2-Lehre, zum zweiten Mal an derselben Karte. Wer es enger will, muss Wien oben und
+unten beschneiden, und das ist eine Entscheidung, keine Korrektur.
+
+**8. `bezirkStapel` ist ein ZUSTAND und keine Route — wegen harter Regel 50.**
+`/bezirk/[plz]` wäre der erste Gedanke und trüge die Auswahl in der Adresse; damit
+stünde sie zweimal da, einmal in `filter.bezirk` und einmal im Pfad. *Was auf der Karte
+gewählt ist, IST der Bezirksfilter — es gibt keinen zweiten Zustand daneben.* Nebenbei
+erspart es `generateStaticParams` (harte Regel 11). Der Zustand fällt beim
+Ansichtswechsel zu, der Bezirksfilter überlebt ihn.
+
+**9. `SsBack` hat ein optionales `onPress` bekommen, und harte Regel 5 bleibt heil.**
+Nicht jedes „zurück" ist ein Screen-Wechsel: Auf dem Bezirks-Vollbild führte
+`zurueckOderFeed()` aus der Karte hinaus statt eine Ebene zurück. **Wer nichts angibt,
+bekommt weiter `zurueckOderFeed()`** — es gibt keinen zweiten Zurück-Knopf, nur eine
+Stelle, die ausdrücklich sagt, dass ihr Rückweg ein anderer ist.
+
+**Was geprüft ist:** Vollbild auf 390 × 844 und 360 × 600 im Browser (kein waagrechter
+Überlauf, Zurück-Knopf 44 × 44 und getroffen, auf dem Screen nur *Zurück · Weg · Bin
+dabei* plus die vier Tabs) und auf iOS (`ae08`, SafeArea unter der Dynamic Island).
+Der Weg Karte → Bezirk → Blase → Vollbild → zurück ist mit echten Zeigergesten
+durchgespielt, **mit Bewegung zwischen `down` und `up`** (Phase-19e-1-Falle). Der
+leere Stapel im Vollbild ist durch echtes Wischen erzeugt worden, nicht behauptet
+(`ae04`) — die 18d-Lehre.
+
+**Was NICHT geprüft ist:** der Tipp am Simulator. `osascript` verweigert den
+Hilfszugriff (Fehler −25211), und die Berechtigung kann nur Ian geben
+(Systemeinstellungen → Datenschutz → Bedienungshilfen). Gemessen wurde deshalb am
+Simulator nur, was ohne Berührung erreichbar ist; alles Interaktive im Browser, wo die
+Geometrie laut Phase 19e-2 dieselbe ist.
+
+**Nebenbefund, vorbestehend und nicht behoben:** Wischt man im Browser die letzte Karte
+weg, markiert der Zug den Text, der darunter auftaucht, blau. `WischKarte` hat
+`userSelect: 'none'`, die Auswahl entsteht erst, wenn die Karte mitten im Zug
+verschwindet. Trifft den Startbildschirm genauso und nur im Browser.
 
 ---
 

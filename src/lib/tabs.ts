@@ -46,8 +46,91 @@ import { spacing } from '@/theme';
  */
 export const TAB_KAPSEL_HOEHE = 56;
 
-/** Seitlicher Abstand — dasselbe Maß wie der Seitenrand jedes Screens. */
+/**
+ * Seitlicher Abstand — dasselbe Maß wie der Seitenrand jedes Screens.
+ *
+ * ⚠️ **Er muss als `start`/`end` gesetzt werden, nicht als `left`/`right`** — siehe
+ * `TAB_KAPSEL_SEITE_KANTEN` gleich darunter. Das war von Phase 19e-2 bis 19i der
+ * Grund, warum die Kapsel auf iOS an beiden Rändern klebte.
+ */
 export const TAB_KAPSEL_SEITE = spacing.lg;
+
+/**
+ * Der seitliche Abstand als Style — **und der Name der Eigenschaften ist hier die
+ * ganze Nachricht** (Phase 19i, 2026-09-09).
+ *
+ * ── Der Fehler, den das behebt ────────────────────────────────────────────────
+ * Die Tab-Leiste bringt in `BottomTabBar.js` einen eigenen Style mit:
+ *
+ *     bottom: { start: 0, end: 0, bottom: 0, elevation: 8 }
+ *
+ * Bis Phase 19i stand hier `left: 16, right: 16`. Im Style-Array kam das SPÄTER,
+ * also schien es zu gewinnen — **aber `start`/`end` und `left`/`right` sind in
+ * Yoga zwei verschiedene Eigenschaften, und die richtungsabhängige gewinnt gegen
+ * die absolute, unabhängig von der Reihenfolge.** Auf iOS lag die Kapsel damit an
+ * `start: 0` / `end: 0`: über die volle Bildschirmbreite, an beiden Rändern
+ * klebend.
+ *
+ * ── Warum es vier Wochen niemand gesehen hat ──────────────────────────────────
+ * **Auf Web stimmte es.** `react-native-web` macht aus `start`/`end` und
+ * `left`/`right` dieselben CSS-Eigenschaften, dort gewinnt die spätere Angabe —
+ * und der Beleg `z01-web-kapsel-360.png` zeigte brav „x = 16, 328 breit". Geprüft
+ * wurde also genau die Plattform, auf der der Fehler nicht auftritt.
+ *
+ * ── Warum das mehr ist als ein Schönheitsfehler ───────────────────────────────
+ * Harte Regel 62 sagt wörtlich: *Glas braucht RAND, nicht nur Hintergrund. Eine
+ * Fläche, die an drei Kanten am Schirm klebt, sieht aus wie eine getönte Leiste;
+ * erst wenn Inhalt daneben UND darunter durchläuft, sieht man, dass sie bricht.*
+ * Genau diese Bedingung war auf dem einzigen Gerät, das echtes Glas zeichnet, nie
+ * erfüllt. **Ians Urteil „das ist immer noch kein richtiges Liquid Glass"
+ * (Entscheidung 68) hat hier eine seiner Ursachen** — zum dritten Mal lag es an
+ * der Form und nicht am Effekt.
+ *
+ * Gemessen auf seinem iPhone (`IMG_0713.PNG`, 393 × 852 pt) und am Simulator
+ * (402 × 874): Kapselbreite = Bildschirmbreite, Seitenrand **0** statt 16.
+ */
+export const TAB_KAPSEL_SEITE_KANTEN = {
+  start: TAB_KAPSEL_SEITE,
+  end: TAB_KAPSEL_SEITE,
+} as const;
+
+/** Höhe des Symbol-Rahmens in `BottomTabItem.js` (`ICON_SIZE_TALL`). */
+export const TAB_SYMBOL_RAHMEN = 28;
+/** Innenabstand eines Tab-Eintrags in `BottomTabItem.js` (`tabVerticalUiKit`). */
+export const TAB_EINTRAG_POLSTER = 5;
+
+/**
+ * Wie weit das Tab-Symbol nach unten geschoben wird, damit es in der Kapsel
+ * **mittig** sitzt — Ians Entscheidung 67 (Phase 19i).
+ *
+ * ── Der Fehler, den das behebt ────────────────────────────────────────────────
+ * Seit Phase 19h trägt die Kapsel keine Wörter mehr (`tabBarShowLabel: false`).
+ * Der PLATZ für das Wort wird aber weiter gerechnet: Ein Tab-Eintrag ist in
+ * `BottomTabItem.js` eine Spalte mit `justifyContent: 'flex-start'` und
+ * `padding: 5` — Symbol oben, Beschriftung darunter. Fällt die Beschriftung weg,
+ * bleibt das Symbol oben kleben und der leere Platz steht darunter.
+ *
+ * ── Die Zahl ist gerechnet UND gemessen, und beides stimmt überein ────────────
+ * In einer 56 pt hohen Kapsel sitzt die Symbolmitte bei
+ *
+ *     5 + 28/2 = 19        statt bei        56/2 = 28
+ *
+ * also **9 pt zu hoch** — und genau 9,0 pt sind auf Ians Screenshot nachgemessen
+ * (`IMG_0713.PNG`: Symbolmitte y = 2372,5 px, Kapselmitte y = 2399,5 px, bei 3×).
+ * Dass Rechnung und Messung sich decken, ist der Grund, warum hier eine Formel
+ * stehen darf und nicht bloß eine Zahl.
+ *
+ * ── Warum ein Versatz und nicht `justifyContent: 'center'` ────────────────────
+ * Weil man an die Stelle nicht herankommt: `tabBarItemStyle` landet auf dem
+ * ÄUSSEREN View, das `justifyContent: 'flex-start'` sitzt auf dem Knopf darin,
+ * und der bekommt sein `flex: 1` von der Leiste selbst. Ein `height`/`flex` am
+ * Symbol-Rahmen (`tabBarIconStyle`) wäre der andere naheliegende Weg und ist
+ * falsch: **Die Zahl am Anfragen-Tab hängt mit `top: -3` an genau diesem Rahmen**
+ * und wäre nach oben aus der Kapsel gewandert. Ein `marginTop` verschiebt Symbol
+ * und Zahl gemeinsam — das ist der einzige Griff, der beide zusammenhält.
+ */
+export const TAB_SYMBOL_VERSATZ =
+  (TAB_KAPSEL_HOEHE - 2 * TAB_EINTRAG_POLSTER - TAB_SYMBOL_RAHMEN) / 2;
 
 /**
  * Wie weit die Kapsel über dem unteren Rand schwebt.

@@ -4,7 +4,17 @@
 
 ---
 
-## 📱 Die neue Fassung ist auf deinem iPhone (08.09.2026, nachts)
+## 🆕 Zuletzt gebaut: 09.09.2026 vormittags — Phase 19i
+
+**Der Bezirk ist jetzt ein Vollbild, die Tab-Symbole sitzen mittig, und beim Glas habe
+ich zwei echte Fehler gefunden.** Alles steht in **`NACH_DEM_CLEAR.md`** — dort mit
+den Bildern, die du dir anschauen sollst (`ae01`, `ae06` gegen `ae07`).
+
+⚠️ **Auf deinem Handy ist das noch NICHT** — dafür musst du es einmal anstecken.
+
+---
+
+## 📱 Die Fassung vom 08.09.2026 ist auf deinem iPhone
 
 **Frisch installiert und startbereit** — `SimplySocial`, wieder eine Release-Fassung:
 läuft ohne Kabel und ohne dass der Mac an ist. Die 7 Tage fangen von vorne an.
