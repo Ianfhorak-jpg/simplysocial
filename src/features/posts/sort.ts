@@ -1,4 +1,5 @@
-import { bezirksAbstandMeter } from '@/lib/karte-geo';
+import { abstandVonOrtMeter, bezirksAbstandMeter } from '@/lib/karte-geo';
+import { STANDORT_ROLLE, type MeinOrt } from './standort';
 import type { Post } from '@/types/models';
 
 /**
@@ -80,8 +81,19 @@ import type { Post } from '@/types/models';
 export interface SortKontext {
   /** Jetzt. Wird durchgereicht statt in der Funktion geholt, damit sie testbar bleibt. */
   jetzt: Date;
-  /** Der Bezirk des angemeldeten Nutzers, z. B. "1070". */
+  /** Der Bezirk des angemeldeten Nutzers, z. B. "1070". Die GRUNDLAGE (Entscheidung 61). */
   meinBezirk: string;
+  /**
+   * Wo der Betrachter gerade wirklich steht — **Phase 19h-2**, `null`, wenn es
+   * keine Erlaubnis, keine Messung oder keinen Schalter gibt.
+   *
+   * **Pflichtfeld und nicht optional, und das ist Absicht.** Ein `meinOrt?:` hätte
+   * alle drei Aufrufstellen stumm durchlaufen lassen — dieselbe Falle wie
+   * `ChatThread.postId` (Phase 16) und `Post.district` (Phase 12), und ausgerechnet
+   * eine dieser Stellen hat in 19h-1 vier Wochen lang den falschen Bezirk
+   * durchgereicht, weil niemand hinsehen musste. So schreibt `tsc` die Arbeitsliste.
+   */
+  meinOrt: MeinOrt;
 }
 
 /**
@@ -149,9 +161,22 @@ export function heuteZuerst(a: Post, b: Post, jetzt: Date): number {
  * gleich weit weg und fallen an die zweite Stufe — das ist die Stelle, an der
  * Entscheidung 1 weiterlebt.
  */
-export function entfernungMeter(post: Post, meinBezirk: string): number | null {
+export function entfernungMeter(post: Post, ctx: SortKontext): number | null {
   if (post.district === null) return null;
-  return bezirksAbstandMeter(meinBezirk, post.district);
+
+  // Phase 19h-2: Wenn ein gemessener Ort da ist, wird ab IHM gemessen statt ab der
+  // eigenen Bezirksmitte. Der Zielpunkt bleibt in beiden Fällen die Bezirksmitte des
+  // Posts — ein Post hat keine Koordinate (harte Regel 47). Deshalb bleiben alle
+  // Posts eines Bezirks auch mit GPS gleich weit weg, und die zweite Stufe unten
+  // (Entscheidung 1) greift unverändert.
+  //
+  // Welche Rolle der Standort überhaupt spielen darf, steht in `standort.ts` und
+  // nicht hier: `'ausgangspunkt'` ist die einzige Rolle, die diese Rechnung ändert.
+  if (STANDORT_ROLLE === 'ausgangspunkt' && ctx.meinOrt) {
+    return abstandVonOrtMeter(ctx.meinOrt, post.district);
+  }
+
+  return bezirksAbstandMeter(ctx.meinBezirk, post.district);
 }
 
 /**
@@ -161,9 +186,9 @@ export function entfernungMeter(post: Post, meinBezirk: string): number | null {
  * untereinander unentschieden (0), damit die nächste Stufe greift und sie nicht in
  * einer zufälligen Reihenfolge stehen bleiben.
  */
-export function nachEntfernung(a: Post, b: Post, meinBezirk: string): number {
-  const ea = entfernungMeter(a, meinBezirk);
-  const eb = entfernungMeter(b, meinBezirk);
+export function nachEntfernung(a: Post, b: Post, ctx: SortKontext): number {
+  const ea = entfernungMeter(a, ctx);
+  const eb = entfernungMeter(b, ctx);
   if (ea === null && eb === null) return 0;
   if (ea === null) return OHNE_BEZIRK_POSITION === 'nach-vorn' ? -1 : 1;
   if (eb === null) return OHNE_BEZIRK_POSITION === 'nach-vorn' ? 1 : -1;
@@ -185,7 +210,7 @@ export function nachEntfernung(a: Post, b: Post, meinBezirk: string): number {
  * @returns negativ = a steht vor b · 0 = unentschieden · positiv = a steht nach b
  */
 export function vergleichePosts(a: Post, b: Post, ctx: SortKontext): number {
-  const weite = nachEntfernung(a, b, ctx.meinBezirk);
+  const weite = nachEntfernung(a, b, ctx);
   if (weite !== 0) return weite;
   return nachErstellung(a, b);
 }

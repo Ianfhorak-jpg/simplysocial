@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import * as Location from 'expo-location';
+import { useEffect, useMemo } from 'react';
 
-import { CURRENT_USER_ID, aendern, neueId, useSlice } from '../store';
+import { CURRENT_USER_ID, aendern, getState, neueId, useSlice } from '../store';
 import { istMitglied } from '../groups/gruppe';
 import { istBlockiert } from '../safety/hooks';
 import { useUserMap } from '../social/hooks';
@@ -16,6 +17,7 @@ import {
 } from './filter';
 import { istAktuell } from './lifecycle';
 import { gehoertAufsProfil } from './profil';
+import { STANDORT_FRISCHE_MS, type MeinOrt, type StandortStand } from './standort';
 import { vergleichePosts } from './sort';
 import { gehoertInDenStapel, type StapelKontext } from './wisch';
 
@@ -177,6 +179,19 @@ export function useFeed(filter: FeedFilter): FeedEintrag[] {
   const gruppen = useSlice('groups');
   const userMap = useUserMap();
   const ich = userMap.get(CURRENT_USER_ID);
+  /** Phase 19h-2. Ist `null`, solange niemand den Schalter umgelegt hat. */
+  const meinOrt = useMeinOrt();
+
+  // Neu messen, wenn die letzte Messung alt ist — **hier und nicht in einem
+  // Zeitgeber**: Ein Intervall misst auch, während niemand hinschaut, und kostet
+  // Strom für eine Antwort, die keiner liest. Der Feed ist die einzige Stelle, an
+  // der der Ort etwas BEWIRKT, also fragt er selbst nach. `standortAuffrischen`
+  // hält sich an `STANDORT_FRISCHE_MS` und tut meistens gar nichts — deshalb ist
+  // die leere Abhängigkeitsliste hier richtig und nicht faul: Der Effekt soll beim
+  // Öffnen des Feeds laufen, nicht bei jeder Filteränderung.
+  useEffect(() => {
+    void standortAuffrischen();
+  }, []);
 
   return useMemo(() => {
     if (!ich) return [];
@@ -206,12 +221,12 @@ export function useFeed(filter: FeedFilter): FeedEintrag[] {
     // Kopie sortieren, nicht das Original: `sort` verändert das Array an Ort und
     // Stelle, und `posts` gehört dem Speicher.
     return eintraege.sort((a, b) =>
-      vergleichePosts(a.post, b.post, { jetzt, meinBezirk: ich.district }),
+      vergleichePosts(a.post, b.post, { jetzt, meinBezirk: ich.district, meinOrt }),
     );
     // `filter` ist im Screen ein `useMemo` über seine sechs Werte — es als Ganzes
     // aufzuführen ist deshalb dasselbe wie sechs einzelne Einträge, nur ohne die
     // Gelegenheit, beim siebten Filter einen zu vergessen.
-  }, [posts, gruppen, userMap, ich, filter]);
+  }, [posts, gruppen, userMap, ich, filter, meinOrt]);
 }
 
 /**
@@ -415,6 +430,7 @@ export function useProfilPosts(userId: string | undefined): ProfilPosts {
   const posts = useSlice('posts');
   const gruppen = useSlice('groups');
   const userMap = useUserMap();
+  const meinOrt = useMeinOrt();
 
   return useMemo(() => {
     const leer = { eintraege: [], verborgen: { follower: 0, gruppe: 0 } };
@@ -460,11 +476,13 @@ export function useProfilPosts(userId: string | undefined): ProfilPosts {
     // schaut. **Ein ungenutzter Parameter ist einer, den nie jemand geprüft hat.**
     return {
       eintraege: eintraege.sort((a, b) =>
-        vergleichePosts(a.post, b.post, { jetzt, meinBezirk: ich?.district ?? '' }),
+        // `meinOrt` gehört hier genauso dazu wie im Feed: Sortiert wird für den, der
+        // SCHAUT — das ist die Berichtigung aus 19h-1, eine Ebene weitergedacht.
+        vergleichePosts(a.post, b.post, { jetzt, meinBezirk: ich?.district ?? '', meinOrt }),
       ),
       verborgen,
     };
-  }, [posts, gruppen, userMap, userId]);
+  }, [posts, gruppen, userMap, userId, meinOrt]);
 }
 
 /**
@@ -486,6 +504,7 @@ export function useProfilPosts(userId: string | undefined): ProfilPosts {
 export function useGruppenPosts(gruppe: Group | undefined): FeedEintrag[] {
   const posts = useSlice('posts');
   const userMap = useUserMap();
+  const meinOrt = useMeinOrt();
 
   return useMemo(() => {
     if (!gruppe || !istMitglied(gruppe, CURRENT_USER_ID)) return [];
@@ -507,9 +526,9 @@ export function useGruppenPosts(gruppe: Group | undefined): FeedEintrag[] {
     return eintraege.sort((a, b) =>
       // `meinBezirk` ist am Menschen Pflicht; der Ersatz greift nur, wenn der
       // eigene Nutzer fehlt — und dann ist an den Daten grundlegend etwas kaputt.
-      vergleichePosts(a.post, b.post, { jetzt, meinBezirk: ich?.district ?? '' }),
+      vergleichePosts(a.post, b.post, { jetzt, meinBezirk: ich?.district ?? '', meinOrt }),
     );
-  }, [posts, userMap, gruppe]);
+  }, [posts, userMap, gruppe, meinOrt]);
 }
 
 // ── Phase 11: der Wischstapel ────────────────────────────────────────────────
@@ -564,4 +583,109 @@ export function wegwischen(postId: string): void {
 /** "Rückgängig" — die Karte kommt an ihren Platz im Stapel zurück. */
 export function wischRueckgaengig(postId: string): void {
   aendern((alt) => ({ weggewischt: alt.weggewischt.filter((id) => id !== postId) }));
+}
+
+// ── Phase 19h-2: der Standort ────────────────────────────────────────────────
+//
+// Die REGEL steht in `standort.ts`, hier steht nur die Ausführung — dieselbe
+// Trennung wie zwischen `wisch.ts` und `wegwischen()` acht Zeilen weiter oben.
+//
+// **Eine Datei, kein Plattform-Zweig, und ein GEWÖHNLICHER Import.** `expo-location`
+// bringt für den Browser eine eigene Umsetzung mit (`navigator.geolocation`); anders
+// als bei `SsKarte` (harte Regel 52) sind es nicht zwei Bibliotheken, sondern eine
+// mit zwei Böden, und anders als bei `SsGlas` (Regel 61) wird beim Laden kein
+// `requireNativeViewManager` gerufen — es gibt keine View, nur Funktionen. Damit
+// fällt beide Male der Grund für eine Plattform-Endung weg.
+//
+// ⚠️ Hier stand zuerst ein `await import('expo-location')`, als Vorsicht gegen genau
+// den Ladezeitpunkt, den es hier gar nicht gibt. Der Preis war real: Der Dev-Server
+// bündelt lazy, also wurde daraus ein NACHGELADENER Brocken — und der braucht Metro
+// ausgerechnet in dem Moment, in dem jemand den Schalter drückt. Beim Prüfen ist
+// genau das passiert. **Eine Vorsichtsmaßnahme gegen ein Problem, das man nicht hat,
+// ist keine Vorsicht, sondern eine zusätzliche Fehlerquelle.**
+
+/**
+ * Der Standort, wie der Rest der App ihn sieht.
+ *
+ * Gibt **nur** den Ort zurück, nicht den Zustand — wer sortiert, soll nicht wissen
+ * können, ob jemand die Erlaubnis verweigert hat. Der Schalter in den Einstellungen
+ * nimmt `useStandortStand()` eine Zeile weiter unten.
+ */
+export function useMeinOrt(): MeinOrt {
+  return useSlice('standort').ort;
+}
+
+/** Für den Schalter in den Einstellungen — der braucht den ganzen Stand. */
+export function useStandortStand(): StandortStand {
+  return useSlice('standort');
+}
+
+/**
+ * Anschalten: fragen, messen, eintragen.
+ *
+ * ── Warum hier zwei Aufrufe stehen und nicht einer ───────────────────────────
+ * `requestForegroundPermissionsAsync()` zeigt den Systemdialog **nur beim ersten
+ * Mal**. Danach antwortet es sofort mit dem gemerkten Ergebnis, ohne dass etwas zu
+ * sehen ist. Ein Schalter, der beim zweiten Umlegen scheinbar nichts tut, ist genau
+ * der Fall, für den `STANDORT_FRAGE = 'einstellung'` gebaut ist: Der Screen zeigt
+ * über `standortFolgen('verweigert')`, dass der Weg zurück über die Systemeinstel-
+ * lungen führt — die App kann ihn nicht selbst gehen.
+ */
+export async function standortAnschalten(): Promise<void> {
+  if (!(await Location.hasServicesEnabledAsync().catch(() => true))) {
+    aendern(() => ({ standort: { zustand: 'unmoeglich', ort: null, gemessenUm: null } }));
+    return;
+  }
+
+  const { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') {
+    aendern(() => ({ standort: { zustand: 'verweigert', ort: null, gemessenUm: null } }));
+    return;
+  }
+
+  // `Balanced` und nicht `Highest`: Die Frage lautet „in welcher Ecke von Wien bin
+  // ich?", und die beantworten hundert Meter genauso gut wie fünf. `Highest` weckt
+  // dafür das GPS auf und kostet spürbar Strom — für eine Genauigkeit, die in einer
+  // Reihenfolge ohnehin untergeht (siehe die Bezirksmitten in `lib/karte-geo.ts`).
+  const messung = await Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.Balanced,
+  }).catch(() => null);
+
+  if (!messung) {
+    aendern(() => ({ standort: { zustand: 'unmoeglich', ort: null, gemessenUm: null } }));
+    return;
+  }
+
+  aendern(() => ({
+    standort: {
+      zustand: 'an',
+      ort: { latitude: messung.coords.latitude, longitude: messung.coords.longitude },
+      gemessenUm: Date.now(),
+    },
+  }));
+}
+
+/**
+ * Ausschalten.
+ *
+ * Der Ort wird dabei **gelöscht**, nicht nur ignoriert — das ist der sichtbare Teil
+ * der Zusage aus `standort.ts`. Die iOS-Erlaubnis bleibt bestehen; sie zurückzunehmen
+ * kann nur die Person selbst, und das ist richtig so.
+ */
+export function standortAusschalten(): void {
+  aendern(() => ({ standort: { zustand: 'aus', ort: null, gemessenUm: null } }));
+}
+
+/**
+ * Neu messen, wenn die letzte Messung älter ist als `STANDORT_FRISCHE_MS`.
+ *
+ * Aufgerufen wird das dort, wo der Ort WIRKT (im Feed), und nicht in einem
+ * Zeitgeber: Ein Intervall würde auch messen, während die App gar nicht angeschaut
+ * wird — Strom für eine Antwort, die niemand liest.
+ */
+export async function standortAuffrischen(): Promise<void> {
+  const stand = getState().standort;
+  if (stand.zustand !== 'an') return;
+  if (stand.gemessenUm !== null && Date.now() - stand.gemessenUm < STANDORT_FRISCHE_MS) return;
+  await standortAnschalten();
 }

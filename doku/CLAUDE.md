@@ -35,6 +35,61 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 19h-2 ist fertig (2026-09-09): der Standort — und das ist die erste Phase
+seit 19d-1 mit einem neuen Native-Baustein** (`expo-location@~57.0.16`). Ein Schalter in
+`/einstellungen`, direkt unter dem Heimatbezirk: Ist er an, misst der Feed ab dem
+gemessenen Ort statt ab der eigenen Bezirksmitte. Zwei neue Entscheidungen von Ian (69
+und 70), Belege `af01`–`af04`. Sieben Dinge sind wichtiger als der Schalter:
+
+1. **Der Zielpunkt bleibt die Bezirksmitte — und genau das rettet Entscheidung 1.**
+   Ein Post trägt seit Phase 2 nur `district` (harte Regel 47), genauer wird also nur,
+   WO ICH STEHE. Weil der Zielpunkt gleich bleibt, haben **alle Posts eines Bezirks auch
+   mit GPS exakt dieselbe Entfernung** — der Gleichstand bleibt, und die zweite Stufe
+   („bei gleicher Entfernung das Neueste") greift unverändert. Gemessen: die vier
+   1070er Posts liegen alle auf 6,45 km. **Läge am Post eine Koordinate, wäre
+   Entscheidung 1 still verschwunden.**
+2. **`meinOrt` ist PFLICHTFELD in `SortKontext`, und das war die halbe Arbeit.** Ein
+   `meinOrt?:` hätte alle drei Aufrufstellen stumm durchlaufen lassen — dieselbe Falle
+   wie `ChatThread.postId` (16) und `Post.district` (12). Ausgerechnet eine der drei
+   (`useProfilPosts`) hat in 19h-1 vier Wochen lang den falschen Bezirk durchgereicht,
+   **weil niemand hinsehen musste.** So hat `tsc` die Arbeitsliste geschrieben.
+3. **Belegt durch Umstellen UND Zurückstellen.** Aus 1070: `1070 ×4 → 1060 → 1040 →
+   1030 → 1020 → 1170 → 1190 → 1100 → 1140 ×2 → 1220 ×2`. Mit Standort am Donauturm:
+   `1020 → 1030 → 1190 → 1220 ×2 → 1040 → 1070 ×4 → 1060 → 1170 → 1100 → 1140 ×2`.
+   Beide gegen die gerechneten Kilometer gehalten, beide monoton. **Nach dem Ausschalten
+   steht wieder Zeichen für Zeichen die erste Folge da** — das ist der Beleg, dass der
+   Ort gelöscht und nicht nur ignoriert wird.
+4. **Die bekannte Schwäche zeigt sich an einem neuen Ort.** Vom Donauturm aus steht
+   **1220 nicht oben**, obwohl man im 22. Bezirk steht: Der Beschriftungspunkt der
+   Donaustadt liegt 5,95 km weiter östlich. **Ein genauerer Ausgangspunkt macht einen
+   ungenauen Zielpunkt nicht besser — er verschiebt nur, wo die Ungenauigkeit sitzt.**
+   Angenommen, weil die Zahl weiterhin nirgends steht.
+5. **Der dynamische Import war Vorsicht gegen ein Problem, das es nicht gibt.** Zuerst
+   stand da `await import('expo-location')`, nach dem Muster von harter Regel 61 — die
+   begründet die Trennung aber mit einem `requireNativeViewManager` beim Laden, und
+   `expo-location` hat **keine View, nur Funktionen**. Der Preis war real: Der
+   Dev-Server bündelt lazy, also wurde daraus ein nachgeladener Brocken, der Metro
+   ausgerechnet beim Drücken des Schalters braucht — **und genau das ist beim Prüfen
+   passiert.** Jetzt ein gewöhnlicher Import.
+6. **Der Prebuild hat die Signatur-Zeilen weggeworfen, wie es in der Fallen-Liste
+   steht** — die Notiz vom 2026-09-07 hat sich nach zwei Tagen bezahlt gemacht. Neu:
+   `pod install` verlangt inzwischen **`cmake`**, und der Aufruf meldete den Fehler mit
+   **EXIT 0** (dieselbe Familie wie „`expo run:ios` gibt EXIT 0 zurück").
+7. **Web-Bündel +17.972 B (+1,21 %).** `tsc` sauber; `expo lint` 83 Probleme vorher wie
+   nachher, alle vorbestehend.
+
+⚠️ **Nicht geprüft: der echte Erlaubnis-Dialog von iOS.** Im Browser ist genau die
+Betriebssystem-Grenze nachgestellt (`navigator.permissions.query` und
+`navigator.geolocation.getCurrentPosition` überschrieben) und **sonst nichts** — alles
+darüber, `expo-location` eingeschlossen, lief echt. Wie sich der Dialog am Gerät anfühlt,
+gehört in den nächsten Durchgang.
+
+✅ **Der Hilfszugriff für den Simulator ist inzwischen ERLAUBT** (Ian hat das Häkchen
+gesetzt) — der 19i-Blocker ist weg. Was am 2026-09-09 abends stattdessen im Weg stand:
+**Ians Bildschirm schlief.** Ohne wachen Bildschirm hat die Simulator-App gar kein
+Fenster (`count of windows` = 0), und ohne Fenster gibt es keine Stelle zum Antippen.
+Das Menü ließ sich lesen — daran erkennt man, dass es NICHT an der Berechtigung liegt.
+
 ✅ **Phase 19i ist fertig (2026-09-09): Der Bezirk als Vollbild — und zwei echte
 Ursachen für „das ist kein Liquid Glass".** Ians fünf Punkte vom Durchgang am eigenen
 Handy (Entscheidungen 65–68), gebaut am Simulator und im Browser, **ohne neuen Build**.
@@ -1172,8 +1227,10 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    Vollbild, Tab-Symbole mittig, zwei Glas-Ursachen)~~ ✅ *2026-09-09, ohne neuen
    Build* — **die Kapsel klebte auf iOS seit 19e-2 an beiden Rändern, und das war
    eine der Ursachen für „das ist kein Liquid Glass"** ·
-   **19h-2** „Standort" (`expo-location`, braucht einen Build) ← *hier geht es weiter,
-   wahlweise gleich Phase 20.3*. **Von den zwei Kartenfehlern war einer keiner** (der 14.
+   ~~**19h-2** „Standort" (`expo-location`, mit neuem Build)~~ ✅ *2026-09-09 — der
+   Feed misst ab dem gemessenen Ort; **der Zielpunkt bleibt die Bezirksmitte, und
+   deshalb überlebt Entscheidung 1**.* ← *hier geht es weiter: **Phase 20.3
+   (Anmelden)**, und das braucht Ians Konten*. **Von den zwei Kartenfehlern war einer keiner** (der 14.
    Bezirk stimmt, gegen die amtlichen Daten nachgerechnet) und einer gehörte einer
    älteren Fassung (der Filter-Knopf, erledigt durch 19f).
 10. **Backend** (Phase 20) ← *hier sind wir* — ~~Schema (20.1)~~ ✅ · ~~Policies
@@ -1786,6 +1843,24 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    wie am Start, nur ohne Bedienung. Der Zustand heißt `bezirkStapel` und ist bewusst
    **keine Route**: `/bezirk/[plz]` trüge die Auswahl in der Adresse, und dann stünde
    sie zweimal da (harte Regel 50).
+
+68. **Was der Standort darf, steht in `features/posts/standort.ts` und nirgends
+   sonst.** *(Phase 19h-2, Ians Entscheidungen 69 und 70.)* Dieselbe Bauart wie
+   `safety/block.ts` (17), `groups/gruppe.ts` (32) und `requests/kollision.ts` (46):
+   Screens lesen `STANDORT_ROLLE` und `STANDORT_FRAGE` nie, die Sätze kommen aus
+   `standortFolgen()`. **Der Unterschied zu den anderen dreien ist, was die Datei
+   verspricht** — harte Regel 47 in ihrer schärfsten Fassung, und in einer Form, die
+   man nachprüfen kann: Der Standort geht **ausschließlich** in eine Reihenfolge ein,
+   steht an keinem Post, in keinem Profil, in keinem Chat, wird **nicht gespeichert**
+   (er liegt in der Sitzungs-Angabe `standort` im Speicher, wie `weggewischt`, und ist
+   beim nächsten Start weg) und wird **nirgends angezeigt, auch nicht der Person
+   selbst als Zahl**. Eine angezeigte Entfernung wäre ein Versprechen über
+   Genauigkeit, das die Daten nicht abgeben können (siehe die Bezirksmitten in
+   `lib/karte-geo.ts`) — und der erste Schritt zu „Lea ist 400 m weg".
+   **Wer hier etwas ergänzt, das den Standort ANZEIGT oder SPEICHERT, hebt
+   Entscheidung 61 und harte Regel 47 zugleich auf. Nicht ohne Rückfrage.**
+   Das gilt ausdrücklich auch für Phase 20.4: Wo aus `weggewischt` später eine
+   Sammlung am Nutzer wird, muss `standort` eine Zeile bleiben.
 
 53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
    rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und
@@ -2417,6 +2492,40 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   erst `terminate` + `launch` brachte die 16 pt. Dieselbe Familie wie „Fast Refresh
   behält `useState`" (Phase 19d) — **wer eine Layout-Konstante ändert, startet die App
   neu, bevor er misst.**
+- **`pod install` verlangt inzwischen `cmake` — und meldet den Fehlschlag mit EXIT 0.**
+  (Phase 19h-2, 2026-09-09) `hermes-engine.podspec` ruft
+  `Pod::Executable::which!('cmake')`; ohne cmake bricht es mit *„Unable to locate the
+  executable cmake"* ab. `npx expo prebuild` schluckt das zu einer Warnzeile und gibt
+  **0 zurück** — dieselbe Familie wie „`expo run:ios` gibt EXIT 0 zurück, auch wenn
+  `xcodebuild` gescheitert ist". **Der belastbare Test nach einem Prebuild ist deshalb
+  nicht der Rückgabewert, sondern `ios/Podfile.lock`**: Sie ist nach einem
+  gescheiterten Lauf schlicht WEG, und der neue Baustein steht nicht drin.
+  Behoben mit `brew install cmake`.
+- **Ein `expo prebuild` OHNE `--clean` wirft die Signatur-Zeilen genauso weg.**
+  (Phase 19h-2) Die Notiz vom 2026-09-07 nennt nur `--clean`; es trifft auch den
+  gewöhnlichen Lauf. `DEVELOPMENT_TEAM` und `CODE_SIGN_STYLE` waren beide Male aus
+  `project.pbxproj` verschwunden. **Vor jedem Prebuild eine Kopie der Datei anlegen**
+  — für einen Simulator-Build fällt es nicht auf (der braucht keine Signatur), und
+  genau deshalb merkt man es erst beim nächsten GERÄTEbuild, also Tage später.
+  Und: Der Erlaubnis-Text aus einem Config-Plugin (`locationWhenInUsePermission`)
+  entsteht **nur** beim Prebuild — wer ihn nur in `app.json` einträgt und nicht
+  prebuildet, hat ihn nirgends. Geprüft wird er im GEBAUTEN Bundle
+  (`PlistBuddy -c Print :NSLocation… SimplySocial.app/Info.plist`), nicht in `app.json`.
+- **Ein `await import(...)` wird im Dev-Server zu einem nachgeladenen Brocken.**
+  (Phase 19h-2) Metro bündelt mit `lazy=true`, also holt der dynamische Import beim
+  Klick eine neue Datei vom Server — und braucht Metro genau in dem Moment. Beim
+  Prüfen war Metro unter der Last eines parallel laufenden Xcode-Builds kurz weg, die
+  Seite lud neu, **und damit war der ganze Prüfzustand zurückgesetzt** (Speicher,
+  nachgestellter Standort). Das sah nach einem kaputten Schalter aus. Ein dynamischer
+  Import lohnt nur gegen einen Modul-Nebeneffekt beim Laden — gibt es keinen (kein
+  `requireNativeViewManager`, keine View), ist er reine Fehlerquelle.
+- **Ein schlafender Mac-Bildschirm nimmt dem Simulator sein FENSTER.** (Phase 19h-2)
+  `count of windows` meldet dann 0, das Fenstermenü kennt das Gerät trotzdem, und ein
+  `screencapture` liefert ein komplett schwarzes Bild. **Das sieht aus wie eine
+  fehlende Bedienungshilfen-Berechtigung und ist eine andere Ursache** — daran zu
+  unterscheiden, dass sich Menüleiste und Menüeinträge des Simulators problemlos
+  AUSLESEN lassen (das verlangt dieselbe Berechtigung). Wer am Simulator tippen will,
+  prüft zuerst, ob überhaupt ein Bildschirm wach ist.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

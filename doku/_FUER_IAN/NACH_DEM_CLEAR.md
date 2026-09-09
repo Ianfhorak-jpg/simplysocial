@@ -1,6 +1,63 @@
 # Was du nach dem Clear schreiben sollst
 
-## ✅ STAND 09.09.2026, VORMITTAG — PHASE 19i IST FERTIG
+## ✅ STAND 09.09.2026, ABENDS — PHASE 19h-2 IST FERTIG, UND PHASE 19 IST DURCH
+
+> **Der Standort ist gebaut.** In den Einstellungen steht jetzt unter „Dein Bezirk" ein
+> Schalter: Ist er an, sortiert dein Feed ab da, wo du gerade WIRKLICH bist, statt ab
+> deinem Wohnbezirk. Du hast dazu zwei Sachen entschieden (Nummer 69 und 70).
+>
+> ✅ **Die Live-Seite ist auf Stand** — `https://ianfhorak-jpg.github.io/simplysocial/`
+> zeigt jetzt 19i (Bezirk als Vollbild, mittige Tab-Symbole, reparierte Kapsel).
+> Den Standort-Schalter siehst du dort auch.
+>
+> ⚠️ **Auf deinem Handy ist es noch nicht.** Der Build dort hat seinen Stand
+> eingebacken. Steck es an, dann kommt alles drauf.
+>
+> 🔴 **Und jetzt bist DU dran, sonst geht es nicht weiter:** Das Nächste ist das
+> Backend (echte Nutzer statt erfundener), und dafür brauche ich drei Konten von dir.
+> Steht als Punkt **2b** in `OFFENE_SACHEN.md`. Ich baue in der Zwischenzeit den Teil,
+> der ohne Konten geht — du hältst also nichts auf, wenn du ein paar Tage brauchst.
+
+### Was jetzt anders ist
+
+1. **Einstellungen → „Von deinem Standort aus".** Schalter an, und die App fragt
+   einmal um Erlaubnis. Danach steht im Feed oben, was dir gerade am nächsten ist —
+   nicht mehr, was deiner Wohnung am nächsten ist.
+2. **Dein Bezirk bleibt trotzdem stehen und gilt weiter.** Ohne Erlaubnis, ohne
+   Schalter, ohne Empfang ist alles genau wie vorher. Das war deine Entscheidung 69.
+3. **Der Standort steht nirgends.** Nicht an einem Post, nicht in deinem Profil, in
+   keinem Chat, und auch dir selbst zeigt die App keine Entfernung an. Er wird auch
+   nicht gespeichert — schließt du die App, ist er weg.
+
+### Was ich dich fragen musste
+
+**Zweimal, und beide Male hast du das genommen, was schon dastand:**
+
+- **Was der Standort mit deinem Bezirk macht** → er ist nur der genauere Startpunkt,
+  der Bezirk bleibt die Grundlage. (Verworfen: dass er deinen Bezirk automatisch
+  überschreibt, und ein extra Knopf auf dem Startbildschirm.)
+- **Wann die App um Erlaubnis fragt** → nur, wenn du selbst den Schalter umlegst.
+  Nicht beim Start, nicht beim ersten Blick in den Feed. Der Preis ist echt und du
+  kennst ihn: **Die meisten Leute finden den Schalter nie.**
+
+### Der Haken, den du kennst
+
+Wenn der Schalter an ist, ändert sich deine Reihenfolge, ohne dass du etwas tust — und
+die App darf es dir nicht erklären, weil sie den Standort nirgends anzeigen darf. Das
+einzige Zeichen ist das Wort „An" in den Einstellungen. **Wenn dich das im Betrieb
+stört, ist die Änderung ein Wort.**
+
+### Was noch offen ist
+
+- **Wie sich der Erlaubnis-Dialog auf deinem Handy anfühlt.** Am Mac konnte ich nur
+  nachstellen, dass du „ja" sagst. Wichtig: **iOS fragt nur EIN einziges Mal.** Wer
+  einmal „nein" tippt, kommt nur noch über die iPhone-Einstellungen zurück.
+- **Die drei Sachen aus 19i warten weiter auf dein Urteil** — das Glas, der
+  weggefallene „ohne Bezirk"-Chip und das fehlende ✕. Steht unten.
+
+---
+
+## 📎 Stand davor: 09.09.2026, VORMITTAG — PHASE 19i IST FERTIG
 
 > **Deine fünf Punkte von letzter Nacht sind gebaut.** Vier davon vollständig, beim
 > fünften (Liquid Glass) habe ich zwei echte Fehler gefunden und behoben — und dann
@@ -9,8 +66,8 @@
 >
 > ⚠️ **Das alles ist NICHT auf deinem Handy.** Der Build dort hat seinen Stand
 > eingebacken. Steck es an, dann kommt es drauf. Im Browser
-> (`https://ianfhorak-jpg.github.io/simplysocial/`) ist es auch noch nicht — sag
-> Bescheid, wenn es live soll.
+> (`https://ianfhorak-jpg.github.io/simplysocial/`) ist es **inzwischen schon** —
+> hochgeladen am Abend des 09.09.
 
 ### Was jetzt anders ist
 

@@ -1,5 +1,5 @@
 import { BEZIRKE, KARTE_BREITE, KARTE_HOEHE, PROJEKTION } from '@/data/wien-bezirke';
-import { ringeAus } from './karte-treffer';
+import { bezirkAn, ringeAus } from './karte-treffer';
 
 /**
  * Zwischen dem Raster der Bezirksflächen und der Erde.
@@ -183,3 +183,56 @@ export const BEZIRKE_GEO: readonly BezirkGeo[] = BEZIRKE.map((b) => ({
     return punkte;
   }),
 }));
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  WIE WEIT EIN BEZIRK VON EINEM ECHTEN ORT WEG IST — Phase 19h-2
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Dasselbe wie `bezirksAbstandMeter`, nur ist der Ausgangspunkt kein Bezirk mehr,
+ * sondern eine gemessene Koordinate. Warum es trotzdem eine eigene Funktion ist und
+ * kein Sonderfall in der alten: Die alte beantwortet „wie weit liegen zwei Bezirke
+ * auseinander" und ist symmetrisch; diese beantwortet „wie weit ist der 7. Bezirk von
+ * MIR weg" und ist es nicht. Zwei Fragen, zwei Namen.
+ *
+ * ── Der Zielpunkt bleibt die Bezirksmitte, und das ist keine Nachlässigkeit ───
+ * Ein Post trägt seit Phase 2 nur `district`, keine Koordinate — harte Regel 47: Eine
+ * Stecknadel verriete statt „1220" die genaue Parkbank. Genauer wird durch den
+ * Standort also nur die eine Hälfte der Rechnung, nämlich WO ICH STEHE. Das ist
+ * trotzdem der Unterschied zwischen „ich wohne in 1070" und „ich stehe gerade an der
+ * Grenze zu 1060".
+ *
+ * ── Was dabei zufällig gerettet wird: Ians Entscheidung 1 ────────────────────
+ * Weil der Zielpunkt die Bezirksmitte BLEIBT, haben alle Posts eines Bezirks auch mit
+ * echtem GPS **exakt dieselbe** Entfernung. Der Gleichstand bleibt also bestehen, und
+ * die zweite Stufe in `sort.ts` („bei gleicher Entfernung das Neueste") greift
+ * unverändert. Läge am Post eine Koordinate, wäre sie still verschwunden.
+ *
+ * ── Die Ungenauigkeit von oben gilt weiter ───────────────────────────────────
+ * Der Absatz „Die bekannte Schwäche" gilt unverändert: Hietzings Mitte sitzt im
+ * Lainzer Tiergarten. Ein genauerer Ausgangspunkt macht einen ungenauen Zielpunkt
+ * nicht besser — er verschiebt nur, wo die Ungenauigkeit sitzt. **Angenommen, weil
+ * die Zahl weiterhin nirgends steht.**
+ *
+ * @returns Meter — oder **null**, wenn die Postleitzahl kein Wiener Bezirk ist.
+ *          `null` heißt „keine Auskunft", nicht „weit weg" (wie oben).
+ */
+export function abstandVonOrtMeter(ort: GeoPunkt, plz: string): number | null {
+  const ziel = MITTEN.get(plz);
+  if (!ziel) return null;
+  const hier = nachRaster(ort);
+  return Math.hypot(hier.x - ziel.x, hier.y - ziel.y) * METER_JE_EINHEIT;
+}
+
+/**
+ * In welchem Bezirk ein Ort liegt — oder **null**, wenn er außerhalb von Wien ist.
+ *
+ * Bewusst über `bezirkAn()` aus `karte-treffer.ts`, also über denselben Punkt-in-
+ * Fläche-Test, den ein Tipp auf die Karte benutzt. Ein zweiter Test wäre eine zweite
+ * Antwort auf dieselbe Frage (harte Regel 52), und die beiden würden an den Rändern
+ * auseinanderlaufen — genau dort, wo es darauf ankommt.
+ */
+export function bezirkAmOrt(ort: GeoPunkt): string | null {
+  const { x, y } = nachRaster(ort);
+  return bezirkAn(x, y);
+}

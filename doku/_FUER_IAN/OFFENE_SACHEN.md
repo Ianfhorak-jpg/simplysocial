@@ -3,7 +3,9 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 08.09.2026 — **die App LÄUFT auf deinem iPhone.** Jetzt bist du dran:
+> Stand: 09.09.2026 — **jetzt kommt das Backend, und dafür brauche ich Konten von dir.**
+> Der neue Punkt 3 gleich hier unten ist der einzige, der die Arbeit wirklich aufhält.
+> Davor: 08.09.2026 — **die App LÄUFT auf deinem iPhone.** Jetzt bist du dran:
 > der Durchgang, Punkt 2 gleich hier unten.
 > Davor: 07.09.2026 (abends) — **deine Liste steht ganz oben, sortiert nach Aufwand.**
 > Neu an dem Abend: Das Liquid Glass ist gebaut (Punkt 2 hat dadurch eine Zeile mehr) —
@@ -22,26 +24,27 @@
 Du hast an dem Abend zehn Design-Entscheidungen getroffen (Phase 19e steht fertig im
 Plan). Was jetzt noch von DIR kommen muss — sortiert nach Aufwand, nicht nach Wichtigkeit:
 
-### 0. Bedienungshilfen für den Simulator freigeben · **1 Minute** 🟢 ← *neu am 09.09.*
+### 0. ~~Bedienungshilfen für den Simulator freigeben~~ ✅ *erledigt, 09.09.*
 
-**Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen** — und dort das
-Terminal (bzw. Claude Code) einschalten.
+**Danke — du hast das Häkchen gesetzt.** Ich kann den Simulator jetzt fernsteuern.
 
-**Was du davon hast:** Ich kann das simulierte iPhone dann selbst antippen. Heute geht
-das nicht (macOS meldet Fehler −25211), und ich muss alles Anklickbare im Browser
-prüfen und am Simulator nur das ansehen, was ohne Berühren zu sehen ist. Bei allem,
-was mit **Glas, Gesten oder der Apple-Karte** zu tun hat, ist das der Unterschied
-zwischen „belegt" und „vermutlich".
+<details><summary>Eine Kleinigkeit, damit es beim nächsten Mal gleich klappt</summary>
 
-**Was es dich kostet:** nichts außer dem Häkchen. Es betrifft nur deinen eigenen Mac
-und nur, solange du mit mir arbeitest.
+Am Abend des 09.09. ging es trotzdem nicht — aber aus einem ganz anderen Grund:
+**dein Bildschirm war eingeschlafen.** Ohne wachen Bildschirm zeigt der Simulator gar
+kein Fenster, und ohne Fenster gibt es nichts zum Antippen. Das sieht genauso aus wie
+eine fehlende Berechtigung, ist aber keine.
+
+Wenn ich also am Simulator etwas antippen soll: Bildschirm anlassen. Sonst schreibe
+ich es dir dazu, und wir machen es beim nächsten Mal.
+</details>
 
 ### 1. Die Farbe der Landing-Page · **2 Minuten** 🟢
 Liegt seit dem 06.09. fertig da: `landing-vorschau/` — Olivgrün, Weinrot, Türkis.
 Offen ist **Farbe UND A oder B** (A: auch die sechs Kategoriefarben werden Abstufungen
 der Leitfarbe · B: nur die Marke, Kategorien bleiben bunt). Blockiert sonst still.
 
-### 2. Der Durchgang am Handy · **15 Minuten** 🟢 ← *das ist jetzt dran*
+### 2. Der Durchgang am Handy · **15 Minuten** 🟢
 > ✅ **Am 08.09.2026 erledigt: Die App LÄUFT auf deinem iPhone.** Aufgespielt,
 > Entwickler bestätigt, gestartet (`Launched application with at.simplysocial.app`).
 > Sie läuft **ohne Kabel und ohne Mac** — du kannst sie mitnehmen und herzeigen.
@@ -101,6 +104,29 @@ alles Sachen, die ein Mausklick am Simulator **nicht** beweist.
 > 🟢 **Eine gute Nachricht dazu:** Das Glas hat **keinen neuen Baustein und keinen neuen
 > Build** gekostet — das Stück Apple-Technik dafür lag durch ein anderes Paket schon in
 > der App drin. Es war reine Programmierarbeit, du musst dafür nichts tun.
+
+### 2b. Die drei Konten fürs Backend · **ab jetzt der Engpass** 🟡 ← *neu am 09.09.*
+
+Ab hier wird aus dem Prototyp eine echte App: **echte Nutzer, echte Posts, echte
+Chats** statt der erfundenen Daten. Das Fundament steht seit dem 06.09. — Datenbank und
+Sicherheitsregeln sind gebaut und mit 25 Angriffen geprüft, **ohne dass es ein Konto
+gab.** Weiter geht es ohne dich nicht.
+
+**Es sind genau die Punkte 3, 4 und 6 weiter unten** — sie standen dort schon, waren
+aber „irgendwann". Ab heute sind sie dran:
+
+| | | |
+|---|---|---|
+| **Supabase** (Punkt 3) | die Datenbank, gratis | 10 Min |
+| **Apple Developer** (Punkt 6) | 99 $/Jahr, brauchst du für den App Store ohnehin | — |
+| **Google** (Punkt 4) | gratis, für „Mit Google anmelden" | 15 Min |
+
+**Die Reihenfolge gibt Apple vor: Apple vor Google.** Warum, steht bei Punkt 4.
+
+**Was ich in der Zwischenzeit ohne dich baue:** den ganzen Teil in der App selbst — dass
+es überhaupt so etwas wie „angemeldet" und „nicht angemeldet" gibt. Mehrere Stunden
+Arbeit, und dafür braucht es kein einziges Konto. **Du hältst also nichts auf, wenn du
+ein paar Tage brauchst** — nur den Schritt danach.
 
 ### 3. Supabase-Konto anlegen · **10 Minuten** 🟡
 Gratis, mit deiner E-Mail. Schema und Regeln sind **schon fertig und geprüft** — es ist

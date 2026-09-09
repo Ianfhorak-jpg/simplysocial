@@ -3995,7 +3995,7 @@ abgeschnittener Text, das Blatt bei `zu` sauber geklippt). `npx tsc --noEmit` sa
 
 ---
 
-### Phase 19h — Nähe statt Filter · **19h-1 ✅ (2026-09-08, ohne Build) · 19h-2 ⬜**
+### Phase 19h — Nähe statt Filter · **19h-1 ✅ (2026-09-08, ohne Build) · 19h-2 ✅ (2026-09-09, mit Build)**
 
 **Entscheidung 61 — der Heimatbezirk ist die Grundlage, der Standort kommt optional
 dazu.** Ian über den Bezirks-Filter: *„Bezirk ist too viel, das sieht echt nicht gut
@@ -4355,6 +4355,123 @@ Geometrie laut Phase 19e-2 dieselbe ist.
 weg, markiert der Zug den Text, der darunter auftaucht, blau. `WischKarte` hat
 `userSelect: 'none'`, die Auswahl entsteht erst, wenn die Karte mitten im Zug
 verschwindet. Trifft den Startbildschirm genauso und nur im Browser.
+
+---
+
+### Phase 19h-2 — Der Standort ✅ *(2026-09-09, mit neuem Build)*
+
+**Die Ausführung von Ians Entscheidung 61**, und die erste Phase seit 19d-1, die einen
+neuen Native-Baustein braucht: `expo-location@~57.0.16`. Zwei neue Entscheidungen von
+ihm (69 und 70), Belege `af01`–`af06`.
+
+#### Was gebaut ist
+
+Ein Schalter in `/einstellungen`, direkt unter „Dein Bezirk" und im selben Block: Ist
+er an, misst der Feed ab dem gemessenen Ort statt ab der eigenen Bezirksmitte. Der
+Zielpunkt bleibt in beiden Fällen die Bezirksmitte des Posts.
+
+| Datei | Was drin steht |
+|---|---|
+| `features/posts/standort.ts` | **die Regel** — `STANDORT_ROLLE`, `STANDORT_FRAGE`, `STANDORT_FRISCHE_MS`, `standortFolgen()` |
+| `features/posts/hooks.ts` | die Ausführung — `useMeinOrt`, `standortAnschalten/-Ausschalten/-Auffrischen` |
+| `lib/karte-geo.ts` | die Rechnung — `abstandVonOrtMeter()`, `bezirkAmOrt()` |
+| `features/posts/sort.ts` | `SortKontext.meinOrt`, und `entfernungMeter` liest ihn |
+| `features/store.ts` | die Sitzungs-Angabe `standort` (wie `weggewischt`) |
+
+#### Ians Entscheidung 69 — der Standort ist der genauere AUSGANGSPUNKT
+
+Drei Lesarten von „kommt optional dazu" lagen ihm vor; er nahm die wörtliche:
+Der Heimatbezirk bleibt gesetzt und gilt immer, der Standort verfeinert nur, **wo**
+gemessen wird. Verworfen: *nur den Bezirk setzen* (überschreibt eine Angabe, die die
+Person selbst gemacht hat, für fast keinen Gewinn) und *nur auf Knopfdruck* (ein
+Bedienelement mehr, gegen harte Regel 63).
+
+**Den Haken kennt er, er stand in der Frage:** Die Reihenfolge ändert sich, ohne dass
+jemand etwas getan hat — und die App darf es nicht sagen, weil sie den Standort
+nirgends anzeigen darf. Die einzige Rückmeldung ist das Wort „An" in den Einstellungen.
+
+#### Ians Entscheidung 70 — gefragt wird NUR im Schalter
+
+Kein Dialog beim Start, keiner beim ersten Feed. Der Preis stand in der Frage und ist
+angenommen: **Die meisten Leute finden den Schalter nie.** Genau deshalb ist der
+Heimatbezirk die Grundlage — die App muss ohne den Standort vollständig funktionieren,
+und sie tut es. Dahinter steht ein Sachverhalt, der die Wahl schwerer macht, als sie
+aussieht: **iOS zeigt den Systemdialog nur ein einziges Mal.** Ein Fehlgriff in einem
+Moment, in dem jemand etwas ganz anderes vorhat, kostet die Funktion dauerhaft.
+
+#### Sechs Dinge, die wichtiger sind als der Schalter
+
+1. **Der Zielpunkt bleibt die Bezirksmitte — und das rettet Entscheidung 1.** Ein Post
+   trägt seit Phase 2 nur `district` (harte Regel 47). Genauer wird also nur die eine
+   Hälfte der Rechnung. **Weil der Zielpunkt gleich bleibt, haben alle Posts eines
+   Bezirks auch mit GPS exakt dieselbe Entfernung** — der Gleichstand bleibt, und die
+   zweite Stufe („bei gleicher Entfernung das Neueste") greift unverändert. Gemessen im
+   Browser: die vier 1070er Posts liegen alle auf 6,45 km und stehen weiter nach dem
+   Neuesten. **Läge am Post eine Koordinate, wäre Entscheidung 1 still verschwunden.**
+2. **`meinOrt` ist ein PFLICHTFELD in `SortKontext`, und das war die halbe Arbeit.**
+   Ein `meinOrt?:` hätte alle drei Aufrufstellen stumm durchlaufen lassen — dieselbe
+   Falle wie `ChatThread.postId` (16) und `Post.district` (12). Und ausgerechnet eine
+   dieser drei (`useProfilPosts`) hat in 19h-1 vier Wochen lang den falschen Bezirk
+   durchgereicht, **weil niemand hinsehen musste.** So hat `tsc` die Arbeitsliste
+   geschrieben: drei Fehler, drei angesehene Stellen.
+3. **Belegt wurde durch UMSTELLEN, wie in 19h-1 — und diesmal zusätzlich durch
+   ZURÜCKSTELLEN.** Aus 1070 heraus: `1070 ×4 → 1060 → 1040 → 1030 → 1020 → 1170 →
+   1190 → 1100 → 1140 ×2 → 1220 ×2`. Mit nachgestelltem Standort am Donauturm dreht
+   sich alles: `1020 → 1030 → 1190 → 1220 ×2 → 1040 → 1070 ×4 → 1060 → 1170 → 1100 →
+   1140 ×2`. Beide Folgen gegen die gerechneten Kilometer gehalten, beide monoton
+   steigend. **Und nach dem Ausschalten steht wieder Zeichen für Zeichen die erste
+   Folge da** — das ist der Beleg dafür, dass der Ort wirklich gelöscht wird und nicht
+   nur ignoriert.
+4. **Die bekannte Schwäche zeigt sich an einem neuen Ort.** Vom Donauturm aus steht
+   **1220 nicht oben**, obwohl die Person im 22. Bezirk steht: Der Beschriftungspunkt
+   der Donaustadt liegt 5,95 km weiter östlich. Das ist dieselbe Ungenauigkeit wie
+   Hietzings Mitte im Lainzer Tiergarten (19h-1), nur fällt sie mit einem genauen
+   Ausgangspunkt stärker auf. **Ein genauerer Ausgangspunkt macht einen ungenauen
+   Zielpunkt nicht besser — er verschiebt nur, wo die Ungenauigkeit sitzt.**
+   Angenommen, weil die Zahl weiterhin nirgends steht.
+5. **Der dynamische Import war eine Vorsicht gegen ein Problem, das es nicht gibt.**
+   Zuerst stand da `await import('expo-location')`, nach dem Muster von harter Regel 61.
+   Die Regel begründet die Trennung aber mit einem `requireNativeViewManager` beim Laden
+   — und `expo-location` hat **keine View, nur Funktionen**. Der Preis war dafür real:
+   Der Dev-Server bündelt lazy, also wurde daraus ein NACHGELADENER Brocken, der Metro
+   ausgerechnet in dem Moment braucht, in dem jemand den Schalter drückt. **Beim Prüfen
+   ist genau das passiert** (Metro war unter der Last des parallelen Xcode-Builds kurz
+   weg, die Seite lud neu, der Speicher war zurückgesetzt). Jetzt ein gewöhnlicher
+   Import. **Eine Vorsichtsmaßnahme gegen ein Problem, das man nicht hat, ist keine
+   Vorsicht, sondern eine zusätzliche Fehlerquelle.**
+6. **Der Prebuild hat die Signatur-Zeilen weggeworfen — genau wie es in der Fallen-Liste
+   steht.** `npx expo prebuild -p ios` (ohne `--clean`) hat `DEVELOPMENT_TEAM` und
+   `CODE_SIGN_STYLE` aus `project.pbxproj` entfernt; ohne die vorher angelegte Kopie
+   wäre der nächste Gerätebuild an etwas gescheitert, das am 2026-09-07 schon einmal
+   gelöst war. **Die Notiz hat sich nach zwei Tagen bezahlt gemacht.** Neu dazugekommen:
+   `pod install` verlangt inzwischen **`cmake`** (`hermes-engine.podspec` ruft
+   `Pod::Executable::which!('cmake')`), und der Aufruf meldete den Fehler mit **EXIT 0**
+   — dieselbe Familie wie „`expo run:ios` gibt EXIT 0 zurück".
+
+#### Was geprüft ist
+
+- **Rechnung gegen echte Orte** (die 19d-Methode, kein Round-Trip): Stephansdom → 1010,
+  Schönbrunn → 1130, Donauturm → 1220, Praterstern → 1020, Hauptbahnhof → 1100,
+  Grinzing → 1190, Marswiese → 1170. Sieben von sieben.
+- **Der ganze Weg im Browser**, 390 × 844, per Klick statt per Navigation (die
+  19h-1-Falle: ein echtes Neuladen setzt den Speicher zurück): Schalter an → Text
+  wechselt auf die `'an'`-Fassung aus `standortFolgen()` → Feed sortiert um → Schalter
+  aus → Feed steht wieder wie vorher.
+- **iOS**: Build durch (`BUILD SUCCEEDED`, keine `error:`-Zeile), App startet,
+  `ExpoLocation.framework` liegt im gebauten Bundle, und der deutsche Erlaubnis-Satz
+  steht im **gebauten** `Info.plist` — nicht nur in `app.json`.
+- `npx tsc --noEmit` sauber. `expo lint`: 83 Probleme vorher, 83 nachher — alle
+  vorbestehend, keines aus dieser Phase.
+- **Web-Bündel: 1.489.368 → 1.507.340 B, also +17.972 B (+1,21 %).**
+
+#### Was NICHT geprüft ist
+
+**Der echte Erlaubnis-Dialog von iOS.** Im Browser ist die Betriebssystem-Grenze
+nachgestellt (`navigator.permissions.query` und `navigator.geolocation.getCurrentPosition`
+überschrieben) — **genau diese eine Grenze und sonst nichts**; alles darüber,
+`expo-location` eingeschlossen, ist echt gelaufen. Wie sich der Dialog auf Ians Gerät
+anfühlt und ob er den Weg über die Systemeinstellungen findet, wenn er ihn einmal
+wegdrückt, gehört in den nächsten Gerätedurchgang.
 
 ---
 
@@ -5526,6 +5643,41 @@ sie sind der Grund, warum eine Entscheidung überhaupt irgendwo ankommt.
 
 ---
 
+### 40. Was der Standort darf — `features/posts/standort.ts` ✅
+
+**Zwei Entscheidungen von Ian am 2026-09-09, beide vor dem ersten Handgriff an der
+Oberfläche gestellt.** Sie führen seine Entscheidung 61 aus (*der Heimatbezirk ist die
+Grundlage, der Standort kommt optional dazu*) und stehen als `STANDORT_ROLLE` und
+`STANDORT_FRAGE` in einer Regel-Datei — die verworfenen Möglichkeiten samt Begründung
+im Kopfkommentar, wie in allen sieben davor.
+
+**Entscheidung 69 — A, der genauere AUSGANGSPUNKT.** Der Bezirk bleibt gesetzt und
+gilt immer; solange ein Standort da ist, wird ab IHM gemessen statt ab der
+Bezirksmitte. Verworfen:
+
+| | | |
+|---|---|---|
+| **A** | ✅ genauerer Ausgangspunkt | seine Wahl — die wörtliche Lesart von Entscheidung 61 |
+| **B** | nur den Bezirk automatisch setzen | überschreibt eine Angabe, die er selbst gemacht hat, für fast keinen Gewinn |
+| **C** | ein Knopf „von hier aus" | ein Bedienelement mehr auf dem Startbildschirm, gegen harte Regel 63 |
+
+**Den Haken kennt er, er stand in der Frage:** Die Reihenfolge ändert sich, ohne dass
+jemand etwas getan hat — und die App darf es nicht erklären, weil sie den Standort
+nirgends anzeigen darf (harte Regel 47). Die einzige Rückmeldung ist das Wort „An" in
+den Einstellungen. Der Wechsel wäre EIN Wort; alle drei Rollen stehen fertig da.
+
+**Entscheidung 70 — gefragt wird NUR im Schalter.** Kein Dialog beim Start, keiner
+beim ersten Feed. Dahinter steht ein Sachverhalt, der die Wahl schwerer macht, als sie
+aussieht: **iOS zeigt den Systemdialog nur ein einziges Mal.** Wer ihn wegdrückt,
+kommt nur noch über die Systemeinstellungen zurück — ein Fehlgriff in einem Moment,
+in dem jemand etwas ganz anderes vorhat, kostet die Funktion dauerhaft.
+
+**Der Preis stand in der Frage und ist angenommen: Die meisten Leute finden den
+Schalter nie.** Genau deshalb ist der Heimatbezirk die Grundlage und nicht der
+Standort — die App muss ohne ihn vollständig funktionieren, und seit 19h-1 tut sie es.
+
+---
+
 ## 7. Bewusst NICHT im Prototyp
 
 Login · Karte · Push-Nachrichten · Bezahlung · **echte Bilder-Uploads** ·
@@ -5714,8 +5866,49 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-09 nachts, SPÄTESTER Eintrag):
-> Phase 19i — „Der Bezirk als Vollbild, und das Glas überall".** Ians fünf Punkte,
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-09 abends, SPÄTESTER Eintrag):
+> Phase 20.3 — Anmelden. Und das ist die erste Aufgabe, die wirklich auf Ian
+> wartet.** 19i und 19h-2 sind beide gebaut; damit ist **die ganze Phase 19 fertig
+> bis auf 19d-2 (MapKit JS im Browser), und die hängt selbst an 20.3.** Sieben Dinge,
+> die eine frische Sitzung zuerst wissen muss:
+>
+> - **Ohne Ians Konten geht 20.3 nicht weiter:** Supabase-Projekt, Apple Developer,
+>   Google. **Was OHNE sie geht und zuerst drankommt, ist der JS-Teil**:
+>   `CURRENT_USER_ID` **ersatzlos löschen** (nicht auf `string | null` setzen — das
+>   wäre die `Post.district`-Falle zum fünften Mal), `useCurrentUserId()` an ihre
+>   Stelle, und der ausgeloggte Zustand eine Ebene höher. Sechs Stellen lesen die
+>   Konstante direkt; `tsc` schreibt die Arbeitsliste. Einzelheiten in Abschnitt 5b
+>   unter 20.3.
+> - **Dieselbe Trennung hat schon bei 20.1/20.2 getragen:** *halten die Regeln?* und
+>   *ist das Projekt eingerichtet?* sind zwei Fragen. 25 Angriffe liefen gegen eine
+>   Wegwerf-Datenbank, ohne dass es ein Supabase-Konto gab
+>   (`bash supabase/pruefen/aufbauen.sh`).
+> - **Der Standort ist seit 19h-2 gebaut und wartet auf einen Gerätedurchgang.** Was
+>   im Browser nicht zu prüfen war, ist der echte iOS-Erlaubnis-Dialog — dort ist nur
+>   die Betriebssystem-Grenze nachgestellt. **Wichtig für 20.3:** *„man gibt am Anfang
+>   seinen Bezirk an"* (Entscheidung 64) gehört ins Anmelden; der Schalter in
+>   `/einstellungen` bleibt daneben bestehen.
+> - **`expo-location` ist drin, der nächste Build braucht also nichts Neues mehr für
+>   19h-2** — 20.3 bringt aber vier weitere Bausteine mit
+>   (`expo-apple-authentication`, `expo-auth-session` + `expo-web-browser`,
+>   `expo-secure-store`, `async-storage`), und die kommen **alle zusammen in EINEN
+>   Build**.
+> - **Reihenfolge, die Apple erzwingt:** Sobald Google dabei ist, ist „Anmelden mit
+>   Apple" nach Richtlinie 4.8 **Pflicht**. Also muss Apple fertig sein, BEVOR Google
+>   live geht — sonst Ablehnung im Review.
+> - **Vor jedem `expo prebuild` eine Kopie von `ios/SimplySocial.xcodeproj/project.pbxproj`
+>   anlegen.** Am 2026-09-09 hat auch der Lauf OHNE `--clean` `DEVELOPMENT_TEAM` und
+>   `CODE_SIGN_STYLE` weggeworfen. Für einen Simulator-Build fällt das nicht auf —
+>   erst der nächste GERÄTEbuild scheitert daran. Und **Bauplatz außerhalb von iCloud**
+>   (`-derivedDataPath ~/Library/Developer/Xcode/DerivedData/SimplySocial-geraet`).
+> - **Der Hilfszugriff für den Simulator ist inzwischen erlaubt** — der 19i-Blocker ist
+>   weg. Wenn `count of windows` trotzdem 0 meldet, **schläft der Bildschirm**; das
+>   sieht gleich aus und ist eine andere Ursache.
+>
+> ---
+>
+> 📎 **Stand davor (erledigt): Phase 19i — „Der Bezirk als Vollbild, und das Glas
+> überall".** Ians fünf Punkte,
 > nachdem 19h-1 auf seinem iPhone lief; **er hat danach gecleart, der Auftrag steht
 > vollständig in Abschnitt 5b unter Phase 19i.** Sechs Dinge, die eine frische
 > Sitzung zuerst wissen muss:

@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
+import type { StandortStand } from '@/features/posts/standort';
+
 import {
   CURRENT_USER_ID,
   chatThreads as mockChats,
@@ -73,6 +75,22 @@ export interface AppState {
    * ändert sich.
    */
   weggewischt: string[];
+  /**
+   * Wo ich gerade bin — Phase 19h-2, und die einzige Angabe hier, die die App über
+   * die WIRKLICHE Welt macht statt über ihre eigenen Daten.
+   *
+   * Sie steht aus demselben Grund hier wie `weggewischt` daneben: Sie entsteht erst
+   * beim Benutzen, hat kein Gegenstück in `mock.ts`, und **Neuladen setzt sie
+   * zurück**. Das ist bei `weggewischt` eine Regel (`'sitzung'` aus `posts/wisch.ts`)
+   * und hier eine ZUSAGE — harte Regel 47, ausgeschrieben im Kopf von
+   * `posts/standort.ts`: Der Standort wird nicht gespeichert.
+   *
+   * **Anders als bei `weggewischt` darf daraus mit dem Backend NICHTS werden.** Wo
+   * dort später eine Sammlung am Nutzer entsteht, muss diese Zeile eine Zeile
+   * bleiben. Wer sie in Phase 20.4 mit übernimmt, macht aus einer Reihenfolge eine
+   * gespeicherte Ortsangabe.
+   */
+  standort: StandortStand;
 }
 
 let state: AppState = {
@@ -86,6 +104,7 @@ let state: AppState = {
   groupRequests: mockGroupRequests,
   groupInvites: mockGroupInvites,
   weggewischt: [],
+  standort: { zustand: 'aus', ort: null, gemessenUm: null },
 };
 
 const zuhoerer = new Set<() => void>();

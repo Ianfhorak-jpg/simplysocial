@@ -5,9 +5,11 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { entblocken, useBlockierte } from '@/features/safety/hooks';
+import { standortAnschalten, standortAusschalten, useStandortStand } from '@/features/posts/hooks';
+import { standortFolgen } from '@/features/posts/standort';
 import { bezirkSetzen, useCurrentUser } from '@/features/social/hooks';
 import { BEZIRKS_LISTE } from '@/lib/bezirk';
-import { colors, danger, radius, spacing } from '@/theme';
+import { accent, colors, danger, radius, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
 
 /**
@@ -39,6 +41,10 @@ export default function EinstellungenScreen() {
   const ich = useCurrentUser();
   /** Die 23 Bezirke stehen zugeklappt — harte Regel 63. */
   const [bezirkOffen, setBezirkOffen] = useState(false);
+  const standort = useStandortStand();
+  // Die Sätze kommen aus der Regel-Datei, nicht aus diesem Screen — sonst steht hier
+  // eines Tages etwas, das `STANDORT_ROLLE` nicht mehr tut (harte Regel 17).
+  const standortText = standortFolgen(standort.zustand);
 
   return (
     <SsScreen scroll contentStyle={styles.seite}>
@@ -90,6 +96,43 @@ export default function EinstellungenScreen() {
             ))}
           </View>
         ) : null}
+
+        {/* ── Phase 19h-2: der Standort, direkt UNTER dem Bezirk ──────────────
+            Und zwar in demselben Block, nicht in einem eigenen: Er ist kein
+            zweiter Ort, sondern die Verfeinerung des einen darüber (Ians
+            Entscheidung 61 — *der Heimatbezirk ist die Grundlage, der Standort
+            kommt optional dazu*). Ein eigener Abschnitt mit eigener Überschrift
+            würde daraus zwei gleichrangige Einstellungen machen, und dann fragt
+            sich zu Recht jemand, welche von beiden gilt.
+
+            Hier steht auch der einzige Erlaubnis-Dialog der App
+            (`STANDORT_FRAGE = 'einstellung'`, Begründung in `standort.ts`). */}
+        <Pressable
+          onPress={() => (standort.zustand === 'an' ? standortAusschalten() : void standortAnschalten())}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: standort.zustand === 'an' }}
+          accessibilityLabel={`${standortText.titel}. ${standortText.erklaerung}`}
+          style={({ pressed }) => [styles.zeile, pressed && styles.zeileGedrueckt]}>
+          <View style={styles.zeileIcon}>
+            <SsIcon
+              name="ziel"
+              size={20}
+              color={standort.zustand === 'an' ? accent.base : colors.ink}
+            />
+          </View>
+          <View style={styles.zeileText}>
+            <SsText variant="bodyStrong">{standortText.titel}</SsText>
+            <SsText variant="caption" color={colors.inkSoft}>
+              {standortText.erklaerung}
+            </SsText>
+          </View>
+          {/* Kein React-Native-`Switch`: Die App hat keinen, und einer allein für
+              diese Zeile wäre ein Baustein, den niemand sonst benutzt. Das Wort
+              sagt dasselbe und passt zur Zeile darüber. */}
+          <SsText variant="label" color={standort.zustand === 'an' ? accent.base : colors.inkSoft}>
+            {standort.zustand === 'an' ? 'An' : 'Aus'}
+          </SsText>
+        </Pressable>
       </View>
 
       <View style={styles.block}>
