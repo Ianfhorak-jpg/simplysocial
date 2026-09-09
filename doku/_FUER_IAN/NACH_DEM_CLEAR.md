@@ -6,9 +6,10 @@
 > Schalter: Ist er an, sortiert dein Feed ab da, wo du gerade WIRKLICH bist, statt ab
 > deinem Wohnbezirk. Du hast dazu zwei Sachen entschieden (Nummer 69 und 70).
 >
-> ✅ **Die Live-Seite ist auf Stand** — `https://ianfhorak-jpg.github.io/simplysocial/`
-> zeigt jetzt 19i (Bezirk als Vollbild, mittige Tab-Symbole, reparierte Kapsel).
-> Den Standort-Schalter siehst du dort auch.
+> ✅ **Die Live-Seite zeigt jetzt 19i** — `https://ianfhorak-jpg.github.io/simplysocial/`
+> mit Bezirk als Vollbild, mittigen Tab-Symbolen und der reparierten Kapsel.
+> ⚠️ **Der Standort-Schalter ist dort noch NICHT** — du hattest das Hochladen für 19i
+> freigegeben, und 19h-2 kam danach. Sag Bescheid, dann ist es ein Aufruf.
 >
 > ⚠️ **Auf deinem Handy ist es noch nicht.** Der Build dort hat seinen Stand
 > eingebacken. Steck es an, dann kommt alles drauf.
