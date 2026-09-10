@@ -123,10 +123,17 @@ aber „irgendwann". Ab heute sind sie dran:
 
 **Die Reihenfolge gibt Apple vor: Apple vor Google.** Warum, steht bei Punkt 4.
 
-**Was ich in der Zwischenzeit ohne dich baue:** den ganzen Teil in der App selbst — dass
-es überhaupt so etwas wie „angemeldet" und „nicht angemeldet" gibt. Mehrere Stunden
-Arbeit, und dafür braucht es kein einziges Konto. **Du hältst also nichts auf, wenn du
-ein paar Tage brauchst** — nur den Schritt danach.
+**Was ich in der Zwischenzeit ohne dich gebaut habe** (Stand 10.09.): erst den Teil in
+der App selbst — dass es überhaupt so etwas wie „angemeldet" und „nicht angemeldet"
+gibt (fertig am 09.09.) — und dann die **Schreibseite der Datenbank**: alles, was
+passieren muss, wenn jemand eine Anfrage bestätigt, jemanden blockiert, eine Gruppe
+verlässt, gründet, beitritt oder einen Chat anfängt. Die Datenbank prüft das jetzt
+selbst, statt sich auf die App zu verlassen. **78 Prüfungen laufen dagegen, alle
+grün** — vorher waren es 25. Auch dafür brauchte es kein Konto.
+
+**Du hältst also nichts auf, wenn du ein paar Tage brauchst** — nur den Schritt danach.
+Der ist jetzt allerdings der einzige, der noch übrig ist: **Ohne die drei Konten geht
+es wirklich nicht weiter.**
 
 ### 3. Supabase-Konto anlegen · **10 Minuten** 🟡
 Gratis, mit deiner E-Mail. Schema und Regeln sind **schon fertig und geprüft** — es ist
