@@ -335,12 +335,29 @@ create policy nachricht_schreiben on messages for insert to authenticated with c
 
 -- ── Meldungen ────────────────────────────────────────────────────────────────
 --
--- Schreiben ja, LESEN NEIN — für niemanden. Es gibt hier bewusst keine
--- select-Policy: Eine Meldung enthält den Namen dessen, der gemeldet hat, und wer
--- sie lesen könnte, wüsste, wer ihn angezeigt hat. Gelesen wird sie in der
--- Supabase-Tabellenansicht mit dem Dienstschlüssel — von einem Menschen, und das ist
--- 20.7 und Apples Auflage 1.2.
+-- Schreiben ja, lesen NUR DIE EIGENEN.
+--
+-- ⚠️ BERICHTIGT AM 2026-09-10 (Phase 20.4). Hier stand bis dahin „LESEN NEIN — für
+-- niemanden", mit dieser Begründung: *Eine Meldung enthält den Namen dessen, der
+-- gemeldet hat, und wer sie lesen könnte, wüsste, wer ihn angezeigt hat.*
+--
+-- Die Begründung stimmt und gilt weiter — sie trifft aber nur FREMDE Meldungen.
+-- Die eigene zu lesen verrät niemandem etwas, das er nicht selbst getan hat.
+--
+-- Gefunden hat den Fehler nicht das Nachdenken über Meldungen, sondern die Frage,
+-- was `store.ts` in Phase 20.4 überhaupt laden kann: `useMeineMeldung()` in
+-- `features/safety/hooks.ts` liest `state.reports` und macht daraus seit Phase 7
+-- den Satz „Du hast das schon gemeldet". Ohne select-Recht käme die Liste LEER
+-- zurück — kein Fehler, keine Meldung, einfach nichts. Der Satz verschwände
+-- lautlos, und dieselbe Sache ließe sich beliebig oft melden. **Genau die Sorte
+-- Fehler, die man erst bemerkt, wenn die Meldungen schon in der Tabelle liegen.**
+--
+-- Was NICHT dazugehört: `erledigt_am` und `erledigt_von` lesen zu können. Wer
+-- gemeldet hat, erfährt hier nicht, ob jemand es angesehen hat — das ist 20.7 und
+-- eine Auskunft, die ein Mensch gibt, keine Zeile. Die Spalten stehen trotzdem in
+-- derselben Zeile; wer sie schützen will, braucht eine View. Notiert, nicht getan.
 create policy melden on reports for insert to authenticated with check (from_user_id = auth.uid());
+create policy melder_sieht_eigene on reports for select to authenticated using (from_user_id = auth.uid());
 
 
 -- ═══════════════════════════════════════════════════════════════════════════════
@@ -368,4 +385,4 @@ grant select, insert, update           on group_invites     to authenticated;
 grant select                           on chat_threads      to authenticated;
 grant select                           on chat_participants to authenticated;
 grant select, insert                   on messages          to authenticated;
-grant insert                           on reports           to authenticated;
+grant select, insert                   on reports           to authenticated;

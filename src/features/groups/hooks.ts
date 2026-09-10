@@ -8,6 +8,7 @@ import { aendern, neueId, useSlice } from '../store';
 import {
   darfEinladen,
   inGruppenListe,
+  istAufgeloest,
   istGruender,
   istMitglied,
   nachfolgerId,
@@ -196,6 +197,9 @@ export function beitrittAnfragen(gruppeId: string, message: string): void {
     const gruppe = alt.groups.find((g) => g.id === gruppeId);
     if (!gruppe) return {};
     if (istMitglied(gruppe, ichId)) return {};
+    // Phase 20.4: Eine aufgelöste Gruppe ist `offen` geblieben und hat trotzdem
+    // niemanden mehr, der bestätigen könnte. Die Anfrage läge für immer da.
+    if (istAufgeloest(gruppe)) return {};
     // Phase 18a: In eine private Gruppe kommt man nur auf Einladung. Der Screen
     // zeigt den Knopf gar nicht erst — das hier ist das Netz für den direkten
     // Link, dieselbe Vorsicht wie bei der Block-Prüfung ein paar Zeilen weiter.
@@ -318,13 +322,31 @@ export function gruppeVerlassen(gruppeId: string): void {
     const loest = istGruender(gruppe, ichId) && erbe === null;
 
     const restIds = gruppe.memberIds.filter((id) => id !== ichId);
-    const groups = loest
-      ? alt.groups.filter((g) => g.id !== gruppeId)
-      : alt.groups.map((g) =>
-          g.id === gruppeId
-            ? { ...g, memberIds: restIds, creatorId: erbe ?? g.creatorId }
-            : g,
-        );
+    // ⚠️ Phase 20.4: „Auflösen" heißt seit Ians Entscheidung 41 AUFHÖREN und nicht
+    // LÖSCHEN. Hier stand `alt.groups.filter((g) => g.id !== gruppeId)`, also die
+    // Zeile weg — und das war der Grund, warum der Prototyp den Zustand gar nicht
+    // herstellen konnte, für den `aufgeloestAm` überhaupt da ist.
+    //
+    // Der Unterschied ist nicht kosmetisch: Ein Post „nur für diese Gruppe" muss
+    // stehen bleiben (dieselbe Regel wie `AUSTRITT_WIRKUNG`), und dafür braucht er
+    // seine Gruppen-ID weiter — sonst wäre er ein Gruppen-Post ohne Gruppe, also
+    // genau der Zustand, den Phase 17 undarstellbar gemacht hat (harte Regel 31).
+    //
+    // Die drei Felder gehören ZUSAMMEN und entstehen gemeinsam, wie in
+    // `gruppe_verlassen()` in `0004_transaktionen.sql`: Datum gesetzt, keine
+    // Mitglieder, kein Chef.
+    const groups = alt.groups.map((g) => {
+      if (g.id !== gruppeId) return g;
+      if (loest) {
+        return {
+          ...g,
+          memberIds: [],
+          creatorId: null,
+          aufgeloestAm: new Date().toISOString(),
+        };
+      }
+      return { ...g, memberIds: restIds, creatorId: erbe ?? g.creatorId };
+    });
 
     return {
       groups,
@@ -453,6 +475,10 @@ export function useGesendeteGruppenAnfragen(): GruppenAnfrageEintrag[] {
       if (anfrage.status === 'declined') continue;
       const gruppe = gruppen.find((g) => g.id === anfrage.groupId);
       if (!gruppe) continue;
+      // Ohne Gründer gibt es niemanden, der diese Anfrage je beantworten könnte —
+      // die Gruppe hat aufgehört (Ians Entscheidung 41). Die Zeile fällt damit
+      // weg, statt mit einem leeren Namen dazustehen.
+      if (gruppe.creatorId === null) continue;
       const person = userMap.get(gruppe.creatorId);
       if (!person) continue;
       if (ich && istBlockiert(ich, person)) continue;
@@ -629,6 +655,11 @@ export function einladungAnnehmen(einladungId: string): void {
 
     const gruppe = alt.groups.find((g) => g.id === einladung.groupId);
     if (!gruppe) return {};
+    // Das Netz unter dem versteckten Knopf — dieselbe Vorsicht wie bei der
+    // Block-Prüfung in `beitrittAnfragen`: Der Screen zeigt die Zeile gar nicht
+    // mehr, aber die Adresse ist im Browser frei tippbar. Ohne das hier stünde man
+    // als einziges Mitglied in einer Gruppe, die aufgehört hat.
+    if (istAufgeloest(gruppe)) return {};
 
     return {
       groupInvites: alt.groupInvites.map((e) =>
@@ -693,6 +724,13 @@ export function useMeineEinladungen(): EinladungEintrag[] {
       if (einladung.toUserId !== ichId || einladung.status !== 'pending') continue;
       const gruppe = gruppen.find((g) => g.id === einladung.groupId);
       if (!gruppe) continue;
+      // Phase 20.4: Hat die Gruppe inzwischen aufgehört, ist die Einladung
+      // gegenstandslos — und der Knopf „Annehmen" wäre einer, der nichts bewirken
+      // KANN. `istMitglied()` fängt das nicht: Man ist ja gerade nicht drin, und
+      // genau deshalb stünde die Zeile ohne diese Prüfung weiter da. Sie zählt auch
+      // in die Zahl am Anfragen-Tab (harte Regel 40) — eine Zahl, die man nicht
+      // wegbekommt, ist schlimmer als keine.
+      if (istAufgeloest(gruppe)) continue;
       // Bin ich inzwischen anders hineingekommen (über meine eigene Anfrage), ist
       // die Einladung gegenstandslos. Sie hier zu verstecken ist richtiger, als sie
       // beim Bestätigen wegzuräumen: Der Gründer weiß nichts von der Einladung.

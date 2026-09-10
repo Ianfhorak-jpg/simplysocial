@@ -294,3 +294,53 @@ begin;
     end if;
   end $$;
 rollback;
+
+
+\echo ''
+\echo '── Meldungen: die EIGENE lesen ja, eine fremde nie (2026-09-10, Phase 20.4) ─'
+
+-- In den Prüfdaten hat IAN Tobi gemeldet. Drei Fragen, drei Antworten.
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111"}';
+  -- Ohne diese Zeile käme in Phase 20.4 eine leere Liste zurück, und der Satz
+  -- „Du hast das schon gemeldet" (Phase 7) verschwände lautlos. Genau deshalb
+  -- steht seit dem 2026-09-10 `melder_sieht_eigene` in 0002.
+  select case when count(*) = 1 then '  ✓ ' else '  ✗ FEHLT — ' end
+      || 'der Melder sieht seine eigene Meldung' from reports;
+rollback;
+
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222"}';
+  -- Lea hat nichts gemeldet. Sie darf auch nicht sehen, DASS jemand etwas gemeldet
+  -- hat — sonst wäre eine Meldung an ihrer Zahl abzulesen.
+  select case when count(*) = 0 then '  ✓ ' else '  ✗ DURCHGELASSEN — ' end
+      || 'eine Fremde sieht KEINE Meldung' from reports;
+rollback;
+
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"44444444-4444-4444-4444-444444444444"}';
+  -- Der GEMELDETE ist der Wichtigste: Er darf nicht erfahren, dass er gemeldet
+  -- wurde, und schon gar nicht von wem. Harte Regel 10 in ihrer zweiten Form.
+  select case when count(*) = 0 then '  ✓ ' else '  ✗ DURCHGELASSEN — ' end
+      || 'der GEMELDETE sieht nicht, dass er gemeldet wurde' from reports;
+rollback;
+
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222"}';
+  -- Und eine Meldung im fremden Namen bleibt unmöglich — die insert-Policy von
+  -- 20.2 ist durch das neue select-Recht unberührt.
+  do $$ declare z text; begin
+    insert into reports (target_type, target_id, from_user_id, reason)
+      values ('user','44444444-4444-4444-4444-444444444444',
+              '11111111-1111-1111-1111-111111111111','spam');
+    raise notice '  ✗ DURCHGELASSEN — im Namen eines anderen gemeldet';
+  exception when others then get stacked diagnostics z = returned_sqlstate;
+    if z = '42501' then raise notice '  ✓ im Namen eines anderen melden geht nicht';
+    else raise notice '  ✗ FALSCHER GRUND (SQLSTATE=%)', z;
+    end if;
+  end $$;
+rollback;

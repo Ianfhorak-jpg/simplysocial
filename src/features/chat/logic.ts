@@ -47,6 +47,11 @@ export function mitChatFuerTreffen(
   const neu: ChatThread = {
     id: neueId('t'),
     postId,
+    // Die HERKUNFT, und sie ist nicht dasselbe wie `postId` (harte Regel 56):
+    // Verschwindet der Post später in der Datenbank, bleibt dieser Chat einer aus
+    // einer Aktivität — sonst gälte plötzlich Ians `SCHREIB_REGEL` für zwei Leute,
+    // die sich längst getroffen haben.
+    ausAktivitaet: true,
     // Im Prototyp immer zu zweit. Bei mehreren Plätzen entsteht pro Zusage ein
     // eigener Faden — ein Gruppenchat mit Leuten, die einander nicht kennen, wäre
     // eine andere App. (Falls das später anders soll: hier ist die eine Stelle.)
@@ -86,8 +91,12 @@ export function mitDirektChat(threads: ChatThread[], meineId: string, andereId: 
   const neu: ChatThread = {
     id: neueId('t'),
     // KEIN `postId: undefined` hingeschrieben: Das Feld ist optional, und ein
-    // ausdrückliches `undefined` sähe im Firestore-Dokument später wie ein Feld mit
-    // dem Wert `null` aus — also wie „Aktivität gelöscht" statt „nie eine gehabt".
+    // ausdrückliches `undefined` sähe im Dokument später wie ein Feld mit dem Wert
+    // `null` aus — also wie „Aktivität gelöscht" statt „nie eine gehabt".
+    //
+    // Genau diesen Unterschied schreibt `ausAktivitaet` seit Phase 20.4 aus, statt
+    // ihn der Schreibweise eines fehlenden Feldes zu überlassen.
+    ausAktivitaet: false,
     participantIds: [meineId, andereId],
     lastMessageAt: new Date().toISOString(),
   };

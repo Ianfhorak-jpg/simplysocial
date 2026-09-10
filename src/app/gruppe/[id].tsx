@@ -18,6 +18,7 @@ import {
   austrittFolgen,
   beitrittHuerdeText,
   darfEinladen,
+  istAufgeloest,
   istGruender,
   istMitglied,
   mitgliederText,
@@ -82,12 +83,15 @@ export default function GruppeScreen() {
   const meineAnfrage = useMeineGruppenAnfrage(id);
   const meineEinladung = useMeineEinladung(id);
   const einladbare = useEinladbare(gruppe);
-  const gruender = useUser(gruppe?.creatorId);
+  // `?? undefined`, weil eine aufgelöste Gruppe keinen Gründer mehr hat
+  // (`creator_id` steht dann auf `null`) — und `useUser` fragt nach einer ID oder
+  // nach gar keiner, nicht nach „ausdrücklich keine“.
+  const gruender = useUser(gruppe?.creatorId ?? undefined);
   // WER eingeladen hat, ist bei einer privaten Gruppe die einzige Auskunft, die man
   // von aussen bekommt — und die, an der man entscheidet. „Lea hat dich geholt" ist
   // etwas anderes als „jemand hat dich geholt".
   const einlader = useUser(meineEinladung?.fromUserId);
-  const blockiert = useIstBlockiert(gruppe?.creatorId);
+  const blockiert = useIstBlockiert(gruppe?.creatorId ?? undefined);
 
   const [nachricht, setNachricht] = useState('');
   const [fragt, setFragt] = useState(false);
@@ -390,12 +394,20 @@ function Aussenseite({
   // Fehler, und der Screen sagt zwei Zeilen höher schon etwas anderes für den Fall,
   // dass es die Gruppe wirklich nicht mehr gibt.
   if (huerde) {
+    // Phase 20.4: Eine aufgelöste Gruppe hat AUCH keinen Weg hinein — aber aus dem
+    // umgekehrten Grund, und die zwei Sätze dürfen sich nicht mischen. „Was hier
+    // läuft und wer dabei ist, bleibt zu" verspricht etwas HINTER dem Schloss; bei
+    // einer Gruppe, die es nicht mehr gibt, läuft nichts. Ein Schloss davor wäre
+    // genauso falsch — es lädt zum Anklopfen ein.
+    const beendet = istAufgeloest(gruppe);
     return (
       <View style={styles.block}>
-        <SsIconText icon="schloss">{huerde}</SsIconText>
-        <SsText variant="caption" color={colors.inkSoft}>
-          Was hier läuft und wer dabei ist, bleibt zu.
-        </SsText>
+        <SsIconText icon={beendet ? 'uhr' : 'schloss'}>{huerde}</SsIconText>
+        {beendet ? null : (
+          <SsText variant="caption" color={colors.inkSoft}>
+            Was hier läuft und wer dabei ist, bleibt zu.
+          </SsText>
+        )}
       </View>
     );
   }

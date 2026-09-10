@@ -41,3 +41,8 @@ $PSQL -tA -d ss -f "$HIER/20_transaktionen.sql"
 
 # Das Wettrennen braucht ZWEI Verbindungen und geht deshalb nicht als .sql-Datei.
 bash "$HIER/30_wettlauf.sh"
+
+# Die Übersetzung (Phase 20.4) braucht Node und ÄNDERT die Datenbank — sie löst eine
+# Gruppe auf und löscht einen Post, um die zwei Zustände herzustellen, die es im
+# Prototyp nicht geben kann. Deshalb steht sie als LETZTE.
+bash "$HIER/40_uebersetzung.sh"

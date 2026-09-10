@@ -266,11 +266,36 @@ export const GRUENDER_AUSTRITT: GruenderAustritt = 'weitergeben';
  * eine Unterkollektion sind und keine Liste.
  */
 export function istMitglied(gruppe: Group, userId: string): boolean {
+  // Aus einer Gruppe, die aufgehört hat, ist man draußen — auch wenn irgendwo noch
+  // eine Zeile stünde. Siehe den Kommentar bei `istGruender`.
+  if (istAufgeloest(gruppe)) return false;
   return gruppe.memberIds.includes(userId);
+}
+
+/**
+ * Hat diese Gruppe AUFGEHÖRT? Phase 20.4, Ians Entscheidung 41.
+ *
+ * Eine eigene Funktion für einen `!== undefined`-Vergleich sieht nach Übertreibung
+ * aus — es ist dieselbe Überlegung wie bei `istDirektChat()` in `chat/direkt.ts`,
+ * und dort hat sie sich bezahlt gemacht: `!g.aufgeloestAm` wäre bei einem leeren
+ * String schon eine andere Frage, und aus der Datenbank kommt später `null` statt
+ * `undefined`. Dann ist es EINE Zeile hier.
+ *
+ * ⚠️ Der Compiler zeigt keine einzige Stelle an, an der man das fragen MÜSSTE — ein
+ * optionales Feld ist eine Lockerung (die Phase-16-Lehre). Die Enge sitzt deshalb in
+ * `istMitglied()`, `istGruender()` und `inGruppenListe()`, nicht in den Screens.
+ */
+export function istAufgeloest(gruppe: Group): boolean {
+  return gruppe.aufgeloestAm !== undefined;
 }
 
 /** Ist diese Person der Gründer — also die, die Beitritte bestätigt? */
 export function istGruender(gruppe: Group, userId: string): boolean {
+  // Eine aufgelöste Gruppe hat keinen Chef — `creator_id` steht dort auf `null`
+  // (0001, `constraint chef_oder_aufgeloest`). Der ausdrückliche Ausschluss ist
+  // trotzdem kein Beiwerk: Ohne ihn hinge „wer bestätigt Anfragen" daran, dass
+  // niemand je vergisst, die Spalte mitzuleeren.
+  if (istAufgeloest(gruppe)) return false;
   return gruppe.creatorId === userId;
 }
 
@@ -283,6 +308,12 @@ export function istGruender(gruppe: Group, userId: string): boolean {
  * trotzdem da, damit `'einladung'` ein Wort bleibt und kein Umbau.
  */
 export function darfBeitreten(gruppe: Group, userId: string): boolean {
+  // Steht VOR allem anderen: Eine aufgelöste Gruppe behält `offen = true` (das Feld
+  // wird beim Auflösen nicht angefasst) und hat niemanden mehr, der bestätigen
+  // könnte. Ohne diese Zeile ließe sich eine Anfrage stellen, die für immer liegen
+  // bliebe — dasselbe, was Ians Entscheidung 13 („die Gruppe wird vererbt") gerade
+  // verhindern soll.
+  if (istAufgeloest(gruppe)) return false;
   if (istMitglied(gruppe, userId)) return false;
   // Phase 18a: Eine private Gruppe ist die App-weite Regel für DIESE eine Gruppe
   // ausgeschaltet. Steht VOR dem `switch`, weil `Group.offen` das speziellere Wort
@@ -325,6 +356,10 @@ export function darfEinladen(gruppe: Group, userId: string): boolean {
  * mir vor". Siehe den Kopf bei `PRIVAT_SICHT`.
  */
 export function inGruppenListe(gruppe: Group, userId: string): boolean {
+  // Phase 20.4: Eine aufgelöste Gruppe ist OFFEN geblieben (`offen` wird beim
+  // Auflösen nicht angefasst) — ohne diese Zeile stünde sie also weiter zum
+  // Beitreten da, mit einem Knopf, der nichts mehr bewirken kann.
+  if (istAufgeloest(gruppe)) return false;
   return gruppe.offen || istMitglied(gruppe, userId);
 }
 
@@ -336,8 +371,10 @@ export function inGruppenListe(gruppe: Group, userId: string): boolean {
  * Ändert Ian die Regel, ändert sich der Satz mit. `undefined` heißt „keine Hürde".
  */
 export function beitrittHuerdeText(gruppe: Group): string | undefined {
-  // Phase 18a: Erst die Gruppe, dann die App-Regel — dieselbe Reihenfolge wie in
-  // `darfBeitreten()`, damit die beiden nie auseinanderlaufen können.
+  // Dieselbe Reihenfolge wie in `darfBeitreten()`, damit die beiden nie
+  // auseinanderlaufen können — deshalb steht das Aufgelöstsein auch hier zuerst.
+  if (istAufgeloest(gruppe)) return GRUPPE_HAT_AUFGEHOERT;
+  // Phase 18a: Erst die Gruppe, dann die App-Regel.
   if (!gruppe.offen) {
     return 'Diese Gruppe ist privat. Hinein kommt man nur, wenn jemand von drinnen dich einlädt.';
   }
@@ -495,6 +532,16 @@ export function sichtbarkeitBauen(kind: VisibilityKind, gruppeId: string | null)
  * dann nach einem Fehler aus.
  */
 export const GRUPPE_UNBEKANNT = 'einer Gruppe';
+
+/**
+ * Was auf der Seite einer Gruppe steht, die aufgehört hat — Ians Entscheidung 41.
+ *
+ * Die Seite bleibt erreichbar, weil ihre Adresse in Chats und Lesezeichen steht und
+ * ein 404 dort wie ein Fehler der App aussähe. Was fehlt, ist der Weg HINEIN: kein
+ * Anfragen-Knopf, keine Mitgliederliste, kein Gründer.
+ */
+export const GRUPPE_HAT_AUFGEHOERT =
+  'Diese Gruppe gibt es nicht mehr. Sie hat sich aufgelöst, als die letzte Person sie verlassen hat.';
 
 /** Wie viele Mitglieder — Einzahl und Mehrzahl an einer Stelle. */
 export function mitgliederText(anzahl: number): string {

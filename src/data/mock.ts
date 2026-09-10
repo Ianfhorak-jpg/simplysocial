@@ -294,6 +294,33 @@ export const groups: Group[] = [
     district: '1050',
     createdAt: vorStunden(24 * 60),
   },
+  {
+    // Eine AUFGELÖSTE Gruppe — Phase 20.4, Ians Entscheidung 41.
+    //
+    // Sie steht hier aus demselben Grund wie `p16` in Phase 17: **Ein unsichtbarer
+    // Eintrag ist der Beweis.** Ohne sie sähe man nur, dass nichts Falsches
+    // dasteht, und wüsste nie, ob die Filter wirklich greifen oder ob es schlicht
+    // keinen Fall gibt (die 18d-Lehre).
+    //
+    // Die drei Felder gehören ZUSAMMEN und entstehen gemeinsam — Datum gesetzt,
+    // keine Mitglieder, kein Chef. So schreibt es `gruppe_verlassen()` in
+    // `0004_transaktionen.sql`, und so schreibt es seit Phase 20.4 auch
+    // `gruppeVerlassen` in `features/groups/hooks.ts`.
+    //
+    // Sie darf NIRGENDS auftauchen: nicht unter „Deine Gruppen", nicht in der Liste
+    // auf `/gruppen`, nicht im Anfragen-Tab. Was sie trotzdem tut, ist `p20` am
+    // Leben halten — und das IST die Entscheidung.
+    id: 'g5',
+    name: 'Bouldern Dienstag',
+    description: 'War eine Runde aus dem Vorjahr. Hat sich aufgelöst.',
+    category: 'sport',
+    creatorId: null,
+    memberIds: [],
+    offen: true,
+    district: '1150',
+    createdAt: vorStunden(24 * 120),
+    aufgeloestAm: vorStunden(24 * 9),
+  },
 ];
 
 // Zwei Anfragen an Ians Gruppe (er bestätigt) und eine von ihm (er wartet) — beide
@@ -711,6 +738,32 @@ export const posts: Post[] = [
     status: 'open',
     createdAt: vorStunden(3),
   },
+  {
+    // Der Post, der Ians Entscheidung 41 BEWEIST: Er gehört einer Gruppe, die es
+    // nicht mehr gibt (`g5`), und er läuft trotzdem weiter.
+    //
+    // Der naheliegende Weg wäre gewesen, beim Auflösen die Gruppen-ID am Post zu
+    // leeren. Dann stünde hier `visibility: { kind: 'group' }` OHNE `groupId` —
+    // und genau das lässt der Typ seit Phase 17 nicht zu (harte Regel 31). In der
+    // Datenbank bricht an derselben Stelle der CHECK `sicht_vollstaendig` ab.
+    //
+    // Sichtbar ist er nur für IAN, und zwar ohne Sonderregel: `darfIchSehen()`
+    // lässt eigene Posts immer durch, und Mitglieder hat `g5` keine mehr.
+    id: 'p20',
+    authorId: 'u_ian',
+    category: 'sport',
+    title: 'Bouldern nach der Schule',
+    district: '1150',
+    startsAt: bald(4, '17:00'),
+    level: 'beginner',
+    alter: { kind: 'egal' },
+    spotsTotal: 2,
+    spotsFilled: 0,
+    note: 'Schuhe kann man ausleihen.',
+    visibility: { kind: 'group', groupId: 'g5' },
+    status: 'open',
+    createdAt: vorStunden(5),
+  },
 ];
 
 // ── Anfragen ─────────────────────────────────────────────────────────────────
@@ -787,12 +840,14 @@ export const chatThreads: ChatThread[] = [
   {
     id: 't1',
     postId: 'p1',
+    ausAktivitaet: true,
     participantIds: ['u_ian', 'u_lea'],
     lastMessageAt: vorStunden(1),
   },
   {
     id: 't2',
     postId: 'p2',
+    ausAktivitaet: true,
     participantIds: ['u_ian', 'u_tobi'],
     lastMessageAt: vorStunden(6),
   },
@@ -807,8 +862,32 @@ export const chatThreads: ChatThread[] = [
     // Wäre der Direktchat an jemandem, mit dem auch ein Treffen läuft, sähe man in
     // der Liste nie, wie eine Zeile OHNE Aktivität aussieht.
     id: 't3',
+    ausAktivitaet: false,
     participantIds: ['u_ian', 'u_mira'],
     lastMessageAt: vorStunden(2),
+  },
+  {
+    // Der VERWAISTE Chat — Phase 20.4. Aus einer Aktivität entstanden
+    // (`ausAktivitaet: true`), aber der Post ist weg: Der Verfasser hat ihn
+    // gelöscht, oder sein Konto (Ians Entscheidung 39, dann gehen die Posts mit).
+    // In der Datenbank ist das `on delete set null` an `chat_threads.post_id`.
+    //
+    // Warum er hier steht: Ohne ihn zeigt kein Datensatz den Zustand, für den
+    // `ausAktivitaet` überhaupt eingeführt wurde — und eine Regel, die nichts
+    // vorfindet, sieht aus wie eine Regel, die tut (die Lehre aus Phase 18d, wo
+    // ohne `p18` die ganze Doppelbuchungs-Prüfung unsichtbar geblieben wäre).
+    //
+    // Und die Person ist mit Bedacht SARA: Sie folgt Ian, Ian folgt ihr NICHT
+    // (`FOLLOW_EDGES`). Unter Ians `SCHREIB_REGEL = 'gegenseitig'` könnten die
+    // beiden gar keinen Direktchat haben. Würde dieser Faden je fälschlich als
+    // Direktchat gelesen, wäre das also nicht nur eine falsche Überschrift, sondern
+    // ein Chat, den es nach den Regeln der App nicht geben dürfte. Genau das ist
+    // der Fall, gegen den harte Regel 56 gebaut ist — an einer Person, die ihn
+    // sichtbar macht.
+    id: 't4',
+    ausAktivitaet: true,
+    participantIds: ['u_ian', 'u_sara'],
+    lastMessageAt: vorStunden(30),
   },
 ];
 
@@ -859,6 +938,24 @@ export const messages: Message[] = [
     senderId: 'u_mira',
     text: 'Perfekt, danke dir. Dann probier ich den auch mal.',
     sentAt: vorStunden(2),
+  },
+
+  // Der verwaiste Chat (t4). Der Verlauf verrät noch, worum es ging — genau darum
+  // steht Ians Entscheidung 42 darüber: Der Chat DARF nicht aussehen, als hätten
+  // die zwei sich einfach so geschrieben.
+  {
+    id: 'm13',
+    threadId: 't4',
+    senderId: 'u_sara',
+    text: 'War super gestern, danke fürs Mitnehmen!',
+    sentAt: vorStunden(31),
+  },
+  {
+    id: 'm14',
+    threadId: 't4',
+    senderId: 'u_ian',
+    text: 'Gern! Beim nächsten Mal sag ich dir Bescheid.',
+    sentAt: vorStunden(30),
   },
 ];
 

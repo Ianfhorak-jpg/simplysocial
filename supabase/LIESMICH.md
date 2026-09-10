@@ -31,13 +31,14 @@ Prüfdaten ein und lässt den Angriff laufen. **Es braucht dafür kein Supabase-
 kein Netz:** RLS ist ein Postgres-Feature. Was Supabase mitbringt (`auth.users`,
 `auth.uid()`), steht wortgleich nachgebaut in `pruefen/00_supabase_lokal.sql`.
 
-Erwartet sind **78 Häkchen und kein Kreuz.**
+Erwartet sind **121 Häkchen und kein Kreuz.**
 
 | Datei | Was sie fragt |
 |---|---|
 | `pruefen/10_angriff.sql` | *Kommt jemand an Daten, an die er nicht darf?* |
 | `pruefen/20_transaktionen.sql` | *Tut ein rechtmäßiger Schreibvorgang genau das, was Ians Regel sagt — und ein unrechtmäßiger GAR NICHTS?* |
 | `pruefen/30_wettlauf.sh` | *Was passiert bei ZWEI gleichzeitigen Bestätigungen auf denselben letzten Platz?* Braucht zwei echte Verbindungen und geht deshalb nicht als `.sql`-Datei. |
+| `pruefen/40_uebersetzung.sh` | *Wird aus einer echten Zeile das richtige App-Objekt?* Stellt erst mit den echten Funktionen aus 0004 die zwei Zustände her, die es im Prototyp nicht geben kann (eine aufgelöste Gruppe, ein Chat ohne Aktivität), holt die Zeilen als JSON und schickt sie durch `src/data/zeilen.ts`. Braucht Node und **ändert die Datenbank** — läuft deshalb als letzte. |
 
 ## Warum es `0004_transaktionen.sql` gibt
 

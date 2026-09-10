@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { SsAvatar, SsBack, SsButton, SsChip, SsIcon, SsIconText, SsInput, SsScreen, SsText } from '@/components/ui';
 import { useIstBlockiert } from '@/features/safety/hooks';
+import { herkunftText, istDirektChat } from '@/features/chat/direkt';
 import { nachrichtSenden, useChat } from '@/features/chat/hooks';
 import { nachklangTageUebrig } from '@/features/chat/lifecycle';
 import { chatIds } from '@/features/statisch';
@@ -97,7 +98,7 @@ export default function ChatScreen() {
         {post ? (
           <PostKopf post={post} name={gegenueber.displayName} />
         ) : (
-          <PersonKopf person={gegenueber} />
+          <PersonKopf person={gegenueber} herkunft={herkunftText(thread, post)} />
         )}
       </View>
 
@@ -131,7 +132,12 @@ export default function ChatScreen() {
         // `onContentSizeChange` und die letzten Nachrichten rutschen aus dem Bild.
         // Was sich ändert, ist die Fläche, und die meldet sich hier.
         onLayout={() => nachUnten(false)}
-        ListEmptyComponent={<NochStill name={gegenueber.displayName} direkt={!post} />}
+        // `istDirektChat` und nicht `!post`: Ein Aktivitäts-Chat, dessen Post
+        // gelöscht wurde, ist kein Direktchat — und „Erst mit deiner ersten
+        // Nachricht sieht Sara, dass es diesen Chat gibt" wäre dort schlicht falsch.
+        ListEmptyComponent={
+          <NochStill name={gegenueber.displayName} direkt={istDirektChat(thread)} />
+        }
       />
 
       {/* Phase 7: Steht eine Blockierung dazwischen, verschwindet das Eingabefeld und
@@ -235,7 +241,7 @@ function PostKopf({ post, name }: { post: Post; name: string }) {
  * Aktivität ist der Gegenüber eine Nebenangabe („mit Lea"), bei einer Direktnachricht
  * ist er der ganze Inhalt der Zeile.
  */
-function PersonKopf({ person }: { person: User }) {
+function PersonKopf({ person, herkunft }: { person: User; herkunft?: string }) {
   return (
     <Pressable
       onPress={() => router.push({ pathname: '/user/[id]', params: { id: person.id } })}
@@ -249,6 +255,14 @@ function PersonKopf({ person }: { person: User }) {
         <SsText variant="caption" color={colors.inkSoft} numberOfLines={1}>
           {`${person.handle}   ·   ${person.district} Wien`}
         </SsText>
+        {/* Ians Entscheidung 42: Ist die Aktivität gelöscht, steht der Chat NICHT
+            als Direktchat da — der Satz kommt aus `herkunftText()` und nicht von
+            hier, damit ein anderer Wortlaut eine Regel-Datei ist und kein Screen. */}
+        {herkunft ? (
+          <SsText variant="caption" color={colors.inkSoft} numberOfLines={2}>
+            {herkunft}
+          </SsText>
+        ) : null}
       </View>
       <SsIcon name="chevronRechts" size={20} color={colors.inkSoft} />
     </Pressable>

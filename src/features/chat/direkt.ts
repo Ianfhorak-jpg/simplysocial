@@ -1,4 +1,4 @@
-import type { ChatThread, User } from '@/types/models';
+import type { ChatThread, Post, User } from '@/types/models';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
@@ -176,12 +176,57 @@ export function schreibHuerdeText(name: string): string | undefined {
 /**
  * Ist dieser Faden ein Direktchat — also einer ohne Aktivität?
  *
- * Eine eigene Funktion für einen `=== undefined`-Vergleich sieht nach Übertreibung
- * aus, ist aber genau das, was verhindert, dass die Frage an sechs Stellen sechsmal
- * leicht anders gestellt wird. `!t.postId` etwa wäre bei einem leeren String schon
- * eine andere Frage, und im Backend ist ein fehlendes Feld später `null` und nicht
- * `undefined`. Dann ist es EINE Zeile hier.
+ * Eine eigene Funktion für einen Vergleich sieht nach Übertreibung aus, ist aber
+ * genau das, was verhindert, dass die Frage an sechs Stellen sechsmal leicht anders
+ * gestellt wird. Die erste Fassung stand auf `thread.postId === undefined` und
+ * schrieb daneben: *„im Backend ist ein fehlendes Feld später `null` und nicht
+ * `undefined`. Dann ist es EINE Zeile hier."* — **Es war eine Zeile.**
+ *
+ * Seit Phase 20.4 wird die HERKUNFT gefragt und nicht der Zeiger. Der Unterschied
+ * ist keine Sauberkeit, sondern ein Verhalten: In der Datenbank steht an
+ * `chat_threads.post_id` ein `on delete set null`, ein Aktivitäts-Chat verliert
+ * seinen Post also, wenn der Verfasser ihn löscht. Mit der alten Fassung wäre
+ * daraus lautlos ein Direktchat geworden — und damit gälte `SCHREIB_REGEL =
+ * 'gegenseitig'` für zwei Leute, die sich längst getroffen haben. Harte Regel 56.
  */
 export function istDirektChat(thread: ChatThread): boolean {
-  return thread.postId === undefined;
+  return !thread.ausAktivitaet;
+}
+
+// ── Woher ein Chat KOMMT, wenn die Aktivität weg ist ─────────────────────────
+
+/**
+ * Der Satz, der über einem Chat steht, dessen Aktivität es nicht mehr gibt.
+ *
+ * ⚠️ Text und damit Ians. Er steht als EINE Konstante da, damit ein anderer
+ * Wortlaut ein Wort ist und keine Suche durch drei Dateien.
+ */
+export const VERWAIST_TEXT = 'Aus einer Aktivität, die es nicht mehr gibt.';
+
+/**
+ * Was oben im Chat steht, wenn die Aktivität dazu nicht mehr da ist.
+ *
+ * `undefined` heißt „nichts zu sagen" — dieselbe Form wie `schreibHuerdeText()`
+ * darüber und `beitrittHuerdeText()` in `groups/gruppe.ts`. Der Screen kennt die
+ * Bedingung nicht, er sieht nur das Ergebnis (harte Regel 17).
+ *
+ * ── Wann dieser Fall überhaupt eintritt ───────────────────────────────────────
+ * Löscht der Verfasser seinen Post — oder sein Konto, dann gehen die Posts mit
+ * (Ians Entscheidung 39) —, bleibt der Chat stehen und verliert seine Aktivität.
+ * Im Prototyp konnte das nie passieren; ein Post ließ sich nicht löschen.
+ *
+ * ── Ians Entscheidung 42 (2026-09-10) ─────────────────────────────────────────
+ * Gefragt war, was dann oben im Chat steht. Seine Antwort: **die Person wie bei
+ * einem Direktchat, und darunter leise dieser Satz.** Verworfen: nur die Person
+ * (der Chat sähe aus wie ein Direktchat, obwohl er keiner ist — und woher man sich
+ * kennt, ist genau das, was man nach zwei Wochen nicht mehr weiß) und ein eigener
+ * Kasten „Diese Aktivität wurde gelöscht" (der stünde für immer da, auch wenn die
+ * beiden noch monatelang schreiben — ein Grabstein in einem lebenden Chat).
+ */
+export function herkunftText(thread: ChatThread, post: Post | undefined): string | undefined {
+  // Ein Direktchat hatte nie eine Aktivität — da ist nichts verlorengegangen.
+  if (istDirektChat(thread)) return undefined;
+  // Der Normalfall: Die Aktivität steht oben, mit Titel, Zeit und Ort.
+  if (post) return undefined;
+  return VERWAIST_TEXT;
 }

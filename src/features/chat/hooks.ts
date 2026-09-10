@@ -138,10 +138,12 @@ export function useChatListe(): ChatEintrag[] {
       if (!thread.participantIds.includes(ichId)) continue;
 
       const direkt = istDirektChat(thread);
-      // Bei einem Aktivitäts-Chat ist ein fehlender Post ein kaputter Datensatz und
-      // die Zeile fällt weg. Bei einem Direktchat ist er der Normalfall.
+      // Ein fehlender Post ist bei einem Direktchat der Normalfall — und bei einem
+      // Aktivitäts-Chat seit Phase 20.4 KEIN kaputter Datensatz mehr, sondern eine
+      // gelöschte Aktivität (`on delete set null`). Hier stand bis dahin ein
+      // `continue`: Der Chat wäre aus der Liste verschwunden, weil eine DRITTE
+      // Sache weg ist. Ians Entscheidung 42 sagt, was stattdessen dasteht.
       const post = direkt ? undefined : posts.find((p) => p.id === thread.postId);
-      if (!direkt && !post) continue;
 
       const gegenueber = gegenueberVon(thread, userMap, ichId);
       if (!gegenueber) continue;
@@ -192,8 +194,10 @@ export function useChat(threadId: string | undefined): ChatVerlauf | undefined {
     if (!thread || !thread.participantIds.includes(ichId)) return undefined;
 
     const direkt = istDirektChat(thread);
+    // Siehe `useChatListe`: Ohne Post ist der Chat nicht kaputt, sondern verwaist.
+    // Das `return undefined`, das hier stand, hätte ihn UNÖFFENBAR gemacht — man
+    // hätte ihn in der Liste gesehen und wäre auf „Diesen Chat gibt es nicht" gelandet.
     const post = direkt ? undefined : posts.find((p) => p.id === thread.postId);
-    if (!direkt && !post) return undefined;
 
     const gegenueber = gegenueberVon(thread, userMap, ichId);
     if (!gegenueber) return undefined;

@@ -4801,7 +4801,7 @@ weil das die einzige Datei ist, die `@/data/mock` importieren darf (harte Regel 
   Der Tausch ist in `PrototypHinweis.tsx` auf zwei Funktionen eingeengt und gehört in
   denselben Build wie die drei Auth-Bausteine.
 
-#### 20.4 — `store.ts` austauschen, Teil 1: Lesen ⬜
+#### 20.4 — `store.ts` austauschen, Teil 1: Lesen · **Übersetzung ✅ (2026-09-10)** · Abfragen ⬜
 
 **Die Zusage aus Phase 1 wird hier eingelöst oder gebrochen.** Im Kopf von `store.ts`
 steht seit dem 2026-08-31: *„Später ersetzt Firestore (oder Supabase) das Innere dieser
@@ -4818,6 +4818,65 @@ gebraucht wird. Für `useFeed` heißt das: Die Sortier- und Filterarbeit aus
 `posts/sort.ts` und `posts/filter.ts` wandert schrittweise in die Abfrage. **Nicht als
 Erstes** — zuerst wird alles geladen wie bisher, damit man einen Unterschied hat, an dem
 man messen kann.
+
+> ✅ **Die Übersetzung ist gebaut und an echten Zeilen belegt, wieder ohne Konto.**
+> `src/data/zeilen.ts`, Prüfungen in `pruefen/40_uebersetzung.sh` (+ `.mjs`).
+> **121 Häkchen statt 78, kein Kreuz.** Was dabei herauskam, steht unter „Was beim
+> Bauen von 20.4-a herauskam".
+
+#### Was beim Bauen von 20.4-a herauskam *(2026-09-10)*
+
+**Die Übersetzung entscheidet an drei Stellen etwas und benennt nicht nur um — und
+genau deshalb ist sie eine eigene Datei.** Acht Dinge sind wichtiger als die Datei:
+
+1. **Der teuerste Fund ist ein Zeitstempel.** Postgres liefert
+   `2026-09-10T07:59:29.833382+01:00`, Supabase `…+00:00`, die App schreibt `…833Z`.
+   Derselbe Augenblick — und **neun Stellen sortieren Zeitstempel mit `localeCompare`,
+   also als TEXT**. Gemessen: gegen die App-Schreibweise ergibt die eine Fassung `1`
+   („später"), die andere `−1` („früher"). Ungetauft stünde im Feed und in der
+   Chat-Liste eine falsche Reihenfolge — **eine, die aussieht wie ein kaputter
+   Sortierer und keiner ist.** Der Ausweg ist nicht, neun Stellen auf `Date`
+   umzubauen, sondern EINE Zeile (`zeitpunkt()`). Gegenprobe gemessen: ohne sie wird
+   das Prüfskript rot, die Rücknahme ist nachgewiesen (19d-Methode). Jetzt harte
+   Regel 72.
+2. **Ein fehlender `grant` war diesmal KEINE Zusage — und harte Regel 70 sagt selbst,
+   woran man das unterscheidet.** Auf `reports` stand nur `insert`, begründet mit „eine
+   Meldung enthält den Namen dessen, der gemeldet hat". Das trifft FREMDE Meldungen;
+   `useMeineMeldung()` liest die EIGENEN und macht daraus seit Phase 7 „Du hast das
+   schon gemeldet". Ohne select-Recht käme die Liste **leer** zurück — kein Fehler,
+   keine Meldung, der Satz verschwände lautlos, und dieselbe Sache ließe sich endlos
+   melden. Jetzt `melder_sieht_eigene`, dazu drei Angriffe: der Melder sieht seine,
+   eine Fremde nichts, **der Gemeldete nichts**. Die Berichtigung steht ausdrücklich
+   an der alten Begründung in 0002 und nicht still daneben (harte Regel 58).
+3. **Die zwei abgesprochenen Schulden sind bezahlt — und die Vorhersage stimmte auf
+   die Fehlerzahl.** `ChatThread.ausAktivitaet` als PFLICHTfeld meldete **5** Stellen,
+   `Group.creatorId: string | null` **3**, und `Group.aufgeloestAm?` meldete **NULL**.
+   Eine Lockerung meldet nichts (die Phase-16-Lehre), deshalb sitzt die Enge dafür in
+   `istAufgeloest()` und in den Regel-Funktionen.
+4. **Zwei echte Löcher fand nur Nachsehen von Hand.** Eine Einladung in eine aufgelöste
+   Gruppe stand weiter im Anfragen-Tab — `istMitglied()` sagt dort „nein", die Zeile war
+   also *richtig* da, mit einem „Annehmen", das einen als einziges Mitglied in eine tote
+   Gruppe gesetzt hätte. Und `darfBeitreten()` ließ eine Anfrage zu, weil `offen` beim
+   Auflösen nicht angefasst wird; sie hätte für immer dagelegen.
+5. **Der Prototyp konnte den Zustand gar nicht herstellen.** `gruppeVerlassen` LÖSCHTE
+   die Gruppe aus dem Array. Jetzt schreibt sie dieselben drei Felder wie
+   `gruppe_verlassen()` in 0004. Dazu `g5` und `p20` in `mock.ts` — **ein unsichtbarer
+   Eintrag ist der Beweis** (dasselbe Muster wie `p16` in Phase 17): `g5` steht in
+   keiner Liste, `p20` steht im Post-Screen mit „Sichtbar für · Nur Bouldern Dienstag".
+6. **`if (!direkt && !post) return undefined;` stand ZWEIMAL in `chat/hooks.ts`** — mit
+   dem Kommentar „bei einem Aktivitäts-Chat ist ein fehlender Post ein kaputter
+   Datensatz". Richtig, solange sich ein Post nicht löschen lässt. Gegen die Datenbank
+   wäre der Chat aus der Liste verschwunden und beim Öffnen auf „Diesen Chat gibt es
+   nicht" gelandet — **weil eine DRITTE Sache weg ist.**
+7. **Ians Entscheidung 42** — Abschnitt 6, Punkt 42.
+8. **Der Prüf-Chat ist mit SARA, und das ist kein Zufall.** Sie folgt Ian, Ian folgt ihr
+   nicht: Unter `SCHREIB_REGEL = 'gegenseitig'` könnten die beiden gar keinen Direktchat
+   haben. Würde `t4` je fälschlich als Direktchat gelesen, wäre das kein Schönheitsfehler,
+   sondern ein Chat, den es nach den Regeln der App nicht geben dürfte.
+
+**Was NICHT gemacht ist und ausdrücklich in 20.4-b gehört:** der Supabase-Client, die
+Abfragen, Realtime und der Umbau vom Speicher zum Zwischenspeicher. `store.ts` liest
+weiter `mock.ts`. Die Übersetzung darunter ist fertig.
 
 #### 20.5 — `store.ts` austauschen, Teil 2: Schreiben · **SQL-Seite ✅ (2026-09-10)** · App-Seite ⬜
 
@@ -5877,6 +5936,48 @@ Datenschutzproblem und C eines.**
 
 ---
 
+### 42. Was oben im Chat steht, wenn die Aktivität gelöscht wurde ✅
+
+**Ians Entscheidung vom 2026-09-10, gefragt beim Bauen von 20.4-a.** Auch sie kam nicht
+aus einem Screen, sondern aus einem Zustand, den es im Prototyp GAR NICHT GEBEN KANN.
+
+**Die Lage:** In der Datenbank steht an `chat_threads.post_id` ein `on delete set null`.
+Löscht der Verfasser seinen Post — oder sein Konto, dann gehen die Posts mit
+(Entscheidung 39) —, bleibt der Chat stehen und verliert seine Aktivität. Beide dürfen
+sich weiter schreiben; dafür sorgt `aus_aktivitaet` (harte Regel 56). Aber der
+Aktivitäts-Kopf oben im Chat hat nichts mehr anzuzeigen.
+
+**Ohne Entscheidung sähe der Chat aus wie ein Direktchat** — als hätten die zwei sich
+einfach so geschrieben. Das ist nicht wahr, und es ist genau die Stelle, an der man sich
+nach zwei Wochen nicht mehr erinnert, woher man sich kennt.
+
+**Gewählt: die Person, und darunter leise der Satz.** Verworfen:
+
+| | | |
+|---|---|---|
+| **A** | ✅ Person + leise Zeile „Aus einer Aktivität, die es nicht mehr gibt." | seine Wahl — sagt die Wahrheit, ohne den Chat zum Grabstein zu machen |
+| **B** | nur die Person, wie bisher | am ruhigsten, aber der Chat behauptet, ein Direktchat zu sein — und woher man sich kennt, ist das Einzige, was hier fehlt |
+| **C** | ein eigener Kasten „Diese Aktivität wurde gelöscht" | am ehrlichsten und am lautesten: Er stünde für immer da, auch wenn die beiden noch monatelang schreiben |
+
+**Der Satz steht als EINE Konstante** (`VERWAIST_TEXT` in `features/chat/direkt.ts`) und
+kommt über `herkunftText()` in den Screen — dieselbe Bauart wie `blockFolgen()` und
+`schreibHuerdeText()`. **Ein anderer Wortlaut ist damit ein Wort, keine Suche durch drei
+Dateien.**
+
+**Was beim Bauen daran hing, steht in Abschnitt 5b unter „Was beim Bauen von 20.4-a
+herauskam", Punkt 6:** In `chat/hooks.ts` stand zweimal `if (!direkt && !post) return
+undefined;`. Ohne Entscheidung 42 wäre der Chat nicht nur falsch beschriftet gewesen,
+sondern aus der Liste verschwunden und **nicht mehr zu öffnen**.
+
+❓ **Eine Frage bleibt offen und wartet auf ihn** (blockiert nichts): **Läuft so ein
+Chat je ab?** Ein gewöhnlicher Aktivitäts-Chat verschwindet eine Woche nach dem Treffen
+(`NACHKLANG_TAGE`, seine Entscheidung vom 2026-09-01). Ein verwaister hat keinen Termin
+mehr, an dem diese Woche hängen könnte — `chatZustand(undefined)` gibt heute `'aktiv'`,
+also bleibt er für immer. Das ist die vorsichtige Lesart von Entscheidung 41 („was
+bleibt, bleibt"), aber es ist meine Auslegung und nicht seine Entscheidung.
+
+---
+
 ## 7. Bewusst NICHT im Prototyp
 
 Login · Karte · Push-Nachrichten · Bezahlung · **echte Bilder-Uploads** ·
@@ -6065,7 +6166,43 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-10, SPÄTESTER Eintrag): Phase 20.4 —
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-10 abends, SPÄTESTER Eintrag): Ians
+> Konten sind jetzt der EINZIGE Engpass.** ✅ **20.4-a ist gebaut** — die Übersetzung
+> (`src/data/zeilen.ts`), beide abgesprochenen Schulden bezahlt, Belege `ah01`–`ah03`;
+> **121 Häkchen statt 78** (Einzelheiten in Abschnitt 5b unter „Was beim Bauen von
+> 20.4-a herauskam"). Sieben Dinge, die eine frische Sitzung zuerst wissen muss:
+>
+> - **Ohne Ians Konten ist alles gebaut, was ohne sie ging.** 20.1, 20.2, 20.3-a, 20.5
+>   (SQL) und 20.4-a sind fertig. Was bleibt, braucht ein eingerichtetes Projekt:
+>   **20.3-b** (Supabase, Apple, Google — vier Native-Bausteine in EINEM Build) und
+>   **20.4-b** (der Client, die Abfragen, Realtime).
+> - **`bash supabase/pruefen/aufbauen.sh` erwartet ab jetzt 121 Häkchen und kein
+>   Kreuz.** Es ruft `30_wettlauf.sh` UND `40_uebersetzung.sh` mit; letzteres **ändert
+>   die Datenbank** (löst eine Gruppe auf, löscht einen Post) und läuft deshalb als
+>   letzte. Wer `postgresql@17` nicht hat: `brew install postgresql@17`.
+> - **Der Zeitstempel ist der Fund, den man beim Weiterbauen im Kopf haben muss.**
+>   Jeder Wert aus der Datenbank geht durch `zeitpunkt()` — neun Stellen der App
+>   sortieren Zeitstempel als TEXT (harte Regel 72). Wer eine zweite Quelle
+>   anschließt, taucht sie durch dieselbe Funktion.
+> - **`data/zeilen.ts` importiert AUSSCHLIESSLICH Typen, und das ist Absicht.** Nach
+>   `tsc` bleibt kein Import übrig, also läuft die Datei in blankem Node — nur deshalb
+>   kann `40_uebersetzung.sh` echte Postgres-Zeilen durch die echte Regel-Datei
+>   schicken. Wer dort einen Baustein hineinimportiert, nimmt dem Prüfskript die
+>   Grundlage.
+> - **Ians 42. Entscheidung ist neu** (Abschnitt 6): Ein Chat, dessen Aktivität
+>   gelöscht wurde, zeigt die Person und darunter leise *„Aus einer Aktivität, die es
+>   nicht mehr gibt."* Der Satz steht als EINE Konstante (`VERWAIST_TEXT`).
+> - ❓ **Eine Auslegung wartet auf ihn** (blockiert nichts): Ein verwaister Chat läuft
+>   NIE ab, weil ohne Post kein Termin da ist, an dem `NACHKLANG_TAGE` hängen könnte.
+>   Steht am Ende von Abschnitt 6, Punkt 42.
+> - **Was `tsc` bei dieser Sorte Arbeit NICHT findet, steht in harter Regel 73.** Eine
+>   Lockerung (`aufgeloestAm?`) meldet null Fehler; die zwei echten Löcher (Einladung
+>   in eine tote Gruppe, Beitritt in eine tote Gruppe) fand nur Nachsehen von Hand.
+>
+> ---
+>
+> 📎 **Stand davor (er gilt weiter, wo er nicht überholt ist).**
+> 🔜 **(Stand 2026-09-10 früh): Phase 20.4 —
 > `store.ts` aus der Datenbank lesen. Und die Konten von Ian sind weiter der einzige
 > echte Engpass (20.3-b).** ✅ **Die SQL-Seite von 20.5 ist gebaut** (sieben Funktionen
 > und ein Trigger in `migrations/0004_transaktionen.sql`; **78 Häkchen statt 25**,

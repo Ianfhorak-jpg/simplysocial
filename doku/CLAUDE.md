@@ -35,11 +35,86 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 20.4-a ist fertig (2026-09-10): die Übersetzung — was aus einer
+Datenbankzeile wird.** Der Teil von 20.4, der OHNE Ians Konten geht, und wieder gegen
+die echte Wegwerf-Datenbank belegt: `bash supabase/pruefen/aufbauen.sh` erwartet jetzt
+**121 Häkchen statt 78** und ruft ein drittes Prüfskript mit, das echte Zeilen durch
+`src/data/zeilen.ts` schickt. Eine neue Entscheidung von Ian (42). `tsc` sauber,
+**83 Lint-Probleme vorher wie nachher**. Acht Dinge sind wichtiger als die
+Übersetzungsdatei:
+
+1. **Der teuerste Fund ist ein Zeitstempel — und er hätte die REIHENFOLGE der ganzen
+   App still verdreht.** Postgres liefert `2026-09-10T07:59:29.833382+01:00`, Supabase
+   `…+00:00`, die App schreibt `…833Z`. Derselbe Augenblick, drei Schreibweisen — und
+   **neun Stellen sortieren Zeitstempel mit `localeCompare`, also als TEXT**
+   (`posts/sort.ts`, `chat/sort.ts`, `requests/hooks.ts`, `groups/hooks.ts`). Gemessen:
+   `'…07:59:29.833382+01:00'.localeCompare('…06:59:29.833Z')` ergibt **1** („später"),
+   die UTC-Fassung ergibt **−1** („früher"). Der Ausweg ist NICHT, neun Stellen auf
+   `Date` umzubauen — das wären neun Gelegenheiten, eine zu vergessen —, sondern EINE
+   Zeile in `zeitpunkt()`. Gegenprobe gemessen: ohne die Taufe wird das Prüfskript rot
+   (2 Kreuze), die Rücknahme ist nachgewiesen (19d-Methode).
+2. **Ein fehlender `grant` war diesmal KEINE Zusage, sondern eine Lücke — und harte
+   Regel 70 sagt selbst, woran man das unterscheidet.** Auf `reports` stand nur
+   `insert`, mit der Begründung „eine Meldung enthält den Namen dessen, der gemeldet
+   hat". Die Begründung stimmt für FREMDE Meldungen; `useMeineMeldung()` liest aber die
+   EIGENEN und macht daraus seit Phase 7 den Satz „Du hast das schon gemeldet". Ohne
+   select-Recht käme die Liste **leer** zurück — kein Fehler, keine Meldung, der Satz
+   verschwände lautlos und dieselbe Sache ließe sich endlos melden. Jetzt
+   `melder_sieht_eigene` plus **drei Angriffe**: der Melder sieht seine, eine Fremde
+   sieht nichts, **der Gemeldete sieht nichts**.
+3. **Die zwei abgesprochenen Schulden sind bezahlt, und die eine hat `tsc` geschrieben,
+   die andere nicht — genau wie vorhergesagt.** `ChatThread.ausAktivitaet` als
+   PFLICHTfeld meldete **5 Stellen**, `Group.creatorId: string | null` **3**, und
+   `Group.aufgeloestAm?` meldete **NULL** (eine Lockerung, die Phase-16-Lehre). Deshalb
+   sitzt die Enge dafür in `istAufgeloest()` und in den drei Regel-Funktionen
+   `istMitglied` / `istGruender` / `inGruppenListe` — nicht in den Screens.
+4. **Und beim Nachsehen von Hand kamen zwei echte Löcher heraus, die kein Compiler
+   findet.** Eine Einladung in eine aufgelöste Gruppe stand weiter im Anfragen-Tab —
+   `istMitglied()` sagt dort „nein", also war die Zeile *richtig* da, mit einem
+   „Annehmen", das einen als einziges Mitglied in eine tote Gruppe gesetzt hätte. Und
+   `darfBeitreten()` ließ eine Anfrage zu, weil `offen` beim Auflösen nicht angefasst
+   wird — sie hätte für immer dagelegen, weil niemand mehr bestätigt.
+5. **Der Prototyp konnte den Zustand gar nicht herstellen, und das war der eigentliche
+   Grund.** `gruppeVerlassen` LÖSCHTE die Gruppe aus dem Array; jetzt setzt sie
+   `aufgeloestAm`, leert die Mitglieder und nullt `creatorId` — dieselben drei Felder
+   wie `gruppe_verlassen()` in 0004. Dazu `g5` und `p20` in `mock.ts`: eine aufgelöste
+   Gruppe und ein Post, der sie überlebt. **Ein unsichtbarer Eintrag ist der Beweis**
+   (dasselbe Muster wie `p16` in Phase 17): `g5` steht in keiner Liste, `p20` steht im
+   Post-Screen und trägt „Sichtbar für · Nur Bouldern Dienstag".
+6. **`if (!direkt && !post) return undefined;` stand ZWEIMAL in `chat/hooks.ts` — und
+   hätte einen Chat UNÖFFENBAR gemacht.** Der Kommentar daneben sagte „bei einem
+   Aktivitäts-Chat ist ein fehlender Post ein kaputter Datensatz". Das war richtig,
+   solange sich ein Post nicht löschen lässt. In der Datenbank steht `on delete set
+   null`: Der Chat wäre aus der Liste verschwunden und beim Öffnen auf „Diesen Chat gibt
+   es nicht" gelandet — weil eine DRITTE Sache weg ist.
+7. **Ians Entscheidung 42 (2026-09-10): Person plus leise Zeile.** Ein Chat, dessen
+   Aktivität gelöscht wurde, zeigt den Namen wie ein Direktchat und darunter *„Aus einer
+   Aktivität, die es nicht mehr gibt."* Verworfen: nur die Person (der Chat sähe aus wie
+   ein Direktchat, obwohl er keiner ist) und ein eigener Kasten „Diese Aktivität wurde
+   gelöscht" (ein Grabstein in einem Chat, in dem man noch monatelang schreibt). Der
+   Satz steht als EINE Konstante in `chat/direkt.ts` (`VERWAIST_TEXT`).
+8. **Der Prüf-Chat ist mit SARA, und das ist kein Zufall.** Sie folgt Ian, Ian folgt ihr
+   nicht — unter Ians `SCHREIB_REGEL = 'gegenseitig'` könnten die beiden gar keinen
+   Direktchat haben. Würde `t4` je fälschlich als Direktchat gelesen, wäre das also
+   nicht nur eine falsche Überschrift, sondern ein Chat, den es nach den Regeln der App
+   nicht geben dürfte. Genau der Fall, gegen den harte Regel 56 gebaut ist.
+
+⚠️ **Was 20.4-a NICHT ist: das Lesen selbst.** Es gibt keinen Supabase-Client;
+`store.ts` liest weiter `mock.ts`. Was fehlt, ist der Teil, der ein Projekt braucht —
+Abfragen, Realtime, aus dem Speicher einen Zwischenspeicher machen. **Die Übersetzung
+darunter ist fertig und an echten Zeilen belegt.**
+
+❓ **Eine Auslegung wartet auf Ian** (blockiert nichts): Ein verwaister Chat läuft NIE
+ab. `chatZustand(undefined)` gibt `'aktiv'`, weil ohne Post kein Termin da ist, an dem
+Ians `NACHKLANG_TAGE` hängen könnten. Das ist die vorsichtige Lesart seiner
+Entscheidung 41 („was bleibt, bleibt"), aber es ist eine Auslegung: Ein gewöhnlicher
+Aktivitäts-Chat verschwindet eine Woche nach dem Treffen, dieser nie.
+
 ✅ **Phase 20.5 (SQL-Seite) ist fertig (2026-09-10): die Schreibseite — sieben
 Funktionen, nicht drei, und gefunden hat sie die Rechteliste.** Wieder ohne Konto
 gebaut und trotzdem bewiesen, wie 20.1/20.2: `bash supabase/pruefen/aufbauen.sh`
-erwartet jetzt **78 Häkchen statt 25** und ruft ein zweites Prüfskript mit, das zwei
-echte Verbindungen gleichzeitig öffnet. Eine neue Entscheidung von Ian (41). Sechs
+erwartete danach **78 Häkchen statt 25** (seit 20.4-a sind es 121) und ruft ein zweites
+Prüfskript mit, das zwei echte Verbindungen gleichzeitig öffnet. Eine neue Entscheidung von Ian (41). Sechs
 Dinge sind wichtiger als die Funktionen:
 
 1. **Ein fehlender `grant` ist in diesem Projekt eine ZUSAGE, keine Lücke — und er hat
@@ -596,7 +671,8 @@ aus `lib/tabs.ts`.
 ✅ **Phase 20.1 und 20.2 sind fertig (2026-09-06): das Schema und die Regeln auf dem
 Server.** Alles in `simplysocial/supabase/` — und **ohne Supabase-Konto gebaut und
 trotzdem bewiesen.** `bash supabase/pruefen/aufbauen.sh` baut eine Wegwerf-Datenbank
-und lässt 25 Angriffe von außen laufen; erwartet sind 25 Häkchen und kein Kreuz. Sechs
+und lässt Angriffe von außen laufen; erwartet waren damals 25 Häkchen und kein Kreuz
+(seit 20.4-a sind es 121). Sechs
 Dinge sind daran wichtiger als die Tabellen:
 1. **Die Absicherung ist ein POSTGRES-Ding, kein Supabase-Ding — deshalb ging 20.2 vor
    20.3.** Der Plan hängte den Prüfstein an „den Zugangsschlüssel eines zweiten Kontos",
@@ -1343,8 +1419,10 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    ~~**Anmelden, die Naht (20.3-a)**~~ ✅ *2026-09-09, ohne Konto und ohne Build:
    `CURRENT_USER_ID` gelöscht, Sitzung, Torwächter, Anmelde-Bildschirm mit Attrappe* ·
    ~~**Schreiben, die SQL-Seite (20.5)**~~ ✅ *2026-09-10, wieder ohne Konto: sieben
-   Funktionen und ein Trigger, 78 Häkchen* · **Anmelden, die Konten (20.3-b)** —
-   *NUR das braucht Ians Konten* · **`store.ts` lesen (20.4)** ← *hier geht es
+   Funktionen und ein Trigger, 78 Häkchen* · ~~**Lesen, die Übersetzung (20.4-a)**~~
+   ✅ *2026-09-10, wieder ohne Konto: `data/zeilen.ts`, die zwei abgesprochenen
+   Schulden bezahlt, 121 Häkchen* · **Anmelden, die Konten (20.3-b)** —
+   *NUR das braucht Ians Konten* · **`store.ts` lesen (20.4-b)** ← *hier geht es
    weiter, sobald das Supabase-Projekt steht* · Profilbilder · Meldungen lesen.
    Danach fällt 19d-2 nebenbei ab.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
@@ -1538,7 +1616,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 28. **Ein Chat hat seit Phase 16 vielleicht KEINEN Post.** Gefragt wird danach nie mit
    `!thread.postId`, sondern mit `istDirektChat()` aus `features/chat/direkt.ts` — im
    Backend ist ein fehlendes Feld später `null` statt `undefined`, und dann ist es EINE
-   Zeile dort statt sechs verstreute. In Screens fragt man gar nicht am Faden, sondern
+   Zeile dort statt sechs verstreute. **Seit Phase 20.4 ist genau das eingetreten, und
+   es war wirklich eine Zeile:** Die Funktion fragt jetzt `!thread.ausAktivitaet` statt
+   `postId === undefined` (harte Regel 56). Ein Aktivitäts-Chat, dessen Post gelöscht
+   wurde, ist damit KEIN Direktchat — was oben in ihm steht, sagt `herkunftText()`
+   (Ians Entscheidung 42). In Screens fragt man gar nicht am Faden, sondern
    an `ChatEintrag.post`: Der ist optional, und **dort** fängt der Typecheck die Stellen,
    die einen Post voraussetzen. Am Modell fängt er nichts — `find(p => p.id ===
    thread.postId)` ist mit `undefined` gültiger Code.
@@ -1810,7 +1892,8 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    nicht als Nebenwirkung.
 
 57. **Was am Server gilt, wird ANGEGRIFFEN, nicht angeschaut.**
-   `bash supabase/pruefen/aufbauen.sh`, 25 Prüfungen, erwartet sind 25 Häkchen. Jeder
+   `bash supabase/pruefen/aufbauen.sh` — **erwartet sind 121 Häkchen und kein Kreuz**
+   (25 in 20.2, 78 nach 20.5, 121 seit 20.4-a). Jeder
    Block setzt `set local role authenticated` — **wer als `postgres` prüft, prüft
    nichts**, denn der Eigentümer einer Tabelle umgeht seine eigenen Policies. Und ein
    Test, der nur „ist fehlgeschlagen" abfragt, prüft zu wenig: Er muss `SQLSTATE =
@@ -2015,6 +2098,32 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    eine Umrechnung prüft, prüft sie gegen **echte Orte** (Stephansdom → 1010) und nicht
    gegen sich selbst — ein Round-Trip besteht auch bei beidseitig falschem Vorzeichen.
 
+
+72. **Ein Zeitstempel aus der Datenbank wird GETAUFT, bevor ihn jemand vergleicht.**
+   *(Phase 20.4, 2026-09-10.)* `zeitpunkt()` in `data/zeilen.ts` ist die eine Stelle;
+   sie macht aus `2026-09-10T07:59:29.833382+01:00` ein `…833Z`. Der Grund ist nicht
+   Ordnung: **Neun Stellen der App sortieren Zeitstempel mit `localeCompare`, also als
+   Text** (`posts/sort.ts`, `chat/sort.ts`, `requests/hooks.ts`, `groups/hooks.ts`).
+   Gemessen — derselbe Augenblick ist als Text einmal „später" (Versatz `+01:00`) und
+   einmal „früher" (`+00:00`) als die App-Schreibweise. Der Ausweg ist NICHT, die neun
+   Stellen auf `Date`-Vergleiche umzubauen: Das wären neun Gelegenheiten, eine zu
+   vergessen, und der Fehler wäre eine falsche Reihenfolge, die aussieht wie ein
+   kaputter Sortierer. **Wer eine zweite Quelle für Zeitstempel anschließt, taucht sie
+   durch dieselbe Funktion.**
+73. **Eine aufgelöste Gruppe wird nicht gelöscht, sie HÖRT AUF — und gefragt wird mit
+   `istAufgeloest()`.** *(Ians Entscheidung 41, gebaut in Phase 20.4.)* Die drei
+   Felder gehören zusammen und entstehen gemeinsam: `aufgeloestAm` gesetzt,
+   `memberIds` leer, `creatorId` auf `null` (`gruppe_verlassen()` in 0004 und
+   `gruppeVerlassen` in `groups/hooks.ts` schreiben dasselbe). **Der Compiler zeigt
+   dazu NICHTS an** — ein optionales Feld ist eine Lockerung. Die Enge sitzt deshalb
+   in `istMitglied()`, `istGruender()`, `inGruppenListe()` und `darfBeitreten()`, und
+   sie steht dort auch, wo sie heute nichts ändert: Dass eine aufgelöste Gruppe ohnehin
+   keine Mitglieder hat, ist eine Tatsache über die DATEN und keine über die REGEL —
+   und eine Regel, die sich auf die Form ihrer Daten verlässt, wirkt weiter, wenn ihr
+   Grund wegfällt (Phase 18a). **Was `tsc` nicht findet, findet nur Nachsehen:** Eine
+   Einladung in eine tote Gruppe stand deshalb weiter im Anfragen-Tab, und eine
+   Beitritts-Anfrage war weiter möglich, weil `offen` beim Auflösen nicht angefasst
+   wird. Ein Post „nur für diese Gruppe" bleibt stehen — das IST die Entscheidung.
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
@@ -2712,6 +2821,23 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   `count(*) = 0` und wurden rot — **richtig so**: Sie hingen an „die Zeile ist weg"
   statt an „die Gruppe hat aufgehört". Wer eine Regel prüft, formuliert die Prüfung in
   den Worten der REGEL, nicht in denen der Zeile.
+- **Ein veraltetes Metro-Bündel meldet einen Fehler, den es nicht gibt.** (Phase 20.4,
+  2026-09-10, zweimal hineingetappt) Nach dem Anlegen eines neuen Posts in `mock.ts`
+  zeigte `/post/p20` „Diesen Post gibt es nicht mehr" — und das sah nach einer kaputten
+  Sichtbarkeitsregel aus. Der Post war in Ordnung; Metros Dateiwächter hatte die
+  Änderung nicht übernommen und lieferte weiter das alte Bündel („Web Bundled 17ms
+  (1 module)"). **Ein neuer Query-Parameter hilft nicht** — der lädt die SEITE neu, nicht
+  das Bündel. Erkennbar daran, dass `curl` auf die `.bundle`-Adresse den neuen Text
+  schon enthält, der Browser aber nicht; behoben mit `pkill -f "expo start"` und
+  `--clear`. **Dieselbe Familie wie der hängengebliebene Seitenzoom in 19b: vor der
+  Fehlersuche im eigenen Code prüfen, ob das Messgerät den Code überhaupt kennt.**
+- **Ein `import type` erzeugt keine Abhängigkeit — das macht Regel-Dateien einzeln
+  prüfbar.** (Phase 20.4) `data/zeilen.ts`, `groups/gruppe.ts` und `chat/direkt.ts`
+  importieren ausschließlich Typen. Nach `tsc` bleibt in den .js-Dateien kein einziger
+  Import übrig, also laufen sie in blankem Node — ohne Expo, ohne Metro, ohne React.
+  Genau darauf steht `40_uebersetzung.sh`: echte Zeilen aus Postgres durch die echte
+  Regel-Datei. **Wer eine Regel-Datei so hält, kann sie später gegen echte Daten
+  prüfen; wer einen Baustein hineinimportiert, kann es nicht mehr.**
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

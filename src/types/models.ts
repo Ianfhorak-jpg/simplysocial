@@ -203,7 +203,7 @@ export interface Group {
    * sie sich uneinig sind. Für eine Tennisgruppe aus acht Leuten ist das mehr
    * Regelwerk als Nutzen. Kommt später ein Bedarf, ist es ein Feld mehr.
    */
-  creatorId: string;
+  creatorId: string | null;
   /**
    * Alle Mitglieder — der Gründer IST darin enthalten und steht an erster Stelle.
    *
@@ -239,6 +239,31 @@ export interface Group {
   /** Wo die Gruppe hauptsächlich unterwegs ist. `null` heißt „ganz Wien". */
   district: string | null;
   createdAt: string;
+  /**
+   * Wann diese Gruppe AUFGEHÖRT hat. Fehlt das Feld, lebt sie — Phase 20.4.
+   *
+   * ── Warum eine Gruppe aufhört statt zu verschwinden ─────────────────────────
+   * Ians Entscheidung 41 vom 2026-09-10: Löst sich eine Gruppe auf, BLEIBT ein
+   * Post stehen, der „nur für diese Gruppe" war — dieselbe Regel wie
+   * `AUSTRITT_WIRKUNG` (Entscheidung 12). Der naheliegende Weg dorthin wäre, die
+   * Gruppe zu löschen und die Gruppen-ID am Post auf `null` zu setzen. Dann stünde
+   * am Post `visibility.kind === 'group'` OHNE `groupId` — genau der Zustand, den
+   * Phase 17 mit einem diskriminierten Union UNDARSTELLBAR gemacht hat (harte
+   * Regel 31). In der Datenbank bricht dort der CHECK `sicht_vollstaendig` ab.
+   *
+   * Also verschwindet die Gruppe nicht. Sie bekommt ein Datum, ihre
+   * Mitgliederliste ist leer und `creatorId` steht auf `null` — die drei gehören
+   * zusammen und entstehen gemeinsam in `gruppe_verlassen()` (0004).
+   *
+   * ── ⚠️ Der Compiler sagt zu diesem Feld NICHTS ──────────────────────────────
+   * Ein optionales Feld hinzuzufügen ist eine LOCKERUNG, und die meldet `tsc` mit
+   * null Fehlern (die Phase-16-Lehre, siehe `ChatThread.postId` darunter). Die
+   * Enge ist deshalb eine Ebene höher gebaut: `lebendeGruppen()` in
+   * `features/groups/gruppe.ts` ist die einzige Stelle, an der aus einer rohen
+   * Liste eine Liste zum Anzeigen wird. Gefragt wird nie mit `!g.aufgeloestAm`,
+   * sondern mit `istAufgeloest()` — dieselbe Bauart wie `istDirektChat()`.
+   */
+  aufgeloestAm?: string;
 }
 
 /**
@@ -396,6 +421,32 @@ export interface ChatThread {
    * `istDirektChat()`.
    */
   postId?: string;
+  /**
+   * Ist dieser Chat aus einer AKTIVITÄT entstanden? Phase 20.4, harte Regel 56.
+   *
+   * ── Warum das dasteht, obwohl `postId` es schon zu sagen scheint ─────────────
+   * Bis hierher war `istDirektChat(t)` genau `t.postId === undefined`, und das war
+   * richtig: Im Prototyp lässt sich ein Post gar nicht löschen. In der Datenbank
+   * lässt er sich löschen, und `on delete set null` macht dann aus einem
+   * Aktivitäts-Chat LAUTLOS einen Direktchat.
+   *
+   * Die Folge wäre nicht kosmetisch. Für einen Direktchat gilt Ians
+   * `SCHREIB_REGEL = 'gegenseitig'` (`chat/direkt.ts`): Zwei Leute, die sich über
+   * eine Aktivität verabredet haben und einander NICHT folgen, könnten einander
+   * plötzlich nicht mehr schreiben — weil eine DRITTE Sache verschwunden ist.
+   * Niemand hätte das entschieden, und gemerkt hätte es nur, wer es ausprobiert.
+   *
+   * Die Herkunft eines Chats ist eine TATSACHE über seine Entstehung, kein
+   * abgeleiteter Wert. `postId` bleibt der Zeiger auf die Aktivität, solange es sie
+   * gibt — die beiden beantworten zwei Fragen: „woraus ist dieser Chat entstanden"
+   * und „welche Aktivität ist das gerade".
+   *
+   * PFLICHTFELD und nicht optional: Ein fehlendes Feld hieße „unbekannte Herkunft",
+   * und den Zustand gibt es nicht — jeder Chat entsteht auf genau einem der zwei
+   * Wege. Optional wäre außerdem eine Lockerung, und die meldet `tsc` mit null
+   * Fehlern; als Pflichtfeld schreibt es die Arbeitsliste.
+   */
+  ausAktivitaet: boolean;
   participantIds: string[];
   lastMessageAt: string;
 }
