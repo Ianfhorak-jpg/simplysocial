@@ -7,7 +7,7 @@ import { SsAvatar, SsCard, SsChip, SsIconText, SsText } from './ui';
 
 import { alterAmProfil } from '@/config/alter';
 import { useProfilPosts } from '@/features/posts/hooks';
-import { CURRENT_USER_ID } from '@/features/store';
+import { useCurrentUserId } from '@/features/auth/hooks';
 import { colors, radius, spacing } from '@/theme';
 import type { User } from '@/types/models';
 
@@ -62,7 +62,8 @@ export function Profil({
   fuss?: ReactNode;
 }) {
   const { eintraege, verborgen } = useProfilPosts(person.id);
-  const binIch = person.id === CURRENT_USER_ID;
+  const ichId = useCurrentUserId();
+  const binIch = person.id === ichId;
 
   return (
     <>

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { CURRENT_USER_ID, aendern, useSlice } from '../store';
+import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
+import { aendern, useSlice } from '../store';
 
 import { istWienerBezirk } from '@/lib/bezirk';
 import type { User } from '@/types/models';
@@ -8,18 +9,25 @@ import type { User } from '@/types/models';
 /**
  * Alles rund um Menschen: wer bin ich, wer ist das, wer folgt wem.
  *
- * Kein Login im Prototyp — `CURRENT_USER_ID` steht in `data/mock.ts` fest. Wenn
- * später eine Anmeldung dazukommt, ändert sich nur diese Datei: `useCurrentUser`
- * liest dann aus der Sitzung statt aus einer Konstante.
+ * Bis Phase 20.3 stand hier: *„Kein Login im Prototyp — die Konstante steht in
+ * `data/mock.ts` fest. Wenn später eine Anmeldung dazukommt, ändert sich nur diese
+ * Datei: `useCurrentUser` liest dann aus der Sitzung statt aus einer Konstante."*
+ *
+ * **Genau das ist am 2026-09-09 eingetreten, und die Zusage hat zur Hälfte gehalten.**
+ * `useCurrentUser()` liest jetzt aus der Sitzung (`features/auth/hooks.ts`), und
+ * jeder Screen, der ihn ruft, hat nichts gemerkt. Nicht gehalten hat sie für die
+ * 110 Stellen, die die Konstante DIREKT gelesen haben statt über einen Haken — und
+ * das ist die Lehre daraus: **Eine Naht hält nur dort, wo wirklich jemand durchgeht.**
  */
 
 /** Der Nutzer, als der man den Prototyp bedient. */
 export function useCurrentUser(): User {
+  const ichId = useCurrentUserId();
   const users = useSlice('users');
-  const ich = users.find((u) => u.id === CURRENT_USER_ID);
+  const ich = users.find((u) => u.id === ichId);
   // Fehlt der eigene Nutzer, ist an den Daten etwas grundlegend kaputt. Lieber hier
   // laut scheitern als in jedem Screen einen Sonderfall für "kein Ich" mitschleppen.
-  if (!ich) throw new Error(`Nutzer ${CURRENT_USER_ID} fehlt in den Daten`);
+  if (!ich) throw new Error(`Nutzer ${ichId} fehlt in den Daten`);
   return ich;
 }
 
@@ -60,11 +68,13 @@ export function useFolgeIch(id: string): boolean {
  * Harte Regel 9 aus PLAN.md.
  */
 export function folgen(id: string): void {
-  aendern((alt) => ({ users: mitFolgeKante(alt.users, CURRENT_USER_ID, id, true) }));
+  const ichId = getCurrentUserId();
+  aendern((alt) => ({ users: mitFolgeKante(alt.users, ichId, id, true) }));
 }
 
 export function entfolgen(id: string): void {
-  aendern((alt) => ({ users: mitFolgeKante(alt.users, CURRENT_USER_ID, id, false) }));
+  const ichId = getCurrentUserId();
+  aendern((alt) => ({ users: mitFolgeKante(alt.users, ichId, id, false) }));
 }
 
 /**
@@ -83,8 +93,9 @@ export function entfolgen(id: string): void {
  */
 export function bezirkSetzen(plz: string): void {
   if (!istWienerBezirk(plz)) return;
+  const ichId = getCurrentUserId();
   aendern((alt) => ({
-    users: alt.users.map((u) => (u.id === CURRENT_USER_ID ? { ...u, district: plz } : u)),
+    users: alt.users.map((u) => (u.id === ichId ? { ...u, district: plz } : u)),
   }));
 }
 

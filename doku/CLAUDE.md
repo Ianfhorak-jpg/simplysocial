@@ -35,6 +35,59 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 20.3-a ist fertig (2026-09-09): die Naht fürs Anmelden — und der Prototyp
+merkt davon nichts.** Der Teil von 20.3, der OHNE Ians Konten geht: `CURRENT_USER_ID`
+ist ersatzlos gelöscht, an ihrer Stelle steht eine Sitzung. Belege `ag01`–`ag03`,
+`tsc` sauber, **83 Lint-Probleme vorher wie nachher**. Sieben Dinge sind wichtiger als
+der Anmelde-Bildschirm:
+
+1. **Die Konstante ZU LÖSCHEN statt sie auf `string | null` zu setzen, war die ganze
+   Methode — und sie hat 12 Dateien gemeldet.** `string | null` wäre die
+   `Post.district`-Falle zum fünften Mal gewesen: `find(u => u.id === null)` ist
+   gültiger Code, und in JSX rendert `null` klaglos als Nichts. So hat `tsc` die
+   Arbeitsliste geschrieben, wie `IconName` in Phase 14.
+2. **Die 110 Fundstellen zerfallen in zwei Sorten, und der Unterschied ist eine Regel
+   von React.** In einem HAKEN darf man einen Haken rufen und MUSS es (sonst zeichnet
+   der Screen beim Abmelden nicht neu) — `useCurrentUserId()`. In einer AKTION
+   (`folgen`, `blockieren`, `nachrichtSenden`) darf man keinen — `getCurrentUserId()`.
+   Dieselbe Teilung, die seit Phase 1 als `useSlice()`/`getState()` danebensteht.
+3. **Der teuerste Fund war unsichtbar: Beim Abbau des Navigators schreibt
+   `expo-router` die ADRESSE NEU.** Abmelden aus `/einstellungen` zeigte richtig den
+   Anmelde-Bildschirm — und die Adresse stand danach auf **`/account-loeschen`**, einer
+   Seite, die niemand geöffnet hatte. Sie ist schlicht die erste Route im Verzeichnis.
+   **Am Bild war nichts zu sehen; erst das nächste Neuladen hätte jemanden auf dem
+   Lösch-Screen abgesetzt.** Behoben mit einem absichtlichen `router.replace('/')` VOR
+   dem Abmelden — gemessen: `/einstellungen?x=2` → `/`.
+4. **Der Torwächter zeichnet den `Stack` GAR NICHT, statt ihn zu überdecken.** Nur
+   deshalb darf `useCurrentUserId()` ein `string` sein: Ein Screen, der ein Ich
+   braucht, hängt ausgeloggt nicht im Baum. Belegt mit dem umgekehrten Test — `/post/p1`
+   ausgeloggt geöffnet zeigt Anmelden und **`Bin dabei` steht nicht im Text**.
+5. **Die Adresse überlebt den ausgeloggten Kaltstart, und das war der Grund für die
+   Bauweise.** `/post/p1` ohne Sitzung → Anmelden, Adresse bleibt `/post/p1` →
+   „Weiter als Ian" → **man steht auf `/post/p1`, bei Leas Tennis.** Keine Stelle muss
+   sich ein Ziel merken. Geprüft, indem der ausgeloggte Start vorübergehend im Code
+   erzwungen und per `git diff` nachweislich zurückgenommen wurde (die 19d-Methode).
+6. **Dreimal derselbe Hinweis kostete zwölf Bildpunkte.** Unter jedem der drei
+   Anmeldewege stand „Kommt mit dem Konto — im Prototyp noch ohne Funktion." Auf
+   360 × 600 war der Kasten dadurch **612 statt 600 hoch** und stand über beiden
+   Kanten. Jetzt steht der Satz EINMAL unter der Gruppe — und das ist nicht der Fix,
+   sondern Entscheidung 50: Dreimal dasselbe ist genau das, was ein Bildschirm nicht
+   zeigen soll. Nachher Überlauf **0** auf 360 × 600 und 390 × 844.
+7. **Die Wortmarke hätte beim Kaltstart die Farbe gewechselt.** „Social" steht im
+   Startbild (`+html.tsx`) und auf der Landing-Page in `categoryColors.creative`
+   (`#C23D7B`), auf meinem ersten Anmelde-Bildschirm in `accent` (`#3E4043`, ein
+   Grau). Ausgeloggt liegt Anmelden unmittelbar hinter dem Startbild — die Marke wäre
+   mitten im Bildaufbau von Pink auf Grau gesprungen.
+
+⚠️ **Was 20.3-a NICHT ist: das Anmelden selbst.** Es gibt keinen Login — die drei
+Knöpfe sind sichtbar ohne Funktion, hinein kommt man über „Weiter als Ian"
+(`ANMELDE_QUELLE = 'attrappe'`, EIN Wort in `features/auth/anmeldung.ts`). **Die
+Frage nach dem Heimatbezirk (Entscheidung 64) fehlt bewusst**: Sie gehört an das
+erste NEUE Konto, und die Attrappe meldet einen Menschen an, der seinen Bezirk längst
+hat — ein Schritt, der etwas Beantwortetes fragt, ist kein Beleg für den Schritt.
+**Beides kommt in 20.3-b, und das braucht Ians Konten** (Supabase, Apple, Google) und
+vier Native-Bausteine in EINEM Build.
+
 ✅ **Phase 19h-2 ist fertig (2026-09-09): der Standort — und das ist die erste Phase
 seit 19d-1 mit einem neuen Native-Baustein** (`expo-location@~57.0.16`). Ein Schalter in
 `/einstellungen`, direkt unter dem Heimatbezirk: Ist er an, misst der Feed ab dem
@@ -1234,9 +1287,11 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    Bezirk stimmt, gegen die amtlichen Daten nachgerechnet) und einer gehörte einer
    älteren Fassung (der Filter-Knopf, erledigt durch 19f).
 10. **Backend** (Phase 20) ← *hier sind wir* — ~~Schema (20.1)~~ ✅ · ~~Policies
-   (20.2)~~ ✅ *beide 2026-09-06, ohne Konto gebaut und mit 18 Angriffen belegt* ·
-   **Anmelden (20.3)** ← *hier geht es weiter, und das braucht Ians Konten* ·
-   `store.ts` tauschen (20.4/20.5) · Profilbilder · Meldungen lesen.
+   (20.2)~~ ✅ *beide 2026-09-06, ohne Konto gebaut und mit 25 Angriffen belegt* ·
+   ~~**Anmelden, die Naht (20.3-a)**~~ ✅ *2026-09-09, ohne Konto und ohne Build:
+   `CURRENT_USER_ID` gelöscht, Sitzung, Torwächter, Anmelde-Bildschirm mit Attrappe* ·
+   **Anmelden, die Konten (20.3-b)** ← *hier geht es weiter, und NUR das braucht Ians
+   Konten* · `store.ts` tauschen (20.4/20.5) · Profilbilder · Meldungen lesen.
    Danach fällt 19d-2 nebenbei ab.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 
@@ -1861,6 +1916,20 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Entscheidung 61 und harte Regel 47 zugleich auf. Nicht ohne Rückfrage.**
    Das gilt ausdrücklich auch für Phase 20.4: Wo aus `weggewischt` später eine
    Sammlung am Nutzer wird, muss `standort` eine Zeile bleiben.
+
+69. **Wer ich bin, kommt aus der SITZUNG — nie aus einer Konstante.** *(Phase 20.3-a,
+   2026-09-09.)* In einem Haken `useCurrentUserId()`, in einer Aktion
+   `getCurrentUserId()`, beide aus `features/auth/hooks.ts`, beide liefern `string`.
+   **Dass sie kein `string | null` liefern, ist keine Bequemlichkeit, sondern eine
+   Zusage, die woanders eingelöst wird:** Der Torwächter in `app/_layout.tsx`
+   zeichnet den `Stack` gar nicht erst, solange niemand angemeldet ist. Wer diese
+   Bedingung aufweicht — einen Screen ausgeloggt rendern, den Torwächter zu einer
+   Überdeckung machen —, muss vorher 110 Stellen einen Sonderfall für „kein Ich"
+   geben. Was die Regeln des Anmeldens sind, steht in `features/auth/anmeldung.ts`
+   und nirgends sonst (dieselbe Bauart wie 17, 32, 46, 68); `ANMELDE_QUELLE` ist der
+   eine Schalter, den 20.3-b umlegt. **`data/mock.ts` trägt nur noch
+   `ATTRAPPE_ICH_ID`** — welcher Seed-Nutzer der eigene ist, und nicht mehr, wer
+   „der aktuelle Nutzer" ist. Wer sie wieder so liest, dreht die Phase zurück.
 
 53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
    rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und
@@ -2526,6 +2595,29 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   unterscheiden, dass sich Menüleiste und Menüeinträge des Simulators problemlos
   AUSLESEN lassen (das verlangt dieselbe Berechtigung). Wer am Simulator tippen will,
   prüft zuerst, ob überhaupt ein Bildschirm wach ist.
+- **Beim ABBAU eines Navigators schreibt `expo-router` die Adresse neu — auf die erste
+  Route im Verzeichnis.** (Phase 20.3-a, 2026-09-09) Der Torwächter zeichnet den
+  `Stack` beim Abmelden nicht mehr; die Adresse sprang dabei von `/einstellungen` auf
+  **`/account-loeschen`**, eine Seite, die niemand geöffnet hatte — sie ist nur
+  alphabetisch die erste unter `app/`. **Sichtbar war davon NICHTS**, der
+  Anmelde-Bildschirm stand richtig da; erst ein Neuladen hätte jemanden auf dem
+  Lösch-Screen abgesetzt. Der Ausweg ist, die Adresse ABSICHTLICH zu setzen
+  (`router.replace('/')` vor dem Abmelden) — dann hat der Abbau nichts zu raten.
+  **Allgemein: Wer einen Navigator bedingt rendert, misst nach dem Umschalten
+  `location.href`, nicht nur den Bildschirm.**
+- **Ein Prüfklick, der „danebengeht", hat oft eine Entscheidung getroffen.**
+  (Phase 20.3-a) Ein Klick auf die Abmelden-Zeile lief in einen Timeout mit
+  *„`Verstanden` intercepts pointer events"* — das ist der Prototyp-Hinweis, und er
+  SOLL alles überdecken (Ians Entscheidung 48, harte Regel 22). Zweite Fassung der
+  `elementFromPoint`-Lehre vom 2026-09-03: Wer die Meldung als Fehler liest,
+  repariert eine Entscheidung. Im Prüfbrowser gehört deshalb vor jeden Screen-Test
+  ein „Verstanden".
+- **Ein Haken je LISTENZEILE abonniert den Speicher je Zeile.** (Phase 20.3-a) Die
+  naheliegende Umstellung war, `useCurrentUserId()` in `ChatZeile` und `Blase` zu
+  rufen — bei fünfzig Nachrichten fünfzig Abonnements für eine Antwort, die für alle
+  Zeilen dieselbe ist. Sie kommt jetzt als Prop von oben, dieselbe Überlegung wie
+  `useUserMap()` statt `find` je Zeile. **Gilt für jeden Wert, der in einer Liste
+  konstant ist.**
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

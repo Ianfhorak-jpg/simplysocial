@@ -9,7 +9,6 @@ import {
   useUser,
   type FolgeListe as Art,
 } from '@/features/social/hooks';
-import { CURRENT_USER_ID } from '@/features/store';
 import { colors, spacing } from '@/theme';
 import type { User } from '@/types/models';
 
@@ -35,7 +34,7 @@ export function FolgeListeScreen({ userId, art }: { userId: string | undefined; 
   // ihn, ihm folgt nur niemand". Zwei verschiedene Aussagen, deshalb zwei Zweige.
   if (!person || !leute) return <NichtGefunden />;
 
-  const wen = person.id === CURRENT_USER_ID ? { dativ: 'dir', nominativ: 'du' } : { dativ: person.displayName, nominativ: person.displayName };
+  const wen = person.id === ich.id ? { dativ: 'dir', nominativ: 'du' } : { dativ: person.displayName, nominativ: person.displayName };
 
   return (
     <SsScreen contentStyle={styles.seite}>
@@ -54,7 +53,11 @@ export function FolgeListeScreen({ userId, art }: { userId: string | undefined; 
         data={leute}
         keyExtractor={(u) => u.id}
         renderItem={({ item }) => (
-          <PersonZeile person={item} folgeIch={ich.followingIds.includes(item.id)} />
+          <PersonZeile
+            person={item}
+            folgeIch={ich.followingIds.includes(item.id)}
+            binIch={item.id === ich.id}
+          />
         )}
         ItemSeparatorComponent={() => <View style={styles.luecke} />}
         contentContainerStyle={styles.liste}
@@ -69,8 +72,15 @@ export function FolgeListeScreen({ userId, art }: { userId: string | undefined; 
   );
 }
 
-function PersonZeile({ person, folgeIch }: { person: User; folgeIch: boolean }) {
-  const binIch = person.id === CURRENT_USER_ID;
+function PersonZeile({
+  person,
+  folgeIch,
+  binIch,
+}: {
+  person: User;
+  folgeIch: boolean;
+  binIch: boolean;
+}) {
 
   return (
     <SsCard onPress={() => router.push({ pathname: '/user/[id]', params: { id: person.id } })}>

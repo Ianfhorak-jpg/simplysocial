@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
+import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
 import { useCurrentUser, useUserMap } from '../social/hooks';
-import { CURRENT_USER_ID, aendern, getState, neueId, useSlice } from '../store';
+import { aendern, getState, neueId, useSlice } from '../store';
 
 import { ENTSTEHUNG, darfSchreiben, istDirektChat } from './direkt';
 import { chatZustand, type ChatZustand } from './lifecycle';
@@ -93,9 +94,20 @@ function letzteJeFaden(messages: Message[]): Map<string, Message> {
   return map;
 }
 
-/** Aus einem Faden die andere Person heraussuchen. */
-function gegenueberVon(thread: ChatThread, userMap: Map<string, User>): User | undefined {
-  const id = thread.participantIds.find((teilnehmer) => teilnehmer !== CURRENT_USER_ID);
+/**
+ * Aus einem Faden die andere Person heraussuchen.
+ *
+ * `ichId` kommt als Argument herein und wird nicht hier gelesen: Seit Phase 20.3
+ * beantwortet die SITZUNG „wer bin ich", und ein Haken darf in einer gewöhnlichen
+ * Funktion nicht gerufen werden. Wer sie hier hineinholt, macht aus einem Helfer
+ * eine Stelle, die nur noch in React läuft.
+ */
+function gegenueberVon(
+  thread: ChatThread,
+  userMap: Map<string, User>,
+  ichId: string,
+): User | undefined {
+  const id = thread.participantIds.find((teilnehmer) => teilnehmer !== ichId);
   return id ? userMap.get(id) : undefined;
 }
 
@@ -111,6 +123,7 @@ function gegenueberVon(thread: ChatThread, userMap: Map<string, User>): User | u
  * suchen und danach sortieren" wäre dort eine teure Abfrage.
  */
 export function useChatListe(): ChatEintrag[] {
+  const ichId = useCurrentUserId();
   const threads = useSlice('chatThreads');
   const messages = useSlice('messages');
   const posts = useSlice('posts');
@@ -122,7 +135,7 @@ export function useChatListe(): ChatEintrag[] {
     const eintraege: ChatEintrag[] = [];
 
     for (const thread of threads) {
-      if (!thread.participantIds.includes(CURRENT_USER_ID)) continue;
+      if (!thread.participantIds.includes(ichId)) continue;
 
       const direkt = istDirektChat(thread);
       // Bei einem Aktivitäts-Chat ist ein fehlender Post ein kaputter Datensatz und
@@ -130,7 +143,7 @@ export function useChatListe(): ChatEintrag[] {
       const post = direkt ? undefined : posts.find((p) => p.id === thread.postId);
       if (!direkt && !post) continue;
 
-      const gegenueber = gegenueberVon(thread, userMap);
+      const gegenueber = gegenueberVon(thread, userMap, ichId);
       if (!gegenueber) continue;
 
       const zustand = chatZustand(post, jetzt);
@@ -153,7 +166,7 @@ export function useChatListe(): ChatEintrag[] {
     }
 
     return eintraege.sort(vergleicheChats);
-  }, [threads, messages, posts, userMap]);
+  }, [threads, messages, posts, userMap, ichId]);
 }
 
 /**
@@ -165,6 +178,7 @@ export function useChatListe(): ChatEintrag[] {
  * der sich beim Öffnen weigert, sähe kaputt aus statt aufgeräumt.
  */
 export function useChat(threadId: string | undefined): ChatVerlauf | undefined {
+  const ichId = useCurrentUserId();
   const threads = useSlice('chatThreads');
   const messages = useSlice('messages');
   const posts = useSlice('posts');
@@ -175,13 +189,13 @@ export function useChat(threadId: string | undefined): ChatVerlauf | undefined {
     // Nur Beteiligte. Im Prototyp gäbe es keinen Weg in einen fremden Chat, aber die
     // Adresse ist im Browser frei tippbar — und dieselbe Prüfung muss später ohnehin
     // in den Firestore-Regeln stehen.
-    if (!thread || !thread.participantIds.includes(CURRENT_USER_ID)) return undefined;
+    if (!thread || !thread.participantIds.includes(ichId)) return undefined;
 
     const direkt = istDirektChat(thread);
     const post = direkt ? undefined : posts.find((p) => p.id === thread.postId);
     if (!direkt && !post) return undefined;
 
-    const gegenueber = gegenueberVon(thread, userMap);
+    const gegenueber = gegenueberVon(thread, userMap, ichId);
     if (!gegenueber) return undefined;
 
     const nachrichten = messages
@@ -198,7 +212,7 @@ export function useChat(threadId: string | undefined): ChatVerlauf | undefined {
       },
       nachrichten,
     };
-  }, [threads, messages, posts, userMap, threadId]);
+  }, [threads, messages, posts, userMap, threadId, ichId]);
 }
 
 /**
@@ -213,12 +227,13 @@ export function useChat(threadId: string | undefined): ChatVerlauf | undefined {
  * sich nur ändert, wenn sich der Faden wirklich ändert.
  */
 export function useChatZuPost(postId: string | undefined, gastId?: string): ChatThread | undefined {
+  const ichId = useCurrentUserId();
   const threads = useSlice('chatThreads');
   if (!postId) return undefined;
   return threads.find(
     (t) =>
       t.postId === postId &&
-      t.participantIds.includes(CURRENT_USER_ID) &&
+      t.participantIds.includes(ichId) &&
       (gastId === undefined || t.participantIds.includes(gastId)),
   );
 }
@@ -239,15 +254,16 @@ export function nachrichtSenden(threadId: string, text: string): void {
   const inhalt = text.trim();
   if (!inhalt) return;
 
+  const ichId = getCurrentUserId();
   aendern((alt) => {
     const thread = alt.chatThreads.find((t) => t.id === threadId);
-    if (!thread || !thread.participantIds.includes(CURRENT_USER_ID)) return {};
+    if (!thread || !thread.participantIds.includes(ichId)) return {};
 
     const sentAt = new Date().toISOString();
     const neu: Message = {
       id: neueId('m'),
       threadId,
-      senderId: CURRENT_USER_ID,
+      senderId: ichId,
       text: inhalt,
       sentAt,
     };
@@ -305,10 +321,11 @@ export function useDarfSchreiben(id: string | undefined): boolean {
  * Objekt AUS der Liste zurück.
  */
 export function useDirektChat(id: string | undefined): ChatThread | undefined {
+  const ichId = useCurrentUserId();
   const threads = useSlice('chatThreads');
   if (!id) return undefined;
   return threads.find(
-    (t) => istDirektChat(t) && t.participantIds.includes(CURRENT_USER_ID) && t.participantIds.includes(id),
+    (t) => istDirektChat(t) && t.participantIds.includes(ichId) && t.participantIds.includes(id),
   );
 }
 
@@ -329,8 +346,9 @@ export function useDirektChat(id: string | undefined): ChatThread | undefined {
  * `undefined` heißt „darf nicht" — der Screen navigiert dann einfach nicht.
  */
 export function direktChatOeffnen(id: string): string | undefined {
+  const ichId = getCurrentUserId();
   const vorher = getState();
-  const ich = vorher.users.find((u) => u.id === CURRENT_USER_ID);
+  const ich = vorher.users.find((u) => u.id === ichId);
   const andere = vorher.users.find((u) => u.id === id);
   if (!ich || !andere) return undefined;
 
@@ -344,13 +362,13 @@ export function direktChatOeffnen(id: string): string | undefined {
   );
   if (!darfSchreiben(ich, andere, schonGetroffen)) return undefined;
 
-  aendern((alt) => ({ chatThreads: mitDirektChat(alt.chatThreads, CURRENT_USER_ID, id) }));
+  aendern((alt) => ({ chatThreads: mitDirektChat(alt.chatThreads, ichId, id) }));
 
   // Nach dem Ändern nachsehen: `mitDirektChat` gibt entweder den vorhandenen Faden
   // unverändert zurück oder legt einen an, und in beiden Fällen ist die gesuchte ID
   // danach die eine passende in der Liste. Sie aus `neueId()` vorherzusagen wäre die
   // Alternative — dann wüssten zwei Stellen, wie IDs entstehen.
   return getState().chatThreads.find(
-    (t) => istDirektChat(t) && t.participantIds.includes(CURRENT_USER_ID) && t.participantIds.includes(id),
+    (t) => istDirektChat(t) && t.participantIds.includes(ichId) && t.participantIds.includes(id),
   )?.id;
 }

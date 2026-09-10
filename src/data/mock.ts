@@ -21,8 +21,18 @@ import type {
  * Aktion durch alle Screens.
  */
 
-/** Wer der Prototyp gerade "ist". Kein Login — der Nutzer steht einfach fest. */
-export const CURRENT_USER_ID = 'u_ian';
+/**
+ * Als wer die Attrappe anmeldet, solange `ANMELDE_QUELLE = 'attrappe'` ist
+ * (`features/auth/anmeldung.ts`).
+ *
+ * Bis Phase 20.3 hieß das hier `CURRENT_USER_ID` und war die Antwort auf „wer bin
+ * ich" für die ganze App — 110 Stellen haben sie direkt gelesen. Sie ist gelöscht,
+ * nicht umbenannt worden: Die Frage „wer bin ich" beantwortet seither die SITZUNG
+ * (`useCurrentUserId()`), und die kann sich ändern. Übrig bleibt genau das, was
+ * wirklich zu den Startdaten gehört — **welcher der Seed-Nutzer der eigene ist.**
+ * Wer diese Zeile wieder als „der aktuelle Nutzer" liest, dreht Phase 20.3 zurück.
+ */
+export const ATTRAPPE_ICH_ID = 'u_ian';
 
 // ── Keine echten Personen und keine echte Schule ─────────────────────────────
 // Ab Phase 8 liegt der Prototyp auf einer öffentlichen Adresse, und Links werden

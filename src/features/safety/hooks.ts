@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
+import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
 import { nachfolgerId } from '../groups/gruppe';
-import { CURRENT_USER_ID, aendern, neueId, useSlice } from '../store';
+import { aendern, neueId, useSlice } from '../store';
 
 import { BLOCK_WIRKUNG } from './block';
 
@@ -47,8 +48,9 @@ export function istBlockiert(a: User, b: User): boolean {
 
 /** Steht zwischen mir und dieser Person ein Block? Für Screens. */
 export function useIstBlockiert(id: string | undefined): boolean {
+  const ichId = useCurrentUserId();
   const users = useSlice('users');
-  const ich = users.find((u) => u.id === CURRENT_USER_ID);
+  const ich = users.find((u) => u.id === ichId);
   const andere = users.find((u) => u.id === id);
   return Boolean(ich && andere && istBlockiert(ich, andere));
 }
@@ -62,23 +64,25 @@ export function useIstBlockiert(id: string | undefined): boolean {
  * und das ist das Einzige, was ein Block auf keinen Fall tun darf.
  */
 export function useHabeIchBlockiert(id: string | undefined): boolean {
+  const ichId = useCurrentUserId();
   const users = useSlice('users');
-  const ich = users.find((u) => u.id === CURRENT_USER_ID);
+  const ich = users.find((u) => u.id === ichId);
   return Boolean(id && ich?.blockedIds.includes(id));
 }
 
 /** Alle, die ich blockiert habe — die Liste in den Einstellungen. */
 export function useBlockierte(): User[] {
+  const ichId = useCurrentUserId();
   const users = useSlice('users');
   return useMemo(() => {
-    const ich = users.find((u) => u.id === CURRENT_USER_ID);
+    const ich = users.find((u) => u.id === ichId);
     if (!ich) return [];
     const nachId = new Map(users.map((u) => [u.id, u]));
     return [...ich.blockedIds].reverse().flatMap((id) => {
       const u = nachId.get(id);
       return u ? [u] : [];
     });
-  }, [users]);
+  }, [users, ichId]);
 }
 
 /**
@@ -107,15 +111,16 @@ export function useBlockierte(): User[] {
  * `BLOCK_WIRKUNG` — das ist Ians offene Entscheidung.
  */
 export function blockieren(id: string): void {
-  if (id === CURRENT_USER_ID) return;
+  const ichId = getCurrentUserId();
+  if (id === ichId) return;
 
   aendern((alt) => {
-    const ich = alt.users.find((u) => u.id === CURRENT_USER_ID);
+    const ich = alt.users.find((u) => u.id === ichId);
     if (!ich || ich.blockedIds.includes(id)) return {};
 
     // 1 + 2: Block setzen, Folge-Beziehung in beide Richtungen kappen.
     const users = alt.users.map((u) => {
-      if (u.id === CURRENT_USER_ID) {
+      if (u.id === ichId) {
         return {
           ...u,
           blockedIds: [...u.blockedIds, id],
@@ -126,20 +131,20 @@ export function blockieren(id: string): void {
       if (u.id === id) {
         return {
           ...u,
-          followingIds: u.followingIds.filter((x) => x !== CURRENT_USER_ID),
-          followerIds: u.followerIds.filter((x) => x !== CURRENT_USER_ID),
+          followingIds: u.followingIds.filter((x) => x !== ichId),
+          followerIds: u.followerIds.filter((x) => x !== ichId),
         };
       }
       return u;
     });
 
     // Welche Posts gehören uns beiden? Über sie läuft alles Weitere.
-    const meineIds = new Set(alt.posts.filter((p) => p.authorId === CURRENT_USER_ID).map((p) => p.id));
+    const meineIds = new Set(alt.posts.filter((p) => p.authorId === ichId).map((p) => p.id));
     const seineIds = new Set(alt.posts.filter((p) => p.authorId === id).map((p) => p.id));
 
     /** Betrifft diese Anfrage genau uns beide — in der einen oder anderen Richtung? */
     const zwischenUns = (postId: string, vonId: string) =>
-      (vonId === id && meineIds.has(postId)) || (vonId === CURRENT_USER_ID && seineIds.has(postId));
+      (vonId === id && meineIds.has(postId)) || (vonId === ichId && seineIds.has(postId));
 
     // 3: offene Anfragen zwischen uns entfernen.
     let joinRequests = alt.joinRequests.filter(
@@ -189,7 +194,7 @@ export function blockieren(id: string): void {
     if (BLOCK_WIRKUNG.chat === 'weg') {
       const wegIds = new Set(
         chatThreads
-          .filter((t) => t.participantIds.includes(id) && t.participantIds.includes(CURRENT_USER_ID))
+          .filter((t) => t.participantIds.includes(id) && t.participantIds.includes(ichId))
           .map((t) => t.id),
       );
       chatThreads = chatThreads.filter((t) => !wegIds.has(t.id));
@@ -211,9 +216,10 @@ export function blockieren(id: string): void {
  * überlegt. Das ist genau die Art Nebenwahrheit, die später auseinanderläuft.
  */
 export function entblocken(id: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => ({
     users: alt.users.map((u) =>
-      u.id === CURRENT_USER_ID ? { ...u, blockedIds: u.blockedIds.filter((x) => x !== id) } : u,
+      u.id === ichId ? { ...u, blockedIds: u.blockedIds.filter((x) => x !== id) } : u,
     ),
   }));
 }
@@ -231,10 +237,11 @@ export function useMeineMeldung(
   targetType: ReportTarget,
   targetId: string | undefined,
 ): Report | undefined {
+  const ichId = useCurrentUserId();
   const reports = useSlice('reports');
   return reports.find(
     (r) =>
-      r.fromUserId === CURRENT_USER_ID && r.targetType === targetType && r.targetId === targetId,
+      r.fromUserId === ichId && r.targetType === targetType && r.targetId === targetId,
   );
 }
 
@@ -251,10 +258,11 @@ export function melden(
   reason: ReportReason,
   note: string,
 ): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => {
     const schonDa = alt.reports.some(
       (r) =>
-        r.fromUserId === CURRENT_USER_ID && r.targetType === targetType && r.targetId === targetId,
+        r.fromUserId === ichId && r.targetType === targetType && r.targetId === targetId,
     );
     if (schonDa) return {};
 
@@ -262,7 +270,7 @@ export function melden(
       id: neueId('rep'),
       targetType,
       targetId,
-      fromUserId: CURRENT_USER_ID,
+      fromUserId: ichId,
       reason,
       note: note.trim(),
       createdAt: new Date().toISOString(),
@@ -308,6 +316,7 @@ export interface MeineSpuren {
  * eine Ort, an dem die Datenbank zählt und nicht der Feed.
  */
 export function useMeineSpuren(): MeineSpuren {
+  const ichId = useCurrentUserId();
   const posts = useSlice('posts');
   const chatThreads = useSlice('chatThreads');
   const joinRequests = useSlice('joinRequests');
@@ -315,23 +324,23 @@ export function useMeineSpuren(): MeineSpuren {
   const groups = useSlice('groups');
 
   return useMemo(() => {
-    const ich = users.find((u) => u.id === CURRENT_USER_ID);
+    const ich = users.find((u) => u.id === ichId);
 
     // Die Erbfolge wird NICHT hier gerechnet, sondern von `nachfolgerId()` aus
     // `groups/gruppe.ts` — dieselbe Funktion, die auch der Verlassen-Dialog benutzt
     // (harte Regel 33). Zwei Rechnungen für „wer erbt" wären zwei Gelegenheiten,
     // dem Nutzer verschiedene Namen zu nennen.
-    const meine = groups.filter((g) => g.creatorId === CURRENT_USER_ID);
-    const erbeId = meine.length > 0 ? nachfolgerId(meine[0], CURRENT_USER_ID) : null;
+    const meine = groups.filter((g) => g.creatorId === ichId);
+    const erbeId = meine.length > 0 ? nachfolgerId(meine[0], ichId) : null;
 
     return {
-      posts: posts.filter((p) => p.authorId === CURRENT_USER_ID).length,
-      chats: chatThreads.filter((t) => t.participantIds.includes(CURRENT_USER_ID)).length,
-      anfragen: joinRequests.filter((a) => a.fromUserId === CURRENT_USER_ID).length,
+      posts: posts.filter((p) => p.authorId === ichId).length,
+      chats: chatThreads.filter((t) => t.participantIds.includes(ichId)).length,
+      anfragen: joinRequests.filter((a) => a.fromUserId === ichId).length,
       follower: ich?.followerIds.length ?? 0,
       folgt: ich?.followingIds.length ?? 0,
       gruppenAlsGruender: meine.length,
       nachfolgerName: users.find((u) => u.id === erbeId)?.displayName ?? null,
     };
-  }, [posts, chatThreads, joinRequests, users, groups]);
+  }, [posts, chatThreads, joinRequests, users, groups, ichId]);
 }

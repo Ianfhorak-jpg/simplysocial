@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
+import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
 import { istBlockiert } from '../safety/hooks';
 import { useUserMap } from '../social/hooks';
-import { CURRENT_USER_ID, aendern, neueId, useSlice } from '../store';
+import { aendern, neueId, useSlice } from '../store';
 
 import {
   darfEinladen,
@@ -44,13 +45,14 @@ export interface GruppenEintrag {
 
 /** Alle Gruppen, an denen ich beteiligt bin oder sein möchte — meine zuerst. */
 export function useGruppenListe(): GruppenEintrag[] {
+  const ichId = useCurrentUserId();
   const gruppen = useSlice('groups');
   const anfragen = useSlice('groupRequests');
 
   return useMemo(() => {
     const offen = new Set(
       anfragen
-        .filter((a) => a.fromUserId === CURRENT_USER_ID && a.status === 'pending')
+        .filter((a) => a.fromUserId === ichId && a.status === 'pending')
         .map((a) => a.groupId),
     );
 
@@ -58,17 +60,17 @@ export function useGruppenListe(): GruppenEintrag[] {
       // Phase 18a: Private Gruppen, in denen ich nicht bin, stehen hier nicht.
       // Die Regel steht in `gruppe.ts` (`inGruppenListe`), nicht hier — sonst
       // beantwortete dieser Haken eine Frage, die Ian entschieden hat.
-      .filter((gruppe) => inGruppenListe(gruppe, CURRENT_USER_ID))
+      .filter((gruppe) => inGruppenListe(gruppe, ichId))
       .map((gruppe) => ({
         gruppe,
-        mitglied: istMitglied(gruppe, CURRENT_USER_ID),
+        mitglied: istMitglied(gruppe, ichId),
         angefragt: offen.has(gruppe.id),
       }))
       // Meine Gruppen oben, darunter die angefragten, darunter der Rest. Innerhalb
       // einer Stufe die größte zuerst: Eine Gruppe mit acht Leuten sagt mehr über
       // die Stadt aus als eine mit zwei, und der Screen ist zum Finden da.
       .sort((a, b) => rang(a) - rang(b) || b.gruppe.memberIds.length - a.gruppe.memberIds.length);
-  }, [gruppen, anfragen]);
+  }, [gruppen, anfragen, ichId]);
 }
 
 function rang(e: GruppenEintrag): number {
@@ -79,10 +81,11 @@ function rang(e: GruppenEintrag): number {
 
 /** Nur meine Gruppen — für den Erstellen-Screen und die Zeile am Profil. */
 export function useMeineGruppen(): Group[] {
+  const ichId = useCurrentUserId();
   const gruppen = useSlice('groups');
   return useMemo(
-    () => gruppen.filter((g) => istMitglied(g, CURRENT_USER_ID)),
-    [gruppen],
+    () => gruppen.filter((g) => istMitglied(g, ichId)),
+    [gruppen, ichId],
   );
 }
 
@@ -101,15 +104,16 @@ export function useGruppe(id: string | undefined): Group | undefined {
  * öffentliches Verzeichnis mit einem Schloss davor.
  */
 export function useMitglieder(gruppe: Group | undefined): User[] {
+  const ichId = useCurrentUserId();
   const userMap = useUserMap();
 
   return useMemo(() => {
-    if (!gruppe || !istMitglied(gruppe, CURRENT_USER_ID)) return [];
+    if (!gruppe || !istMitglied(gruppe, ichId)) return [];
     return gruppe.memberIds.flatMap((id) => {
       const u = userMap.get(id);
       return u ? [u] : [];
     });
-  }, [gruppe, userMap]);
+  }, [gruppe, userMap, ichId]);
 }
 
 /**
@@ -146,6 +150,7 @@ export interface GruppenEntwurf {
 
 /** Gruppe anlegen. Gibt die neue ID zurück, damit der Screen dorthin springen kann. */
 export function gruppeErstellen(entwurf: GruppenEntwurf): string {
+  const ichId = getCurrentUserId();
   const id = neueId('g');
 
   aendern((alt) => {
@@ -156,11 +161,11 @@ export function gruppeErstellen(entwurf: GruppenEntwurf): string {
       category: entwurf.category,
       district: entwurf.district,
       offen: entwurf.offen,
-      creatorId: CURRENT_USER_ID,
+      creatorId: ichId,
       // Der Gründer ist Mitglied, und zwar an erster Stelle. Beides trägt: Er soll
       // seine eigene Gruppe im Feed sehen, und die Reihenfolge ist die Grundlage
       // für Ians Erbregel (`nachfolgerId` in `gruppe.ts`).
-      memberIds: [CURRENT_USER_ID],
+      memberIds: [ichId],
       createdAt: new Date().toISOString(),
     };
     return { groups: [...alt.groups, neu] };
@@ -173,9 +178,10 @@ export function gruppeErstellen(entwurf: GruppenEntwurf): string {
 
 /** Meine offene Anfrage an diese Gruppe — falls ich schon eine geschickt habe. */
 export function useMeineGruppenAnfrage(gruppeId: string | undefined): GroupRequest | undefined {
+  const ichId = useCurrentUserId();
   const anfragen = useSlice('groupRequests');
   return anfragen.find(
-    (a) => a.groupId === gruppeId && a.fromUserId === CURRENT_USER_ID && a.status === 'pending',
+    (a) => a.groupId === gruppeId && a.fromUserId === ichId && a.status === 'pending',
   );
 }
 
@@ -185,38 +191,39 @@ export function useMeineGruppenAnfrage(gruppeId: string | undefined): GroupReque
  * Screen: Ein Wort in `gruppe.ts` soll den Ablauf ändern, nicht einen Screen.
  */
 export function beitrittAnfragen(gruppeId: string, message: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => {
     const gruppe = alt.groups.find((g) => g.id === gruppeId);
     if (!gruppe) return {};
-    if (istMitglied(gruppe, CURRENT_USER_ID)) return {};
+    if (istMitglied(gruppe, ichId)) return {};
     // Phase 18a: In eine private Gruppe kommt man nur auf Einladung. Der Screen
     // zeigt den Knopf gar nicht erst — das hier ist das Netz für den direkten
     // Link, dieselbe Vorsicht wie bei der Block-Prüfung ein paar Zeilen weiter.
     if (!gruppe.offen) return {};
 
     if (BEITRITT === 'offen') {
-      return { groups: mitMitglied(alt.groups, gruppeId, CURRENT_USER_ID) };
+      return { groups: mitMitglied(alt.groups, gruppeId, ichId) };
     }
     if (BEITRITT === 'einladung') return {};
 
     // Doppelt drücken darf keine zweite Anfrage erzeugen — auf Web ist ein
     // Doppelklick schnell passiert. Dieselbe Vorsicht wie in `anfrageSenden`.
     const schonDa = alt.groupRequests.some(
-      (a) => a.groupId === gruppeId && a.fromUserId === CURRENT_USER_ID && a.status === 'pending',
+      (a) => a.groupId === gruppeId && a.fromUserId === ichId && a.status === 'pending',
     );
     if (schonDa) return {};
 
     // Steht ein Block zum Gründer dazwischen, entsteht keine Anfrage. Der Screen
     // zeigt den Knopf gar nicht erst — das hier ist das Netz darunter, für den
     // direkten Link. Sicherheitsregeln gehören dorthin, wo Daten sich ändern.
-    const ich = alt.users.find((u) => u.id === CURRENT_USER_ID);
+    const ich = alt.users.find((u) => u.id === ichId);
     const gruender = alt.users.find((u) => u.id === gruppe.creatorId);
     if (ich && gruender && istBlockiert(ich, gruender)) return {};
 
     const neu: GroupRequest = {
       id: neueId('gr'),
       groupId: gruppeId,
-      fromUserId: CURRENT_USER_ID,
+      fromUserId: ichId,
       message: message.trim(),
       status: 'pending',
       createdAt: new Date().toISOString(),
@@ -227,10 +234,11 @@ export function beitrittAnfragen(gruppeId: string, message: string): void {
 
 /** Anfrage zurückziehen, solange sie noch offen ist. */
 export function beitrittZuruecknehmen(gruppeId: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => ({
     groupRequests: alt.groupRequests.filter(
       (a) =>
-        !(a.groupId === gruppeId && a.fromUserId === CURRENT_USER_ID && a.status === 'pending'),
+        !(a.groupId === gruppeId && a.fromUserId === ichId && a.status === 'pending'),
     ),
   }));
 }
@@ -247,6 +255,7 @@ export function beitrittZuruecknehmen(gruppeId: string): void {
  * Termin, an dem sie stattfindet.
  */
 export function beitrittBestaetigen(anfrageId: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => {
     const anfrage = alt.groupRequests.find((a) => a.id === anfrageId);
     if (!anfrage || anfrage.status !== 'pending') return {};
@@ -256,7 +265,7 @@ export function beitrittBestaetigen(anfrageId: string): void {
     // Nur der Gründer bestätigt — Ians Entscheidung 2. Das Netz gegen den
     // Doppelklick steckt in `mitMitglied`: eine ID zweimal in `memberIds` wäre eine
     // Person, die in der Liste doppelt steht und sich nur einmal entfernen lässt.
-    if (!istGruender(gruppe, CURRENT_USER_ID)) return {};
+    if (!istGruender(gruppe, ichId)) return {};
 
     return {
       groupRequests: alt.groupRequests.map((a) =>
@@ -269,11 +278,12 @@ export function beitrittBestaetigen(anfrageId: string): void {
 
 /** Ablehnen. Ohne Rückfrage — man kann erneut anfragen, wie bei einer Post-Absage. */
 export function beitrittAblehnen(anfrageId: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => {
     const anfrage = alt.groupRequests.find((a) => a.id === anfrageId);
     if (!anfrage || anfrage.status !== 'pending') return {};
     const gruppe = alt.groups.find((g) => g.id === anfrage.groupId);
-    if (!gruppe || !istGruender(gruppe, CURRENT_USER_ID)) return {};
+    if (!gruppe || !istGruender(gruppe, ichId)) return {};
 
     return {
       groupRequests: alt.groupRequests.map((a) =>
@@ -295,18 +305,19 @@ export function beitrittAblehnen(anfrageId: string): void {
  * Verlassen-Knopf zeigt.
  */
 export function gruppeVerlassen(gruppeId: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => {
     const gruppe = alt.groups.find((g) => g.id === gruppeId);
-    if (!gruppe || !istMitglied(gruppe, CURRENT_USER_ID)) return {};
+    if (!gruppe || !istMitglied(gruppe, ichId)) return {};
 
-    const erbe = istGruender(gruppe, CURRENT_USER_ID)
-      ? nachfolgerId(gruppe, CURRENT_USER_ID)
+    const erbe = istGruender(gruppe, ichId)
+      ? nachfolgerId(gruppe, ichId)
       : null;
     // Gründer ohne Nachfolger heißt: niemand mehr da. Die Gruppe verschwindet — und
     // mit ihr, was auf sie zeigt. Siehe `gruppe.ts`, Ians Entscheidung 2.
-    const loest = istGruender(gruppe, CURRENT_USER_ID) && erbe === null;
+    const loest = istGruender(gruppe, ichId) && erbe === null;
 
-    const restIds = gruppe.memberIds.filter((id) => id !== CURRENT_USER_ID);
+    const restIds = gruppe.memberIds.filter((id) => id !== ichId);
     const groups = loest
       ? alt.groups.filter((g) => g.id !== gruppeId)
       : alt.groups.map((g) =>
@@ -320,7 +331,7 @@ export function gruppeVerlassen(gruppeId: string): void {
       // Ians Entscheidung 1 steckt in `postsBeimAustritt` — hier steht nur, WELCHE
       // Posts sie überhaupt betrifft: meine, und nur die für DIESE Gruppe.
       posts: alt.posts.flatMap((p) => {
-        if (p.authorId !== CURRENT_USER_ID) return [p];
+        if (p.authorId !== ichId) return [p];
         if (p.visibility.kind !== 'group' || p.visibility.groupId !== gruppeId) return [p];
         const behandelt = postsBeimAustritt(p);
         return behandelt ? [behandelt] : [];
@@ -334,7 +345,7 @@ export function gruppeVerlassen(gruppeId: string): void {
           // drin. Ohne das stünde nach dem Austritt „Anfrage läuft" bei einer
           // Gruppe, die ich gerade verlassen habe.
           alt.groupRequests.filter(
-            (a) => !(a.groupId === gruppeId && a.fromUserId === CURRENT_USER_ID),
+            (a) => !(a.groupId === gruppeId && a.fromUserId === ichId),
           ),
     };
   });
@@ -382,26 +393,28 @@ export interface GruppenAnfragenGruppe {
  * einmal.
  */
 export function useOffeneGruppenAnfragen(): GroupRequest[] {
+  const ichId = useCurrentUserId();
   const anfragen = useSlice('groupRequests');
   const gruppen = useSlice('groups');
   const meine = new Set(
-    gruppen.filter((g) => istGruender(g, CURRENT_USER_ID)).map((g) => g.id),
+    gruppen.filter((g) => istGruender(g, ichId)).map((g) => g.id),
   );
   return anfragen.filter((a) => a.status === 'pending' && meine.has(a.groupId));
 }
 
 /** Die eingehenden Beitritts-Anfragen, gruppiert nach Gruppe. */
 export function useEingehendeGruppenAnfragen(): GruppenAnfragenGruppe[] {
+  const ichId = useCurrentUserId();
   const anfragen = useSlice('groupRequests');
   const gruppen = useSlice('groups');
   const userMap = useUserMap();
 
   return useMemo(() => {
-    const ich = userMap.get(CURRENT_USER_ID);
+    const ich = userMap.get(ichId);
     const ergebnis: GruppenAnfragenGruppe[] = [];
 
     for (const gruppe of gruppen) {
-      if (!istGruender(gruppe, CURRENT_USER_ID)) continue;
+      if (!istGruender(gruppe, ichId)) continue;
 
       const eintraege: GruppenAnfrageEintrag[] = [];
       for (const anfrage of anfragen) {
@@ -421,21 +434,22 @@ export function useEingehendeGruppenAnfragen(): GruppenAnfragenGruppe[] {
     }
 
     return ergebnis;
-  }, [anfragen, gruppen, userMap]);
+  }, [anfragen, gruppen, userMap, ichId]);
 }
 
 /** Was ICH angefragt habe — das Neueste zuerst, wie im Feed. */
 export function useGesendeteGruppenAnfragen(): GruppenAnfrageEintrag[] {
+  const ichId = useCurrentUserId();
   const anfragen = useSlice('groupRequests');
   const gruppen = useSlice('groups');
   const userMap = useUserMap();
 
   return useMemo(() => {
-    const ich = userMap.get(CURRENT_USER_ID);
+    const ich = userMap.get(ichId);
     const eintraege: GruppenAnfrageEintrag[] = [];
 
     for (const anfrage of anfragen) {
-      if (anfrage.fromUserId !== CURRENT_USER_ID) continue;
+      if (anfrage.fromUserId !== ichId) continue;
       if (anfrage.status === 'declined') continue;
       const gruppe = gruppen.find((g) => g.id === anfrage.groupId);
       if (!gruppe) continue;
@@ -446,7 +460,7 @@ export function useGesendeteGruppenAnfragen(): GruppenAnfrageEintrag[] {
     }
 
     return eintraege.sort((a, b) => b.anfrage.createdAt.localeCompare(a.anfrage.createdAt));
-  }, [anfragen, gruppen, userMap]);
+  }, [anfragen, gruppen, userMap, ichId]);
 }
 
 // ── Einladen (Phase 18a) ─────────────────────────────────────────────────────
@@ -496,13 +510,14 @@ export interface EinladbarEintrag {
  * Blockierte Leute stehen nicht drin, in keiner Richtung (`istBlockiert`).
  */
 export function useEinladbare(gruppe: Group | undefined): EinladbarEintrag[] {
+  const ichId = useCurrentUserId();
   const einladungen = useSlice('groupInvites');
   const anfragen = useSlice('groupRequests');
   const userMap = useUserMap();
 
   return useMemo(() => {
-    const ich = userMap.get(CURRENT_USER_ID);
-    if (!gruppe || !ich || !darfEinladen(gruppe, CURRENT_USER_ID)) return [];
+    const ich = userMap.get(ichId);
+    if (!gruppe || !ich || !darfEinladen(gruppe, ichId)) return [];
 
     // `Set` und nicht `concat`: Wer mir folgt UND dem ich folge, stünde sonst
     // zweimal in der Liste — mit demselben `key`, und React beschwert sich zu Recht.
@@ -547,7 +562,7 @@ export function useEinladbare(gruppe: Group | undefined): EinladbarEintrag[] {
         rangE[a.zustand] - rangE[b.zustand] ||
         a.person.displayName.localeCompare(b.person.displayName),
     );
-  }, [gruppe, einladungen, anfragen, userMap]);
+  }, [gruppe, einladungen, anfragen, userMap, ichId]);
 }
 
 /**
@@ -560,11 +575,12 @@ export function useEinladbare(gruppe: Group | undefined): EinladbarEintrag[] {
  * Wort — deshalb steht es hier und nicht nur im Kopf von `gruppe.ts`.
  */
 export function einladen(gruppeId: string, toUserId: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => {
     const gruppe = alt.groups.find((g) => g.id === gruppeId);
     if (!gruppe) return {};
-    if (!darfEinladen(gruppe, CURRENT_USER_ID)) return {};
-    if (EINLADEN_DARF === 'mitglied-schlaegt-vor' && !istGruender(gruppe, CURRENT_USER_ID)) {
+    if (!darfEinladen(gruppe, ichId)) return {};
+    if (EINLADEN_DARF === 'mitglied-schlaegt-vor' && !istGruender(gruppe, ichId)) {
       return {};
     }
     if (istMitglied(gruppe, toUserId)) return {};
@@ -577,14 +593,14 @@ export function einladen(gruppeId: string, toUserId: string): void {
     );
     if (schonDa) return {};
 
-    const ich = alt.users.find((u) => u.id === CURRENT_USER_ID);
+    const ich = alt.users.find((u) => u.id === ichId);
     const ziel = alt.users.find((u) => u.id === toUserId);
     if (!ich || !ziel || istBlockiert(ich, ziel)) return {};
 
     const neu: GroupInvite = {
       id: neueId('gi'),
       groupId: gruppeId,
-      fromUserId: CURRENT_USER_ID,
+      fromUserId: ichId,
       toUserId,
       status: 'pending',
       createdAt: new Date().toISOString(),
@@ -605,10 +621,11 @@ export function einladen(gruppeId: string, toUserId: string): void {
  * schon drin ist — und im Tab des Gründers eine Zeile, die er beantworten soll.
  */
 export function einladungAnnehmen(einladungId: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => {
     const einladung = alt.groupInvites.find((e) => e.id === einladungId);
     if (!einladung || einladung.status !== 'pending') return {};
-    if (einladung.toUserId !== CURRENT_USER_ID) return {};
+    if (einladung.toUserId !== ichId) return {};
 
     const gruppe = alt.groups.find((g) => g.id === einladung.groupId);
     if (!gruppe) return {};
@@ -617,9 +634,9 @@ export function einladungAnnehmen(einladungId: string): void {
       groupInvites: alt.groupInvites.map((e) =>
         e.id === einladungId ? { ...e, status: 'accepted' as const } : e,
       ),
-      groups: mitMitglied(alt.groups, gruppe.id, CURRENT_USER_ID),
+      groups: mitMitglied(alt.groups, gruppe.id, ichId),
       groupRequests: alt.groupRequests.filter(
-        (a) => !(a.groupId === gruppe.id && a.fromUserId === CURRENT_USER_ID),
+        (a) => !(a.groupId === gruppe.id && a.fromUserId === ichId),
       ),
     };
   });
@@ -630,10 +647,11 @@ export function einladungAnnehmen(einladungId: string): void {
  * erneut eingeladen werden, es geht nichts unwiederbringlich verloren.
  */
 export function einladungAblehnen(einladungId: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => {
     const einladung = alt.groupInvites.find((e) => e.id === einladungId);
     if (!einladung || einladung.status !== 'pending') return {};
-    if (einladung.toUserId !== CURRENT_USER_ID) return {};
+    if (einladung.toUserId !== ichId) return {};
 
     return {
       groupInvites: alt.groupInvites.map((e) =>
@@ -645,9 +663,10 @@ export function einladungAblehnen(einladungId: string): void {
 
 /** Meine offene Einladung in DIESE Gruppe — für die Gruppenseite. */
 export function useMeineEinladung(gruppeId: string | undefined): GroupInvite | undefined {
+  const ichId = useCurrentUserId();
   const einladungen = useSlice('groupInvites');
   return einladungen.find(
-    (e) => e.groupId === gruppeId && e.toUserId === CURRENT_USER_ID && e.status === 'pending',
+    (e) => e.groupId === gruppeId && e.toUserId === ichId && e.status === 'pending',
   );
 }
 
@@ -661,22 +680,23 @@ export function useMeineEinladung(gruppeId: string | undefined): GroupInvite | u
  * Überlegung wie harte Regel 30 bei der Chat-Liste).
  */
 export function useMeineEinladungen(): EinladungEintrag[] {
+  const ichId = useCurrentUserId();
   const einladungen = useSlice('groupInvites');
   const gruppen = useSlice('groups');
   const userMap = useUserMap();
 
   return useMemo(() => {
-    const ich = userMap.get(CURRENT_USER_ID);
+    const ich = userMap.get(ichId);
     const eintraege: EinladungEintrag[] = [];
 
     for (const einladung of einladungen) {
-      if (einladung.toUserId !== CURRENT_USER_ID || einladung.status !== 'pending') continue;
+      if (einladung.toUserId !== ichId || einladung.status !== 'pending') continue;
       const gruppe = gruppen.find((g) => g.id === einladung.groupId);
       if (!gruppe) continue;
       // Bin ich inzwischen anders hineingekommen (über meine eigene Anfrage), ist
       // die Einladung gegenstandslos. Sie hier zu verstecken ist richtiger, als sie
       // beim Bestätigen wegzuräumen: Der Gründer weiß nichts von der Einladung.
-      if (istMitglied(gruppe, CURRENT_USER_ID)) continue;
+      if (istMitglied(gruppe, ichId)) continue;
       const von = userMap.get(einladung.fromUserId);
       if (!von) continue;
       if (ich && istBlockiert(ich, von)) continue;
@@ -689,5 +709,5 @@ export function useMeineEinladungen(): EinladungEintrag[] {
     return eintraege.sort((a, b) =>
       b.einladung.createdAt.localeCompare(a.einladung.createdAt),
     );
-  }, [einladungen, gruppen, userMap]);
+  }, [einladungen, gruppen, userMap, ichId]);
 }

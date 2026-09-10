@@ -7,7 +7,7 @@ import { useIstBlockiert } from '@/features/safety/hooks';
 import { nachrichtSenden, useChat } from '@/features/chat/hooks';
 import { nachklangTageUebrig } from '@/features/chat/lifecycle';
 import { chatIds } from '@/features/statisch';
-import { CURRENT_USER_ID } from '@/features/store';
+import { useCurrentUserId } from '@/features/auth/hooks';
 import { ortText } from '@/lib/bezirk';
 import { startOderSeit, tagText, uhrzeit } from '@/lib/zeit';
 import { accent, categoryColors, colors, radius, spacing, type CategoryPalette } from '@/theme';
@@ -55,6 +55,8 @@ export function generateStaticParams(): Array<{ id: string }> {
  */
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  // Einmal hier, dann als Prop an jede Blase — siehe die Begründung in `chats.tsx`.
+  const ichId = useCurrentUserId();
   const verlauf = useChat(id);
   const [entwurf, setEntwurf] = useState('');
   const listeRef = useRef<FlatList<Zeile>>(null);
@@ -113,7 +115,7 @@ export default function ChatScreen() {
           item.art === 'tag' ? (
             <TagTrenner text={item.text} />
           ) : (
-            <Blase nachricht={item.nachricht} palette={palette} />
+            <Blase nachricht={item.nachricht} palette={palette} ichId={ichId} />
           )
         }
         style={styles.listeAussen}
@@ -263,8 +265,16 @@ function PersonKopf({ person }: { person: User }) {
  * aus `onBase` und nicht pauschal in Weiß: Sport ist gelb, und weißer Text darauf
  * wäre unlesbar (siehe `theme/colors.ts`).
  */
-function Blase({ nachricht, palette }: { nachricht: Message; palette: CategoryPalette }) {
-  const meins = nachricht.senderId === CURRENT_USER_ID;
+function Blase({
+  nachricht,
+  palette,
+  ichId,
+}: {
+  nachricht: Message;
+  palette: CategoryPalette;
+  ichId: string;
+}) {
+  const meins = nachricht.senderId === ichId;
 
   return (
     <View style={[styles.blaseZeile, meins ? styles.rechts : styles.links]}>

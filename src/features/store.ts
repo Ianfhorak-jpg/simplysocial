@@ -1,9 +1,10 @@
 import { useSyncExternalStore } from 'react';
 
+import { ANMELDE_QUELLE, type Sitzung } from '@/features/auth/anmeldung';
 import type { StandortStand } from '@/features/posts/standort';
 
 import {
-  CURRENT_USER_ID,
+  ATTRAPPE_ICH_ID,
   chatThreads as mockChats,
   groupInvites as mockGroupInvites,
   groupRequests as mockGroupRequests,
@@ -47,8 +48,6 @@ import type {
  * wissen nicht, woher die Daten kommen.
  */
 
-export { CURRENT_USER_ID };
-
 export interface AppState {
   posts: Post[];
   users: User[];
@@ -91,6 +90,20 @@ export interface AppState {
    * gespeicherte Ortsangabe.
    */
   standort: StandortStand;
+  /**
+   * Wer angemeldet ist — Phase 20.3, und der Nachfolger von `CURRENT_USER_ID`.
+   *
+   * Sie steht aus demselben Grund hier wie `weggewischt` und `standort` darüber: Sie
+   * entsteht erst beim Benutzen und hat kein Gegenstück in `mock.ts`. Und sie liegt
+   * IM Zustand und nicht in einem eigenen Speicher daneben, weil sie dann alles
+   * mitbringt, was es hier schon gibt — `useSlice('sitzung')` zeichnet neu, wenn
+   * jemand sich abmeldet, und `getState().sitzung` gilt für Aktionen. Ein zweiter
+   * Mechanismus daneben hätte zwei Wahrheiten ergeben, die auseinanderlaufen können.
+   *
+   * **Gelesen wird sie über `features/auth/hooks.ts`, nie hier.** Dort steht auch,
+   * warum der Zugang `string` liefert und nicht `string | null`.
+   */
+  sitzung: Sitzung;
 }
 
 let state: AppState = {
@@ -105,7 +118,39 @@ let state: AppState = {
   groupInvites: mockGroupInvites,
   weggewischt: [],
   standort: { zustand: 'aus', ort: null, gemessenUm: null },
+  sitzung: startSitzung(),
 };
+
+/**
+ * Womit die App startet.
+ *
+ * Solange `ANMELDE_QUELLE = 'attrappe'` gilt, ist der Prototyp beim Öffnen angemeldet
+ * — genau wie an allen Tagen davor, als hier eine Konstante stand. **Das ist der
+ * einzige Grund, warum die öffentliche Adresse von Phase 20.3 nichts merkt.** Steht
+ * die Quelle auf `'supabase'`, beginnt die App ausgeloggt und der Torwächter in
+ * `app/_layout.tsx` zeigt das Anmelden; die gespeicherte Sitzung kommt dann aus
+ * `expo-secure-store` (Phase 20.3-b) und ersetzt diese Funktion.
+ */
+function startSitzung(): Sitzung {
+  if (ANMELDE_QUELLE === 'attrappe') return attrappeSitzung();
+  return { zustand: 'aus' };
+}
+
+/**
+ * Die Sitzung der Attrappe — der einzige Weg, wie der Seed-Nutzer aus `mock.ts` in
+ * die App kommt.
+ *
+ * **Sie gibt eine `Sitzung` heraus und keine ID**, und das ist der ganze Punkt: Eine
+ * exportierte ID wäre `CURRENT_USER_ID` unter neuem Namen, und die nächste Sitzung
+ * würde sie irgendwo als „der aktuelle Nutzer" lesen. Ein `Sitzung`-Objekt kann man
+ * nur an eine Stelle geben — dorthin, wo Sitzungen hingehören.
+ *
+ * Sie steht hier und nicht in `features/auth/`, weil diese Datei die EINZIGE ist, die
+ * `@/data/mock` importieren darf (Kopf oben, harte Regel 2).
+ */
+export function attrappeSitzung(): Sitzung {
+  return { zustand: 'an', ichId: ATTRAPPE_ICH_ID };
+}
 
 const zuhoerer = new Set<() => void>();
 

@@ -4,7 +4,32 @@
 
 ---
 
-## 🆕 Zuletzt gebaut: 09.09.2026 vormittags — Phase 19i
+## 🆕 Zuletzt gebaut: 09.09.2026 nachts — der Anmelde-Bildschirm (die halbe Sache)
+
+**Die App hat jetzt einen Anmelde-Bildschirm — aber noch kein Anmelden.** Das klingt
+komisch, ist aber genau der Punkt: Alles, was ich ohne deine Konten bauen konnte, ist
+gebaut. Was noch fehlt, sind **nur noch die drei Konten** (Supabase, Apple, Google) —
+Punkt 3 und 4 in `OFFENE_SACHEN.md`.
+
+**Was du merkst, wenn du den Prototyp aufmachst: nichts.** Die Seite startet wie immer
+mitten in der App. Den neuen Bildschirm siehst du, wenn du in den **Einstellungen** ganz
+unten auf **„Abmelden"** tippst — dann steht er da, mit drei Knöpfen (Apple, Google,
+E-Mail) und einem vierten: *„Weiter als Ian"*. Die ersten drei sind absichtlich grau,
+darunter steht warum. Der vierte bringt dich zurück hinein.
+
+**Bilder dazu: `ag01-anmelden-390.png` · `ag02-abmelden-zeile-390.png` ·
+`ag03-anmelden-360x600.png`.**
+
+Warum das trotzdem viel Arbeit war: In der App stand an **110 Stellen** fest
+eingetragen „ich bin Ian". Das ist jetzt überall eine Frage statt einer Tatsache — und
+nur deshalb kann später ein echtes Konto an dieselbe Stelle. Von außen sieht man davon
+nichts, und das ist das gewünschte Ergebnis.
+
+⚠️ **Auf deinem Handy ist das noch NICHT** — dafür musst du es einmal anstecken.
+
+---
+
+## Davor gebaut: 09.09.2026 vormittags — Phase 19i
 
 **Der Bezirk ist jetzt ein Vollbild, die Tab-Symbole sitzen mittig, und beim Glas habe
 ich zwei echte Fehler gefunden.** Alles steht in **`NACH_DEM_CLEAR.md`** — dort mit

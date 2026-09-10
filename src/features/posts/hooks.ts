@@ -1,7 +1,8 @@
 import * as Location from 'expo-location';
 import { useEffect, useMemo } from 'react';
 
-import { CURRENT_USER_ID, aendern, getState, neueId, useSlice } from '../store';
+import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
+import { aendern, getState, neueId, useSlice } from '../store';
 import { istMitglied } from '../groups/gruppe';
 import { istBlockiert } from '../safety/hooks';
 import { useUserMap } from '../social/hooks';
@@ -175,10 +176,11 @@ function blockDazwischen(ich: User, verfasser: User): boolean {
  * dort „das Neueste zuerst".
  */
 export function useFeed(filter: FeedFilter): FeedEintrag[] {
+  const ichId = useCurrentUserId();
   const posts = useSlice('posts');
   const gruppen = useSlice('groups');
   const userMap = useUserMap();
-  const ich = userMap.get(CURRENT_USER_ID);
+  const ich = userMap.get(ichId);
   /** Phase 19h-2. Ist `null`, solange niemand den Schalter umgelegt hat. */
   const meinOrt = useMeinOrt();
 
@@ -367,13 +369,14 @@ export type PostEntwurf = {
  * nichts neu, sie ändert nur den Speicher. Die Screens erfahren es über ihre Haken.
  */
 export function postErstellen(entwurf: PostEntwurf): string {
+  const ichId = getCurrentUserId();
   const id = neueId('p');
 
   aendern((alt) => {
     const neu: Post = {
       ...entwurf,
       id,
-      authorId: CURRENT_USER_ID,
+      authorId: ichId,
       spotsFilled: 0,
       status: 'open',
       createdAt: new Date().toISOString(),
@@ -427,6 +430,7 @@ export interface ProfilPosts {
  * Ende nur, dass ein Post fehlt, aber nicht, warum.
  */
 export function useProfilPosts(userId: string | undefined): ProfilPosts {
+  const ichId = useCurrentUserId();
   const posts = useSlice('posts');
   const gruppen = useSlice('groups');
   const userMap = useUserMap();
@@ -442,19 +446,19 @@ export function useProfilPosts(userId: string | undefined): ProfilPosts {
     // Erklärung. Was der Screen STATTDESSEN zeigt, entscheidet er selbst: Habe ich
     // blockiert, steht dort der Aufheben-Knopf; hat die andere Person mich blockiert,
     // sieht es aus wie ein Profil ohne Pläne. Das ist Absicht (`safety/hooks.ts`).
-    const ich = userMap.get(CURRENT_USER_ID);
+    const ich = userMap.get(ichId);
     if (ich && blockDazwischen(ich, person)) return leer;
 
     const jetzt = new Date();
     const ctx = { jetzt };
-    const meineGruppen = meineGruppenIds(gruppen, CURRENT_USER_ID);
+    const meineGruppen = meineGruppenIds(gruppen, ichId);
     const eintraege: FeedEintrag[] = [];
     const verborgen = { follower: 0, gruppe: 0 };
 
     for (const post of posts) {
       if (post.authorId !== person.id) continue;
       if (!gehoertAufsProfil(post, ctx)) continue;
-      if (!darfIchSehen(post, person, CURRENT_USER_ID, meineGruppen)) {
+      if (!darfIchSehen(post, person, ichId, meineGruppen)) {
         // Nach dem GRUND zählen, nicht bloß zählen. `'public'` kommt hier nie an —
         // ein öffentlicher Post ist immer sichtbar —, aber der Zweig steht da,
         // damit eine vierte Stufe eines Tages einen Typfehler auslöst statt still
@@ -482,7 +486,7 @@ export function useProfilPosts(userId: string | undefined): ProfilPosts {
       ),
       verborgen,
     };
-  }, [posts, gruppen, userMap, userId, meinOrt]);
+  }, [posts, gruppen, userMap, userId, meinOrt, ichId]);
 }
 
 /**
@@ -502,13 +506,14 @@ export function useProfilPosts(userId: string | undefined): ProfilPosts {
  * Stellen steht, ist eine, die man an der zweiten vergisst.
  */
 export function useGruppenPosts(gruppe: Group | undefined): FeedEintrag[] {
+  const ichId = useCurrentUserId();
   const posts = useSlice('posts');
   const userMap = useUserMap();
   const meinOrt = useMeinOrt();
 
   return useMemo(() => {
-    if (!gruppe || !istMitglied(gruppe, CURRENT_USER_ID)) return [];
-    const ich = userMap.get(CURRENT_USER_ID);
+    if (!gruppe || !istMitglied(gruppe, ichId)) return [];
+    const ich = userMap.get(ichId);
     const jetzt = new Date();
 
     const eintraege: FeedEintrag[] = [];
@@ -528,7 +533,7 @@ export function useGruppenPosts(gruppe: Group | undefined): FeedEintrag[] {
       // eigene Nutzer fehlt — und dann ist an den Daten grundlegend etwas kaputt.
       vergleichePosts(a.post, b.post, { jetzt, meinBezirk: ich?.district ?? '', meinOrt }),
     );
-  }, [posts, userMap, gruppe, meinOrt]);
+  }, [posts, userMap, gruppe, meinOrt, ichId]);
 }
 
 // ── Phase 11: der Wischstapel ────────────────────────────────────────────────
@@ -547,22 +552,23 @@ export function useGruppenPosts(gruppe: Group | undefined): FeedEintrag[] {
  * nicht die Meinung dieses Hakens.
  */
 export function useStapel(filter: FeedFilter): FeedEintrag[] {
+  const ichId = useCurrentUserId();
   const eintraege = useFeed(filter);
   const anfragen = useSlice('joinRequests');
   const weggewischt = useSlice('weggewischt');
 
   return useMemo(() => {
     const ctx: StapelKontext = {
-      ichId: CURRENT_USER_ID,
+      ichId: ichId,
       // Die Regel fragt, sie rechnet nicht — siehe `StapelKontext` in `wisch.ts`.
       istOffen,
       angefragt: new Set(
-        anfragen.filter((a) => a.fromUserId === CURRENT_USER_ID).map((a) => a.postId),
+        anfragen.filter((a) => a.fromUserId === ichId).map((a) => a.postId),
       ),
       weggewischt: new Set(weggewischt),
     };
     return eintraege.filter((e) => gehoertInDenStapel(e.post, ctx));
-  }, [eintraege, anfragen, weggewischt]);
+  }, [eintraege, anfragen, weggewischt, ichId]);
 }
 
 /**

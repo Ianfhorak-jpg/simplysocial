@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 
+import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
 import { mitChatFuerTreffen } from '../chat/logic';
 import { istBlockiert } from '../safety/hooks';
 import { useUserMap } from '../social/hooks';
-import { CURRENT_USER_ID, aendern, neueId, useSlice } from '../store';
+import { aendern, neueId, useSlice } from '../store';
 
 import { kollidiert, zaehltAlsTermin, type Termin } from './kollision';
 import { istDannVoll, postNachBestaetigung, uebrigeAnfragenBeiVollemPost } from './logic';
@@ -21,8 +22,9 @@ import type { JoinRequest, Post, User } from '@/types/models';
 
 /** Meine Anfrage auf diesen Post — falls ich schon eine geschickt habe. */
 export function useMeineAnfrage(postId: string | undefined): JoinRequest | undefined {
+  const ichId = useCurrentUserId();
   const anfragen = useSlice('joinRequests');
-  return anfragen.find((a) => a.postId === postId && a.fromUserId === CURRENT_USER_ID);
+  return anfragen.find((a) => a.postId === postId && a.fromUserId === ichId);
 }
 
 /**
@@ -33,11 +35,12 @@ export function useMeineAnfrage(postId: string | undefined): JoinRequest | undef
  * erfahren es über ihre Haken von selbst.
  */
 export function anfrageSenden(postId: string, message: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => {
     // Doppelt drücken darf keine zweite Anfrage erzeugen — auf Web ist ein
     // Doppelklick schnell passiert.
     const schonDa = alt.joinRequests.some(
-      (a) => a.postId === postId && a.fromUserId === CURRENT_USER_ID,
+      (a) => a.postId === postId && a.fromUserId === ichId,
     );
     if (schonDa) return {};
 
@@ -47,14 +50,14 @@ export function anfrageSenden(postId: string, message: string): void {
     // eines alten Renderzustands doch zeigt. Sicherheitsregeln gehören dorthin, wo die
     // Daten sich ändern, nicht dorthin, wo Knöpfe gezeichnet werden.
     const post = alt.posts.find((p) => p.id === postId);
-    const ich = alt.users.find((u) => u.id === CURRENT_USER_ID);
+    const ich = alt.users.find((u) => u.id === ichId);
     const verfasser = alt.users.find((u) => u.id === post?.authorId);
     if (ich && verfasser && istBlockiert(ich, verfasser)) return {};
 
     const neu: JoinRequest = {
       id: neueId('r'),
       postId,
-      fromUserId: CURRENT_USER_ID,
+      fromUserId: ichId,
       message: message.trim(),
       status: 'pending',
       createdAt: new Date().toISOString(),
@@ -65,9 +68,10 @@ export function anfrageSenden(postId: string, message: string): void {
 
 /** Anfrage zurückziehen, solange sie noch nicht bestätigt ist. */
 export function anfrageZuruecknehmen(postId: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => ({
     joinRequests: alt.joinRequests.filter(
-      (a) => !(a.postId === postId && a.fromUserId === CURRENT_USER_ID && a.status === 'pending'),
+      (a) => !(a.postId === postId && a.fromUserId === ichId && a.status === 'pending'),
     ),
   }));
 }
@@ -81,10 +85,11 @@ export function anfrageZuruecknehmen(postId: string): void {
  * ersten abweicht, sobald ein Post den Besitzer wechselt oder gelöscht wird.
  */
 export function useOffeneAnfragen(): JoinRequest[] {
+  const ichId = useCurrentUserId();
   const anfragen = useSlice('joinRequests');
   const posts = useSlice('posts');
   const meinePostIds = new Set(
-    posts.filter((p) => p.authorId === CURRENT_USER_ID).map((p) => p.id),
+    posts.filter((p) => p.authorId === ichId).map((p) => p.id),
   );
   return anfragen.filter((a) => a.status === 'pending' && meinePostIds.has(a.postId));
 }
@@ -119,13 +124,14 @@ export interface AnfragenGruppe {
  * zuerst gefragt hat, steht zuerst da.
  */
 export function useEingehendeAnfragen(): AnfragenGruppe[] {
+  const ichId = useCurrentUserId();
   const anfragen = useSlice('joinRequests');
   const posts = useSlice('posts');
   const userMap = useUserMap();
 
   return useMemo(() => {
-    const meine = posts.filter((p) => p.authorId === CURRENT_USER_ID);
-    const ich = userMap.get(CURRENT_USER_ID);
+    const meine = posts.filter((p) => p.authorId === ichId);
+    const ich = userMap.get(ichId);
     const gruppen: AnfragenGruppe[] = [];
 
     for (const post of meine) {
@@ -147,7 +153,7 @@ export function useEingehendeAnfragen(): AnfragenGruppe[] {
     }
 
     return gruppen.sort((a, b) => a.post.startsAt.localeCompare(b.post.startsAt));
-  }, [anfragen, posts, userMap]);
+  }, [anfragen, posts, userMap, ichId]);
 }
 
 /**
@@ -160,15 +166,16 @@ export function useEingehendeAnfragen(): AnfragenGruppe[] {
  * Das Neueste zuerst — dieselbe Regel wie im Feed (`posts/sort.ts`).
  */
 export function useGesendeteAnfragen(): AnfrageEintrag[] {
+  const ichId = useCurrentUserId();
   const anfragen = useSlice('joinRequests');
   const posts = useSlice('posts');
   const userMap = useUserMap();
 
   return useMemo(() => {
-    const ich = userMap.get(CURRENT_USER_ID);
+    const ich = userMap.get(ichId);
     const eintraege: AnfrageEintrag[] = [];
     for (const anfrage of anfragen) {
-      if (anfrage.fromUserId !== CURRENT_USER_ID) continue;
+      if (anfrage.fromUserId !== ichId) continue;
       const post = posts.find((p) => p.id === anfrage.postId);
       if (!post) continue;
       const person = userMap.get(post.authorId);
@@ -181,7 +188,7 @@ export function useGesendeteAnfragen(): AnfrageEintrag[] {
       eintraege.push({ anfrage, person, post });
     }
     return eintraege.sort((a, b) => b.anfrage.createdAt.localeCompare(a.anfrage.createdAt));
-  }, [anfragen, posts, userMap]);
+  }, [anfragen, posts, userMap, ichId]);
 }
 
 /**
@@ -199,6 +206,7 @@ export function useGesendeteAnfragen(): AnfrageEintrag[] {
  * bestätigt, der Platz aber noch frei ist — und React würde ihn zeichnen.
  */
 export function anfrageBestaetigen(anfrageId: string): void {
+  const ichId = getCurrentUserId();
   aendern((alt) => {
     const anfrage = alt.joinRequests.find((a) => a.id === anfrageId);
     if (!anfrage || anfrage.status !== 'pending') return {};
@@ -209,7 +217,7 @@ export function anfrageBestaetigen(anfrageId: string): void {
     // Zwei Sicherheitsnetze gegen den Doppelklick auf Web: nur der Verfasser
     // bestätigt, und nur solange wirklich ein Platz frei ist. Ohne das zweite käme
     // `spotsFilled` über `spotsTotal` — und "−1 Plätze frei" steht dann im Feed.
-    if (post.authorId !== CURRENT_USER_ID) return {};
+    if (post.authorId !== ichId) return {};
     if (post.spotsFilled >= post.spotsTotal) return {};
 
     const voll = istDannVoll(post);
@@ -271,6 +279,7 @@ export function useKollisionen(
   startsAt: string | undefined,
   ausserPostId?: string,
 ): Termin[] {
+  const ichId = useCurrentUserId();
   const posts = useSlice('posts');
   const anfragen = useSlice('joinRequests');
 
@@ -286,7 +295,7 @@ export function useKollisionen(
       // Post nach Ians Regel bis Tagesende stehen bleibt.
       if (post.status === 'past') continue;
 
-      if (post.authorId === CURRENT_USER_ID) {
+      if (post.authorId === ichId) {
         kandidaten.push({ post, rolle: 'gastgeber', jemandDabei: post.spotsFilled > 0 });
         continue;
       }
@@ -295,7 +304,7 @@ export function useKollisionen(
       // sonst warnt die App bei jedem, der sich mehrere Sachen offenhält.
       const zugesagt = anfragen.some(
         (a) =>
-          a.postId === post.id && a.fromUserId === CURRENT_USER_ID && a.status === 'accepted',
+          a.postId === post.id && a.fromUserId === ichId && a.status === 'accepted',
       );
       if (zugesagt) kandidaten.push({ post, rolle: 'zugesagt', jemandDabei: true });
     }
@@ -303,5 +312,5 @@ export function useKollisionen(
     return kandidaten
       .filter((t) => zaehltAlsTermin(t) && kollidiert(startsAt, t.post.startsAt))
       .sort((a, b) => a.post.startsAt.localeCompare(b.post.startsAt));
-  }, [posts, anfragen, startsAt, ausserPostId]);
+  }, [posts, anfragen, startsAt, ausserPostId, ichId]);
 }

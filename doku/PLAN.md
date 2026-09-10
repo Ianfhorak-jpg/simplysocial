@@ -4675,7 +4675,7 @@ hatte, sie stünde bei allen drei Möglichkeiten schon fest — **eine Meldung �
 Konto dessen, der sie geschrieben hat**, sonst nimmt jeder Anzeigende beim Löschen den
 Beleg mit. Sie tut es jetzt auch wirklich.
 
-#### 20.3 — Anmelden ⬜ *(Ians 27. Entscheidung)*
+#### 20.3 — Anmelden · **20.3-a ✅ (2026-09-09)** · 20.3-b ⬜ *(Ians 27. Entscheidung)*
 
 **E-Mail-Code UND Google UND Apple.** Er hat gegen meine Empfehlung entschieden, und die
 Begründung dahinter zählt: Für 16-Jährige ist ein Tipp weniger Reibung als eine
@@ -4709,6 +4709,97 @@ Native-Bausteine, die dabei dazukommen — **alle vier zusammen, dann ein Build*
 > Technik wie `IconName` in Phase 14. An ihre Stelle kommt `useCurrentUserId()`, und der
 > ausgeloggte Zustand wird **eine Ebene höher** behandelt: Ein Screen, der einen
 > angemeldeten Nutzer braucht, wird gar nicht erst gezeichnet.
+
+#### Was beim Bauen von 20.3-a herauskam *(2026-09-09)*
+
+**20.3 zerfällt in zwei Hälften, und nur die zweite braucht Ians Konten.** Das ist
+dieselbe Trennung wie bei 20.1/20.2 (*halten die Regeln?* gegen *ist das Projekt
+eingerichtet?*) und wie „Simulator statt EAS-Build" in Phase 19. Gebaut ist die erste:
+
+| | |
+|---|---|
+| **20.3-a ✅** | Die NAHT. `CURRENT_USER_ID` gelöscht, Sitzung im Zustand, `useCurrentUserId()`/`getCurrentUserId()`, Torwächter, Anmelde-Bildschirm, Abmelden. Kein Konto, kein neuer Baustein, kein Build. |
+| **20.3-b ⬜** | Die KONTEN. Supabase-Auth, Apple, Google, E-Mail-Code, `expo-secure-store`, die Bezirksfrage beim ersten Konto. Vier Native-Bausteine in EINEM Build. |
+
+**Acht Befunde:**
+
+**1. Die Konstante zu LÖSCHEN war die Methode, nicht das Ergebnis.** Der Plan sagte es
+voraus, und es hat genau so funktioniert: `npx tsc --noEmit` meldete **12 Dateien**,
+und diese Liste war die Arbeitsliste. Mit `string | null` wären es **null** gewesen —
+`find(u => u.id === null)` ist gültiger Code. Dieselbe Technik wie `IconName` in
+Phase 14, dieselbe Falle vermieden wie bei `Post.district` und `ChatThread.postId`.
+
+**2. Zwei Zugänge, weil React zwei Sorten Code kennt.** In einem HAKEN darf man einen
+Haken rufen und muss es — sonst zeichnet der Screen beim Abmelden nicht neu. In einer
+AKTION (`folgen`, `blockieren`, `nachrichtSenden`, `postErstellen` …) darf man keinen.
+Also `useCurrentUserId()` und `getCurrentUserId()`, wie `useSlice()` und `getState()`
+seit Phase 1 danebenstehen. **Der eigentliche Prüfstein war der Linter:** In 34
+`useMemo`-Blöcken kam ein neuer Wert dazu, und ein vergessenes Dep hätte einen Feed
+ergeben, der nach dem Abmelden noch nach dem Vorgänger sortiert. `expo lint` zählt
+**83 Probleme vorher wie nachher**, keine einzige neue `exhaustive-deps`-Warnung.
+
+**3. Der teuerste Fund war UNSICHTBAR — die Adresse.** Abmelden aus `/einstellungen`
+zeigte richtig den Anmelde-Bildschirm; `location.href` stand danach auf
+**`/account-loeschen`**. Ursache: Der Torwächter zeichnet den `Stack` nicht mehr, und
+`expo-router` schreibt beim ABBAU die Adresse neu — auf die erste Route im Verzeichnis,
+und `account-loeschen.tsx` ist alphabetisch die erste unter `app/`. **Am Bild war
+nichts falsch. Erst das nächste Neuladen hätte jemanden auf dem Lösch-Screen
+abgesetzt.** Behoben mit einem absichtlichen `router.replace('/')` vor dem Abmelden —
+kein Trick gegen den Router, sondern die richtige Aussage: Wer sich abmeldet, steht
+nicht mehr in den Einstellungen. Gemessen: `/einstellungen?x=2` → `/`.
+
+**4. Der Torwächter zeichnet den Stack GAR NICHT — und nur deshalb darf der Zugang
+`string` liefern.** Die naheliegende Bauweise wäre eine Überdeckung wie beim
+Prototyp-Hinweis gewesen. Dann hingen die Screens weiter im Baum, würden zeichnen und
+`useCurrentUserId()` würde werfen. Der Gegenbeweis ist gemessen: `/post/p1` ausgeloggt
+geöffnet zeigt Anmelden, und **`Bin dabei` steht nicht im Text der Seite** — der Screen
+existiert nicht, er ist nicht nur verdeckt.
+
+**5. Keine Route `/anmelden`, und der Grund ist die Adresse.** Belegt, indem der
+ausgeloggte Start vorübergehend im Code erzwungen und per `git diff` nachweislich
+zurückgenommen wurde (die 19d-Methode): `/post/p1` ohne Sitzung → Anmelden, Adresse
+bleibt `/post/p1` → „Weiter als Ian" → **man steht auf `/post/p1`, bei Leas Tennis.**
+Keine Stelle merkt sich ein Ziel, weil nie navigiert wird. Eine Route hätte nach
+`/anmelden` umgeleitet und das Ziel verloren — bei einer App, in der seit Phase 8 jede
+Adresse die erste sein kann (harte Regel 5), ist das kein Randfall.
+
+**6. Dreimal derselbe Satz kostete zwölf Bildpunkte — und war schon vorher falsch.**
+Unter jedem der drei Wege stand „Kommt mit dem Konto — im Prototyp noch ohne
+Funktion." Auf **360 × 600** war der Kasten dadurch 612 hoch und stand über beiden
+Kanten (gemessen: `scrollHeight` 606 gegen `innerHeight` 600, angemeldet 600 = 600).
+Der Satz steht jetzt EINMAL unter der Gruppe — und das ist nicht die Reparatur,
+sondern **Entscheidung 50**: Dreimal dasselbe ist genau das, was ein Bildschirm nicht
+zeigen soll. Nachher Überlauf **0** auf beiden Größen, alle vier Knöpfe mit
+`elementFromPoint` frei getroffen.
+
+**7. Die Wortmarke hätte beim ausgeloggten Kaltstart die Farbe gewechselt.** „Social"
+steht im Startbild (`app/+html.tsx`) und auf der Landing-Page in
+`categoryColors.creative` (`#C23D7B`), auf der ersten Fassung des Anmelde-Bildschirms
+in `accent` (`#3E4043`, ein Grau). Ausgeloggt liegt Anmelden unmittelbar hinter dem
+Startbild — die Marke wäre mitten im Bildaufbau von Pink auf Grau gesprungen. Dritte
+Fassung von harte Regel 13: **Was an mehreren Orten steht, driftet, sobald einer neu
+gebaut wird.**
+
+**8. Zwei Sachen, die nur die Attrappe betreffen, und beide sind EIN Wort.**
+`ANMELDE_QUELLE = 'attrappe'` in `features/auth/anmeldung.ts` entscheidet, ob die App
+angemeldet startet; `attrappeSitzung()` in `store.ts` ist der einzige Weg, wie der
+Seed-Nutzer hineinkommt. **Sie gibt eine `Sitzung` heraus und keine ID** — eine
+exportierte ID wäre `CURRENT_USER_ID` unter neuem Namen. Und sie steht in `store.ts`,
+weil das die einzige Datei ist, die `@/data/mock` importieren darf (harte Regel 2).
+
+**Was 20.3-a ausdrücklich NICHT enthält, und warum:**
+
+- **Die Bezirksfrage beim Anmelden** (Ians Entscheidung 64, *„man gibt am Anfang seinen
+  Bezirk an"*). Sie gehört an das erste NEUE Konto. Die Attrappe meldet einen Menschen
+  an, der seinen Bezirk längst hat — ein Schritt, der etwas Beantwortetes fragt, ist
+  kein Beleg für den Schritt (die 18d-Lehre: *welche Daten bringen ihn zum Sprechen?*).
+  Die Regel dazu steht schon geschrieben, im Kopf von `features/auth/anmeldung.ts`.
+- **Der Standort.** `STANDORT_FRAGE = 'einstellung'` (Entscheidung 70) sagt es
+  ausdrücklich, und iOS fragt EINMAL: Wer im Anmelden wegdrückt, drückt für immer weg.
+- **`expo-secure-store`.** Der Prototyp-Hinweis merkt sich sein „Verstanden" weiter in
+  `sessionStorage` und kommt auf Native nach jedem Kaltstart wieder (Vorhersage 19.6).
+  Der Tausch ist in `PrototypHinweis.tsx` auf zwei Funktionen eingeengt und gehört in
+  denselben Build wie die drei Auth-Bausteine.
 
 #### 20.4 — `store.ts` austauschen, Teil 1: Lesen ⬜
 
@@ -5866,9 +5957,40 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-09 abends, SPÄTESTER Eintrag):
-> Phase 20.3 — Anmelden. Und das ist die erste Aufgabe, die wirklich auf Ian
-> wartet.** 19i und 19h-2 sind beide gebaut; damit ist **die ganze Phase 19 fertig
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-09 nachts, SPÄTESTER Eintrag):
+> Phase 20.3-b — die Konten. Und das ist die erste Aufgabe, die WIRKLICH auf Ian
+> wartet.** ✅ **20.3-a ist gebaut** (die Naht: Konstante gelöscht, Sitzung,
+> Torwächter, Anmelde-Bildschirm mit Attrappe, Abmelden; Belege `ag01`–`ag03`,
+> Einzelheiten in Abschnitt 5b unter „Was beim Bauen von 20.3-a herauskam"). Sechs
+> Dinge, die eine frische Sitzung zuerst wissen muss:
+>
+> - **Es fehlen genau drei Konten: Supabase, Apple Developer, Google.** Alles, was
+>   ohne sie ging, ist gemacht. Der Umbau der 110 Fundstellen ist durch, `tsc` sauber,
+>   83 Lint-Probleme wie vorher.
+> - **`ANMELDE_QUELLE` in `features/auth/anmeldung.ts` ist der eine Schalter.** Steht
+>   er auf `'supabase'`, startet die App ausgeloggt, der Attrappen-Knopf verschwindet
+>   und die drei Wege werden `bereit`. Alles darüber ist schon das Echte.
+> - **Die Bezirksfrage (Entscheidung 64) gehört in 20.3-b**, an das erste NEUE Konto —
+>   nicht in den Anmelde-Bildschirm der Attrappe, die einen Menschen anmeldet, der
+>   seinen Bezirk längst hat. Der Schalter in `/einstellungen` bleibt daneben bestehen.
+> - **Reihenfolge, die Apple erzwingt:** Sobald Google dabei ist, ist „Anmelden mit
+>   Apple" nach Richtlinie 4.8 **Pflicht**. Apple muss also fertig sein, BEVOR Google
+>   live geht. Steht als Kommentar an `ANMELDE_WEGE`.
+> - **Vier Bausteine kommen in EINEN Build** (`expo-apple-authentication`,
+>   `expo-auth-session` + `expo-web-browser`, `expo-secure-store`, `async-storage`).
+>   **Vor jedem `expo prebuild` eine Kopie von
+>   `ios/SimplySocial.xcodeproj/project.pbxproj`** — auch der Lauf OHNE `--clean` wirft
+>   `DEVELOPMENT_TEAM` und `CODE_SIGN_STYLE` weg. Und **Bauplatz außerhalb von iCloud**
+>   (`-derivedDataPath ~/Library/Developer/Xcode/DerivedData/SimplySocial-geraet`).
+> - **Wer am Torwächter etwas ändert, misst danach `location.href`, nicht den
+>   Bildschirm.** Beim Abbau des Navigators schreibt `expo-router` die Adresse neu; das
+>   hat 20.3-a einmal auf `/account-loeschen` gesetzt, ohne dass am Bild etwas falsch
+>   aussah (harte Regel 69 und die Fallen-Liste).
+>
+> ---
+>
+> 📎 **Stand davor (die Ausschreibung von 20.3, aus der 20.3-a gebaut wurde).**
+> 19i und 19h-2 sind beide gebaut; damit ist **die ganze Phase 19 fertig
 > bis auf 19d-2 (MapKit JS im Browser), und die hängt selbst an 20.3.** Sieben Dinge,
 > die eine frische Sitzung zuerst wissen muss:
 >

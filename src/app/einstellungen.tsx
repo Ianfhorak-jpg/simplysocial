@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
+import { abmelden } from '@/features/auth/hooks';
 import { entblocken, useBlockierte } from '@/features/safety/hooks';
 import { standortAnschalten, standortAusschalten, useStandortStand } from '@/features/posts/hooks';
 import { standortFolgen } from '@/features/posts/standort';
@@ -187,6 +188,15 @@ export default function EinstellungenScreen() {
         <SsText variant="label" color={colors.inkSoft}>
           Dein Konto
         </SsText>
+        {/* Abmelden steht ÜBER dem Löschen und ist kein Vorzimmer davon: Das eine ist
+            umkehrbar, das andere nicht. Die Reihenfolge sagt das mit — wer nach dem
+            Ausstieg sucht, findet zuerst den, von dem er zurückkommt. */}
+        <Zeile
+          icon="pfeilRechts"
+          label="Abmelden"
+          hinweis={`Zurück zum Anmelden von ${BRAND.name}`}
+          onPress={hinaus}
+        />
         <Zeile
           icon="muell"
           label="Account löschen"
@@ -216,7 +226,46 @@ export default function EinstellungenScreen() {
 }
 
 /**
- * Eine Zeile, die woanders hinführt.
+ * Abmelden — und dabei die Adresse mitnehmen.
+ *
+ * ── Warum hier ein `replace` steht und nicht nur `abmelden()` ─────────────────
+ * Der Torwächter in `app/_layout.tsx` zeichnet den `Stack` nicht mehr, sobald die
+ * Sitzung weg ist. **Beim Abbau schreibt `expo-router` die Adresse neu** — gemessen
+ * am 2026-09-09: Aus `/einstellungen` wurde `/account-loeschen`, eine Seite, die
+ * niemand geöffnet hatte. Sie ist schlicht die erste Route im Verzeichnis; ohne
+ * Navigator fällt der Router darauf zurück. Sichtbar war davon nichts (der
+ * Anmelde-Bildschirm stand richtig da) — **erst beim nächsten Neuladen hätte es
+ * jemanden auf dem Lösch-Screen abgesetzt.**
+ *
+ * `replace('/')` ist deshalb kein Trick gegen den Router, sondern die richtige
+ * Aussage: Wer sich abmeldet, steht nicht mehr in den Einstellungen. Und weil die
+ * Adresse ABSICHTLICH gesetzt wird, hat der Abbau nichts mehr zu raten.
+ *
+ * `replace` und nicht `push`: Die Einstellungen sollen nicht im Zurück-Verlauf
+ * liegenbleiben, sonst führt der Zurück-Knopf des Browsers nach dem nächsten
+ * Anmelden in einen Screen, den man gerade verlassen hat.
+ *
+ * **Das gilt nur für den Weg über diesen Knopf.** Wer die App ausgeloggt ÖFFNET
+ * (Phase 20.3-b), behält seine Adresse — dort wird nie ein Navigator abgebaut.
+ * Belegt am 2026-09-09: `/post/p1` ausgeloggt geöffnet, angemeldet, und man steht
+ * auf `/post/p1`.
+ */
+function hinaus(): void {
+  router.replace('/');
+  abmelden();
+}
+
+/**
+ * Wohin eine Zeile führt — ein Weg ODER eine Tat, nie beides und nie keines.
+ *
+ * Dasselbe Muster wie `SsButtonVariantProps` (Kategoriefarbe nur bei
+ * `variant="category"`, dort aber Pflicht): Eine Zeile ohne Ziel wäre tippbar und
+ * täte nichts, eine mit zweien hätte zwei Bedeutungen. Beides ist so nicht tippbar.
+ */
+type ZeileZiel = { href: Href; onPress?: never } | { onPress: () => void; href?: never };
+
+/**
+ * Eine Zeile, die woanders hinführt oder etwas tut.
  *
  * Das Winkelzeichen rechts ist dasselbe wie auf der Verfasser-Karte im Post-Detail —
  * in dieser App heisst der Chevron immer: hier geht es weiter. `rot` färbt nur den Text, nicht
@@ -224,26 +273,26 @@ export default function EinstellungenScreen() {
  * von `SsButton.tsx`): Die unfreundliche Aktion soll erkennbar sein, ohne der lauteste
  * Punkt auf dem Bildschirm zu werden.
  */
-function Zeile({
-  icon,
-  label,
-  hinweis,
-  href,
-  rot,
-}: {
-  // `IconName` und NICHT `string` — genau daran ist diese Zeile in Phase 14
-  // vorbeigerutscht. Solange hier `string` stand, war „blatt" ein gültiger Wert,
-  // und `tsc` hatte keinen Grund, sich zu melden. Siehe den Kommentar bei `SsIcon`
-  // unten.
-  icon: IconName;
-  label: string;
-  hinweis: string;
-  href: Href;
-  rot?: boolean;
-}) {
+function Zeile(
+  props: {
+    // `IconName` und NICHT `string` — genau daran ist diese Zeile in Phase 14
+    // vorbeigerutscht. Solange hier `string` stand, war „blatt" ein gültiger Wert,
+    // und `tsc` hatte keinen Grund, sich zu melden. Siehe den Kommentar bei `SsIcon`
+    // unten.
+    icon: IconName;
+    label: string;
+    hinweis: string;
+    rot?: boolean;
+  } & ZeileZiel,
+) {
+  const { icon, label, hinweis, rot } = props;
+  // Nicht destrukturieren: Ein `...ziel` verliert die Verzweigung des Unions, und
+  // `tsc` sieht danach ein `Href | undefined`. Am ganzen `props` narrowt er sauber.
+  const fuehrt = props.href !== undefined;
+
   return (
     <Pressable
-      onPress={() => router.push(href)}
+      onPress={() => (props.href !== undefined ? router.push(props.href) : props.onPress())}
       accessibilityRole="button"
       style={({ pressed }) => [styles.zeile, pressed && styles.zeileGedrueckt]}>
       {/* Hier stand `<SsText>{icon}</SsText>` — richtig, solange `icon` ein Emoji war
@@ -262,7 +311,10 @@ function Zeile({
           {hinweis}
         </SsText>
       </View>
-      <SsIcon name="chevronRechts" size={18} color={colors.inkSoft} />
+      {/* Der Chevron heißt in dieser App IMMER „hier geht es weiter". Eine Zeile, die
+          etwas TUT statt zu führen, bekommt deshalb keinen — sonst verspricht das
+          Zeichen einen Bildschirm, der nicht kommt. */}
+      {fuehrt ? <SsIcon name="chevronRechts" size={18} color={colors.inkSoft} /> : null}
     </Pressable>
   );
 }

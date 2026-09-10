@@ -5,7 +5,7 @@ import { Pressable, SectionList, StyleSheet, View } from 'react-native';
 import { SsAvatar, SsButton, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { useChatListe, type ChatEintrag } from '@/features/chat/hooks';
 import { NACHKLANG_TAGE } from '@/features/chat/lifecycle';
-import { CURRENT_USER_ID } from '@/features/store';
+import { useCurrentUserId } from '@/features/auth/hooks';
 import { categoryColors, colors, spacing } from '@/theme';
 import { vergangen } from '@/lib/zeit';
 
@@ -103,6 +103,10 @@ const TEXT_LINKS = STREIFEN + RAND + AVATAR + spacing.md;
 
 export default function ChatsScreen() {
   const chats = useChatListe();
+  // Wer ich bin, wird EINMAL hier gelesen und an die Zeilen durchgereicht — nicht in
+  // jeder Zeile neu. Eine Liste, in der jede Zeile den Speicher abonniert, um zu
+  // erfahren, wer sie liest, zahlt für eine Antwort, die für alle Zeilen dieselbe ist.
+  const ichId = useCurrentUserId();
 
   const sections = useMemo(() => {
     const aktiv = chats.filter((c) => c.zustand === 'aktiv');
@@ -172,7 +176,7 @@ export default function ChatsScreen() {
             </View>
           ) : null
         }
-        renderItem={({ item }) => <ChatZeile eintrag={item} />}
+        renderItem={({ item }) => <ChatZeile eintrag={item} ichId={ichId} />}
         // Die Trennlinie steht ZWISCHEN den Zeilen, nicht an jeder Zeile unten: sonst
         // hat die letzte Zeile vor der nächsten Überschrift eine Linie, die nichts
         // trennt.
@@ -207,9 +211,9 @@ export default function ChatsScreen() {
  * Zeilenliste sind ausgefranste Avatar-Spalten genau das „unruhig", gegen das diese
  * Phase gebaut ist. Die Auskunft steckt weiter im Platz: keine Farbe = keine Aktivität.
  */
-function ChatZeile({ eintrag }: { eintrag: ChatEintrag }) {
+function ChatZeile({ eintrag, ichId }: { eintrag: ChatEintrag; ichId: string }) {
   const { thread, post, gegenueber, letzte } = eintrag;
-  const vonMir = letzte?.senderId === CURRENT_USER_ID;
+  const vonMir = letzte?.senderId === ichId;
 
   return (
     <Pressable

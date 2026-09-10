@@ -10,7 +10,7 @@ import { blockFolgen } from '@/features/safety/block';
 import { blockieren, entblocken, useHabeIchBlockiert, useMeineMeldung } from '@/features/safety/hooks';
 import { entfolgen, folgen, useFolgeIch, useUser } from '@/features/social/hooks';
 import { userIds } from '@/features/statisch';
-import { CURRENT_USER_ID } from '@/features/store';
+import { useCurrentUserId } from '@/features/auth/hooks';
 import { colors, danger, spacing } from '@/theme';
 import type { User } from '@/types/models';
 
@@ -56,10 +56,11 @@ export default function UserProfileScreen() {
   const darfSchreiben = useDarfSchreiben(id);
   const meldung = useMeineMeldung('user', id);
   const [fragt, setFragt] = useState(false);
+  const ichId = useCurrentUserId();
 
   // Erst NACH allen Haken aussteigen — React verlangt in jedem Durchlauf dieselben
   // Haken in derselben Reihenfolge.
-  if (id === CURRENT_USER_ID) return <Redirect href="/profile" />;
+  if (id === ichId) return <Redirect href="/profile" />;
   if (!person) return <NichtGefunden />;
 
   if (habeIchBlockiert) return <BlockiertesProfil person={person} />;

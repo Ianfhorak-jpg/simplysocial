@@ -6,13 +6,29 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { Anmelden } from '@/components/Anmelden';
 import { PrototypHinweis } from '@/components/PrototypHinweis';
 import { BRAND } from '@/config/brand';
+import { useSitzung } from '@/features/auth/hooks';
 import { colors } from '@/theme';
 
 /**
- * Die Wurzel der App. Bewusst dünn: hier kommt später nur noch dazu, was WIRKLICH
- * überall gilt (Schriften laden, später der Auth-Zustand).
+ * Die Wurzel der App. Bewusst dünn: hier steht nur, was WIRKLICH überall gilt.
+ *
+ * ── Der Torwächter (Phase 20.3) ───────────────────────────────────────────────
+ * Seit dem 2026-09-09 steht hier der Auth-Zustand — genau da, wo dieser Kommentar
+ * ihn seit Phase 1 angekündigt hat. Ist niemand angemeldet, wird der `Stack` GAR
+ * NICHT gezeichnet, und an seiner Stelle steht `<Anmelden />`.
+ *
+ * **Das ist keine Geschmacksfrage, sondern die Bedingung dafür, dass
+ * `useCurrentUserId()` ein `string` sein darf und kein `string | null`.** Jeder
+ * Screen darunter setzt ein Ich voraus; hinge er im Baum, würde er zeichnen und
+ * werfen. Der ausgeloggte Zustand wird deshalb eine Ebene HÖHER behandelt, und diese
+ * Ebene ist die einzige, die über dem Stack liegt.
+ *
+ * Warum das keine `/anmelden`-Route ist, steht im Kopf von `components/Anmelden.tsx`:
+ * Die Adresse bleibt stehen, also landet man nach dem Anmelden dort, wohin der Link
+ * zeigte — ohne dass sich irgendetwas ein Ziel merken muss.
  *
  * `headerShown: false` — jeder Screen baut seine Kopfzeile selbst. Die Standard-
  * Kopfzeile von React Navigation sieht auf Web und iOS unterschiedlich aus; bei einem
@@ -32,18 +48,23 @@ import { colors } from '@/theme';
 export default function RootLayout() {
   startFlaecheWeg();
   tabTitel();
+  const angemeldet = useSitzung().zustand === 'an';
 
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
       <View style={styles.app}>
         <View style={styles.buehne}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.bg },
-            }}
-          />
+          {angemeldet ? (
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.bg },
+              }}
+            />
+          ) : (
+            <Anmelden />
+          )}
         </View>
         {/* NACH der Bühne und damit darüber: Das Vollbild überdeckt, statt den Inhalt
             zu schieben — sonst wackelt beim Wegdrücken der ganze Bildschirm. Und es

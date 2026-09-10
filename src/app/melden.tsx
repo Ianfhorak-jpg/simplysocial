@@ -7,7 +7,7 @@ import { MELDE_GRUENDE, MELDE_TITEL, type MeldeGrund } from '@/config/melden';
 import { usePost } from '@/features/posts/hooks';
 import { melden, useHabeIchBlockiert, useMeineMeldung } from '@/features/safety/hooks';
 import { useUser } from '@/features/social/hooks';
-import { CURRENT_USER_ID } from '@/features/store';
+import { useCurrentUserId } from '@/features/auth/hooks';
 import { ortText } from '@/lib/bezirk';
 import { colors, danger, radius, spacing } from '@/theme';
 import type { ReportReason, ReportTarget } from '@/types/models';
@@ -46,6 +46,7 @@ export default function MeldenScreen() {
   const [grund, setGrund] = useState<ReportReason | null>(null);
   const [notiz, setNotiz] = useState('');
   const [gesendet, setGesendet] = useState(false);
+  const ichId = useCurrentUserId();
 
   // Erst NACH allen Haken aussteigen — React verlangt in jedem Durchlauf dieselben
   // Haken in derselben Reihenfolge.
@@ -55,7 +56,7 @@ export default function MeldenScreen() {
   // Den eigenen Post oder sich selbst zu melden ergibt keinen Sinn. Über die
   // Oberfläche kann es nicht passieren, über einen direkten Link schon.
   const istMeins =
-    targetType === 'post' ? eintrag?.post.authorId === CURRENT_USER_ID : id === CURRENT_USER_ID;
+    targetType === 'post' ? eintrag?.post.authorId === ichId : id === ichId;
   if (istMeins) return <NichtGefunden eigenes />;
 
   const fertig = gesendet || Boolean(schonGemeldet);

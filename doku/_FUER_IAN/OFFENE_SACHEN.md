@@ -132,6 +132,11 @@ ein paar Tage brauchst** — nur den Schritt danach.
 Gratis, mit deiner E-Mail. Schema und Regeln sind **schon fertig und geprüft** — es ist
 kein Anfang mehr, sondern ein Einspielen.
 
+> **Neu seit 09.09.2026:** Auch die App-Seite ist fertig. Der Anmelde-Bildschirm steht,
+> und in der App ist überall die Frage „wer bin ich?" eingebaut statt der festen
+> Antwort „Ian". **Es fehlen buchstäblich nur noch die Konten** — dieses hier, das von
+> Apple und das von Google. Danach ist Anmelden ein Umschalten, kein Bauen.
+
 ### 4. Google-Login — und warum es das überhaupt braucht · **15 Minuten** 🟡
 
 > **Du hast gesagt, du verstehst das nicht ganz. Hier in normalen Worten:**
