@@ -32,7 +32,12 @@ $PSQL -q -d ss -f "$HIER/00_supabase_lokal.sql"
 $PSQL -q -d ss -f "$HIER/../migrations/0001_schema.sql"
 $PSQL -q -d ss -f "$HIER/../migrations/0002_policies.sql"
 $PSQL -q -d ss -f "$HIER/../migrations/0003_konto_loeschen.sql"
+$PSQL -q -d ss -f "$HIER/../migrations/0004_transaktionen.sql"
 $PSQL -q -d ss -f "$HIER/05_daten.sql"
 echo "Datenbank steht. Jetzt der Angriff:"
 echo
 $PSQL -tA -d ss -f "$HIER/10_angriff.sql"
+$PSQL -tA -d ss -f "$HIER/20_transaktionen.sql"
+
+# Das Wettrennen braucht ZWEI Verbindungen und geht deshalb nicht als .sql-Datei.
+bash "$HIER/30_wettlauf.sh"

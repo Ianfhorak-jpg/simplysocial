@@ -4819,7 +4819,13 @@ gebraucht wird. Für `useFeed` heißt das: Die Sortier- und Filterarbeit aus
 Erstes** — zuerst wird alles geladen wie bisher, damit man einen Unterschied hat, an dem
 man messen kann.
 
-#### 20.5 — `store.ts` austauschen, Teil 2: Schreiben ⬜
+#### 20.5 — `store.ts` austauschen, Teil 2: Schreiben · **SQL-Seite ✅ (2026-09-10)** · App-Seite ⬜
+
+> ✅ **Die SQL-Seite ist gebaut und bewiesen, ohne Konto — dieselbe Trennung wie bei
+> 20.1/20.2** (*halten die Regeln?* gegen *ist das Projekt eingerichtet?*).
+> `migrations/0004_transaktionen.sql`, Prüfungen in `pruefen/20_transaktionen.sql`
+> und `pruefen/30_wettlauf.sh`. **78 Häkchen statt 25, kein Kreuz.** Was dabei
+> herauskam, steht unter „Was beim Bauen von 20.5 (SQL) herauskam".
 
 23 Stellen rufen `aendern()`. Bei den meisten ist es eine Zeile mehr. Bei dreien nicht:
 
@@ -4834,6 +4840,76 @@ man messen kann.
 > weg" — löst Chat, Zusage und Platz auf einmal) · `gruppeVerlassen` (mit
 > `nachfolgerId()`). Alle drei werden **eine Postgres-Funktion** und über `rpc()`
 > aufgerufen. Eine Transaktion ist entweder ganz passiert oder gar nicht.
+
+#### Was beim Bauen von 20.5 (SQL) herauskam *(2026-09-10)*
+
+**Sieben Funktionen, nicht drei — und gefunden hat sie nicht jemand, sondern die
+Rechteliste aus 0002.** Sechs Dinge sind wichtiger als die Funktionen selbst:
+
+1. **Ein fehlender `grant` ist in diesem Projekt eine ZUSAGE, keine Lücke.**
+   `group_members` hat nur `select`, `chat_threads` auch. Solange 0004 fehlte, konnte
+   also **niemand** einer Gruppe beitreten oder einen Chat anfangen — auch nicht
+   rechtmäßig. Genau das sagt harte Regel 55: Beitreten ist das ERGEBNIS einer
+   bestätigten Anfrage, kein Schreibvorgang. **Damit hat die Rechteliste die
+   Arbeitsliste geschrieben**, dieselbe Technik wie `IconName` in Phase 14 (ein enger
+   Typ) und das Löschen von `CURRENT_USER_ID` in 20.3-a (ein verschwundener Export),
+   nur mit Rechten statt mit TypeScript.
+2. **Das Wettrennen ist der einzige Teil, für den es im Prototyp kein Gegenstück
+   gibt — und es ist nachgestellt, nicht behauptet.** In `anfrageBestaetigen()` stehen
+   „zwei Sicherheitsnetze gegen den Doppelklick auf Web"; sie sind gegen zwei Klicks
+   DERSELBEN Person richtig und gegen zwei gleichzeitige Verbindungen wirkungslos.
+   `30_wettlauf.sh` öffnet zwei echte Verbindungen auf einen Post mit EINEM Platz.
+   **Die Gegenprobe ist der eigentliche Beleg** (die 18d-Lehre): Ohne
+   `select … for update` sind danach **zwei Anfragen bestätigt, zwei Chats angelegt
+   und ein Platz belegt** — und niemand bekommt einen Fehler. Einer der beiden hat
+   schlicht keinen Sitz und erfährt es beim Hingehen. Die Sperre wurde nachweislich
+   zurückgenommen (`diff` gegen die Sicherung leer, die 19d-Methode).
+3. **Ians Entscheidung 41 ließ sich NICHT so bauen, wie es naheliegt — und das ist
+   eine gute Nachricht.** Er hat entschieden, dass ein Gruppen-Post die Auflösung
+   seiner Gruppe überlebt. Der naheliegende Weg wäre `on delete set null` an
+   `posts.visibility_group_id` gewesen; dann stünde am Post `visibility_kind =
+   'group'` OHNE Gruppen-ID — **genau der Zustand, den Phase 17 mit einem
+   diskriminierten Union undarstellbar gemacht hat** (harte Regel 31), und der CHECK
+   `sicht_vollstaendig` bricht den Löschvorgang ab. **Die Absicherung von damals hat
+   hier zum ersten Mal wirklich etwas verhindert.** Der Ausweg ist, dass die Gruppe
+   nicht verschwindet, sondern AUFHÖRT: `aufgeloest_am`, Mitgliederliste leer,
+   `creator_id` auf `null`. Beide Zusagen bleiben heil — der Union ist vollständig,
+   der Fremdschlüssel gültig.
+4. **Und daran hing sofort der Fehler, aus dem Entscheidung 39 überhaupt entstanden
+   ist, einen Schritt später.** `groups.creator_id` war `not null references profiles
+   (id)` ohne Cascade. Solange die Gruppe gelöscht wurde, ging `konto_loeschen()`
+   durch; sobald sie stehen bleibt, scheitert es an `groups_creator_id_fkey`. Jetzt
+   `on delete set null` plus `constraint chef_oder_aufgeloest` — „ohne Chef" ist NUR
+   bei einer aufgelösten Gruppe darstellbar. Eine lebende Gruppe ohne Gründer wäre
+   eine, in der niemand mehr Anfragen bestätigt, und die Zeilen lägen für immer da.
+5. **Zwei bestehende Prüfungen sind beim Umbau ROT geworden, und das war ihr Zweck.**
+   Beide behaupteten „die Gruppe ist WEG" (`count(*) = 0`). Entscheidung 41 hat sie
+   überholt — sie fragen jetzt nach `aufgeloest_am is not null and creator_id is
+   null`. **Eine Prüfung, die eine Bedeutungsänderung nicht merkt, prüft die
+   Umsetzung und nicht die Regel.**
+6. **`last_message_at` ist ein TRIGGER geworden und keine achte Funktion — aus einem
+   Grund, der nicht Bequemlichkeit ist.** Eine `security definer`-Funktion umgeht die
+   Policies, also müsste sie `nachricht_schreiben` aus 0002 NACHBAUEN, und damit
+   stünde Ians `SCHREIB_REGEL` zweimal da. Mit dem Trigger bleibt das Senden ein
+   gewöhnliches `insert into messages` unter der bestehenden Policy, und harte
+   Regel 6 ist trotzdem erfüllt: Der Trigger läuft in derselben Transaktion.
+   **Die Regel aus Punkt 1 hat also eine Grenze — ein fehlender Grant verlangt eine
+   Funktion, WENN etwas zu entscheiden ist. Hier ist nichts zu entscheiden.**
+
+**Ein kleiner Fund am Rande, der beinahe unbemerkt geblieben wäre:** In
+`30_wettlauf.sh` stand eine Prüfung mit Backticks in doppelten Anführungszeichen
+(``pruef "… auf `full`" "$STATUS" "full"``). Die Shell hat `full` als BEFEHL
+ausgeführt, beide Seiten des Vergleichs waren leer — **und die Prüfung meldete grün,
+ohne irgendetwas zu messen.** Gesehen nur, weil `full: command not found` daneben
+stand.
+
+**Was noch NICHT gemacht ist und ausdrücklich in 20.4 gehört:** Der Prototyp kennt
+`aufgeloest_am` nicht — er löscht die Gruppe aus seinem Array und zeigt am Post
+`GRUPPE_UNBEKANNT = 'einer Gruppe'`. Sobald `store.ts` aus der Datenbank liest, braucht
+`Group` ein `aufgeloestAm?`, und **jede Gruppen-LISTE muss es herausfiltern**, sonst
+steht eine tote Gruppe unter „Deine Gruppen". Dieselbe abgesprochene Schuld wie
+`aus_aktivitaet` (harte Regel 56) — sie steht am Feld in 0001 und hier, nicht nur an
+einer Stelle.
 
 #### 20.6 — Profilbilder ⬜
 
@@ -5767,6 +5843,38 @@ in dem jemand etwas ganz anderes vorhat, kostet die Funktion dauerhaft.
 Schalter nie.** Genau deshalb ist der Heimatbezirk die Grundlage und nicht der
 Standort — die App muss ohne ihn vollständig funktionieren, und seit 19h-1 tut sie es.
 
+### 41. Was aus einem Gruppen-Post wird, wenn die Gruppe aufhört ✅
+
+**Ians Entscheidung vom 2026-09-10, gefragt beim Bauen von 20.5 (SQL).** Sie kam nicht
+aus einem Screen, sondern aus einem WIDERSPRUCH zwischen zwei Dingen, die beide schon
+da waren — und ohne harte Regel 58 wäre sie still entschieden worden.
+
+**Der Widerspruch:** `AUSTRITT_WIRKUNG = 'posts-bleiben'` (seine Entscheidung 12) sagt,
+dass die Posts eines Austretenden stehen bleiben. Löst sich die Gruppe aber ganz auf,
+nahm `posts.visibility_group_id` mit `on delete cascade` sie mit. Zwei Regeln, beide
+für sich richtig, mit gegensätzlichem Ergebnis — **und keine davon hatte jemand für
+diesen Fall gefragt.**
+
+**Gewählt: der Post bleibt stehen.** Verworfen:
+
+| | | |
+|---|---|---|
+| **A** | ✅ Post bleibt stehen | seine Wahl — Entscheidung 12 gilt auch hier |
+| **B** | Post geht mit der Gruppe | hätte über `useChatListe` still den CHAT zur Verabredung mitgenommen: Ein Aktivitäts-Chat ohne Post gilt dort als kaputter Datensatz und fällt aus der Liste |
+| **C** | Post bleibt und wird öffentlich | genau das hat er am 2026-09-02 beim Austritt schon verworfen — macht aus „nur für meine Tennisgruppe" still „für ganz Wien" |
+
+**Was daran technisch interessant ist, steht in Abschnitt 5b unter „Was beim Bauen von
+20.5 (SQL) herauskam", Punkte 3 und 4:** A ließ sich nicht so bauen, wie es naheliegt.
+`on delete set null` hätte einen Post mit `visibility_kind = 'group'` ohne Gruppen-ID
+ergeben — den Zustand, den Phase 17 undarstellbar gemacht hat. Also verschwindet die
+Gruppe nicht, sie HÖRT AUF (`aufgeloest_am`, keine Mitglieder, `creator_id = null`).
+
+**Den Haken kennt er nicht ausdrücklich, und er ist klein:** Der Post ist danach nur
+noch für seinen Verfasser sichtbar — `posts_lesen` fragt `regel.ist_mitglied`, und
+Mitglieder gibt es keine mehr. Er läuft also weiter, aber niemand Neues kann ihn
+finden. Wer schon zugesagt hat, behält Chat und Termin. **Genau deshalb ist A kein
+Datenschutzproblem und C eines.**
+
 ---
 
 ## 7. Bewusst NICHT im Prototyp
@@ -5957,7 +6065,39 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
-> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-09 nachts, SPÄTESTER Eintrag):
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-10, SPÄTESTER Eintrag): Phase 20.4 —
+> `store.ts` aus der Datenbank lesen. Und die Konten von Ian sind weiter der einzige
+> echte Engpass (20.3-b).** ✅ **Die SQL-Seite von 20.5 ist gebaut** (sieben Funktionen
+> und ein Trigger in `migrations/0004_transaktionen.sql`; **78 Häkchen statt 25**,
+> Einzelheiten in Abschnitt 5b unter „Was beim Bauen von 20.5 (SQL) herauskam").
+> Sechs Dinge, die eine frische Sitzung zuerst wissen muss:
+>
+> - **20.3-b braucht Supabase, Apple und Google und sonst nichts.** Daran hat sich
+>   nichts geändert. `ANMELDE_QUELLE` in `features/auth/anmeldung.ts` ist der eine
+>   Schalter; alles darüber ist schon das Echte.
+> - **Warum 20.5 vor 20.4 kam:** Dieselbe Trennung, die bei 20.1/20.2 getragen hat —
+>   *halten die Regeln?* geht ohne Konto, *ist das Projekt eingerichtet?* nicht.
+>   20.4 (Lesen) braucht einen echten Server, 20.5 (Schreiben, SQL) nicht.
+> - **Die Rechteliste aus 0002 hat die Arbeitsliste geschrieben.** Der Plan nannte
+>   drei Funktionen; es sind sieben, und die vier zusätzlichen ergaben sich aus
+>   fehlenden `grant`s (`group_members`, `chat_threads`, `chat_participants` haben
+>   nur `select`). Ein fehlender Grant ist in diesem Projekt eine ZUSAGE.
+> - **Ians 41. Entscheidung ist neu und steht in Abschnitt 6:** Löst sich eine
+>   Gruppe auf, BLEIBT ein Gruppen-Post stehen. Die Gruppe wird deshalb nicht mehr
+>   gelöscht, sondern hört auf (`aufgeloest_am`, `creator_id = null`).
+> - ⚠️ **Die Schuld daraus liegt in 20.4 und ist ausdrücklich abgesprochen:** `Group`
+>   braucht ein `aufgeloestAm?`, und **jede Gruppen-LISTE muss es herausfiltern** —
+>   sonst steht eine tote Gruppe unter „Deine Gruppen". Steht am Feld in 0001 und in
+>   Abschnitt 5b, nicht nur an einer Stelle. Dieselbe Bauart wie `aus_aktivitaet`
+>   (harte Regel 56).
+> - **`bash supabase/pruefen/aufbauen.sh` erwartet ab jetzt 78 Häkchen und kein
+>   Kreuz** und ruft `30_wettlauf.sh` mit. Wer `postgresql@17` nicht hat:
+>   `brew install postgresql@17`.
+>
+> ---
+>
+> 📎 **Stand davor (die Ausschreibung von 20.3-b).**
+> 🔜 **(Stand 2026-09-09 nachts):
 > Phase 20.3-b — die Konten. Und das ist die erste Aufgabe, die WIRKLICH auf Ian
 > wartet.** ✅ **20.3-a ist gebaut** (die Naht: Konstante gelöscht, Sitzung,
 > Torwächter, Anmelde-Bildschirm mit Attrappe, Abmelden; Belege `ag01`–`ag03`,

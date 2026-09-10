@@ -61,7 +61,16 @@ begin
      limit 1;
 
     if erbe is null then
-      delete from public.groups where id = gruppe.id;
+      -- AUFLÖSEN, nicht löschen — Ians Entscheidung 41 vom 2026-09-10. Ein `delete`
+      -- nähme über `on delete cascade` die Gruppen-Posts ANDERER Leute mit, und
+      -- Entscheidung 39 gilt ausdrücklich nur für das, was NUR mir gehört. Die
+      -- ganze Begründung steht an der Spalte `aufgeloest_am` in 0001; dieselbe
+      -- Stelle in `gruppe_verlassen` (0004) macht es genauso, denn ein Konto zu
+      -- löschen IST ein Verlassen.
+      update public.groups set aufgeloest_am = now(), creator_id = null
+       where id = gruppe.id;
+      delete from public.group_requests where group_id = gruppe.id;
+      delete from public.group_invites  where group_id = gruppe.id;
     else
       update public.groups set creator_id = erbe where id = gruppe.id;
     end if;

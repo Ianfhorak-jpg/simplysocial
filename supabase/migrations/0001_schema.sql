@@ -103,10 +103,58 @@ create table groups (
   name        text not null,
   description text not null default '',
   category    activity_category not null,   -- PFLICHT, siehe Kommentar am Typ `Group`
-  creator_id  uuid not null references profiles (id),
+  -- ⚠️ NULL-FÄHIG, und zwar seit Ians Entscheidung 41 (2026-09-10). Vorher stand
+  -- hier `not null`, weil eine Gruppe immer jemandem gehörte: Ging der Gründer,
+  -- erbte jemand (Entscheidung 13) oder die Gruppe wurde gelöscht. Seit sie
+  -- stattdessen AUFHÖRT (siehe `aufgeloest_am` unten), gibt es einen dritten Fall —
+  -- eine Gruppe ohne Mitglieder und damit ohne Chef.
+  --
+  -- Zwei Dinge hängen daran, und beide fallen erst später auf:
+  --   • `on delete set null` ist PFLICHT. Ohne es scheitert `konto_loeschen()` an
+  --     `groups_creator_id_fkey` — genau der Fehler, aus dem Entscheidung 39
+  --     überhaupt entstanden ist, nur einen Schritt später.
+  --   • Der CHECK unten sorgt dafür, dass „ohne Chef" NUR bei einer aufgelösten
+  --     Gruppe darstellbar ist. Eine lebende Gruppe ohne Gründer wäre eine, in der
+  --     niemand mehr Anfragen bestätigt — die Zeilen lägen für immer da.
+  creator_id  uuid references profiles (id) on delete set null,
   offen       boolean not null default true, -- Ians Entscheidung 28
   district    text,                          -- null heißt „ganz Wien"
-  created_at  timestamptz not null default now()
+  created_at  timestamptz not null default now(),
+
+  -- ═══════════════════════════════════════════════════════════════════════════
+  --  EINE AUFGELÖSTE GRUPPE WIRD NICHT GELÖSCHT, SIE HÖRT AUF
+  --  Ians Entscheidung 41 vom 2026-09-10 — und die Spalte ist ihre Folge, nicht
+  --  ihr Inhalt.
+  --
+  --  Gefragt war, was mit einem Post passiert, der „nur für diese Gruppe" war,
+  --  wenn die Gruppe sich auflöst (der Gründer geht, niemand ist mehr drin).
+  --  Seine Antwort: **der Post bleibt stehen** — dieselbe Regel wie
+  --  `AUSTRITT_WIRKUNG = 'posts-bleiben'` (Entscheidung 12), und der Prototyp
+  --  macht es seit Phase 17 genau so.
+  --
+  --  Der naheliegende Weg dorthin wäre `on delete set null` an
+  --  `posts.visibility_group_id` gewesen. Er geht nicht, und der Grund ist eine
+  --  gute Nachricht: Dann stünde am Post `visibility_kind = 'group'` OHNE
+  --  Gruppen-ID — genau der Zustand, den Phase 17 mit einem diskriminierten Union
+  --  UNDARSTELLBAR gemacht hat (harte Regel 31). Der CHECK `sicht_vollstaendig`
+  --  unten bricht den Löschvorgang ab. **Die Absicherung von damals hat hier zum
+  --  ersten Mal wirklich etwas verhindert.**
+  --
+  --  Also verschwindet die Gruppe nicht. Sie bekommt ein Datum, ihre
+  --  Mitgliederliste ist leer, und damit ist sie für alle unsichtbar außer für
+  --  den Verfasser eines Posts, der auf sie zeigt (`posts_lesen` fragt
+  --  `regel.ist_mitglied`, und Mitglieder gibt es keine). Zwei Zusagen bleiben
+  --  gleichzeitig heil: der Union ist vollständig, der Fremdschlüssel gültig.
+  --
+  --  ⚠️ ZU TUN IN 20.4: Der Prototyp löscht die Gruppe aus seinem Array und zeigt
+  --  am Post `GRUPPE_UNBEKANNT = 'einer Gruppe'`. Sobald `store.ts` aus der
+  --  Datenbank liest, muss `Group` ein `aufgeloestAm?` bekommen und jede
+  --  Gruppen-LISTE es herausfiltern — sonst steht eine tote Gruppe unter „Deine
+  --  Gruppen". Dieselbe abgesprochene Schuld wie `aus_aktivitaet` (harte Regel 56).
+  -- ═══════════════════════════════════════════════════════════════════════════
+  aufgeloest_am timestamptz,
+
+  constraint chef_oder_aufgeloest check (creator_id is not null or aufgeloest_am is not null)
 );
 
 -- Aus `Group.memberIds` wird eine Tabelle — und die REIHENFOLGE wird dabei ehrlich.

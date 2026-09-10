@@ -268,11 +268,19 @@ begin;
   -- Nora ist ALLEIN in ihrer Gruppe. „Weitergeben" ohne Nachfolger heißt auflösen —
   -- und das ist keine Ausnahme, sondern dieselbe Regel: Die Gruppe gehört den Leuten
   -- darin, und es sind keine mehr da.
+  --
+  -- 🔁 Seit Ians Entscheidung 41 (2026-09-10) heißt „auflösen" NICHT MEHR „die Zeile
+  --    ist weg": Die Gruppe hört auf (`aufgeloest_am`), damit Gruppen-Posts anderer
+  --    Leute stehen bleiben können (die Begründung an der Spalte in 0001). Diese
+  --    Prüfung stand vorher auf `count(*) = 0` und ist beim Umbau ROT geworden —
+  --    genau, wozu sie da ist.
   select konto_loeschen();
   reset role;
-  select case when count(*) = 0 then '  ✓ ' else '  ✗ VERWAIST — ' end
-      || 'Noras Gruppe löst sich auf, weil sie allein darin war'
-    from groups where id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+  select case when count(*) = 1 then '  ✓ ' else '  ✗ VERWAIST — ' end
+      || 'Noras Gruppe hört auf, weil sie allein darin war (Datum gesetzt, kein Chef)'
+    from groups
+   where id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+     and aufgeloest_am is not null and creator_id is null;
 rollback;
 
 begin;

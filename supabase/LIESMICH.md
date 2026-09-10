@@ -1,7 +1,8 @@
 # `supabase/` — das Backend
 
-Phase 20 aus [PLAN.md, Abschnitt 5b](../../PLAN.md). **Stand 2026-09-06: 20.1 und 20.2
-sind fertig und geprüft, 20.3 bis 20.8 sind offen.**
+Phase 20 aus [PLAN.md, Abschnitt 5b](../../PLAN.md). **Stand 2026-09-10: 20.1, 20.2
+und die SQL-Seite von 20.5 sind fertig und geprüft.** Offen sind 20.3-b (braucht Ians
+Konten), 20.4 und der App-Teil von 20.5.
 
 Hier liegt noch **kein Anschluss an ein echtes Supabase-Projekt** — die App liest weiter
 aus `src/data/mock.ts`. Was hier liegt, ist das Schema und die Regeln, und beides ist
@@ -14,6 +15,7 @@ gegen einen echten Postgres bewiesen, nicht behauptet.
 | `migrations/0001_schema.sql` | Die Tabellen. Übersetzt `src/types/models.ts` — an drei Stellen ist das eine Entscheidung und keine Übersetzung, die stehen dort im Kommentar. |
 | `migrations/0002_policies.sql` | **Die Regeln.** Jede Regel-Datei der App hat hier ihr Gegenstück. |
 | `migrations/0003_konto_loeschen.sql` | Ians Entscheidung 39 (A, „alles mit“) — die Gruppe ist die Ausnahme und wird nach Entscheidung 13 vererbt. |
+| `migrations/0004_transaktionen.sql` | **Die Schreibseite.** Sieben Funktionen und ein Trigger — alles, was die Rechteliste bewusst unmöglich macht. |
 | `pruefen/` | Der Angriff von außen. Läuft ohne Supabase-Konto. |
 | `entscheidungen/` | Vorbereitete Plätze für Ians Entscheidungen. Läuft NICHT mit — dieselbe Anordnung wie `landing-vorschau/` neben `landing/`. |
 
@@ -29,7 +31,26 @@ Prüfdaten ein und lässt den Angriff laufen. **Es braucht dafür kein Supabase-
 kein Netz:** RLS ist ein Postgres-Feature. Was Supabase mitbringt (`auth.users`,
 `auth.uid()`), steht wortgleich nachgebaut in `pruefen/00_supabase_lokal.sql`.
 
-Erwartet sind **25 Häkchen und kein Kreuz.**
+Erwartet sind **78 Häkchen und kein Kreuz.**
+
+| Datei | Was sie fragt |
+|---|---|
+| `pruefen/10_angriff.sql` | *Kommt jemand an Daten, an die er nicht darf?* |
+| `pruefen/20_transaktionen.sql` | *Tut ein rechtmäßiger Schreibvorgang genau das, was Ians Regel sagt — und ein unrechtmäßiger GAR NICHTS?* |
+| `pruefen/30_wettlauf.sh` | *Was passiert bei ZWEI gleichzeitigen Bestätigungen auf denselben letzten Platz?* Braucht zwei echte Verbindungen und geht deshalb nicht als `.sql`-Datei. |
+
+## Warum es `0004_transaktionen.sql` gibt
+
+**Ein fehlender `grant` in `0002_policies.sql` ist keine Lücke, sondern eine Zusage.**
+`group_members` hat nur `select`, `chat_threads` auch. Solange es 0004 nicht gab,
+konnte also niemand einer Gruppe beitreten oder einen Chat anfangen — auch nicht
+rechtmäßig. Das ist Absicht: Beitreten ist das ERGEBNIS einer bestätigten Anfrage,
+kein Schreibvorgang (harte Regel 55).
+
+**Damit hat die Rechteliste die Arbeitsliste geschrieben** — dieselbe Technik wie
+`IconName` in Phase 14 (ein enger Typ) und das Löschen von `CURRENT_USER_ID` in
+20.3-a (ein verschwundener Export), nur mit Rechten statt mit TypeScript. Der Plan
+nannte drei Funktionen; es sind sieben.
 
 ## Warum es diesen Angriff gibt
 

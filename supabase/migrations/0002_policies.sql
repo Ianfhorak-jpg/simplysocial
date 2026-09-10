@@ -259,9 +259,15 @@ create policy gruppenanfrage_lesen on group_requests for select to authenticated
 );
 -- Anfragen kann man nur an OFFENE Gruppen — `darfBeitreten()` aus `gruppe.ts`.
 -- Bei einer privaten Gruppe gibt es diesen Weg nicht, und zwar nicht nur im Screen.
+-- `aufgeloest_am is null` seit Ians Entscheidung 41 (2026-09-10): Eine aufgelöste
+-- Gruppe wird nicht gelöscht, sondern hört auf (die Begründung steht an der Spalte
+-- in 0001). Damit steht ihre Zeile weiter da — und ohne diese Bedingung könnte
+-- jemand einer Gruppe beitreten wollen, die es nicht mehr gibt. `offen` allein
+-- reicht nicht: Sie war beim Aufhören womöglich offen und bleibt es.
 create policy gruppenanfrage_stellen on group_requests for insert to authenticated with check (
   from_user_id = auth.uid()
-  and exists (select 1 from groups g where g.id = group_id and g.offen)
+  and exists (select 1 from groups g
+               where g.id = group_id and g.offen and g.aufgeloest_am is null)
   and not regel.ist_mitglied(group_id, auth.uid())
 );
 create policy gruppenanfrage_beantworten on group_requests for update to authenticated using (

@@ -35,6 +35,58 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 20.5 (SQL-Seite) ist fertig (2026-09-10): die Schreibseite — sieben
+Funktionen, nicht drei, und gefunden hat sie die Rechteliste.** Wieder ohne Konto
+gebaut und trotzdem bewiesen, wie 20.1/20.2: `bash supabase/pruefen/aufbauen.sh`
+erwartet jetzt **78 Häkchen statt 25** und ruft ein zweites Prüfskript mit, das zwei
+echte Verbindungen gleichzeitig öffnet. Eine neue Entscheidung von Ian (41). Sechs
+Dinge sind wichtiger als die Funktionen:
+
+1. **Ein fehlender `grant` ist in diesem Projekt eine ZUSAGE, keine Lücke — und er hat
+   die Arbeitsliste geschrieben.** `group_members` hat nur `select`, `chat_threads`
+   auch. Solange `0004_transaktionen.sql` fehlte, konnte **niemand** einer Gruppe
+   beitreten oder einen Chat anfangen, auch nicht rechtmäßig; genau das sagt harte
+   Regel 55. **Dieselbe Technik wie `IconName` in Phase 14 (ein enger Typ) und das
+   Löschen von `CURRENT_USER_ID` in 20.3-a (ein verschwundener Export), nur mit
+   Rechten.** Der Plan nannte drei Funktionen, es sind sieben.
+2. **Der teuerste Fund ist ein Fehler, den es im Prototyp gar nicht geben KANN.**
+   `anfrageBestaetigen()` hat „zwei Sicherheitsnetze gegen den Doppelklick auf Web" —
+   richtig gegen zwei Klicks DERSELBEN Person, wirkungslos gegen zwei gleichzeitige
+   Verbindungen. Gegenprobe gemessen (`30_wettlauf.sh`, ein Post mit EINEM Platz):
+   ohne `select … for update` sind danach **zwei Anfragen bestätigt, zwei Chats
+   angelegt und ein Platz belegt — und niemand bekommt einen Fehler.** Einer der
+   beiden hat schlicht keinen Sitz und erfährt es beim Hingehen. Die Sperre wurde
+   nachweislich zurückgenommen (19d-Methode, `diff` leer).
+3. **Ians Entscheidung 41 ließ sich NICHT so bauen, wie es naheliegt — und das ist
+   eine gute Nachricht.** Ein Gruppen-Post überlebt jetzt die Auflösung seiner Gruppe
+   (dieselbe Regel wie `AUSTRITT_WIRKUNG`). Der naheliegende Weg `on delete set null`
+   ergäbe `visibility_kind = 'group'` OHNE Gruppen-ID — **genau der Zustand, den
+   Phase 17 mit einem diskriminierten Union undarstellbar gemacht hat** (harte
+   Regel 31), und der CHECK bricht ab. **Die Absicherung von damals hat hier zum
+   ersten Mal wirklich etwas verhindert.** Also verschwindet die Gruppe nicht, sie
+   HÖRT AUF: `aufgeloest_am`, keine Mitglieder, `creator_id = null`.
+4. **Und daran hing sofort der Fehler, aus dem Entscheidung 39 entstanden ist —
+   einen Schritt später.** `groups.creator_id` war `not null` ohne Cascade; sobald
+   die Gruppe stehen bleibt, scheitert `konto_loeschen()` an
+   `groups_creator_id_fkey`. Jetzt `on delete set null` plus
+   `constraint chef_oder_aufgeloest`: „ohne Chef" ist NUR bei einer aufgelösten
+   Gruppe darstellbar.
+5. **Zwei bestehende Prüfungen sind beim Umbau rot geworden, und das war ihr Zweck.**
+   Beide behaupteten „die Gruppe ist WEG". **Eine Prüfung, die eine
+   Bedeutungsänderung nicht merkt, prüft die Umsetzung und nicht die Regel.**
+6. **`last_message_at` ist ein TRIGGER und keine achte Funktion.** Eine
+   `security definer`-Funktion umgeht die Policies, müsste also `nachricht_schreiben`
+   NACHBAUEN — dann stünde Ians `SCHREIB_REGEL` zweimal da. **Die Regel aus Punkt 1
+   hat damit eine Grenze: Ein fehlender Grant verlangt eine Funktion, WENN etwas zu
+   entscheiden ist.**
+
+⚠️ **Was 20.5 NICHT ist: die App-Seite.** Die App ruft weiter `aendern()` gegen
+`mock.ts`; `tsc` ist unberührt sauber. **Und eine Schuld ist ausdrücklich
+abgesprochen:** Der Prototyp kennt `aufgeloest_am` nicht — in 20.4 braucht `Group` ein
+`aufgeloestAm?`, und **jede Gruppen-LISTE muss es herausfiltern**, sonst steht eine
+tote Gruppe unter „Deine Gruppen". Dieselbe Bauart wie `aus_aktivitaet` (harte
+Regel 56).
+
 ✅ **Phase 20.3-a ist fertig (2026-09-09): die Naht fürs Anmelden — und der Prototyp
 merkt davon nichts.** Der Teil von 20.3, der OHNE Ians Konten geht: `CURRENT_USER_ID`
 ist ersatzlos gelöscht, an ihrer Stelle steht eine Sitzung. Belege `ag01`–`ag03`,
@@ -1290,8 +1342,10 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    (20.2)~~ ✅ *beide 2026-09-06, ohne Konto gebaut und mit 25 Angriffen belegt* ·
    ~~**Anmelden, die Naht (20.3-a)**~~ ✅ *2026-09-09, ohne Konto und ohne Build:
    `CURRENT_USER_ID` gelöscht, Sitzung, Torwächter, Anmelde-Bildschirm mit Attrappe* ·
-   **Anmelden, die Konten (20.3-b)** ← *hier geht es weiter, und NUR das braucht Ians
-   Konten* · `store.ts` tauschen (20.4/20.5) · Profilbilder · Meldungen lesen.
+   ~~**Schreiben, die SQL-Seite (20.5)**~~ ✅ *2026-09-10, wieder ohne Konto: sieben
+   Funktionen und ein Trigger, 78 Häkchen* · **Anmelden, die Konten (20.3-b)** —
+   *NUR das braucht Ians Konten* · **`store.ts` lesen (20.4)** ← *hier geht es
+   weiter, sobald das Supabase-Projekt steht* · Profilbilder · Meldungen lesen.
    Danach fällt 19d-2 nebenbei ab.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 
@@ -1930,6 +1984,29 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    eine Schalter, den 20.3-b umlegt. **`data/mock.ts` trägt nur noch
    `ATTRAPPE_ICH_ID`** — welcher Seed-Nutzer der eigene ist, und nicht mehr, wer
    „der aktuelle Nutzer" ist. Wer sie wieder so liest, dreht die Phase zurück.
+
+70. **Was die Rechteliste verbietet, macht GENAU EINE Funktion — und ein fehlender
+   `grant` ist eine Zusage, keine Lücke.** *(Phase 20.5, 2026-09-10.)* In
+   `0002_policies.sql` haben `group_members`, `chat_threads` und `chat_participants`
+   nur `select`. Das heißt nicht „vergessen", sondern: Beitreten ist das ERGEBNIS
+   einer bestätigten Anfrage (Regel 55), ein Chat das Ergebnis einer Zusage. Wer
+   einen dieser Grants nachträgt, hebt damit still eine Regel auf. Die sieben Wege
+   stehen in `migrations/0004_transaktionen.sql`, jeder prüft selbst — denn
+   `security definer` schaltet die Policies darunter AUS, und eine Funktion, die
+   sich auf die Policy verlässt, verlässt sich auf etwas, das für sie nicht gilt.
+   **Die Regel hat eine Grenze, und sie steht am Trigger `nachricht_notiert`:** Ein
+   fehlender Grant verlangt eine Funktion, WENN etwas zu entscheiden ist. Beim
+   `last_message_at` ist nichts zu entscheiden — dort wäre eine Funktion sogar
+   schlechter, weil sie Ians `SCHREIB_REGEL` ein zweites Mal hinschreiben müsste.
+71. **Ein Sicherheitsnetz gegen den Doppelklick ist KEINES gegen zwei Verbindungen.**
+   *(Phase 20.5.)* `anfrage_bestaetigen()` liest die Post-Zeile mit
+   `select … for update`. Ohne die Sperre lesen zwei gleichzeitige Bestätigungen
+   denselben Stand, beide finden einen Platz frei — und danach sind **zwei Anfragen
+   bestätigt, zwei Chats angelegt und ein Platz belegt, ohne dass irgendwo ein
+   Fehler auftaucht.** Gemessen, nicht überlegt: `pruefen/30_wettlauf.sh` öffnet
+   zwei echte Verbindungen und wird ohne die Sperre rot. **Wer eine Prüfung „ist
+   noch Platz?" schreibt, fragt sich, was zwischen Lesen und Schreiben passieren
+   kann** — im Browser war die Antwort „nichts", in einer Datenbank ist sie „alles".
 
 53. **Die Geometrie der Bezirke steht EINMAL da — im Raster.** Wer sie in Grad braucht,
    rechnet über `PROJEKTION` aus `data/wien-bezirke.ts` um (`lib/karte-geo.ts`), und
@@ -2618,6 +2695,23 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   Zeilen dieselbe ist. Sie kommt jetzt als Prop von oben, dieselbe Überlegung wie
   `useUserMap()` statt `find` je Zeile. **Gilt für jeden Wert, der in einer Liste
   konstant ist.**
+- **Eine Prüfung mit Backticks in doppelten Anführungszeichen misst NICHTS und meldet
+  grün.** (Phase 20.5, 2026-09-10) In `30_wettlauf.sh` stand
+  ``pruef "… auf `full`" "$STATUS" "full"`` — Projektkonvention in Kommentaren, in der
+  Shell aber eine Befehlsersetzung. `full` wurde ausgeführt, beide Seiten des
+  Vergleichs waren leer, und `"" = ""` ist wahr: **ein Häkchen ohne Messung.**
+  Aufgefallen nur, weil `full: command not found` danebenstand. Dieselbe Familie wie
+  die Backticks im CSS-Template vom 2026-09-02 — **Backticks sind in Kommentaren
+  Konvention und überall sonst Syntax.**
+- **`perform` gibt es nur INNERHALB von plpgsql.** (Phase 20.5) In einer `.sql`-Datei
+  außerhalb eines `do $$ … $$` heißt es `select`. Die Meldung lautet schlicht
+  `syntax error at or near "perform"` und sieht aus, als wäre die Funktion kaputt.
+- **Eine Prüfung, die eine BEDEUTUNGSÄNDERUNG nicht merkt, prüft die Umsetzung.**
+  (Phase 20.5) Nach Ians Entscheidung 41 wird eine aufgelöste Gruppe nicht mehr
+  gelöscht, sondern bekommt ein Datum. Zwei bestehende Prüfungen fragten
+  `count(*) = 0` und wurden rot — **richtig so**: Sie hingen an „die Zeile ist weg"
+  statt an „die Gruppe hat aufgehört". Wer eine Regel prüft, formuliert die Prüfung in
+  den Worten der REGEL, nicht in denen der Zeile.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)
