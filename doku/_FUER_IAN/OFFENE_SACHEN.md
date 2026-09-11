@@ -109,7 +109,7 @@ alles Sachen, die ein Mausklick am Simulator **nicht** beweist.
 > Build** gekostet — das Stück Apple-Technik dafür lag durch ein anderes Paket schon in
 > der App drin. Es war reine Programmierarbeit, du musst dafür nichts tun.
 
-### 2b. Die drei Konten fürs Backend · **ab jetzt der Engpass** 🟡 ← *neu am 09.09.*
+### 2b. Die Konten fürs Backend · **zwei von drei sind da** 🟡 ← *aktualisiert am 12.09.*
 
 Ab hier wird aus dem Prototyp eine echte App: **echte Nutzer, echte Posts, echte
 Chats** statt der erfundenen Daten. Das Fundament steht seit dem 06.09. — Datenbank und
@@ -139,9 +139,24 @@ verlässt, gründet, beitritt oder einen Chat anfängt. Die Datenbank prüft das
 selbst, statt sich auf die App zu verlassen. **78 Prüfungen laufen dagegen, alle
 grün** — vorher waren es 25. Auch dafür brauchte es kein Konto.
 
+**Stand 12.09. — es fehlt nur noch EINS, und es ist Punkt 4 (Google).** Supabase steht
+seit heute, Apple seit dem 11.09.
+
+**Und ich habe seither weitergebaut, ohne dich zu brauchen:** Die App kann jetzt
+wirklich aus deiner Datenbank lesen — sie holt Posts, Menschen, Gruppen und Chats von
+dort statt aus den erfundenen Daten. Das ist am echten Server geprüft: 29 Messungen,
+alle grün, und die Datenbank war danach wieder leer (die Prüfung räumt selbst auf).
+**Nachgewiesen ist dabei auch das Wichtigste — die Sicherheitsregeln greifen wirklich:**
+Wer nicht angemeldet ist, sieht null Posts; jemand, den du blockiert hast, verschwindet
+aus deinem Feed; fremde Anfragen bleiben unsichtbar.
+
+**Was du davon noch nicht siehst:** Der Schalter ist bewusst noch nicht umgelegt. Die
+App zeigt weiter die erfundenen Daten, und der Prototyp im Netz ist unverändert. Der
+Grund ist einfach: Zum Lesen aus der Datenbank muss man **angemeldet** sein, und
+Anmelden gibt es noch nicht. Genau das ist der nächste Schritt — und dafür brauche ich
+Punkt 4.
+
 **Du hältst also nichts auf, wenn du ein paar Tage brauchst** — nur den Schritt danach.
-Der ist jetzt allerdings der einzige, der noch übrig ist: **Ohne die drei Konten geht
-es wirklich nicht weiter.**
 
 ### 3. ~~Supabase-Konto anlegen~~ ✅ *erledigt am 12.09.2026*
 
