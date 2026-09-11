@@ -35,6 +35,67 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 20.4-b ist fertig (2026-09-12): die App KANN aus Supabase lesen — und der
+Prototyp merkt davon nichts.** Der Client, die dreizehn Abfragen, Realtime, der
+Ladezustand und Ians Entscheidung 43. `npm run pruef-lesen` — **29 Häkchen, kein Kreuz
+am ECHTEN Server**, danach ist die Datenbank wieder leer. `tsc` sauber, **81
+Lint-Probleme statt 83**, lokal weiter 121 Häkchen. Zehn Dinge sind wichtiger als die
+Abfragen:
+
+1. **`@supabase/supabase-js` ist JS-only — 20.4-b brauchte KEINEN neuen Build.**
+   Gemessen statt vermutet: kein `.podspec`, kein `expo-module.config.json`. Native wird
+   es erst da, wo die SITZUNG gespeichert werden muss (`AsyncStorage`,
+   `expo-secure-store`), und das ist 20.3-b. Deshalb steht `persistSession: false` im
+   Client — **keine Bequemlichkeit, sondern die Zeile, die diese Phase ohne Build
+   möglich macht.** Der Preis: Wer die App schließt, ist ausgeloggt.
+2. **Es gibt genau EINEN Schalter, und er heißt weiter `ANMELDE_QUELLE`.** Ein zweiter
+   (`DATEN_QUELLE`) wäre naheliegend gewesen und kann zwei Zustände darstellen, die es
+   nicht gibt — beide scheitern **stumm**: `supabase`-Daten mit `attrappe`-Anmeldung
+   ergibt kein Token, also **0 Zeilen**, und das sieht aus wie „die Datenbank ist leer".
+   `LIEST_AUS_SUPABASE` wird deshalb ABGELEITET, dieselbe Überlegung wie `PROJEKTION`
+   (harte Regel 53).
+3. **Der teuerste Fund lag am Server und war unsichtbar: die Publication
+   `supabase_realtime` war LEER.** Ein Abo auf `postgres_changes` verbindet sich dann
+   sauber, meldet `SUBSCRIBED` — **und liefert nie ein Ereignis.** Kein Fehler, keine
+   Warnung; für die App sähe das aus, als passierte in Wien nichts.
+   `0005_realtime.sql` trägt elf Tabellen ein, `einspielen.sh` misst **neun Zahlen statt
+   sieben**, und der Wächter hat am echten Server sofort angeschlagen.
+4. **`blocks` und `reports` stehen NICHT in der Publication — harte Regel 10.** Supabase
+   wendet RLS auf `postgres_changes` bei INSERT und UPDATE an, **bei DELETE nicht**:
+   Dort geht der Primärschlüssel an ALLE Abonnenten, und bei `blocks` ist das
+   `(blocker_id, blocked_id)`. Ein Entblocken wäre eine Nachricht an den Blockierten.
+   `REPLICA IDENTITY` bleibt aus demselben Grund auf DEFAULT.
+5. **Der Realtime-Anstoß ist ein SIGNAL, kein Datentransport.** Aus keinem `payload`
+   wird ein Feld gelesen; nachgeladen wird durch die Policies. Damit kann Realtime
+   nichts verraten, auch wenn seine RLS-Prüfung aussetzt. Entprellt wird, weil **harte
+   Regel 6 hier RÜCKWÄRTS ankommt**: `anfrage_bestaetigen()` ändert drei Tabellen in
+   EINER Transaktion — am Kanal werden daraus drei Ereignisse.
+6. **Beim Abmelden muss der Zwischenspeicher geleert werden, und das ist kein
+   Aufräumen.** Mit echten Daten lägen sonst fremde Chats im Speicher, bis das neue
+   Laden durch ist — ein Fehler, der wie ein Flackern aussieht.
+7. **Ians Entscheidung 43: der Vollbild-Kasten.** `supabase-js` wirft nicht, und
+   `data ?? []` machte aus jedem Fehler „Noch nichts los in deinem Feed" — ein Satz, der
+   lügt. Regel in `data/quelle.ts`, Bildschirm in `components/LadeSchirm.tsx`.
+8. **Vier eigene Fehler beim Prüfstand, alle dieselbe Familie:** ein abgeschriebenes
+   Abräumen (unvollständig, weil ich `05_daten.sql` nur bis Zeile 70 gelesen hatte),
+   eine unterdrückte Fehlermeldung (`>/dev/null 2>&1` verschluckte genau die Ursache),
+   eine Drift-Prüfung, die sich an einer erfundenen RPC **still selbst übersprungen**
+   hätte, und eine Realtime-Prüfung, die EINE Messung war, wo es drei braucht. Dazu:
+   **ein Wächter hinter einem anderen ist ein ungeprüfter Wächter** — in `0005` verdeckte
+   der Zähler die Regel-10-Prüfung, bis die Reihenfolge gedreht war.
+9. **„Database error querying schema" sind acht `NULL`s.** GoTrue liest acht
+   Textspalten von `auth.users` in ein `string`, nicht in ein `*string`. Der Fehler nennt
+   weder Spalte noch Grund und klingt nach kaputtem Schema. **`null` und `''` sind nicht
+   dasselbe.**
+10. **Der Preis ist eine Zahl: +74.789 B gzip (+18,3 %)** — deutlich mehr als jeder
+   Baustein bisher. **Daraus folgt: `npm run deploy` bleibt liegen, bis der Schalter
+   umgelegt wird**; auf der öffentlichen Adresse kostet der Umbau 75 kB und tut nichts.
+
+⚠️ **Was 20.4-b NICHT ist: der Schalter selbst.** `ANMELDE_QUELLE` steht weiter auf
+`'attrappe'`, der Prototyp sieht Zeichen für Zeichen aus wie vorher (nachgemessen,
+keine Konsolenfehler). **Umlegen lässt er sich erst mit 20.3-b** — ohne echte Anmeldung
+kein Token, ohne Token null Zeilen.
+
 🔑 **Und der Zugang für die APP liegt seit demselben Tag in `.env`** —
 `npm run anon-key`, wieder über die Zwischenablage. **Damit ist die Konten-Seite von
 20.3-b/20.4-b für Supabase vollständig; offen bleiben nur Apple-Sign-in und Google.**
@@ -1654,9 +1715,12 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    ~~**Schreiben, die SQL-Seite (20.5)**~~ ✅ *2026-09-10, wieder ohne Konto: sieben
    Funktionen und ein Trigger, 78 Häkchen* · ~~**Lesen, die Übersetzung (20.4-a)**~~
    ✅ *2026-09-10, wieder ohne Konto: `data/zeilen.ts`, die zwei abgesprochenen
-   Schulden bezahlt, 121 Häkchen* · **Anmelden, die Konten (20.3-b)** —
-   *NUR das braucht Ians Konten* · **`store.ts` lesen (20.4-b)** ← *hier geht es
-   weiter, sobald das Supabase-Projekt steht* · Profilbilder · Meldungen lesen.
+   Schulden bezahlt, 121 Häkchen* · ~~**Lesen, die Abfragen (20.4-b)**~~ ✅ *2026-09-12
+   am echten Server: Client, dreizehn Abfragen, Realtime, Ladezustand, 29 Häkchen —
+   **der Schalter bleibt aber auf `'attrappe'`, umlegen geht erst mit 20.3-b*** ·
+   **Anmelden, die Konten (20.3-b)** ← *hier geht es weiter — und es ist das EINZIGE,
+   was noch an Ians Konten hängt (Apple-Sign-in und Google; Supabase steht)* ·
+   Profilbilder · Meldungen lesen.
    Danach fällt 19d-2 nebenbei ab.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 
@@ -2357,6 +2421,42 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Einladung in eine tote Gruppe stand deshalb weiter im Anfragen-Tab, und eine
    Beitritts-Anfrage war weiter möglich, weil `offen` beim Auflösen nicht angefasst
    wird. Ein Post „nur für diese Gruppe" bleibt stehen — das IST die Entscheidung.
+
+74. **Es gibt EINEN Schalter für Anmeldung und Daten, und er heißt `ANMELDE_QUELLE`.**
+   *(Phase 20.4-b, 2026-09-12.)* `LIEST_AUS_SUPABASE` in `lib/supabase.ts` wird daraus
+   ABGELEITET und steht nicht daneben. Von den vier Kombinationen zweier Schalter
+   funktionieren nur zwei, und die anderen beiden scheitern **stumm**: Supabase-Daten
+   ohne Token ergeben **0 Zeilen** (die Policies tun ihre Arbeit), und das ist von
+   „die Datenbank ist leer" nicht zu unterscheiden; umgekehrt findet eine
+   Supabase-UUID in `mock.ts` niemanden. **Ein Schalter, der einen unmöglichen
+   Zustand darstellen kann, ist derselbe Fehler wie `visibility: 'group'` mit
+   `groupId: null` (Regel 31)** — nur an einer Stelle, an der kein Compiler hinsieht.
+   Dieselbe Überlegung wie `PROJEKTION` (Regel 53) und die Project URL aus dem Token.
+75. **Ein Realtime-Ereignis ist ein SIGNAL und wird nie gelesen.** *(Phase 20.4-b.)*
+   `data/realtime.ts` nimmt aus keinem `payload` ein Feld; es stößt ein Nachladen an,
+   und das geht durch die 33 Policies. Der Grund ist nicht Bequemlichkeit: Supabase
+   wendet RLS auf `postgres_changes` bei INSERT und UPDATE an, **bei DELETE nicht.**
+   Wer `payload.new` in den Speicher legt, hat eine ZWEITE Fassung der
+   Sichtbarkeitsregel, und die schwächere. Welche Tabellen überhaupt senden dürfen,
+   steht in `migrations/0005_realtime.sql` — **`blocks` und `reports` NICHT** (bei
+   `blocks` ist der Primärschlüssel `(blocker_id, blocked_id)`, ein Entblocken wäre
+   damit eine Nachricht an den Blockierten, Regel 10). `REPLICA IDENTITY` bleibt
+   DEFAULT: Auf `FULL` — die überall empfohlene Einstellung — gehen bei jedem Update
+   und Delete **alle Spalten der alten Zeile** über die Leitung.
+   **Entprellt wird, weil Regel 6 hier rückwärts ankommt:** Was als EINE Transaktion
+   gedacht war, kommt am Kanal als drei Ereignisse an.
+76. **Was dasteht, wenn die Daten nicht kommen, steht in `data/quelle.ts`.**
+   *(Ians Entscheidung 43, Phase 20.4-b.)* Dieselbe Bauart wie `safety/block.ts` (17),
+   `groups/gruppe.ts` (32), `requests/kollision.ts` (46), `posts/standort.ts` (68) und
+   `auth/anmeldung.ts` (69). Der Grund ist, dass **`supabase-js` nicht wirft**: Es gibt
+   `{ data, error }` zurück, und `data ?? []` macht aus jedem Fehler eine leere Liste —
+   die App sagt dann „Noch nichts los in deinem Feed", und das ist ein Satz, der lügt.
+   `laden.ts` wirft deshalb einen `LadeFehler` **mit Tabellenname und `code`**; auf den
+   BILDSCHIRM kommt keines von beidem (der 2026-09-03-Fund: Entwickler-Notizen in
+   JSX-Text sind öffentlich). **Der Knopf tut zwei verschiedene Dinge**, und das
+   entscheidet `anmeldenNoetig` in der Regel-Datei, nicht die Oberfläche: Bei `42501`
+   ist ein neuer Ladeversuch sinnlos, und ein Knopf, der „Anmelden" sagt und neu lädt,
+   ist eine Schleife, die wie ein Defekt aussieht.
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
@@ -3092,6 +3192,46 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   bleibt beim Programmbeitritt dasselbe; die 7-Tage-Grenze einer Gratis-Apple-ID steckt
   **ausschließlich im Profil**. Wer bei „läuft in 3 Tagen ab“ das Zertifikat prüft,
   misst die falsche Hälfte.
+- **Die Publication `supabase_realtime` ist in einem frischen Projekt LEER — und ein
+  Abo darauf verbindet sich trotzdem sauber.** (Phase 20.4-b, 2026-09-12) `subscribe()`
+  meldet `SUBSCRIBED`, der Kanal steht, und es kommt nie ein Ereignis. Kein Fehler,
+  keine Warnung. Für die App sieht das aus, als passierte nichts. Dieselbe Familie wie
+  „Kamerabefehle verpuffen still vor `onMapReady`": **Ein Aufruf, der nichts tut, sieht
+  aus wie einer, der nicht stattfindet.** Der Wächter dagegen ist eine Messung —
+  `einspielen.sh` zählt die Tabellen in der Publication mit.
+- **„Database error querying schema" von GoTrue heißt fast immer: acht `NULL`s in
+  `auth.users`.** (Phase 20.4-b) Wer einen Nutzer direkt per SQL anlegt, muss
+  `confirmation_token`, `recovery_token`, `email_change`, `email_change_token_new`,
+  `email_change_token_current`, `phone_change`, `phone_change_token` und
+  `reauthentication_token` auf **`''`** setzen, nicht auf `NULL`: GoTrue ist in Go
+  geschrieben und scannt sie in ein `string`, nicht in ein `*string`. Die Meldung nennt
+  weder Spalte noch Grund und klingt nach kaputtem Schema. Dazu gehören `aud`, `role`,
+  `instance_id` und ein gesetztes `email_confirmed_at` — sonst kommt „Invalid login
+  credentials", was wie ein falsches Passwort aussieht und ein fehlendes Feld ist.
+- **Ein Wächter hinter einem anderen ist ein ungeprüfter Wächter.** (Phase 20.4-b) In
+  `0005_realtime.sql` standen zwei Prüfungen: erst der Zähler („elf Tabellen?"), dann
+  die Regel-10-Prüfung („steht `blocks` drin?"). Die Gegenprobe mit `blocks` brach am
+  ZÄHLER ab (12 statt 11) — die zweite Prüfung kam nie dran und war damit unbelegt.
+  **Und der teure Fall ist ein anderer:** Wer `blocks` gegen `follows` TAUSCHT, bleibt
+  bei elf. Reihenfolge gedreht, beide jetzt einzeln belegt. Dieselbe Familie wie die
+  Team-Prüfung in `geraet-bauen.sh`, die still eine 0 ergab.
+- **`n_live_tup` ist ein SCHÄTZWERT, kein Zähler.** (Phase 20.4-b) Nach dem Abräumen
+  meldete `pg_stat_user_tables` `profiles=5`, während `select count(*)` 0 ergab — die
+  Statistiken waren einfach noch nicht nachgezogen. Wer prüft, ob wirklich etwas weg
+  ist, zählt. Dieselbe Familie wie der hängengebliebene Seitenzoom in 19b: **vor der
+  Fehlersuche prüfen, ob das Messgerät stimmt.**
+- **Ein Abräumen, das den Zustand eines GESCHEITERTEN Abräumens nicht aufräumen kann,
+  ist nur beim Schönwetter-Lauf vollständig.** (Phase 20.4-b) `52_abraeumen.sql` löscht
+  Chat-Fäden über ihre Teilnehmer. Bricht der Lauf mitten drin ab, sind die Konten schon
+  weg und `chat_participants` mit ihnen (Cascade) — dann findet die Abfrage nichts mehr,
+  und die Fäden bleiben mit ihren FESTEN IDs liegen. Der nächste Lauf scheitert dann an
+  einem Schlüsselkonflikt in `05_daten.sql` und sieht aus wie kaputte Prüfdaten.
+  Zweite Bedingung: Fäden ohne jeden Teilnehmer.
+- **Ein verwaister Playwright-Lock sieht aus wie ein laufender Browser.** (2026-09-12)
+  `Browser is already in use … use --isolated` — und `pgrep` fand keinen einzigen
+  Prozess dazu; der `SingletonLock` in `~/Library/Caches/ms-playwright-mcp/` war zwei
+  Tage alt. Löschen (samt `SingletonCookie` und `SingletonSocket`) genügt. Dritte
+  Fassung von „prüf zuerst, ob das Messgerät verstellt ist".
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

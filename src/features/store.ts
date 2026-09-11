@@ -2,6 +2,8 @@ import { useSyncExternalStore } from 'react';
 
 import { ANMELDE_QUELLE, type Sitzung } from '@/features/auth/anmeldung';
 import type { StandortStand } from '@/features/posts/standort';
+import { allesLaden, LadeFehler } from '@/data/laden';
+import { client, LIEST_AUS_SUPABASE } from '@/lib/supabase';
 
 import {
   ATTRAPPE_ICH_ID,
@@ -104,21 +106,91 @@ export interface AppState {
    * warum der Zugang `string` liefert und nicht `string | null`.
    */
   sitzung: Sitzung;
+  /**
+   * Wie weit das Laden ist — Phase 20.4-b.
+   *
+   * Ein diskriminiertes Union und kein `boolean` daneben, aus demselben Grund wie
+   * `Sitzung` und `Visibility`: Der Zustand „fertig geladen UND ein Fehler liegt an"
+   * ist damit undarstellbar. Mit `laedt: boolean` plus `fehler: LadeFehler | null`
+   * wäre er tippbar gewesen, und niemand hätte es gemerkt.
+   *
+   * Bei `mock` steht er vom ersten Augenblick an auf `'da'` — die Listen liegen ja
+   * schon im Speicher. **Das ist der Grund, warum die öffentliche Adresse von 20.4-b
+   * nichts merkt.**
+   */
+  laden: LadeStand;
 }
 
+/**
+ * Die drei Lagen beim Laden.
+ *
+ * `'laeuft'` ist auch der ANFANG, nicht nur ein Zwischenschritt — deshalb steht in
+ * den neun Listen zu dem Zeitpunkt nichts. Ein Screen, der währenddessen zeichnen
+ * würde, sagte „Noch nichts los in deinem Feed", und das ist Ians Entscheidung 43
+ * zufolge genau der Satz, der nicht dastehen darf. Wer hier etwas ändert, liest
+ * zuerst `data/quelle.ts`.
+ */
+export type LadeStand =
+  | { zustand: 'laeuft' }
+  | { zustand: 'da' }
+  | { zustand: 'fehler'; fehler: LadeFehler };
+
+/**
+ * Die neun Listen beim Start.
+ *
+ * Aus `mock.ts`, solange die App nicht aus Supabase liest — **und LEER, sobald sie
+ * es tut.** Das ist keine Sparmaßnahme, sondern die Zusage aus `data/quelle.ts`:
+ * Wenn die Daten aus der Datenbank kommen, darf keine einzige erfundene Person
+ * dazwischen stehen. Ein Rückfall auf `mock.ts` wäre Möglichkeit C, und die ist
+ * dort samt Grund verworfen.
+ */
+function startListen(): GeladeneListen {
+  if (LIEST_AUS_SUPABASE) {
+    return {
+      posts: [],
+      users: [],
+      joinRequests: [],
+      chatThreads: [],
+      messages: [],
+      reports: [],
+      groups: [],
+      groupRequests: [],
+      groupInvites: [],
+    };
+  }
+  return {
+    posts: mockPosts,
+    users: mockUsers,
+    joinRequests: mockRequests,
+    chatThreads: mockChats,
+    messages: mockMessages,
+    reports: mockReports,
+    groups: mockGroups,
+    groupRequests: mockGroupRequests,
+    groupInvites: mockGroupInvites,
+  };
+}
+
+/** Die neun Listen, die aus der Datenbank kommen — die fünf anderen Felder nicht. */
+type GeladeneListen = Pick<
+  AppState,
+  | 'posts'
+  | 'users'
+  | 'joinRequests'
+  | 'chatThreads'
+  | 'messages'
+  | 'reports'
+  | 'groups'
+  | 'groupRequests'
+  | 'groupInvites'
+>;
+
 let state: AppState = {
-  posts: mockPosts,
-  users: mockUsers,
-  joinRequests: mockRequests,
-  chatThreads: mockChats,
-  messages: mockMessages,
-  reports: mockReports,
-  groups: mockGroups,
-  groupRequests: mockGroupRequests,
-  groupInvites: mockGroupInvites,
+  ...startListen(),
   weggewischt: [],
   standort: { zustand: 'aus', ort: null, gemessenUm: null },
   sitzung: startSitzung(),
+  laden: LIEST_AUS_SUPABASE ? { zustand: 'laeuft' } : { zustand: 'da' },
 };
 
 /**
@@ -199,4 +271,78 @@ let zaehler = 0;
 export function neueId(praefix: string): string {
   zaehler += 1;
   return `${praefix}_neu${zaehler}`;
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  Das Laden — Phase 20.4-b
+// ═════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Läuft gerade ein Ladevorgang? **Ein Wächter und kein Bequemlichkeitsfeld.**
+ *
+ * Ohne ihn startet jeder Aufruf von `datenHolen()` dreizehn neue Abfragen. Der
+ * Torwächter in `app/_layout.tsx` zeichnet bei JEDER Zustandsänderung neu, und ein
+ * Effekt, der beim Zeichnen lädt, lädt dann in einer Schleife — der Feed sähe
+ * richtig aus und die Leitung liefe heiß. Er steht als Modulvariable und nicht in
+ * `AppState`, weil ein `aendern()` darauf jedes Mal alle Screens neu zeichnen
+ * würde, für eine Auskunft, die keinen Screen betrifft.
+ */
+let holtGerade = false;
+
+/**
+ * Alles holen und in den Speicher legen.
+ *
+ * ── Wann sie gerufen wird ────────────────────────────────────────────────────
+ * Aus `app/_layout.tsx`, sobald jemand angemeldet ist — und **nur dann**. Vorher
+ * hat es keinen Sinn: Ohne Token lassen die 33 Policies null Zeilen durch, und
+ * das Ergebnis wäre nicht „leer", sondern „leer und nicht zu unterscheiden von
+ * kaputt" (siehe `data/quelle.ts`).
+ *
+ * ── Warum sie nichts wirft ───────────────────────────────────────────────────
+ * Der Fehler wird zu einem ZUSTAND (`laden.zustand === 'fehler'`), weil ein
+ * geworfener Fehler in einem Effekt an genau einer Stelle ankommt: in der Konsole.
+ * Ians Entscheidung 43 verlangt aber, dass er auf dem BILDSCHIRM ankommt.
+ */
+export async function datenHolen(): Promise<void> {
+  if (!LIEST_AUS_SUPABASE || holtGerade) return;
+  holtGerade = true;
+  aendern(() => ({ laden: { zustand: 'laeuft' } }));
+  try {
+    const daten = await allesLaden(client());
+    aendern(() => ({ ...daten, laden: { zustand: 'da' } }));
+  } catch (fehler) {
+    // Ein `LadeFehler` trägt Tabelle und `code` und ist damit beantwortbar (siehe
+    // `ladeFehlerFolgen()`). Alles andere — ein fehlender Zugang, ein Tippfehler in
+    // einer Übersetzung — ist ein PROGRAMMfehler und soll laut sein, nicht als
+    // „Keine Verbindung" verkleidet werden. Das ist dieselbe Unterscheidung wie bei
+    // `ZeilenFehler` in `zeilen.ts`.
+    if (!(fehler instanceof LadeFehler)) {
+      holtGerade = false;
+      throw fehler;
+    }
+    console.warn(fehler.message);
+    aendern(() => ({ laden: { zustand: 'fehler', fehler } }));
+  } finally {
+    holtGerade = false;
+  }
+}
+
+/**
+ * Den Zwischenspeicher leeren — beim Abmelden, und **das ist kein Aufräumen.**
+ *
+ * Heute wäre es folgenlos: `mock.ts` ist für alle dieselbe erfundene Welt. Mit
+ * echten Daten liegen nach dem Abmelden fremde Chats, fremde Anfragen und fremde
+ * Meldungen im Speicher — und wer sich als Nächstes anmeldet, sieht sie, bis das
+ * neue Laden durch ist. **Ein Fehler, der wie ein Flackern aussieht und keiner
+ * ist.** Dieselbe Begründung, mit der `abmelden()` seit 20.3-a schon `weggewischt`
+ * und `standort` mitnimmt, nur mit dem Unterschied, dass es hier fremde Daten sind
+ * und nicht eigene.
+ *
+ * Auf `'laeuft'` und nicht auf `'da'`: Wer abgemeldet ist, hat nichts geladen. Ein
+ * `'da'` mit neun leeren Listen ist die Lüge aus Entscheidung 43 in ihrer reinsten
+ * Form.
+ */
+export function zwischenspeicherLeeren(): void {
+  if (!LIEST_AUS_SUPABASE) return;
+  aendern(() => ({ ...startListen(), laden: { zustand: 'laeuft' } }));
 }

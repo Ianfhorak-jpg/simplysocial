@@ -1,6 +1,6 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════════
-#  Die vier Migrationen in ein ECHTES Supabase-Projekt einspielen.
+#  Die fünf Migrationen in ein ECHTES Supabase-Projekt einspielen.
 #
 #  Aufruf:  npm run einspielen
 #
@@ -24,7 +24,8 @@
 #     merkt es NIE. Gefragt wird deshalb nach Dingen, die NUR das echte Supabase
 #     hat: dem Schema `storage` und der Rolle `service_role`.
 #  2. Ist die Datenbank leer? Ein zweiter Lauf über ein bestehendes Schema
-#     scheitert mitten drin — und lässt die Hälfte stehen.
+#     scheitert mitten drin — und lässt die Hälfte stehen. Steht schon etwas da,
+#     wird nur nachgemessen statt abgebrochen.
 #  3. Läuft alles in EINER Transaktion (`--single-transaction`). Harte Regel 6
 #     eine Ebene tiefer: Ein Abbruch nach 0002 hinterliesse Tabellen ohne
 #     Schreibwege — offen für alle, weil die Funktionen aus 0004 fehlen.
@@ -33,13 +34,32 @@
 #  Die Lehre vom 2026-09-11: Der Gerätebuild meldete `BUILD SUCCEEDED` und hatte
 #  das falsche Profil eingebettet. `psql` gibt hier genauso 0 zurück, wenn alles
 #  lief — die Frage ist aber nicht "lief es?", sondern "steht jetzt dasselbe da
-#  wie lokal?". Die sieben Zahlen stammen aus der lokalen Datenbank, gegen die
+#  wie lokal?". Die neun Zahlen stammen aus der lokalen Datenbank, gegen die
 #  121 Prüfungen grün sind.
 # ═══════════════════════════════════════════════════════════════════════════════
 set -e
 export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
 HIER="$(cd "$(dirname "$0")" && pwd)"
 URL_DATEI="$HOME/.simplysocial/db-url"
+
+# ── Eine EINZELNE Migration nachziehen ───────────────────────────────────────
+#     npm run einspielen -- 0005_realtime.sql
+#
+# Warum es das gibt: Der dritte Wächter unten bricht ab, wenn 'public' nicht mehr
+# leer ist — richtig so, eine Produktionsdatenbank neu aufzubauen ist Ians
+# Entscheidung und keine Nebenwirkung. Nur stand danach niemand mehr, der eine
+# NEUE Migration einspielen konnte: Am 2026-09-12 meldete das Nachmessen
+# „Realtime-Tabellen 0 (erwartet 11)" und nannte keinen Weg, das zu beheben.
+# **Eine Prüfung, die einen Mangel findet und keinen Ausweg nennt, ist eine halbe
+# Prüfung.** Die Vorprüfungen (ist das echtes Supabase?) und das Nachmessen laufen
+# unverändert mit — nur das Einspielen betrifft dann eine Datei statt fünf.
+NUR_DIESE="${1:-}"
+if [ -n "$NUR_DIESE" ] && [ ! -f "$HIER/migrations/$NUR_DIESE" ]; then
+  echo "✗ Migration nicht gefunden: migrations/$NUR_DIESE"
+  echo "  Vorhanden:"
+  ls -1 "$HIER/migrations/" | sed 's/^/    /'
+  exit 1
+fi
 
 # Der lokale Stand ist die Messlatte. Ändert sich eine Migration, ändern sich
 # diese Zahlen — dann gehören sie hier nachgezogen, nachdem `aufbauen.sh` wieder
@@ -51,6 +71,14 @@ ERWARTET_REGEL_FN=6
 ERWARTET_PUBLIC_FN=9
 ERWARTET_ENUMS=8
 ERWARTET_TRIGGER=1
+# Neu mit 0005 (Phase 20.4-b). Elf der dreizehn Tabellen — `blocks` und `reports`
+# gehören ausdrücklich NICHT dazu, der Grund steht im Kopf der Migration.
+# **Diese zwei Zahlen sind der Wächter gegen die Falle vom 2026-09-12:** Die
+# Publication `supabase_realtime` ist in einem frischen Projekt LEER, und ein Abo
+# darauf verbindet sich sauber und meldet nie etwas. Ohne Messung sähe das aus, als
+# passierte in Wien nichts.
+ERWARTET_REALTIME=11
+ERWARTET_REALTIME_VERBOTEN=0
 
 if [ ! -f "$URL_DATEI" ]; then
   cat <<HINWEIS
@@ -122,15 +150,21 @@ else
 fi
 
 echo
-if [ "$NUR_MESSEN" = "1" ]; then
+if [ "$NUR_MESSEN" = "1" ] && [ -n "$NUR_DIESE" ]; then
+  echo "── 3. Nur '$NUR_DIESE' einspielen (Nachziehen) ──"
+  psql "$DB_URL" -v ON_ERROR_STOP=1 --single-transaction -q \
+    -f "$HIER/migrations/$NUR_DIESE" 2>&1 | filtern
+  echo "✓ durchgelaufen — aber das ist noch kein Beleg."
+elif [ "$NUR_MESSEN" = "1" ]; then
   echo "── 3. Einspielen übersprungen (siehe oben) ──"
 else
-echo "── 3. Einspielen (alle vier in EINER Transaktion) ──"
+echo "── 3. Einspielen (alle fünf in EINER Transaktion) ──"
 psql "$DB_URL" -v ON_ERROR_STOP=1 --single-transaction -q \
   -f "$HIER/migrations/0001_schema.sql" \
   -f "$HIER/migrations/0002_policies.sql" \
   -f "$HIER/migrations/0003_konto_loeschen.sql" \
-  -f "$HIER/migrations/0004_transaktionen.sql" 2>&1 | filtern
+  -f "$HIER/migrations/0004_transaktionen.sql" \
+  -f "$HIER/migrations/0005_realtime.sql" 2>&1 | filtern
 echo "✓ durchgelaufen — aber das ist noch kein Beleg."
 fi
 
@@ -160,16 +194,28 @@ mess "Enums"             "select count(*) from pg_type t join pg_namespace n on 
 # WENIGER mitbringt als das Original, lässt eine Messung durchgehen, die am
 # Original falsch ist. Die anderen sechs Zahlen waren von Anfang an eingeschränkt.
 mess "Trigger (public)"   "select count(*) from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where not t.tgisinternal and n.nspname='public';" "$ERWARTET_TRIGGER"
+mess "Realtime-Tabellen"  "select count(*) from pg_publication_tables where pubname='supabase_realtime' and schemaname='public';" "$ERWARTET_REALTIME"
+# Die zweite Realtime-Zahl misst etwas ANDERES als die erste, und deshalb steht sie
+# daneben statt in ihr: Wer `blocks` gegen `follows` tauscht, bleibt bei elf. Beim
+# Bauen von 0005 hing die Gegenprobe zuerst am Zähler, und die Regel-10-Prüfung
+# dahinter kam nie dran — ein Wächter hinter einem anderen ist ein ungeprüfter.
+mess "Realtime verboten"  "select count(*) from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename in ('blocks','reports');" "$ERWARTET_REALTIME_VERBOTEN"
 
 echo
 if [ "$FEHLER" = "1" ]; then
   echo "✗ Die Datenbank steht NICHT so da wie lokal. Nichts weiterbauen, bevor das stimmt."
+  if [ "$NUR_MESSEN" = "1" ] && [ -z "$NUR_DIESE" ]; then
+    echo
+    echo "  Fehlt eine NEUE Migration, zieh sie einzeln nach — zum Beispiel:"
+    echo "      npm run einspielen -- $(ls -1 "$HIER/migrations/" | tail -1)"
+    echo "  (Die Vorprüfungen und das Nachmessen laufen dabei genauso mit.)"
+  fi
   exit 1
 fi
 if [ "$NUR_MESSEN" = "1" ]; then
-  echo "✓ Alle sieben Zahlen stimmen. Die Datenbank war schon richtig eingerichtet."
+  echo "✓ Alle neun Zahlen stimmen. Die Datenbank war schon richtig eingerichtet."
 else
-  echo "✓ Alle sieben Zahlen stimmen. Die Datenbank ist eingerichtet."
+  echo "✓ Alle neun Zahlen stimmen. Die Datenbank ist eingerichtet."
 fi
 echo "  Was jetzt fehlt, ist der Client (20.4-b) — und dafür brauche ich"
 echo "  Project URL und anon key aus Settings → API."

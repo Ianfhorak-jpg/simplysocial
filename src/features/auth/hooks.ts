@@ -1,6 +1,6 @@
 import type { Sitzung } from './anmeldung';
 
-import { aendern, attrappeSitzung, getState, useSlice } from '../store';
+import { aendern, attrappeSitzung, getState, useSlice, zwischenspeicherLeeren } from '../store';
 
 /**
  * Der Zugang zur Sitzung — die Stelle, die `CURRENT_USER_ID` ersetzt.
@@ -86,6 +86,11 @@ export function attrappeAnmelden(): void {
  * zweiten verbietet harte Regel 47 ausdrücklich.
  */
 export function abmelden(): void {
+  // Die neun Listen aus der Datenbank gehen MIT — aus derselben Begründung wie
+  // `weggewischt` und `standort`, nur schärfer: Das sind FREMDE Daten. Siehe
+  // `zwischenspeicherLeeren()` in `store.ts`. Zuerst, damit zwischen dem Leeren und
+  // dem Abmelden kein Augenblick liegt, in dem ein Screen noch zeichnet.
+  zwischenspeicherLeeren();
   aendern(() => ({
     sitzung: { zustand: 'aus' },
     weggewischt: [],

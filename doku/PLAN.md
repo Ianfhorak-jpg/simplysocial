@@ -4878,6 +4878,145 @@ genau deshalb ist sie eine eigene Datei.** Acht Dinge sind wichtiger als die Dat
 Abfragen, Realtime und der Umbau vom Speicher zum Zwischenspeicher. `store.ts` liest
 weiter `mock.ts`. Die Übersetzung darunter ist fertig.
 
+> ✅ **20.4-b ist gebaut und am ECHTEN Server belegt (2026-09-12).** Der Client, die
+> dreizehn Abfragen, Realtime, der Ladezustand und Ians Entscheidung 43.
+> `npm run pruef-lesen` — **29 Häkchen, kein Kreuz**, und die Datenbank ist danach
+> wieder leer. Was dabei herauskam, steht unter „Was beim Bauen von 20.4-b herauskam".
+
+#### Was beim Bauen von 20.4-b herauskam *(2026-09-12)*
+
+**Neu:** `lib/supabase.ts` · `data/laden.ts` · `data/quelle.ts` · `data/realtime.ts` ·
+`components/LadeSchirm.tsx` · `migrations/0005_realtime.sql` ·
+`pruefen/50_lesen.{sh,mjs}` · `pruefen/51_konten.sql` · `pruefen/52_abraeumen.sql`.
+Geändert: `store.ts`, `auth/hooks.ts`, `app/_layout.tsx`, `einspielen.sh`,
+`pruefen/aufbauen.sh`, `pruefen/00_supabase_lokal.sql`.
+`tsc` sauber, **Lint 81 statt 83** (siehe Punkt 8), lokal weiter 121 Häkchen.
+
+**Zehn Dinge sind wichtiger als die Abfragen:**
+
+**1. `@supabase/supabase-js` ist JS-only — 20.4-b braucht KEINEN neuen Build.** Gemessen
+statt vermutet: kein `.podspec`, kein `expo-module.config.json` in `node_modules/
+@supabase/`. Native wird es erst da, wo die SITZUNG gespeichert werden muss
+(`AsyncStorage`, `expo-secure-store`), und das ist 20.3-b. Deshalb steht
+`persistSession: false` im Client — **es ist keine Bequemlichkeit, sondern die Zeile,
+die diese Phase ohne Build möglich macht.** Der Preis ist benannt: Wer die App
+schließt, ist ausgeloggt.
+
+**2. Es gibt genau EINEN Schalter, und er heißt weiter `ANMELDE_QUELLE`.** Der
+naheliegende Entwurf wäre ein zweiter (`DATEN_QUELLE`) gewesen. Von den vier
+Kombinationen funktionieren aber nur zwei, und die beiden anderen scheitern **stumm**:
+`supabase`-Daten mit `attrappe`-Anmeldung ergibt kein Token, also lassen die 33
+Policies **0 Zeilen** durch — das sieht aus wie „die Datenbank ist leer"; umgekehrt ist
+`ichId` eine Supabase-UUID, die in `mock.ts` niemanden findet. Ein Schalter, der einen
+unmöglichen Zustand DARSTELLEN kann, ist derselbe Fehler wie `visibility: 'group'` mit
+`groupId: null` (harte Regel 31), nur an einer Stelle, an der kein Compiler hinsieht.
+`LIEST_AUS_SUPABASE` wird deshalb ABGELEITET — dieselbe Überlegung wie `PROJEKTION`
+(Regel 53) und die Project URL aus dem Token.
+
+**3. Der teuerste Fund liegt am Server und war unsichtbar: die Publication
+`supabase_realtime` war LEER.** In einem frischen Supabase-Projekt steht keine einzige
+Tabelle drin. Ein Abo auf `postgres_changes` verbindet sich dann sauber, meldet
+`SUBSCRIBED` — **und liefert nie ein Ereignis.** Kein Fehler, keine Warnung. Für die
+App sähe das aus, als passierte in Wien nichts. `0005_realtime.sql` trägt elf Tabellen
+ein, und `einspielen.sh` misst seither **neun Zahlen statt sieben** — der Wächter hat
+am echten Server sofort angeschlagen (`Realtime-Tabellen 0, erwartet 11`).
+
+**4. `blocks` und `reports` stehen NICHT in der Publication, und das ist harte Regel 10.**
+Supabase wendet RLS auf `postgres_changes` bei INSERT und UPDATE an — **bei DELETE
+nicht.** Dort geht der Primärschlüssel der gelöschten Zeile an ALLE Abonnenten, und der
+Primärschlüssel von `blocks` ist `(blocker_id, blocked_id)`. Ein Entblocken wäre damit
+eine Nachricht an den Blockierten, dass die Kante je bestanden hat. Dazu bleibt
+`REPLICA IDENTITY` auf DEFAULT: Auf `FULL` — die Einstellung, die man überall empfohlen
+findet — schickt Postgres bei jedem Update und Delete **alle Spalten der alten Zeile**
+über die Leitung.
+
+**5. Der Realtime-Anstoß ist ein SIGNAL und kein Datentransport, und genau das macht
+ihn sicher.** `data/realtime.ts` liest aus keinem `payload` auch nur ein Feld; es wird
+nachgeladen, und das Nachladen geht durch die Policies. Damit kann Realtime selbst dann
+nichts verraten, wenn seine RLS-Prüfung aussetzt — die Sichtbarkeit hängt an EINER
+Stelle statt an zweien. Der Preis ist benannt: Jede fremde Nachricht kostet dreizehn
+Abfragen, und das wird bei vierzehn Posts nicht auffallen. **Entprellt wird, weil harte
+Regel 6 hier RÜCKWÄRTS ankommt:** `anfrage_bestaetigen()` ändert Anfrage, Post und Chat
+in EINER Transaktion — am Kanal werden daraus drei Ereignisse.
+
+**6. Beim Abmelden muss der Zwischenspeicher geleert werden, und das ist kein
+Aufräumen.** Heute wäre es folgenlos, `mock.ts` ist für alle dieselbe erfundene Welt.
+Mit echten Daten liegen nach dem Abmelden **fremde Chats, fremde Anfragen und fremde
+Meldungen** im Speicher, und wer sich als Nächstes anmeldet, sieht sie, bis das neue
+Laden durch ist — ein Fehler, der wie ein Flackern aussieht und keiner ist. `abmelden()`
+nimmt sie jetzt mit, aus derselben Begründung, mit der es seit 20.3-a `weggewischt` und
+`standort` mitnimmt; nur sind es hier fremde Daten statt eigener.
+
+**7. Der Prüfstand schreibt in die Produktionsdatenbank — und hat eine Bedingung,
+unter der er sich weigert.** `50_lesen.sh` bricht ab, wenn `auth.users` nicht leer ist.
+Solange niemand drin ist, sind Aufbauen/Messen/Abräumen harmlos; sobald echte Menschen
+drin sind, wäre derselbe Ablauf ein Eingriff in fremde Daten, und das Abräumen
+unterscheidet nicht, wem eine Zeile gehört. **Ab dann gehört diese Prüfung in ein
+zweites Supabase-Projekt.** Dieselbe Bauart wie der dritte Wächter in `einspielen.sh`.
+Die Prüfkonten entstehen dabei per SQL und nicht über `signUp`: **so geht keine einzige
+Mail an eine erfundene Adresse raus.**
+
+**8. Vier eigene Fehler beim Prüfstand, und alle vier sind dieselbe Familie.**
+   - **Das Abräumen war unvollständig**, weil ich die Gruppen-IDs aus `05_daten.sql`
+     abgeschrieben und die Datei nur bis Zeile 70 gelesen hatte. Die zweite Gruppe
+     („Nora allein") fehlte, das Abräumen scheiterte am `chef_oder_aufgeloest` und ließ
+     fünf erfundene Menschen in einer echten Datenbank liegen. **Eine Liste, die aus
+     einer anderen Datei abgeschrieben wird, ist eine Kopie** (harte Regel 13 in klein)
+     — jetzt wird abgeleitet (`where creator_id in (…)`).
+   - **Und die Meldung dazu hatte ich unterdrückt** (`>/dev/null 2>&1`). Übrig blieb „es
+     stehen noch 5 Zeilen" ohne Grund. Dieselbe Falle wie das `set -e`, das in
+     `db-url.sh` die eigens gebaute Diagnose tötete.
+   - **Die Drift-Prüfung hätte sich still selbst übersprungen:** Sie hing an einer RPC,
+     die es gar nicht gibt, mit einem Rückfall auf `null` — kein Häkchen, kein Kreuz,
+     keine Spur. Dieselbe Familie wie die Backticks in `30_wettlauf.sh`. Jetzt kommt die
+     Liste über `psql`.
+   - **Die Realtime-Prüfung war EINE Messung, wo es drei braucht.** „Kommt das Ereignis
+     an?" → nein kann dreierlei heißen: Kanal nicht verbunden, Änderung hat nie
+     stattgefunden, Realtime schweigt. Jetzt werden alle drei einzeln gemessen — harte
+     Regel 57 in ihrer allgemeinen Form.
+   - Dazu ein fünfter, der KEINER war: Ein Wächter schlug an, der andere kam nie dran.
+     Die Reihenfolge in `0005` ist gedreht, weil der Zähler („12 statt 11") die
+     Regel-10-Prüfung verdeckte — **ein Wächter hinter einem anderen ist ein ungeprüfter
+     Wächter.** Beide sind jetzt EINZELN belegt: falsche Zahl → Zähler greift; `blocks`
+     gegen `follows` getauscht (Zahl bleibt 11) → Regel-10-Prüfung greift.
+
+**9. „Database error querying schema" sind acht `NULL`s.** GoTrue ist in Go geschrieben
+und liest `confirmation_token`, `recovery_token`, `email_change` und fünf weitere
+Textspalten in ein `string`, nicht in ein `*string`. Ein `NULL` lässt sich dorthin nicht
+scannen, und der Fehler nennt weder Spalte noch Grund — er klingt nach kaputtem Schema.
+**`null` und `''` sind nicht dasselbe**, dieselbe Unterscheidung, die `zeilen.ts` an
+sieben Stellen trifft. Beim normalen `signUp` schreibt GoTrue selbst leere Strings
+hinein; wer direkt in `auth.users` schreibt, macht es nach.
+
+**10. Ich habe selbst zwei Fallen aus CLAUDE.md gebaut und wieder entfernt.** Die
+`await import()` in `_layout.tsx` waren die 19h-2-Falle (*ein dynamischer Import lohnt
+nur gegen einen Nebeneffekt beim Laden — gibt es keinen, ist er reine Fehlerquelle*), und
+es gibt hier keinen: `lib/supabase.ts` baut den Client ausdrücklich erst beim ersten
+`client()`. Und `react-hooks/rules-of-hooks` meldete `datenLaden` — **statt nur meine
+eine wegzumachen, heißen jetzt alle drei Helfer `use…`** (`useStartFlaecheWeg`,
+`useTabTitel`, `useDatenLaden`); zwei davon waren seit Phase 13 gemeldet. Das Projekt
+hat dafür längst ein Muster: `useSlice`, `useTabRand`, `useSichtText` — `use` plus
+deutsches Wort. **81 Lint-Probleme statt 83.**
+
+**Der Preis dieser Phase ist eine Zahl: +74.789 B gzip (+18,3 %).** Roh +293.727 B
+(+19,5 %). Deutlich mehr als jeder Baustein bisher (`react-native-svg` +3,5 %,
+`expo-glass-effect` +0,36 %). `storage-js` und `functions-js` sind dabei wirklich tote
+Last — wer sie loswerden will, muss `postgrest-js`, `realtime-js` und `auth-js` einzeln
+verdrahten, und `createClient` macht genau die Verdrahtung, die man dann selbst bauen
+müsste: **das Auth-Token an PostgREST UND an Realtime weiterreichen.** Vergisst man das
+zweite, greift RLS am Kanal nicht wie erwartet, und der Fehler ist still. 30 kB gegen
+eine selbstgebaute Auth-Verdrahtung ist kein guter Handel. **Daraus folgt: `npm run
+deploy` bleibt liegen, bis der Schalter umgelegt wird** — auf der öffentlichen
+Prototyp-Adresse kostet der Umbau 75 kB und tut nichts.
+
+⚠️ **Was 20.4-b NICHT ist: der Schalter selbst.** `ANMELDE_QUELLE` steht weiter auf
+`'attrappe'`, der Prototyp liest weiter `mock.ts` und sieht Zeichen für Zeichen aus wie
+vorher (nachgemessen auf 390 × 844, keine Konsolenfehler). **Umlegen lässt er sich erst
+mit 20.3-b**, weil ohne echte Anmeldung kein Token da ist und die Policies dann null
+Zeilen durchlassen. Belegt ist bis dahin die ganze Kette darunter — inklusive der
+Sichtbarkeitsregeln über PostgREST — und der Ladefehler-Schirm an der App selbst
+(erzwungen und per `diff` nachweislich zurückgenommen, die 19d-Methode).
+
 #### 20.5 — `store.ts` austauschen, Teil 2: Schreiben · **SQL-Seite ✅ (2026-09-10)** · App-Seite ⬜
 
 > ✅ **Die SQL-Seite ist gebaut und bewiesen, ohne Konto — dieselbe Trennung wie bei
@@ -5976,6 +6115,62 @@ mehr, an dem diese Woche hängen könnte — `chatZustand(undefined)` gibt heute
 also bleibt er für immer. Das ist die vorsichtige Lesart von Entscheidung 41 („was
 bleibt, bleibt"), aber es ist meine Auslegung und nicht seine Entscheidung.
 
+### 43. Was dasteht, wenn die Daten nicht kommen ✅
+
+**Ians Entscheidung vom 2026-09-12, gefragt beim Bauen von 20.4-b.** Die dritte in
+Folge, die nicht aus einem Screen kam, sondern aus einer Eigenschaft der Technik
+darunter.
+
+**Die Lage:** `supabase-js` WIRFT NICHT. Es gibt `{ data, error }` zurück, und `data`
+ist im Fehlerfall `null`. Der naheliegende Griff `data ?? []` macht aus **jedem**
+Fehler — Netz weg, Token abgelaufen, Tabelle umbenannt — eine leere Liste. Und eine
+leere Liste sagt in dieser App seit Phase 13:
+
+> „Noch nichts los in deinem Feed"
+
+**Das ist ein Satz, der lügt.** „Hier ist nichts" und „ich komme nicht dran" sind zwei
+Lagen, und nur eine davon kann man beheben. Dieselbe Familie wie der unsichtbare
+Startbildschirm vom 2026-09-11 (weißes Logo auf Papierweiß): **Ein Fehler, der nur als
+ABWESENHEIT auftritt, überlebt jeden Typecheck und jeden grünen Lauf, weil niemand
+hinsehen muss.**
+
+**Gewählt: A, der Vollbild-Kasten.** Verworfen:
+
+| | | |
+|---|---|---|
+| **A** | ✅ Vollbild-Kasten mit „Nochmal versuchen" | seine Wahl — unübersehbar, und der Ausweg steht daneben |
+| **B** | leise Zeile über dem Feed | näher an Entscheidung 50, und an ihrer eigenen Stärke gescheitert: Ein LEERER Feed mit einem schmalen Streifen darüber sieht auf den ersten Blick immer noch aus wie „nichts los" |
+| **C** | Rückfall auf `mock.ts` | gar nicht erst angeboten, und der Grund gehört aufgeschrieben: Er zeigt einem echten Menschen erfundene Leute mit erfundenen Verabredungen, ohne dass irgendwo steht, dass sie erfunden sind. Harte Regel 12 verbietet Persönliches in den Fake-Daten — hier wäre die Fälschung die Funktion |
+
+**Der Haken ist benannt und gehört zu 20.3-b:** Wer im U-Bahn-Tunnel aufmacht, sieht
+von der App gar nichts — auch nicht die Chats, die er vorhin gelesen hat. Das wird erst
+besser, wenn es einen Speicher gibt, aus dem sich etwas zeigen ließe
+(`expo-secure-store` / `AsyncStorage` kommen mit 20.3-b). **Dann ist B die
+naheliegende Nachbesserung**, und `LADE_FEHLER` ist das eine Wort dafür.
+
+**Die Regel steht in `src/data/quelle.ts`** (`LADE_FEHLER`, `ladeFehlerFolgen()`) —
+dieselbe Bauart wie `safety/block.ts` (harte Regel 17), `groups/gruppe.ts` (32),
+`requests/kollision.ts` (46), `posts/standort.ts` (68) und `auth/anmeldung.ts` (69).
+Screens lesen die Konstante nie.
+
+**Zwei Dinge kamen beim Bauen dazu, und beide sind keine Oberfläche:**
+
+1. **Der Text sagt bei einer abgelaufenen Anmeldung etwas anderes.** `42501` heißt, dass
+   die Datenbank den Zugriff verweigert hat — die Policies haben getan, wofür sie da
+   sind, und die Ursache ist fast immer ein abgelaufenes Token. „Prüf dein Internet"
+   wäre dort falsch beraten und schickt jemanden eine Viertelstunde zum Router.
+   Dieselbe Unterscheidung, die harte Regel 57 von einer PRÜFUNG verlangt — hier für
+   den Menschen davor.
+2. **Und daran hing ein echter Mangel.** Beim ersten Bauen rief der Knopf in beiden
+   Fällen `datenHolen()`: Er sagte „Anmelden" und lud neu. Bei abgelaufenem Token
+   scheitern die nächsten dreizehn Abfragen genauso — eine Schleife, die wie ein
+   kaputter Knopf aussieht. **Zwei für sich richtige Teile ergeben zusammen einen
+   falschen Satz**, dieselbe Sorte wie die Verlassen-Rückfrage in Phase 17. Jetzt ruft
+   er `abmelden()`, und der Torwächter zeigt den Anmelde-Bildschirm. Gemessen: „Du bist
+   nicht mehr angemeldet" → Klick → Anmelde-Bildschirm, Adresse unverändert.
+
+---
+
 ---
 
 ## 7. Bewusst NICHT im Prototyp
@@ -6166,6 +6361,41 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
+> ✅ **Phase 20.4-b ist fertig (2026-09-12): die App KANN aus Supabase lesen — und der
+> Prototyp merkt davon nichts.** `npm run pruef-lesen` — **29 Häkchen, kein Kreuz am
+> ECHTEN Server**, danach ist die Datenbank wieder leer. Eine neue Entscheidung von Ian
+> (43). `tsc` sauber, **81 Lint-Probleme statt 83**, lokal weiter 121 Häkchen.
+> Die vollständige Liste steht in Abschnitt 5b unter „Was beim Bauen von 20.4-b
+> herauskam". Sechs Dinge, die eine frische Sitzung zuerst wissen muss:
+>
+> 1. **Der Schalter ist NICHT umgelegt, und das geht auch nicht.** `ANMELDE_QUELLE`
+>    steht weiter auf `'attrappe'`; ohne echte Anmeldung gibt es kein Token, und die 33
+>    Policies lassen dann null Zeilen durch. **20.4-b ist fertig, das Umlegen ist
+>    20.3-b.** Was belegt ist, ist die ganze Kette darunter: echtes Supabase → PostgREST
+>    → `supabase-js` → `zeilen.ts` → `AppState`, mit den Sichtbarkeitsregeln über HTTP
+>    (Ian sieht vier Posts, Tobis fehlt wegen des Blocks, fremde Anfragen bleiben
+>    unsichtbar).
+> 2. **Es gibt genau EINEN Schalter.** `LIEST_AUS_SUPABASE` in `lib/supabase.ts` wird
+>    aus `ANMELDE_QUELLE` ABGELEITET. Ein zweiter daneben könnte zwei Zustände
+>    darstellen, die es nicht gibt — und beide scheitern stumm (siehe 5b, Punkt 2).
+> 3. **`@supabase/supabase-js` ist JS-only: kein neuer Build.** Gemessen, nicht
+>    vermutet. `persistSession: false` ist die Zeile, die das möglich macht — eine
+>    gespeicherte Sitzung braucht `AsyncStorage`, und das ist nativ. **Der Preis dafür
+>    gehört zu 20.3-b:** Wer die App schließt, ist ausgeloggt.
+> 4. **Am Server ist etwas dazugekommen: `0005_realtime.sql`.** Die Publication
+>    `supabase_realtime` war LEER — ein Abo hätte sich sauber verbunden und nie etwas
+>    gemeldet. `einspielen.sh` misst jetzt **neun Zahlen statt sieben**, und es kann
+>    einzelne Migrationen nachziehen: `npm run einspielen -- 0005_realtime.sql`.
+>    **`blocks` und `reports` gehören NICHT hinein** (harte Regel 10, siehe 5b Punkt 4).
+> 5. **`npm run deploy` bleibt ausdrücklich liegen.** Der Umbau kostet **+74.789 B gzip
+>    (+18,3 %)** und tut auf der öffentlichen Prototyp-Adresse nichts, solange der
+>    Schalter auf `'attrappe'` steht. Erst zusammen mit 20.3-b hochladen.
+> 6. **Der neue Prüfstand weigert sich, sobald jemand ein Konto hat.**
+>    `50_lesen.sh` bricht ab, wenn `auth.users` nicht leer ist — er schreibt in die
+>    Produktionsdatenbank und räumt ab, und das Abräumen unterscheidet nicht, wem eine
+>    Zeile gehört. **Ab dem ersten echten Nutzer gehört er in ein zweites
+>    Supabase-Projekt.**
+>
 > 🔑 **Und der Zugang für die APP liegt seit demselben Tag in `.env`** —
 > `npm run anon-key`, wieder über die Zwischenablage. **Damit ist die Konten-Seite von
 > 20.3-b/20.4-b für Supabase vollständig; offen bleiben nur Apple-Sign-in und Google.**

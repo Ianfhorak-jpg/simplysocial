@@ -49,3 +49,22 @@ end $$;
 
 grant usage on schema public to anon, authenticated;
 grant usage on schema auth  to anon, authenticated;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Die Realtime-Publication — nachgetragen am 2026-09-12 für Migration 0005.
+--
+-- Sie steht hier aus GENAU dem Grund, der am selben Tag den Trigger-Zähler
+-- getroffen hat: **Eine Nachbildung, die WENIGER mitbringt als das Original,
+-- lässt eine Messung durchgehen, die am Original falsch ist.** Ohne diese Zeile
+-- scheitert 0005 lokal mit „publication does not exist" — und das wäre noch der
+-- gute Fall. Der schlechte: Jemand baut die Migration so um, dass sie die
+-- Publication selbst anlegt, und dann prüft sie am echten Server eine andere
+-- Publication als die, die Supabase benutzt.
+--
+-- Sie wird LEER angelegt, genau wie in einem frischen Supabase-Projekt
+-- (`puballtables = false`, keine Tabellen). Was hineinkommt, sagt 0005.
+do $$ begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    create publication supabase_realtime;
+  end if;
+end $$;
