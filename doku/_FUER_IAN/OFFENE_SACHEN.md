@@ -200,9 +200,18 @@ Kommt noch, du hast es gesagt. Bis dahin steht überall der Platzhalter-Schriftz
    danach nachgesehen habe, wie lange sie wirklich gilt. Das prüft das Skript jetzt
    von selbst und bricht ab, statt „fertig“ zu sagen.
    </details>
-2. **TestFlight geht.** Christoph, Leopold und Daria können die App auf ihre **eigenen**
-   Handys holen, ohne Kabel und ohne dass ihre Geräte einzeln registriert werden. Das ist
-   Punkt 8 der Reihenfolge („wieder herzeigen"), der seit dem 02.09. offen liegt.
+2. ✅ **TestFlight steht seit dem 11.09. um 23:00.** Die App ist hochgeladen, von Apple
+   geprüft und freigegeben (Build 1, gültig bis 10.12.2026). Dein Platzhalter-Logo ist
+   als App-Icon und als Startbild eingebaut.
+
+   ❓ **Eine Entscheidung fehlt noch: Wie kommen die drei an die App?**
+
+   | | Was das heißt | Der Haken |
+   |---|---|---|
+   | **Intern** | Du trägst sie mit ihrer Apple-ID als Benutzer in dein App-Store-Connect-Konto ein. Sie haben die App **sofort**, ohne Wartezeit. | Sie sehen dein Konto — in der Rolle, die du vergibst, aber sie sind drin. |
+   | **Extern** | Du schickst nur eine E-Mail oder einen Link, sie brauchen keinen Zugang zu deinem Konto. | Der **erste** Build muss durch Apples Beta-Prüfung (meist ein Tag). Dabei wird auch die Altersfrage gestellt, die oben als Punkt 0 steht. |
+
+   **Sag mir, welches von beiden** — den Rest richte ich ein.
 3. **„Anmelden mit Apple" wird überhaupt erst möglich.** Der Schlüssel dafür lässt sich
    nur mit einem Developer-Programm anlegen — ohne ihn ist Punkt 4 (Google) laut
    Richtlinie 4.8 gesperrt.

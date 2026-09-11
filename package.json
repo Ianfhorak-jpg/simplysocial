@@ -40,7 +40,8 @@
     "typecheck": "tsc --noEmit",
     "deploy": "bash scripts/deploy.sh",
     "doku": "bash scripts/doku.sh",
-    "geraet": "bash scripts/geraet-bauen.sh"
+    "geraet": "bash scripts/geraet-bauen.sh",
+    "asc": "python3 scripts/asc.py"
   },
   "private": true
 }

@@ -76,6 +76,46 @@ normalerweise 18 Jahre; mit 16 läuft es üblicherweise über einen Elternteil. 
 hängen Anbietername im Store, Verträge — und der Sign-in-Schlüssel, dessen Wechsel
 später jeden Nutzer zum Neuanmelden zwingt.
 
+🚀 **TestFlight steht (2026-09-11): Build 1 ist bei Apple und `VALID`.** App
+`SimplySocial` (SKU `simplysocial-1`), hochgeladen um 22:58, gültig bis 2026-12-10.
+Damit ist Punkt 8 der Reihenfolge („wieder herzeigen") erreichbar, offen seit dem
+2026-09-02. Vier Dinge sind wichtiger als der Upload:
+
+1. **Die App hatte kein eigenes Icon — sie trug das EXPO-Logo, und zwar an zwei
+   Stellen.** `ASSETCATALOG_COMPILER_APPICON_NAME = expo` zeigte auf ein
+   Icon-Composer-Bundle (`assets/expo.icon`), `AppIcon.appiconset` war **leer**, und
+   `assets/images/icon.png` war ebenfalls das Expo-Logo. Ians Platzhalter-Logo
+   (`~/Desktop/Logo_simplySocial_Platzhalter.pdf`, weißes „S“ auf `#72B9AE`) ist jetzt
+   beides: 1024 × 1024 **ohne Alpha** (mit Alpha weist Apple den Upload ab) und
+   zentriert nach MESSUNG — das Motiv saß im Original 3 px von der Feldmitte entfernt,
+   also war nichts zu verschieben.
+2. **Der Startbildschirm war unsichtbar, und kein Werkzeug hätte das gefunden.**
+   `splash-icon.png` war ein **weißes** Logo auf dem konfigurierten Papierweiß
+   `#FAF9F6` — 41 % der Fläche gedeckt, davon nichts zu sehen. **Ein Fehler, der nur
+   als Abwesenheit auftritt, überlebt jeden Typecheck und jeden grünen Build.** Jetzt
+   trägt das „S“ die Logofarbe; der Hintergrund blieb unangetastet, weil er eine
+   Entscheidung trägt (Markenfarbe aus `theme/colors.ts`) und das Bild nur ein
+   Versehen war. **Die Einfärbung ist eine Auslegung und wartet auf Ians Urteil.**
+   Nebenbefund zur Methode: Die erste Fassung legte einen Schleier über das ganze
+   Motivrechteck, weil die Alpha-Schwelle (140) UNTER der Helligkeit des Türkis
+   (157,7) lag — **eine Schwelle zwischen zwei Farben wird gemessen, nicht geraten.**
+3. **`ITSAppUsesNonExemptEncryption` fehlte.** Ohne den Eintrag fragt TestFlight bei
+   JEDEM Build nach der Exportverschlüsselung. Steht jetzt als `false` in `app.json`
+   unter `ios.infoPlist` — eine Erklärung in Ians Namen, deshalb ausdrücklich mit ihm
+   besprochen: Die App bringt keine eigene Kryptographie mit, nur System-HTTPS.
+4. **Der Upload läuft über einen App-Store-Connect-API-Schlüssel, nicht über Ians
+   Passwort.** Schlüssel und Issuer-ID liegen in `~/.appstoreconnect/` (Rechte 600),
+   **außerhalb des Repos** — harte Regel 12 in ihrer schärfsten Form, weil der Prototyp
+   öffentlich abrufbar ist. `scripts/asc.py` (`npm run asc`) fragt damit Buildstatus und
+   TestFlight-Gruppen ab; das JWT lebt 15 Minuten. **Die Issuer-ID kam über die
+   Zwischenablage statt über den Chat** und wird aus jeder Ausgabe herausgefiltert,
+   falls Apple sie in einer Fehlermeldung zurückspiegelt.
+
+❓ **Was auf Ian wartet:** wie die drei Mitgründer die App bekommen — **intern**
+(sofort, kein Review, aber jeder braucht eine Apple-ID als Benutzer im Konto) oder
+**extern** (nur eine E-Mail, dafür einmalig Apples Beta-Prüfung, in der auch die
+Altersfrage aus `OFFENE_SACHEN.md` Punkt 0 gestellt wird).
+
 🔧 **Und der Gerätebuild ist seit dem 2026-09-11 ein Skript** —
 `scripts/geraet-bauen.sh`, Aufruf `npm run geraet`. Er stand bis dahin nur als Prosa in
 der Fallen-Liste; darin stecken sechs Fallen, die alle schon einmal einen Abend

@@ -16,8 +16,10 @@
 - ✅ **Die zwei Klicks in Xcode hast du gemacht** (11.09., 21:55) — mehr war nicht
   nötig. Es gibt **keine neue Team-ID**: Apple hat dein bisheriges Team aufgewertet,
   die Nummer blieb dieselbe. Am Projekt musste nichts geändert werden.
-- 📲 **Danach geht TestFlight**: Christoph, Leopold und Daria bekommen die App auf ihre
-  **eigenen** Handys, ohne Kabel.
+- 🚀 **TestFlight steht seit dem 11.09., 23:00 Uhr.** Die App liegt bei Apple, ist
+  geprüft (`VALID`) und bereit. **Dein Platzhalter-Logo ist drin** — als App-Icon und
+  auf dem Startbildschirm. Was noch fehlt, ist eine Entscheidung von dir, wie Christoph,
+  Leopold und Daria drankommen (steht unten bei Punkt 6).
 - ⬜ **Weiter offen: Supabase und Google.** Supabase allein (10 Minuten) reicht für den
   größten Schritt — die App liest dann echte Daten statt der erfundenen.
 

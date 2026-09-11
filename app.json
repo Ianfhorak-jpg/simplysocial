@@ -11,7 +11,10 @@
     "ios": {
       "bundleIdentifier": "at.simplysocial.app",
       "supportsTablet": false,
-      "icon": "./assets/expo.icon"
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
