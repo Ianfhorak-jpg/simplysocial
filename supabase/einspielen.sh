@@ -107,15 +107,24 @@ echo
 echo "── 2. Ist die Datenbank noch leer? ──"
 SCHON="$(frage "select count(*) from pg_tables where schemaname='public' and tablename in ('profiles','posts','groups','chat_threads');")"
 if [ "$SCHON" != "0" ]; then
-  echo "✗ In 'public' stehen schon $SCHON unserer Tabellen."
-  echo "  Dieses Skript spielt NUR in eine frische Datenbank ein — es überschreibt nichts."
-  echo "  Wenn wirklich neu aufgebaut werden soll, ist das eine Entscheidung von Ian,"
-  echo "  keine Nebenwirkung eines Skriptlaufs."
-  exit 1
+  # Nicht abbrechen, sondern NACHMESSEN. Der Unterschied ist die Auskunft: "steht
+  # schon alles richtig da" und "da liegt etwas Halbes" sind zwei verschiedene
+  # Lagen, und nur eine davon ist ein Problem. Beim ersten echten Lauf am
+  # 2026-09-12 war die Datenbank nach einem falsch gemessenen Kreuz bereits
+  # vollständig eingespielt — und ein blankes "✗ nicht leer" hätte das verschwiegen.
+  echo "→ In 'public' stehen schon $SCHON unserer Tabellen — es wird NICHT noch"
+  echo "  einmal eingespielt. Stattdessen nur nachgemessen:"
+  echo
+  NUR_MESSEN=1
+else
+  echo "✓ 'public' ist frei."
+  NUR_MESSEN=0
 fi
-echo "✓ 'public' ist frei."
 
 echo
+if [ "$NUR_MESSEN" = "1" ]; then
+  echo "── 3. Einspielen übersprungen (siehe oben) ──"
+else
 echo "── 3. Einspielen (alle vier in EINER Transaktion) ──"
 psql "$DB_URL" -v ON_ERROR_STOP=1 --single-transaction -q \
   -f "$HIER/migrations/0001_schema.sql" \
@@ -123,6 +132,7 @@ psql "$DB_URL" -v ON_ERROR_STOP=1 --single-transaction -q \
   -f "$HIER/migrations/0003_konto_loeschen.sql" \
   -f "$HIER/migrations/0004_transaktionen.sql" 2>&1 | filtern
 echo "✓ durchgelaufen — aber das ist noch kein Beleg."
+fi
 
 echo
 echo "── 4. Nachmessen: steht jetzt dasselbe da wie lokal? ──"
@@ -142,13 +152,24 @@ mess "RLS eingeschaltet" "select count(*) from pg_class c join pg_namespace n on
 mess "Funktionen regel." "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='regel';" "$ERWARTET_REGEL_FN"
 mess "Funktionen public." "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public';" "$ERWARTET_PUBLIC_FN"
 mess "Enums"             "select count(*) from pg_type t join pg_namespace n on n.oid=t.typnamespace where n.nspname='public' and t.typtype='e';" "$ERWARTET_ENUMS"
-mess "Trigger"           "select count(*) from pg_trigger where not tgisinternal;" "$ERWARTET_TRIGGER"
+# ⚠️ Der `nspname='public'`-Filter ist hier KEINE Schönheit, und er hat beim ersten
+# echten Lauf am 2026-09-12 zugeschlagen: Ohne ihn zählt die Abfrage auch Supabases
+# eigene Trigger in `storage` und `realtime` mit — gemessen SECHS statt einem.
+# Lokal fällt das nie auf, weil die Wegwerf-Datenbank diese Schemas gar nicht hat.
+# Dieselbe Familie wie die Attrappen-Falle vom 2026-09-06: Eine Nachbildung, die
+# WENIGER mitbringt als das Original, lässt eine Messung durchgehen, die am
+# Original falsch ist. Die anderen sechs Zahlen waren von Anfang an eingeschränkt.
+mess "Trigger (public)"   "select count(*) from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where not t.tgisinternal and n.nspname='public';" "$ERWARTET_TRIGGER"
 
 echo
 if [ "$FEHLER" = "1" ]; then
   echo "✗ Die Datenbank steht NICHT so da wie lokal. Nichts weiterbauen, bevor das stimmt."
   exit 1
 fi
-echo "✓ Alle sieben Zahlen stimmen. Die Datenbank ist eingerichtet."
+if [ "$NUR_MESSEN" = "1" ]; then
+  echo "✓ Alle sieben Zahlen stimmen. Die Datenbank war schon richtig eingerichtet."
+else
+  echo "✓ Alle sieben Zahlen stimmen. Die Datenbank ist eingerichtet."
+fi
 echo "  Was jetzt fehlt, ist der Client (20.4-b) — und dafür brauche ich"
 echo "  Project URL und anon key aus Settings → API."

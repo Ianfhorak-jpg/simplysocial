@@ -6166,6 +6166,47 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
+> ✅ **Das Supabase-Projekt STEHT (2026-09-12) — Schema, Regeln und Funktionen sind
+> eingespielt und am echten Server belegt.** Ians Konto, Region `eu-west-1` (Irland, nicht
+> das empfohlene Frankfurt — immer noch EU, nur weiter weg). `npm run db-url` +
+> `npm run einspielen`, danach alle sieben Zahlen grün: **13 Tabellen · 33 Policies · RLS
+> auf allen 13 · 6 `regel.`-Funktionen · 9 `public.`-Funktionen · 8 Enums · 1 Trigger.**
+> **Damit ist 20.3-b/20.4-b nicht mehr blockiert** — es fehlt nur noch der `anon key`.
+> Fünf Dinge sind wichtiger als das Einspielen selbst:
+> 
+> 1. **Der Wächter hat beim ERSTEN echten Lauf angeschlagen — und der Fehler war meine
+>    Messung.** `Trigger 6 statt 1`: Der Zähler war als einziger der sieben **nicht** auf
+>    `nspname='public'` eingeschränkt und zählte Supabases eigene Trigger in `storage`
+>    und `realtime` mit. **Lokal ist das folgenlos, weil die Wegwerf-Datenbank diese
+>    Schemas gar nicht hat** — dieselbe Familie wie die Attrappen-Falle vom 2026-09-06:
+>    *Eine Nachbildung, die WENIGER mitbringt als das Original, lässt eine Messung
+>    durchgehen, die am Original falsch ist.* Der Wächter hat trotzdem getan, wofür er
+>    gebaut ist: Er hat einen Unterschied gemeldet statt „fertig" zu sagen.
+> 2. **Daraus kam eine Verbesserung, die vorher fehlte:** Ist die Datenbank nicht leer,
+>    bricht `einspielen.sh` nicht mehr ab, sondern **misst nach**. „Steht schon alles
+>    richtig da" und „da liegt etwas Halbes" sind zwei Lagen, und nur eine ist ein
+>    Problem. Nach dem berichtigten Zähler war die Datenbank bereits vollständig — ein
+>    blankes „✗ nicht leer" hätte das verschwiegen.
+> 3. **Supabases echte `auth.uid()` verhält sich wie die Attrappe — gemessen, nicht
+>    gehofft.** Am echten Server: `set local request.jwt.claims` → `auth.uid()` gibt die
+>    `sub` zurück. Das ist der Beleg dafür, dass die 121 lokalen Prüfungen überhaupt etwas
+>    über die echte Datenbank aussagen.
+> 4. **Vier Angriffe am echten Server, alle gehalten:** `anon` sieht **0** Posts, ein
+>    angemeldeter Fremder sieht **0** Blocks (harte Regel 10), und ein `insert` als `anon`
+>    scheitert mit **`42501`**. Der erste Versuch dazu war wertlos und sah trotzdem nach
+>    Erfolg aus: Er scheiterte an einem falschen SPALTENNAMEN, nicht an RLS — genau der
+>    Fall, gegen den harte Regel 57 den `SQLSTATE`-Vergleich verlangt.
+> 5. **`npm run db-url` legt den Verbindungs-String über die ZWISCHENABLAGE ab**, in zwei
+>    Schritten: erst der String mit `[YOUR-PASSWORD]` als Entwurf, dann nur noch das
+>    Passwort — URL-kodiert (Supabase-Passwörter enthalten `@ : / ? #`, und ein blankes
+>    `@` macht aus dem Rest einen Hostnamen) und über **stdin** statt als Argument, weil
+>    Argumente in `ps` stehen. Danach wird die Verbindung wirklich aufgebaut.
+>    **Zwei eigene Fehler dabei, beide „keine Meldung" statt „falsche Meldung":** ohne
+>    `PGCONNECT_TIMEOUT` hängt psql minutenlang und sieht aus wie ein hängendes Skript;
+>    und `set -e` tötete das Skript beim psql-Fehlercode, **bevor die eigens gebaute
+>    Diagnose überhaupt lief** — drei Läufe lang gab es nur `exit=2` und keinen Text.
+>
+>
 > 🔜 **Das Erste, was zu tun ist (Stand 2026-09-12, SPÄTESTER Eintrag): Ian legt
 > Supabase an — und das Einspielen ist seither ein Befehl statt vier Copy-Paste.**
 > Zwei Entscheidungen von ihm an dem Tag, beide in dieser Sitzung:
