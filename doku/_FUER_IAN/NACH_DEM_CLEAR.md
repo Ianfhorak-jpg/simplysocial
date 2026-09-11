@@ -1,5 +1,67 @@
 # Was du nach dem Clear schreiben sollst
 
+## ✅ STAND 12.09.2026 — SUPABASE STEHT. DER ENGPASS IST WEG.
+
+> **Die Datenbank läuft.** Projekt in der EU (Irland), Schema, Regeln und Funktionen
+> eingespielt und **am echten Server nachgemessen**: 13 Tabellen · 33 Regeln · RLS auf
+> allen 13 · 15 Funktionen · 8 Enums · 1 Trigger. Der Zugang für die App liegt in
+> `.env`, die Verbindung ist geprüft (HTTP 200 von deinem Server).
+>
+> **Vier Angriffe direkt gegen dein Projekt, alle gehalten** — und der wichtigste Beleg
+> ist ein anderer: **Supabases echte Anmelde-Funktion verhält sich genau wie die
+> Nachbildung, gegen die die 121 Prüfungen laufen.** Erst das macht die 121 Prüfungen
+> für deinen Server gültig; vorher waren sie eine Aussage über meinen Testrechner.
+
+### 🟢 Was du in die nächste Sitzung schreiben kannst
+
+```
+Weiter mit Phase 20.4-b: store.ts liest echte Daten aus Supabase statt aus mock.ts.
+Supabase steht seit 12.09., .env ist da, PLAN.md Abschnitt 9 lesen.
+```
+
+Das ist der größte Brocken des Backends — der Moment, in dem SimplySocial aufhört, ein
+Prototyp zu sein. **Dafür brauche ich nichts mehr von dir.**
+
+### 🔴 Was noch auf DICH wartet
+
+| Was | Wie lange | Wofür |
+|---|---|---|
+| **Drei Apple-IDs** | 2 Min | Christoph, Leopold und Daria bekommen die App über TestFlight. Format: `Christoph:Nachname:mail@…` — die Adresse, mit der sie sich am **iPhone** anmelden, nicht irgendein Postfach. |
+| **Google + zwei Apple-Handgriffe** | 25 Min | Erst danach ist das *Anmelden* fertig. Klickfolge in `KONTEN_EINRICHTEN.md`. |
+| Logo vom Freund | wartet auf ihn | |
+| Farbe der Landing-Page | 2 Min | liegt seit dem 06.09. fertig da |
+
+### Was an dem Tag neu dazugekommen ist
+
+| Befehl | Was er macht |
+|---|---|
+| `npm run db-url` | nimmt den Verbindungs-String aus der Zwischenablage — zweistufig, damit du nichts abtippen musst |
+| `npm run einspielen` | die vier Migrationen in **einer** Transaktion, danach werden sieben Zahlen nachgemessen |
+| `npm run anon-key` | legt den App-Zugang in `.env` — und weist einen `service_role`-Schlüssel ab |
+| `npm run asc tester` | interne TestFlight-Tester einladen; ohne `--wirklich` nur Vorschau |
+
+### Was dabei schiefgegangen ist (damit es nicht wieder passiert)
+
+- **Der wertvollste Moment war ein rotes Kreuz.** „6 Trigger statt 1" — und der Fehler
+  war **meine Messung**, nicht deine Datenbank: Sie zählte Supabases eigene Trigger mit,
+  die es auf meinem Testrechner gar nicht gibt. **Eine Nachbildung, die WENIGER
+  mitbringt als das Original, lässt eine Messung durchgehen, die am Original falsch
+  ist.** Das Skript hat trotzdem getan, wofür es gebaut ist: einen Unterschied gemeldet
+  statt „fertig" zu sagen.
+- **Drei eigene Fehler in meinen Skripten, alle von derselben Sorte: „keine Meldung"
+  statt „falsche Meldung".** Ein Heredoc-Ende, das im Skript statt in der Shell landete;
+  ein fehlender Verbindungs-Timeout (sah aus wie ein hängendes Skript); und `set -e`,
+  das mein Skript tötete, **bevor die eigens gebaute Diagnose lief** — drei Läufe lang
+  gab es nur `exit=2` und kein Wort dazu. **Ein Fehler, der nur als Abwesenheit
+  auftritt, überlebt jeden Test, der bloss den Rückgabewert liest.**
+- **`supabase/db-url` war nicht git-ignoriert.** Meine eigene Anleitung sagte „leg die
+  Datei ausserhalb des Projekts ab" — aber **eine Anleitung ist kein Netz.** Wäre sie
+  versehentlich im Projektordner gelandet, stünde dein Datenbankpasswort beim nächsten
+  `git push` öffentlich im Internet. Jetzt gesperrt, in beide Richtungen geprüft.
+
+---
+
+
 ## ✅ STAND 11.09.2026, NACHTS — APPLE DEVELOPER, JAHRESBUILD UND TESTFLIGHT
 
 > **Du hast das Apple Developer Program gekauft, und an dem Abend sind drei Dinge

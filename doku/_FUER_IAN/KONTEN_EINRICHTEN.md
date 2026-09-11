@@ -5,7 +5,8 @@
 > gehören. Das bist du.
 >
 > ✅ **Apple Developer Program — hast du seit dem 11.09.**
-> ⬜ **Supabase** (die Datenbank) · ⬜ **Google** (der zweite Anmeldeweg)
+> ✅ **Supabase** — steht seit dem 12.09.2026
+> ⬜ **Google** (der zweite Anmeldeweg) · ⬜ **zwei Apple-Handgriffe** (1b und 1c unten)
 >
 > Reihenfolge ist unten vorgegeben und **nicht beliebig**: Apple muss vor Google fertig
 > sein, sonst lehnt Apple die App später ab (Richtlinie 4.8).
@@ -62,10 +63,17 @@ geändert werden.
 
 ---
 
-## 2. Supabase — die Datenbank · **10 Minuten**
+## 2. ~~Supabase — die Datenbank~~ ✅ *erledigt am 12.09.2026*
 
-Das ist kein Anfang mehr, sondern ein Einspielen: Schema und Regeln liegen fertig da und
-sind gegen 121 Angriffe geprüft.
+**Steht.** Projekt in der EU (Irland), alles eingespielt und am echten Server
+nachgemessen: 13 Tabellen · 33 Regeln · RLS auf allen 13 · 15 Funktionen. Der Zugang
+für die App liegt in `.env`. **Du musst hier nichts mehr tun** — die Schritte unten
+stehen nur noch als Gedächtnis, falls das Projekt je neu aufgesetzt werden muss.
+
+<details><summary>Die Schritte von damals</summary>
+
+Das war kein Anfang mehr, sondern ein Einspielen: Schema und Regeln lagen fertig da und
+waren gegen 121 Angriffe geprüft.
 
 1. [supabase.com](https://supabase.com) → **Start your project** → mit E-Mail oder GitHub
 2. **New project**
@@ -114,6 +122,8 @@ sind gegen 121 Angriffe geprüft.
 > 🔒 **Auf derselben Seite steht ein `service_role`-Schlüssel. Den schickst du mir nicht
 > und niemandem sonst.** Er hebt alle Sicherheitsregeln auf — die 121 Prüfungen wären
 > damit wertlos. Der `anon`-Schlüssel dagegen ist dafür gemacht, in der App zu stehen.
+
+</details>
 
 ---
 
