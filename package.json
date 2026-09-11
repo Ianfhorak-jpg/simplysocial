@@ -40,6 +40,8 @@
     "typecheck": "tsc --noEmit",
     "deploy": "bash scripts/deploy.sh",
     "doku": "bash scripts/doku.sh",
+    "db-url": "bash scripts/db-url.sh",
+    "einspielen": "bash supabase/einspielen.sh",
     "geraet": "bash scripts/geraet-bauen.sh",
     "asc": "python3 scripts/asc.py"
   },

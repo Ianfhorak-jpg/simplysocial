@@ -35,6 +35,50 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+🔧 **Das Einspielen in ein echtes Supabase ist seit dem 2026-09-12 ein Befehl** —
+`supabase/einspielen.sh`, Aufruf `npm run einspielen`. **Ians Entscheidung an dem Tag:
+Supabase jetzt anlegen** (gegen „ohne ihn mit einem lokalen Server weiterbauen" und
+gegen „erst herzeigen"); der Vier-Dateien-Copy-Paste in `KONTEN_EINRICHTEN.md` ist
+damit weg. Das Skript ist in BEIDE Richtungen belegt, bevor es je ein echtes Projekt
+gesehen hat. Vier Dinge sind daran wichtiger als die Bequemlichkeit:
+
+1. **Die teuerste denkbare Verwechslung hat einen Namen: `00_supabase_lokal.sql`.**
+   Die Attrappe bringt `auth.users` und `auth.uid()` genauso mit wie das Original —
+   wer die Ziele vertauscht, spielt 33 Policies gegen eine Datenbank ein, in der
+   `auth.uid()` etwas anderes bedeutet, und **bekommt keine einzige Fehlermeldung.**
+   Gefragt wird deshalb nach dem, was NUR das echte Supabase hat: Schema `storage`
+   und Rolle `service_role`. Gemessen: lokale Wegwerf-DB → 0/0, Abbruch; ein Ziel mit
+   beidem → durchgelaufen, alle sieben Zahlen grün. Dieselbe Familie wie die
+   Team-Prüfung in `geraet-bauen.sh`.
+2. **Alle vier Migrationen in EINER Transaktion** — harte Regel 6 eine Ebene tiefer.
+   Ein Abbruch nach `0002` hinterliesse Tabellen **ohne** Schreibwege, und weil ein
+   fehlender `grant` hier eine ZUSAGE ist (Regel 70), sähe das aus wie Absicht.
+3. **Danach wird NACHGEMESSEN, nicht „fertig" gemeldet** (die Lehre vom 2026-09-11):
+   **13 Tabellen · 33 Policies · RLS auf allen 13 · 6 `regel.`-Funktionen ·
+   9 `public.`-Funktionen · 8 Enums · 1 Trigger** — die Zahlen der lokalen Datenbank,
+   gegen die 121 Prüfungen grün sind. Ändert eine Migration sich, gehören sie
+   nachgezogen.
+4. **Der Verbindungs-String liegt in `~/.simplysocial/db-url`** (Rechte 600),
+   außerhalb des Repos — dasselbe Muster wie `~/.appstoreconnect/`. **Er enthält das
+   Datenbankpasswort, und Postgres spiegelt ihn bei Verbindungsfehlern zurück**; der
+   Filter dagegen ist nachgemessen, nicht vermutet.
+
+🧪 **TestFlight läuft INTERN (Ians Entscheidung, 2026-09-12) — vorbereitet, es fehlen
+drei E-Mail-Adressen.** `npm run asc tester -- Vor:Nach:mail [--wirklich]`. Die drei
+werden Benutzer von Ians Konto; dafür entfällt Apples Beta-Prüfung und mit ihr die
+Altersfrage aus `OFFENE_SACHEN.md` Punkt 0. Zwei Dinge sind wichtiger als der Aufruf:
+
+- **Apple lässt als interne Tester NUR fünf Rollen zu** (nachgelesen, nicht geraten):
+  ACCOUNT_HOLDER, ADMIN, APP_MANAGER, DEVELOPER, MARKETING. **`READ_ONLY` und
+  `CUSTOMER_SUPPORT` gehen NICHT** — ausgerechnet die beiden, die am harmlosesten
+  klingen. `TESTER_ROLLE = 'MARKETING'` ist die kleinste zulässige; `DEVELOPER` wäre
+  der naheliegende Griff und darf **Zertifikate und Provisioning-Profile verwalten**,
+  also genau das, woran am 2026-09-11 ein 20-Minuten-Build hing. Dazu
+  `allAppsVisible: false` — sie sehen nur diese eine App.
+- **Ohne `--wirklich` passiert nichts.** Apple verschickt die Einladung im Moment des
+  Anlegens und nur dann, und für interne Tester gibt es keinen Nachschick-Aufruf.
+  Die Vorschau ist gegengemessen: 0 offene Einladungen danach.
+
 🍏 **Ian hat das Apple Developer Program (2026-09-11).** Eines der drei Konten aus dem
 20.3-b-Engpass ist damit da; offen bleiben **Supabase und Google**. Drei Dinge sind
 daran wichtiger als der Kauf:

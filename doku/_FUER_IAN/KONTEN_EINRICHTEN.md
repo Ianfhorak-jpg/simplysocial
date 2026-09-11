@@ -74,18 +74,38 @@ sind gegen 121 Angriffe geprüft.
      nächsten. Wichtig für die Datenschutzfrage und für die Geschwindigkeit.
    - Database Password: eines erzeugen lassen und **speichern**
 3. Warten, bis das Projekt steht (ca. 2 Minuten)
-4. Links **SQL Editor** → **New query** → und dann **nacheinander, in dieser Reihenfolge**,
-   den Inhalt dieser vier Dateien einfügen und jeweils **Run**:
+4. **Und dann sagst du mir nur Bescheid — das Einspielen mache ich.**
 
-   | | Datei | Was sie macht |
-   |---|---|---|
-   | 1 | `simplysocial/supabase/migrations/0001_schema.sql` | die Tabellen |
-   | 2 | `…/0002_policies.sql` | wer was sehen darf |
-   | 3 | `…/0003_konto_loeschen.sql` | deine 39. Entscheidung |
-   | 4 | `…/0004_transaktionen.sql` | die sieben Schreibwege |
+   Dafür brauche ich den Verbindungs-String deiner Datenbank:
+   **Connect** (oben auf der Projektseite) → **Session pooler** oder
+   **Direct connection** → kopieren. Darin steht `[YOUR-PASSWORD]` — das ersetzt du
+   durch das Passwort aus Schritt 2.
 
-   *Wenn dir das zu fummelig ist: sag Bescheid, dann mache ich es über die Kommandozeile —
-   dafür brauche ich nur das Datenbankpasswort aus Schritt 2.*
+   > 🔒 **Schick ihn mir NICHT in den Chat.** Leg ihn stattdessen hier ab, dann liest
+   > ihn nur mein Skript und niemand sonst:
+   > ```
+   > mkdir -p ~/.simplysocial && chmod 700 ~/.simplysocial
+   > printf '%s' 'postgresql://…hier einfügen…' > ~/.simplysocial/db-url
+   > chmod 600 ~/.simplysocial/db-url
+   > ```
+   > Das ist derselbe Ort wie bei Apple (`~/.appstoreconnect/`) und aus demselben
+   > Grund: **außerhalb des Projektordners**, der geht ins Internet.
+
+   Danach laufen die vier Dateien mit **einem** Befehl (`npm run einspielen`) — in
+   der richtigen Reihenfolge, in **einer** Transaktion, und danach wird nachgemessen,
+   ob wirklich 13 Tabellen, 33 Regeln und 9 Funktionen dastehen. Bricht etwas ab,
+   bleibt die Datenbank leer statt halb gefüllt.
+
+   <details><summary>Falls du es doch lieber selbst klickst</summary>
+
+   SQL-Editor → New query → nacheinander einfügen und jeweils **Run**:
+   `0001_schema.sql` (die Tabellen) · `0002_policies.sql` (wer was sehen darf) ·
+   `0003_konto_loeschen.sql` (deine 39. Entscheidung) · `0004_transaktionen.sql`
+   (die sieben Schreibwege). Alle vier in `simplysocial/supabase/migrations/`.
+   **Die Reihenfolge ist Pflicht**, und `00_supabase_lokal.sql` aus dem
+   `pruefen/`-Ordner gehört ausdrücklich **nicht** dazu — das ist die Attrappe für
+   meine Tests, Supabase bringt das Echte selbst mit.
+   </details>
 
 5. **Settings → API** öffnen. Dort stehen zwei Dinge, die ich brauche:
    - **Project URL** (`https://….supabase.co`)

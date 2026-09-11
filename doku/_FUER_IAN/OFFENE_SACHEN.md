@@ -204,14 +204,29 @@ Kommt noch, du hast es gesagt. Bis dahin steht überall der Platzhalter-Schriftz
    geprüft und freigegeben (Build 1, gültig bis 10.12.2026). Dein Platzhalter-Logo ist
    als App-Icon und als Startbild eingebaut.
 
-   ❓ **Eine Entscheidung fehlt noch: Wie kommen die drei an die App?**
+   ✅ **Entschieden am 12.09.: INTERN.** Die drei werden Benutzer deines
+   App-Store-Connect-Kontos und haben die App sofort — ohne Apples Beta-Prüfung und
+   damit ohne die Altersfrage aus Punkt 0.
 
-   | | Was das heißt | Der Haken |
-   |---|---|---|
-   | **Intern** | Du trägst sie mit ihrer Apple-ID als Benutzer in dein App-Store-Connect-Konto ein. Sie haben die App **sofort**, ohne Wartezeit. | Sie sehen dein Konto — in der Rolle, die du vergibst, aber sie sind drin. |
-   | **Extern** | Du schickst nur eine E-Mail oder einen Link, sie brauchen keinen Zugang zu deinem Konto. | Der **erste** Build muss durch Apples Beta-Prüfung (meist ein Tag). Dabei wird auch die Altersfrage gestellt, die oben als Punkt 0 steht. |
+   **Alles ist vorbereitet, es fehlen nur drei E-Mail-Adressen.** Und zwar genau die
+   **Apple-IDs** von Christoph, Leopold und Daria — die Adresse, mit der sie sich am
+   iPhone anmelden. Eine andere nützt nichts: TestFlight hängt am Apple-Konto, nicht
+   am Postfach. Schick sie mir so:
+   `Christoph:Nachname:seine@mail.at` — dann läuft ein Befehl, und die Einladungen
+   sind raus.
 
-   **Sag mir, welches von beiden** — den Rest richte ich ein.
+   **Was ich für dich entschieden habe und was du zurücknehmen kannst:** Sie bekommen
+   die Rolle **Marketing** (`TESTER_ROLLE` in `scripts/asc.py`). Apple lässt als
+   interne Tester nur fünf Rollen zu, und das ist die kleinste davon. Der
+   naheliegende Griff wäre `Developer` gewesen — die Rolle darf aber **Zertifikate
+   und Signaturen verwalten**, also genau das, woran am 11.09. ein 20-Minuten-Build
+   hing. `Admin` könnte dich selbst aus dem Konto werfen. Marketing sieht App-Daten
+   und sonst nichts; sie sehen auch **nur diese eine App** (`allAppsVisible: false`).
+
+   ⚠️ **Eine Einladung ist unumkehrbar** — Apple verschickt die Mail im Moment des
+   Anlegens und nur dann (die Lehre vom 11.09.). Deshalb macht der Befehl ohne den
+   Zusatz `--wirklich` erst eine **Vorschau**: Er zeigt, wer eingeladen WÜRDE, und
+   verschickt nichts. Nachgemessen: 0 Einladungen nach einem Vorschaulauf.
 3. **„Anmelden mit Apple" wird überhaupt erst möglich.** Der Schlüssel dafür lässt sich
    nur mit einem Developer-Programm anlegen — ohne ihn ist Punkt 4 (Google) laut
    Richtlinie 4.8 gesperrt.

@@ -6166,6 +6166,68 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
+> 🔜 **Das Erste, was zu tun ist (Stand 2026-09-12, SPÄTESTER Eintrag): Ian legt
+> Supabase an — und das Einspielen ist seither ein Befehl statt vier Copy-Paste.**
+> Zwei Entscheidungen von ihm an dem Tag, beide in dieser Sitzung:
+>
+> - **Supabase jetzt** (gegen „ohne ihn mit einem lokalen Server weiterbauen" und
+>   gegen „erst herzeigen"). Damit ist 20.4-b der nächste Bauschritt.
+> - **TestFlight INTERN** für Christoph, Leopold und Daria — sie werden Benutzer
+>   seines Kontos, dafür entfällt Apples Beta-Prüfung und mit ihr die Altersfrage.
+>
+> **`supabase/einspielen.sh` (`npm run einspielen`) ist neu und in BEIDE Richtungen
+> belegt**, bevor es je ein echtes Projekt gesehen hat:
+>
+> 1. **Die teuerste denkbare Verwechslung hat einen Namen: `00_supabase_lokal.sql`.**
+>    Die Attrappe bringt `auth.users` und `auth.uid()` genauso mit wie das Original —
+>    wer die beiden Ziele vertauscht, spielt 33 Policies gegen eine Datenbank ein, in
+>    der `auth.uid()` etwas anderes bedeutet, und **bekommt keine einzige
+>    Fehlermeldung**. Gefragt wird deshalb nach dem, was NUR das echte Supabase hat:
+>    Schema `storage` und Rolle `service_role`. Gemessen: lokale Wegwerf-DB → 0/0,
+>    Abbruch; ein Ziel mit beidem → durchgelaufen und alle sieben Zahlen grün.
+> 2. **Alle vier Migrationen laufen in EINER Transaktion** (`--single-transaction`).
+>    Harte Regel 6 eine Ebene tiefer: Ein Abbruch nach `0002` hinterliesse Tabellen
+>    **ohne** Schreibwege — und weil ein fehlender `grant` in diesem Projekt eine
+>    Zusage ist (Regel 70), sähe die halb eingespielte Datenbank aus wie eine
+>    absichtlich strenge.
+> 3. **Danach wird NACHGEMESSEN, nicht „fertig" gemeldet.** `psql` gibt 0 zurück,
+>    wenn es lief — die Frage ist aber „steht jetzt dasselbe da wie lokal?".
+>    Sieben Zahlen aus der Datenbank, gegen die 121 Prüfungen grün sind:
+>    **13 Tabellen · 33 Policies · RLS auf allen 13 · 6 `regel.`-Funktionen ·
+>    9 `public.`-Funktionen · 8 Enums · 1 Trigger.** Ändert eine Migration sich,
+>    gehören die Zahlen im Skript nachgezogen — eine Erwartung, die niemand misst,
+>    wird zur nächsten Vorhersage 19.4.
+> 4. **Der dritte Wächter ist der langweiligste und der wichtigste:** Läuft das
+>    Skript ein zweites Mal, bricht es ab, weil `public` nicht mehr leer ist.
+>    Eine Produktionsdatenbank neu aufzubauen ist eine Entscheidung von Ian, keine
+>    Nebenwirkung eines Skriptlaufs.
+> 5. **Nebenbefund am Passwortfilter, im Test aufgetaucht:** Postgres spiegelt bei
+>    einem Verbindungsfehler den ganzen String zurück, Passwort inklusive — der
+>    Filter ist also nicht Zierde. Er ersetzt aber stumpf jedes Vorkommen: Mit dem
+>    Testpasswort `x` wurde aus „does not exist" ein „does not e«PASSWORT»ist".
+>    **Der Fehler geht in die harmlose Richtung** — er verstümmelt eine Meldung,
+>    statt ein Geheimnis durchzulassen. Wer ihn „repariert" (Wortgrenzen), tauscht
+>    einen Schönheitsfehler gegen ein Leck.
+>
+> **Für TestFlight ist alles vorbereitet, es fehlen drei E-Mail-Adressen** (die
+> Apple-IDs der drei). `npm run asc tester -- Vor:Nach:mail [--wirklich]`. Zwei Dinge
+> sind daran wichtiger als der Aufruf:
+>
+> - **Die Rolle ist eine Entscheidung und steht als Konstante** (`TESTER_ROLLE`,
+>   `scripts/asc.py`). Apple lässt als interne Tester **nur fünf** Rollen zu
+>   (nachgelesen, nicht geraten): ACCOUNT_HOLDER, ADMIN, APP_MANAGER, DEVELOPER,
+>   MARKETING. **`READ_ONLY` und `CUSTOMER_SUPPORT` gehen NICHT** — ausgerechnet die
+>   beiden, die am harmlosesten klingen. Gewählt ist `MARKETING`, die kleinste
+>   zulässige; `DEVELOPER` wäre der naheliegende Griff und darf **Zertifikate und
+>   Provisioning-Profile verwalten**, also genau das, woran am 2026-09-11 ein
+>   20-Minuten-Build hing. Dazu `allAppsVisible: false`: nur diese eine App.
+> - **Ohne `--wirklich` passiert nichts.** Apple verschickt die Einladung im Moment
+>   des Anlegens und NUR dann (die Lehre vom 2026-09-11), und für interne Tester gibt
+>   es keinen Nachschick-Aufruf. Die Vorschau ist gegengemessen: 0 offene
+>   Einladungen danach.
+>
+> ---
+>
 > 🔜 **Das Erste, was zu tun ist (Stand 2026-09-10 abends, SPÄTESTER Eintrag): Ians
 > Konten sind jetzt der EINZIGE Engpass.** ✅ **20.4-a ist gebaut** — die Übersetzung
 > (`src/data/zeilen.ts`), beide abgesprochenen Schulden bezahlt, Belege `ah01`–`ah03`;

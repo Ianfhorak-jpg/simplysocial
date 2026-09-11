@@ -51,3 +51,19 @@ example
 
 # Rest von 'npx supabase' — Werkzeug-Zwischenspeicher, kein Projektinhalt
 supabase/.temp/
+
+# Python-Zwischenspeicher (entsteht bei jedem `npm run asc` neu)
+__pycache__/
+*.pyc
+
+# ── Netz gegen Geheimnisse im Projektordner ──────────────────────────────────
+# Die Zugangsdaten gehören nach ~/.simplysocial/ und ~/.appstoreconnect/, also
+# AUSSERHALB des Repos — so steht es in `einspielen.sh` und in `asc.py`. Eine
+# Anleitung ist aber kein Netz: Legt sie jemand aus Versehen hier ab, wäre das
+# Datenbankpasswort beim nächsten `git push` öffentlich abrufbar (harte Regel 12).
+# Deshalb sind die Namen hier gesperrt, auch wenn sie hier nie stehen sollen.
+db-url
+*.p8
+.env
+.env.*
+!.env.example
