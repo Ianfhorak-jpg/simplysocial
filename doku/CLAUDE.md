@@ -47,15 +47,26 @@ daran wichtiger als der Kauf:
    niemand, weil Phase 19 den Cloud-Weg gar nicht ging** — gebaut wurde lokal mit
    `xcodebuild`, und dort fällt eine fehlende Mitgliedschaft nur als „7 Tage" auf.
    Alle vier Stellen sind berichtigt.
-2. **Bezahlt ist nicht dasselbe wie am Rechner verwendbar, und nur das Zweite lässt
-   sich messen.** `security find-identity -v -p codesigning` meldet am 2026-09-11 genau
-   **eine** Identität, Team `5TQTMP2L2H` — das Personal Team. Ein Programmbeitritt legt
-   eine ZWEITE Team-ID an, und die kommt erst, wenn Xcode die Apple-ID neu lädt.
-   Dieselbe Unterscheidung wie „Tunnel braucht Vertrauen, Disk-Image braucht ein
-   offenes Display" in der Fallen-Liste.
-3. **Die App auf Ians Handy läuft ab, und das ist der dringende Teil.** Gemessen am
-   eingebetteten Profil, nicht geschätzt: `ExpirationDate` **2026-09-14 22:00 UTC**,
-   `TimeToLive: 7`, erzeugt am 2026-09-07 22:00. Mit dem Programm wird daraus ein Jahr, dafür muss sie einmal neu drauf.
+2. **Bezahlt ist nicht dasselbe wie am Rechner verwendbar — und was veraltet war, war
+   Xcodes Zwischenspeicher, nicht Apples Antwort.** Um 21:46 meldete
+   `com.apple.dt.Xcode.plist` `teamType: "Personal Team"` und
+   `isFreeProvisioningTeam: true`; nachdem Ian in Xcode einmal auf sein Konto geklickt
+   hatte, stand um 21:55 **`teamType: "Individual"`, `isFreeProvisioningTeam: false`**.
+   Die Mitgliedschaft war die ganze Zeit aktiv.
+   **Und der teuerste Teil ist, was sich NICHT geändert hat: die Team-ID.** Sie ist
+   weiter `5TQTMP2L2H` — Apple hat das bestehende Personal Team **aufgewertet**, statt
+   ein zweites anzulegen. Ich hatte das Gegenteil angenommen und Ian nach „der neuen
+   Team-ID" gefragt; es gibt keine. `DEVELOPMENT_TEAM` im `project.pbxproj` stimmte
+   also schon, und der Gerätebuild lief ohne eine einzige Änderung am Projekt.
+   **Ein Feld, das dieselbe Zeichenkette behält, kann trotzdem etwas anderes bedeuten**
+   — wer auf die ID schaut, sieht den Unterschied nie; er steht in `teamType`.
+3. ✅ **Erledigt am selben Abend: die App auf Ians iPhone gilt jetzt bis 2027-09-11.**
+   Vorher `TimeToLive: 7` / `ExpirationDate 2026-09-14 22:00`, nachher **365** /
+   `2027-09-11 21:29`. Aufgespielt und gestartet (`at.simplysocial.app`, PID 21296
+   gegen `devicectl device info processes` geprüft). **Am Projekt war dafür keine Zeile
+   zu ändern** — die Team-ID blieb dieselbe. Der teure Teil steht in der Fallen-Liste:
+   Der ERSTE Build lief 20 Minuten durch, meldete `BUILD SUCCEEDED` und hatte trotzdem
+   das alte 7-Tage-Profil eingebettet. Mit dem Programm wird daraus ein Jahr, dafür muss sie einmal neu drauf.
    Danach geht **TestFlight**, und damit Punkt 8 der Reihenfolge („wieder herzeigen"),
    der seit dem 2026-09-02 offen liegt.
 
@@ -2893,6 +2904,27 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   Genau darauf steht `40_uebersetzung.sh`: echte Zeilen aus Postgres durch die echte
   Regel-Datei. **Wer eine Regel-Datei so hält, kann sie später gegen echte Daten
   prüfen; wer einen Baustein hineinimportiert, kann es nicht mehr.**
+- **`-allowProvisioningUpdates` holt nur ein neues Profil, wenn GAR KEINES passt — ein
+  fast abgelaufenes ist ihm lieber als keines.** (2026-09-11, und es hat einen
+  20-Minuten-Build wertlos gemacht.) Ian war dem Developer-Programm beigetreten, Xcode
+  zeigte „Individual“, das Zertifikat gilt bis 2027 — und `xcodebuild` bettete trotzdem
+  das zwischengespeicherte Profil vom 2026-09-07 ein: `TimeToLive: 7`,
+  `ExpirationDate 2026-09-14`. **Der Build meldete `BUILD SUCCEEDED`, und die App wäre
+  am 14.09. genauso gestorben wie vorher.**
+  **Die Lehre ist schärfer als „grep nach dem Erfolg“:** `BUILD SUCCEEDED` beantwortet
+  *„hat er gebaut?“* — gebaut wurde aber wegen *„gilt sie ein Jahr?“*, und die beiden
+  Antworten waren verschieden. **Nach jedem Gerätebuild wird das eingebettete Profil
+  gemessen** (`security cms -D -i …/embedded.mobileprovision`, dann `TimeToLive`), nicht
+  das Protokoll gelesen. Der Ausweg ist, das alte Profil aus
+  `~/Library/Developer/Xcode/UserData/Provisioning Profiles/` **wegzuräumen, bevor**
+  gebaut wird; danach stand dort `TimeToLive: 365`. Beides steckt seither in
+  `scripts/geraet-bauen.sh` — die Nachprüfung bricht mit einem Fehler ab, statt „fertig“
+  zu melden.
+- **Ein Zertifikat und ein Profil laufen verschieden ab, und nur eines davon war je das
+  Problem.** (2026-09-11) Das Zertifikat gilt immer ~1 Jahr (hier bis 2027-05-22) und
+  bleibt beim Programmbeitritt dasselbe; die 7-Tage-Grenze einer Gratis-Apple-ID steckt
+  **ausschließlich im Profil**. Wer bei „läuft in 3 Tagen ab“ das Zertifikat prüft,
+  misst die falsche Hälfte.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

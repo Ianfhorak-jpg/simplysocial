@@ -184,12 +184,22 @@ Kommt noch, du hast es gesagt. Bis dahin steht überall der Platzhalter-Schriftz
 
 **Du hast es gekauft.** Damit ändert sich dreierlei — und das Erste davon ist dringend:
 
-1. **Die App auf deinem Handy läuft sonst ab — am 14.09. um 22:00 Uhr.** Das ist
-   nachgemessen, nicht geschätzt: Es steht so im Profil, mit dem sie signiert ist
-   (`TimeToLive: 7`, erzeugt am 07.09. um 22:00). Mit dem Programm wird daraus
-   **ein Jahr** — dafür muss sie einmal neu drauf, und das dauert etwa fünf Minuten.
+1. ✅ **Erledigt am 11.09. um 22:31: Die App auf deinem Handy gilt jetzt bis zum
+   11.09.2027.** Vorher wäre sie am 14.09. um 22:00 gestorben (`TimeToLive: 7`), jetzt
+   steht dort **365**. Neu aufgespielt, gestartet, läuft.
    **Das Aufspielen ist seit dem 11.09. ein Befehl** (`npm run geraet`), nicht mehr
    ein Abend mit sechs Fallstricken.
+
+   <details><summary>Was dabei fast schiefgegangen wäre</summary>
+
+   Der erste Build lief 20 Minuten, meldete „erfolgreich“ — und hatte trotzdem das
+   ALTE Sieben-Tage-Profil eingebacken. Xcode holt sich nämlich nur dann ein neues,
+   wenn gar keines mehr da ist; ein fast abgelaufenes ist ihm lieber als keines.
+   Hätte ich nur auf „erfolgreich“ geschaut, wäre die App am 14.09. genauso gestorben
+   wie vorher — nach einer Erfolgsmeldung von mir. Gemerkt habe ich es, weil ich
+   danach nachgesehen habe, wie lange sie wirklich gilt. Das prüft das Skript jetzt
+   von selbst und bricht ab, statt „fertig“ zu sagen.
+   </details>
 2. **TestFlight geht.** Christoph, Leopold und Daria können die App auf ihre **eigenen**
    Handys holen, ohne Kabel und ohne dass ihre Geräte einzeln registriert werden. Das ist
    Punkt 8 der Reihenfolge („wieder herzeigen"), der seit dem 02.09. offen liegt.
@@ -204,9 +214,9 @@ Kommt noch, du hast es gesagt. Bis dahin steht überall der Platzhalter-Schriftz
 > Konto, und im App Store steht dessen Name als Anbieter. Das ist später teuer zu ändern
 > und jetzt gratis.
 
-> 📎 **Am Mac ist davon noch nichts angekommen** (gemessen am 11.09.): Es liegt genau ein
-> Signatur-Zertifikat da, und das gehört dem alten Gratis-Team. Xcode muss deine Apple-ID
-> einmal neu laden, dann kommt das neue Team dazu. Zwei Klicks, stehen in der Anleitung.
+> ✅ **Erledigt am 11.09., 21:55:** Du hast Xcode geöffnet und dein Konto angeklickt —
+> seither steht dort „Individual“ statt „Personal Team“. **Eine neue Team-ID gibt es
+> nicht**, Apple hat das bestehende Team aufgewertet; am Projekt war nichts zu ändern.
 
 ---
 

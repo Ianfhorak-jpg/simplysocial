@@ -9,11 +9,13 @@
 **Eines von drei Konten ist damit da.** Was daraus folgt, steht ausführlich in
 [KONTEN_EINRICHTEN.md](KONTEN_EINRICHTEN.md) — hier das Wichtigste in vier Zeilen:
 
-- ⏰ **Die App auf deinem Handy läuft am 14.09. um 22:00 ab.** Nachgemessen im Profil,
-  nicht geschätzt. Mit dem Programm wird daraus **ein Jahr**.
-- 🔴 **Was JETZT von dir kommt: zwei Klicks in Xcode** (Settings → Accounts → deine
-  Apple-ID), damit der Mac die neue Mitgliedschaft überhaupt sieht. Dann die neue
-  **Team-ID** an mich — den Rest macht ein Befehl.
+- ✅ **Die App auf deinem Handy gilt jetzt bis zum 11.09.2027** — ein Jahr statt drei
+  Tagen. Sie ist am 11.09. um 22:31 neu aufgespielt und gestartet worden; du musstest
+  dafür nichts tun außer Xcode aufzumachen. **Du kannst sie ab jetzt herzeigen, ohne
+  dass sie dir zwischendurch stirbt.**
+- ✅ **Die zwei Klicks in Xcode hast du gemacht** (11.09., 21:55) — mehr war nicht
+  nötig. Es gibt **keine neue Team-ID**: Apple hat dein bisheriges Team aufgewertet,
+  die Nummer blieb dieselbe. Am Projekt musste nichts geändert werden.
 - 📲 **Danach geht TestFlight**: Christoph, Leopold und Daria bekommen die App auf ihre
   **eigenen** Handys, ohne Kabel.
 - ⬜ **Weiter offen: Supabase und Google.** Supabase allein (10 Minuten) reicht für den

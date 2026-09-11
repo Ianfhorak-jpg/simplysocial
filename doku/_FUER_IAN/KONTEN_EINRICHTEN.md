@@ -29,24 +29,16 @@ Anbieter. Gut zu wissen, weil es später nicht mehr gratis zu ändern ist.
 
 ## 1. Apple — drei Handgriffe, die erst jetzt möglich sind · **20 Minuten**
 
-### 1a. 🔴 **JETZT DRAN:** Xcode die neue Mitgliedschaft zeigen · 2 Minuten
-Am Mac ist vom neuen Programm noch **nichts** angekommen — ich habe am 11.09. nachgesehen,
-dort liegt nur das alte Gratis-Zertifikat. Deshalb:
+### 1a. ~~Xcode die neue Mitgliedschaft zeigen~~ ✅ *erledigt am 11.09., 21:55*
 
-1. **Xcode** öffnen → Menü **Xcode → Settings… → Accounts**
-2. Deine Apple-ID anklicken. Steht rechts nur *„Personal Team"*, unten auf **„Download
-   Manual Profiles"** bzw. das Konto einmal entfernen und neu hinzufügen.
-3. Richtig ist es, wenn dort **zwei** Einträge stehen: „Personal Team" **und** ein Team mit
-   deinem (oder dem elterlichen) Namen ohne den Zusatz „Personal".
+Du hast Xcode geöffnet und dein Konto angeklickt — **das war schon alles.** Unter *Teams*
+steht jetzt „ian Faye Horak · **Admin**" statt „Personal Team".
 
-**Danach sag mir die neue Team-ID** (zehn Zeichen, steht in Xcode neben dem Team und
-auf developer.apple.com unter *Membership details*) — **den Rest mache ich mit einem
-Befehl.** Das Bauen und Aufspielen ist seit dem 11.09. ein Skript (`npm run geraet`);
-es prüft von selbst, ob dein Handy das richtige ist und ob es aufgesperrt ist.
-
-> ⏰ **Warum das eilt:** Die App auf deinem Handy ist mit dem alten Gratis-Team signiert
-> und läuft **am 14.09. um 22:00** ab. Das steht so im Profil — ich habe nachgemessen,
-> nicht geschätzt. Danach startet sie nicht mehr, bis sie neu drauf ist.
+**Und es gibt keine neue Team-ID.** Ich hatte dich danach gefragt, das war falsch: Apple
+hat dein bisheriges Team **aufgewertet**, die Nummer ist dieselbe geblieben
+(`5TQTMP2L2H`). Was sich geändert hat, steht nicht in der Nummer, sondern daneben —
+vorher „Personal Team, gratis", jetzt „Individual". Am Projekt musste deshalb **nichts**
+geändert werden.
 
 ### 1b. Die App-ID registrieren und „Anmelden mit Apple" freischalten · 10 Minuten
 1. [developer.apple.com/account](https://developer.apple.com/account) → **Identifiers** → **+**

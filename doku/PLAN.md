@@ -6215,10 +6215,14 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 >   Alle vier sind berichtigt. **Eine Voraussetzung, die nie jemand misst, steht
 >   irgendwann falsch da** — dieselbe Familie wie der ungenutzte Parameter `_ctx`
 >   aus 19h-1.
-> - **Am Mac ist davon noch nichts angekommen, und das ist messbar.**
->   `security find-identity -v -p codesigning` meldet genau eine Identität, Team
->   `5TQTMP2L2H` (Personal Team). Erst wenn Xcode die Apple-ID neu lädt, kommt das
->   zweite Team. **Bezahlt und am Rechner verwendbar sind zwei Zustände.**
+> - **Die Team-ID bleibt `5TQTMP2L2H` — Apple wertet das Personal Team AUF, statt ein
+>   zweites anzulegen.** Gemessen an derselben Datei im Abstand von neun Minuten:
+>   21:46 `teamType: "Personal Team"` / `isFreeProvisioningTeam: true`, nach einem Klick
+>   auf das Konto in Xcode 21:55 `teamType: "Individual"` / `false`. **Veraltet war
+>   Xcodes Zwischenspeicher, nicht Apples Antwort.** Die Annahme „es kommt eine NEUE
+>   Team-ID" war falsch und stand kurzzeitig in allen vier Dateien; `DEVELOPMENT_TEAM`
+>   im `project.pbxproj` musste nicht angefasst werden. **Wer nur auf die ID schaut,
+>   sieht den Unterschied nie — er steht in `teamType`.**
 > - **Die Fassung auf Ians iPhone läuft am 2026-09-14 um 22:00 UTC ab.** Gemessen im
 >   eingebetteten Profil (`TimeToLive: 7`, erzeugt 2026-09-07 22:00), nicht geschätzt.
 >   **Der Gerätebuild ist seit dem 2026-09-11 ein Skript** (`npm run geraet`).

@@ -56,6 +56,13 @@ fi
 
 # Ein Personal Team signiert nur 7 Tage. Das ist kein Fehler, aber es soll dastehen,
 # BEVOR gebaut wird — sonst merkt man es erst, wenn die App eine Woche später stirbt.
+# Gefragt wird der TYP, nicht die ID — und das ist der eigentliche Grund:
+# Tritt jemand mit derselben Apple-ID dem Developer-Programm bei, wertet Apple das
+# bestehende Personal Team AUF; die Team-ID bleibt Zeichen für Zeichen dieselbe
+# (gemessen am 2026-09-11: 5TQTMP2L2H vorher wie nachher, "Personal Team" → "Individual").
+# Ein Skript, das an der ID erkennen will, ob 7 Tage oder 12 Monate gelten, erkennt
+# also GAR NICHTS.
+#
 # Gefragt wird `teamType`, nicht `isFreeProvisioningTeam` — und das ist kein Geschmack:
 # Letzteres steht in der plist VOR der teamID (ein `grep -A` findet es also nie) und
 # `plutil -p` schreibt `=> true`, nicht `=> 1`. Beide Fehler ergaben still eine 0, und
@@ -71,6 +78,32 @@ if [ "$FREI" != "0" ]; then
   echo
   read -r -p "   Trotzdem mit 7 Tagen bauen? [j/N] " ANTWORT
   [ "$ANTWORT" = "j" ] || exit 1
+fi
+
+# ── Schritt 0b: Ein veraltetes 7-Tage-Profil wegräumen ───────────────────────
+#
+# Am 2026-09-11 hat genau das einen kompletten Build wertlos gemacht: Der Beitritt
+# zum Developer-Programm war durch, Xcode zeigte "Individual" — und `xcodebuild`
+# hat trotzdem das ZWISCHENGESPEICHERTE Profil vom 2026-09-07 eingebettet, mit
+# `TimeToLive: 7`. Der Build meldete BUILD SUCCEEDED, und die App wäre am 14.09.
+# genauso gestorben wie vorher. `-allowProvisioningUpdates` holt nämlich nur ein
+# neues Profil, wenn KEINES passt — ein abgelaufenes ist ihm lieber als keines.
+#
+# Deshalb: Passt das Team (zahlend) nicht zum Profil (7 Tage), fliegt das Profil
+# raus, BEVOR gebaut wird. Weggeräumt heisst verschoben, nicht gelöscht.
+PROFILE="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
+if [ "$FREI" = "0" ] && [ -d "$PROFILE" ]; then
+  for PRO in "$PROFILE"/*.mobileprovision; do
+    [ -e "$PRO" ] || continue
+    security cms -D -i "$PRO" > /tmp/ss-pruef.plist 2>/dev/null || continue
+    TTL="$(plutil -extract TimeToLive raw /tmp/ss-pruef.plist 2>/dev/null || true)"
+    if [ "$TTL" = "7" ]; then
+      mkdir -p /tmp/ss-profile-alt
+      mv "$PRO" /tmp/ss-profile-alt/
+      echo "→ 7-Tage-Profil weggeräumt ($(basename "$PRO")) — Xcode holt ein neues."
+      echo "  (liegt in /tmp/ss-profile-alt, falls es doch gebraucht wird)"
+    fi
+  done
 fi
 
 # ── Schritt 1: Bauen ─────────────────────────────────────────────────────────
@@ -96,8 +129,19 @@ APP="$DERIVED/Build/Products/Release-iphoneos/SimplySocial.app"
 echo "✓ Gebaut: $APP"
 
 # Wie lange die App gilt, steht im eingebetteten Profil — gemessen, nicht geschätzt.
+# Und das ist eine PRÜFUNG, keine Auskunft: "BUILD SUCCEEDED" beantwortet
+# "hat er gebaut?", nicht "gilt sie ein Jahr?" — und gebaut wird wegen der zweiten
+# Frage. Am 2026-09-11 waren beide Antworten verschieden.
 if security cms -D -i "$APP/embedded.mobileprovision" > /tmp/ss-profil.plist 2>/dev/null; then
-  echo "  Gültig bis: $(plutil -extract ExpirationDate raw /tmp/ss-profil.plist 2>/dev/null)"
+  TTL="$(plutil -extract TimeToLive raw /tmp/ss-profil.plist 2>/dev/null || true)"
+  BIS="$(plutil -extract ExpirationDate raw /tmp/ss-profil.plist 2>/dev/null || true)"
+  echo "  Gültig bis: $BIS  (TimeToLive: ${TTL:-?} Tage)"
+  if [ "$FREI" = "0" ] && [ "$TTL" = "7" ]; then
+    echo "✗ Das Team zahlt, die App gilt trotzdem nur 7 TAGE."
+    echo "  Xcode hat ein altes Profil eingebettet. Dieses hier wegräumen und neu bauen:"
+    echo "  mv ~/Library/Developer/Xcode/UserData/Provisioning\\ Profiles/*.mobileprovision /tmp/"
+    exit 1
+  fi
 fi
 
 # ── Schritt 2: Das richtige Gerät ────────────────────────────────────────────
