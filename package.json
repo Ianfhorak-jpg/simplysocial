@@ -43,7 +43,8 @@
     "db-url": "bash scripts/db-url.sh",
     "einspielen": "bash supabase/einspielen.sh",
     "geraet": "bash scripts/geraet-bauen.sh",
-    "asc": "python3 scripts/asc.py"
+    "asc": "python3 scripts/asc.py",
+    "anon-key": "bash scripts/anon-key.sh"
   },
   "private": true
 }

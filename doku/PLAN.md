@@ -6166,6 +6166,33 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
 
+> 🔑 **Und der Zugang für die APP liegt seit demselben Tag in `.env`** —
+> `npm run anon-key`, wieder über die Zwischenablage. **Damit ist die Konten-Seite von
+> 20.3-b/20.4-b für Supabase vollständig; offen bleiben nur Apple-Sign-in und Google.**
+> Drei Dinge sind wichtiger als die Datei:
+> 
+> 1. **Der anon key ist das GEGENTEIL eines Geheimnisses, und das muss man aussprechen.**
+>    Er landet zwangsläufig im gebauten Bundle — jeder, der die App hat, kann ihn lesen.
+>    Das ist kein Versäumnis, sondern das Modell: **Was er darf, entscheiden die 33
+>    Policies, nicht seine Geheimhaltung.** Deshalb liegt er in `.env` (git-ignoriert,
+>    mit `.env.example` als sichtbarer Vorlage) und nicht in `~/.simplysocial/` wie der
+>    Verbindungs-String — und trotzdem nicht im Code, weil ein Wert im Quelltext beim
+>    nächsten Projekt mitwandert und niemand merkt, dass er zu tauschen wäre.
+> 2. **Der Wächter, auf den es ankommt, liest die Rolle AUS DEM TOKEN.** Auf derselben
+>    Supabase-Seite steht der `service_role` key: gleiche Länge, gleicher Anfang `eyJ`,
+>    gleiche Stelle in der Oberfläche — und er hebt **jede** Policy auf. Ein JWT trägt
+>    seine Rolle als `role` in der Nutzlast, also wird nachgesehen statt dem Namen des
+>    Feldes vertraut. Beide Richtungen belegt: echter Schlüssel → `anon`, durchgelassen;
+>    ein **nachgebautes** `service_role`-Token → abgewiesen; `sb_secret_…` → abgewiesen.
+> 3. **Die Project URL wird aus dem Token ABGELEITET, nicht abgetippt.** Der
+>    Projekt-Verweis steht als `ref` schon drin. Zwei Quellen für dieselbe Angabe sind
+>    zwei Gelegenheiten, dass sie auseinanderlaufen — dieselbe Überlegung wie
+>    `PROJEKTION` in `karte-geo.ts` (harte Regel 53).
+>    **Gegengemessen von aussen, über HTTP, so wie die App es tun wird:**
+>    `GET /rest/v1/posts?limit=1` mit dem anon key → **HTTP 200**, leere Liste. Damit ist
+>    nicht nur der Schlüssel geprüft, sondern die ganze Kette bis PostgREST.
+>
+>
 > ✅ **Das Supabase-Projekt STEHT (2026-09-12) — Schema, Regeln und Funktionen sind
 > eingespielt und am echten Server belegt.** Ians Konto, Region `eu-west-1` (Irland, nicht
 > das empfohlene Frankfurt — immer noch EU, nur weiter weg). `npm run db-url` +
