@@ -1,5 +1,61 @@
 # Was du nach dem Clear schreiben sollst
 
+## ✅ STAND 11.09.2026, NACHTS — APPLE DEVELOPER, JAHRESBUILD UND TESTFLIGHT
+
+> **Du hast das Apple Developer Program gekauft, und an dem Abend sind drei Dinge
+> daraus geworden:**
+>
+> 1. 🍏 **Die App auf deinem iPhone gilt jetzt bis 11.09.2027** statt bis zum 14.09.
+>    Neu gebaut, aufgespielt, läuft.
+> 2. 🚀 **TestFlight steht — und du hast die App darüber installiert.** Build 1 liegt
+>    bei Apple, geprüft und freigegeben, gültig bis 10.12.2026.
+> 3. 🎨 **Dein Platzhalter-Logo ist drin** — als App-Icon und auf dem Startbildschirm.
+>    Vorher steckte dort das **Expo-Logo**, an beiden Stellen.
+>
+> 🔴 **Und jetzt bist DU dran, sonst geht es nicht weiter — unverändert seit dem 09.09.:**
+> Es fehlen **Supabase** und **Google**. Alles dazu steht als Klickfolge in
+> `KONTEN_EINRICHTEN.md`. **Supabase allein (10 Minuten) reicht für den größten
+> Schritt**: Danach liest die App echte Daten statt der erfundenen.
+
+### Was an dem Abend neu dazugekommen ist
+
+| Befehl | Was er macht |
+|---|---|
+| `npm run geraet` | baut die App und spielt sie auf dein iPhone — vorher ein Abend mit sechs Fallstricken |
+| `npm run asc` | fragt App Store Connect ab: Buildstatus, TestFlight-Gruppen, Tester |
+
+### Was dabei schiefgegangen ist (damit es nicht wieder passiert)
+
+- **Der erste Jahresbuild war gelungen und trotzdem wertlos.** Xcode hat das alte
+  7-Tage-Profil eingebacken und „erfolgreich" gemeldet. Hätte ich nur auf die
+  Erfolgsmeldung geschaut, wäre die App am 14.09. trotzdem gestorben. Das Skript
+  prüft jetzt selbst nach, wie lange die App wirklich gilt.
+- **Der Startbildschirm war unsichtbar** — ein weißes Logo auf weißem Grund. So einen
+  Fehler findet kein Werkzeug, nur Hinschauen.
+- **TestFlight zeigte nur „Code einlösen".** Der Grund: **Apple verschickt die
+  Einladung genau im Moment, in dem jemand zur Gruppe hinzugefügt wird — und nur
+  dann.** Ein Build, der später dazukommt, holt das nicht nach. Rausnehmen und neu
+  hinzufügen war der richtige Griff. *(Meine erste Erklärung dazu war falsch und ist
+  zurückgenommen.)*
+
+### Deine Entscheidungen an dem Abend
+
+- Das Developer-Programm läuft **auf dich selbst** (nicht auf einen Erwachsenen).
+  ⚠️ Vor dem App Store gehört das noch einmal besprochen — steht in `OFFENE_SACHEN.md`.
+- **Erst mal nur du** als Tester. Christoph, Leopold und Daria kommen dazu, wenn du
+  die Fassung selbst gesehen hast — dann sag Bescheid, das ist eingerichtet.
+- Dein **Platzhalter-Logo** darf verwendet werden; Farbe und Form sind nicht endgültig.
+
+### Was auf dein Urteil wartet (blockiert nichts)
+
+- **Der Startbildschirm:** Ich habe das „S" türkis auf dein Papierweiß gesetzt. Du
+  könntest es auch vollflächig türkis wollen — das ist eine Zeile.
+- **Die Zeile `SPERR_ANTWORT`** in `scripts/geraet-bauen.sh`: Was soll passieren, wenn
+  dein Handy beim Aufspielen gesperrt ist — abbrechen, warten oder einmal bitten?
+
+---
+
+
 ## ✅ STAND 09.09.2026, ABENDS — PHASE 19h-2 IST FERTIG, UND PHASE 19 IST DURCH
 
 > **Der Standort ist gebaut.** In den Einstellungen steht jetzt unter „Dein Bezirk" ein

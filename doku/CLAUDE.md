@@ -111,10 +111,27 @@ Damit ist Punkt 8 der Reihenfolge („wieder herzeigen") erreichbar, offen seit 
    Zwischenablage statt über den Chat** und wird aus jeder Ausgabe herausgefiltert,
    falls Apple sie in einer Fehlermeldung zurückspiegelt.
 
-❓ **Was auf Ian wartet:** wie die drei Mitgründer die App bekommen — **intern**
-(sofort, kein Review, aber jeder braucht eine Apple-ID als Benutzer im Konto) oder
-**extern** (nur eine E-Mail, dafür einmalig Apples Beta-Prüfung, in der auch die
-Altersfrage aus `OFFENE_SACHEN.md` Punkt 0 gestellt wird).
+5. **Ians Entscheidung: erst mal nur er als Tester.** Interne Gruppe `Gründer`,
+   `hasAccessToAllBuilds = true` (künftige Uploads landen von selbst darin).
+   **Am 2026-09-11 um 23:2x hat er die App über TestFlight installiert — es läuft.**
+   Christoph, Leopold und Daria kommen dazu, wenn er die Fassung selbst gesehen hat;
+   die Wahl intern/extern steht dann wieder an (extern hieße Apples Beta-Prüfung mit
+   der Altersfrage aus `OFFENE_SACHEN.md` Punkt 0).
+6. **Der letzte Fehler des Abends kostete drei Anläufe: TestFlight zeigte nur „Code
+   einlösen“.** Serverseitig war alles grün — Build `VALID`, der Gruppe zugewiesen,
+   Exportcompliance beantwortet, Benutzer `ACCOUNT_HOLDER` mit Zugriff auf alle Apps.
+   Der einzige abweichende Wert war `state: NOT_INVITED` am Tester.
+   **Apple verschickt die Einladung im Moment des HINZUFÜGENS und nur dann** — ein
+   Build, der später dazukommt, holt sie nicht nach, und für INTERNE Tester gibt es
+   in der API keinen Einladungs-Aufruf. Herausnehmen und neu hinzufügen erzeugte sie
+   sofort (gemessen: `INVITED`, und die Mail von `testflight_no_reply@email.apple.com`
+   lag im Postfach).
+   ❌ **Eine Zwischendiagnose war falsch und ist zurückgenommen:** `inviteType: EMAIL`
+   sah nach „als Fremder per E-Mail angelegt“ aus. Apple kennt aber nur `EMAIL` und
+   `PUBLIC_LINK` — für jeden Tester ohne öffentlichen Link steht dort `EMAIL`, auch bei
+   internen. **Ein Feld mit zwei möglichen Werten trägt keine Diagnose**, und ich habe
+   Ian deswegen unnötig einen Eintrag löschen lassen. Die zweite Spur (Medien-&-Käufe-ID
+   statt iCloud-ID) war richtig gedacht, traf hier aber auch nicht zu.
 
 🔧 **Und der Gerätebuild ist seit dem 2026-09-11 ein Skript** —
 `scripts/geraet-bauen.sh`, Aufruf `npm run geraet`. Er stand bis dahin nur als Prosa in
