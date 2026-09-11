@@ -143,9 +143,36 @@ grün** — vorher waren es 25. Auch dafür brauchte es kein Konto.
 Der ist jetzt allerdings der einzige, der noch übrig ist: **Ohne die drei Konten geht
 es wirklich nicht weiter.**
 
-### 3. Supabase-Konto anlegen · **10 Minuten** 🟡
-Gratis, mit deiner E-Mail. Schema und Regeln sind **schon fertig und geprüft** — es ist
-kein Anfang mehr, sondern ein Einspielen.
+### 3. ~~Supabase-Konto anlegen~~ ✅ *erledigt am 12.09.2026*
+
+**Steht.** Projekt in der EU (Irland), Schema, Regeln und Funktionen eingespielt, und
+am echten Server nachgemessen: **13 Tabellen · 33 Regeln · RLS auf allen 13 · 15
+Funktionen · 8 Enums · 1 Trigger.** Der Zugang für die App liegt in `.env`, die
+Verbindung ist geprüft (HTTP 200 von deinem Server).
+
+**Vier Angriffe direkt gegen dein Projekt, alle gehalten:** Ein nicht angemeldeter
+Besucher sieht **keine** Posts. Ein angemeldeter Fremder sieht **keine** Blockierungen.
+Ein Schreibversuch ohne Anmeldung wird abgewiesen. Und Supabases Anmelde-Funktion
+verhält sich genau so wie die Nachbildung, gegen die die 121 Prüfungen laufen — **erst
+das macht die 121 Prüfungen für deinen echten Server gültig.**
+
+<details><summary>Was dabei beinahe schiefgegangen wäre</summary>
+
+Mein Prüfskript meldete beim ersten Lauf ein Kreuz: „6 Trigger statt 1". Der Fehler war
+**meine Messung** — sie zählte Supabases eigene Trigger mit, die es auf meinem
+Testrechner gar nicht gibt. Deine Datenbank war die ganze Zeit richtig.
+
+Das Wichtige daran: Das Skript hat **nicht** „fertig" gemeldet, sondern einen
+Unterschied. Genau dafür ist es gebaut — nach dem Abend vom 11.09., an dem ein Build
+„erfolgreich" sagte und trotzdem das falsche Profil eingebacken hatte.
+</details>
+
+> 🔒 **Eine Sache, die du wissen solltest:** Der Schlüssel, der in der App steht
+> (`anon`), ist **kein Geheimnis** — er landet zwangsläufig in der fertigen App, und
+> jeder kann ihn auslesen. Das ist so gedacht: Was er darf, bestimmen die 33 Regeln auf
+> dem Server, nicht seine Geheimhaltung. Der **`service_role`**-Schlüssel daneben ist
+> das Gegenteil und hebt alle Regeln auf — mein Skript weist ihn ab, falls er je
+> versehentlich kopiert wird (nachgemessen mit einem nachgebauten).
 
 > **Neu seit 09.09.2026:** Auch die App-Seite ist fertig. Der Anmelde-Bildschirm steht,
 > und in der App ist überall die Frage „wer bin ich?" eingebaut statt der festen
