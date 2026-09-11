@@ -35,6 +35,61 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+🍏 **Ian hat das Apple Developer Program (2026-09-11).** Eines der drei Konten aus dem
+20.3-b-Engpass ist damit da; offen bleiben **Supabase und Google**. Drei Dinge sind
+daran wichtiger als der Kauf:
+
+1. **Der Plan behauptete es seit dem 2026-08-31 — an vier Stellen, und es stimmte
+   nicht.** Zeile 71 („gekauft am 2026-08-31"), die Kostentabelle 21.6, die
+   MapKit-JS-Zeile und die 19.4-Voraussetzungen standen alle auf „erfüllt", während
+   19.4 daneben richtig schrieb *„Ian hat heute nur eine gewöhnliche Apple-ID"*. Die
+   Angabe stammt aus dem ersten Brief und ist nie nachgeprüft worden. **Gemerkt hat es
+   niemand, weil Phase 19 den Cloud-Weg gar nicht ging** — gebaut wurde lokal mit
+   `xcodebuild`, und dort fällt eine fehlende Mitgliedschaft nur als „7 Tage" auf.
+   Alle vier Stellen sind berichtigt.
+2. **Bezahlt ist nicht dasselbe wie am Rechner verwendbar, und nur das Zweite lässt
+   sich messen.** `security find-identity -v -p codesigning` meldet am 2026-09-11 genau
+   **eine** Identität, Team `5TQTMP2L2H` — das Personal Team. Ein Programmbeitritt legt
+   eine ZWEITE Team-ID an, und die kommt erst, wenn Xcode die Apple-ID neu lädt.
+   Dieselbe Unterscheidung wie „Tunnel braucht Vertrauen, Disk-Image braucht ein
+   offenes Display" in der Fallen-Liste.
+3. **Die App auf Ians Handy läuft ab, und das ist der dringende Teil.** Gemessen am
+   eingebetteten Profil, nicht geschätzt: `ExpirationDate` **2026-09-14 22:00 UTC**,
+   `TimeToLive: 7`, erzeugt am 2026-09-07 22:00. Mit dem Programm wird daraus ein Jahr, dafür muss sie einmal neu drauf.
+   Danach geht **TestFlight**, und damit Punkt 8 der Reihenfolge („wieder herzeigen"),
+   der seit dem 2026-09-02 offen liegt.
+
+❓ **Eine Frage wartet auf Ian, und sie ist später teuer:** Läuft das Programm auf
+seinen Namen oder auf den eines Erwachsenen? Apple verlangt für ein eigenes Konto
+normalerweise 18 Jahre; mit 16 läuft es üblicherweise über einen Elternteil. Daran
+hängen Anbietername im Store, Verträge — und der Sign-in-Schlüssel, dessen Wechsel
+später jeden Nutzer zum Neuanmelden zwingt.
+
+🔧 **Und der Gerätebuild ist seit dem 2026-09-11 ein Skript** —
+`scripts/geraet-bauen.sh`, Aufruf `npm run geraet`. Er stand bis dahin nur als Prosa in
+der Fallen-Liste; darin stecken sechs Fallen, die alle schon einmal einen Abend
+gekostet haben. Drei Dinge sind daran wichtiger als die Bequemlichkeit:
+
+- **Es prüft die ANWESENHEIT von `BUILD SUCCEEDED`**, nicht die Abwesenheit von
+  `error:` — der codesign-Fehler vom 2026-09-08 hatte gar keine `error:`-Zeile.
+- **Die Team-Prüfung war beim ersten Versuch falsch herum grün.** Sie fragte
+  `isFreeProvisioningTeam`; das steht in der Xcode-plist **vor** der `teamID` (ein
+  `grep -A` findet es nie) und `plutil -p` schreibt `=> true`, nicht `=> 1`. Beide
+  Fehler ergaben still eine **0** — also „kein Gratis-Team“ an einem Gratis-Team.
+  Jetzt wird `teamType` gefragt, und **beide Richtungen sind belegt**: echtes Team → 2,
+  erfundenes Team → 0. Dieselbe Familie wie die Backticks in `30_wettlauf.sh`.
+- ❓ **Eine Zeile wartet auf Ian** (`SPERR_ANTWORT`, blockiert nichts): Was soll
+  passieren, wenn das iPhone beim Aufspielen gesperrt ist — abbrechen, warten oder
+  einmal bitten? Am 2026-09-07 haben 30 Wiederholungen das Rennen gegen die
+  automatische Sperre nicht gewonnen. Drin steht `'bitten'` als **Platzhalter, nicht
+  als Entscheidung** (dieselbe Unterscheidung wie bei `zaehltAlsTermin()`).
+
+📋 **Alle Klicks stehen ab jetzt in `_FUER_IAN/KONTEN_EINRICHTEN.md`** — Supabase, die
+drei Apple-Handgriffe (App-ID, Sign-in-Schlüssel, Xcode-Konto) und Google, in der
+Reihenfolge, die Richtlinie 4.8 vorgibt. **Supabase allein reicht für den größten
+Brocken** (20.4-b, echte Daten statt `mock.ts`); Apple und Google hängen nur am
+Anmelden.
+
 ✅ **Phase 20.4-a ist fertig (2026-09-10): die Übersetzung — was aus einer
 Datenbankzeile wird.** Der Teil von 20.4, der OHNE Ians Konten geht, und wieder gegen
 die echte Wegwerf-Datenbank belegt: `bash supabase/pruefen/aufbauen.sh` erwartet jetzt

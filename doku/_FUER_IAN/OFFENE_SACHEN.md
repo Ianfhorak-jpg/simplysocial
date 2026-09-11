@@ -3,7 +3,11 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 09.09.2026 — **jetzt kommt das Backend, und dafür brauche ich Konten von dir.**
+> Stand: 11.09.2026 — **du hast das Apple Developer Program. Eines von drei Konten ist
+> damit da.** Punkt 6 ist abgehakt; was jetzt fehlt, sind Supabase und Google — und
+> **drei Handgriffe im Apple-Portal**, die erst mit dem Programm möglich sind. Alle
+> Klicks stehen ab heute in `_FUER_IAN/KONTEN_EINRICHTEN.md`.
+> Davor: 09.09.2026 — **jetzt kommt das Backend, und dafür brauche ich Konten von dir.**
 > Der neue Punkt 3 gleich hier unten ist der einzige, der die Arbeit wirklich aufhält.
 > Davor: 08.09.2026 — **die App LÄUFT auf deinem iPhone.** Jetzt bist du dran:
 > der Durchgang, Punkt 2 gleich hier unten.
@@ -118,8 +122,12 @@ aber „irgendwann". Ab heute sind sie dran:
 | | | |
 |---|---|---|
 | **Supabase** (Punkt 3) | die Datenbank, gratis | 10 Min |
-| **Apple Developer** (Punkt 6) | 99 $/Jahr, brauchst du für den App Store ohnehin | — |
+| ~~**Apple Developer** (Punkt 6)~~ | ~~99 $/Jahr~~ | ✅ **erledigt am 11.09.2026** |
 | **Google** (Punkt 4) | gratis, für „Mit Google anmelden" | 15 Min |
+
+**Seit dem 11.09. fehlen zwei statt drei** — und aus dem erledigten Apple-Punkt kommen
+drei neue Handgriffe, die vorher gar nicht möglich waren (Sign-in-Schlüssel, Bundle-ID,
+TestFlight). Alles davon steht als Klickfolge in `KONTEN_EINRICHTEN.md`.
 
 **Die Reihenfolge gibt Apple vor: Apple vor Google.** Warum, steht bei Punkt 4.
 
@@ -172,11 +180,33 @@ Kommt noch, du hast es gesagt. Bis dahin steht überall der Platzhalter-Schriftz
 > Verbindung (harte Regel 13). Und für den App Store braucht Apple es in einer eigenen
 > Größe ohne Transparenz.
 
-### 6. Apple Developer Program, 99 $/Jahr · **wenn du so weit bist** 🟠
-Du hast gesagt, das kommt bald. Damit ändert sich zweierlei: Der Build läuft dann in der
-Cloud statt per Kabel, die App läuft ein Jahr statt sieben Tage — und **TestFlight** geht,
-also können Christoph, Leopold und Daria die App auf ihre **eigenen** Handys holen. Für
-Phase 21 (App Store) brauchst du es ohnehin.
+### 6. ~~Apple Developer Program, 99 $/Jahr~~ ✅ *erledigt am 11.09.2026*
+
+**Du hast es gekauft.** Damit ändert sich dreierlei — und das Erste davon ist dringend:
+
+1. **Die App auf deinem Handy läuft sonst ab — am 14.09. um 22:00 Uhr.** Das ist
+   nachgemessen, nicht geschätzt: Es steht so im Profil, mit dem sie signiert ist
+   (`TimeToLive: 7`, erzeugt am 07.09. um 22:00). Mit dem Programm wird daraus
+   **ein Jahr** — dafür muss sie einmal neu drauf, und das dauert etwa fünf Minuten.
+   **Das Aufspielen ist seit dem 11.09. ein Befehl** (`npm run geraet`), nicht mehr
+   ein Abend mit sechs Fallstricken.
+2. **TestFlight geht.** Christoph, Leopold und Daria können die App auf ihre **eigenen**
+   Handys holen, ohne Kabel und ohne dass ihre Geräte einzeln registriert werden. Das ist
+   Punkt 8 der Reihenfolge („wieder herzeigen"), der seit dem 02.09. offen liegt.
+3. **„Anmelden mit Apple" wird überhaupt erst möglich.** Der Schlüssel dafür lässt sich
+   nur mit einem Developer-Programm anlegen — ohne ihn ist Punkt 4 (Google) laut
+   Richtlinie 4.8 gesperrt.
+
+> ⚠️ **Was ich dazu wissen muss, bevor ich baue** — steht als Frage in
+> `KONTEN_EINRICHTEN.md` ganz oben: **Läuft das Programm auf deinen Namen oder auf den
+> eines Erwachsenen?** Apple verlangt für ein eigenes Konto normalerweise 18 Jahre. Läuft
+> es über jemand anderen, ist das völlig in Ordnung — aber dann gehört die App diesem
+> Konto, und im App Store steht dessen Name als Anbieter. Das ist später teuer zu ändern
+> und jetzt gratis.
+
+> 📎 **Am Mac ist davon noch nichts angekommen** (gemessen am 11.09.): Es liegt genau ein
+> Signatur-Zertifikat da, und das gehört dem alten Gratis-Team. Xcode muss deine Apple-ID
+> einmal neu laden, dann kommt das neue Team dazu. Zwei Klicks, stehen in der Anleitung.
 
 ---
 

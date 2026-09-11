@@ -48,3 +48,6 @@ example
 # Screenshots aus der Entwicklung
 *.png
 !assets/**/*.png
+
+# Rest von 'npx supabase' — Werkzeug-Zwischenspeicher, kein Projektinhalt
+supabase/.temp/

@@ -39,7 +39,8 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "deploy": "bash scripts/deploy.sh",
-    "doku": "bash scripts/doku.sh"
+    "doku": "bash scripts/doku.sh",
+    "geraet": "bash scripts/geraet-bauen.sh"
   },
   "private": true
 }

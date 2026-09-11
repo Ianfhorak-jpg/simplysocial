@@ -4,6 +4,24 @@
 
 ---
 
+## 🍏 NEU am 11.09.2026 — du hast das Apple Developer Program
+
+**Eines von drei Konten ist damit da.** Was daraus folgt, steht ausführlich in
+[KONTEN_EINRICHTEN.md](KONTEN_EINRICHTEN.md) — hier das Wichtigste in vier Zeilen:
+
+- ⏰ **Die App auf deinem Handy läuft am 14.09. um 22:00 ab.** Nachgemessen im Profil,
+  nicht geschätzt. Mit dem Programm wird daraus **ein Jahr**.
+- 🔴 **Was JETZT von dir kommt: zwei Klicks in Xcode** (Settings → Accounts → deine
+  Apple-ID), damit der Mac die neue Mitgliedschaft überhaupt sieht. Dann die neue
+  **Team-ID** an mich — den Rest macht ein Befehl.
+- 📲 **Danach geht TestFlight**: Christoph, Leopold und Daria bekommen die App auf ihre
+  **eigenen** Handys, ohne Kabel.
+- ⬜ **Weiter offen: Supabase und Google.** Supabase allein (10 Minuten) reicht für den
+  größten Schritt — die App liest dann echte Daten statt der erfundenen.
+
+---
+
+
 ## 🆕 Zuletzt gebaut: 09.09.2026 nachts — der Anmelde-Bildschirm (die halbe Sache)
 
 **Die App hat jetzt einen Anmelde-Bildschirm — aber noch kein Anmelden.** Das klingt

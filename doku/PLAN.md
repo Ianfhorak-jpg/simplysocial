@@ -68,7 +68,7 @@ weg — das ist nicht gemeint. **Es wartet keine Frage auf Ian.**
 |---|---|
 | Was ist es? | Treff-App für Aktivitäten in Wien. **Kein Dating.** |
 | Erster Schritt | Klickbarer Web-Prototyp mit Fake-Daten |
-| Endziel | Echte iOS-App im App Store (Apple Developer Program hat Ian am 2026-08-31 gekauft) |
+| Endziel | Echte iOS-App im App Store (**Apple Developer Program hat Ian am 2026-09-11 gekauft** — die Zeile sagte bis dahin „2026-08-31", das war eine Annahme aus dem Brief und nie wahr) |
 | Antwort auf einen Post | **Wischstapel** — links weg, rechts mitmachen. *Revidiert am 2026-09-01, siehe unten* |
 | Nach „Bin dabei" | **Poster bestätigt zuerst**, dann erst Chat |
 | Aktivitäten | **Alles** — Sport, Kaffee, Lernen, Kultur, Draußen, Kreativ |
@@ -2442,7 +2442,7 @@ npx eas-cli build --profile development --platform ios
 ```
 
 **Voraussetzungen, die alle schon erfüllt sind:** Apple Developer Program (gekauft am
-2026-08-31), `eas-cli` 20.5.0 läuft über `npx`, und **Xcode 26.5 ist installiert**.
+**2026-09-11** — bis dahin stand hier fälschlich der 2026-08-31, siehe Abschnitt 1), `eas-cli` 20.5.0 läuft über `npx`, und **Xcode 26.5 ist installiert**.
 Letzteres ist mehr wert, als es klingt: Mit `--local` baut der Mac selbst, und dann sind
 die **15 Gratis-Builds pro Monat keine Grenze**. Der erste Build geht trotzdem in die
 Cloud — dort legt EAS die Apple-Zertifikate von selbst an, und das ist der Teil, den man
@@ -2816,7 +2816,7 @@ einer Zeile ist auch nicht neu — die Chat-Liste macht es seit 18c genauso.
 |---|---|
 | `react-native-maps` ist ein **Native-Baustein** | Neuer Build. Nach ihm stürzt der alte Dev-Build ab (die ACTA-Falle) |
 | Auf **Web gibt es MapKit nicht** | Der Prototyp, den Ian herzeigt, hätte ohne Weiteres **keine Karte** |
-| MapKit JS braucht einen **Apple-Schlüssel** | Wartet auf Ian — er hat den Developer-Account seit dem 2026-08-31 |
+| MapKit JS braucht einen **Apple-Schlüssel** | Wartet auf Ian — **Developer-Programm seit dem 2026-09-11**, der Schlüssel selbst ist noch nicht angelegt |
 | Apple verlangt **Namensnennung** | Apple-Logo und Rechtelink auf der Karte, nicht verhandelbar |
 
 #### Der Befund, der alles andere ordnet: eine echte Karte macht die App NICHT genauer
@@ -5071,7 +5071,7 @@ Was bei einer App dieser Art erfahrungsgemäß zu Ablehnungen führt — alles v
 
 | Posten | Kosten | Stand |
 |---|---|---|
-| Apple Developer Program | 99 $/Jahr | ✅ bezahlt am 2026-08-31 |
+| Apple Developer Program | 99 $/Jahr | ✅ bezahlt am **2026-09-11** |
 | EAS Build | 0 € | 15 iOS-Builds/Monat gratis; mit Xcode lokal unbegrenzt |
 | Supabase Gratis-Stufe | 0 € | 500 MB Datenbank, 1 GB Bilder, 50.000 Nutzer/Monat — **schläft nach 7 stillen Tagen** |
 | Supabase Pro | 25 $/Monat | erst nötig, wenn die Pause stört — also ab dem echten Start |
@@ -6198,6 +6198,36 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > - **Was `tsc` bei dieser Sorte Arbeit NICHT findet, steht in harter Regel 73.** Eine
 >   Lockerung (`aufgeloestAm?`) meldet null Fehler; die zwei echten Löcher (Einladung
 >   in eine tote Gruppe, Beitritt in eine tote Gruppe) fand nur Nachsehen von Hand.
+>
+> ---
+>
+> 🍏 **Neu am 2026-09-11: Ian hat das Apple Developer Program.** Der Engpass 20.3-b
+> besteht weiter — es fehlen **Supabase und Google** —, aber drei Dinge haben sich
+> geändert:
+>
+> - **Vier Stellen dieses Plans behaupteten seit dem 2026-08-31, das Programm sei
+>   gekauft, und das war falsch.** Abschnitt 1 („Endziel"), die Kostentabelle in 21.6,
+>   die MapKit-JS-Zeile in Abschnitt 5b und die Voraussetzungen von 19.4 — während
+>   19.4 daneben richtig schrieb, Ian habe *„heute nur eine gewöhnliche Apple-ID"*.
+>   Die Angabe stammt aus dem Brief und wurde nie nachgeprüft. **Aufgefallen ist es
+>   nie, weil Phase 19 den EAS-Weg gar nicht ging** — der lokale `xcodebuild`-Weg
+>   braucht keine Mitgliedschaft, dort zeigt sich ihr Fehlen nur als „7 Tage".
+>   Alle vier sind berichtigt. **Eine Voraussetzung, die nie jemand misst, steht
+>   irgendwann falsch da** — dieselbe Familie wie der ungenutzte Parameter `_ctx`
+>   aus 19h-1.
+> - **Am Mac ist davon noch nichts angekommen, und das ist messbar.**
+>   `security find-identity -v -p codesigning` meldet genau eine Identität, Team
+>   `5TQTMP2L2H` (Personal Team). Erst wenn Xcode die Apple-ID neu lädt, kommt das
+>   zweite Team. **Bezahlt und am Rechner verwendbar sind zwei Zustände.**
+> - **Die Fassung auf Ians iPhone läuft am 2026-09-14 um 22:00 UTC ab.** Gemessen im
+>   eingebetteten Profil (`TimeToLive: 7`, erzeugt 2026-09-07 22:00), nicht geschätzt.
+>   **Der Gerätebuild ist seit dem 2026-09-11 ein Skript** (`npm run geraet`).
+>   Der nächste Gerätebuild gilt ein Jahr; danach ist **TestFlight** möglich und damit
+>   Punkt 8 der Reihenfolge — Christoph, Leopold und Daria auf ihren eigenen Handys.
+>
+> ❓ **Offen und später teuer:** Läuft das Programm auf Ian (16) oder auf einen
+> Erwachsenen? Davon hängen Anbietername, Verträge und der Sign-in-Schlüssel ab.
+> Die Klickfolge für alle drei Konten steht in `_FUER_IAN/KONTEN_EINRICHTEN.md`.
 >
 > ---
 >
