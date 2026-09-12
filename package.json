@@ -59,7 +59,8 @@
     "brevo-key": "bash scripts/brevo-key.sh",
     "pruef-bilder": "bash supabase/pruefen/80_bilder.sh",
     "google-key": "bash scripts/google-key.sh",
-    "provider": "bash scripts/provider-einrichten.sh"
+    "provider": "bash scripts/provider-einrichten.sh",
+    "pruef-bildwahl": "bash supabase/pruefen/90_bildwahl.sh"
   },
   "private": true
 }

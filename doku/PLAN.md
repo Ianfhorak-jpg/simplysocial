@@ -5610,7 +5610,7 @@ unverändert 20.3-b2 plus der Prototyp-Hinweis — der beim Durchgang sichtbar �
 Anmelde-Bildschirm stand und „Es gibt keinen Login — du bist gerade Ian" behauptete
 (`am02`). **Der Satz ist Ians** (harte Regel 22).
 
-#### 20.6 — Profilbilder · **20.6-a ✅ (2026-09-12)** · 20.6-b ⬜
+#### 20.6 — Profilbilder · **20.6-a ✅ (2026-09-12)** · **20.6-b ✅ (2026-09-13)**
 
 Darias Wunsch vom 2026-09-02, seit Phase 15 vorbereitet: `User.photoUrl?` gibt es,
 sechzehn Aufrufstellen reichen es durch, `SsAvatar` kann es zeichnen. **Es fehlte nur
@@ -5627,12 +5627,85 @@ Unterschieds-Rechtecke `None`). Preis: **+2.702 B gzip (+0,55 %)** auf 493.492 B
 und darin steckt auch 20.5-c, das nie gemessen wurde; die beiden lassen sich
 nachträglich nicht trennen.
 
-**20.6-b fehlt und hängt an einem Baustein:** Auf Native kann man kein Bild aussuchen,
-dafür braucht es `expo-image-picker`. **Gemessen, nicht vermutet** — anders als
-`expo-glass-effect` in 19e-2 liegt es NICHT über eine andere Abhängigkeit schon in
-`node_modules`, und in `ios/Podfile.lock` steht es auch nicht. Es gehört damit in
-denselben Build wie 20.3-b2: **aus vier Bausteinen in EINEM Build werden fünf.** Im
-Browser läuft der Upload vollständig.
+**20.6-b ist seit dem 2026-09-13 fertig — und es hing NICHT an Ians Supabase-Klick.**
+Hier stand, der Bildwähler gehöre „in denselben Build wie 20.3-b2". Der Build ist seit
+dem 12.09. nachts gemacht (`expo-image-picker` liegt in `node_modules`, 20 Treffer in
+`ios/Podfile.lock`) — **und die sieben Felder im Supabase-Dashboard, auf die 20.3-b2
+wartet, braucht der Bildwähler gar nicht: `expo-image-picker` redet mit iOS, nicht mit
+Supabase.** Dieselbe Trennung wie 20.3-a vor 20.3-b und 19e vor 19h-2; sie war hier nur
+nicht aufgeschrieben, weil beide Phasen denselben Build teilten.
+
+Eine neue Entscheidung von Ian (**54**: der Ausschnitt), zwei neue Dateien
+(`lib/base64.ts`, `lib/bild-waehlen-typen.ts`), ein neuer Prüfstand
+(`npm run pruef-bildwahl` — **35 Häkchen, kein Kreuz**, ohne Gerät und ohne Datenbank).
+`tsc` sauber, **81 Lint-Probleme wie vorher**, lokal weiter **136 Häkchen**,
+`pruef-bilder` **32 statt 27 Häkchen am ECHTEN Server**, Prototyp auf 390 × 844 **Pixel
+für Pixel identisch** (`ap01` gegen `ao01`, Unterschieds-Rechteck `None`, 0 abweichende
+Pixel). Preis: **+1.689 B gzip (+0,34 %)** auf 495.765 B.
+
+##### Fünf Dinge, die wichtiger sind als der Dialog
+
+**1. Der teuerste Fund: `uri` ist HEIC, `base64` ist JPEG — und `image/heic` ist
+verboten.** Gemessen in `node_modules/expo-image-picker/ios/ImageUtils.swift`:
+Zeile 147 gibt für ein HEIC-Foto `rawData` mit der Endung `.heic` zurück, die Datei
+hinter `uri` bleibt also HEIC; Zeile 206 sagt dagegen, base64 werde *„always JPEG
+regardless of the source file's original format (e.g. HEIC, PNG)"*. `BILD_TYPEN` kennt
+nur JPEG, PNG und WebP. **Der naheliegende Weg — Datei über `uri` lesen, Typ aus
+`asset.mimeType` — hätte damit JEDEM gewöhnlichen iPhone-Foto die Absage „Das geht nur
+als JPG, PNG oder WebP" gegeben.** Nicht dem Rand: dem Normalfall, dieselbe Familie wie
+„wer nie ein Profilbild hatte" in 20.6-c. Deshalb steht der Typ als
+`BILD_TYP_VOM_GERAET` in der Regel-Datei und wird NICHT vom Bild übernommen: Der Inhalt
+IST JPEG, also muss der `content-type` JPEG sagen — sonst läge im Bucket eine
+JPEG-Datei mit der Aufschrift „HEIC", und kein Browser zeigt sie an.
+
+**2. Ein `Blob` funktioniert auf React Native nicht, und das steht wörtlich in der
+Bibliothek.** `@supabase/storage-js` schreibt an seinem eigenen `upload`:
+*„For React Native, using either `Blob`, `File` or `FormData` does not work as intended.
+Upload file using `ArrayBuffer` from base64 file data instead."* Der Mechanismus steht
+dreißig Zeilen darüber (`StorageFileApi.ts`, Zeile 99 ff.): Ein `Blob` wird in ein
+`FormData` gewickelt, alles andere geht als roher Rumpf hinaus — **und nur in diesem
+zweiten Zweig setzt storage-js `content-type` und `cache-control` als HEADER.** Ians
+Entscheidung 51 reist also je nach Plattform auf zwei verschiedenen Wegen mit.
+**Beide Probleme haben dieselbe Lösung:** `base64: true`, und aus base64 wird über
+`lib/base64.ts` der `Uint8Array`, den Punkt 2 verlangt.
+
+**3. Und der Geräte-Weg ist vom Mac aus MESSBAR — das war nicht vorherzusehen.**
+`storage-js` entscheidet am TYP des Inhalts, nicht an der Plattform. Ein
+`Uint8Array`-Upload aus Node nimmt also denselben Zweig wie React Native.
+`80_bilder.mjs` hat dafür fünf neue Häkchen: Der Upload wird angenommen, liefert genau
+die hineingegebenen Bytes, trägt den richtigen Typ — **und `cacheControl` überlebt den
+anderen Zweig.** Ungeprüft bleibt allein der Dialog davor; der gehört aufs Gerät, wie
+der Erlaubnis-Dialog in 19h-2.
+
+**4. `bytes` steht im Typ AUSDRÜCKLICH, und das ist die wichtigste Zeile der Phase.**
+Der Screen fragte `bildHuerdeText(wahl.typ, wahl.datei.size)`. Ein `Uint8Array` hat kein
+`.size`, sondern `.byteLength` — und `undefined > BILD_MAX_BYTES` ist **`false`**. Die
+Größenprüfung wäre am Handy **still ausgefallen**: kein Typfehler, keine Meldung, jedes
+Bild geht durch, bis der Bucket es ablehnt — auf Englisch und nach dem Warten. Dieselbe
+Familie wie `Post.district` und `ChatThread.postId`; der Ausweg ist auch derselbe, die
+Angabe bekommt einen eigenen Namen statt aus der Form erraten zu werden. Aus demselben
+Grund trägt `Bilddatei` ein getrenntes `vorschau`: Ohne es hätte der Attrappen-Zweig
+`URL.createObjectURL()` auf ein `Uint8Array` angewendet — und `ANMELDE_QUELLE` steht am
+Gerät weiter auf `'attrappe'`, der Zweig läuft also. **`uri` ist zum Anschauen richtig
+und zum Hochladen falsch.**
+
+**5. Der eigene Prüfstand hing am Zufall, und das war der lehrreichste Fund.**
+`90_bildwahl.sh` prüft `lib/base64.ts` gegen echte Bilddateien. Die erste Fassung nahm
+„kleinste, mittlere, größte" — und ein absichtlich eingebauter Bit-Versatz
+(`bits >= 8` → `bits > 8`) fiel **ausschließlich bei Dateien auf, deren Länge durch 3
+teilbar ist**, also in einem von drei Fällen. Grün blieb er bei 6608 B und 2.632.931 B,
+rot nur bei 49.104 B. **Hätte Ian einen Beleg gelöscht, wäre der Lauf grün und der
+Dekoder kaputt gewesen.** Und der Kommentar der ersten Fassung sagte es sogar schon
+(*„die hängt an `size % 3`, nicht an der Größe"*), während der Code daneben nach Größe
+auswählte — harte Regel 83 in Reinform. Jetzt wird jede Datei in allen drei Restklassen
+angeschnitten; drei verschiedene eingebaute Fehler ergeben 5, 13 und 3 Kreuze, die
+Rücknahme ist per `diff` belegt (19d-Methode).
+
+⚠️ **Was an 20.6-b NICHT geprüft ist: der Dialog am Gerät.** Erlaubnis-Abfrage,
+Zuschneide-Fenster und die tatsächliche Dateigröße bei `BILD_QUALITAET = 0.8` brauchen
+ein iPhone mit echten Fotos. Die Zahl 0,8 ist begründet (bei 1.0 läge ein
+12-Megapixel-Foto im Bereich von `BILD_MAX_BYTES`), aber **nicht nachgemessen**. Sie
+gehört in denselben Durchgang wie Apple- und Google-Anmeldung.
 
 ##### Sechs Dinge, die wichtiger sind als der Upload
 
@@ -7181,6 +7254,32 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 >
 > **Falls Ian es anders will**, ist die Korrektur eine Zeile: `hatteBild` durch `true`
 > ersetzen. Dann sagt die Leiste den Satz immer.
+
+### 54. Darf man am Handy den Ausschnitt wählen? ✅
+
+> **Entschieden am 2026-09-13.** Beim Bildwähler am Gerät (Phase 20.6-b) fragt iOS auf
+> Wunsch nach einem Ausschnitt — auf iOS **immer quadratisch** (nachgelesen in den
+> Optionen von `expo-image-picker`: `aspect` und `shape` sind ausdrücklich
+> Android-only). Im Browser gibt es die Frage nicht.
+>
+> | | |
+> |---|---|
+> | **A: Ausschnitt wählen** *(gewählt)* | Ein Tipp mehr, dafür sitzt das Bild im Kreis. Preis: ein zweiter Schritt, und harte Regel 63 spricht dagegen. |
+> | B: sofort fertig | Ein Tipp, ganz nach Entscheidung 50. Preis: `SsAvatar` beschneidet MITTIG — wer auf einem Gruppenfoto links steht, bekommt einen Kreis ohne sich darin, und ändern kann er es nur, indem er ein anderes Foto sucht. |
+>
+> **Ians Begründung ist die Umkehrung von harter Regel 63, und das ist kein
+> Widerspruch:** Die Regel sagt, ein Bildschirm soll zeigen, was für die Entscheidung
+> HIER nötig ist. Die Entscheidung hier lautet „welcher Teil des Fotos bin ich" — und
+> die kann nur der Mensch treffen. Ein Schritt, der etwas Unentscheidbares entscheidet,
+> ist kein Schritt zu viel; ein Ergebnis, das man nicht beeinflussen kann, ist der
+> zweite Halbsatz von Entscheidung 50 (*„wenn die Person etwas wissen will, dann soll's
+> auch einfach für sie sein"*) mit umgedrehtem Vorzeichen.
+>
+> `ZUSCHNEIDEN = true` in `features/social/bild.ts` (harte Regel 88) — ein Wort.
+>
+> **Der Nebeneffekt war nicht der Grund und zählt trotzdem:** Aus einem
+> 12-Megapixel-Foto wird nur der Ausschnitt hochgeladen. Das ist weniger Wartezeit und
+> weniger von der einen Gigabyte, die Supabase gratis gibt.
 
 ## 7. Bewusst NICHT im Prototyp
 

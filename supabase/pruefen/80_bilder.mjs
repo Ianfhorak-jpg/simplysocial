@@ -117,7 +117,15 @@ const PNG = Buffer.from(
 /** Die Adresse holen — so, wie ein Fremder sie ginge: ohne Token, ohne Client. */
 async function abrufen(adresse) {
   const antwort = await fetch(adresse, { cache: 'no-store' });
-  return { status: antwort.status, bytes: antwort.ok ? (await antwort.arrayBuffer()).byteLength : 0 };
+  return {
+    status: antwort.status,
+    bytes: antwort.ok ? (await antwort.arrayBuffer()).byteLength : 0,
+    // Seit 20.6-b mitgelesen: Auf dem Geräte-Weg (`Uint8Array`) reisen Typ und
+    // Cache-Dauer als HEADER mit statt im `FormData`. Ob sie ankommen, sieht man
+    // nur hier — am Objekt selbst steht danach nichts anderes.
+    typ: antwort.headers.get('content-type'),
+    cache: antwort.headers.get('cache-control'),
+  };
 }
 
 /** Was die Adresse über ihr eigenes Zwischenlager sagt (Ians Entscheidung 51). */
@@ -150,10 +158,27 @@ const lea = await anmelden(LEA);
 // weiter unten**, und das ist ohnehin die belastbarere Frage: Eine Zahl in einer
 // Spalte ist eine Absicht, ein abgewiesenes SVG ist eine Wirkung.
 
+// ── Wie eine `Bilddatei` aussieht, seit 20.6-b ─────────────────────────────────
+// Der Typ trägt `inhalt` in zwei Gestalten: Im Browser ein `Blob`, auf dem Gerät
+// ein `Uint8Array` (weil `storage-js` sagt, dass ein Blob auf React Native nicht
+// funktioniert). `vorschau` braucht nur der Attrappen-Zweig und ist hier egal.
+const alsBrowser = (bytes, typ = 'image/png') => ({
+  inhalt: new Blob([bytes], { type: typ }),
+  typ,
+  bytes: bytes.length,
+  vorschau: 'egal://prüfstand',
+});
+const alsGeraet = (bytes, typ = 'image/png') => ({
+  inhalt: new Uint8Array(bytes),
+  typ,
+  bytes: bytes.length,
+  vorschau: 'egal://prüfstand',
+});
+
 abschnitt('Ian setzt ein Profilbild');
 let adresse1;
 {
-  adresse1 = await senden.profilbildSetzen(ian, new Blob([PNG], { type: 'image/png' }), 'image/png', IAN);
+  adresse1 = await senden.profilbildSetzen(ian, alsBrowser(PNG), IAN);
   pruefWahr('`profilbildSetzen` gibt eine Adresse zurück', typeof adresse1 === 'string' && adresse1.length > 0);
 
   const { data } = await ian.from('profiles').select('photo_url').eq('id', IAN).single();
@@ -164,6 +189,42 @@ let adresse1;
   const a = await abrufen(adresse1);
   pruef('… und ein Fremder ohne Anmeldung bekommt das Bild (Entscheidung 50 = A)', a.status, 200);
   pruef('… und zwar genau die hochgeladenen Bytes', a.bytes, PNG.length);
+}
+
+abschnitt('Der Weg, den das GERÄT nimmt — `Uint8Array` statt `Blob` (20.6-b)');
+{
+  // ── Warum das vom Mac aus messbar ist, obwohl hier kein iPhone steht ────────
+  // `storage-js` entscheidet den Weg am TYP des Inhalts, nicht an der Plattform:
+  // Ein `Blob` wird in ein `FormData` gewickelt, alles andere geht als roher Rumpf
+  // hinaus — und nur dort setzt es `content-type` und `cache-control` als HEADER
+  // (nachgelesen in `StorageFileApi.ts`, Zeile 99 ff.).
+  //
+  // Ein `Uint8Array`-Upload aus Node nimmt also **denselben Zweig wie React
+  // Native**. Was hier NICHT geprüft wird, ist der Dialog davor — der gehört aufs
+  // Gerät, wie der Erlaubnis-Dialog in 19h-2.
+  const geraet = await abrufen(await senden.profilbildSetzen(ian, alsGeraet(PNG), IAN));
+  pruefWahr('ein `Uint8Array` wird angenommen', geraet.status === 200);
+  pruef('… und liefert genau die Bytes, die hineingingen', geraet.bytes, PNG.length);
+  pruef('… und zwar mit dem richtigen Typ am Objekt', geraet.typ, 'image/png');
+
+  // **Die Zeile, wegen der der Abschnitt hier steht:** Auf dem ArrayBuffer-Weg
+  // reist Ians Entscheidung 51 als HEADER mit statt als FormData-Feld. Wäre sie
+  // dabei verlorengegangen, nähme Supabase seine Voreinstellung von einer Stunde —
+  // und `bildFolgen()` verspräche fünf Minuten. Genau der Satz, der am 12.09. schon
+  // einmal gelogen hat.
+  //
+  // ⚠️ **Gefragt wird nicht nach einer Zeichenkette, sondern nach der GLEICHHEIT
+  // der beiden Wege.** Die erste Fassung verglich mit `max-age=300` und war rot:
+  // Supabase schreibt `public, max-age=300`. Das war kein Fehler im Code, sondern
+  // eine zu wörtliche Erwartung — und hätte sie gestimmt, wäre sie trotzdem beim
+  // nächsten `immutable` in Supabases Antwort rot geworden, ohne dass Ians
+  // Entscheidung verletzt wäre. So misst die Zeile, worauf es ankommt: Das Gerät
+  // bekommt dieselbe Zusage wie der Browser.
+  const browser = await abrufen(await senden.profilbildSetzen(ian, alsBrowser(PNG), IAN));
+  pruef('… und `cacheControl` überlebt den anderen Zweig (Entscheidung 51)',
+    geraet.cache, browser.cache);
+  pruefWahr(`… und beide tragen wirklich Ians ${bild.BILD_CACHE_SEKUNDEN} Sekunden`,
+    /(^|[\s,])max-age=300($|[\s,;])/.test(geraet.cache ?? ''));
 }
 
 abschnitt('Der Dateiname ist die ganze Absicherung — also ist er nicht abzulesen');
@@ -185,7 +246,7 @@ abschnitt('Der Dateiname ist die ganze Absicherung — also ist er nicht abzules
 abschnitt('Austauschen — und der Befund, der Entscheidung 51 ausgelöst hat');
 let adresse2;
 {
-  adresse2 = await senden.profilbildSetzen(ian, new Blob([PNG], { type: 'image/png' }), 'image/png', IAN);
+  adresse2 = await senden.profilbildSetzen(ian, alsBrowser(PNG), IAN);
   pruefWahr('das zweite Bild bekommt eine ANDERE Adresse', adresse2 !== adresse1);
 
   const { data } = await ian.storage.from(bild.BILD_BUCKET).list(IAN);
@@ -278,7 +339,7 @@ abschnitt('Wer NIE ein Bild hatte — der Weg, den heute die Mehrheit geht');
 
 abschnitt('Kontolöschen — die Reihenfolge ist die ganze Zusage');
 {
-  const adresse = await senden.profilbildSetzen(lea, new Blob([PNG], { type: 'image/png' }), 'image/png', LEA);
+  const adresse = await senden.profilbildSetzen(lea, alsBrowser(PNG), LEA);
   pruef('Lea hat ein Bild', (await abrufen(adresse)).status, 200);
 
   // ❌ **Hier stand zuerst, `konto_loeschen()` nehme das Bild mit.** Es tat es in
@@ -303,7 +364,7 @@ abschnitt('Und was passiert, wenn die App dazwischen abstürzt');
   // behauptet. Wer sein Konto löscht, ohne dass die App vorher aufgeräumt hat,
   // lässt sein Bild stehen. Es gibt dagegen am Server kein Netz, solange die
   // einzige Alternative das Umgehen eines fremden Sicherheitstriggers ist.
-  const adresse = await senden.profilbildSetzen(ian, new Blob([PNG], { type: 'image/png' }), 'image/png', IAN);
+  const adresse = await senden.profilbildSetzen(ian, alsBrowser(PNG), IAN);
   const { error } = await ian.rpc('konto_loeschen');
   pruef('das Konto ist weg', error?.message ?? 'weg', 'weg');
   pruef('… aber das Bild steht noch da — die benannte Lücke aus 0008',

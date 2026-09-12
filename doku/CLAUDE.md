@@ -81,6 +81,58 @@ Apple oder Google anmeldet; die zwei Knöpfe sind seit 20.3-a sichtbar und tot.
 nach dem `+`, Supabase sieht einen Neuzugang). Nie eingelöst, also ohne Profil.
 **Gehört gelöscht.**
 
+✅ **Phase 20.6-b ist fertig (2026-09-13): man kann am HANDY ein Bild aussuchen — und
+sie hing NICHT an Ians Supabase-Klick.** Hier stand, der Bildwähler gehöre „in denselben
+Build wie 20.3-b2". Der Build ist seit dem 12.09. nachts gemacht; **die sieben Felder im
+Dashboard, auf die 20.3-b2 wartet, braucht `expo-image-picker` gar nicht — es redet mit
+iOS, nicht mit Supabase.** Eine neue Entscheidung von Ian (**54**: der Ausschnitt), zwei
+neue Dateien (`lib/base64.ts`, `lib/bild-waehlen-typen.ts`), ein neuer Prüfstand
+(`npm run pruef-bildwahl` — **35 Häkchen, kein Kreuz**, ohne Gerät und ohne Datenbank).
+`tsc` sauber, **81 Lint-Probleme wie vorher**, lokal weiter **136 Häkchen**,
+`pruef-bilder` **32 statt 27 am ECHTEN Server**, Prototyp auf 390 × 844 **Pixel für
+Pixel identisch** (`ap01` gegen `ao01`, 0 abweichende Pixel). **+1.689 B gzip (+0,34 %)**
+auf 495.765 B. Fünf Dinge:
+
+1. **Der teuerste Fund: `uri` ist HEIC, `base64` ist JPEG — und `image/heic` ist
+   verboten.** Gemessen in `expo-image-picker/ios/ImageUtils.swift`: Zeile 147 gibt für
+   ein HEIC-Foto `rawData` mit `.heic` zurück; Zeile 206 sagt, base64 werde *„always
+   JPEG regardless of the source file's original format"*. `BILD_TYPEN` kennt nur JPEG,
+   PNG und WebP. **Der naheliegende Weg — Datei über `uri`, Typ aus `asset.mimeType` —
+   hätte JEDEM gewöhnlichen iPhone-Foto die Absage „Das geht nur als JPG, PNG oder
+   WebP" gegeben.** Nicht der Rand, der Normalfall — dieselbe Familie wie „wer nie ein
+   Profilbild hatte" in 20.6-c. Harte Regel 90.
+2. **Ein `Blob` funktioniert auf React Native nicht, und das steht wörtlich in der
+   Bibliothek.** `storage-js` schreibt an seinem `upload`: *„For React Native, using
+   either `Blob`, `File` or `FormData` does not work as intended."* Dreißig Zeilen
+   darüber steht der Mechanismus — ein `Blob` wird in `FormData` gewickelt, alles
+   andere geht als roher Rumpf hinaus, **und nur dort setzt storage-js `content-type`
+   und `cache-control` als HEADER.** **Beide Probleme haben dieselbe Lösung:**
+   `base64: true`. Harte Regel 91.
+3. **Und der Geräte-Weg ist vom Mac aus MESSBAR — das war nicht vorherzusehen.**
+   `storage-js` entscheidet am TYP des Inhalts, nicht an der Plattform; ein
+   `Uint8Array` aus Node nimmt denselben Zweig wie ein iPhone. Fünf neue Häkchen in
+   `80_bilder.mjs`, darunter: **`cacheControl` überlebt den anderen Zweig** (Ians
+   Entscheidung 51). Ungeprüft bleibt allein der Dialog davor.
+4. **`bytes` steht im Typ AUSDRÜCKLICH, und das ist die wichtigste Zeile der Phase.**
+   Der Screen fragte `wahl.datei.size`. Ein `Uint8Array` hat kein `.size` — und
+   `undefined > BILD_MAX_BYTES` ist **`false`**. Die Größenprüfung wäre am Handy
+   **still ausgefallen**. Aus demselben Grund trägt `Bilddatei` ein getrenntes
+   `vorschau`: Sonst hätte der Attrappen-Zweig `URL.createObjectURL()` auf ein
+   `Uint8Array` angewendet — und am Gerät steht `ANMELDE_QUELLE` weiter auf
+   `'attrappe'`. **`uri` ist zum Anschauen richtig und zum Hochladen falsch.**
+5. **Der eigene Prüfstand hing am Zufall, und das war der lehrreichste Fund.** Ein
+   eingebauter Bit-Versatz fiel **nur bei Dateilängen auf, die durch 3 teilbar sind** —
+   einer von drei Fällen, und er war bloß durch Glück unter den drei ausgewählten
+   Belegen. **Ein gelöschter Beleg hätte gereicht, und der Lauf wäre grün bei kaputtem
+   Dekoder gewesen.** Der Kommentar der ersten Fassung wusste es sogar schon
+   (*„hängt an `size % 3`, nicht an der Größe"*), der Code daneben nicht. Harte
+   Regel 92.
+
+⚠️ **Was 20.6-b NICHT ist: am Gerät geprüft.** Erlaubnis-Dialog, Zuschneide-Fenster und
+die echte Dateigröße bei `BILD_QUALITAET = 0.8` brauchen ein iPhone mit echten Fotos.
+Die 0,8 ist begründet, aber **nicht nachgemessen** — sie gehört in denselben Durchgang
+wie Apple und Google.
+
 ✅ **Phase 20.6-c ist fertig (2026-09-12): der Lösch-Knopf LÖSCHT — nach vier Wochen,
 in denen er nichts tat.** Seit Phase 7 stand `/account-loeschen` da und sagte beim
 letzten Klick selbst, dass nichts passiert; das war richtig, solange es kein Konto gab.
@@ -241,12 +293,10 @@ ECHTEN Server**, danach ist die Datenbank sauber. Zwei neue Entscheidungen von I
    der Wächter fragte die Prüf-Gruppe nicht ab, obwohl sie seit Entscheidung 41 ihren
    Gründer überlebt.
 
-⚠️ **Was 20.6-a NICHT ist: der Bildwähler am Gerät.** Auf Native braucht es
-`expo-image-picker` — **gemessen, nicht vermutet**: Anders als `expo-glass-effect` in
-19e-2 liegt es NICHT schon über eine andere Abhängigkeit in `node_modules`. Es gehört
-in denselben Build wie 20.3-b2, **aus vier Bausteinen werden fünf**. Im Browser läuft
-der Upload vollständig; auf dem Gerät steht statt eines toten Knopfes ein Satz
-(die Phase-16-Lehre).
+✅ **Was 20.6-a noch NICHT war — der Bildwähler am Gerät — ist seit dem 2026-09-13
+gebaut (20.6-b, siehe oben).** Hier stand, er gehöre „in denselben Build wie 20.3-b2".
+Der Build ist gemacht; **den Supabase-Klick, auf den 20.3-b2 wartet, brauchte er nie.**
+Im Browser lief der Upload schon vorher vollständig.
 
 ⚠️ **Und eine Lücke ist benannt UND gemessen:** Bricht die App zwischen „Bild wegräumen"
 und `konto_loeschen()` ab, bleibt das Bild liegen. Am Server gibt es dagegen kein Netz,
@@ -2214,7 +2264,13 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    Server**. **Dabei kam heraus, dass jeder OHNE Profilbild einen Satz über einen Verlust
    bekommen hätte, den es nie gab** — und dass ein Fehler beim Bild-Entfernen das Konto
    unlöschbar gemacht hätte.* ·
-   **Profilbilder am Gerät (20.6-b)** · Meldungen lesen (20.7).
+   ~~**Profilbilder am Gerät (20.6-b)**~~ ✅ *2026-09-13: `expo-image-picker` mit
+   Zuschnitt (Entscheidung 54), `lib/base64.ts`, **35 Häkchen** im neuen
+   `pruef-bildwahl` und **32 statt 27** in `pruef-bilder`. **Dabei kam heraus, dass
+   `asset.uri` bei einem iPhone-Foto HEIC bleibt und `asset.base64` immer JPEG ist**
+   — der naheliegende Weg hätte jedes gewöhnliche Handyfoto abgewiesen (harte
+   Regeln 90 und 91). **Hing nachgemessen NICHT an Ians Supabase-Klick.*** ·
+   Meldungen lesen (20.7).
    Danach fällt 19d-2 nebenbei ab.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 
@@ -2687,8 +2743,13 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    (25 in 20.2, 78 nach 20.5-SQL, 121 seit 20.4-a, 124 seit 0006, 136 seit 0008).
    **Dazu VIER Prüfstände am ECHTEN Server, und die können etwas, das lokal
    prinzipiell nicht geht:** `npm run pruef-lesen` (29) · `npm run pruef-konto` (29) ·
-   `npm run pruef-schreiben` (50, seit 20.5) · `npm run pruef-bilder` (**27**, seit 20.6 —
-   **der einzige, der den Weg über das CDN messen kann**, siehe harte Regel 89). Warum das nicht dasselbe ist, steht in
+   `npm run pruef-schreiben` (50, seit 20.5) · `npm run pruef-bilder` (**32**, seit 20.6 —
+   **der einzige, der den Weg über das CDN messen kann**, siehe harte Regel 89).
+   **Und seit 20.6-b einer, der WEDER Server NOCH Datenbank braucht:**
+   `npm run pruef-bildwahl` (35) hält `lib/base64.ts` gegen echte Bilddateien — sie hat
+   keinen einzigen Import und läuft deshalb in blankem Node (dieselbe Bauart wie
+   `40_uebersetzung.sh`). **Wer dort Beispiele auswählt, liest zuerst harte Regel 92.**
+   Warum das nicht dasselbe ist, steht in
    harter Regel 85 — die Wegwerf-Datenbank war bis zum 2026-09-12 STRENGER als das
    Original. Jeder
    Block setzt `set local role authenticated` — **wer als `postgres` prüft, prüft
@@ -3159,6 +3220,56 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Der Schalter `storage.allow_delete_query` gehört ausschließlich in einen
    Prüfstand, dessen Zeilen in derselben Minute wieder weg sind — in der App ließe
    er die DATEI für immer und unauffindbar liegen.
+
+90. **Ein Bild vom GERÄT kommt als base64 herein, nie über seine `uri` — und der Typ
+   ist IMMER `image/jpeg`.** *(Phase 20.6-b, 2026-09-13, beides gemessen in
+   `node_modules/expo-image-picker/ios/ImageUtils.swift`.)* Zwei Tatsachen, die man
+   leicht verwechselt:
+   **(a)** `asset.uri` zeigt auf die DATEI, und die bleibt bei einem iPhone-Foto
+   **HEIC** (Zeile 147: `case UTType.heic.identifier: return (rawData, ".heic")`).
+   `image/heic` steht nicht in `BILD_TYPEN` — wer `asset.mimeType` als Typ nimmt,
+   weist damit **jedes gewöhnliche iPhone-Foto** ab. Das ist nicht der Rand, sondern
+   der Normalfall, dieselbe Familie wie „wer nie ein Profilbild hatte" (20.6-c).
+   **(b)** `asset.base64` ist laut Zeile 206 *„always JPEG regardless of the source
+   file's original format"*. Deshalb steht `BILD_TYP_VOM_GERAET` als Konstante in
+   `features/social/bild.ts` und wird nicht vom Bild übernommen: Der Inhalt IST JPEG,
+   also muss der `content-type` JPEG sagen. Liefe beides auseinander, läge im Bucket
+   eine JPEG-Datei mit der Aufschrift „HEIC", und kein Browser zeigte sie an.
+   **Die `uri` ist trotzdem nicht wertlos — sie ist die VORSCHAU.** Zum Anschauen
+   taugt HEIC (iOS zeigt es an), zum Hochladen nicht; `Bilddatei` trägt beides
+   getrennt. Wer die Felder zusammenlegt, macht je nach Zweig einen der beiden Fälle
+   still kaputt.
+91. **`@supabase/storage-js` nimmt auf React Native KEINEN `Blob` — und die
+   Größenangabe muss danebenstehen.** *(Phase 20.6-b.)* Die Bibliothek sagt es in
+   ihrem eigenen Quelltext am `upload`: *„For React Native, using either `Blob`,
+   `File` or `FormData` does not work as intended. Upload file using `ArrayBuffer`
+   from base64 file data instead."* Der Mechanismus steht dreißig Zeilen darüber
+   (`StorageFileApi.ts`, Zeile 99 ff.): Ein `Blob` wird in ein `FormData` gewickelt,
+   alles andere geht als roher Rumpf hinaus — **und nur in diesem zweiten Zweig setzt
+   storage-js `content-type` und `cache-control` als HEADER.** Ians Entscheidung 51
+   reist also je nach Plattform auf zwei verschiedenen Wegen mit; dass beide
+   ankommen, misst `80_bilder.mjs`, indem es die Header der zwei Wege GEGENEINANDER
+   hält statt gegen eine Zeichenkette. **Und weil storage-js am TYP entscheidet und
+   nicht an der Plattform, ist der Geräte-Weg vom Mac aus messbar** — ein
+   `Uint8Array` aus Node nimmt denselben Zweig wie ein iPhone.
+   ⚠️ **Daraus folgt die Zeile, die man vergisst:** `Bilddatei` führt `bytes`
+   ausdrücklich mit. Ein `Blob` hat `.size`, ein `Uint8Array` hat `.byteLength` — und
+   `undefined > BILD_MAX_BYTES` ist `false`. Ein `wahl.datei.size` am Gerät lässt die
+   Größenprüfung **still ausfallen**: kein Typfehler, keine Meldung, jedes Bild geht
+   durch, bis der Bucket es ablehnt. Dieselbe Familie wie `Post.district`
+   (`string | null` erzwingt in JSX nichts) und `ChatThread.postId`.
+92. **Ein Prüfstand, der Beispiele AUSWÄHLT, muss die Eigenschaft erzwingen, an der
+   der Fehler hängt — sonst prüft er den Zufall.** *(Phase 20.6-b, am eigenen
+   Prüfstand gelernt.)* `90_bildwahl.sh` hielt `lib/base64.ts` gegen „das kleinste,
+   ein mittleres, das größte" echte Bild. Ein absichtlich eingebauter Bit-Versatz
+   fiel **ausschließlich bei Längen auf, die durch 3 teilbar sind** — einer von drei
+   Fällen, und er war nur durch Glück dabei. Ein gelöschter Beleg hätte gereicht, und
+   der Lauf wäre grün bei kaputtem Dekoder gewesen.
+   **Der Kommentar wusste es schon und der Code nicht** (*„hängt an `size % 3`, nicht
+   an der Größe"*) — harte Regel 83 innerhalb einer Datei. Jetzt wird jede Datei in
+   allen drei Restklassen angeschnitten; drei verschiedene eingebaute Fehler ergeben
+   5, 13 und 3 Kreuze. **Allgemein: Erst benennen, woran der Fehler hängt, dann die
+   Auswahl danach bauen — nicht nach der Größe, die man gerade zur Hand hat.**
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 

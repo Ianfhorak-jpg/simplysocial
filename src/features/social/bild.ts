@@ -112,6 +112,73 @@ export const BILD_MAX_BYTES = 5 * 1024 * 1024;
  */
 export const BILD_TYPEN = ['image/jpeg', 'image/png', 'image/webp'] as const;
 
+/**
+ * Darf man am Handy den Ausschnitt wählen? — **Ians Entscheidung 54 (2026-09-13).**
+ *
+ * Gilt nur für den nativen Zweig: Im Browser gibt es keinen Zuschneide-Dialog, dort
+ * öffnet sich das Dateifeld des Betriebssystems.
+ *
+ * **Verworfen: sofort fertig.** Ein Tipp weniger, und harte Regel 63 spricht dafür.
+ * Der Preis wäre aber an einer Stelle angefallen, an der man ihn nicht mehr
+ * korrigieren kann: `SsAvatar` beschneidet ein Querformat-Foto MITTIG. Wer auf einem
+ * Gruppenfoto links steht, bekommt einen Kreis ohne sich darin — und die einzige
+ * Abhilfe wäre, ein anderes Foto zu suchen. Das ist kein „weniger sehen", sondern
+ * ein Ergebnis, das man nicht beeinflussen kann.
+ *
+ * Der Zuschnitt ist auf iOS **immer ein Quadrat** (nachgelesen in den Optionen von
+ * `expo-image-picker`: `aspect` und `shape` sind ausdrücklich Android-only) — also
+ * genau die Form, die ein runder Avatar braucht. Auf Android käme `aspect: [1, 1]`
+ * dazu, sobald es eine Android-Fassung gibt.
+ *
+ * **Der Nebeneffekt ist der eigentliche Gewinn und war nicht der Grund:** Aus einem
+ * 12-Megapixel-Foto wird nur der gewählte Ausschnitt hochgeladen. Das ist weniger
+ * Wartezeit für den, der es aussucht, und weniger von der einen Gigabyte, die
+ * Supabase gratis gibt.
+ */
+export const ZUSCHNEIDEN = true;
+
+/**
+ * Wie stark das Bild beim Auslesen zusammengedrückt wird (0…1) — **und das ist
+ * KEINE Bequemlichkeit, sondern die Zahl, die über die Hürde entscheidet.**
+ *
+ * Der native Zweig liest das Bild als base64, und `expo-image-picker` kodiert dabei
+ * **immer neu als JPEG** mit genau diesem Wert (gemessen in `ios/ImageUtils.swift`,
+ * `readJpegBase64From`). Bei `1.0` liegt ein 12-Megapixel-Foto erfahrungsgemäß im
+ * Bereich von `BILD_MAX_BYTES` — die App lehnte dann ein gewöhnliches Handyfoto ab,
+ * und der Mensch hätte nichts falsch gemacht.
+ *
+ * `0.8` ist der übliche Wert, ab dem ein Unterschied mit bloßem Auge nicht mehr
+ * auffällt. Für einen Avatar, der auch auf einem 3x-Bildschirm keine 300 Punkte
+ * breit wird, ist selbst das noch reichlich.
+ *
+ * ⚠️ **Die Zahl ist begründet, aber am Gerät NICHT nachgemessen** — dafür braucht es
+ * ein iPhone mit echten Fotos. Sie gehört in denselben Durchgang wie der Dialog
+ * selbst; die Stelle zum Nachsehen ist `bildHuerdeText()`, das die Größe meldet,
+ * bevor irgendetwas hochgeladen wird.
+ */
+export const BILD_QUALITAET = 0.8;
+
+/**
+ * Als was ein am Gerät ausgesuchtes Bild ANKOMMT — **immer JPEG, und das ist ein
+ * Fund, keine Festlegung.**
+ *
+ * `expo-image-picker` gibt zwei Dinge zurück, die man leicht verwechselt:
+ * - `uri` zeigt auf die DATEI, und die bleibt bei einem iPhone-Foto **HEIC**
+ *   (`ios/ImageUtils.swift:147` — `case UTType.heic.identifier: return (rawData, ".heic")`).
+ * - `base64` ist laut derselben Datei (Zeile 206) *„always JPEG regardless of the
+ *   source file's original format (e.g. HEIC, PNG)"*.
+ *
+ * `image/heic` steht nicht in `BILD_TYPEN`. Wer also `asset.mimeType` als Typ nimmt,
+ * weist **jedes gewöhnliche iPhone-Foto** ab — nicht den Rand, sondern den Normalfall,
+ * dieselbe Familie wie „wer nie ein Profilbild hatte" in 20.6-c.
+ *
+ * Deshalb steht der Typ hier als Konstante und wird nicht vom Bild übernommen: Der
+ * Inhalt IST JPEG, also muss der `content-type` am Bucket JPEG sagen. Liefe beides
+ * auseinander, läge im Bucket eine JPEG-Datei mit der Aufschrift „HEIC" — und kein
+ * Browser zeigt sie an.
+ */
+export const BILD_TYP_VOM_GERAET = 'image/jpeg';
+
 const ENDUNGEN: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',

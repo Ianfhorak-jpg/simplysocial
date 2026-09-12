@@ -37,6 +37,7 @@ import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 
 import { SchreibFehler, type SchreibAktion } from '@/data/schreiben';
 import { BILD_BUCKET, BILD_CACHE_SEKUNDEN, bildPfad } from '@/features/social/bild';
+import type { Bilddatei } from '@/lib/bild-waehlen-typen';
 import type { PostEntwurf } from '@/features/posts/hooks';
 import type { GruppenEntwurf } from '@/features/groups/hooks';
 import type { ReportReason, ReportTarget } from '@/types/models';
@@ -454,19 +455,33 @@ export async function melden(
  */
 export async function profilbildSetzen(
   sb: SupabaseClient,
-  datei: Blob,
-  typ: string,
+  bild: Bilddatei,
   ichId: string,
 ): Promise<string> {
-  const pfad = bildPfad(ichId, typ);
+  const pfad = bildPfad(ichId, bild.typ);
 
   // `cacheControl` ist Ians Entscheidung 51 und steht deshalb NICHT als Zahl hier,
   // sondern in `bild.ts`. Ohne die Angabe nimmt `supabase-js` 3600 — und das ist
   // genau der Wert, der am 2026-09-12 den Satz in `bildFolgen()` zur Unwahrheit
   // gemacht hat.
+  // ── `bild.inhalt` ist NICHT immer ein `Blob`, und das ist der Kern von 20.6-b ──
+  // Im Browser ist es einer; auf dem Gerät ein `Uint8Array`. `storage-js` sagt in
+  // seinem eigenen Quelltext, warum:
+  //
+  //   > For React Native, using either `Blob`, `File` or `FormData` does not work
+  //   > as intended. Upload file using `ArrayBuffer` from base64 file data instead.
+  //
+  // Der Mechanismus steht dort dreißig Zeilen darüber: Ein `Blob` wird in ein
+  // `FormData` gewickelt, alles andere geht als roher Rumpf hinaus — und **nur in
+  // diesem zweiten Zweig setzt storage-js `content-type` und `cache-control` als
+  // HEADER.** Ians Entscheidung 51 reist also auf zwei verschiedenen Wegen mit,
+  // je nach Plattform, und `contentType` unten deckt beide ab.
   const hoch = await sb.storage
     .from(BILD_BUCKET)
-    .upload(pfad, datei, { contentType: typ, cacheControl: String(BILD_CACHE_SEKUNDEN) });
+    .upload(pfad, bild.inhalt, {
+      contentType: bild.typ,
+      cacheControl: String(BILD_CACHE_SEKUNDEN),
+    });
   if (hoch.error) {
     // `StorageError` ist kein `PostgrestError` — es gibt keinen SQLSTATE. Der Code
     // wird deshalb aus dem Status gebaut, damit `schreibFehlerFolgen()` „nicht mehr

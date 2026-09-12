@@ -75,11 +75,11 @@ export default function EinstellungenScreen() {
     // Vor dem Hochladen fragen, nicht danach: Der Bucket weist dieselben Fälle ab
     // (gemessen in `80_bilder.mjs`), aber erst nach dem Warten und mit einer
     // Meldung auf Englisch. Die Regel steht in `bild.ts`, nicht hier.
-    const huerde = bildHuerdeText(wahl.typ, wahl.datei.size);
+    const huerde = bildHuerdeText(wahl.typ, wahl.bytes);
     setBildHuerde(huerde);
     if (huerde) return;
 
-    await profilbildSetzen(wahl.datei, wahl.typ);
+    await profilbildSetzen(wahl);
   }
   // Der Entwurf steht NEBEN dem gespeicherten Wert und nicht an seiner Stelle: Beim
   // Tippen durchläuft das Feld `1`, `12`, `122` — Zustände, die kein Bezirk sind. Wer

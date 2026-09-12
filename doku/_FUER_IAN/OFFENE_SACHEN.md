@@ -39,6 +39,12 @@
 >
 > ⚠️ **Und eine Frage von vorhin ist noch offen: Punkt 10** (eine Minute) — wer nie
 > ein Profilbild hatte, soll der trotzdem lesen, dass eines entfernt wurde?
+> **Seit heute weniger dringend**, weil man am Handy endlich ein Bild setzen kann; die
+> Begründung dort ist berichtigt.
+>
+> ✅ **Neu am 13.09.: Profilbilder gehen jetzt auch am HANDY** (Phase 20.6-b, deine
+> Entscheidung 54). **Das hing nachgemessen NICHT an den sieben Feldern oben** — der
+> Baustein dafür redet mit iOS, nicht mit Supabase. Punkt 9 ist damit abgehakt.
 >
 > ℹ️ **Was mir aufgefallen ist, fürs nächste Mal:** Du hast die Schlüssel per
 > Screenshot auf den Schreibtisch gelegt. Das ist verständlich — sie verschwinden ja
@@ -998,8 +1004,19 @@ App den Preis benennen** statt ihn zu verschweigen. Der Satz lautet:
 **Die Frage, die dabei niemand gestellt hat:** Was, wenn jemand **gar kein Bild** hatte?
 Dann hat er auch keines verloren — bekäme aber denselben Satz zu lesen.
 
-**Das ist gerade nicht der Ausnahmefall, sondern der Normalfall:** Am Handy kann man
-bis zum nächsten App-Update überhaupt kein Bild aussuchen, also hat fast niemand eines.
+⚠️ **Nachtrag vom 13.09.2026 — die halbe Begründung ist weggefallen, die Frage nicht.**
+
+Hier stand: *„Das ist gerade nicht der Ausnahmefall, sondern der Normalfall: Am Handy
+kann man bis zum nächsten App-Update überhaupt kein Bild aussuchen, also hat fast
+niemand eines."* **Seit Phase 20.6-b stimmt das nicht mehr** — am Handy geht es jetzt.
+
+Das ändert die Frage nicht, aber es ändert, wie viel sie wiegt: Vorher hätte B **fast
+jeden** betroffen, jetzt nur noch die, die wirklich nie ein Bild gesetzt haben. **A ist
+dadurch nicht falscher geworden, nur weniger dringend.**
+
+Ich schreibe es dazu, weil sonst genau das passiert, was in diesem Projekt schon zweimal
+teuer war: Eine Begründung bleibt stehen, nachdem ihr Grund weg ist — und beim nächsten
+Lesen entscheidet jemand anhand einer Zahl, die nicht mehr stimmt.
 
 | | |
 |---|---|
@@ -1011,14 +1028,24 @@ behaupten, was nicht stimmt — deine Entscheidungen 43 und 51). **Es ist aber m
 Auslegung deiner Entscheidung und nicht deine Entscheidung**, deshalb steht es hier.
 **Wenn du B willst, ist es ein Wort.**
 
-### 9. Profilbilder — der Platz steht, das Bild fehlt
+### 9. ✅ Profilbilder — **erledigt am 12./13.09.2026**
 
 Daria wollte „ein Foto von der Person oder halt die Altersgruppe". Du hast gesagt:
 **beides.** Die Altersgruppe ist seit 02.09. voll drin — man sieht am Profil „26+" und
 am Post, für wen er gedacht ist.
 
-**Beim Foto ist nur der Platz gebaut.** Die App kann ein Profilbild anzeigen, überall,
-sofort — es gibt bloß keines hochzuladen. Warum das nicht am Programmieren liegt:
+✅ **Seit dem 12.09. (Browser) und dem 13.09. (Handy) kannst du wirklich ein Bild
+setzen, austauschen und entfernen** — es liegt in deiner Datenbank, nicht nur im
+Bildschirm. In den Einstellungen unter „Dein Bild". Am Handy fragt iOS dabei nach einem
+Ausschnitt (deine Entscheidung 54).
+
+**Was davon weiterhin gilt:** Die drei Punkte unten waren die Gründe, warum es das nicht
+von Anfang an gab. Zwei davon sind beantwortet (Speicher: Supabase, 1 GB gratis; wer was
+hochladen darf: nur sein eigenes, die Regeln am Server messen das). **Der mittlere ist
+offen und gehört zu Punkt 7** — jemand muss draufschauen.
+
+<details><summary>Warum es so lange gedauert hat (zum Nachlesen)</summary>
+
 
 - **Speicher.** Bilder liegen nicht im Code, sie brauchen einen Ort im Netz. Kostet ab
   einer gewissen Menge Geld (siehe Punkt 8).
@@ -1028,9 +1055,16 @@ sofort — es gibt bloß keines hochzuladen. Warum das nicht am Programmieren li
 - **Wer darf ein Bild von wem hochladen?** Ein Foto von jemand anderem hochzuladen ist
   rechtlich etwas ganz anderes als ein Selfie — gehört zu Punkt 1.
 
-**Was du Daria sagen solltest:** Bis zum Backend sieht sie Anfangsbuchstaben, kein
-Gesicht. Die halbe Antwort jetzt ist besser als eine ganze in drei Monaten — aber sag
-ihr, dass es die halbe ist.
+</details>
+
+**Was du Daria sagen kannst — und es ist jetzt die ganze Antwort:** Ihr Wunsch vom
+02.09. ist gebaut. Bild UND Altersgruppe, im Browser und am Handy. *(Hier stand bis zum
+13.09.: „Bis zum Backend sieht sie Anfangsbuchstaben, kein Gesicht … sag ihr, dass es
+die halbe ist." Das gilt nicht mehr.)*
+
+⚠️ **Eine Sache fehlt trotzdem, und sie ist keine Programmier-Sache:** Sobald Leute
+Bilder hochladen, muss jemand hinschauen können. Das ist Punkt 7 — und Apple fragt im
+Review danach.
 
 ### 8. Backend kostet irgendwann Geld
 Solange ihr 200 Leute seid: gratis. Wenn es wächst, kommen laufende Kosten (Datenbank,

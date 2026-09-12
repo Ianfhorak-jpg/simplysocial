@@ -34,6 +34,49 @@
 
 ---
 
+## ✅ STAND 13.09.2026 — AM HANDY KANN MAN JETZT EIN BILD AUSSUCHEN
+
+> **Phase 20.6-b ist fertig.** Bisher ging das Profilbild nur im Browser; am Handy
+> stand dort ein Satz statt eines Knopfes. Jetzt geht es auf beiden.
+>
+> **Deine Entscheidung 54 ist eingebaut:** Nach dem Antippen zeigt iOS den
+> Zuschneide-Dialog, du schiebst und zoomst, bis dein Kopf im Kreis sitzt.
+>
+> **Und das Wichtigste vorweg: Das hing NICHT an deinem Supabase-Klick.** Im Plan
+> stand, der Bildwähler gehöre in denselben Schritt wie „Anmelden mit Apple/Google".
+> Nachgesehen: Der Baustein dafür ist seit vorgestern Nacht im Projekt, und mit
+> Supabase hat er gar nichts zu tun — er redet mit iOS. **Deine sieben Felder im
+> Dashboard sind also weiter offen (siehe ganz oben), aber sie haben diese Phase
+> nicht aufgehalten.**
+>
+> **Zwei Funde, die du kennen solltest — beide hätten fast jeden getroffen:**
+>
+> 1. **Ein iPhone-Foto ist kein JPEG.** Apple speichert Fotos als HEIC, und unsere
+>    App erlaubt nur JPG, PNG und WebP. Der naheliegende Weg hätte damit **jedem
+>    gewöhnlichen Handyfoto** gesagt „Das geht nur als JPG, PNG oder WebP" — also
+>    nicht einem Sonderfall, sondern fast allen. Gefunden, indem ich im Quelltext des
+>    Bausteins nachgelesen habe: Er kann das Bild auf Wunsch selbst als JPEG
+>    herausgeben. Genau das macht die App jetzt.
+> 2. **Die Größenprüfung wäre am Handy still ausgefallen.** „Höchstens 5 MB" wurde an
+>    einer Stelle gefragt, die es am Handy gar nicht gibt — und das Ergebnis wäre
+>    nicht „Fehler", sondern „geht immer durch" gewesen. Niemand hätte es gemerkt, bis
+>    ein zu großes Bild beim Hochladen scheitert, auf Englisch und nach dem Warten.
+>
+> **Und einer über meine eigene Prüfung, der mir zu denken gibt:** Ich habe den neuen
+> Umrechner absichtlich kaputtgemacht, um zu sehen, ob die Prüfung anschlägt. Sie
+> schlug an — **aber nur, weil zufällig eine der drei Testdateien die richtige Länge
+> hatte.** Hättest du einen Screenshot aus `_belege/` gelöscht, wäre die Prüfung grün
+> gewesen und der Code kaputt. Ist behoben: Jetzt wird jede Datei in allen drei Längen
+> geprüft.
+>
+> ⚠️ **Was noch aussteht: ein Durchgang am echten iPhone.** Der Erlaubnis-Dialog, das
+> Zuschneide-Fenster und die Frage, wie groß ein Foto danach wirklich ist, lassen sich
+> am Mac nicht prüfen. Das gehört in denselben Durchgang wie Apple und Google.
+>
+> **Für dich ist keine neue Aufgabe entstanden.** Offen bleibt oben: die sieben Felder.
+
+---
+
 ## ✅ STAND 12.09.2026 (spät) — ALLE KONTEN STEHEN, DER BUILD IST VORBEREITET
 
 > **Supabase ✅ · Apple ✅ · Google ✅** — alle sechs Zugänge liegen in

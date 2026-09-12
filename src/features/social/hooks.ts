@@ -5,6 +5,7 @@ import { aendern, schreibVorgang, schreibVorgangMitId, useSlice } from '../store
 import * as senden from '@/data/senden';
 
 import { istWienerBezirk } from '@/lib/bezirk';
+import type { Bilddatei } from '@/lib/bild-waehlen-typen';
 import type { User } from '@/types/models';
 
 /**
@@ -136,7 +137,7 @@ export function bezirkSetzen(plz: string): Promise<void> {
  * („Neuladen setzt zurück"), und es ist ehrlicher als ein Platzhalterbild: Man
  * sieht SEIN Bild, nicht irgendeines.
  */
-export function profilbildSetzen(datei: Blob, typ: string): Promise<string> {
+export function profilbildSetzen(bild: Bilddatei): Promise<string> {
   const ichId = getCurrentUserId();
   return schreibVorgangMitId(
     'profilbildSetzen',
@@ -145,12 +146,17 @@ export function profilbildSetzen(datei: Blob, typ: string): Promise<string> {
     // ist der Unterschied zu `bezirkSetzen`, wo die App das Ergebnis kennt.
     () => ({}),
     async (sb) => {
-      const adresse = await senden.profilbildSetzen(sb, datei, typ, ichId);
+      const adresse = await senden.profilbildSetzen(sb, bild, ichId);
       adresseEintragen(ichId, adresse);
       return adresse;
     },
     () => {
-      const adresse = URL.createObjectURL(datei);
+      // `bild.vorschau` statt `URL.createObjectURL(bild.inhalt)` — auf dem Gerät ist
+      // `inhalt` ein `Uint8Array`, und der Attrappen-Zweig läuft dort genauso
+      // (`ANMELDE_QUELLE` steht weiter auf `'attrappe'`). Die Adresse hat der
+      // Wähler schon, weil nur er weiß, welche seiner beiden Gestalten anzeigbar
+      // ist (siehe `Bilddatei`).
+      const adresse = bild.vorschau;
       adresseEintragen(ichId, adresse);
       return adresse;
     },
