@@ -5456,6 +5456,23 @@ und `laden.js` `mock` auch über keinen Umweg ziehen.
 Satz im Prototyp-Hinweis, der „Es gibt keinen Login" behauptet — harte Regel 22, der
 Satz ist Ians.
 
+⚠️ **Was an 20.5 NICHT geprüft ist, und zwar prinzipiell nicht — solange der Schalter
+auf `'attrappe'` steht.** Die 49 Häkchen messen `data/senden.ts` **unmittelbar**, mit
+einem echten Token gegen den echten Server. Was sie NICHT durchlaufen, ist der Weg
+darüber:
+
+- **Der `'supabase'`-Zweig von `schreibVorgang()`** — also der wartende Knopf
+  („Moment …"), die Fehlerleiste und das Nachladen als Rücknahme. Er ist typgeprüft und
+  im Prototyp nachweislich folgenlos (Pixel für Pixel identisch), aber niemand hat ihn
+  laufen sehen.
+- **Ians Entscheidung 47** (`useNachladenBeimHervorholen`). Der Haken kehrt bei
+  `!LIEST_AUS_SUPABASE` sofort um; im Prototyp gibt es also nichts zu beobachten.
+
+**Beides hängt am selben Nagel wie alles andere: an 20.3-b2.** Ohne echte Anmeldung
+kein Token, ohne Token kein `LIEST_AUS_SUPABASE`. Das ist dieselbe Lage wie bei 20.4-b
+(„der Schalter lässt sich erst mit 20.3-b umlegen") und kein Versäumnis dieser Phase —
+aber es gehört beim Umlegen als Erstes angeschaut, nicht als Letztes.
+
 #### 20.6 — Profilbilder ⬜
 
 Darias Wunsch vom 2026-09-02, seit Phase 15 vorbereitet: `User.photoUrl?` gibt es, alle
