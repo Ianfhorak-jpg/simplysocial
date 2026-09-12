@@ -35,6 +35,33 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+🎉 **Die Anmeldung LÄUFT — Ian hat sich am 2026-09-12 mit seiner eigenen Mailadresse
+am echten Supabase angemeldet.** Der erste echte Login in SimplySocial. Drei Befunde aus
+dem Durchgang, zwei davon meine Fehler, und **alle drei hätten ausgerechnet jeden NEUEN
+Nutzer getroffen**:
+
+1. **Die erste Mail kam aus der FALSCHEN Vorlage.** Ian hatte „Magic link or OTP" auf
+   `{{ .Token }}` umgestellt und bekam trotzdem einen Link: Es gab sein Konto noch
+   nicht, also hat `signInWithOtp` ihn **registriert** — und dafür nimmt GoTrue die
+   Vorlage **„Confirm signup"**. **Das Tückische ist die Verteilung:** Der Fehler tritt
+   pro Mensch genau EINMAL auf, beim allerersten Mal. Wer selbst testet, sieht ihn
+   einmal und hält ihn danach für behoben, während jeder Neue wieder hineinläuft.
+   **Beide Vorlagen tragen jetzt `{{ .Token }}`.**
+2. **Der Code hat ACHT Ziffern, mein Feld nahm sechs — und die App hat Ian für ihren
+   eigenen Fehler beschuldigt.** Supabase lässt 6–10 zu (*Email OTP Length*), meine
+   `maxLength={6}` war eine Annahme über eine fremde Einstellung. **`maxLength`
+   schneidet stillschweigend ab:** richtiger Code eingetippt, zwei Ziffern verworfen,
+   „Der Code stimmt nicht". Dieselbe Familie wie „Noch nichts los in deinem Feed" bei
+   einem Netzausfall. Jetzt `CODE_MIN`/`CODE_MAX` in der Regel-Datei — **ein zu
+   großzügiges Feld kostet nichts, ein zu kleines verwirft Eingaben.**
+3. **Der Bezirk ist ab jetzt ein FELD, kein Raster** (Ians Rückmeldung, harte Regel 81).
+
+⚠️ **Und daraus folgt etwas für die nächste Sitzung:** In `auth.users` steht seit dem
+2026-09-12 **ein echtes Konto (Ians)**. Damit verweigern `npm run pruef-lesen` und
+`npm run pruef-konto` den Dienst — der Wächter tut, wofür er gebaut ist. Entweder das
+Konto löschen (`delete from auth.users;`) oder die Prüfstände in ein zweites
+Supabase-Projekt umziehen. **Das ist Ians Entscheidung.**
+
 ✅ **Phase 20.3-b1 ist fertig (2026-09-12): die App kann sich WIRKLICH anmelden — per
 E-Mail-Code, gegen Ians echtes Supabase.** Der Teil von 20.3-b, der OHNE Apple und
 Google geht, und wieder ohne neuen Baustein und ohne Build. `npm run pruef-konto` —
@@ -2591,6 +2618,33 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    sondern **„steht etwas zum Anschauen?"**. Gemessen am 2026-09-12 beim ersten Umlegen
    des Schalters; dieselbe Familie wie das weiße Logo auf Papierweiß.
 
+81. **Einen Bezirk gibt man an, man wählt ihn nicht — `SsBezirkFeld`, nie 23 Chips.**
+   *(Ians Rückmeldung vom 2026-09-12, nach seinem ersten eigenen Durchgang durch den
+   Bildschirm fürs erste Konto: „bitte merk dir das endlich mit den Bezirken dass das
+   nicht geht, bitte ein Feld wo man seine Postleitzahl eingeben soll.")* Gilt für den
+   Bildschirm fürs erste Konto und für den Heimatbezirk in `/einstellungen`.
+   **`BEZIRKS_LISTE` bleibt für FILTER richtig** — und genau darin liegt der
+   Unterschied: Beim Filtern wählt man aus dem, was da ist (`useBezirkeImFeed`,
+   Phase-15-Falle); hier gibt man etwas an, das man ohnehin weiß. Jeder Wiener kennt
+   seine vier Ziffern; sie unter 23 Chips zu suchen ist mehr Arbeit als sie zu tippen,
+   und auf 360 px sind es sechs Zeilen, die alles darunter aus dem Bild schieben
+   (gemessen: 132 px Überhang allein durch das Raster). Harte Regel 63.
+   **Ein freies Feld braucht dafür etwas, das eine Liste geschenkt hat:** Eine Liste
+   bestätigt sich selbst — was dasteht, gibt es. `1240` sieht aus wie ein Bezirk und
+   ist keiner. Deshalb zeigt das Feld den NAMEN zur Zahl, und das fängt auch den
+   Zahlendreher ab, den `istWienerBezirk()` allein durchlässt: Wer `1120` statt `1210`
+   tippt, liest „Meidling" statt „Floridsdorf".
+82. **Eine Längenbegrenzung an einem Eingabefeld ist eine ANNAHME — und `maxLength`
+   schneidet stillschweigend ab.** *(2026-09-12, an Ian gemessen.)* `maxLength={6}` am
+   Code-Feld war meine Annahme über eine Supabase-Einstellung, die 6 bis 10 zulässt
+   (*Email OTP Length*, bei Ian auf 8). Er tippte den richtigen Code, das Feld verwarf
+   zwei Ziffern, und die App sagte ihm, der Code sei falsch — **sie hat ihn für ihren
+   eigenen Fehler beschuldigt.** Deshalb stehen `CODE_MIN`/`CODE_MAX` in
+   `features/auth/anmeldung.ts` und nicht als Zahl im Bildschirm: Die Länge gehört
+   Supabase. Allgemein: **Ein zu großzügiges Feld kostet nichts, ein zu kleines
+   verwirft Eingaben** — und wer prüfen will, ob eine Eingabe stimmt, fragt die Stelle,
+   die sie erzeugt hat, nicht das Feld.
+
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
 - **Große Display-Fonts clippen auf iOS.** `lineHeight ≈ 1.2 × fontSize` setzen, sonst
@@ -3398,6 +3452,14 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   und die PID im Lock zeigte auf einen davon — ein Browser aus einer früheren Sitzung.
   **Erst `pgrep` gegen die PID im Lock halten, dann entscheiden**, ob man löscht oder
   schließt.
+- **`signInWithOtp` nimmt bei einem NEUEN Konto die Vorlage „Confirm signup", nicht
+  „Magic Link".** (2026-09-12) Ian hatte „Magic link or OTP" auf `{{ .Token }}`
+  umgestellt und bekam trotzdem einen Link: Weil es sein Konto noch nicht gab, war es
+  eine Registrierung. **Der Fehler tritt pro Mensch genau EINMAL auf** — beim zweiten
+  Versuch existiert das Konto und die Magic-Link-Vorlage greift. Wer selbst testet,
+  sieht ihn einmal und hält ihn für behoben, während jeder Neue wieder hineinläuft.
+  **Beide Vorlagen brauchen `{{ .Token }}`.** Dieselbe Sorte wie die Attrappen-Falle:
+  Der eigene Zustand ist nicht der Zustand, in dem die anderen ankommen.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

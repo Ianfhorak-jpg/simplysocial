@@ -8,6 +8,7 @@ export * from './SsChip';
 export * from './SsGlas';
 export * from './SsIcon';
 export * from './SsIconText';
+export * from './SsBezirkFeld';
 export * from './SsInput';
 export * from './SsJahrgangBalken';
 export * from './SsKarte';

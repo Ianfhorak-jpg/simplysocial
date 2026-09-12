@@ -2,14 +2,23 @@ import { router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsIcon, SsScreen, SsText } from '@/components/ui';
+import {
+  SsAvatar,
+  SsBack,
+  SsBezirkFeld,
+  SsButton,
+  SsCard,
+  SsIcon,
+  SsScreen,
+  SsText,
+} from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { abmelden } from '@/features/auth/hooks';
 import { entblocken, useBlockierte } from '@/features/safety/hooks';
 import { standortAnschalten, standortAusschalten, useStandortStand } from '@/features/posts/hooks';
 import { standortFolgen } from '@/features/posts/standort';
 import { bezirkSetzen, useCurrentUser } from '@/features/social/hooks';
-import { BEZIRKS_LISTE } from '@/lib/bezirk';
+import { istWienerBezirk } from '@/lib/bezirk';
 import { accent, colors, danger, radius, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
 
@@ -40,8 +49,13 @@ import type { IconName } from '@/theme/icons';
 export default function EinstellungenScreen() {
   const blockierte = useBlockierte();
   const ich = useCurrentUser();
-  /** Die 23 Bezirke stehen zugeklappt — harte Regel 63. */
+  /** Das Bezirksfeld steht zugeklappt — harte Regel 63. */
   const [bezirkOffen, setBezirkOffen] = useState(false);
+  // Der Entwurf steht NEBEN dem gespeicherten Wert und nicht an seiner Stelle: Beim
+  // Tippen durchläuft das Feld `1`, `12`, `122` — Zustände, die kein Bezirk sind. Wer
+  // sie direkt ins Profil schreibt, sortiert den Feed zwischendurch ab einem Ort, den
+  // es nicht gibt. Übernommen wird erst, was `istWienerBezirk()` durchlässt.
+  const [entwurf, setEntwurf] = useState(ich.district);
   const standort = useStandortStand();
   // Die Sätze kommen aus der Regel-Datei, nicht aus diesem Screen — sonst steht hier
   // eines Tages etwas, das `STANDORT_ROLLE` nicht mehr tut (harte Regel 17).
@@ -82,19 +96,28 @@ export default function EinstellungenScreen() {
           <SsIcon name={bezirkOffen ? 'chevronUnten' : 'chevronRechts'} size={18} color={colors.inkSoft} />
         </Pressable>
 
+        {/* Ein FELD, kein Raster aus 23 Chips — Ians Rückmeldung vom 2026-09-12.
+            Die Begründung steht im Kopf von `SsBezirkFeld`. Sie gilt hier genauso
+            wie beim ersten Konto: Man WÄHLT hier nichts aus, man GIBT an, wo man
+            wohnt, und das weiß man.
+
+            Zugeklappt wird NICHT mehr von selbst. Beim Raster war das richtig — ein
+            Tipp, eine Wahl, fertig. Bei einem Feld gibt es diesen Augenblick nicht:
+            Nach der vierten Ziffer wegzuklappen nähme jemandem die Zeile weg, an
+            der er gerade abliest, ob er sich vertippt hat. */}
         {bezirkOffen ? (
-          <View style={styles.bezirke}>
-            {BEZIRKS_LISTE.map((b) => (
-              <SsChip
-                key={b.plz}
-                label={b.plz}
-                selected={ich.district === b.plz}
-                onPress={() => {
-                  bezirkSetzen(b.plz);
-                  setBezirkOffen(false);
-                }}
-              />
-            ))}
+          <View style={styles.bezirkFeld}>
+            <SsBezirkFeld
+              wert={entwurf}
+              setzen={(plz) => {
+                setEntwurf(plz);
+                // Erst übernehmen, wenn es wirklich ein Bezirk ist. Sonst stünde
+                // nach der ersten Ziffer eine `1` im Profil, und der Feed sortierte
+                // ab einem Ort, den es nicht gibt.
+                if (istWienerBezirk(plz)) bezirkSetzen(plz);
+              }}
+              label="Dein Heimatbezirk"
+            />
           </View>
         ) : null}
 
@@ -326,7 +349,9 @@ const styles = StyleSheet.create({
   // Umbrechendes Pillenfeld statt einer waagrechten Reihe: 23 Bezirke in EINER
   // Zeile hieße scrollen, um Liesing zu finden — und man sucht hier genau einen
   // bestimmten, nicht „irgendeinen".
-  bezirke: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  // Das Chip-Raster ist mit Ians Rückmeldung vom 2026-09-12 weg; übrig bleibt
+  // die Einrückung, damit das Feld unter der Zeile steht statt neben ihr.
+  bezirkFeld: { paddingTop: spacing.xs },
 
   person: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   personText: { flex: 1, minWidth: 0, gap: 2 },

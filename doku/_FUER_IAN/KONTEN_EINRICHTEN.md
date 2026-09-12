@@ -6,9 +6,10 @@
 >
 > ✅ **Apple Developer Program — hast du seit dem 11.09.**
 > ✅ **Supabase** — steht seit dem 12.09.2026
-> 🆕 ⬜ **Ein Mail-Versender** (Punkt 0 gleich hier unten) · **15 Minuten** — ohne ihn
-> kommt beim Anmelden per E-Mail niemand hinein, und ihr könnt es zu viert gar nicht
-> ausprobieren (Supabase gratis: **2 Mails pro Stunde**)
+> ✅ **Mail-Versender (Brevo)** — steht seit dem 12.09., und **die Anmeldung LÄUFT**:
+> Du hast dich an dem Abend mit deiner eigenen Adresse angemeldet.
+> 🆕 ⬜ **Eine Vorlage fehlt noch** (Punkt 0e-2) · **2 Minuten** — sonst bekommen
+> Christoph, Leopold und Daria einen Link statt einer Zahl
 > ⬜ **Google** (der zweite Anmeldeweg) · ⬜ **zwei Apple-Handgriffe** (1b und 1c unten)
 >
 > Reihenfolge ist unten vorgegeben und **nicht beliebig**: Apple muss vor Google fertig
@@ -127,6 +128,38 @@ Brevo will wissen, von welcher Adresse die Mails kommen sollen.
 
 4. Bei **Subject** hineinschreiben: `Dein Code für SimplySocial`
 5. **Save**
+
+### 0e-2. ⚠️ Die ZWEITE Vorlage — sonst geht es den anderen drei schlecht
+
+**Das hat uns am 12.09. eine Runde gekostet.** Es gibt zwei Vorlagen, und welche
+genommen wird, hängt davon ab, ob es das Konto schon gibt:
+
+| Wer sich anmeldet | Vorlage |
+|---|---|
+| jemand **zum ersten Mal** (Konto wird angelegt) | **Confirm signup** |
+| jemand, den es schon gibt | **Magic link or OTP** |
+
+**Du merkst das an dir selbst nicht mehr** — dein Konto gibt es jetzt. Christoph,
+Leopold und Daria bekämen aber alle drei wieder einen Link statt einer Zahl.
+
+Also: **Authentication → Emails → „Confirm signup"** → Body auf **Source** →
+
+```html
+<h2>Willkommen bei SimplySocial</h2>
+<p>Gib diese Zahl in der App ein:</p>
+<p style="font-size:32px;letter-spacing:6px;"><strong>{{ .Token }}</strong></p>
+<p>Sie gilt eine Stunde und nur einmal. Wenn du das nicht warst, ignorier diese Mail.</p>
+```
+
+Subject: `Dein Code für SimplySocial` — **Save**
+
+> ℹ️ **Nebenbefund:** Dein Code hat **acht** Ziffern, nicht sechs. Das steht in
+> Supabase unter *Authentication → Sign In / Providers → Email → Email OTP Length*.
+> Musst du nicht ändern — die App kommt jetzt mit 6 bis 10 zurecht. Wissen muss man es
+> trotzdem, denn vorher hat sie stillschweigend zwei Ziffern weggeworfen und dann
+> behauptet, der Code sei falsch.
+
+---
 
 ### 0f. Und dann sagst du mir Bescheid
 

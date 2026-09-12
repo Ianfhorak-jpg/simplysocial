@@ -8,6 +8,8 @@ import {
   ANMELDE_QUELLE,
   ANMELDE_WEGE,
   anmeldeFolgen,
+  CODE_MAX,
+  CODE_MIN,
   codeFehlerText,
 } from '@/features/auth/anmeldung';
 import { anmeldenMitCode, attrappeAnmelden, codeSchicken } from '@/features/auth/hooks';
@@ -232,10 +234,15 @@ function EmailWeg({
           <SsInput
             label="Die Zahl aus der Mail"
             value={code}
-            onChangeText={setCode}
+            // Nur Ziffern, und NICHT abgeschnitten: `maxLength` steht auf dem, was
+            // Supabase höchstens schicken kann (CODE_MAX), nicht auf dem, was wir
+            // erwarten. Der Filter ist trotzdem da, weil beim Kopieren aus einer
+            // Mail gern ein Leerzeichen mitkommt — und ein unsichtbares Zeichen im
+            // Code ist genau die Sorte Fehler, die als „Code falsch" erscheint.
+            onChangeText={(wert) => setCode(wert.replace(/\D/g, ''))}
             placeholder="123456"
             keyboardType="number-pad"
-            maxLength={6}
+            maxLength={CODE_MAX}
             autoFocus
             onSubmitEditing={() => void pruefen()}
           />
@@ -243,7 +250,7 @@ function EmailWeg({
             label={laeuft ? 'Einen Moment …' : 'Weiter'}
             block
             size="lg"
-            disabled={laeuft || code.trim().length === 0}
+            disabled={laeuft || code.trim().length < CODE_MIN}
             onPress={() => void pruefen()}
           />
         </>

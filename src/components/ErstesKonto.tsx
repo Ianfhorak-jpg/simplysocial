@@ -2,12 +2,11 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { SsButton, SsChip, SsInput, SsText } from '@/components/ui';
+import { SsBezirkFeld, SsButton, SsInput, SsText } from '@/components/ui';
 import { jahrgangMax, jahrgangMin } from '@/config/alter';
 import { kontoAnlegen } from '@/features/auth/hooks';
 import { BEZIRK_GRUND, fehltNoch, handleVorschlag, kontoFolgen } from '@/features/auth/konto';
 import { KontoFehler } from '@/features/auth/konten';
-import { BEZIRKS_LISTE } from '@/lib/bezirk';
 import { colors, MAX_CONTENT_WIDTH, radius, spacing, status } from '@/theme';
 
 /**
@@ -117,27 +116,18 @@ export function ErstesKonto({ authId }: { authId: string }) {
           </SsText>
         ) : null}
 
-        <View style={styles.block}>
-          <SsText variant="label">{texte.bezirkTitel}</SsText>
-          <SsText variant="caption" color={colors.inkSoft}>
-            {BEZIRK_GRUND}
-          </SsText>
-          <View style={styles.bezirke}>
-            {BEZIRKS_LISTE.map((b) => (
-              <SsChip
-                key={b.plz}
-                label={b.plz}
-                selected={bezirk === b.plz}
-                onPress={() => setBezirk(b.plz)}
-              />
-            ))}
-          </View>
-          {gezeigt && maengel.bezirk ? (
-            <SsText variant="caption" color={status.danger}>
-              {maengel.bezirk}
-            </SsText>
-          ) : null}
-        </View>
+        {/* Ein FELD, kein Raster aus 23 Chips — Ians Rückmeldung vom 2026-09-12,
+            nachdem er den Bildschirm zum ersten Mal selbst benutzt hatte. Die
+            Begründung steht im Kopf von `SsBezirkFeld`; sie ist keine
+            Geschmacksfrage, sondern der Unterschied zwischen etwas AUSWÄHLEN und
+            etwas ANGEBEN, das man ohnehin weiß. */}
+        <SsBezirkFeld
+          wert={bezirk}
+          setzen={setBezirk}
+          label={texte.bezirkTitel}
+          hinweis={BEZIRK_GRUND}
+          fehler={gezeigt ? maengel.bezirk ?? undefined : undefined}
+        />
 
         {/* Der Hinweis steht UNTER dem Titel und nicht daneben — dasselbe Muster wie
             der Grund beim Bezirk darüber. Als `hint` teilte er sich die Zeile mit dem
@@ -204,5 +194,4 @@ const styles = StyleSheet.create({
   // darunter — der `gap` des Kastens würde sie sonst gleich weit von beiden weg
   // setzen und damit freischwebend aussehen lassen.
   grund: { marginTop: -spacing.xs },
-  bezirke: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
 });

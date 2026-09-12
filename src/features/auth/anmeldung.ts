@@ -203,6 +203,31 @@ export function anmeldeFolgen(weg: AnmeldeWeg): {
 }
 
 /**
+ * Wie viele Ziffern der Code aus der Mail hat — **eine Spanne, keine Zahl.**
+ *
+ * ── Warum das hier steht und nicht als `maxLength={6}` im Screen ─────────────
+ * Weil die Zahl gar nicht uns gehört: Supabase lässt sie im Dashboard von **6 bis
+ * 10** einstellen (Authentication → Sign In / Providers → Email → „Email OTP
+ * Length"). Eine feste 6 im Eingabefeld ist damit eine ANNAHME über eine fremde
+ * Einstellung — und am 2026-09-12 war sie falsch.
+ *
+ * ── Wie sie gescheitert ist, ist der eigentliche Grund für diesen Absatz ─────
+ * `maxLength` schneidet **stillschweigend** ab. Ian hat den richtigen Code
+ * eingetippt, das Feld hat die letzten Ziffern verworfen, und die App hat ihm
+ * gesagt, der Code stimme nicht. **Sie hat ihn für ihren eigenen Fehler
+ * beschuldigt** — dieselbe Familie wie „Noch nichts los in deinem Feed" bei einem
+ * Netzausfall (Ians Entscheidung 43): ein Satz, der lügt, weil niemand geprüft
+ * hat, ob seine Voraussetzung gilt.
+ *
+ * Deshalb steht `MAX` auf der OBERGRENZE dessen, was Supabase überhaupt schicken
+ * kann, und nicht auf dem, was wir erwarten: **Ein zu großzügiges Feld kostet
+ * nichts, ein zu kleines verwirft Eingaben.** Geprüft wird die Länge nicht hier,
+ * sondern von GoTrue — das ist die einzige Stelle, die den Code wirklich kennt.
+ */
+export const CODE_MIN = 6;
+export const CODE_MAX = 10;
+
+/**
  * Was dasteht, wenn der Code nicht durchgeht — Phase 20.3-b1.
  *
  * ── Warum eine Funktion und nicht ein Satz ───────────────────────────────────

@@ -4741,6 +4741,66 @@ Native-Bausteine, die dabei dazukommen — **alle vier zusammen, dann ein Build*
 > ausgeloggte Zustand wird **eine Ebene höher** behandelt: Ein Screen, der einen
 > angemeldeten Nutzer braucht, wird gar nicht erst gezeichnet.
 
+#### Der erste echte Durchgang mit Ian *(2026-09-12 abends)* — drei Befunde
+
+**Die Anmeldung LÄUFT am echten Server, mit Ians eigener Mailadresse.** Was dabei
+herauskam, sind drei Dinge, die kein Prüfstand gefunden hätte — zwei davon meine
+Fehler, einer eine Eigenheit von Supabase.
+
+**1. Die erste Mail kam aus der FALSCHEN Vorlage, und der Fehler trifft ausgerechnet
+jeden neuen Nutzer.** Ian hatte „Magic link or OTP" auf `{{ .Token }}` umgestellt und
+bekam trotzdem einen Link. Grund: Es gab sein Konto noch nicht, also hat
+`signInWithOtp` ihn **registriert** — und für eine Registrierung nimmt GoTrue die
+Vorlage **„Confirm signup"**. Die stand noch auf `{{ .ConfirmationURL }}`.
+**Das Tückische ist die Verteilung:** Der Fehler tritt pro Mensch genau EINMAL auf,
+beim allerersten Mal, und danach nie wieder — beim zweiten Versuch existiert das Konto
+und die Magic-Link-Vorlage greift. Wer selbst testet, sieht ihn also genau einmal und
+hält ihn danach für behoben, während jeder Neue wieder hineinläuft.
+**Beide Vorlagen tragen jetzt `{{ .Token }}`.** Nachgemessen an der Datenbank: Das
+Konto war um 09:00:17 angelegt und um 09:00:31 bestätigt — der Link hatte
+funktioniert, er führte nur nirgendwohin, wo die App steht.
+
+**2. Der Code hat ACHT Ziffern, das Feld nahm sechs — und die App hat Ian für ihren
+eigenen Fehler beschuldigt.** `maxLength={6}` war meine Annahme, Supabase lässt 6 bis
+10 zu (*Email OTP Length*, in Ians Projekt auf 8). **`maxLength` schneidet
+stillschweigend ab:** Ian tippte den richtigen Code, das Feld verwarf zwei Ziffern, und
+die App meldete „Der Code stimmt nicht". Dieselbe Familie wie „Noch nichts los in
+deinem Feed" bei einem Netzausfall (Entscheidung 43) — **ein Satz, der lügt, weil
+niemand geprüft hat, ob seine Voraussetzung gilt.** Und wieder hätte es alle drei
+Mitgründer getroffen.
+Jetzt `CODE_MIN`/`CODE_MAX` in `anmeldung.ts` statt einer `6` im Bildschirm: **Die Zahl
+gehört Supabase und nicht uns.** `maxLength` steht auf der Obergrenze dessen, was
+überhaupt kommen kann — **ein zu großzügiges Feld kostet nichts, ein zu kleines
+verwirft Eingaben.** Dazu ein Ziffernfilter (beim Kopieren aus einer Mail rutscht ein
+Leerzeichen mit, und ein unsichtbares Zeichen sieht aus wie ein falscher Code) und ein
+Knopf, der erst ab `CODE_MIN` aktiv wird.
+
+**3. Ians Rückmeldung zum Bezirk, und sie gilt ab jetzt überall:** *„bitte merk dir das
+endlich mit den Bezirken dass das nicht geht, bitte ein Feld wo man seine Postleitzahl
+eingeben soll."* Das Raster aus 23 Chips ist weg, an seiner Stelle steht der Baustein
+**`SsBezirkFeld`** — im Bildschirm fürs erste Konto UND beim Heimatbezirk in
+`/einstellungen`.
+**Der Unterschied, um den es geht, ist nicht Geschmack:** Beim FILTERN wählt man aus
+dem, was da ist (`useBezirkeImFeed`, Phase-15-Falle) — hier GIBT man etwas an, das man
+weiß. Jeder Wiener kennt seine vier Ziffern auswendig; sie unter 23 Chips zu suchen ist
+mehr Arbeit als sie zu tippen, und auf 360 px sind es sechs Zeilen, die alles darunter
+aus dem Bild schieben (gemessen: 132 px Überhang allein durch das Raster).
+**Was ein freies Feld zusätzlich braucht:** Eine Liste bestätigt sich selbst — was
+dasteht, gibt es. `1240` sieht aus wie ein Bezirk und ist keiner. Deshalb zeigt das Feld
+bei einer gültigen Zahl den NAMEN dazu, und das fängt auch den Zahlendreher ab, den eine
+reine Gültigkeitsprüfung durchlässt: Wer `1120` statt `1210` tippt, liest „Meidling"
+statt „Floridsdorf". Belegt: `1210` → *Floridsdorf*, `1240` → *„Den Bezirk gibt es in
+Wien nicht."*, `ak01`.
+
+> ⚠️ **Was daraus für die nächste Sitzung folgt:** In `auth.users` steht seit dem
+> 2026-09-12 **ein echtes Konto (Ians)**, noch ohne Profil. Damit verweigern
+> `npm run pruef-lesen` und `npm run pruef-konto` den Dienst — der Wächter tut genau
+> das, wofür er gebaut ist. **Entweder wird das Konto gelöscht** (`delete from
+> auth.users;`, dann laufen beide wieder) **oder die Prüfstände ziehen in ein zweites
+> Supabase-Projekt um.** Das ist Ians Entscheidung, nicht meine.
+
+---
+
 #### Was beim Bauen von 20.3-b1 herauskam *(2026-09-12)*
 
 **Gebaut ist der E-Mail-Weg, und zwar gegen Ians echtes Supabase.** `npm run
