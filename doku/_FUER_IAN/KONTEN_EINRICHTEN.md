@@ -307,15 +307,49 @@ waren gegen 121 Angriffe geprüft.
 laut Richtlinie 4.8, dass „Anmelden mit Apple" daneben steht. Andersherum ist es eine
 Ablehnung im Review.
 
-1. [console.cloud.google.com](https://console.cloud.google.com) → neues Projekt `SimplySocial`
-2. **APIs & Services → OAuth consent screen** → **External** → App-Name `SimplySocial`,
-   deine E-Mail als Kontakt. Mehr braucht es für den Anfang nicht.
-3. **Credentials → Create Credentials → OAuth client ID**, und zwar **zweimal**:
-   - **Web application** — Redirect-URI: `https://<deine-projekt-url>.supabase.co/auth/v1/callback`
-     *(die URL aus Punkt 2.5)*
-   - **iOS** — Bundle ID: `at.simplysocial.app`
-4. **Was ich brauche:** von der Web-Variante **Client ID und Client Secret**, von der
-   iOS-Variante nur die **Client ID**.
+> ❌ **Die Anleitung hier war veraltet und ist am 12.09.2026 berichtigt.** Sie nannte
+> *„APIs & Services → OAuth consent screen"* und *„Credentials"* — **diese Navigation
+> gibt es nicht mehr.** Google hat die OAuth-Einrichtung in die **Google Auth
+> Platform** verschoben; die drei Reiter *Branding · Zielgruppe · Clients* ersetzen
+> zusammen das alte Formular. Ian hat „Credentials" gesucht und nicht gefunden —
+> nachgesehen statt geraten, dann war der Grund in zwei Minuten klar.
+
+**Auf Deutsch, und mit den Direktlinks:**
+
+1. [console.cloud.google.com](https://console.cloud.google.com) → oben in der
+   Projekt-Auswahl → **Neues Projekt** → Name `SimplySocial` → **Erstellen**
+2. **Google Auth Platform** öffnen → <https://console.cloud.google.com/auth/overview>
+   Steht dort **„Jetzt starten"**, draufklicken.
+3. Reiter **Zielgruppe** → **Extern** → speichern.
+   *(Diese Reihenfolge ist nicht beliebig: Erst wenn die Zielgruppe steht, lässt sich
+   Branding überhaupt ausfüllen.)*
+4. Reiter **Branding** → App-Name `SimplySocial`, deine E-Mail als Kontakt.
+5. Reiter **Clients** → <https://console.cloud.google.com/auth/clients> →
+   **„+ Client erstellen"**, und zwar **zweimal**:
+
+   | Anwendungstyp | Was hinein muss |
+   |---|---|
+   | **Webanwendung** | Autorisierte Weiterleitungs-URI: `https://iwvakdbefwpshzhlhmgj.supabase.co/auth/v1/callback` |
+   | **iOS** | Bundle-ID: `at.simplysocial.app` |
+
+> ⚠️ **Das Client-Geheimnis zeigt Google seit Juni 2025 nur EINMAL an** — danach nur
+> noch die letzten vier Zeichen. **Dieselbe Falle wie beim Brevo-Schlüssel und beim
+> Apple-`.p8`**, dreimal an einem Tag.
+>
+> **Deshalb gibt es dafür einen Befehl.** Bei Google auf Kopieren klicken, dann:
+>
+> ```bash
+> cd simplysocial && npm run google-key sichern
+> ```
+>
+> Das Skript **erkennt am Präfix selbst**, was du kopiert hast (`GOCSPX-…` ist das
+> Geheimnis, `….apps.googleusercontent.com` eine Client ID) und legt es richtig ab —
+> Geheimnis nach `~/.simplysocial/` außerhalb des Repos, die IDs daneben. **Du musst
+> nichts in den Chat tippen und nichts unterscheiden.** Dreimal aufrufen, einmal je
+> Wert.
+>
+> `npm run google-key` (ohne `sichern`) zeigt den Stand und legt das Geheimnis
+> zurück in die Zwischenablage, falls das Einfügen in Supabase schiefgeht.
 
 ---
 
