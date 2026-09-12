@@ -35,6 +35,78 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Der erste DURCHGANG mit echten Daten ist gemacht (2026-09-12 abends) — und im
+ungeprüften Teil von 20.5 lag ein Fehler, der jeden Benutzer bei JEDER FREMDEN
+NACHRICHT aus dem Bildschirm geworfen hätte.** Hier stand am Nachmittag, der
+`'supabase'`-Zweig von `schreibVorgang()` und Ians Entscheidung 47 seien „typgeprüft,
+aber niemand hat sie laufen sehen", und das gehöre beim Umlegen als Erstes angeschaut.
+**Angeschaut — ohne auf 20.3-b2 zu warten**, weil man den Schalter zum MESSEN nicht
+dauerhaft umlegen muss. Gemessen: `tsc` sauber, **81 Lint-Probleme wie vorher**, lokal
+**124 Häkchen**, `pruef-lesen` 29 · `pruef-konto` 29 · `pruef-schreiben` 49, Prototyp
+auf 390 × 844 **Pixel für Pixel identisch** (`am01` gegen `al01`, Unterschieds-Rechteck
+`None`). Die echte Datenbank stand danach wieder auf **einem Konto — Ians —, sonst
+nichts.** Belege `am01`–`am06`, alles in PLAN.md 5b unter „20.5-c". Sechs Dinge:
+
+1. **Der teuerste Fund braucht KEINEN Tastendruck.** Ian steht auf `/post/…` und rührt
+   sich nicht; *Lea* schreibt in einen ganz anderen Chat. Ergebnis: Bildschirmtext
+   **204 → 12** (~240 ms leer), Adresse `/post/…` → **`/account-loeschen`** → `/`.
+   `datenHolen()` setzte **immer** `laden: { zustand: 'laeuft' }`, der Torwächter
+   zeichnet dann `null` statt des `Stack` — also baute **jeder der 22 Schreibvorgänge
+   und jeder Realtime-Anstoß den ganzen Navigator ab.** `/account-loeschen` ist
+   alphabetisch die erste Route unter `app/`: **die Falle aus Phase 20.3-a an einer
+   zweiten Stelle.** Behoben mit einem vierten Glied (`'nachladen'`) und einer
+   Regel-Funktion mit `never` — harte Regel 87.
+2. **Die richtige Frage stand schon in derselben Datei, DREI ZEILEN darüber.** Der
+   Kommentar an `useStartFlaecheWeg`, am selben Tag geschrieben: *„Die Frage ist nicht
+   ‚sind die Daten da?', sondern ‚steht etwas zum Anschauen?'"* — und der Torwächter
+   eine Zeile weiter unten stellte sie nicht. Harte Regel 73: Eine Regel, deren GRUND
+   wegfällt, hinterlässt ihre Wirkung.
+3. **Ausgerechnet Ians NEUESTE Entscheidung wäre der zuverlässigste Auslöser gewesen.**
+   Entscheidung 47 läuft gemessen genau richtig (ruhend 0 Abfragen · Weggehen **0** ·
+   Hervorholen **1**) — ohne den Fix hätte jedes Zurückkommen aus WhatsApp den Menschen
+   auf den Startbildschirm geworfen.
+4. **Alles andere am `'supabase'`-Zweig hält, und zwar zum ersten Mal sichtbar.**
+   `"Moment …"` ist mit einem vorher aufgestellten `MutationObserver` gemessen, nicht
+   gehofft. Das Konfetti kommt **nach** dem Server (`accepted`, `spots_filled` 0 → 1,
+   neuer Chat-Faden, `/requests → push→/match` ohne Umschreibung). **Das Nachladen IST
+   die Rücknahme** — mit einem erzwungenen `42501` belegt: Die Leiste sagt „Du bist
+   nicht mehr angemeldet", und die Nachricht, die nicht durchkam, steht **nicht** im
+   Chat. Realtime treibt die Oberfläche (die **1** am Anfragen-Tab ohne Neuladen). Und
+   **RLS greift bis ins Bild**: Tobis Post fehlt im Feed, wegen des Blocks.
+5. **Hineingekommen bin ich ohne Apple, ohne Google und ohne Postfach** — und die
+   Methode ist wichtiger als der Weg: Konten mit Passwort säen (feste UUIDs, harte
+   Regel 83), in Node **denselben Client mit einer Speicher-Attrappe** bauen und
+   **nachsehen**, was `auth-js` wirklich ablegt (`sb-<ref>-auth-token`, schlichtes
+   JSON), das Paar in den Browser legen. **Das Format wurde gemessen, nicht aus dem
+   Bibliothekscode geschlossen** — die Realtime-Lehre vom selben Tag. Schalter
+   vorübergehend um, nachweislich zurück (19d-Methode, `git diff`).
+6. ✅ **Zwei Sachen waren keine Reparatur, sondern eine Wahl — und Ian hat beide noch
+   am selben Abend entschieden (48 und 49).**
+   **48: Die Fehlerleiste RÜCKT, sie überdeckt nicht.** Sie lag auf `top: 0`, also
+   genau auf dem Zurück-Pfeil (`elementFromPoint` gemessen) — und widersprach damit
+   ihrer eigenen Begründung im Dateikopf, die sagt, man könne weiterarbeiten. Nachher
+   sitzt der Pfeil auf y = 114 (390) bzw. 92 (360) und wird getroffen. **Dabei kam
+   heraus, was nicht angekündigt war:** Seit sie schiebt, kostet jede Zeile Platz —
+   der alte Satz plus „Nochmal versuchen" ergaben **vier Zeilen**; beide gekürzt, jetzt
+   zwei (`am09`, `am10`).
+   **49: Vollbild beim ERSTEN Laden, leise Zeile beim NACHladen.** Genau die
+   Nachbesserung, die `quelle.ts` selbst vorhergesagt hatte (*„sobald es etwas zu
+   zeigen gibt, was schon da war"*) — und der Augenblick war mit `'nachladen'`
+   eingetreten. Belegt: Netz gekappt, **die Chat-Liste blieb stehen**, darüber „Kein
+   Netz — du siehst den letzten Stand." (`am08`). Beim Bauen fiel eine Falle an, die
+   keine Prüfung gefunden hätte: Der nächste Versuch fragte `=== 'da'` und hätte bei
+   `'fehler-nachladen'` ausgerechnet über „Nochmal" den Bildschirm abgerissen, den die
+   Zeile gerade gerettet hat — jetzt `stehtSchonEtwas()`, abgeleitet aus
+   `ladeSichtFuer()` statt als zweiter `switch` (harte Regel 53).
+   **Auch danach ist der Prototyp Pixel für Pixel identisch** (`am07` gegen `al01`
+   UND gegen `am01`).
+7. ⚠️ **Eine Sache ist im Browser prinzipiell nicht zu belegen und gehört aufs Gerät.**
+   Trägt die Leiste den oberen SafeArea-Rand, darf der Screen darunter ihn nicht noch
+   einmal nehmen (die ACTA-Falle „doppelter Inset"). **Auf Web ist `insets.top` null** —
+   der Fehler träte erst auf Ians iPhone auf, dieselbe Lage wie in Phase 19i, diesmal
+   vorher bedacht statt hinterher gemessen. Gelöst über `SafeAreaInsetsContext`
+   (`OhneOberenRand` in `app/_layout.tsx`), **ungeprüft.**
+
 ✅ **Phase 20.5 ist FERTIG (2026-09-12): die App SCHREIBT wirklich nach Supabase — und
 der Prototyp merkt davon nichts.** Alle 22 Schreib-Aktionen gehen über `data/senden.ts`;
 zwei neue Entscheidungen von Ian (**46**: wie sich ein Knopf beim Schreiben verhält ·
@@ -2862,6 +2934,26 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    entfernt hat. Also `merken(art, id)` **unmittelbar nach dem Anlegen**, in eine Datei
    ausserhalb von `$ARBEIT` — bei einem Sammeln bis zum Schluss wäre die Liste nach
    einem Abbruch in der Mitte leer, also genau dann, wenn man sie braucht.
+87. **„Es wird geladen" und „es wird NACHgeladen" sind zwei Lagen — gefragt wird mit
+   `ladeSichtFuer()`, nie mit `laden.zustand === …`.** *(Gemessen am 2026-09-12 beim
+   ersten Durchgang mit echten Daten.)* `'laeuft'` heißt **es war noch nie etwas da**
+   (Start, und nach dem Abmelden); `'nachladen'` heißt **es steht etwas da und wird
+   aufgefrischt**. Die Verwechslung kostete den Bildschirm: `datenHolen()` setzte immer
+   `'laeuft'`, der Torwächter zeichnete dann `null` statt des `Stack`, und damit baute
+   **jeder der 22 Schreibvorgänge und jeder Realtime-Anstoß den ganzen Navigator ab.**
+   Gemessen, ohne dass jemand etwas tut: Ian steht auf `/post/…`, Lea schreibt in einen
+   FREMDEN Chat — Bildschirmtext 204 → **12**, Adresse `/post/…` →
+   **`/account-loeschen`** → `/`. Das ist die Falle aus Phase 20.3-a an einer zweiten
+   Stelle: **Wer einen Navigator bedingt zeichnet, baut ihn bei jeder Zustandsänderung
+   ab**, und `expo-router` schreibt die Adresse dann auf die alphabetisch erste Route.
+   **Die richtige Frage stand schon drei Zeilen darüber** (`useStartFlaecheWeg`,
+   derselbe Tag): *nicht „sind die Daten da?", sondern „steht etwas zum Anschauen?"*.
+   Die Enge sitzt deshalb in einem erschöpfenden `switch` mit `never` in
+   `data/quelle.ts` — ein neues Glied am Union ist eine Lockerung, und die meldet `tsc`
+   nicht (Phase-16-Lehre). **Und der Fehler-Fall ist bewusst noch der alte:** Ein
+   gescheitertes NACHladen zeigt weiter den Vollbild-Kasten, obwohl Daten dastehen;
+   `LADE_FEHLER = 'zeile'` ist die Nachbesserung, die `quelle.ts` selbst vorhergesagt
+   hat — und sie ist Ians Entscheidung, nicht meine.
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 

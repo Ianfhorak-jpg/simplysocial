@@ -247,9 +247,17 @@ export function schreibFehlerFolgen(fehler: SchreibFehler): {
   /** `true`, wenn ein neuer Versuch die Lage gar nicht ändern kann. */
   anmeldenNoetig: boolean;
 } {
+  // ── Die Sätze sind KURZ, und das ist seit Ians Entscheidung 48 kein Geschmack ─
+  // Solange die Leiste sich über den Bildschirm legte, kostete eine Zeile mehr
+  // nichts. Seit sie den Inhalt SCHIEBT, kostet jede Zeile echten Platz — und
+  // gemessen am 2026-09-12: „Das hat gerade nicht geklappt. Das liegt meistens am
+  // Netz." plus der Knopf „Nochmal versuchen" ergaben auf 390 px **vier Zeilen**,
+  // die den halben Bildschirm nach unten schoben. Harte Regel 63 gilt für eine
+  // Leiste schärfer als für einen Vollbild-Kasten: Der Kasten IST der Bildschirm,
+  // die Leiste steht vor dem, weswegen man gekommen ist.
   if (fehler.code === '42501' || fehler.code === 'PGRST301') {
     return {
-      text: 'Du bist nicht mehr angemeldet. Melde dich noch einmal an.',
+      text: 'Du bist nicht mehr angemeldet.',
       knopf: 'Anmelden',
       anmeldenNoetig: true,
     };
@@ -266,8 +274,8 @@ export function schreibFehlerFolgen(fehler: SchreibFehler): {
     };
   }
   return {
-    text: 'Das hat gerade nicht geklappt. Das liegt meistens am Netz.',
-    knopf: 'Nochmal versuchen',
+    text: 'Das hat nicht geklappt — meistens liegt es am Netz.',
+    knopf: 'Nochmal',
     anmeldenNoetig: false,
   };
 }

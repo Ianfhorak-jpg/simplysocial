@@ -22,6 +22,13 @@ import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
  * Dort war die leise Zeile falsch, weil ein leerer Feed darunter immer noch wie
  * „nichts los" aussieht. Hier ist unter der Leiste der richtige Inhalt.
  *
+ * ── Sie liegt im FLUSS, sie überdeckt nichts — Ians Entscheidung 48 ──────────
+ * Bis zum 2026-09-12 abends lag sie mit `position: 'absolute'` oben auf dem
+ * Bildschirm und **schluckte damit den Zurück-Pfeil**, der dort auf jedem Screen
+ * sitzt. Aufgefallen ist es erst beim ersten Durchgang mit echten Daten, weil man
+ * die Leiste vorher gar nicht zu sehen bekam. Gemessen, nicht angeschaut:
+ * `elementFromPoint` in der Mitte von `SsBack` lieferte die Leiste.
+ *
  * ── Der Bildschirm darunter stimmt schon wieder ──────────────────────────────
  * `schreibVorgang` lädt bei einem Fehler nach, wenn vorher lokal etwas geändert
  * wurde — **das Nachladen IST die Rücknahme.** Wenn diese Leiste erscheint, steht
@@ -35,11 +42,7 @@ import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
  * Bildschirm. `schreibFehlerFolgen()` liefert deshalb nur bei einer abgelaufenen
  * Anmeldung einen Weg, der woanders hinführt.
  */
-export function SchreibFehlerLeiste({
-  fehler,
-}: {
-  fehler: SchreibFehlerTyp;
-}) {
+export function SchreibFehlerLeiste({ fehler }: { fehler: SchreibFehlerTyp }) {
   const insets = useSafeAreaInsets();
   const { text, knopf, anmeldenNoetig } = schreibFehlerFolgen(fehler);
 
@@ -66,15 +69,26 @@ export function SchreibFehlerLeiste({
 }
 
 const styles = StyleSheet.create({
-  // Ausgeschriebene Kanten statt `absoluteFill` — registrierte Style-ID, lässt sich
-  // nicht mit eigenen Werten mischen (ACTA-Falle). Wie in `LadeSchirm`.
+  // ── Ians Entscheidung 48 (2026-09-12 abends): sie RÜCKT, sie überdeckt nicht ──
+  // Hier stand `position: 'absolute', top: 0` — und genau dort liegt auf JEDEM
+  // Screen der Zurück-Pfeil. Gemessen mit `document.elementFromPoint`: `SsBack`
+  // sitzt auf 16/8, 44 × 44, und in seiner Mitte lag die Leiste. **Damit war sie
+  // eine Falle statt einer Auskunft** — und sie widersprach ihrer eigenen
+  // Begründung im Dateikopf, die sagt, unter der Leiste stehe der richtige Inhalt
+  // und man könne weiterarbeiten.
+  //
+  // Der Preis, den Ian kennt: Kommt sie oder geht sie, rutscht der Bildschirm
+  // einmal kurz mit. Das ist die Sorte Bewegung, die man sieht und versteht —
+  // anders als ein Knopf, der einfach nicht reagiert.
+  //
+  // Den `insets.top` trägt SIE, und die Bühne darunter bekommt ihn deshalb auf 0
+  // gesetzt (siehe `app/_layout.tsx`) — sonst zählt der Notch zweimal, die
+  // SafeArea-Falle aus ACTA.
   huelle: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
     paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
     alignItems: 'center',
+    backgroundColor: colors.bg,
   },
   leiste: {
     width: '100%',

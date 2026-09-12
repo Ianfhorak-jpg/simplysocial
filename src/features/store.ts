@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react';
 import { ANMELDE_QUELLE, type Sitzung } from '@/features/auth/anmeldung';
 import type { StandortStand } from '@/features/posts/standort';
 import { allesLaden, LadeFehler } from '@/data/laden';
+import { stehtSchonEtwas } from '@/data/quelle';
 import { SchreibFehler, wartetAufServer, type SchreibAktion } from '@/data/schreiben';
 import { client, LIEST_AUS_SUPABASE } from '@/lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -138,18 +139,26 @@ export interface AppState {
 }
 
 /**
- * Die drei Lagen beim Laden.
+ * Die VIER Lagen beim Laden — seit dem 2026-09-12 vier statt drei.
  *
  * `'laeuft'` ist auch der ANFANG, nicht nur ein Zwischenschritt — deshalb steht in
  * den neun Listen zu dem Zeitpunkt nichts. Ein Screen, der währenddessen zeichnen
  * würde, sagte „Noch nichts los in deinem Feed", und das ist Ians Entscheidung 43
- * zufolge genau der Satz, der nicht dastehen darf. Wer hier etwas ändert, liest
- * zuerst `data/quelle.ts`.
+ * zufolge genau der Satz, der nicht dastehen darf.
+ *
+ * **`'nachladen'` ist die andere Hälfte davon**, und sie hat gefehlt, solange es nur
+ * den ersten Ladevorgang gab: Es steht etwas da und wird aufgefrischt. Warum das
+ * zwei Lagen sein MÜSSEN und was die Verwechslung gemessen angerichtet hat, steht
+ * in `data/quelle.ts` — **wer hier etwas ändert, liest das zuerst.** Gefragt wird
+ * nie mit `===`, sondern mit `ladeSichtFuer()`.
  */
 export type LadeStand =
   | { zustand: 'laeuft' }
+  | { zustand: 'nachladen' }
   | { zustand: 'da' }
-  | { zustand: 'fehler'; fehler: LadeFehler };
+  | { zustand: 'fehler'; fehler: LadeFehler }
+  /** Es steht etwas da, es ist nur nicht mehr frisch. Ians Entscheidung 49. */
+  | { zustand: 'fehler-nachladen'; fehler: LadeFehler };
 
 /**
  * Die drei Lagen beim Schreiben — ein Union und keine zwei Felder.
@@ -371,7 +380,20 @@ export async function datenHolen(): Promise<void> {
   }
   holtGerade = true;
   nochmalHolen = false;
-  aendern(() => ({ laden: { zustand: 'laeuft' } }));
+  // **`'laeuft'` nur, wenn noch nichts dasteht.** Sonst `'nachladen'` — sonst
+  // nimmt jedes Nachladen dem Menschen den Bildschirm weg, auf dem er gerade
+  // steht, und `expo-router` schreibt beim Abbau des Navigators die Adresse neu
+  // (gemessen: `/post/…` → `/account-loeschen` → `/`, ohne dass jemand etwas
+  // getan hat). Die ganze Begründung steht in `data/quelle.ts`.
+  //
+  // **Gefragt wird NICHT `=== 'da'`, und der Unterschied ist eine echte Falle.**
+  // Seit Ians Entscheidung 49 gibt es `'fehler-nachladen'`: Der Bildschirm steht
+  // voll da, darüber liegt nur eine leise Zeile. Ein `=== 'da'` hätte den nächsten
+  // Versuch — also genau den Griff auf „Nochmal" — wieder auf `'laeuft'` gesetzt
+  // und damit den Bildschirm abgerissen, den die Zeile gerade retten sollte.
+  // `stehtSchonEtwas()` fragt stattdessen, was die Bühne WIRKLICH zeichnet.
+  const stehtWas = stehtSchonEtwas(state.laden.zustand);
+  aendern(() => ({ laden: { zustand: stehtWas ? 'nachladen' : 'laeuft' } }));
   try {
     const daten = await allesLaden(client());
     aendern(() => ({ ...daten, laden: { zustand: 'da' } }));
@@ -386,7 +408,14 @@ export async function datenHolen(): Promise<void> {
       throw fehler;
     }
     console.warn(fehler.message);
-    aendern(() => ({ laden: { zustand: 'fehler', fehler } }));
+    // **Zwei Lagen, zwei Glieder** (Ians Entscheidung 49): Scheitert das ERSTE
+    // Laden, ist nichts da — Vollbild-Kasten (Entscheidung 43). Scheitert ein
+    // NACHladen, steht alles noch im Speicher, und es wäre der Haken aus
+    // Entscheidung 43 in Person, ihn dafür wegzuwerfen: „Wer im U-Bahn-Tunnel
+    // aufmacht, sieht von der App gar nichts."
+    aendern(() => ({
+      laden: { zustand: stehtWas ? 'fehler-nachladen' : 'fehler', fehler },
+    }));
   } finally {
     holtGerade = false;
   }

@@ -5473,6 +5473,143 @@ kein Token, ohne Token kein `LIEST_AUS_SUPABASE`. Das ist dieselbe Lage wie bei 
 („der Schalter lässt sich erst mit 20.3-b umlegen") und kein Versäumnis dieser Phase —
 aber es gehört beim Umlegen als Erstes angeschaut, nicht als Letztes.
 
+> ✅ **ERLEDIGT am 2026-09-12 abends — und es war richtig, nicht zu warten.** Siehe
+> 20.5-c gleich hier drunter: Beides ist gelaufen, und im ungeprüften Teil lag ein
+> Fehler, der jeden Benutzer bei **jeder fremden Nachricht** aus dem Bildschirm
+> geworfen hätte.
+
+#### 20.5-c — Der erste Durchgang mit echten Daten ✅ *(2026-09-12 abends)*
+
+**Was hier gebaut wurde, ist nicht die Phase — es ist die MESSUNG der Phase.** Der
+Absatz darüber sagte, der `'supabase'`-Zweig von `schreibVorgang()` und Ians
+Entscheidung 47 seien „typgeprüft, aber niemand hat sie laufen sehen", und das gehöre
+beim Umlegen als Erstes angeschaut. Genau das ist passiert — **ohne auf 20.3-b2 zu
+warten**, weil man den Schalter zum ANSCHAUEN nicht dauerhaft umlegen muss.
+
+**Ergebnis: `tsc` sauber · 81 Lint-Probleme wie vorher · lokal 124 Häkchen ·
+`pruef-lesen` 29 · `pruef-konto` 29 · `pruef-schreiben` 49 · Prototyp auf 390 × 844
+Pixel für Pixel identisch** (`am01` gegen die 20.5-Referenz `al01`, Unterschieds-
+Rechteck `None`). Belege `am01`–`am06`. Die echte Datenbank stand danach wieder auf
+**einem Konto — Ians —, sonst nichts.**
+
+##### Wie man ohne Apple, ohne Google und ohne Postfach hineinkommt
+
+Der Weg ist die Methode, nicht der Trick, und er ist wiederholbar:
+
+1. `05_daten.sql` + `51_konten.sql` säen fünf Menschen MIT Passwort (dieselben festen
+   UUIDs wie `pruef-lesen`, harte Regel 83) — es geht keine Mail hinaus.
+2. In Node denselben Client bauen, aber mit einer **Speicher-Attrappe** statt
+   `localStorage`, `signInWithPassword`, und dann **nachsehen, was `auth-js` wirklich
+   hineingeschrieben hat**. Gemessen: Schlüssel `sb-<ref>-auth-token`, Wert schlichtes
+   JSON. **Das Format wurde nicht aus dem Bibliothekscode geschlossen** — siehe die
+   Realtime-Lehre vom selben Tag: Ein gefundener Mechanismus ist eine Hypothese.
+3. Dasselbe Paar in den Browser-`localStorage`, Schalter vorübergehend auf
+   `'supabase'`, neu laden. **Zurückgenommen und nachgewiesen** über `git diff` — die
+   19d-Methode; `anmeldung.ts` taucht im Diff nicht mehr auf.
+
+##### 1. Der teuerste Fund: jedes NACHladen hat den Bildschirm abgerissen
+
+Gemessen, ohne dass jemand etwas tut — Ian steht auf `/post/…`, **Lea schreibt in
+einen ganz anderen Chat**:
+
+| | vorher | nachher |
+|---|---|---|
+| Bildschirmtext | 204 Zeichen → **12** (~240 ms leer) | **191** (steht) |
+| Adresse | `/post/…` → `/account-loeschen` → **`/`** | keine Umschreibung |
+| Ians Zutun | **keines** | — |
+
+`datenHolen()` setzte **immer** `laden: { zustand: 'laeuft' }`, und der Torwächter
+zeichnet dann `null` statt des `Stack`. Der Navigator wurde also bei **jedem** der 22
+Schreibvorgänge und bei **jedem Realtime-Anstoß** abgebaut. `/account-loeschen` ist
+dabei kein Zufall und auch kein neuer Fehler: **Es ist die Falle aus Phase 20.3-a an
+einer zweiten Stelle** — beim Abbau eines Navigators schreibt `expo-router` die Adresse
+auf die erste Route im Verzeichnis, und das ist alphabetisch `account-loeschen`. Damals
+traf es das Abmelden, einmal je Sitzung. Jetzt jede fremde Nachricht.
+
+**Der Zustand war für den ERSTEN Ladevorgang richtig gebaut und ist beim NACHladen
+falsch** — harte Regel 73 in Reinform: *Eine Regel, deren GRUND wegfällt, hinterlässt
+ihre Wirkung.* Beim ersten Laden steht wirklich nichts da (Entscheidung 43 verbietet
+„Noch nichts los in deinem Feed"); beim Nachladen steht alles schon da.
+
+**Und die richtige Frage stand schon in derselben Datei, drei Zeilen darüber.** Der
+Kommentar an `useStartFlaecheWeg` — am selben Tag geschrieben — lautet wörtlich:
+*„Die Frage ist nicht ‚sind die Daten da?', sondern ‚steht etwas zum Anschauen?'"*
+Der Torwächter eine Zeile weiter unten stellte sie nicht.
+
+**Behoben mit einem vierten Glied**, nicht mit einem `if`: `LadeStand` hat jetzt
+`'nachladen'` neben `'laeuft'`, `'da'` und `'fehler'`. Weil ein neues Glied eine
+LOCKERUNG ist und `tsc` dazu schweigt (die Phase-16-Lehre), sitzt die Enge in
+**`ladeSichtFuer()`** in `data/quelle.ts` — erschöpfender `switch` mit `never`, genau
+wie `torwaechterZeigt()` (harte Regel 77). Ein fünftes Glied ergibt dort einen
+Typfehler statt eines stillen Bildschirms.
+
+##### 2. Ausgerechnet Ians Entscheidung 47 wäre der zuverlässigste Auslöser gewesen
+
+Gemessen (Abfragen auf `/rest/v1/posts`): ruhend **0** · Weggehen **0** · Hervorholen
+**1**. Die Entscheidung selbst läuft also genau richtig, und der Teil, den man leicht
+falsch baut — auf JEDEN Wechsel laden —, ist nachweislich nicht drin.
+
+**Der Zusammenhang ist der Punkt:** Ohne den Fix aus 1. hätte jedes Zurückkommen aus
+WhatsApp den Menschen auf den Startbildschirm geworfen. Die zuletzt getroffene
+Entscheidung wäre die Aktion gewesen, die den ältesten Fehler am häufigsten auslöst.
+
+##### 3. Was am `'supabase'`-Zweig sonst noch belegt ist — alles zum ersten Mal
+
+- **Der wartende Knopf.** Ein `MutationObserver` vor dem Klick aufgestellt statt
+  hinterher gehofft: `"Moment …"` ist gemessen aufgetreten.
+- **Das Konfetti kommt NACH dem Server.** „Ihr seid verabredet" (`am05`), und in der
+  Datenbank danach: Anfrage `accepted`, `spots_filled` **0 → 1**, **ein neuer
+  Chat-Faden** — alles aus `anfrage_bestaetigen()` mit `select … for update`. Der
+  Adressweg dazu ist sauber: `/requests → push→/match`, keine Umschreibung.
+- **Das Nachladen IST die Rücknahme.** Erzwungen, indem `window.fetch` für
+  Schreibvorgänge ein echtes PostgREST-`42501` zurückgab: Die Leiste sagt „Du bist
+  nicht mehr angemeldet" (`schreibFehlerFolgen()` deutet den Code richtig), **und die
+  Nachricht, die nicht durchkam, steht nicht im Chat** — nur die, die wirklich am
+  Server liegt (`am06`).
+- **Realtime treibt die Oberfläche.** Ein `insert` per SQL, und die **1** am
+  Anfragen-Tab erscheint ohne Neuladen.
+- **Der Trigger `nachricht_notiert` aus 20.5** ist zum ersten Mal aus der App heraus
+  gelaufen (`last_message_at` gesetzt).
+- **RLS greift durch die ganze Kette bis ins Bild:** Ians drei Posts und Maras stehen
+  im Feed, **Tobis „Kino" fehlt** — wegen des Blocks, ohne dass die App etwas filtert.
+
+##### 4. Zwei Fragen an Ian — beide noch am selben Abend beantwortet und gebaut
+
+Der Durchgang hat zwei Sachen aufgedeckt, die keine Reparatur sind, sondern eine Wahl.
+Beide sind **Entscheidungen 48 und 49** (Abschnitt 6) und stehen im Code:
+
+- **Die Fehlerleiste verdeckte den Zurück-Knopf.** Gemessen mit `elementFromPoint`:
+  `SsBack` liegt auf 16/8, 44 × 44 — und in seiner Mitte lag die Leiste. Der Dateikopf
+  von `SchreibFehler.tsx` begründet die Leiste ausgerechnet damit, dass man
+  weiterarbeiten kann. **Ians Entscheidung 48: der Inhalt rückt.** Nachgemessen: Der
+  Pfeil sitzt jetzt auf y = 114 (390 px) bzw. y = 92 (360 px) und wird getroffen; kein
+  Überlauf (`am09`, `am10`).
+- **Ein Fehler beim Nachladen nahm den ganzen Bildschirm weg.** **Ians Entscheidung 49:
+  Vollbild beim ersten Laden, leise Zeile beim Nachladen** — genau die Nachbesserung,
+  die `quelle.ts` selbst vorhergesagt hatte. Belegt: Netz gekappt, die Chat-Liste blieb
+  stehen, darüber „Kein Netz — du siehst den letzten Stand." (`am08`).
+
+**Der Prototyp ist auch danach Pixel für Pixel identisch** (`am07` gegen `al01` UND
+gegen `am01`, beide Unterschieds-Rechtecke `None`), `tsc` sauber, 81 Lint-Probleme,
+124 · 29 · 29 · 49 Häkchen.
+
+⚠️ **Eine Sache an 48 ist im Browser prinzipiell nicht zu belegen:** Trägt die Leiste
+den oberen SafeArea-Rand, darf der Screen darunter ihn nicht noch einmal nehmen. Auf
+Web ist `insets.top` **null** — der Fehler träte erst auf Ians iPhone auf. Gelöst über
+`SafeAreaInsetsContext` (`OhneOberenRand` in `app/_layout.tsx`) und **ungeprüft**;
+gehört in den nächsten Gerätedurchgang.
+
+##### 5. Was der Durchgang NICHT beantwortet
+
+**Die Bündelgröße ist nicht gemessen.** Die Änderung ist ein Ternär plus Kommentare,
+und der Prototyp ist Pixel für Pixel identisch — aber eine Zahl ist das nicht, und sie
+soll hier nicht behauptet werden. Sie gehört in den nächsten Lauf, der ohnehin exportiert.
+
+**Und der Schalter steht weiter auf `'attrappe'`.** Was ihn dauerhaft blockiert, ist
+unverändert 20.3-b2 plus der Prototyp-Hinweis — der beim Durchgang sichtbar über dem
+Anmelde-Bildschirm stand und „Es gibt keinen Login — du bist gerade Ian" behauptete
+(`am02`). **Der Satz ist Ians** (harte Regel 22).
+
 #### 20.6 — Profilbilder ⬜
 
 Darias Wunsch vom 2026-09-02, seit Phase 15 vorbereitet: `User.photoUrl?` gibt es, alle
@@ -6676,6 +6813,95 @@ selbst** (am sichersten und das einzige mit einem LAUFENDEN Preis: dreizehn Abfr
 Runde für jeden, der die App offen hat). **Den Haken kennt er:** Wer die App
 stundenlang offen liegen lässt, ohne zu wechseln, bekommt kein Netz — dafür wäre C da,
 und C ist nachrüstbar, ohne etwas zurückzunehmen.
+
+### 48. Wie sich eine Fehlerleiste zum Bildschirm verhält ✅
+
+**Gefragt am 2026-09-12 abends, beim ersten Durchgang mit echten Daten** — und die
+Frage entstand aus einer MESSUNG, nicht aus einer Überlegung: Die Schreibfehler-Leiste
+lag mit `position: 'absolute', top: 0` über dem Bildschirm, und dort sitzt auf jedem
+Screen der Zurück-Pfeil. `document.elementFromPoint` in der Mitte von `SsBack` (16/8,
+44 × 44) lieferte die Leiste. **Man kam nicht mehr zurück.**
+
+Besonders unangenehm: Der Dateikopf von `SchreibFehler.tsx` begründet die Leiste
+ausdrücklich damit, dass *„unter der Leiste der richtige Inhalt"* stehe und man
+weiterarbeiten könne — sie widersprach also ihrer eigenen Begründung. Aufgefallen ist
+es nie, weil die Leiste vor diesem Tag nie zu sehen war.
+
+**Ians Wahl: A — der Inhalt rückt nach unten.**
+
+  A. **DER INHALT RÜCKT** ← seine Wahl
+     Die Leiste liegt im Fluss und schiebt den Bildschirm ein Stück nach unten.
+     Nichts ist verdeckt, und es gibt keine Stelle, an der man raten muss, ob ein
+     Knopf noch zu treffen ist. **Der Haken, den er kennt:** Kommt sie oder geht sie,
+     rutscht der ganze Bildschirm einmal kurz mit.
+
+  B. **SIE GEHT VON SELBST WEG** (verworfen)
+     Bliebe oben liegen und verschwände nach ein paar Sekunden. Verloren hat sie an
+     einer Sache, die in dieser App schwerer wiegt als anderswo: **Wer in dem Moment
+     nicht hinsieht, erfährt nie, dass etwas nicht durchgekommen ist** — und bei einer
+     Zusage zu einem Treffen ist „ich dachte, das ist abgeschickt" der teuerste
+     denkbare Irrtum. Dieselbe Familie wie „Noch nichts los in deinem Feed" bei einem
+     Netzausfall (Entscheidung 43).
+
+  C. **SIE RUTSCHT NACH UNTEN** (verworfen)
+     Wie eine Meldung am unteren Rand. Scheitert an einer Tatsache und nicht an einem
+     Geschmack: Im Chat liegt unten das Eingabefeld (harte Regel 9), und darüber die
+     Tab-Kapsel. Sie verdeckte dann das Schreiben statt des Zurückgehens.
+
+**Was daraus zusätzlich folgte, und es war nicht angekündigt:** Seit die Leiste
+SCHIEBT, kostet jede Zeile echten Platz. Gemessen auf 390 px ergaben der alte Satz und
+der Knopf „Nochmal versuchen" zusammen **vier Zeilen**. Beide sind gekürzt; jetzt sind
+es zwei, auf 360 px nachgemessen und ohne Überlauf (`am10`). **Harte Regel 63 gilt für
+eine Leiste schärfer als für einen Vollbild-Kasten** — der Kasten IST der Bildschirm,
+die Leiste steht vor dem, weswegen man gekommen ist.
+
+Gebaut in `components/SchreibFehler.tsx`, `components/LadeSchirm.tsx` (die leise Zeile
+aus Entscheidung 49 liegt genauso) und `app/_layout.tsx`. **Und eine Sache daran ist im
+Browser prinzipiell nicht zu belegen:** Trägt die Leiste den oberen SafeArea-Rand, darf
+der Screen darunter ihn nicht noch einmal nehmen (die ACTA-Falle „doppelter Inset").
+Auf Web ist `insets.top` **null**, der Fehler träte also erst auf Ians iPhone auf —
+dieselbe Lage wie in Phase 19i, diesmal vorher bedacht. Gelöst über
+`SafeAreaInsetsContext` in `OhneOberenRand`; **gehört auf dem Gerät nachgesehen.**
+
+### 49. Was dasteht, wenn das NACHladen scheitert ✅
+
+**Gefragt am selben Abend**, und sie ist die Fortsetzung von Entscheidung 43 — der
+Kopf von `data/quelle.ts` hatte sie wörtlich vorhergesagt: *„`'zeile'` ist die
+Nachbesserung, sobald es etwas zu zeigen gibt, was schon da war."* **Dieser Augenblick
+ist mit dem `'nachladen'`-Zustand eingetreten** (siehe 20.5-c): Zum ersten Mal gibt es
+einen Ladevorgang, bei dem der Bildschirm schon voll ist.
+
+**Ians Wahl: leise Zeile, wenn schon etwas dasteht** (`LADE_FEHLER =
+'vollbild-dann-zeile'`).
+
+  A. **VOLLBILD BEIM ERSTEN LADEN, ZEILE BEIM NACHLADEN** ← seine Wahl
+     Beim ersten Öffnen ohne Netz bleibt der große Kasten: Dort steht wirklich nichts,
+     und ein leerer Feed mit einem Streifen darüber sieht immer noch aus wie „nichts
+     los" — **Entscheidung 43 bleibt unverändert gültig.** Beim Nachladen dagegen ein
+     schmaler Streifen, und die Chats von vorhin bleiben lesbar.
+     **Der Haken, den er kennt:** Was dasteht, ist dann nicht mehr taufrisch, und die
+     Zeile ist das Einzige, was das sagt.
+
+  B. **IMMER DER GROSSE KASTEN** (die alte Fassung, verworfen)
+     Man kann sich nie irren, was alt ist und was frisch. Verloren hat sie an ihrem
+     eigenen Haken aus Entscheidung 43, den er dort schon benannt hatte: **„Wer im
+     U-Bahn-Tunnel aufmacht, sieht von der App gar nichts — auch nicht die Chats, die
+     er vorhin gelesen hat."** Seit 20.5 nach jeder Aktion nachgeladen wird, träfe das
+     nicht mehr nur den Kaltstart, sondern jeden kurzen Aussetzer.
+
+**Gebaut als zwei GLIEDER und nicht als ein Merkmal:** `'fehler'` heißt „es ist nichts
+da", `'fehler-nachladen'` heißt „es steht etwas da, es ist nur nicht mehr frisch". Ein
+`{ zustand: 'fehler'; hatteDaten: boolean }` wäre dasselbe zum Vergessen gewesen —
+dieselbe Überlegung wie bei `Visibility` (harte Regel 31). Belegt am echten Server:
+Netz gekappt, Nachladen angestoßen, **die Chat-Liste stand weiter da** und darüber
+„Kein Netz — du siehst den letzten Stand." (`am08`).
+
+**Und beim Bauen kam eine Falle heraus, die keine Prüfung gefunden hätte:** Der nächste
+Ladeversuch fragte `alt.laden.zustand === 'da'`. Bei `'fehler-nachladen'` ist das
+falsch — der Griff auf „Nochmal" hätte damit genau den Bildschirm abgerissen, den die
+Zeile gerade gerettet hat. Gefragt wird deshalb mit `stehtSchonEtwas()`, und die
+Funktion leitet ihre Antwort aus `ladeSichtFuer()` ab statt aus einem zweiten `switch`:
+zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Regel 53).
 
 ## 7. Bewusst NICHT im Prototyp
 

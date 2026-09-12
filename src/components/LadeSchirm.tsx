@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SsButton, SsIcon, SsText } from '@/components/ui';
 import type { LadeFehler } from '@/data/laden';
-import { ladeFehlerFolgen } from '@/data/quelle';
+import { ladeFehlerFolgen, ladeZeileFolgen } from '@/data/quelle';
 import { abmelden } from '@/features/auth/hooks';
 import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
 
@@ -55,8 +55,12 @@ export function LadeSchirm({ fehler, nochmal }: { fehler: LadeFehler; nochmal: (
     <View
       style={[
         styles.huelle,
-        { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg },
-      ]}>
+        {
+          paddingTop: insets.top + spacing.lg,
+          paddingBottom: insets.bottom + spacing.lg,
+        },
+      ]}
+    >
       <View style={styles.kasten}>
         <View style={styles.zeichen}>
           <SsIcon name="warnung" size={32} color={colors.inkSoft} />
@@ -82,6 +86,50 @@ export function LadeSchirm({ fehler, nochmal }: { fehler: LadeFehler; nochmal: (
           onPress={anmeldenNoetig ? abmelden : nochmal}
           style={styles.knopf}
         />
+      </View>
+    </View>
+  );
+}
+
+/**
+ * Die leise Zeile — **Ians Entscheidung 49** vom 2026-09-12 abends
+ * (`data/quelle.ts`, `LADE_FEHLER = 'vollbild-dann-zeile'`).
+ *
+ * ── Warum es sie GEBEN darf, obwohl Entscheidung 43 sie verworfen hatte ──────
+ * Weil sie damals eine andere Frage beantwortet hätte. Der Einwand lautete: *„Ein
+ * LEERER Feed mit einem schmalen Streifen darüber sieht immer noch aus wie ‚nichts
+ * los'."* Das stimmt — **und unter dieser Zeile ist der Feed nicht leer.** Sie
+ * erscheint ausschließlich, wenn ein NACHladen gescheitert ist, also wenn die Daten
+ * von vorhin noch dastehen. Der Haken aus Entscheidung 43 („Wer im U-Bahn-Tunnel
+ * aufmacht, sieht von der App gar nichts") ist genau der Fall, den sie behebt.
+ *
+ * ── Sie liegt im FLUSS und nicht darüber ─────────────────────────────────────
+ * Dieselbe Bauart wie `SchreibFehlerLeiste` seit Ians Entscheidung 48: Eine Leiste
+ * oben am Bildschirm verdeckt sonst den Zurück-Pfeil, der dort auf jedem Screen
+ * liegt (gemessen mit `elementFromPoint` am 2026-09-12). Der Inhalt rückt.
+ *
+ * ── Warum kein Vollbild-Kasten mit weniger Text ──────────────────────────────
+ * Weil die Frage eine andere ist. Der Kasten beantwortet „kommen die Daten?" und
+ * darf deshalb der ganze Bildschirm sein. Die Zeile beantwortet **„ist das, was ich
+ * sehe, noch aktuell?"** — und die Antwort darauf darf nicht den Bildschirm
+ * verdecken, um den es geht (harte Regel 63).
+ */
+export function LadeZeile({ fehler, nochmal }: { fehler: LadeFehler; nochmal: () => void }) {
+  const insets = useSafeAreaInsets();
+  const { text, knopf } = ladeZeileFolgen(fehler);
+  // Dieselbe Regel wie im Kasten: Bei einer abgelaufenen Anmeldung hilft kein
+  // neuer Ladeversuch, sondern nur ein neuer Anmeldevorgang.
+  const { anmeldenNoetig } = ladeFehlerFolgen(fehler);
+
+  return (
+    <View style={[styles.zeilenHuelle, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={styles.zeile}>
+        {/* Nicht rot — siehe die Begründung am Kasten oben. */}
+        <SsIcon name="warnung" size={16} color={colors.inkSoft} />
+        <SsText variant="caption" color={colors.inkSoft} style={styles.zeilenText}>
+          {text}
+        </SsText>
+        <SsButton label={knopf} variant="ghost" onPress={anmeldenNoetig ? abmelden : nochmal} />
       </View>
     </View>
   );
@@ -114,4 +162,31 @@ const styles = StyleSheet.create({
   },
   zeichen: { marginBottom: spacing.xs },
   knopf: { marginTop: spacing.md, width: '100%' },
+
+  // ── Die leise Zeile (Entscheidung 49) ──────────────────────────────────────
+  // KEIN `position: 'absolute'`: Sie liegt im Fluss und schiebt den Inhalt nach
+  // unten, statt ihn zu verdecken (Ians Entscheidung 48). Der Hintergrund ist
+  // gesetzt, weil unter einer durchsichtigen Zeile der Feed durchscrollen würde.
+  zeilenHuelle: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    alignItems: 'center',
+    backgroundColor: colors.bg,
+  },
+  zeile: {
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+  },
+  // `flex: 1` an dem Text, der nachgeben soll — nicht `flexShrink` am anderen
+  // (harte Regel 43).
+  zeilenText: { flex: 1 },
 });

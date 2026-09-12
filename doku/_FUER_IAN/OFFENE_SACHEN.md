@@ -3,7 +3,16 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 12.09.2026 (abends) — **zwei Entscheidungen von dir sind eingebaut** (46:
+> Stand: 12.09.2026 (spät abends) — **ich habe die App zum ersten Mal wirklich mit
+> deiner Datenbank laufen lassen, und dabei einen dicken Fehler gefunden.** Ohne dass
+> man irgendetwas tippt: Sobald jemand anderer eine Nachricht schrieb, wurde dein
+> Bildschirm kurz leer und du landetest auf dem Startbildschirm — egal, wo du gerade
+> warst. Wer gerade eine Nachricht getippt hätte, hätte sie verloren. **Ist behoben und
+> nachgemessen.** Du hast dazu **zwei Entscheidungen getroffen (48 und 49)**, beide sind
+> schon eingebaut und geprüft. **Neue Aufgaben sind für dich keine entstanden** — was
+> auf dich wartet, ist unverändert Punkt 0 (Brevo) und Punkt 4 (Google).
+>
+> Davor: 12.09.2026 (abends) — **zwei Entscheidungen von dir sind eingebaut** (46:
 > wie sich Knöpfe beim Schreiben verhalten · 47: Nachladen beim Hervorholen), und die
 > App kann jetzt WIRKLICH in die Datenbank schreiben. **Für dich ist daraus keine neue
 > Aufgabe entstanden.** Punkt 0b ist erledigt.

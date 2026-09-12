@@ -1,23 +1,28 @@
 import '../global.css';
 
 import { Stack } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 // `AppState` heißt in React Native genauso wie der Typ des eigenen Speichers.
 // Umbenannt statt verwechselt: Ein `AppState` in dieser Datei wäre sonst je nach
 // Importzeile etwas anderes.
 import { AppState as RnAppState, Platform, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import {
+  SafeAreaInsetsContext,
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 
 import { Anmelden } from '@/components/Anmelden';
 import { ErstesKonto } from '@/components/ErstesKonto';
-import { LadeSchirm } from '@/components/LadeSchirm';
+import { LadeSchirm, LadeZeile } from '@/components/LadeSchirm';
 import { SchreibFehlerLeiste } from '@/components/SchreibFehler';
 import { PrototypHinweis } from '@/components/PrototypHinweis';
 import { BRAND } from '@/config/brand';
 import { torwaechterZeigt } from '@/features/auth/anmeldung';
 import { sitzungWiederherstellen, useSitzung } from '@/features/auth/hooks';
 import { datenHolen, useSchreibStand, useSlice, type LadeStand } from '@/features/store';
+import { ladeSichtFuer } from '@/data/quelle';
 import { NACHLADEN, realtimeStarten, realtimeStoppen } from '@/data/realtime';
 import { client, LIEST_AUS_SUPABASE } from '@/lib/supabase';
 import { colors } from '@/theme';
@@ -65,6 +70,14 @@ export default function RootLayout() {
   const zeigt = torwaechterZeigt(sitzung);
   const angemeldet = zeigt === 'app';
   const laden = useSlice('laden');
+  // **NICHT `laden.zustand === 'laeuft'`.** Seit dem 2026-09-12 hat `LadeStand`
+  // FÜNF Glieder, und ein Vergleich hier hätte `'nachladen'` still in den
+  // richtigen Zweig fallen lassen — richtig aus Versehen. Beim nächsten Glied
+  // (`'fehler-nachladen'`, Ians Entscheidung 49) wäre das Versehen falsch gewesen:
+  // Es hätte den Vollbild-Kasten gezeigt, wo die leise Zeile hingehört. Die Enge
+  // steht in `ladeSichtFuer()`, einem erschöpfenden `switch` mit `never`; die
+  // gemessene Begründung steht in `data/quelle.ts`.
+  const sicht = ladeSichtFuer(laden.zustand);
   const schreiben = useSchreibStand();
   useSitzungLesen();
   useDatenLaden(angemeldet);
@@ -78,55 +91,70 @@ export default function RootLayout() {
   //
   // Die Frage ist nicht „sind die Daten da?", sondern **„steht etwas zum
   // Anschauen?"** — und das ist bei drei der vier Torwächter-Zustände sofort so.
-  useStartFlaecheWeg(zeigt !== 'wartet' && (zeigt !== 'app' || laden.zustand !== 'laeuft'));
+  //
+  // Seit dem 2026-09-12 über `sicht` statt über `laden.zustand`: Die Abdeckung
+  // stellt GENAU die Frage, die `ladeSichtFuer()` beantwortet — steht etwas zum
+  // Anschauen? Mit `laden.zustand !== 'laeuft'` wäre `'nachladen'` wieder nur
+  // aus Versehen richtig gewesen.
+  useStartFlaecheWeg(zeigt !== 'wartet' && (zeigt !== 'app' || sicht !== 'nichts'));
 
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
       <View style={styles.app}>
-        <View style={styles.buehne}>
-          {/* DREI Stufen statt zwei seit Phase 20.4-b — und die Reihenfolge ist
+        {/* ── Die zwei Leisten, und sie liegen ÜBER der Bühne im FLUSS ──────────
+            Ians Entscheidung 48: Sie schieben den Inhalt nach unten, statt sich
+            darüberzulegen. Bis zum 2026-09-12 abends lag die Schreibfehler-Leiste
+            absolut positioniert auf `top: 0` — also genau auf dem Zurück-Pfeil,
+            der dort auf jedem Screen sitzt (mit `elementFromPoint` gemessen).
+
+            Beide stehen HIER und nicht in den vierzehn Screens, aus demselben
+            Grund wie der Ladezustand: Alle 22 Schreib-Aktionen enden in demselben
+            Feld, und eine Leiste je Screen wären vierzehn Gelegenheiten, eine zu
+            vergessen. */}
+        {schreiben.zustand === 'fehler' ? <SchreibFehlerLeiste fehler={schreiben.fehler} /> : null}
+        {sicht === 'app-mit-zeile' && laden.zustand === 'fehler-nachladen' ? (
+          <LadeZeile fehler={laden.fehler} nochmal={datenHolen} />
+        ) : null}
+        <OhneOberenRand aus={schreiben.zustand === 'fehler' || sicht === 'app-mit-zeile'}>
+          <View style={styles.buehne}>
+            {/* DREI Stufen statt zwei seit Phase 20.4-b — und die Reihenfolge ist
               die Aussage: Wer nicht angemeldet ist, hat kein Ladeproblem, sondern
               gar keine Frage nach Daten. Erst danach entscheidet der Ladezustand.
               Wie bei der Anmeldung wird der `Stack` GAR NICHT gezeichnet, statt
               überdeckt zu werden: Ein Screen im Baum zeichnet, und ein Feed mit
               neun leeren Listen sagt „Noch nichts los in deinem Feed" — genau der
               Satz, den Ians Entscheidung 43 verbietet. */}
-          {zeigt === 'wartet' ? (
-            // Es wird noch nachgesehen, ob eine Sitzung liegt. Bewusst NICHTS —
-            // auf Web deckt `#ss-start` aus `+html.tsx`, auf Native der Splash.
+            {zeigt ===
+            'wartet' ? // auf Web deckt `#ss-start` aus `+html.tsx`, auf Native der Splash. // Es wird noch nachgesehen, ob eine Sitzung liegt. Bewusst NICHTS —
             // Ein eigenes Wartebild wäre ein zweites über dem ersten.
-            null
-          ) : zeigt === 'anmelden' ? (
-            <Anmelden />
-          ) : zeigt === 'erstes-konto' ? (
-            // `authId` kommt aus dem ZUSTAND und nicht aus einem Haken im Screen:
-            // Nur hier ist typsicher bekannt, dass es sie gibt.
-            <ErstesKonto authId={sitzung.zustand === 'neu' ? sitzung.authId : ''} />
-          ) : laden.zustand === 'fehler' ? (
-            <LadeSchirm fehler={laden.fehler} nochmal={datenHolen} />
-          ) : laden.zustand === 'laeuft' ? (
-            // Nichts. Auf Web liegt `#ss-start` aus `+html.tsx` darüber (siehe
-            // `useStartFlaecheWeg`), auf Native der Splash. Kein Ladekringel: Er wäre
+            null : zeigt === 'anmelden' ? (
+              <Anmelden />
+            ) : zeigt === 'erstes-konto' ? (
+              // `authId` kommt aus dem ZUSTAND und nicht aus einem Haken im Screen:
+              // Nur hier ist typsicher bekannt, dass es sie gibt.
+              <ErstesKonto authId={sitzung.zustand === 'neu' ? sitzung.authId : ''} />
+            ) : sicht === 'fehler' &&
+              (laden.zustand === 'fehler' || laden.zustand === 'fehler-nachladen') ? (
+              // Der zweite Zweig gilt nur in der verworfenen Fassung
+              // `LADE_FEHLER = 'immer-vollbild'` — dort gibt `ladeSichtFuer()` auch
+              // für `'fehler-nachladen'` den Kasten zurück. Ohne ihn wäre die
+              // verworfene Möglichkeit eine Behauptung im Kommentar (harte Regel 84).
+              <LadeSchirm fehler={laden.fehler} nochmal={datenHolen} />
+            ) : sicht ===
+              'nichts' ? // `useStartFlaecheWeg`), auf Native der Splash. Kein Ladekringel: Er wäre // Nichts. Auf Web liegt `#ss-start` aus `+html.tsx` darüber (siehe
             // ein zweites Warte-Bild über dem ersten, und Entscheidung 50 verlangt
             // eine Begründung dafür, dass etwas im Weg steht.
-            null
-          ) : (
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: colors.bg },
-              }}
-            />
-          )}
-        </View>
-        {/* Ein gescheiterter Schreibvorgang — Phase 20.5. Er steht HIER und nicht in
-            den vierzehn Screens, aus demselben Grund wie der Ladezustand: Alle 22
-            Aktionen enden in demselben Feld, und eine Leiste je Screen wären
-            vierzehn Gelegenheiten, eine zu vergessen. Der Bildschirm darunter ist
-            schon wieder richtig — `schreibVorgang` hat nachgeladen, und das
-            Nachladen IST die Rücknahme. */}
-        {schreiben.zustand === 'fehler' ? <SchreibFehlerLeiste fehler={schreiben.fehler} /> : null}
+            null : (
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: colors.bg },
+                }}
+              />
+            )}
+          </View>
+        </OhneOberenRand>
         {/* NACH der Bühne und damit darüber: Das Vollbild überdeckt, statt den Inhalt
             zu schieben — sonst wackelt beim Wegdrücken der ganze Bildschirm. Und es
             liegt ÜBER der Tab-Leiste, was seit Entscheidung 48 kein Preis mehr ist,
@@ -225,8 +253,13 @@ function useDatenLaden(angemeldet: boolean) {
  * Steht `laden` auf `'fehler'`, liegt Ians Vollbild-Kasten aus Entscheidung 43
  * davor, und der Weg heraus ist SEIN Knopf. Ein Nachladen im Hintergrund würde
  * daran vorbei entweder still heilen (dann stand der Kasten grundlos da) oder
- * still scheitern. `datenHolen()` setzt den Zustand ohnehin auf `'laeuft'` —
- * hier wird deshalb nur geladen, wenn schon etwas dasteht.
+ * still scheitern. Hier wird deshalb nur geladen, wenn schon etwas dasteht.
+ *
+ * ── `'da'` und nicht `!== 'fehler'`, und das schließt `'nachladen'` mit aus ──
+ * Seit dem 2026-09-12 setzt `datenHolen()` beim Nachladen `'nachladen'` statt
+ * `'laeuft'` (siehe `data/quelle.ts`). Ein Hervorholen mitten in einen laufenden
+ * Lauf hinein hat nichts zu holen, was der Lauf nicht ohnehin holt — und
+ * `datenHolen()` hat dafür seinen eigenen Wächter samt `nochmalHolen`.
  */
 function useNachladenBeimHervorholen(angemeldet: boolean, zustand: LadeStand['zustand']) {
   useEffect(() => {
@@ -239,6 +272,33 @@ function useNachladenBeimHervorholen(angemeldet: boolean, zustand: LadeStand['zu
     });
     return () => abo.remove();
   }, [angemeldet, zustand]);
+}
+
+/**
+ * Nimmt dem Inhalt darunter den OBEREN SafeArea-Rand — solange eine Leiste ihn
+ * schon trägt. Ians Entscheidung 48.
+ *
+ * ── Warum es das überhaupt braucht ───────────────────────────────────────────
+ * Seit die zwei Leisten im FLUSS liegen statt darüber, steht über der Bühne
+ * manchmal etwas. Die Leiste trägt dann `insets.top` (sonst läge sie im Notch),
+ * und jeder Screen darunter trägt ihn über `SsScreen` **noch einmal** — das ist
+ * die ACTA-Falle „doppelter Inset = toter Balken", nur andersherum: hier entsteht
+ * eine Lücke statt eines Balkens.
+ *
+ * ── Und warum man das im Browser NICHT sieht ─────────────────────────────────
+ * Auf Web ist `insets.top` **null**. Der Fehler wäre also erst auf Ians iPhone
+ * aufgetaucht — genau die Lage aus Phase 19i („ein Beleg auf der falschen
+ * Plattform ist kein Beleg"), diesmal vorher bedacht statt hinterher gemessen.
+ *
+ * `SafeAreaInsetsContext` ist die Stelle, an der `useSafeAreaInsets()` UND
+ * `SafeAreaView edges={…}` lesen — beide Wege sind damit abgedeckt, und kein
+ * Screen muss etwas davon wissen.
+ */
+function OhneOberenRand({ aus, children }: { aus: boolean; children: React.ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const ohne = useMemo(() => ({ ...insets, top: 0 }), [insets]);
+  if (!aus) return <>{children}</>;
+  return <SafeAreaInsetsContext.Provider value={ohne}>{children}</SafeAreaInsetsContext.Provider>;
 }
 
 /**
