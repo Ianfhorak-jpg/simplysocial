@@ -4891,16 +4891,47 @@ stellt GoTrue das Token aus und PostgREST liest es.
    • **Der Preis: +3.398 B gzip (+0,70 %)** auf 486.870 B, roh +13.041 B. Klein — weil
      `supabase-js` seit 20.4-b ohnehin drin ist.
 
-**9. Ein Prüfstand, der EINMAL rot war und beim zweiten Lauf grün — und der Grund steht
-schon im Plan.** `pruef-lesen` meldete in einem Lauf `… und kommt am Kanal an: false`,
-bei `verbunden: true` und `geschrieben: 'ok'` — also Kanal da, Schreiben durch, Ereignis
-weg. Der zweite Lauf war grün. **Das ist keine Flocke, die man wegsehen darf:** Der
-20.4-b-Abschnitt nennt die Ursache wörtlich — *das Auth-Token muss an PostgREST UND an
-Realtime weitergereicht werden; vergisst man das zweite, greift RLS am Kanal nicht wie
-erwartet, und der Fehler ist still.* Im Prüfstand liegen Anmelden und `subscribe()`
-unmittelbar beieinander, in der App nicht (`realtimeStarten` läuft erst nach dem ersten
-`datenHolen()`). **Offen und aufgeschrieben, nicht erledigt.** Wer es angeht, misst
-`sb.realtime.accessToken` vor dem `subscribe`.
+**9. Ein Prüfstand, der EINMAL rot war und beim zweiten Lauf grün.** `pruef-lesen`
+meldete in einem Lauf `… und kommt am Kanal an: false`, bei `verbunden: true` und
+`geschrieben: 'ok'` — Kanal da, Schreiben durch, Ereignis weg.
+
+> ✅ **Erledigt am 2026-09-12 — und der hier ursprünglich genannte Grund war falsch.**
+> Es stand da: *das Auth-Token muss an PostgREST UND an Realtime weitergereicht
+> werden; vergisst man das zweite, greift RLS am Kanal nicht wie erwartet.* Die Spur
+> war gut begründet und im Bibliothekscode sichtbar — `RealtimeChannel.subscribe()`
+> liest `socket.accessTokenValue` **synchron**, während supabase-js `setAuth()`
+> **async und ohne `await`** aus dem `SIGNED_IN`-Ereignis ruft; landet es im falschen
+> Augenblick, geht der Beitritt ohne Token raus und der Server fällt auf `anon`
+> zurück.
+>
+> **Gemessen ist davon nichts eingetreten.** `accessTokenValue` trug beim
+> `subscribe()` in jedem Lauf das Nutzer-Token, und ein ausdrückliches
+> `await sb.realtime.setAuth(token)` davor machte bei **8 von 8** Läufen keinen
+> Unterschied (vier mit, vier ohne, alle in frischen Prozessen). **Ein Mechanismus,
+> den man im fremden Quelltext findet, ist eine Hypothese und kein Befund.**
+>
+> **Und der erste Vergleich hätte fast das Gegenteil belegt:** „ohne `await`" zuerst,
+> „mit" danach ergab rot/grün — gedreht ergab dieselbe Messung grün/grün. Gemessen
+> wurde die REIHENFOLGE, nicht der Schalter. Dieselbe Lehre wie 19h-1, nur auf den
+> Prüfaufbau angewandt.
+>
+> **Die wirkliche Ursache ist ein Kaltstart und reproduzierbar:** Nach **zwölf
+> Minuten** ohne Verbindung geht das ERSTE Ereignis nach `SUBSCRIBED` verloren, ein
+> zweites 1,5 s später kommt an (`gehört: [B]`); der Lauf unmittelbar danach meldete
+> `[A, B]`. Warm: 5 von 5 mit beiden. Supabase bestätigt den Beitritt, bevor sein
+> WAL-Leser an der aktuellen Stelle steht.
+>
+> **Gebaut ist keine Wiederholung, sondern eine zweite Messung:** `50_lesen.mjs`
+> stupst zweimal (A sofort, B nach 2 s), prüft die Zusage der App — *„spätestens der
+> zweite Anstoß kommt an"* — und schreibt daneben als Satz, ob der erste
+> verlorenging. Kommt keiner an, ist Realtime kaputt; kommt nur der zweite, war der
+> Dienst kalt. **Ein `retry` hätte daraus ein „irgendwann klappt es schon" gemacht.**
+>
+> ⚠️ **Was für die APP folgt, ist offen und gehört Ian:** Nach dem ersten Laden ist
+> Realtime der einzige Anlass nachzuladen — es gibt kein Sicherheitsnetz. Geht ein
+> Ereignis verloren (kalt, Verbindungsabbruch, abgelaufenes Token), steht der
+> Bildschirm still, bis zufällig das nächste kommt. Steht in
+> `_FUER_IAN/OFFENE_SACHEN.md`.
 
 ---
 
@@ -6407,6 +6438,52 @@ Upload gibt es erst in 20.6).
 
 ---
 
+### 45. Wen ein Prüfstand anfassen darf ✅
+
+**Ians Entscheidung vom 2026-09-12, gefragt beim Aufräumen nach seinem ersten echten
+Login.** Die dritte, die aus dem SCHEMA kam statt aus einem Screen — und die erste, bei
+der die Frage sich beim Messen **verändert** hat, bevor sie gestellt wurde.
+
+**Die Lage, wie sie im Plan stand:** Seit Ians Anmeldung liegt ein echtes Konto in
+`auth.users`. `pruef-lesen` und `pruef-konto` brechen dann ab, mit der Begründung *„das
+Abräumen unterscheidet nicht, wem eine Zeile gehört."* Angeboten waren zwei Wege: das
+Konto löschen oder die Prüfstände in ein zweites Supabase-Projekt umziehen.
+
+**Nachgesehen statt geglaubt — und die Begründung stimmte nicht mehr.**
+`52_abraeumen.sql` nennt die fünf UUIDs längst beim Namen und schreibt im eigenen Kopf
+*„Was nicht an ihnen hängt, wird nicht angefasst."* Übrig waren zwei Stellen: eine
+Zeile, die JEDEN Chat ohne Teilnehmer abräumte (und damit ausgerechnet gelöscht hätte,
+was Entscheidung 42 aufhebt), und `62_abraeumen.sql` mit einem blanken
+`delete from auth.users;` — wörtlich das, wovor die Schwesterdatei warnt. **Beide ließen
+sich auf feste IDs bringen; damit war der strenge Wächter ohne Gegenwert**, und es gab
+eine dritte Möglichkeit, die es vorher nicht gab.
+
+**Gewählt: der Wächter fragt nur nach den Prüf-IDs.**
+
+| | | |
+|---|---|---|
+| **A** | ✅ Wächter fragt nach den eigenen festen IDs | seine Wahl — kostet nichts, Ian behält sein Konto, und die Prüfstände laufen dauerhaft. Der Preis ist benannt: Es wird weiter in die Datenbank geschrieben, an der Menschen hängen — aber nur unter IDs, die keinem gehören |
+| **B** | Ians Konto löschen | war nachgemessen billig (das Konto ist LEER — kein Profil, kein Post) und löst das Problem trotzdem nicht: Beim nächsten echten Login steht dieselbe Frage wieder da |
+| **C** | zweites Supabase-Projekt | die sauberste Trennung und die einzige mit laufenden Kosten: rund 20 Minuten Klickarbeit und danach zwei Schemata, die auseinanderlaufen können — dieselbe Sorte Drift wie `landing/stil.css` (harte Regel 13), nur mit einer Datenbank |
+
+**Der Haken, den er kennt:** Ein Prüfstand, der neben echten Daten läuft, ist nur so
+sicher wie seine engste Zeile. Genau deshalb ist die Zusage als **harte Regel 83**
+festgeschrieben: *Ein Prüfstand fasst NUR seine eigenen IDs an — und jede Zählung darin
+auch.* Wer dort eine Zeile ohne `where id in (…)` ergänzt, hebt diese Entscheidung auf,
+und es sieht im eigenen Lauf genau richtig aus.
+
+**Was beim Umbau herauskam, ist der eigentliche Ertrag:** Der Wächter war nur die
+auffälligste Stelle. Drei weitere Messungen stellten dieselbe globale Frage —
+`count(*) from auth.users`, der Vergleich aller `handle`, und die Liste aller
+sichtbaren Posts. Alle drei wurden im ersten Lauf neben echten Konten rot, ohne dass
+etwas kaputt war. **Gegengemessen ist nicht der grüne Lauf, sondern dass die FREMDEN
+Zeilen ihn überleben:** `pruef-konto` 29/0 und `pruef-lesen` 29/0, beide neben zwei
+fremden Konten, und beide Konten standen danach unverändert da.
+
+---
+
+---
+
 ## 7. Bewusst NICHT im Prototyp
 
 Login · Karte · Push-Nachrichten · Bezahlung · **echte Bilder-Uploads** ·
@@ -6638,13 +6715,15 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > 5. **20.3-b2 ist der Rest und braucht einen Build:** Apple-Sign-in, Google und die vier
 >    nativen Bausteine zusammen. Erst damit überlebt die Sitzung am iPhone den Neustart —
 >    heute tut sie es nur im Browser (`localStorage`).
-> 6. **`npm run pruef-konto` ist neu** und läuft gegen die ECHTE Datenbank. Er bricht ab,
->    wenn `auth.users` nicht leer ist — sobald echte Menschen drin sind, gehört er in ein
->    zweites Supabase-Projekt.
-> 7. ⚠️ **Ein Befund liegt offen:** `pruef-lesen` war in einem von zwei Läufen rot, an
->    der Realtime-Zeile (Kanal verbunden, Schreiben durch, Ereignis weg). Verdacht steht
->    im 20.4-b-Abschnitt: das Token muss an PostgREST UND an Realtime. Aufgeschrieben,
->    nicht erledigt.
+> 6. **`npm run pruef-konto` ist neu** und läuft gegen die ECHTE Datenbank.
+>    ✅ *Seit dem 2026-09-12 läuft er NEBEN echten Konten* (Ians Entscheidung 45): Der
+>    Wächter fragt nur noch, ob die eigenen festen Prüf-IDs frei sind. Ein zweites
+>    Supabase-Projekt braucht es dafür nicht.
+> 7. ✅ **Der offene Realtime-Befund ist erledigt — und der Verdacht war falsch.**
+>    Nicht das Token (8 von 8 Läufen ohne Unterschied), sondern ein **Kaltstart**:
+>    Nach zwölf Minuten Ruhe geht das erste Ereignis nach `SUBSCRIBED` verloren.
+>    `50_lesen.mjs` stupst jetzt zweimal und sagt, welcher Anstoß ankam. Einzelheiten
+>    in Abschnitt 5b, Punkt 9.
 
 ---
 

@@ -124,9 +124,16 @@ const zweiter = await profilAnlegen(
   sbB,
 );
 pruef('auch der zweite kommt durch', zweiter.zustand, 'an');
+// `.in('id', …)` statt aller Profile: Diese Zeile fragt nach den ZWEI Menschen
+// dieses Laufs, nicht nach der Bevölkerung der Datenbank. Ohne die Einschränkung
+// war sie am 2026-09-12 rot, sobald irgendein echtes Profil existierte — und der
+// Text daneben („die @-Namen sind ian und ian2") behauptete dann etwas über die
+// ganze Tabelle, was er nie gemeint hat. Dieselbe Berichtigung wie am Wächter und
+// an der Konten-Zählung: **die Prüfung fasst nur ihre eigenen IDs an.**
 const { data: handles } = await sbB
   .from('profiles')
   .select('id, handle')
+  .in('id', [KONTO_A, KONTO_B])
   .order('handle', { ascending: true });
 pruef(
   'die @-Namen sind ian und ian2',

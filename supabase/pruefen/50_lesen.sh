@@ -19,12 +19,29 @@
 #
 #  ── Der Wächter, der wichtiger ist als die Prüfung ───────────────────────────
 #  Dieses Skript SCHREIBT in die Produktionsdatenbank und räumt danach wieder ab.
-#  Solange dort niemand ist, ist das harmlos. Sobald echte Menschen drin sind,
-#  wäre derselbe Ablauf ein Eingriff in fremde Daten — und ein Abräumen, das einen
-#  Schritt zu weit geht, ist nicht rückholbar. Deshalb bricht es ab, wenn
-#  `auth.users` nicht leer ist. Dieselbe Bauart wie der dritte Wächter in
-#  `einspielen.sh`, und derselbe Grund: Eine Produktionsdatenbank anzufassen ist
-#  Ians Entscheidung, keine Nebenwirkung.
+#  Der Wächter fragt: **Ist eine der eigenen Prüf-IDs schon belegt?**
+#
+#  ⚠️ **Bis zum 2026-09-12 fragte er etwas anderes — „ist `auth.users` leer?" — und
+#  das war ab Ians erstem echtem Login das Ende der Prüfung.** Die Begründung stand
+#  daneben: *„das Abräumen unterscheidet nicht, wem eine Zeile gehört."* Nachgesehen
+#  statt geglaubt: **Das stimmte nicht mehr.** `52_abraeumen.sql` nennt seit seiner
+#  Überarbeitung die fünf UUIDs beim Namen und schreibt im eigenen Kopf *„Was nicht
+#  an ihnen hängt, wird nicht angefasst"*. Übrig war EINE stumpfe Zeile — ein
+#  Rundumschlag gegen jeden Chat ohne Teilnehmer —, und die hätte ausgerechnet
+#  gelöscht, was Ians Entscheidung 42 ausdrücklich aufhebt: einen verwaisten Chat
+#  eines echten Menschen. Sie ist weg; abgeräumt wird nur noch nach ID.
+#
+#  **Die Lehre ist nicht „der Wächter war zu streng", sondern dass seine Begründung
+#  und das, was darunter wirklich passierte, auseinandergelaufen sind** — dieselbe
+#  Lage wie `landing/stil.css` gegenüber `theme/colors.ts` (harte Regel 13), nur
+#  zwischen einem Kommentar und seinem Code. Ein Wächter, der die falsche Frage
+#  stellt, sperrt entweder zu viel oder zu wenig; hier war es zu viel, und der Preis
+#  wäre ein zweites Supabase-Projekt gewesen.
+#
+#  **Ians Entscheidung vom 2026-09-12** (gegen „mein Konto löschen" und gegen „ein
+#  zweites Projekt"): Der Prüfstand darf neben echten Nutzern laufen, solange er
+#  ausschließlich seine eigenen IDs anfasst. Wer hier eine Zeile ergänzt, die etwas
+#  ohne feste ID löscht, hebt diese Entscheidung auf.
 #
 #  ── Abgeräumt wird IMMER ─────────────────────────────────────────────────────
 #  Über `trap … EXIT`, nicht am Ende des Skripts. Ein `exit 1` mitten in der
@@ -49,24 +66,38 @@ fi
 DB_URL="$(cat "$URL_DATEI")"
 PSQL="psql $DB_URL -v ON_ERROR_STOP=1 -qAt"
 
-echo "── 1. Ist die Datenbank noch leer? ──"
-BELEGT="$($PSQL -c "select count(*) from auth.users;" 2>&1)" || {
+echo "── 1. Sind die Prüf-IDs frei? ──"
+# Die fünf Menschen; alles Weitere (Profile, Posts, Anfragen) hängt an ihrem
+# Cascade. Dazu die zwei Chat-Fäden, weil `chat_threads` an KEINEM Konto hängt —
+# genau sie bleiben nach einem mitten drin abgebrochenen Lauf liegen.
+PRUEF_IDS="'11111111-1111-1111-1111-111111111111',
+           '22222222-2222-2222-2222-222222222222',
+           '33333333-3333-3333-3333-333333333333',
+           '44444444-4444-4444-4444-444444444444',
+           '55555555-5555-5555-5555-555555555555'"
+BELEGT="$($PSQL -c "select
+    (select count(*) from auth.users   where id in ($PRUEF_IDS))
+  + (select count(*) from chat_threads where id in (
+      '0c000001-0000-0000-0000-000000000001',
+      '0c000002-0000-0000-0000-000000000002'));" 2>&1)" || {
   echo "✗ Keine Verbindung zur Datenbank: $BELEGT"; exit 2; }
 if [ "$BELEGT" != "0" ]; then
   cat <<HINWEIS
-✗ In auth.users stehen $BELEGT Konten.
+✗ $BELEGT Prüf-Zeilen liegen noch in der Datenbank.
 
-Dieses Skript legt Prüfdaten an und löscht sie danach wieder. Solange die
-Datenbank leer ist, ist das harmlos — sobald echte Menschen drin sind, ist es
-ein Eingriff in fremde Daten, und das Abräumen unterscheidet nicht, wem eine
-Zeile gehört.
+Das heißt NICHT, dass echte Nutzer im Weg sind — dieser Prüfstand fasst nur seine
+eigenen, festen IDs an. Es heißt: Ein früherer Lauf ist mitten drin abgebrochen
+und hat nicht abgeräumt. Von Hand nachholen:
 
-Ab hier gehört diese Prüfung in ein ZWEITES Supabase-Projekt (Entwicklung),
-nicht in das, an dem Leute hängen.
+    psql "\$(cat ~/.simplysocial/db-url)" -f supabase/pruefen/52_abraeumen.sql
 HINWEIS
   exit 2
 fi
-echo "✓ auth.users ist leer — Aufbauen und Abräumen sind gefahrlos."
+# Informativ, nicht blockierend: Ians Entscheidung vom 2026-09-12 erlaubt das
+# Mitlaufen. Die Zahl steht trotzdem da — wer sie SIEHT, merkt, wenn er sich in
+# der Datenbank geirrt hat.
+ECHTE="$($PSQL -c "select count(*) from auth.users where id not in ($PRUEF_IDS);" 2>/dev/null || echo '?')"
+echo "✓ Alle Prüf-IDs frei. ($ECHTE echte Konten in der Datenbank — sie werden nicht angefasst.)"
 
 # ── Aufräumen, komme was wolle ───────────────────────────────────────────────
 abraeumen() {
@@ -77,11 +108,19 @@ abraeumen() {
   # blieb „es stehen noch 5 Zeilen" ohne einen Grund. Dieselbe Falle wie das
   # `set -e`, das in `db-url.sh` die eigens gebaute Diagnose tötete.
   $PSQL -f "$HIER/52_abraeumen.sql"
-  REST="$($PSQL -c "select count(*) from auth.users;" 2>/dev/null || echo '?')"
+  # Gefragt wird nach den EIGENEN Zeilen, nicht nach `count(*) = 0`. Die alte
+  # Zeile stellte die falsche Frage gleich doppelt: Sie war rot, sobald ein echter
+  # Mensch in der Datenbank stand (obwohl nichts liegengeblieben war), und sie wäre
+  # grün gewesen, wenn das Abräumen MEHR gelöscht hätte als seine eigenen Zeilen.
+  REST="$($PSQL -c "select
+      (select count(*) from auth.users   where id in ($PRUEF_IDS))
+    + (select count(*) from chat_threads where id in (
+        '0c000001-0000-0000-0000-000000000001',
+        '0c000002-0000-0000-0000-000000000002'));" 2>/dev/null || echo '?')"
   if [ "$REST" = "0" ]; then
-    echo "✓ Die Datenbank ist wieder leer."
+    echo "✓ Alle Prüf-Zeilen sind wieder weg."
   else
-    echo "✗ ACHTUNG: In auth.users stehen noch $REST Zeilen. Von Hand nachsehen:"
+    echo "✗ ACHTUNG: $REST Prüf-Zeilen liegen noch da. Von Hand nachsehen:"
     echo "    psql \"\$(cat ~/.simplysocial/db-url)\" -f supabase/pruefen/52_abraeumen.sql"
   fi
 }

@@ -3,7 +3,15 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 11.09.2026 — **du hast das Apple Developer Program. Eines von drei Konten ist
+> Stand: 12.09.2026 (nachmittags) — **du musst dein Konto NICHT löschen.** Heute früh
+> stand hier noch, die Prüfskripte seien blockiert, seit du dich angemeldet hast, und du
+> müsstest wählen zwischen „Konto weg" und „zweites Supabase kaufen". Nachgemessen:
+> **beides war unnötig.** Deine Entscheidung 45 („der Wächter fragt nur nach den
+> Prüf-IDs") ist eingebaut, beide Prüfstände laufen wieder — **neben deinem Konto, ohne
+> es anzufassen** (nachgemessen: 29 und 29 Häkchen, kein Kreuz, und dein Konto stand
+> danach unverändert da). **Neu für dich: Punkt 0b**, eine Entscheidung, die zwei
+> Minuten kostet.
+> Davor: 11.09.2026 — **du hast das Apple Developer Program. Eines von drei Konten ist
 > damit da.** Punkt 6 ist abgehakt; was jetzt fehlt, sind Supabase und Google — und
 > **drei Handgriffe im Apple-Portal**, die erst mit dem Programm möglich sind. Alle
 > Klicks stehen ab heute in `_FUER_IAN/KONTEN_EINRICHTEN.md`.
@@ -42,6 +50,34 @@ eine fehlende Berechtigung, ist aber keine.
 Wenn ich also am Simulator etwas antippen soll: Bildschirm anlassen. Sonst schreibe
 ich es dir dazu, und wir machen es beim nächsten Mal.
 </details>
+
+### 0b. Soll die App merken, wenn sie eine Änderung verpasst? · **eine Entscheidung** 🟢
+*Neu am 12.09.2026. Blockiert nichts — aber je später sie kommt, desto mehr Code hängt
+dran.*
+
+**Worum es geht, ohne Fachwörter.** Wenn du die App offen hast und jemand postet etwas
+Neues, bekommt deine App vom Server einen Zuruf: *„da hat sich was geändert."* Daraufhin
+lädt sie nach. Das ist heute der **einzige** Grund, aus dem sie nach dem Start noch
+einmal nachlädt.
+
+**Was ich heute gemessen habe:** So ein Zuruf kann verlorengehen. Reproduziert — nach
+zwölf Minuten, in denen niemand die App offen hatte, ging der allererste Zuruf verloren;
+der nächste kam an. Das ist kein Fehler von uns, das macht Supabase so. Im schlimmen
+Fall (Handy kurz ohne Netz, Tunnel, WLAN-Wechsel) heißt es: **dein Bildschirm steht
+still, bis zufällig der nächste Zuruf kommt** — und du hältst die App für kaputt oder
+für leer.
+
+**Drei Möglichkeiten:**
+
+| | |
+|---|---|
+| **A** | **Nichts machen.** Der nächste Zuruf holt es nach. Ehrlich gesagt passiert das meistens schnell — und solange ihr zu viert seid, merkt es kaum jemand. Kostet nichts, und es bleibt ein Fall, in dem die App falsch aussieht. |
+| **B** | **Nachladen, wenn du die App wieder hervorholst.** Du wechselst zu WhatsApp und zurück → sie lädt neu. Das ist genau der Moment, in dem man hinsieht, und es kostet praktisch nichts. |
+| **C** | **Zusätzlich alle paar Minuten von selbst nachladen.** Am sichersten, auch wenn die App stundenlang offen liegt. Kostet Akku und Datenvolumen, und bei dreizehn Abfragen je Runde ist das nicht nichts. |
+
+**Meine Empfehlung: B.** Es deckt den Fall ab, der wirklich weh tut (Netz war weg),
+genau dann, wenn du hinschaust — und es ist die einzige der drei, die keinen laufenden
+Preis hat. **Aber es ist deine Entscheidung; sag einfach A, B oder C.**
 
 ### 1. Die Farbe der Landing-Page · **2 Minuten** 🟢
 Liegt seit dem 06.09. fertig da: `landing-vorschau/` — Olivgrün, Weinrot, Türkis.

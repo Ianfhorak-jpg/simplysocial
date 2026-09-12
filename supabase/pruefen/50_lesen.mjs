@@ -121,7 +121,27 @@ pruefWahr('es kamen Posts an', daten.posts.length > 0);
 
 abschnitt('Sichtbarkeit — dieselben Regeln wie in 10_angriff, nur über HTTP');
 {
-  const titel = daten.posts.map((p) => p.title).sort();
+  // Nur die Posts der fünf PRÜF-Menschen. Vorher stand hier `daten.posts` blank,
+  // und das ist derselbe Fehler wie im alten Wächter, nur an der inhaltlich
+  // heikelsten Stelle: Der Satz „Ian sieht genau vier Posts" war in Wahrheit eine
+  // Aussage über die ganze Datenbank. Am 2026-09-12 wurde er prompt rot, weil ein
+  // fremder öffentlicher Post danebenstand — und Ian SIEHT den zu Recht.
+  //
+  // **Die Einschränkung nimmt der Prüfung nichts weg, sondern gibt ihr erst ihren
+  // Sinn:** Geprüft werden soll die Sichtbarkeits-REGEL an fünf bekannten Fällen,
+  // nicht die Einwohnerzahl. Und Tobis Post fällt weiter auf, wenn der Block bricht
+  // — er gehört ja zu den fünfen (harte Regel 83).
+  const PRUEF_AUTOREN = new Set([
+    '11111111-1111-1111-1111-111111111111',
+    '22222222-2222-2222-2222-222222222222',
+    '33333333-3333-3333-3333-333333333333',
+    '44444444-4444-4444-4444-444444444444',
+    '55555555-5555-5555-5555-555555555555',
+  ]);
+  const titel = daten.posts
+    .filter((p) => PRUEF_AUTOREN.has(p.authorId))
+    .map((p) => p.title)
+    .sort();
   // Ian sieht: seinen öffentlichen, seinen Follower-Post, seinen Gruppen-Post,
   // Maras öffentlichen. NICHT Tobis Kino — Ian hat Tobi blockiert (Entscheidung 7).
   pruef('Ian sieht genau vier Posts', titel, [
@@ -216,16 +236,38 @@ console.log('\n── Realtime: meldet der Kanal wirklich etwas? ─────
   // ist gar nicht verbunden, die Änderung hat nie stattgefunden, oder Realtime
   // schweigt. Harte Regel 57 in ihrer allgemeinen Form: **Ein Test, der nur „hat
   // nicht geklappt" abfragt, prüft zu wenig.**
+  // ── ZWEI Anstöße statt einem, und das ist der Ertrag des 2026-09-12 ────────
+  // Hier stand EIN Anstoß, unmittelbar nach `SUBSCRIBED`. Diese Prüfung war in
+  // einem von zwei Läufen rot (Kanal verbunden, Schreiben durch, Ereignis weg),
+  // und der Verdacht im Plan lautete: das Token geht an PostgREST, aber nicht an
+  // Realtime. **Nachgemessen und WIDERLEGT** — `sb.realtime.accessTokenValue` trug
+  // in beiden Fällen das Nutzer-Token, und ein ausdrückliches `await setAuth()`
+  // davor änderte an 8 von 8 Läufen nichts.
+  //
+  // Die wirkliche Ursache ist ein KALTSTART, und sie ist reproduzierbar: Nach zwölf
+  // Minuten ohne jede Verbindung geht das ERSTE Ereignis nach `SUBSCRIBED`
+  // verloren und erst ein späteres kommt an (gemessen: `gehört: [B]`). Warm kamen
+  // in fünf von fünf Läufen beide an. Supabase bestätigt den Beitritt also, bevor
+  // sein WAL-Leser wirklich an der aktuellen Stelle steht.
+  //
+  // **Daraus folgt die Form dieser Prüfung, nicht ein `retry`.** Wer den einen
+  // Anstoß nur wiederholte, machte aus einer ehrlichen Messung ein „irgendwann
+  // klappt es schon". Gemessen werden beide Anstöße getrennt: Kommt KEINER an, ist
+  // Realtime kaputt; kommt nur der zweite, war der Dienst kalt — und das steht
+  // dann als Satz da, statt als Kreuz, über das jemand hinwegliest.
+  //
+  // (Hier wird die Nutzlast GELESEN, um A von B zu unterscheiden. In App-Code wäre
+  // das harte Regel 75; ein Messgerät darf mehr als der Patient.)
+  const PAUSE_MS = 2000;
   const lage = await new Promise((fertig) => {
-    const ergebnis = { verbunden: false, geschrieben: null, gehoert: false };
-    const uhr = setTimeout(() => fertig(ergebnis), 15000);
+    const ergebnis = { verbunden: false, geschrieben: null, gehoert: [] };
+    const fertigstellen = () => { clearTimeout(uhr); sb.removeChannel(kanal); fertig(ergebnis); };
+    const uhr = setTimeout(() => fertig(ergebnis), 20000);
     const kanal = sb
       .channel('pruef-lesen')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
-        ergebnis.gehoert = true;
-        clearTimeout(uhr);
-        sb.removeChannel(kanal);
-        fertig(ergebnis);
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, (p) => {
+        ergebnis.gehoert.push(String(p.new?.note ?? '?').split(' ')[0]);
+        if (ergebnis.gehoert.includes('B')) fertigstellen();
       })
       .subscribe(async (stand, fehler) => {
         if (stand !== 'SUBSCRIBED') {
@@ -237,16 +279,29 @@ console.log('\n── Realtime: meldet der Kanal wirklich etwas? ─────
         // bevor jemand zuhört — und die Prüfung liefe in ihren Timeout und sähe
         // aus wie ein kaputtes Realtime. Dieselbe Familie wie Kamerabefehle vor
         // `onMapReady`.
-        const { error } = await sb
-          .from('posts')
-          .update({ note: 'angestupst ' + Date.now() })
-          .eq('id', '0a000001-0000-0000-0000-000000000001');
-        ergebnis.geschrieben = error ? `${error.code} ${error.message}` : 'ok';
+        const stups = async (marke) => {
+          const { error } = await sb
+            .from('posts')
+            .update({ note: marke + ' ' + Date.now() })
+            .eq('id', '0a000001-0000-0000-0000-000000000001');
+          return error ? `${error.code} ${error.message}` : 'ok';
+        };
+        ergebnis.geschrieben = await stups('A');
+        setTimeout(() => void stups('B'), PAUSE_MS);
       });
   });
   pruefWahr('der Kanal ist verbunden (SUBSCRIBED)', lage.verbunden);
   pruef('die Änderung ging wirklich durch', lage.geschrieben, 'ok');
-  pruefWahr('… und kommt am Kanal an', lage.gehoert);
+  // Die Zusage der App ist „Änderungen kommen an", nicht „die allererste innerhalb
+  // von Millisekunden nach dem Verbinden". Genau die wird hier geprüft.
+  pruefWahr('… und spätestens der zweite Anstoß kommt an', lage.gehoert.includes('B'));
+  // Kein Häkchen, sondern eine Auskunft: Sie unterscheidet „kalt" von „kaputt" und
+  // ist der Grund, warum ein künftiger roter Lauf nicht wieder geraten werden muss.
+  console.log(
+    lage.gehoert.includes('A')
+      ? '  · der erste Anstoß kam auch an — der Dienst war warm'
+      : `  · der erste Anstoß ging VERLOREN (gehört: [${lage.gehoert.join(', ')}]) — Kaltstart, siehe Dateikopf`,
+  );
 }
 
 console.log(`\n  ${haken} Häkchen, ${kreuze} Kreuze\n`);

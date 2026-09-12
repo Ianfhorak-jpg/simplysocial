@@ -56,11 +56,44 @@ Nutzer getroffen**:
    großzügiges Feld kostet nichts, ein zu kleines verwirft Eingaben.**
 3. **Der Bezirk ist ab jetzt ein FELD, kein Raster** (Ians Rückmeldung, harte Regel 81).
 
-⚠️ **Und daraus folgt etwas für die nächste Sitzung:** In `auth.users` steht seit dem
-2026-09-12 **ein echtes Konto (Ians)**. Damit verweigern `npm run pruef-lesen` und
-`npm run pruef-konto` den Dienst — der Wächter tut, wofür er gebaut ist. Entweder das
-Konto löschen (`delete from auth.users;`) oder die Prüfstände in ein zweites
-Supabase-Projekt umziehen. **Das ist Ians Entscheidung.**
+✅ **ERLEDIGT am 2026-09-12, und die Lage war eine andere als gedacht: die Prüfstände
+laufen NEBEN Ians Konto.** Hier stand, `pruef-lesen` und `pruef-konto` verweigerten den
+Dienst, seit ein echtes Konto in `auth.users` liegt, und Ian müsse wählen zwischen
+„Konto löschen" und „zweites Supabase-Projekt". **Beides war unnötig** (Ians
+Entscheidung 45: *der Wächter fragt nur nach den Prüf-IDs*). Fünf Dinge daran:
+
+1. **Die Begründung des Wächters war seit einer Überarbeitung FALSCH.** Er schrieb
+   *„das Abräumen unterscheidet nicht, wem eine Zeile gehört."* Nachgesehen statt
+   geglaubt: `52_abraeumen.sql` nennt die fünf UUIDs längst beim Namen und sagt im
+   eigenen Kopf *„Was nicht an ihnen hängt, wird nicht angefasst."* **Kommentar und
+   Code waren auseinandergelaufen** — dieselbe Lage wie `landing/stil.css` gegenüber
+   `theme/colors.ts` (harte Regel 13), nur innerhalb einer Datei. Ein Wächter, der
+   die falsche Frage stellt, sperrt zu viel oder zu wenig; hier zu viel, und der
+   Preis wäre ein zweites Projekt gewesen.
+2. **Übrig war EINE stumpfe Zeile, und sie hätte ausgerechnet Entscheidung 42
+   gelöscht.** `or not exists (select 1 from chat_participants …)` räumte JEDEN Chat
+   ohne Teilnehmer ab — und ein verwaister Chat ist nach harter Regel 56 ein gültiger
+   Zustand, den ein echter Mensch haben darf. Die Datei begründet drei Zeilen weiter
+   oben richtig, warum eine verwaiste MELDUNG stehen bleiben muss, und macht beim
+   Chat genau den Fehler, den sie dort vermeidet. **Und das scharfe Werkzeug stand im
+   selben Satz:** *„die Fäden bleiben mit ihren FESTEN IDs liegen."*
+3. **`62_abraeumen.sql` tat wörtlich das, wovor die Schwesterdatei warnt.** Dort stand
+   `delete from auth.users;` — ALLE Konten — mit der Begründung, ein Wächter in einer
+   *anderen* Datei habe vorher aufgepasst. `52_abraeumen.sql` schreibt dagegen: *„ein
+   Abräumen, das sich auf einen Wächter in einer ANDEREN Datei verlässt, ist genau so
+   lange harmlos, bis jemand es einzeln aufruft."* Die zwei festen UUIDs standen zwei
+   Zeilen weiter im aufrufenden Skript.
+4. **Der Wächter war nur die auffälligste Stelle, nicht die einzige — und das hat der
+   erste Lauf sofort gezeigt.** `✗ Erwartet: 2 Konten, 0 Profile. Ist: 4 / 1`: Die
+   Prüfung zählte `count(*) from auth.users`, meinte aber ihre eigenen zwei Zeilen.
+   Dasselbe beim Handle-Vergleich (`["@realtimeprobe","ian","ian2"]`). **Wer eine
+   Zusage von „die Datenbank gehört mir allein" auf „mir gehören diese IDs" umstellt,
+   muss JEDE Zählung mitziehen** — sonst wandert der Abbruch nur eine Zeile nach unten
+   (harte Regel 83).
+5. **Gemessen, nicht behauptet:** `npm run pruef-konto` → **29 Häkchen, 0 Kreuze**,
+   gelaufen neben **zwei fremden Konten**, und beide standen danach unverändert da.
+   Das ist der Beleg, der zählt — nicht, dass das Skript durchläuft, sondern dass die
+   fremden Zeilen es überleben.
 
 ✅ **Phase 20.3-b1 ist fertig (2026-09-12): die App kann sich WIRKLICH anmelden — per
 E-Mail-Code, gegen Ians echtes Supabase.** Der Teil von 20.3-b, der OHNE Apple und
@@ -132,12 +165,40 @@ zwei tote Knöpfe auf der öffentlichen Adresse — Apple und Google sind am Ser
 nachgemessen aus — und einen Prototyp-Hinweis, der „Es gibt keinen Login" behauptet,
 während es einen gibt. **Der Satz ist Ians** (harte Regel 22).
 
-⚠️ **Ein Befund liegt offen und ist NICHT erledigt:** `pruef-lesen` war in einem von
-zwei Läufen rot, an der Realtime-Zeile — Kanal verbunden, Schreiben durch, Ereignis weg.
-Der Verdacht steht wörtlich schon im 20.4-b-Abschnitt: *das Token muss an PostgREST UND
-an Realtime weitergereicht werden, sonst greift RLS am Kanal nicht wie erwartet, und
-der Fehler ist still.* Wer es angeht, misst `sb.realtime.accessToken` vor dem
-`subscribe`.
+✅ **Der offene Realtime-Befund ist ERLEDIGT (2026-09-12) — und der Verdacht war
+falsch.** `pruef-lesen` war in einem von zwei Läufen rot: Kanal verbunden, Schreiben
+durch, Ereignis weg. Hier stand, das Token gehe an PostgREST, aber nicht an Realtime.
+Vier Dinge:
+
+1. ❌ **Widerlegt, nicht vermutet.** `sb.realtime.accessTokenValue` trug im
+   Augenblick des `subscribe()` das **Nutzer-Token**, in jedem gemessenen Lauf. Ein
+   ausdrückliches `await sb.realtime.setAuth(token)` davor änderte an **8 von 8**
+   Läufen nichts — vier mit, vier ohne. Die Spur war plausibel und im
+   Bibliothekscode sogar sichtbar (`subscribe()` liest `accessTokenValue` synchron,
+   `setAuth` ist `async` und wird nicht erwartet), und sie war trotzdem nicht die
+   Ursache. **Ein Mechanismus, den man im fremden Quelltext findet, ist eine
+   Hypothese und kein Befund.**
+2. **Die wirkliche Ursache ist ein KALTSTART, und sie ist reproduzierbar.** Nach
+   **zwölf Minuten** ohne jede Verbindung geht das **erste** Ereignis nach
+   `SUBSCRIBED` verloren; ein zweites 1,5 s später kommt an (`gehört: [B]`). Der
+   Lauf unmittelbar danach, warm, meldete `[A, B]` — gleicher Code, Sekunden
+   auseinander, einziger Unterschied kalt/warm. Warm: **5 von 5** mit beiden.
+   Supabase bestätigt den Beitritt also, **bevor** sein WAL-Leser an der aktuellen
+   Stelle steht. Dieselbe Familie wie „Kamerabefehle verpuffen still vor
+   `onMapReady`".
+3. **Die Antwort ist keine Wiederholung, sondern eine zweite MESSUNG.** Ein `retry`
+   hätte aus einer ehrlichen Prüfung ein „irgendwann klappt es schon" gemacht.
+   `50_lesen.mjs` stupst jetzt **zweimal** (A sofort, B nach 2 s), prüft die Zusage
+   der App (*„spätestens der zweite Anstoß kommt an"*) und **sagt in einem Satz
+   daneben**, ob der erste verlorenging. Kommt keiner an, ist Realtime kaputt; kommt
+   nur der zweite, war der Dienst kalt — beim nächsten roten Lauf muss also niemand
+   mehr raten.
+4. ⚠️ **Was daraus für die APP folgt, ist noch offen und gehört Ian.** Die App hat
+   **kein Sicherheitsnetz**: Nach dem ersten Laden ist Realtime der einzige Anlass
+   nachzuladen. Geht ein Ereignis verloren — kalt, Verbindungsabbruch, abgelaufenes
+   Token —, steht der Bildschirm still, bis zufällig das nächste kommt. Im
+   Kaltstart-Fenster ist das folgenlos (die Daten wurden gerade geladen); bei einem
+   Abbruch ist es das nicht. Die Frage steht in `_FUER_IAN/OFFENE_SACHEN.md`.
 
 🎥 **Und eine Frage von Ian ist beantwortet: Liquid Glass liefert APPLE, wir bauen es
 nicht nach.** Sein Screen Recording liegt als `vorbild-liquid-glass-video.MP4` im
@@ -2645,6 +2706,26 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    verwirft Eingaben** — und wer prüfen will, ob eine Eingabe stimmt, fragt die Stelle,
    die sie erzeugt hat, nicht das Feld.
 
+83. **Ein Prüfstand fasst NUR seine eigenen IDs an — und jede Zählung darin auch.**
+   *(Ians Entscheidung 45, 2026-09-12.)* `50_lesen.sh` und `60_konto.sh` schreiben in
+   die Produktionsdatenbank. Erlaubt ist das, weil beide ausschließlich unter FESTEN
+   UUIDs anlegen (`11111111-…` bis `55555555-…`, die zwei Chat-Fäden `0c00000…`,
+   `aaaaaaaa-0000-…` und `bbbbbbbb-0000-…`) und seit heute auch nur die wieder
+   löschen. **Wer hier eine Zeile ergänzt, die etwas ohne feste ID anfasst, hebt die
+   Entscheidung auf** — und man merkt es nicht, weil so eine Zeile im eigenen Lauf
+   genau richtig aussieht.
+   **Der Fallstrick sind nicht die `delete`s, sondern die MESSUNGEN.** Ein
+   `count(*) from auth.users` ist eine Frage an die ganze Datenbank für eine Aussage
+   über die eigenen zwei Zeilen: rot, sobald jemand Echtes danebensteht, und grün,
+   wenn das Abräumen zu viel gelöscht hat — also falsch in genau dem Fall, der weh
+   tut. Dasselbe gilt für jedes `select` ohne `where id in (…)`. Gegengemessen wird
+   nicht daran, dass der Lauf grün ist, sondern daran, dass die FREMDEN Zeilen ihn
+   überleben.
+   **Und die Begründung gehört mitgepflegt:** Der alte Wächter sperrte alles mit einem
+   Satz, der zum Zeitpunkt des Sperrens nicht mehr stimmte. Ein Kommentar, der eine
+   Sicherheitszusage begründet, ist so viel wert wie eine Messung — nämlich keine,
+   wenn er veraltet ist.
+
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
 - **Große Display-Fonts clippen auf iOS.** `lineHeight ≈ 1.2 × fontSize` setzen, sonst
@@ -3460,6 +3541,46 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   sieht ihn einmal und hält ihn für behoben, während jeder Neue wieder hineinläuft.
   **Beide Vorlagen brauchen `{{ .Token }}`.** Dieselbe Sorte wie die Attrappen-Falle:
   Der eigene Zustand ist nicht der Zustand, in dem die anderen ankommen.
+- **Ein Kommentar, der eine Sicherheitszusage begründet, veraltet lautlos.**
+  (2026-09-12) Der Wächter in `50_lesen.sh` sperrte jede nicht-leere Datenbank mit dem
+  Satz *„das Abräumen unterscheidet nicht, wem eine Zeile gehört."* Das Abräumen
+  daneben war längst umgeschrieben und nannte die fünf UUIDs beim Namen. **Der
+  Kommentar war der einzige Grund für die Sperre und der einzige Teil, der nicht mehr
+  stimmte** — und der vorgeschlagene Ausweg („nimm ein zweites Supabase-Projekt") hätte
+  20 Minuten Klickarbeit und eine zweite driftende Datenbank gekostet. Vor dem Befolgen
+  einer Warnung nachsehen, ob der Code darunter sie noch trägt.
+- **Eine Prüfung mit `count(*)` über eine ganze Tabelle prüft die Tabelle, nicht sich
+  selbst.** (2026-09-12) Nach dem Umbau des Wächters war die nächste Zeile sofort rot:
+  `✗ Erwartet: 2 Konten, 0 Profile. Ist: 4 / 1`. Nichts war kaputt — es standen zwei
+  fremde Konten daneben. Dieselbe Sorte beim Handle-Vergleich
+  (`["@realtimeprobe","ian","ian2"]`). **Die gefährliche Richtung ist die andere:**
+  Ein globales `count(*) = 0` nach dem Abräumen ist auch dann grün, wenn MEHR gelöscht
+  wurde als die eigenen Zeilen. Gefragt wird mit `where id in (…)`.
+- **Ein Prüfstand darf neben echten Daten laufen — der Beleg ist nicht sein grüner
+  Lauf.** (2026-09-12) `29 Häkchen, 0 Kreuze` beweist, dass das Skript funktioniert.
+  Dass es NICHTS Fremdes angefasst hat, beweist erst die Zählung der fremden Zeilen
+  hinterher. Zwei verschiedene Fragen, und nur die zweite ist die, wegen der man den
+  Umbau gemacht hat.
+- **Supabase Realtime verliert nach einer Ruhepause das ERSTE Ereignis — und meldet
+  trotzdem `SUBSCRIBED`.** (2026-09-12, reproduziert) Nach zwölf Minuten ohne
+  Verbindung: Kanal verbunden, Schreiben durch, Ereignis weg; ein zweiter Anstoß
+  1,5 s später kam an. Warm kamen in fünf von fünf Läufen beide an. Der Beitritt wird
+  also bestätigt, bevor der WAL-Leser wirklich an der aktuellen Stelle steht —
+  dieselbe Familie wie „Kamerabefehle verpuffen still vor `onMapReady`". **Wer ein
+  Realtime-Abo prüft, stupst zweimal und misst beide Anstöße getrennt**; ein `retry`
+  macht daraus ein „irgendwann klappt es schon".
+- **Ein Mechanismus, den man im fremden Quelltext FINDET, ist eine Hypothese.**
+  (2026-09-12) In `RealtimeChannel.js` liest `subscribe()` den Token synchron, während
+  `setAuth` async ist und von supabase-js nicht erwartet wird — ein lupenreines
+  Wettrennen, sichtbar im Code, und **nicht** die Ursache des Fehlers, den es erklären
+  sollte. Vier Läufe mit `await` und vier ohne waren gleich grün. Der Code sagt, was
+  passieren KANN; was passiert IST, sagt nur die Messung.
+- **Zwei Konfigurationen nacheinander zu messen misst auch die Reihenfolge.**
+  (2026-09-12) Der erste Vergleich („ohne `await`" zuerst, „mit" danach) sah eindeutig
+  aus: rot, dann grün. Gedreht war er genauso eindeutig — und andersherum. Erst acht
+  frische Prozesse, je vier pro Seite, gaben die Antwort (8/8 grün, kein Unterschied).
+  Dieselbe Lehre wie „ein Sortierer, den man nur in EINER Stellung sieht, ist nicht
+  geprüft" (19h-1), nur auf den Prüfaufbau angewandt statt auf das Geprüfte.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

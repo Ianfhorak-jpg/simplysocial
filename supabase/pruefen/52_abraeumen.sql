@@ -63,9 +63,21 @@ delete from reports where from_user_id in (
 --      und das sieht aus wie kaputte Prüfdaten.
 --      **Ein Abräumen, das den Zustand eines gescheiterten Abräumens nicht
 --      aufräumen kann, ist nur beim Schönwetter-Lauf vollständig.**
---      Gefahrlos ist (2), weil ein Faden ohne jeden Teilnehmer von niemandem mehr
---      geöffnet werden kann — anders als eine verwaiste MELDUNG, die ein Mensch in
---      20.7 noch lesen soll.
+--
+--      ⚠️ **Berichtigt am 2026-09-12, und der Fehler stand im eigenen Kommentar.**
+--      Hier hieß (2) einmal „jeder Faden OHNE jeden Teilnehmer" — ein Rundumschlag
+--      durch eine fremde Datenbank. Die Begründung dafür („ein Faden ohne
+--      Teilnehmer kann von niemandem mehr geöffnet werden") ist FALSCH, und zwar
+--      ausgerechnet wegen Ians Entscheidung 42: Ein verwaister Chat ist ein
+--      gültiger Zustand, den ein echter Mensch haben darf (harte Regel 56). Die
+--      Zeile hätte also genau die Sorte Daten gelöscht, die das Schema ausdrücklich
+--      aufheben will — dieselbe Verwechslung, die der Absatz über die verwaiste
+--      MELDUNG drei Zeilen weiter oben schon einmal richtig vermeidet.
+--
+--      **Und das scharfe Werkzeug stand im selben Satz:** „die Fäden bleiben mit
+--      ihren FESTEN IDs liegen." Es sind genau zwei, sie stehen in `05_daten.sql`,
+--      also werden sie beim Namen genannt. Was nicht an ihnen hängt, wird nicht
+--      angefasst — und damit gilt die Zusage aus dem Kopf dieser Datei wirklich.
 delete from chat_threads
  where id in (
    select thread_id from chat_participants where user_id in (
@@ -76,7 +88,8 @@ delete from chat_threads
      '55555555-5555-5555-5555-555555555555'
    )
  )
-    or not exists (select 1 from chat_participants p where p.thread_id = chat_threads.id);
+    or id in ('0c000001-0000-0000-0000-000000000001',
+              '0c000002-0000-0000-0000-000000000002');
 
 -- Alles, was diese fünf gegründet haben — egal wie viele Gruppen es inzwischen sind.
 delete from groups where creator_id in (
