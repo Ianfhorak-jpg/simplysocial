@@ -160,3 +160,97 @@ export function loeschFolgen(
 
   return folgen;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ *  WAS NACH DEM LETZTEN KLICK PASSIERT — Ians Entscheidungen 52 und 53
+ *  Gefragt am 2026-09-12, als der Screen endlich an `konto_loeschen()` ging.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Bis heute war das keine Frage: Der Screen setzte `schritt = 'fertig'`, zeigte
+ * „Hier wäre Schluss" und sagte selbst, dass nichts gelöscht wurde. Sobald wirklich
+ * gelöscht wird, zerfällt der letzte Klick in zwei Dinge, die nichts miteinander zu
+ * tun haben — WAS am Server passiert (das ist Entscheidung 39, oben) und WAS der
+ * Mensch danach sieht.
+ *
+ *   A. RAUS, UND EIN SATZ BEIM ANMELDEN.
+ *      Gelöscht → abgemeldet → Anmelde-Bildschirm, darüber eine Zeile.
+ *      Haken: Der Anmelde-Bildschirm trägt damit einen Zustand, den er sonst nie hat.
+ *
+ *   B. ERST EIN ABSCHLUSS-BILDSCHIRM, DANN RAUS.
+ *      Der Weg, den der Screen bis heute vormachte.
+ *      Haken — und er ist kein Geschmack, sondern harte Regel 87: Zwischen dem
+ *      Löschen und dem Klick läuft die App mit einem TOTEN Konto weiter. Kommt in
+ *      dieser Zeit ein Realtime-Anstoß, lädt sie nach, bekommt `42501`, und der
+ *      Vollbild-Kasten aus `LadeSchirm` reißt den Abschluss-Bildschirm weg.
+ *
+ *   C. RAUS, OHNE SATZ.
+ *      Am wenigsten Bau, kein toter Zwischenzustand.
+ *      Haken: Die stärkste Handlung der App endet ohne Quittung — von „Abmelden"
+ *      nicht zu unterscheiden.
+ *
+ * ── Ians Wahl: A ─────────────────────────────────────────────────────────────
+ * **Nicht ohne Rückfrage ändern.** Wer B einbaut, baut die Falle aus 20.5-c ein
+ * zweites Mal; wer C einbaut, nimmt die Quittung weg.
+ */
+export const LOESCH_ABSCHLUSS: 'raus-mit-satz' | 'abschluss-bildschirm' | 'raus-still' =
+  'raus-mit-satz';
+
+/**
+ * Die Quittung auf dem Anmelde-Bildschirm.
+ *
+ * Sie steht hier und nicht im Screen — dieselbe Bauart und derselbe Grund wie
+ * `loeschFolgen()` und `blockFolgen()` (harte Regel 17). **Vergangenheit und kein
+ * Versprechen:** „Dein Konto wird gelöscht" wäre eine Zusage über etwas, das schon
+ * passiert ist, und beim kleinsten Zweifel liest sich das wie „es läuft noch".
+ *
+ * KEIN „schade, dass du gehst". Wer bis hierher gekommen ist, hat zweimal bestätigt;
+ * ein Bedauern an dieser Stelle ist die App, die sich wichtiger nimmt als der Mensch,
+ * der gerade gegangen ist.
+ */
+export const LOESCH_QUITTUNG = 'Dein Konto wurde gelöscht.';
+
+/**
+ * Das Profilbild geht VOR dem Konto — und das ist keine Reihenfolge, sondern eine
+ * Notwendigkeit aus harter Regel 89.
+ *
+ * `storage.objects.owner` hängt an KEINEM Fremdschlüssel auf `auth.users` (gemessen
+ * in 20.6-a), und Supabase verbietet jedes SQL-`delete` in `storage` — deshalb kann
+ * `konto_loeschen()` das Bild nicht mitnehmen. Danach geht es auch nicht mehr: Das
+ * Token ist tot, der Storage-Aufruf käme nicht mehr durch. Bliebe das Bild liegen,
+ * wäre es bei einem OFFENEN Bucket (Ians Entscheidung 50) dauerhaft im Netz
+ * abrufbar — ein gelöschtes Konto mit einem Gesicht, das jeder weiter sehen kann.
+ *
+ * **Der Preis steht in `loeschFehlerText()`** und ist Ians Entscheidung 53.
+ */
+export const BILD_ZUERST = true;
+
+/**
+ * Ians 53. Entscheidung vom 2026-09-12: **den Preis benennen, nicht verschweigen.**
+ *
+ * Geht das Löschen schief, NACHDEM das Bild schon weg ist, steht ein Mensch mit
+ * einem Konto da, dem etwas fehlt. Die drei Möglichkeiten:
+ *
+ *   A. EHRLICH BENENNEN — die Leiste sagt beides. Ians Wahl.
+ *      Haken: eine Zeile mehr in einer Leiste, die seit Entscheidung 48 SCHIEBT,
+ *      also echten Platz kostet.
+ *   B. NUR „hat nicht geklappt" — wie jeder andere Schreibvorgang.
+ *      Haken: Das Bild ist still weg, und beim nächsten Blick aufs Profil ist da
+ *      ein Loch, das niemand erklärt hat. Dieselbe Familie wie „Noch nichts los in
+ *      deinem Feed" bei einem Netzausfall: ein Bildschirm, der lügt.
+ *   C. BILD ERST NACH DEM LÖSCHEN — dann kostet ein Fehlschlag nichts.
+ *      Haken: unmöglich, siehe `BILD_ZUERST`. Wurde ihm vorgelegt und abgelehnt.
+ *
+ * ── Warum das nicht in `schreibFehlerFolgen()` steht ─────────────────────────
+ * Weil die Auskunft nicht vom FEHLERCODE abhängt, sondern davon, wie weit der
+ * Vorgang gekommen war. `data/schreiben.ts` weiß das nicht und soll es nicht wissen
+ * müssen — es kennt Aktionen, keine Zwischenstände. Der Satz wird deshalb hier
+ * gebildet und vom Aufrufer angehängt.
+ *
+ * @param bildSchonWeg `true`, wenn `profilbildEntfernen()` bereits durch war.
+ */
+export function loeschFehlerText(bildSchonWeg: boolean): string | null {
+  if (!bildSchonWeg) return null;
+  // Zwei kurze Hauptsätze statt eines langen: Der erste beruhigt, der zweite nennt
+  // den Schaden. Andersherum liest man die Beruhigung erst nach dem Schreck.
+  return 'Dein Konto ist noch da — dein Profilbild ist aber schon entfernt.';
+}

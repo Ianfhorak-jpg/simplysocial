@@ -1,5 +1,31 @@
 # Was du nach dem Clear schreiben sollst
 
+## ✅ STAND 12.09.2026 (nachts) — PROFILBILDER GEHEN
+
+> **Darias Wunsch vom 02.09. ist gebaut.** Du kannst im Browser ein Profilbild
+> aussuchen, austauschen und wieder entfernen — es liegt wirklich in deiner Datenbank,
+> nicht nur im Bildschirm. In den Einstellungen, ganz oben unter „Dein Bild".
+>
+> **Du hast zwei Entscheidungen getroffen (50 und 51), beide sind drin:**
+> Dein Bild sehen alle, die SimplySocial benutzen (feste Adresse, schnellste Listen) —
+> und ein gelöschtes Bild ist nach **fünf Minuten** wirklich überall weg.
+>
+> ⚠️ **Am Handy geht das Aussuchen noch nicht**, im Browser schon. Dafür fehlt ein
+> Baustein, und der kommt mit demselben App-Update wie „Anmelden mit Apple/Google".
+> Statt eines toten Knopfes steht dort ein Satz, der das sagt.
+>
+> **Zwei Sachen sind beim Bauen herausgekommen:**
+> 1. Ein gelöschtes Bild war noch **eine Stunde** lang erreichbar — nicht die Datei,
+>    sondern das Zwischenlager davor. Deshalb die Frage nach den fünf Minuten.
+> 2. Ich hätte fast das **Kontolöschen** kaputtgemacht: Auf meinem Testrechner lief
+>    mein Fix, auf deinem echten Server verbietet Supabase genau das. Gemerkt nur,
+>    weil die Prüfung gegen deinen echten Server läuft. Behoben und nachgemessen.
+>
+> **Für dich ist keine neue Aufgabe entstanden.** Offen bleibt Punkt 0 (Brevo) und
+> Punkt 4 (Google) in `OFFENE_SACHEN.md`.
+
+---
+
 ## ✅ STAND 12.09.2026 — SUPABASE STEHT. DER ENGPASS IST WEG.
 
 > **Die Datenbank läuft.** Projekt in der EU (Irland), Schema, Regeln und Funktionen

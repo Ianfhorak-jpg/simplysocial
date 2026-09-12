@@ -51,7 +51,7 @@ nichts.** Belege `am01`–`am06`, alles in PLAN.md 5b unter „20.5-c". Sechs Di
    sich nicht; *Lea* schreibt in einen ganz anderen Chat. Ergebnis: Bildschirmtext
    **204 → 12** (~240 ms leer), Adresse `/post/…` → **`/account-loeschen`** → `/`.
    `datenHolen()` setzte **immer** `laden: { zustand: 'laeuft' }`, der Torwächter
-   zeichnet dann `null` statt des `Stack` — also baute **jeder der 22 Schreibvorgänge
+   zeichnet dann `null` statt des `Stack` — also baute **jeder der 24 Schreibvorgänge
    und jeder Realtime-Anstoß den ganzen Navigator ab.** `/account-loeschen` ist
    alphabetisch die erste Route unter `app/`: **die Falle aus Phase 20.3-a an einer
    zweiten Stelle.** Behoben mit einem vierten Glied (`'nachladen'`) und einer
@@ -107,15 +107,74 @@ nichts.** Belege `am01`–`am06`, alles in PLAN.md 5b unter „20.5-c". Sechs Di
    vorher bedacht statt hinterher gemessen. Gelöst über `SafeAreaInsetsContext`
    (`OhneOberenRand` in `app/_layout.tsx`), **ungeprüft.**
 
+✅ **Phase 20.6-a ist fertig (2026-09-12): die App kann PROFILBILDER — Darias Wunsch,
+seit Phase 15 vorbereitet.** `npm run pruef-bilder` — **24 Häkchen, kein Kreuz am
+ECHTEN Server**, danach ist die Datenbank sauber. Zwei neue Entscheidungen von Ian
+(**50**: der Bucket ist offen · **51**: fünf Minuten Zwischenlager), eine neue Migration
+(`0008_bilder.sql`), eine neue Regel-Datei (`features/social/bild.ts`). `tsc` sauber,
+**81 Lint-Probleme wie vorher**, lokal **136 statt 124 Häkchen**, `pruef-schreiben`
+**50 statt 49**, Prototyp auf 390 × 844 **Pixel für Pixel identisch** (`an01` gegen
+`am07` UND gegen `al01`). **+2.702 B gzip (+0,55 %)** auf 493.492 B — darin steckt auch
+20.5-c, das nie gemessen wurde. Sechs Dinge:
+
+1. **Der teuerste Fund ist eine ABWESENHEIT: `storage.objects.owner` hat KEINEN
+   Fremdschlüssel auf `auth.users`.** Gemessen; der einzige FK zeigt auf
+   `storage.buckets`. Ein gelöschtes Konto lässt seine Bilder liegen — und bei einem
+   OFFENEN Bucket bliebe das Profilbild damit **nach dem Kontolöschen im Netz
+   abrufbar**. Ians Entscheidung 39 („alles mit") hätte für Bilder still nicht
+   gegolten; es gibt keine Fehlermeldung für eine Datei, die zu viel da ist.
+2. **Der naheliegende Fix war falsch, und LOKAL war er grün — die Attrappen-Falle mit
+   umgekehrtem Vorzeichen.** 0008 bekam zuerst ein `delete from storage.objects` in
+   `konto_loeschen()`. Am echten Server: *„Direct deletion from storage tables is not
+   allowed. Use the Storage API instead."* Supabase hängt dort einen `before
+   delete`-Trigger hin (`storage.protect_delete`). **Damit war ausgerechnet
+   `konto_loeschen()` kaputt — die Funktion hinter einer Apple-1.2-Pflicht.** Bisher
+   war die Attrappe immer STRENGER als das Original (0007); hier war sie **schwächer**,
+   und das ist die gefährlichere Richtung. Der Trigger steht jetzt wortgleich in
+   `00_supabase_lokal.sql`.
+3. **Eine Migration, aus der man eine Zeile HERAUSNIMMT, nimmt sie am Server nicht
+   zurück.** Nach dem Berichtigen trug Ians Datenbank weiter die kaputte Fassung. 0008
+   setzt `konto_loeschen()` deshalb ausdrücklich auf den 0003-Stand zurück, und ein
+   Wächter am Dateiende bricht ab, wenn dort je wieder `storage.objects` auftaucht.
+4. **Der zweite Fund ist eine Zahl, und aus ihr wurde Entscheidung 51.** `bildFolgen()`
+   versprach „sofort weg". Gemessen: Das CDN liefert eine gelöschte Datei bis zu eine
+   Stunde weiter (`cf=HIT`, `max-age=3600`), während sie mit Cache-Buster schon `400`
+   gibt. **Die Datei ist weg, die Adresse antwortet trotzdem** — ein Satz, der lügt,
+   dieselbe Familie wie „Noch nichts los in deinem Feed". Jetzt
+   `BILD_CACHE_SEKUNDEN = 300`, und der Satz nennt die Zahl.
+5. **In `storage` gibt es nur EINEN Riegel.** `anon` hat dort alle Rechte (dieselbe
+   Voreinstellung, die 0007 für `public` weggenommen hat) — **weggenommen wird sie
+   NICHT**, weil der Storage-Dienst selbst unter `authenticated` arbeitet. Offen ist
+   nichts (RLS an, keine Policy für `anon`, `storage` über PostgREST nicht erreichbar),
+   aber jede der vier Policies ist die ganze Absicherung ihrer Richtung.
+6. **Drei eigene Fehler, alle am MESSGERÄT.** `getBucket()` meldet einem gewöhnlichen
+   Nutzer *„Bucket not found"*, wo *„du darfst ihn nicht sehen"* gemeint ist; die
+   `delete`-Policy ist per SQL gar nicht prüfbar, weil der Trigger VOR RLS läuft; und
+   der Wächter fragte die Prüf-Gruppe nicht ab, obwohl sie seit Entscheidung 41 ihren
+   Gründer überlebt.
+
+⚠️ **Was 20.6-a NICHT ist: der Bildwähler am Gerät.** Auf Native braucht es
+`expo-image-picker` — **gemessen, nicht vermutet**: Anders als `expo-glass-effect` in
+19e-2 liegt es NICHT schon über eine andere Abhängigkeit in `node_modules`. Es gehört
+in denselben Build wie 20.3-b2, **aus vier Bausteinen werden fünf**. Im Browser läuft
+der Upload vollständig; auf dem Gerät steht statt eines toten Knopfes ein Satz
+(die Phase-16-Lehre).
+
+⚠️ **Und eine Lücke ist benannt UND gemessen:** Bricht die App zwischen „Bild wegräumen"
+und `konto_loeschen()` ab, bleibt das Bild liegen. Am Server gibt es dagegen kein Netz,
+solange die einzige Alternative das Umgehen eines fremden Sicherheitstriggers ist. Wer
+den Lösch-Screen anschließt (er ruft `konto_loeschen()` bis heute gar nicht), setzt
+`profilbildEntfernen()` DAVOR.
+
 ✅ **Phase 20.5 ist FERTIG (2026-09-12): die App SCHREIBT wirklich nach Supabase — und
-der Prototyp merkt davon nichts.** Alle 22 Schreib-Aktionen gehen über `data/senden.ts`;
+der Prototyp merkt davon nichts.** Alle 24 Schreib-Aktionen gehen über `data/senden.ts`;
 zwei neue Entscheidungen von Ian (**46**: wie sich ein Knopf beim Schreiben verhält ·
 **47**: Nachladen beim Hervorholen), zwei neue Migrationen. `npm run pruef-schreiben` —
 **49 Häkchen, kein Kreuz am ECHTEN Server**, danach ist die Datenbank wieder sauber.
 Lokal **124 statt 121 Häkchen**, `pruef-lesen` und `pruef-konto` weiter 29/29, `tsc`
 sauber, **81 Lint-Probleme wie vorher**, Prototyp auf 390 × 844 **Pixel für Pixel
 identisch**. Preis: **+3.920 B gzip (+0,80 %)** auf 490.790 B. Sieben Dinge sind
-wichtiger als die 22 Aktionen:
+wichtiger als die 24 Aktionen:
 
 1. **Der teuerste Fund war eine ZUSAGE, die am echten Server NIE GALT.** Der Fuß von
    `0002_policies.sql` ist eine Rechteliste, und auf ihr steht das halbe Gebäude dieses
@@ -141,7 +200,7 @@ wichtiger als die 22 Aktionen:
    dort die Frage *Zusage oder Lücke?* — bei `group_members` ist es eine Zusage, hier
    eine Lücke, weil die Schwestertabelle `join_requests` es kann. `0006_zuruecknehmen.sql`.
 4. **„Zurückrollen" gibt es in dieser Phase NICHT, und das ist der Entwurf.** Der
-   naheliegende Weg wären 22 Umkehrfunktionen gewesen — 22 Gelegenheiten, eine falsch zu
+   naheliegende Weg wären 24 Umkehrfunktionen gewesen — 24 Gelegenheiten, eine falsch zu
    schreiben. **Stattdessen wird NACHGELADEN: Das Nachladen IST die Rücknahme.** Damit
    sagt keine einzige Stelle voraus, was der Server tun wird — genau der Einwand, an dem
    Möglichkeit B gescheitert ist.
@@ -2049,12 +2108,20 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    Migrationen (0006, 0007), **49 Häkchen am echten Server** — und der Prototyp ist
    Pixel für Pixel unverändert. **Dabei kam heraus, dass die Rechteliste aus 0002 am
    echten Supabase nie galt** (harte Regel 85).* ·
+   ~~**Profilbilder, der Server (20.6-a)**~~ ✅ *2026-09-12 am echten Server: Bucket,
+   vier Policies, `features/social/bild.ts`, Upload über `data/senden.ts`, Bildwahl im
+   Browser, Entscheidungen 50 und 51, **24 Häkchen** — und der Prototyp ist Pixel für
+   Pixel unverändert. **Dabei kam heraus, dass `storage.objects` an keinem
+   Fremdschlüssel hängt und Supabase dort jedes SQL-`delete` verbietet** (harte
+   Regeln 88 und 89).* ·
    **Anmelden, Apple und Google (20.3-b2)** ← *hier geht es weiter — und es hängt an
-   zwei Konten (Apple-Sign-in-Schlüssel, Google) plus den vier nativen Bausteinen in
-   EINEM Build. **Davor liegt ein Zwei-Minuten-Klick von Ian**: Supabases Mail-Vorlage
+   zwei Konten (Apple-Sign-in-Schlüssel, Google) plus den nativen Bausteinen in
+   EINEM Build. **Seit 20.6 sind es FÜNF statt vier**: `expo-image-picker` kommt dazu,
+   sonst kann man am Handy kein Bild aussuchen (gemessen — es liegt nicht schon in
+   `node_modules`). **Davor liegt ein Zwei-Minuten-Klick von Ian**: Supabases Mail-Vorlage
    von `{{ .ConfirmationURL }}` auf `{{ .Token }}`, sonst schickt die App einen Link
    statt einer Zahl.* ·
-   Profilbilder · Meldungen lesen.
+   **Profilbilder am Gerät (20.6-b)** · Meldungen lesen (20.7).
    Danach fällt 19d-2 nebenbei ab.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 
@@ -2523,11 +2590,12 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    nicht als Nebenwirkung.
 
 57. **Was am Server gilt, wird ANGEGRIFFEN, nicht angeschaut.**
-   `bash supabase/pruefen/aufbauen.sh` — **erwartet sind 124 Häkchen und kein Kreuz**
-   (25 in 20.2, 78 nach 20.5-SQL, 121 seit 20.4-a, 124 seit 0006).
-   **Dazu drei Prüfstände am ECHTEN Server, und die können etwas, das lokal
+   `bash supabase/pruefen/aufbauen.sh` — **erwartet sind 136 Häkchen und kein Kreuz**
+   (25 in 20.2, 78 nach 20.5-SQL, 121 seit 20.4-a, 124 seit 0006, 136 seit 0008).
+   **Dazu VIER Prüfstände am ECHTEN Server, und die können etwas, das lokal
    prinzipiell nicht geht:** `npm run pruef-lesen` (29) · `npm run pruef-konto` (29) ·
-   `npm run pruef-schreiben` (49, seit 20.5). Warum das nicht dasselbe ist, steht in
+   `npm run pruef-schreiben` (50, seit 20.5) · `npm run pruef-bilder` (24, seit 20.6 —
+   **der einzige, der den Weg über das CDN messen kann**, siehe harte Regel 89). Warum das nicht dasselbe ist, steht in
    harter Regel 85 — die Wegwerf-Datenbank war bis zum 2026-09-12 STRENGER als das
    Original. Jeder
    Block setzt `set local role authenticated` — **wer als `postgres` prüft, prüft
@@ -2901,13 +2969,13 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    **Der Trennstrich ist eine FRAGE und keine Liste von Ausnahmen:** *Kann die App das
    Ergebnis selbst hinschreiben, ohne zu raten?* „Nein" hat zwei Gestalten — der Server
    ENTSCHEIDET (ist noch ein Platz frei? wer erbt?), oder er VERGIBT eine ID, zu der
-   der Bildschirm springt. Acht Aktionen warten, vierzehn nicht; `EINORDNUNG` ist ein
+   der Bildschirm springt. Neun Aktionen warten, fünfzehn nicht; `EINORDNUNG` ist ein
    `Record<SchreibAktion, …>`, **eine neue Aktion ohne Eintrag ist ein Typfehler** —
    dieselbe Technik wie `IconName` (Phase 14) und `torwaechterZeigt()` (Regel 77).
-   **Und der wichtigste Teil ist, was NICHT dasteht:** Es gibt zu keiner der 22
+   **Und der wichtigste Teil ist, was NICHT dasteht:** Es gibt zu keiner der 24
    Änderungen eine Umkehrfunktion. Geht ein Schreibvorgang schief, wird
    **NACHGELADEN — das Nachladen IST die Rücknahme.** Wer hier ein „Rückgängig" baut,
-   schreibt 22 Vorhersagen über das Verhalten des Servers hin, und genau daran ist
+   schreibt 24 Vorhersagen über das Verhalten des Servers hin, und genau daran ist
    Möglichkeit B gescheitert.
 85. **Am echten Supabase bekommt JEDE neue Tabelle in `public` alle Rechte — eine
    Rechteliste gilt erst nach einem `revoke`.** *(Gemessen am 2026-09-12, Phase 20.5.)*
@@ -2940,7 +3008,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    (Start, und nach dem Abmelden); `'nachladen'` heißt **es steht etwas da und wird
    aufgefrischt**. Die Verwechslung kostete den Bildschirm: `datenHolen()` setzte immer
    `'laeuft'`, der Torwächter zeichnete dann `null` statt des `Stack`, und damit baute
-   **jeder der 22 Schreibvorgänge und jeder Realtime-Anstoß den ganzen Navigator ab.**
+   **jeder der 24 Schreibvorgänge und jeder Realtime-Anstoß den ganzen Navigator ab.**
    Gemessen, ohne dass jemand etwas tut: Ian steht auf `/post/…`, Lea schreibt in einen
    FREMDEN Chat — Bildschirmtext 204 → **12**, Adresse `/post/…` →
    **`/account-loeschen`** → `/`. Das ist die Falle aus Phase 20.3-a an einer zweiten
@@ -2954,6 +3022,50 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    gescheitertes NACHladen zeigt weiter den Vollbild-Kasten, obwohl Daten dastehen;
    `LADE_FEHLER = 'zeile'` ist die Nachbesserung, die `quelle.ts` selbst vorhergesagt
    hat — und sie ist Ians Entscheidung, nicht meine.
+
+88. **Was ein Profilbild ist und wer es sehen kann, steht in
+   `features/social/bild.ts` — und bei einem OFFENEN Bucket schützt nur der NAME.**
+   *(Ians Entscheidungen 50 und 51, Phase 20.6.)* Dieselbe Bauart wie
+   `safety/block.ts` (17), `groups/gruppe.ts` (32), `requests/kollision.ts` (46),
+   `posts/standort.ts` (68), `auth/anmeldung.ts` (69), `data/quelle.ts` (76),
+   `auth/konto.ts` (78) und `data/schreiben.ts` (84): Screens lesen `BILD_SICHT`,
+   `BILD_MAX_BYTES` und `BILD_CACHE_SEKUNDEN` nie, die Sätze kommen aus
+   `bildFolgen()` und `bildHuerdeText()`.
+   **Der Unterschied zu den anderen acht ist, wo die Regel WIRKT:** Bei einem
+   offenen Bucket liefert ein CDN die Datei aus — Postgres wird beim Abruf gar nicht
+   gefragt, es greift **keine einzige der 34 Policies**. Was ein Bild schützt, sind
+   deshalb zwei ganz andere Dinge: der nicht zu ratende Dateiname (`bildPfad()` —
+   Ordner = eigene UUID, damit die Policies greifen; Dateiname = 16 Byte Zufall aus
+   `crypto`, und **lieber ein Fehler als ein schwacher Zufall**, deshalb wirft
+   `zufallsName()` statt auf `Math.random()` zurückzufallen) und die Tatsache, dass
+   die Adresse nur in `profiles.photo_url` steht — also in einer Tabelle MIT Policy.
+   Deshalb ist `select` auf `storage.objects` auf den eigenen Ordner begrenzt: Sonst
+   liest jemand den Zufallsnamen ab, statt ihn raten zu müssen.
+   **`BILD_TYPEN` ist eine Whitelist und nie `image/*`:** `image/svg+xml` IST ein
+   Bild und kann Skript enthalten — auf einem offenen Bucket wäre das eine Datei auf
+   unserer eigenen Adresse, die im Browser läuft.
+   ⚠️ **Wer `BILD_SICHT` ändert, ändert drei Dateien** (Bucket in 0008, die Adresse,
+   die Sätze). Nicht ohne Rückfrage.
+89. **In `storage` gibt es nur EINEN Riegel, und ein SQL-`delete` gibt es gar
+   nicht.** *(Phase 20.6, beides gemessen.)* Zwei Dinge, die in `public` gelten,
+   gelten dort nicht:
+   **(a)** Die Rechteliste ist kein zweiter Riegel. `anon` hat auf `storage.objects`
+   und `storage.buckets` ALLE Rechte — dieselbe Supabase-Voreinstellung, die
+   `0007_rechte.sql` für `public` weggenommen hat. **Hier wird sie NICHT
+   weggenommen**, weil der Storage-Dienst selbst unter `authenticated` arbeitet; ein
+   `revoke` repariert die App, indem es sie abschaltet. Offen ist deswegen nichts
+   (RLS an, für `anon` keine Policy, `storage` über PostgREST nicht erreichbar) —
+   aber **jede der vier Policies aus 0008 ist die ganze Absicherung ihrer
+   Richtung.**
+   **(b)** `delete from storage.objects` scheitert IMMER, auch als `postgres`:
+   Supabase hängt dort `storage.protect_delete` als `before delete`-Trigger hin.
+   Er läuft VOR RLS, also ist die `delete`-Policy per SQL überhaupt nicht prüfbar —
+   sie wirkt nur über die Storage-Schnittstelle, und gemessen wird sie in
+   `80_bilder.mjs`. **Wer einem gelöschten Konto sein Bild mitgeben will, tut das in
+   der APP vor dem Aufruf** (`profilbildEntfernen()`), nicht in `konto_loeschen()`.
+   Der Schalter `storage.allow_delete_query` gehört ausschließlich in einen
+   Prüfstand, dessen Zeilen in derselben Minute wieder weg sind — in der App ließe
+   er die DATEI für immer und unauffindbar liegen.
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
@@ -3839,6 +3951,46 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   Klick auf „Verstanden" war die Bounding-Box der Unterschiede **leer**. Dieselbe Familie
   wie „ein Screenshot beantwortet nicht, was man ihn fragt" — hier lag es nicht an der
   Fassung, sondern am ZUSTAND.
+- **Eine Attrappe kann auch SCHWÄCHER sein als das Original — und das ist die
+  gefährlichere Richtung.** (Phase 20.6, 2026-09-12) Bisher war die Wegwerf-Datenbank
+  strenger (0007, die Rechte) oder ärmer an Rauschen (der Trigger-Zähler). Hier fehlte
+  ihr Supabases `storage.protect_delete`: Migration 0008 löschte in `konto_loeschen()`
+  das Profilbild per SQL, lokal lief es durch, `25_bilder.sql` war grün — **und am
+  echten Server war dadurch die Funktion hinter einer Apple-1.2-Pflicht kaputt.** Wer
+  ein FREMDES Schema anfasst (`storage`, `auth`), fragt zuerst `pg_trigger` und
+  `pg_policies` am Original ab und baut nach, was dort steht.
+- **Eine Migration, aus der man eine Zeile HERAUSNIMMT, nimmt sie am Server nicht
+  zurück.** (Phase 20.6) Dort steht, was beim ERSTEN Lauf eingespielt wurde. Eine
+  berichtigte Datei ist keine Rücknahme — die Funktion muss ausdrücklich auf den alten
+  Stand gesetzt werden (`create or replace` mit dem alten Rumpf), und danach wird
+  gemessen, nicht angenommen. Dieselbe Lehre wie die 19d-Methode, eine Ebene tiefer.
+- **Eine gelöschte Datei ist weg, ihre ADRESSE antwortet trotzdem.** (Phase 20.6)
+  Supabase liefert öffentliche Objekte über Cloudflare aus, mit `max-age=3600` als
+  Standard von `supabase-js`. Nach dem Löschen: `200` mit `cf=HIT`, mit einem
+  Cache-Buster daran `400`. **Wer prüfen will, ob eine Datei wirklich weg ist, fragt
+  am Cache vorbei** — und wer einem Menschen „sofort weg" verspricht, misst vorher,
+  wie lange „sofort" dauert (Ians Entscheidung 51: `cacheControl` auf 300).
+- **`getBucket()` meldet „Bucket not found", wenn man ihn nicht sehen DARF.**
+  (Phase 20.6) `storage.buckets` hat RLS an und null Policies, ein gewöhnlicher Nutzer
+  sieht also keinen einzigen Bucket. Die Meldung sagt *es gibt ihn nicht*, wo *du
+  darfst ihn nicht sehen* gemeint ist — wer sie für bare Münze nimmt, sucht den Fehler
+  in der Migration. Die Bucket-Einstellungen misst man über `psql`.
+- **Es gibt ZWEI Knöpfe mit der Aufschrift „Verstanden", und sie tun Verschiedenes.**
+  (Phase 20.6) Der eine schließt den Prototyp-Hinweis (Vollbild, oben), der andere ist
+  der rechte Stapel-Knopf der ANLEITUNGSKARTE (unten, seit Phase 11). Ein Prüfskript,
+  das den ersten passenden klickt, wischt die Anleitungskarte weg — und der
+  anschließende Pixelvergleich zeigt dann einen Unterschied, der keiner ist. Gemessen
+  auf 390 × 844: y = 482 (Hinweis) gegen y = 666 (Karte). **Dritte Fassung von „zwei
+  Screenshots im gleichen Zustand vergleichen, nicht zwei Screenshots".**
+- **Eine Prüfung, die NAMEN aufzählt, merkt nicht, wenn etwas dazukommt.** (Phase 20.6)
+  `70_schreiben.mjs` sagte „genau diese acht warten" und blieb grün, als zwei neue
+  Schreib-Aktionen dazukamen — die Aussage stimmte nicht mehr, die Prüfung schon.
+  Behoben mit `SCHREIB_AKTIONEN` aus `EINORDNUNG`: Die dritte Prüfung zählt auf, was in
+  keiner der beiden Listen steht. **Wer zwei Listen prüft, prüft als Drittes ihre
+  Vollständigkeit.**
+- **`UID` ist in zsh reserviert.** (Phase 20.6) `UID=… node skript.mjs` scheitert mit
+  *„failed to change user ID: operation not permitted"* — das sieht nach einem
+  Rechteproblem aus und ist ein Namenskonflikt.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

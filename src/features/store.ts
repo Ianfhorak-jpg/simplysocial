@@ -4,7 +4,12 @@ import { ANMELDE_QUELLE, type Sitzung } from '@/features/auth/anmeldung';
 import type { StandortStand } from '@/features/posts/standort';
 import { allesLaden, LadeFehler } from '@/data/laden';
 import { stehtSchonEtwas } from '@/data/quelle';
-import { SchreibFehler, wartetAufServer, type SchreibAktion } from '@/data/schreiben';
+import {
+  laedtDanachNach,
+  SchreibFehler,
+  wartetAufServer,
+  type SchreibAktion,
+} from '@/data/schreiben';
 import { client, LIEST_AUS_SUPABASE } from '@/lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -493,7 +498,11 @@ async function schreibVorgangIntern<T>(
 
   try {
     const ergebnis = await server(client());
-    await datenHolen();
+    // **Nicht bei `kontoLoeschen`** — dort ist das Token nach dem Aufruf tot, und
+    // ein Nachladen bekäme `42501`. Der Vollbild-Kasten läge dann über dem
+    // Anmelde-Bildschirm, auf dem die Quittung steht (Ians Entscheidung 52).
+    // Die Begründung steht bei `laedtDanachNach()` in `data/schreiben.ts`.
+    if (laedtDanachNach(aktion)) await datenHolen();
     if (wartet) aendern(() => ({ schreiben: { zustand: 'nichts' } }));
     return ergebnis;
   } catch (fehler) {

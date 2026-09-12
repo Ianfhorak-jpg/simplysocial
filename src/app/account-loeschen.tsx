@@ -5,7 +5,8 @@ import { StyleSheet, View } from 'react-native';
 import { SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { loeschFolgen } from '@/features/safety/konto';
-import { useMeineSpuren } from '@/features/safety/hooks';
+import { kontoLoeschen, useMeineSpuren } from '@/features/safety/hooks';
+import { useWartetAuf } from '@/features/store';
 import { useCurrentUser } from '@/features/social/hooks';
 import { colors, danger, spacing } from '@/theme';
 
@@ -25,19 +26,43 @@ import { colors, danger, spacing } from '@/theme';
  * nicht rückgängig machen. Das ist der einzige Grund für eine Rückfrage, und deshalb
  * ist es hier der einzige Ort mit einer.
  *
- * ── Warum am Ende nichts gelöscht wird ────────────────────────────────────────
- * Im Prototyp gibt es keine Konten (harte Regel 1: kein Login). Es gibt genau einen
- * Nutzer, und der ist der, als den man die App bedient — löschte man ihn, wäre der
- * Prototyp danach kaputt, und Ian könnte ihn niemandem mehr zeigen. Der Screen geht
- * deshalb den ganzen Weg bis zum letzten Schritt und sagt dann selbst, warum er dort
- * aufhört. Das ist kein Platzhalter: Der Weg, die Zahlen und die Rückfrage sind echt
- * und genau das, was später gebraucht wird. Nur die letzte Zeile fehlt, und die kann
- * ohne Backend niemand schreiben.
+ * ── Seit dem 2026-09-12 löscht der letzte Knopf WIRKLICH ──────────────────────
+ * Hier stand über Wochen, die letzte Zeile könne „ohne Backend niemand schreiben".
+ * Sie ist geschrieben: `kontoLoeschen()` ruft `konto_loeschen()` aus 0003 auf, und
+ * danach steht man abgemeldet vor dem Anmelde-Bildschirm mit einer Quittung (Ians
+ * Entscheidung 52). Von Apples vier Pflichten aus Richtlinie 1.2 ist das die
+ * einzige, die ein Prüfer wirklich AUSPROBIERT.
+ *
+ * ── Und warum der Prototyp trotzdem „Hier wäre Schluss" zeigt ─────────────────
+ * Auf der öffentlichen Adresse steht `ANMELDE_QUELLE` weiter auf `'attrappe'`: Es
+ * gibt genau einen Nutzer, und der ist der, als den man die App bedient. Löschte man
+ * ihn, wäre der Prototyp danach kaputt und Ian könnte ihn niemandem mehr zeigen.
+ * Der Screen entscheidet das aber NICHT selbst — er fragt nicht nach
+ * `LIEST_AUS_SUPABASE`, sondern liest den AUSGANG (`LoeschAusgang`). Sonst stünde
+ * die Frage „läuft hier echte Anmeldung?" an einer Stelle mehr, und harte Regel 74
+ * gilt auch für das, was man aus einem Schalter ABLEITET.
  */
 export default function AccountLoeschenScreen() {
   const ich = useCurrentUser();
   const spuren = useMeineSpuren();
   const [schritt, setSchritt] = useState<'info' | 'sicher' | 'fertig'>('info');
+  // `'fertig'` bedeutet seit heute nur noch EINES: der Prototyp-Ausgang. Wer wirklich
+  // löscht, sieht diesen Screen nie wieder — der Torwächter baut den Stack ab, sobald
+  // `hinausNachLoeschen()` durch ist (Ians Entscheidung 52).
+  const wartet = useWartetAuf('kontoLoeschen', ich.id);
+
+  /**
+   * Der letzte Klick.
+   *
+   * Bei `'fehler'` passiert hier NICHTS — und das ist kein vergessener Zweig: Die
+   * Fehlerleiste steht dann schon oben, samt dem Satz aus Ians Entscheidung 53, und
+   * der Screen ist unverändert der, auf dem der Knopf steht. Ein zweiter Hinweis
+   * daneben wäre dieselbe Auskunft zweimal (harte Regel 63) — genau der Fehler, den
+   * `StapelDurch` über `LeererFeed` einmal gemacht hat.
+   */
+  async function loeschen(): Promise<void> {
+    if (await kontoLoeschen() === 'prototyp') setSchritt('fertig');
+  }
 
   if (schritt === 'fertig') {
     return (
@@ -140,9 +165,19 @@ export default function AccountLoeschenScreen() {
             label="Ja, Konto endgültig löschen"
             block
             size="lg"
-            onPress={() => setSchritt('fertig')}
+            wartet={wartet}
+            onPress={() => void loeschen()}
           />
-          <SsButton label="Doch nicht" block onPress={() => setSchritt('info')} />
+          {/* Während gelöscht wird, bleibt „Doch nicht" stehen und wird nur stumm.
+              Ihn zu ENTFERNEN wäre der naheliegende Weg und der schlechtere: Der
+              Bildschirm spränge unter der Hand, und zwar genau in dem Augenblick,
+              in dem jemand vielleicht doch noch danach greift. */}
+          <SsButton
+            label="Doch nicht"
+            block
+            disabled={wartet}
+            onPress={() => setSchritt('info')}
+          />
         </View>
       )}
     </SsScreen>

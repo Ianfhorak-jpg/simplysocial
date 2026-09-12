@@ -3,7 +3,32 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 12.09.2026 (spät abends) — **ich habe die App zum ersten Mal wirklich mit
+> Stand: 12.09.2026 (nachts) — **Profilbilder gehen jetzt.** Darias Wunsch vom
+> 02.09. ist gebaut: Du kannst im Browser ein Bild aussuchen, austauschen und wieder
+> entfernen, und es liegt wirklich in deiner Datenbank. **Du hast dazu zwei
+> Entscheidungen getroffen (50 und 51)**, beide sind eingebaut und am echten Server
+> geprüft (24 Messungen, alle grün).
+>
+> **Zwei Sachen sind dabei herausgekommen, die du wissen solltest:**
+>
+> 1. **Ein gelöschtes Bild war noch eine STUNDE lang im Netz erreichbar.** Nicht die
+>    Datei — die ist sofort weg —, sondern das Zwischenlager davor lieferte sie
+>    weiter. Gemessen, nicht vermutet. Du hast entschieden: **fünf Minuten**. Der
+>    Satz in der App sagt jetzt genau das, statt „sofort weg" zu behaupten.
+> 2. **Beim Bauen hätte ich fast das Kontolöschen kaputtgemacht.** Damit ein
+>    gelöschtes Konto sein Bild mitnimmt, wollte ich es in der Datenbank mitlöschen.
+>    Auf meinem Testrechner lief das; auf deinem echten Server verbietet Supabase
+>    genau das — und dadurch wäre der Knopf „Account löschen" für jeden abgestürzt.
+>    **Gemerkt habe ich es nur, weil die Prüfung gegen deinen echten Server läuft
+>    und nicht nur gegen meinen Testrechner.** Ist behoben und nachgemessen.
+>
+> **Neue Aufgaben sind für dich keine entstanden.** Was auf dich wartet, ist
+> unverändert Punkt 0 (Brevo) und Punkt 4 (Google). Eine Kleinigkeit kommt dazu:
+> **Am Handy kann man noch kein Bild aussuchen**, im Browser schon — dafür fehlt ein
+> Baustein, und der kommt mit demselben App-Update wie „Anmelden mit Apple/Google".
+> Aus vier Bausteinen werden damit fünf, und das ist kein Mehraufwand für dich.
+>
+> Davor: 12.09.2026 (spät abends) — **ich habe die App zum ersten Mal wirklich mit
 > deiner Datenbank laufen lassen, und dabei einen dicken Fehler gefunden.** Ohne dass
 > man irgendetwas tippt: Sobald jemand anderer eine Nachricht schrieb, wurde dein
 > Bildschirm kurz leer und du landetest auf dem Startbildschirm — egal, wo du gerade

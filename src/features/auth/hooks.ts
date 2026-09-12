@@ -1,6 +1,6 @@
 import { LIEST_AUS_SUPABASE } from '@/lib/supabase';
 
-import type { Sitzung } from './anmeldung';
+import type { AbmeldeGrund, Sitzung } from './anmeldung';
 import {
   codeAnfordern,
   codePruefen,
@@ -96,6 +96,33 @@ export function attrappeAnmelden(): void {
  * zweiten verbietet harte Regel 47 ausdrücklich.
  */
 export function abmelden(): void {
+  abmeldenIntern();
+}
+
+/**
+ * Hinausgehen, nachdem das Konto gelöscht wurde — Ians Entscheidung 52.
+ *
+ * ── Warum das eine ZWEITE Funktion ist und kein Parameter an `abmelden()` ────
+ * Der naheliegende Weg war `abmelden(grund?: AbmeldeGrund)`, und er war eine Falle,
+ * die `tsc` nicht gesehen hätte: `abmelden` steht an drei Stellen direkt als
+ * `onPress={abmelden}` (`SchreibFehler.tsx`, `LadeSchirm.tsx` zweimal).
+ * `SsButton.onPress` ist zwar als `() => void` DEKLARIERT — React Native ruft es
+ * zur Laufzeit aber mit dem `GestureResponderEvent` auf, und ein optionaler
+ * Parameter ist an `() => void` zuweisbar. Das Event wäre also als `grund` in der
+ * Sitzung gelandet.
+ *
+ * Sichtbar wäre davon nichts gewesen (ein Event ist nie `'konto-geloescht'`) —
+ * genau deshalb steht es hier: **Ein Fehler, der nichts kaputtmacht, wird nie
+ * gefunden**, und beim nächsten Grund wäre er es dann doch.
+ *
+ * Der Name sagt außerdem, was wirklich passiert. Abmelden ist etwas, das ein Mensch
+ * TUT; hier gibt es nichts mehr, wovon man sich abmelden könnte.
+ */
+export function hinausNachLoeschen(): void {
+  abmeldenIntern('konto-geloescht');
+}
+
+function abmeldenIntern(grund?: AbmeldeGrund): void {
   // Am SERVER abmelden, ohne darauf zu warten. Das ist Absicht: Wer auf „Abmelden"
   // tippt, will jetzt weg — und ein `await` vor dem Leeren hieße, dass bei einem
   // langsamen Netz sekundenlang fremde Chats sichtbar bleiben. Der Aufruf räumt
@@ -107,7 +134,11 @@ export function abmelden(): void {
   // dem Abmelden kein Augenblick liegt, in dem ein Screen noch zeichnet.
   zwischenspeicherLeeren();
   aendern(() => ({
-    sitzung: { zustand: 'aus' },
+    // `grund` ist fast immer `undefined` — nur `kontoLoeschen()` gibt einen mit
+    // (Ians Entscheidung 52). Er steht IN der Sitzung und nicht daneben, weil er
+    // sonst das Abmelden nicht überlebte: Genau in dem Augenblick baut der
+    // Torwächter den Navigator ab, und was nur im Screen liegt, ist dann weg.
+    sitzung: { zustand: 'aus', grund },
     weggewischt: [],
     standort: { zustand: 'aus', ort: null, gemessenUm: null },
   }));

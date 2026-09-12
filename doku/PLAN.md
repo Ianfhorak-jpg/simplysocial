@@ -5610,17 +5610,113 @@ unverändert 20.3-b2 plus der Prototyp-Hinweis — der beim Durchgang sichtbar �
 Anmelde-Bildschirm stand und „Es gibt keinen Login — du bist gerade Ian" behauptete
 (`am02`). **Der Satz ist Ians** (harte Regel 22).
 
-#### 20.6 — Profilbilder ⬜
+#### 20.6 — Profilbilder · **20.6-a ✅ (2026-09-12)** · 20.6-b ⬜
 
-Darias Wunsch vom 2026-09-02, seit Phase 15 vorbereitet: `User.photoUrl?` gibt es, alle
-elf Aufrufstellen reichen es durch, `SsAvatar` kann es zeichnen. **Es fehlt nur der
-Upload** — und der brauchte genau das, was jetzt da ist.
+Darias Wunsch vom 2026-09-02, seit Phase 15 vorbereitet: `User.photoUrl?` gibt es,
+sechzehn Aufrufstellen reichen es durch, `SsAvatar` kann es zeichnen. **Es fehlte nur
+der Upload** — und der brauchte genau das, was jetzt da ist.
 
-Was dazugehört und nicht vergessen werden darf: **jemand muss draufschauen können.**
-Sobald Leute Bilder hochladen, laden Leute irgendwann Bilder hoch, die dort nicht
-hingehören — bei einer App mit 16-Jährigen kein Randthema, und Apple fragt im Review
-danach. Mindestens: melden (steht seit Phase 7), löschen können, und eine Adresse, an
-der eine Meldung ankommt.
+**20.6-a ist fertig und am ECHTEN Server belegt** (`npm run pruef-bilder` — 24 Häkchen,
+kein Kreuz, Datenbank danach sauber). Zwei neue Entscheidungen von Ian (**50**: der
+Bucket ist offen · **51**: fünf Minuten Zwischenlager), eine neue Migration
+(`0008_bilder.sql`), eine neue Regel-Datei (`features/social/bild.ts`).
+`tsc` sauber, **81 Lint-Probleme wie vorher**, lokal **136 statt 124 Häkchen**,
+`pruef-lesen` 29 · `pruef-konto` 29 · `pruef-schreiben` **50 statt 49**, Prototyp auf
+390 × 844 **Pixel für Pixel identisch** (`an01` gegen `am07` UND gegen `al01`, beide
+Unterschieds-Rechtecke `None`). Preis: **+2.702 B gzip (+0,55 %)** auf 493.492 B —
+und darin steckt auch 20.5-c, das nie gemessen wurde; die beiden lassen sich
+nachträglich nicht trennen.
+
+**20.6-b fehlt und hängt an einem Baustein:** Auf Native kann man kein Bild aussuchen,
+dafür braucht es `expo-image-picker`. **Gemessen, nicht vermutet** — anders als
+`expo-glass-effect` in 19e-2 liegt es NICHT über eine andere Abhängigkeit schon in
+`node_modules`, und in `ios/Podfile.lock` steht es auch nicht. Es gehört damit in
+denselben Build wie 20.3-b2: **aus vier Bausteinen in EINEM Build werden fünf.** Im
+Browser läuft der Upload vollständig.
+
+##### Sechs Dinge, die wichtiger sind als der Upload
+
+**1. Der teuerste Fund war eine ABWESENHEIT: `storage.objects.owner` hat keinen
+Fremdschlüssel.** Gemessen; der einzige FK der Tabelle zeigt auf `storage.buckets`.
+Ein gelöschtes Konto lässt seine Bilder also liegen — kein Cascade, kein `set null`,
+die Zeile bleibt mit einer `owner`-UUID stehen, die auf niemanden mehr zeigt. **Bei
+einem OFFENEN Bucket heißt das: Das Profilbild bliebe nach dem Kontolöschen im Netz
+abrufbar.** Ians Entscheidung 39 („alles mit") hätte für Bilder stillschweigend nicht
+gegolten, und es gibt keine Fehlermeldung für eine Datei, die zu viel da ist.
+
+**2. Der Fix dafür war FALSCH, und lokal war er grün — die Attrappen-Falle mit
+umgekehrtem Vorzeichen.** 0008 bekam zuerst einen vierten Schritt in
+`konto_loeschen()`: `delete from storage.objects where …`. Lokal lief das durch,
+`25_bilder.sql` bestätigte es. **Am echten Server bricht es ab:**
+
+```
+Direct deletion from storage tables is not allowed. Use the Storage API instead.
+```
+
+Supabase hängt an `storage.objects` einen `before delete`-Trigger
+(`storage.protect_delete`), der jedes SQL-`delete` abweist. **Damit war ausgerechnet
+`konto_loeschen()` kaputt — die Funktion hinter einer Apple-1.2-Pflicht.** Bisher war
+die Attrappe immer STRENGER als das Original (0007) oder ärmer an Rauschen (der
+Trigger-Zähler); hier war sie **schwächer**, und das ist die gefährlichere Richtung.
+`00_supabase_lokal.sql` bringt den Trigger jetzt wortgleich mit.
+
+**3. Eine Migration, aus der man eine Zeile HERAUSNIMMT, nimmt sie am Server nicht
+zurück.** Nach dem Berichtigen der Datei trug Ians Datenbank weiter die kaputte
+Fassung — dort steht, was beim ERSTEN Lauf eingespielt wurde. 0008 setzt
+`konto_loeschen()` deshalb ausdrücklich auf den Stand von 0003 zurück, statt sie nur
+nicht mehr zu ändern, und der Wächter am Dateiende bricht ab, wenn dort je wieder
+`storage.objects` auftaucht. **Das ist dieselbe Lehre wie die 19d-Methode, eine Ebene
+tiefer: Eine Rücknahme ist erst eine, wenn sie gemessen ist.**
+
+**4. Der zweite Fund ist eine ZAHL, und aus ihr wurde Entscheidung 51.** `bildFolgen()`
+versprach „sofort weg"; gemessen liefert das CDN eine gelöschte Datei bis zu eine
+Stunde weiter (`cf=HIT`, `max-age=3600`), während sie mit Cache-Buster schon `400`
+gibt. **Die Datei ist weg, die Adresse antwortet trotzdem.** Siehe Abschnitt 6,
+Punkt 51.
+
+**5. In `storage` gibt es nur EINEN Riegel, nicht zwei.** In `public` sichern Grant UND
+Policy (harte Regel 70/85). Gemessen: `anon` hat auf `storage.objects` und
+`storage.buckets` ALLE Rechte — dieselbe Supabase-Voreinstellung, die 0007 für `public`
+weggenommen hat. **Hier wird sie NICHT weggenommen**, weil der Storage-Dienst selbst
+unter `authenticated` arbeitet; ein `revoke` würde die App reparieren, indem es sie
+abschaltet. Offen ist deswegen nichts (RLS ist an, für `anon` gibt es keine Policy, und
+`storage` ist über PostgREST nicht erreichbar) — aber **jede der vier Policies ist die
+ganze Absicherung ihrer Richtung**, und es steht nichts daneben, das mitfängt.
+
+**6. Drei eigene Fehler beim Prüfstand, alle dieselbe Familie — das MESSGERÄT.**
+`getBucket()` gibt einem gewöhnlichen Nutzer die Bucket-Einstellungen gar nicht heraus
+(`storage.buckets`: RLS an, 0 Policies) und meldet dazu *„Bucket not found"*, also
+**„es gibt ihn nicht", wo „du darfst ihn nicht sehen" gemeint ist**. Die
+`delete`-Policy ist per SQL überhaupt nicht prüfbar, weil der Trigger VOR RLS läuft —
+sie gehört an den echten Server. Und der Wächter von `80_bilder.sh` fragte die
+Prüf-Gruppe nicht ab, obwohl `groups.creator_id` seit Entscheidung 41 `on delete set
+null` ist: Eine Gruppe überlebt ihren Gründer und fällt durch jedes Abräumen, das sie
+über `creator_id` sucht.
+
+##### Was dabei nebenbei herauskam: eine Prüfung, die nichts merkte
+
+`70_schreiben.mjs` zählte zwei Listen von Aktionsnamen auf und sagte *„genau diese acht
+warten"*. **Mit `profilbildSetzen` und `profilbildEntfernen` kamen zwei Aktionen dazu,
+und keine der beiden Listen hat es gemerkt** — die Prüfung blieb grün, während ihre
+Aussage nicht mehr stimmte. Dieselbe Familie wie *„eine Prüfung, die eine
+Bedeutungsänderung nicht merkt, prüft die Umsetzung und nicht die Regel"* (20.5-SQL).
+Behoben mit `SCHREIB_AKTIONEN`, abgeleitet aus `EINORDNUNG` selbst: Die dritte Prüfung
+zählt jetzt auf, was in keiner der beiden Listen steht. Deshalb sind es 50 Häkchen
+statt 49.
+
+##### Was 20.6-a NICHT ist
+
+⚠️ **Eine Lücke ist benannt und gemessen, nicht nur vermutet:** Bricht die App zwischen
+„Bild wegräumen" und `konto_loeschen()` ab, bleibt das Bild liegen — `80_bilder.mjs`
+misst genau diesen Fall (`… aber das Bild steht noch da`). Am Server gibt es dagegen
+kein Netz, solange die einzige Alternative das Umgehen eines fremden
+Sicherheitstriggers ist. **Der saubere Weg wäre ein Aufräumer für verwaiste Dateien**
+(pg_cron plus Storage-API); er ist nicht gebaut.
+
+⚠️ **Und der Lösch-Screen ruft `konto_loeschen()` weiterhin gar nicht.** Das ist
+unverändert seit Phase 7 („der letzte Klick tut nichts, weil es ohne Login kein Konto
+gibt"). Wer ihn anschließt, muss `profilbildEntfernen()` DAVOR setzen — sonst tritt die
+Lücke oben bei jedem Löschen ein statt nur bei einem Absturz.
 
 #### 20.7 — Die Meldungen bekommen einen Leser ⬜
 
@@ -6902,6 +6998,67 @@ falsch — der Griff auf „Nochmal" hätte damit genau den Bildschirm abgerisse
 Zeile gerade gerettet hat. Gefragt wird deshalb mit `stehtSchonEtwas()`, und die
 Funktion leitet ihre Antwort aus `ladeSichtFuer()` ab statt aus einem zweiten `switch`:
 zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Regel 53).
+
+### 50. Wer ein Profilbild sehen kann ✅
+
+> **Entschieden am 2026-09-12.** Darias Wunsch vom 2026-09-02 wird gebaut, und die
+> erste Frage ist keine Gestaltungsfrage, sondern eine Bauart: Ein Supabase-Bucket
+> ist entweder offen oder er ist es nicht, und daran hängt alles Weitere.
+>
+> **Seine Wahl: A — offen, mit fester Adresse.**
+>
+> | | |
+> |---|---|
+> | **A. offen** *(gewählt)* | Dauerhafte Adresse, vom CDN ausgeliefert. Listen zeichnen sofort, kein Aufruf je Avatar. **Der Preis:** Beim Abruf wird Postgres gar nicht gefragt — es greift keine einzige der 34 Policies. Wer eine Adresse hat, behält sie über einen Block hinweg. |
+> | B. ablaufend | Privater Bucket, signierte Adressen mit einer Stunde Gültigkeit. Ein Block wirkt sofort. Verworfen: Jeder Bildschirm mit Avataren bräuchte einen Netzaufruf mehr (Chat-Liste sieben, Feed bis zwölf), und eine lange offene App zeigt danach leere Kreise. |
+> | C. nur Follower und Verabredete | Passt am besten zu „kein Dating". Verworfen, weil ein Profilbild die Frage *mit wem treffe ich mich* beantwortet — und die stellt man, BEVOR man zusagt. Genau dort wäre es weg gewesen. |
+>
+> **Was A erst tragbar macht, sind zwei Dinge, und beide sind Folge der
+> Entscheidung, nicht Beiwerk:** Der DATEINAME ist nicht zu raten
+> (`bildPfad()` — Ordner = eigene UUID für die Policies, Dateiname = 16 Byte
+> Zufall), und `select` auf `storage.objects` ist auf den eigenen Ordner begrenzt,
+> damit niemand den Zufallsnamen ABLESEN kann statt ihn zu raten.
+>
+> Die Regel steht in `src/features/social/bild.ts` (`BILD_SICHT`), die Durchsetzung
+> in `supabase/migrations/0008_bilder.sql`. **Es wartet keine Frage auf Ian.**
+
+### 51. Wie lange ein gelöschtes Bild noch abrufbar ist ✅
+
+> **Entschieden am 2026-09-12, und die Frage kam aus einer MESSUNG** — nicht aus
+> dem Plan. `bildFolgen()` behauptete *„wenn du es austauschst, ist das alte sofort
+> weg"*, und `80_bilder.mjs` hat das widerlegt:
+>
+> ```
+> vor dem Löschen      200   cache-control: public, max-age=3600   cf=MISS
+> nach dem Löschen     200   …                                     cf=HIT
+> mit `?v=1` daran     400   ← die Datei ist wirklich weg
+> ```
+>
+> **Die Datei ist sofort gelöscht, das CDN liefert sie trotzdem weiter** — mit dem
+> Standardwert von `supabase-js` bis zu einer Stunde lang. Der Satz war damit eine
+> Unwahrheit, dieselbe Familie wie „Noch nichts los in deinem Feed" bei einem
+> Netzausfall (Entscheidung 43).
+>
+> **Seine Wahl: fünf Minuten** (`BILD_CACHE_SEKUNDEN = 300`).
+>
+> | | |
+> |---|---|
+> | 3600 (Standard) | Schnellste Listen. Bis zu eine Stunde Nachhall. |
+> | **300** *(gewählt)* | Nach fünf Minuten wirklich überall weg. Preis: Jedes Gerät holt jedes Avatar alle fünf Minuten neu — spürbar im Feed und in der Chat-Liste. |
+> | 0 | Wörtlich sofort weg. Preis: zwölf Anfragen bei jedem Öffnen des Feeds. |
+>
+> **Woran die Wahl NICHT hängt: an der Aktualität.** Jedes neue Bild bekommt einen
+> neuen zufälligen Namen, also ändert sich unter einer Adresse nie etwas — ein
+> langer Cache könnte niemals ein veraltetes Bild zeigen. Er verlängert einzig das
+> Fenster, in dem eine WEGGENOMMENE Adresse noch antwortet. Der Satz in
+> `bildFolgen()` nennt jetzt die Zahl, statt eine Gewissheit zu behaupten.
+>
+> ⚠️ **Die Nummerierung dieses Abschnitts kollidiert mit der aus Phase 19.** Dort
+> heißen Ians Design-Entscheidungen ebenfalls 50 bis 70 (Entscheidung 50 =
+> *„ein Bildschirm zeigt nur, was für die Entscheidung HIER nötig ist"*, harte
+> Regel 63). Die Kollision bestand schon vor dieser Phase; sie wird hier nur
+> benannt, damit die nächste Sitzung nicht nach einer Auflösung sucht, die es nicht
+> gibt. **Gemeint ist immer der Abschnitt, in dem die Nummer steht.**
 
 ## 7. Bewusst NICHT im Prototyp
 

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
-import { schreibVorgang, useSlice } from '../store';
+import { aendern, schreibVorgang, schreibVorgangMitId, useSlice } from '../store';
 import * as senden from '@/data/senden';
 
 import { istWienerBezirk } from '@/lib/bezirk';
@@ -118,6 +118,71 @@ export function bezirkSetzen(plz: string): Promise<void> {
     }),
     (sb) => senden.bezirkSetzen(sb, plz, ichId),
   );
+}
+
+/**
+ * Ein Profilbild setzen — Phase 20.6.
+ *
+ * ── Warum `schreibVorgangMitId` und nicht `schreibVorgang` ──────────────────
+ * Weil die Adresse vom Server kommt und der Bildschirm sie gleich braucht: Ohne
+ * sie stünde nach dem Hochladen weiter der alte Avatar da, und es sähe aus, als
+ * hätte es nicht geklappt. Die Aktion steht deshalb in `EINORDNUNG` auf
+ * `'warten'` (Ians Entscheidung 46) — dort steht auch der dritte Grund zu warten,
+ * den sie neu eingeführt hat: es DAUERT messbar.
+ *
+ * ── Was im Prototyp passiert ────────────────────────────────────────────────
+ * `URL.createObjectURL` — das Bild liegt dann im Speicher des Browsers und ist
+ * beim Neuladen weg. Das ist genau das, was der Prototyp-Hinweis ohnehin sagt
+ * („Neuladen setzt zurück"), und es ist ehrlicher als ein Platzhalterbild: Man
+ * sieht SEIN Bild, nicht irgendeines.
+ */
+export function profilbildSetzen(datei: Blob, typ: string): Promise<string> {
+  const ichId = getCurrentUserId();
+  return schreibVorgangMitId(
+    'profilbildSetzen',
+    ichId,
+    // Vorher passiert NICHTS am Zustand — die Adresse gibt es ja noch nicht. Das
+    // ist der Unterschied zu `bezirkSetzen`, wo die App das Ergebnis kennt.
+    () => ({}),
+    async (sb) => {
+      const adresse = await senden.profilbildSetzen(sb, datei, typ, ichId);
+      adresseEintragen(ichId, adresse);
+      return adresse;
+    },
+    () => {
+      const adresse = URL.createObjectURL(datei);
+      adresseEintragen(ichId, adresse);
+      return adresse;
+    },
+  );
+}
+
+/** Ein Profilbild wieder wegnehmen. */
+export function profilbildEntfernen(): Promise<void> {
+  const ichId = getCurrentUserId();
+  return schreibVorgang(
+    'profilbildEntfernen',
+    ichId,
+    (alt) => ({
+      users: alt.users.map((u) => (u.id === ichId ? { ...u, photoUrl: undefined } : u)),
+    }),
+    (sb) => senden.profilbildEntfernen(sb, ichId),
+  );
+}
+
+/**
+ * Die neue Adresse in den Speicher schreiben.
+ *
+ * Eine eigene Funktion, weil sie in BEIDEN Zweigen gebraucht wird (echt und
+ * Attrappe) und der Zeitpunkt in beiden derselbe ist: erst, wenn die Adresse
+ * wirklich feststeht. Ein `aendern` VOR dem Hochladen zeigte ein Bild, das
+ * vielleicht nie ankommt — und `SCHREIB_ANTWORT` hat für genau diesen Fall kein
+ * Zurückrollen (harte Regel 84: das Nachladen IST die Rücknahme).
+ */
+function adresseEintragen(ichId: string, adresse: string): void {
+  aendern((alt) => ({
+    users: alt.users.map((u) => (u.id === ichId ? { ...u, photoUrl: adresse } : u)),
+  }));
 }
 
 /** Setzt die Kante `vonId → zuId` auf an oder aus und pflegt dabei beide Seiten. */

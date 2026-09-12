@@ -55,9 +55,19 @@ export function SchreibFehlerLeiste({ fehler }: { fehler: SchreibFehlerTyp }) {
             ist nichts davon. */}
         <SsIcon name="warnung" size={18} color={colors.inkSoft} />
         {/* Kein Fehlercode, kein Tabellenname (der Fund vom 2026-09-03). */}
-        <SsText variant="caption" style={styles.text}>
-          {text}
-        </SsText>
+        <View style={styles.text}>
+          <SsText variant="caption">{text}</SsText>
+          {/* Ians Entscheidung 53: Wenn der Vorgang schon etwas angerichtet hat,
+              steht das hier — und nur dann. Der Zusatz kommt aus dem Fehler und
+              nicht aus `schreibFehlerFolgen()`, weil er nicht am CODE hängt,
+              sondern daran, wie weit man gekommen war. Heute gibt es genau einen
+              (das Profilbild beim Kontolöschen). */}
+          {fehler.zusatz ? (
+            <SsText variant="caption" color={colors.inkSoft}>
+              {fehler.zusatz}
+            </SsText>
+          ) : null}
+        </View>
         <SsButton
           label={knopf}
           variant="ghost"

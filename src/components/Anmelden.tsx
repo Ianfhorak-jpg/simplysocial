@@ -12,7 +12,8 @@ import {
   CODE_MIN,
   codeFehlerText,
 } from '@/features/auth/anmeldung';
-import { anmeldenMitCode, attrappeAnmelden, codeSchicken } from '@/features/auth/hooks';
+import { anmeldenMitCode, attrappeAnmelden, codeSchicken, useSitzung } from '@/features/auth/hooks';
+import { LOESCH_QUITTUNG } from '@/features/safety/konto';
 import { KontoFehler } from '@/features/auth/konten';
 import { categoryColors, colors, MAX_CONTENT_WIDTH, radius, spacing, status } from '@/theme';
 
@@ -51,6 +52,16 @@ export function Anmelden() {
   // immer da: Wer sich in der Adresse vertippt hat, merkt es erst, wenn keine Mail
   // kommt — ohne „Andere Adresse" säße er dann fest und müsste die App neu laden.
   const [schritt, setSchritt] = useState<'wahl' | 'email' | 'code'>('wahl');
+  const sitzung = useSitzung();
+  // Ians Entscheidung 52: Wer sein Konto gelöscht hat, liest hier die Quittung.
+  //
+  // **Nur im Schritt `'wahl'`** — aus demselben Grund wie die Hinweise weiter unten
+  // (harte Regel 63): Wer schon auf „Mit E-Mail anmelden" getippt hat, legt gerade
+  // ein neues Konto an, und ein Satz über das alte steht dann im Weg. Der Zustand
+  // in der Sitzung bleibt trotzdem stehen — er ist die Antwort auf „was ist gerade
+  // passiert?", nicht auf „was tue ich jetzt?".
+  const quittung =
+    schritt === 'wahl' && sitzung.zustand === 'aus' && sitzung.grund === 'konto-geloescht';
   const hinweise = [...new Set(ANMELDE_WEGE.map((weg) => anmeldeFolgen(weg).hinweis))].filter(
     Boolean,
   );
@@ -62,6 +73,17 @@ export function Anmelden() {
         { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg },
       ]}>
       <View style={styles.kasten}>
+        {/* ÜBER der Wortmarke und nicht darunter: Sie ist die Antwort auf den
+            letzten Klick und gehört an die Stelle, auf die das Auge zuerst fällt.
+            Unter der Marke stünde sie da, wo sonst der Claim steht — also da, wo
+            man Werbung erwartet und nicht eine Quittung. */}
+        {quittung ? (
+          <View style={styles.quittung}>
+            <SsText variant="bodyStrong" center>
+              {LOESCH_QUITTUNG}
+            </SsText>
+          </View>
+        ) : null}
         <SsText variant="display" center>
           <SsText variant="display" color={colors.ink}>
             {BRAND.wordmark.first}
@@ -298,6 +320,20 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     padding: spacing.xl,
     gap: spacing.sm,
+  },
+  /**
+   * Abgesetzt durch eine Linie darunter, nicht durch eine Farbe.
+   *
+   * `status.danger` wäre der naheliegende Griff und ist falsch: Das Rot gehört in
+   * dieser App dem Absagen, Blockieren und Melden (siehe den Kommentar an der Farbe
+   * in `theme/colors.ts`). Ein gelöschtes Konto ist keine Warnung mehr — es IST
+   * schon passiert, und zwar genau so, wie der Mensch es zweimal bestätigt hat.
+   */
+  quittung: {
+    paddingBottom: spacing.md,
+    marginBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
   },
   claim: { marginBottom: spacing.md },
   wege: { gap: spacing.md },

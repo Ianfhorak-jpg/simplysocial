@@ -109,7 +109,7 @@ export default function RootLayout() {
             der dort auf jedem Screen sitzt (mit `elementFromPoint` gemessen).
 
             Beide stehen HIER und nicht in den vierzehn Screens, aus demselben
-            Grund wie der Ladezustand: Alle 22 Schreib-Aktionen enden in demselben
+            Grund wie der Ladezustand: Alle 24 Schreib-Aktionen enden in demselben
             Feld, und eine Leiste je Screen wären vierzehn Gelegenheiten, eine zu
             vergessen. */}
         {schreiben.zustand === 'fehler' ? <SchreibFehlerLeiste fehler={schreiben.fehler} /> : null}

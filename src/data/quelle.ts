@@ -103,7 +103,7 @@ export const LADE_FEHLER: 'immer-vollbild' | 'vollbild-dann-zeile' = 'vollbild-d
 // Feed mit neun leeren Listen sagt „Noch nichts los in deinem Feed" — der Satz,
 // den Entscheidung 43 verbietet.
 //
-// **Seit 20.5 lädt die App NACH — nach jedem der 22 Schreibvorgänge und nach
+// **Seit 20.5 lädt die App NACH — nach jedem der 24 Schreibvorgänge und nach
 // jedem Realtime-Anstoß.** Und dann steht alles schon da. Gemessen, was die alte
 // Frage in dieser Lage anrichtet:
 //

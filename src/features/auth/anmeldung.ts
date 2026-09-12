@@ -100,6 +100,16 @@ export const ANMELDE_QUELLE: 'attrappe' | 'supabase' = 'attrappe';
  * ID" ist damit undarstellbar; bei `ichId: string | null` wäre er tippbar gewesen
  * und niemand hätte es gemerkt.
  */
+/**
+ * Warum jemand gerade NICHT angemeldet ist — soweit die App etwas dazu zu sagen hat.
+ *
+ * Es gibt genau einen Grund, und das ist Absicht: Ein gewöhnliches Abmelden braucht
+ * keine Erklärung (man hat es selbst getan, gerade eben), und ein abgelaufenes Token
+ * sagt schon die Fehlerleiste (`schreibFehlerFolgen()`). Nur beim Kontolöschen fehlt
+ * sonst jede Rückmeldung, dass die stärkste Handlung der App stattgefunden hat.
+ */
+export type AbmeldeGrund = 'konto-geloescht';
+
 export type Sitzung =
   /**
    * Noch nicht nachgesehen — der ANFANGSZUSTAND mit `ANMELDE_QUELLE = 'supabase'`.
@@ -114,8 +124,25 @@ export type Sitzung =
    * dürfen nicht gleich aussehen.
    */
   | { zustand: 'unbekannt' }
-  /** Niemand angemeldet. Ein Screen, der ein Ich braucht, wird gar nicht gezeichnet. */
-  | { zustand: 'aus' }
+  /**
+   * Niemand angemeldet. Ein Screen, der ein Ich braucht, wird gar nicht gezeichnet.
+   *
+   * `grund` trägt seit dem 2026-09-12 Ians Entscheidung 52: Wer sein Konto gelöscht
+   * hat, landet hier — und soll auf dem Anmelde-Bildschirm eine Quittung lesen
+   * (`LOESCH_QUITTUNG` in `safety/konto.ts`).
+   *
+   * **Ein optionales Feld und kein fünftes Glied**, und das ist eine Abwägung gegen
+   * harte Regel 77: Ein neues Glied hätte `torwaechterZeigt()` zu einem Typfehler
+   * gezwungen — nur wäre die Antwort dort `'anmelden'` gewesen, also dieselbe.
+   * Der Torwächter unterscheidet Sitzungen danach, WAS er zeichnet; beide Fälle
+   * zeichnen den Anmelde-Bildschirm. Ein Glied, das sich vom Nachbarn nur durch
+   * eine Zeile TEXT unterscheidet, ist kein eigener Zustand.
+   *
+   * Der Preis ist benannt: `tsc` meldet zu diesem Feld nichts (Phase-16-Lehre). Wer
+   * einen zweiten Grund ergänzt, prüft die EINE Stelle, die ihn liest — den
+   * Anmelde-Bildschirm — von Hand.
+   */
+  | { zustand: 'aus'; grund?: AbmeldeGrund }
   /**
    * Bei Supabase angemeldet — und noch OHNE Profil. Phase 20.3-b1.
    *

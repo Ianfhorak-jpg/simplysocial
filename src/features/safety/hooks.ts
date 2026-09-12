@@ -1,11 +1,15 @@
 import { useMemo } from 'react';
 
-import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
+import { getCurrentUserId, hinausNachLoeschen, useCurrentUserId } from '../auth/hooks';
 import { nachfolgerId } from '../groups/gruppe';
+import { profilbildEntfernen } from '../social/hooks';
 import { getState, neueId, schreibVorgang, useSlice } from '../store';
+import { SchreibFehler } from '@/data/schreiben';
 import * as senden from '@/data/senden';
+import { LIEST_AUS_SUPABASE } from '@/lib/supabase';
 
 import { BLOCK_WIRKUNG } from './block';
+import { BILD_ZUERST, loeschFehlerText } from './konto';
 
 import type { Report, ReportReason, ReportTarget, User } from '@/types/models';
 
@@ -365,4 +369,110 @@ export function useMeineSpuren(): MeineSpuren {
       nachfolgerName: users.find((u) => u.id === erbeId)?.displayName ?? null,
     };
   }, [posts, chatThreads, joinRequests, users, groups, ichId]);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ *  DAS KONTO LÖSCHEN — Apples Richtlinie 1.2
+ *
+ *  Der Knopf steht seit Phase 7 da und tat bis zum 2026-09-12 NICHTS: Der Screen
+ *  setzte `schritt = 'fertig'` und sagte selbst, dass ohne Konten nichts zu löschen
+ *  ist. Am Server steht `konto_loeschen()` seit 20.1 fertig — es fehlte nur der Weg
+ *  dorthin. Von Apples vier Pflichten ist das die einzige, die ein Prüfer wirklich
+ *  AUSPROBIERT.
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Wie ein Löschversuch ausgegangen ist.
+ *
+ * Ein Union und kein `boolean`, weil es DREI Ausgänge gibt und einer davon kein
+ * Fehler ist: Im Prototyp gibt es kein Konto, und der Screen sagt das seit Phase 7
+ * selbst. Mit `true`/`false` wäre „nichts gelöscht, weil Prototyp" von „nichts
+ * gelöscht, weil kaputt" nicht zu unterscheiden — dieselbe Unterscheidung wie
+ * `'laeuft'` gegen `'nachladen'` (harte Regel 87).
+ */
+export type LoeschAusgang = 'geloescht' | 'prototyp' | 'fehler';
+
+/**
+ * Das eigene Konto löschen. Ians Entscheidungen 39, 52 und 53.
+ *
+ * ── Was diese Funktion NICHT tut: lokal etwas ändern ─────────────────────────
+ * Der `lokal`-Schritt ist leer, und das ist richtig statt faul. `kontoLoeschen`
+ * steht in `EINORDNUNG` auf `'warten'`, also führt `schreibVorgangIntern` ihn im
+ * Supabase-Zweig gar nicht aus. Im Prototyp-Zweig darf er nichts tun: **Löschte er
+ * den Seed-Nutzer, wäre die öffentliche Adresse danach kaputt** und Ian könnte sie
+ * niemandem mehr zeigen (die Begründung steht seit Phase 7 im Kopf des Screens).
+ *
+ * ── Warum danach kein Nachladen kommt ────────────────────────────────────────
+ * Siehe `laedtDanachNach()` in `data/schreiben.ts`. Nach dem Aufruf ist das Token
+ * tot; ein Nachladen bekäme `42501` und legte den Vollbild-Kasten über den
+ * Anmelde-Bildschirm, auf dem die Quittung stehen soll.
+ *
+ * ── Woran der Erfolg erkannt wird ────────────────────────────────────────────
+ * NICHT am Rückgabewert von `schreibVorgang` — der lehnt nie ab, der Fehler wird zu
+ * einem Zustand. Gefragt wird `schreiben.zustand`, genau wie `create.tsx` es vor
+ * dem Sprung auf den neuen Post tut.
+ */
+export async function kontoLoeschen(): Promise<LoeschAusgang> {
+  const ichId = getCurrentUserId();
+
+  // Im Prototyp gibt es nichts zu löschen — und der Screen weiß, was er stattdessen
+  // zeigt. Die Abfrage steht VOR dem Schreibvorgang und nicht darin: `schreibVorgang`
+  // würde im Prototyp-Zweig brav „erfolgreich" melden, und dann liefe darunter
+  // `hinausNachLoeschen()` — die öffentliche Adresse stünde auf dem Anmelde-Bildschirm
+  // mit der Quittung „Dein Konto wurde gelöscht", und hinein käme niemand mehr.
+  if (!LIEST_AUS_SUPABASE) return 'prototyp';
+
+  await schreibVorgang(
+    'kontoLoeschen',
+    ichId,
+    () => ({}),
+    loeschVorgang(ichId),
+  );
+
+  if (getState().schreiben.zustand !== 'nichts') return 'fehler';
+
+  // Ians Entscheidung 52: raus, und die Quittung steht auf dem Anmelde-Bildschirm.
+  hinausNachLoeschen();
+  return 'geloescht';
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  ⬜ HIER SCHREIBT IAN — die Reihenfolge, in der wirklich gelöscht wird
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Gib die Funktion zurück, die `schreibVorgang` mit dem Supabase-Client aufruft.
+ * Sie muss ZWEI Dinge tun, und die Reihenfolge ist deine Entscheidung 53 in Code:
+ *
+ *   1. **Das Profilbild zuerst weg** (`BILD_ZUERST`, harte Regel 89).
+ *      `senden.profilbildEntfernen(sb, ichId)` — nicht der Haken aus
+ *      `social/hooks.ts`, denn der startet einen EIGENEN Schreibvorgang, und zwei
+ *      davon gleichzeitig überschreiben einander den `schreiben`-Zustand.
+ *      Danach ist das Bild weg — merk dir das, Schritt 2 braucht es.
+ *
+ *   2. **Dann `senden.kontoLoeschen(sb)`.**
+ *      Geht DAS schief, wirft es einen `SchreibFehler` — und der soll Ians
+ *      Entscheidung 53 tragen: den Satz aus `loeschFehlerText(bildSchonWeg)`.
+ *      Ein `SchreibFehler` ist unveränderlich, also fängst du ihn und wirfst einen
+ *      neuen mit demselben `aktion`/`code`/`message` plus dem Zusatz.
+ *
+ * Die Denkaufgabe steckt im Fall, den die Beschreibung oben NICHT nennt:
+ * **Was, wenn schon Schritt 1 scheitert?** Dann ist das Bild noch da, das Konto
+ * auch — und `loeschFehlerText()` soll dann `null` liefern, nicht den Satz. Sonst
+ * behauptet die Leiste einen Schaden, den es nicht gegeben hat.
+ *
+ * `bildSchonWeg` ist deshalb kein Parameter, sondern etwas, das du im Verlauf der
+ * Funktion mitschreibst.
+ */
+function loeschVorgang(ichId: string) {
+  return async (sb: Parameters<typeof senden.kontoLoeschen>[0]): Promise<void> => {
+    // TODO(Ian): siehe oben. Ungefähr acht Zeilen.
+    void ichId;
+    void sb;
+    void BILD_ZUERST;
+    void loeschFehlerText;
+    void SchreibFehler;
+    void profilbildEntfernen;
+    throw new Error('loeschVorgang ist noch nicht geschrieben');
+  };
 }

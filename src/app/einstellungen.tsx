@@ -17,7 +17,16 @@ import { abmelden } from '@/features/auth/hooks';
 import { entblocken, useBlockierte } from '@/features/safety/hooks';
 import { standortAnschalten, standortAusschalten, useStandortStand } from '@/features/posts/hooks';
 import { standortFolgen } from '@/features/posts/standort';
-import { bezirkSetzen, useCurrentUser } from '@/features/social/hooks';
+import {
+  bezirkSetzen,
+  profilbildEntfernen,
+  profilbildSetzen,
+  useCurrentUser,
+} from '@/features/social/hooks';
+import { bildFolgen, bildHuerdeText } from '@/features/social/bild';
+import { BILDWAHL_LAEUFT, bildWaehlen } from '@/lib/bild-waehlen';
+import { WARTE_TEXT } from '@/data/schreiben';
+import { useWartetAuf } from '@/features/store';
 import { istWienerBezirk } from '@/lib/bezirk';
 import { accent, colors, danger, radius, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
@@ -51,6 +60,27 @@ export default function EinstellungenScreen() {
   const ich = useCurrentUser();
   /** Das Bezirksfeld steht zugeklappt — harte Regel 63. */
   const [bezirkOffen, setBezirkOffen] = useState(false);
+
+  // Die Hürde ist ein ZUSTAND und kein `alert`: Der Satz muss neben dem Knopf
+  // stehen bleiben, bis jemand es noch einmal versucht — ein Hinweis, der von
+  // selbst verschwindet, ist bei „warum geht mein Foto nicht" wertlos.
+  const [bildHuerde, setBildHuerde] = useState<string | null>(null);
+  const bildLaeuft = useWartetAuf('profilbildSetzen', ich.id);
+
+  async function bildAussuchen() {
+    const wahl = await bildWaehlen();
+    // Abgebrochen ist kein Fehler — und vor allem keine Meldung wert.
+    if (!wahl) return;
+
+    // Vor dem Hochladen fragen, nicht danach: Der Bucket weist dieselben Fälle ab
+    // (gemessen in `80_bilder.mjs`), aber erst nach dem Warten und mit einer
+    // Meldung auf Englisch. Die Regel steht in `bild.ts`, nicht hier.
+    const huerde = bildHuerdeText(wahl.typ, wahl.datei.size);
+    setBildHuerde(huerde);
+    if (huerde) return;
+
+    await profilbildSetzen(wahl.datei, wahl.typ);
+  }
   // Der Entwurf steht NEBEN dem gespeicherten Wert und nicht an seiner Stelle: Beim
   // Tippen durchläuft das Feld `1`, `12`, `122` — Zustände, die kein Bezirk sind. Wer
   // sie direkt ins Profil schreibt, sortiert den Feed zwischendurch ab einem Ort, den
@@ -66,6 +96,68 @@ export default function EinstellungenScreen() {
       <SsBack />
 
       <SsText variant="title">Einstellungen</SsText>
+
+      {/* ── Das Bild steht ÜBER dem Bezirk, und das ist keine Rangfolge ───────
+          Es ist das Einzige auf diesem Screen, das andere Leute sehen. Der
+          Bezirk darunter verändert, was ICH sehe (Entscheidung 63), alles
+          weitere ist Verwaltung — drei Sorten, in dieser Reihenfolge.
+
+          Harte Regel 63 ist dabei mitgeprüft: Der Block zeigt EINEN Avatar und
+          EINEN Knopf. Die drei Sätze aus `bildFolgen()` stehen nur da, wenn
+          wirklich ein Bild da ist — vorher beantworten sie eine Frage, die
+          niemand gestellt hat. */}
+      <View style={styles.block}>
+        <SsText variant="label" color={colors.inkSoft}>
+          Dein Bild
+        </SsText>
+
+        <View style={styles.bildZeile}>
+          <SsAvatar name={ich.displayName} seed={ich.id} photoUrl={ich.photoUrl} size="lg" />
+          <View style={styles.bildText}>
+            {BILDWAHL_LAEUFT ? (
+              <>
+                <SsButton
+                  variant="ghost"
+                  label={
+                    bildLaeuft
+                      ? WARTE_TEXT
+                      : ich.photoUrl
+                        ? 'Anderes Bild'
+                        : 'Bild aussuchen'
+                  }
+                  disabled={bildLaeuft}
+                  onPress={bildAussuchen}
+                />
+                {ich.photoUrl ? (
+                  <SsButton variant="ghost" label="Bild entfernen" onPress={() => void profilbildEntfernen()} />
+                ) : null}
+              </>
+            ) : (
+              /* Steht der Knopf nicht da, steht ein SATZ da — die Lehre aus
+                 Phase 16. Ein Knopf, der nichts tut, sieht aus wie eine App,
+                 die die Funktion nicht hat. */
+              <SsText variant="caption" color={colors.inkSoft}>
+                Ein Bild aussuchen geht am Handy noch nicht — das kommt mit dem
+                nächsten App-Update. Im Browser geht es schon.
+              </SsText>
+            )}
+          </View>
+        </View>
+
+        {bildHuerde ? (
+          <SsText variant="caption" color={danger.base}>
+            {bildHuerde}
+          </SsText>
+        ) : null}
+
+        {ich.photoUrl
+          ? bildFolgen().map((satz) => (
+              <SsText key={satz} variant="caption" color={colors.inkSoft}>
+                {satz}
+              </SsText>
+            ))
+          : null}
+      </View>
 
       {/* ── Ganz oben, und das ist die Aussage ────────────────────────────────
           Es ist die einzige Einstellung, die verändert, was man SIEHT: Seit
@@ -353,6 +445,12 @@ const styles = StyleSheet.create({
   // die Einrückung, damit das Feld unter der Zeile steht statt neben ihr.
   bezirkFeld: { paddingTop: spacing.xs },
 
+  // Avatar links, Knöpfe rechts — dieselbe Form wie `person` darunter, damit der
+  // Block nicht wie ein Fremdkörper über der Liste steht.
+  bildZeile: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 12 },
+  // `flex: 1` an dem, was nachgeben soll — nicht `flexShrink` am anderen (harte
+  // Regel 43, am 2026-09-05 in der Chat-Zeile zweimal falsch geraten).
+  bildText: { flex: 1, gap: 8, alignItems: 'flex-start' as const },
   person: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   personText: { flex: 1, minWidth: 0, gap: 2 },
 

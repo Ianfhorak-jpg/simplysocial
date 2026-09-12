@@ -1,7 +1,7 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
  *  DIE SCHREIBWEGE — Phase 20.5 (App-Seite), 2026-09-12
- *  Das Gegenstück zu `laden.ts`: 22 Aktionen, gegen das echte Supabase.
+ *  Das Gegenstück zu `laden.ts`: 24 Aktionen, gegen das echte Supabase.
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * ── Was hier NICHT steht ─────────────────────────────────────────────────────
@@ -36,6 +36,7 @@
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 
 import { SchreibFehler, type SchreibAktion } from '@/data/schreiben';
+import { BILD_BUCKET, BILD_CACHE_SEKUNDEN, bildPfad } from '@/features/social/bild';
 import type { PostEntwurf } from '@/features/posts/hooks';
 import type { GruppenEntwurf } from '@/features/groups/hooks';
 import type { ReportReason, ReportTarget } from '@/types/models';
@@ -256,7 +257,7 @@ export async function beitrittAnfragen(
  * Bis dahin hatte `group_requests` kein `delete`-Recht und die einzige
  * update-Policy ließ nur den Gründer durch: Der Knopf stand seit Phase 17 in der
  * App und kam am Server nicht durch. Gefunden hat es die Rechteliste beim
- * Einordnen der 22 Aktionen, nicht der Plan.
+ * Einordnen der 24 Aktionen, nicht der Plan.
  */
 export async function beitrittZuruecknehmen(
   sb: SupabaseClient,
@@ -419,4 +420,136 @@ export async function melden(
       note: note.trim(),
     });
   pruefen('melden', error);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  Profilbild — Phase 20.6
+// ═════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Ein neues Profilbild — **drei Schritte, und die Reihenfolge ist die ganze
+ * Überlegung.**
+ *
+ *   1. HOCHLADEN unter einem neuen, zufälligen Namen (`bildPfad()`).
+ *   2. Die Adresse ans Profil schreiben.
+ *   3. Alles andere im eigenen Ordner wegräumen.
+ *
+ * **Warum nicht zuerst aufräumen:** Dann stünde zwischen Schritt 1 und 2 ein
+ * Mensch ohne Bild da, und ein abgebrochener Upload (Netz weg, Datei zu groß für
+ * den Bucket) hätte das alte Bild gekostet, ohne ein neues zu liefern. So kostet
+ * ein Abbruch nach Schritt 1 höchstens eine Datei, die niemand kennt.
+ *
+ * **Warum Schritt 3 den Ordner LISTET, statt die alte Adresse zu zerlegen:** Die
+ * alte Adresse steht als volle URL in `photo_url`; den Pfad daraus zurückzurechnen
+ * hieße, dieselbe Angabe ein zweites Mal abzuleiten — dieselbe Überlegung wie
+ * `PROJEKTION` (harte Regel 53) und die Project URL aus dem Token. Und es wäre
+ * schlechter: Ein Listing räumt auch die Reste weg, die ein Abbruch nach Schritt 1
+ * hinterlassen hat. **Der Ordner heilt sich dabei selbst.**
+ *
+ * ⚠️ **Schritt 3 wird NICHT geprüft** (`pruefen` steht nicht daneben), und das ist
+ * Absicht: Er ist Aufräumen, kein Ergebnis. Scheitert er, hat der Mensch trotzdem
+ * sein neues Bild — ein geworfener Fehler würde ihm sagen, es habe nicht geklappt,
+ * obwohl es das hat. Das wäre „der Satz, der lügt" (Entscheidung 43) mit
+ * umgedrehtem Vorzeichen.
+ */
+export async function profilbildSetzen(
+  sb: SupabaseClient,
+  datei: Blob,
+  typ: string,
+  ichId: string,
+): Promise<string> {
+  const pfad = bildPfad(ichId, typ);
+
+  // `cacheControl` ist Ians Entscheidung 51 und steht deshalb NICHT als Zahl hier,
+  // sondern in `bild.ts`. Ohne die Angabe nimmt `supabase-js` 3600 — und das ist
+  // genau der Wert, der am 2026-09-12 den Satz in `bildFolgen()` zur Unwahrheit
+  // gemacht hat.
+  const hoch = await sb.storage
+    .from(BILD_BUCKET)
+    .upload(pfad, datei, { contentType: typ, cacheControl: String(BILD_CACHE_SEKUNDEN) });
+  if (hoch.error) {
+    // `StorageError` ist kein `PostgrestError` — es gibt keinen SQLSTATE. Der Code
+    // wird deshalb aus dem Status gebaut, damit `schreibFehlerFolgen()` „nicht mehr
+    // angemeldet" weiterhin erkennt.
+    throw new SchreibFehler(
+      'profilbildSetzen',
+      'status' in hoch.error ? String(hoch.error.status) : '—',
+      hoch.error.message,
+    );
+  }
+
+  const adresse = sb.storage.from(BILD_BUCKET).getPublicUrl(pfad).data.publicUrl;
+
+  const { error } = await sb.from('profiles').update({ photo_url: adresse }).eq('id', ichId);
+  pruefen('profilbildSetzen', error);
+
+  await alteBilderWeg(sb, ichId, pfad);
+  return adresse;
+}
+
+/**
+ * Bild weg — **erst die Adresse, dann die Datei**, und hier ist es andersherum als
+ * beim Setzen.
+ *
+ * `photo_url` ist das, worüber alle das Bild finden; solange sie steht, zeigt die
+ * App es. Ein Abbruch zwischen den Schritten hinterlässt deshalb lieber eine Datei,
+ * deren Adresse niemand mehr kennt, als ein Profil, das auf eine tote Adresse zeigt
+ * — das wäre ein kaputtes Bild in jeder Liste, und es sähe nach einem Fehler der
+ * App aus.
+ *
+ * Der Rest heilt sich beim nächsten `profilbildSetzen` (Schritt 3).
+ */
+export async function profilbildEntfernen(sb: SupabaseClient, ichId: string): Promise<void> {
+  const { error } = await sb.from('profiles').update({ photo_url: null }).eq('id', ichId);
+  pruefen('profilbildEntfernen', error);
+
+  await alteBilderWeg(sb, ichId, null);
+}
+
+/**
+ * Alles im eigenen Ordner löschen — außer dem, was gerade gilt.
+ *
+ * Läuft unter den Policies aus `0008_bilder.sql`: `list` sieht nur den eigenen
+ * Ordner, `remove` löscht nur darin. **Auch ein Fehler hier wird geschluckt**, aus
+ * demselben Grund wie oben — und weil die Abweisung bei `delete` still ist (null
+ * Zeilen statt `42501`, harte Regel 85), gäbe es ohnehin nichts zu melden.
+ */
+async function alteBilderWeg(
+  sb: SupabaseClient,
+  ichId: string,
+  behalten: string | null,
+): Promise<void> {
+  const { data } = await sb.storage.from(BILD_BUCKET).list(ichId);
+  if (!data) return;
+
+  const weg = data
+    .map((e) => `${ichId}/${e.name}`)
+    .filter((p) => p !== behalten);
+  if (weg.length > 0) await sb.storage.from(BILD_BUCKET).remove(weg);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ *  DAS KONTO — Apples Richtlinie 1.2, und der letzte Knopf, der bis heute nichts tat
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Das eigene Konto löschen. Ians Entscheidung 39 („alles mit — außer der Gruppe").
+ *
+ * ── Warum diese Funktion KEIN Argument nimmt ─────────────────────────────────
+ * `konto_loeschen()` liest `auth.uid()` selbst und nimmt bewusst keine ID entgegen
+ * (siehe 0003): Mit einem Parameter wäre sie unter `security definer` ein Werkzeug,
+ * mit dem man FREMDE Konten löscht. Die Nicht-Übergabe ist hier also die
+ * Absicherung, nicht die Bequemlichkeit — deshalb steht auch hier keine `ichId`,
+ * obwohl der Aufrufer sie hätte.
+ *
+ * ── Was sie ZURÜCKLÄSST, und warum das kein Versehen ist ─────────────────────
+ * Das Profilbild. `storage.objects` hängt an keinem Fremdschlüssel auf
+ * `auth.users`, und Supabase verbietet dort jedes SQL-`delete`
+ * (`storage.protect_delete`, harte Regel 89). Deshalb muss `profilbildEntfernen()`
+ * **davor** laufen — die Reihenfolge steht in `safety/konto.ts` als `BILD_ZUERST`
+ * samt Begründung, und der Preis eines Abbruchs dazwischen ist Ians Entscheidung 53.
+ */
+export async function kontoLoeschen(sb: SupabaseClient): Promise<void> {
+  const { error } = await sb.rpc('konto_loeschen');
+  pruefen('kontoLoeschen', error);
 }

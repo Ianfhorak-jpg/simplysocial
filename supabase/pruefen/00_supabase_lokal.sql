@@ -91,3 +91,93 @@ do $$ begin
     create publication supabase_realtime;
   end if;
 end $$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Das Schema `storage` — nachgetragen am 2026-09-12 für Migration 0008.
+--
+-- **`storage.foldername` ist WORTGLEICH aus dem echten Projekt kopiert**
+-- (`pg_get_functiondef`, 2026-09-12), aus demselben Grund wie `auth.uid()` oben:
+-- An dieser einen Funktion hängen alle vier Avatar-Policies. Wer sie „sinngemäß"
+-- nachbaut — etwa mit `split_part(name, '/', 1)` —, prüft hinterher seine Attrappe.
+--
+-- Und der Unterschied wäre nicht theoretisch: Bei einem Namen OHNE `/` gibt das
+-- Original ein LEERES Array zurück (`_parts[1:0]`), also ist `[1]` dann `null` und
+-- die Policy weist ab. `split_part` gäbe den ganzen Namen zurück und ließe eine
+-- Datei in der Bucket-Wurzel durch, sobald sie zufällig wie eine UUID heißt.
+create schema if not exists storage;
+
+create table if not exists storage.buckets (
+  id                 text primary key,
+  name               text not null,
+  public             boolean not null default false,
+  file_size_limit    bigint,
+  allowed_mime_types text[]
+);
+
+-- Nur die Spalten, an denen hier etwas hängt. `owner` steht dabei OHNE
+-- Fremdschlüssel auf `auth.users` — **und das ist die wichtigste Zeile dieser
+-- Attrappe**, denn genau so ist es am Original (gemessen am 2026-09-12: der einzige
+-- FK der Tabelle zeigt auf `storage.buckets`). Wer hier ein `references auth.users
+-- on delete cascade` hinschreibt, weil es „sauberer" aussieht, macht die Prüfung
+-- für Schritt 3 in `konto_loeschen()` wertlos: Sie wäre lokal grün, weil das
+-- Cascade räumt, und am Original bliebe das Bild im Netz stehen.
+create table if not exists storage.objects (
+  id        uuid primary key default gen_random_uuid(),
+  bucket_id text references storage.buckets (id),
+  name      text,
+  owner     uuid,
+  created_at timestamptz not null default now()
+);
+
+alter table storage.objects enable row level security;
+
+create or replace function storage.foldername(name text) returns text[]
+language plpgsql immutable as $function$
+declare
+    _parts text[];
+begin
+    -- Split on "/" to get path segments
+    select string_to_array(name, '/') into _parts;
+    -- Return everything except the last segment
+    return _parts[1 : array_length(_parts,1) - 1];
+end
+$function$;
+
+grant usage on schema storage to anon, authenticated;
+grant select, insert, update, delete on storage.objects to authenticated;
+grant select on storage.buckets to anon, authenticated;
+
+-- ⚠️ **Der Trigger, der am 2026-09-12 eine grüne lokale Prüfung als Lüge entlarvt
+-- hat.** Er ist WORTGLEICH aus dem echten Projekt kopiert (`pg_get_functiondef`).
+--
+-- Migration 0008 hatte zuerst ein `delete from storage.objects` in
+-- `konto_loeschen()` stehen, damit ein gelöschtes Konto sein Profilbild mitnimmt
+-- (Ians Entscheidung 39; `storage.objects` hängt an keinem Fremdschlüssel). Lokal
+-- lief das durch und `25_bilder.sql` war grün. **Am echten Server bricht es ab** —
+-- und zwar nicht irgendwo, sondern in der Funktion, mit der ein Mensch sein Konto
+-- löscht. Das Kontolöschen ist eine Apple-1.2-Pflicht, und es war damit kaputt.
+--
+-- Das ist die Attrappen-Falle in ihrer teuersten Form: Eine Nachbildung, die
+-- WENIGER mitbringt als das Original, lässt eine Messung durchgehen, die am
+-- Original falsch ist — dieselbe Familie wie der Trigger-Zähler vom 2026-09-12
+-- und die Rechte-Voreinstellung darüber, nur mit umgekehrtem Vorzeichen: Hier war
+-- lokal das SCHWÄCHERE Verhalten, nicht das strengere.
+create or replace function storage.protect_delete() returns trigger
+language plpgsql as $function$
+begin
+    -- Check if storage.allow_delete_query is set to 'true'
+    IF COALESCE(current_setting('storage.allow_delete_query', true), 'false') != 'true' THEN
+        RAISE EXCEPTION 'Direct deletion from storage tables is not allowed. Use the Storage API instead.'
+            USING HINT = 'This prevents accidental data loss from orphaned objects.',
+                  ERRCODE = '42501';
+    END IF;
+    RETURN NULL;
+end;
+$function$;
+
+do $$ begin
+  if not exists (select 1 from pg_trigger where tgname = 'protect_objects_delete') then
+    create trigger protect_objects_delete before delete on storage.objects
+      for each statement execute function storage.protect_delete();
+  end if;
+end $$;

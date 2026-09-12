@@ -6,7 +6,7 @@
  *
  *  ── Was diese Prüfung kann, was `20_transaktionen.sql` nicht kann ────────────
  *  20 ruft die sieben Funktionen aus 0004 über `psql` auf, mit `set local role`.
- *  Hier laufen die 22 Schreibwege den Weg, den die APP wirklich geht: echtes
+ *  Hier laufen die 24 Schreibwege den Weg, den die APP wirklich geht: echtes
  *  Supabase → echtes JWT → PostgREST → `senden.ts`. Vier Dinge liegen auf dieser
  *  Strecke, die 20 nicht sehen kann:
  *
@@ -44,7 +44,7 @@ const WURZEL = join(HIER, '..', '..');
 const JS = join(process.env.ARBEIT, 'js', 'data');
 
 const senden = await import(join(JS, 'senden.js'));
-const { wartetAufServer, SchreibFehler } = await import(join(JS, 'schreiben.js'));
+const { wartetAufServer, SchreibFehler, SCHREIB_AKTIONEN } = await import(join(JS, 'schreiben.js'));
 
 let haken = 0;
 let kreuze = 0;
@@ -127,24 +127,34 @@ const nora = await anmelden(NORA);
 const lea = await anmelden(LEA);
 
 abschnitt('Die Einordnung aus Ians Entscheidung 46');
-// Nicht Geschmack, sondern Zusage: Genau diese acht warten. Wer eine davon auf
+// Nicht Geschmack, sondern Zusage: Genau diese neun warten. Wer eine davon auf
 // `'sofort'` stellt, bekommt hier ein Kreuz statt eines stillen Verhaltenswechsels.
+const WARTEN = [
+  'anfrageBestaetigen', 'blockieren', 'gruppeVerlassen', 'beitrittBestaetigen',
+  'einladungAnnehmen', 'postErstellen', 'gruppeErstellen', 'direktChatOeffnen',
+  'profilbildSetzen',
+];
+const SOFORT = [
+  'anfrageSenden', 'anfrageZuruecknehmen', 'anfrageAblehnen', 'nachrichtSenden',
+  'beitrittAnfragen', 'beitrittZuruecknehmen', 'beitrittAblehnen', 'einladen',
+  'einladungAblehnen', 'folgen', 'entfolgen', 'bezirkSetzen', 'entblocken', 'melden',
+  'profilbildEntfernen',
+];
+pruef('neun Aktionen warten auf den Server', WARTEN.every(wartetAufServer), true);
+pruef('und die fünfzehn anderen nicht', SOFORT.some(wartetAufServer), false);
+
+// ⚠️ **Die dritte Prüfung ist die, die in 20.6 gefehlt hat.** Die zwei oben zählen
+// Namen auf — kommt eine Aktion dazu, bleiben sie grün, und ihre Aussage („genau
+// diese") stimmt trotzdem nicht mehr. Genau das ist beim Bauen von 20.6 passiert:
+// `profilbildSetzen` und `profilbildEntfernen` kamen dazu, und keine der beiden
+// Listen hat es gemerkt. Dieselbe Familie wie „eine Prüfung, die eine
+// Bedeutungsänderung nicht merkt, prüft die Umsetzung und nicht die Regel"
+// (20.5-SQL). `SCHREIB_AKTIONEN` kommt aus `EINORDNUNG` selbst.
+const fehlend = SCHREIB_AKTIONEN.filter((a) => !WARTEN.includes(a) && !SOFORT.includes(a));
 pruef(
-  'acht Aktionen warten auf den Server',
-  [
-    'anfrageBestaetigen', 'blockieren', 'gruppeVerlassen', 'beitrittBestaetigen',
-    'einladungAnnehmen', 'postErstellen', 'gruppeErstellen', 'direktChatOeffnen',
-  ].every(wartetAufServer),
-  true,
-);
-pruef(
-  'und die vierzehn anderen nicht',
-  [
-    'anfrageSenden', 'anfrageZuruecknehmen', 'anfrageAblehnen', 'nachrichtSenden',
-    'beitrittAnfragen', 'beitrittZuruecknehmen', 'beitrittAblehnen', 'einladen',
-    'einladungAblehnen', 'folgen', 'entfolgen', 'bezirkSetzen', 'entblocken', 'melden',
-  ].some(wartetAufServer),
-  false,
+  `alle ${SCHREIB_AKTIONEN.length} Aktionen sind hier auch wirklich aufgezählt`,
+  fehlend.length === 0 ? '—' : fehlend.join(', '),
+  '—',
 );
 
 abschnitt('postErstellen — und die ID kommt vom Server');

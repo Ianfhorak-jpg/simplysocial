@@ -36,11 +36,13 @@ $PSQL -q -d ss -f "$HIER/../migrations/0004_transaktionen.sql"
 $PSQL -q -d ss -f "$HIER/../migrations/0005_realtime.sql"
 $PSQL -q -d ss -f "$HIER/../migrations/0006_zuruecknehmen.sql"
 $PSQL -q -d ss -f "$HIER/../migrations/0007_rechte.sql"
+$PSQL -q -d ss -f "$HIER/../migrations/0008_bilder.sql"
 $PSQL -q -d ss -f "$HIER/05_daten.sql"
 echo "Datenbank steht. Jetzt der Angriff:"
 echo
 $PSQL -tA -d ss -f "$HIER/10_angriff.sql"
 $PSQL -tA -d ss -f "$HIER/20_transaktionen.sql"
+$PSQL -tA -d ss -f "$HIER/25_bilder.sql"
 
 # Das Wettrennen braucht ZWEI Verbindungen und geht deshalb nicht als .sql-Datei.
 bash "$HIER/30_wettlauf.sh"

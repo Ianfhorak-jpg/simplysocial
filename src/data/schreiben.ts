@@ -79,7 +79,7 @@
  */
 
 /**
- * Jede Stelle, an der die App etwas schreibt — 22 Stück.
+ * Jede Stelle, an der die App etwas schreibt — 24 Stück.
  *
  * Die drei rein örtlichen Sachen stehen NICHT dabei: `wegwischen`,
  * `wischRueckgaengig` und der Standort. Die gehen nie an einen Server (bei
@@ -111,10 +111,18 @@ export type SchreibAktion =
   | 'folgen'
   | 'entfolgen'
   | 'bezirkSetzen'
+  // ── Profilbild (20.6) ──
+  | 'profilbildSetzen'
+  | 'profilbildEntfernen'
   // ── Sicherheit ──
   | 'blockieren'
   | 'entblocken'
-  | 'melden';
+  | 'melden'
+  /**
+   * Das Konto selbst — **die einzige Aktion, nach der es nichts mehr nachzuladen
+   * gibt.** Siehe `laedtDanachNach()` weiter unten.
+   */
+  | 'kontoLoeschen';
 
 /**
  * Ians 46. Entscheidung. Nicht ohne Rückfrage ändern.
@@ -143,6 +151,13 @@ const EINORDNUNG: Record<SchreibAktion, 'sofort' | 'warten'> = {
   beitrittBestaetigen: 'warten',
   /** Dasselbe von der anderen Seite. */
   einladungAnnehmen: 'warten',
+  /**
+   * Der Server entscheidet, WER die Gruppen erbt (`konto_loeschen()`, 0003) — und
+   * vor allem: Danach wird abgemeldet. Ein `'sofort'` hieße hier, den Menschen
+   * hinauszuwerfen, BEVOR feststeht, dass sein Konto wirklich weg ist. Von allen
+   * 25 Aktionen ist das die, bei der Raten am teuersten wäre.
+   */
+  kontoLoeschen: 'warten',
 
   // ── warten, weil der Server eine ID VERGIBT, zu der gesprungen wird ────────
   /** `router.replace('/post/' + id)` — eine erfundene ID führt ins Leere. */
@@ -151,6 +166,21 @@ const EINORDNUNG: Record<SchreibAktion, 'sofort' | 'warten'> = {
   gruppeErstellen: 'warten',
   /** Gibt die Faden-ID heraus, der Chat-Screen öffnet sie. */
   direktChatOeffnen: 'warten',
+
+  /**
+   * **Ein dritter Grund zu warten, und er stand vorher nicht in dieser Liste:
+   * es DAUERT messbar.**
+   *
+   * Die zwei Gründe oben sind „der Server entscheidet" und „der Server vergibt
+   * eine ID". Ein Upload ist keines von beidem — die Adresse rechnet
+   * `getPublicUrl()` sogar selbst aus. Was ihn trotzdem hierher stellt, ist die
+   * Frage aus dem Dateikopf, richtig gestellt: *Kann die App das Ergebnis
+   * hinschreiben, ohne zu raten?* Sie kann es nicht, denn zwischen Tippen und
+   * Bild liegen ein paar Megabyte — und ein Knopf, der sich bei 3 MB über
+   * Mobilfunk nicht rührt, ist genau der Zustand, gegen den Ians Entscheidung 46
+   * gebaut ist.
+   */
+  profilbildSetzen: 'warten',
 
   // ── sofort: die App kennt das Ergebnis vollständig ─────────────────────────
   /** Eine Zeile mehr in `join_requests`. Die ID braucht niemand. */
@@ -179,6 +209,8 @@ const EINORDNUNG: Record<SchreibAktion, 'sofort' | 'warten'> = {
   bezirkSetzen: 'sofort',
   /** Eine Zeile weniger in `blocks`. Das Auflösen war beim BLOCKIEREN, nicht hier. */
   entblocken: 'sofort',
+  /** Ein Feld am eigenen Profil auf `null`. Das Aufräumen danach ist kein Ergebnis. */
+  profilbildEntfernen: 'sofort',
   /** Eine Zeile in `reports`. Die ID braucht niemand. */
   melden: 'sofort',
 };
@@ -189,10 +221,61 @@ const EINORDNUNG: Record<SchreibAktion, 'sofort' | 'warten'> = {
  * Der Zweig über `SCHREIB_ANTWORT` ist die Stelle, an der die zwei verworfenen
  * Möglichkeiten wirklich wirken — sonst wären sie eine Behauptung im Kommentar.
  */
+/**
+ * Alle Aktionen als LISTE — abgeleitet aus `EINORDNUNG`, nicht daneben getippt.
+ *
+ * Sie gibt es nur für den Prüfstand, und sie beantwortet dort eine Frage, die
+ * `tsc` nicht stellen kann: *Ist jede Aktion in der Prüfung auch wirklich
+ * vorgekommen?* `70_schreiben.mjs` zählte bis 20.6 zwei Listen von Namen auf und
+ * sagte „genau diese acht warten" — **eine neue Aktion wäre dort still durch das
+ * Raster gefallen**, und die Prüfung wäre grün geblieben, während ihre Aussage
+ * nicht mehr stimmte. Genau das ist beim Bauen von 20.6 passiert.
+ *
+ * `Object.keys` und nicht eine zweite Aufzählung: Zwei Listen sind zwei
+ * Gelegenheiten, dass sie auseinanderlaufen (harte Regel 53).
+ *
+ * ⚠️ **Sie ist KEINE Einladung, `EINORDNUNG` im Screen zu lesen** — das bleibt
+ * privat, und der Weg dorthin ist weiterhin `useWartetAuf()` (harte Regel 84).
+ */
+export const SCHREIB_AKTIONEN = Object.keys(EINORDNUNG) as SchreibAktion[];
+
 export function wartetAufServer(aktion: SchreibAktion): boolean {
   if (SCHREIB_ANTWORT === 'sofort') return false;
   if (SCHREIB_ANTWORT === 'warten') return true;
   return EINORDNUNG[aktion] === 'warten';
+}
+
+/**
+ * **Die Aktion, nach der die Sitzung zu Ende ist.**
+ *
+ * Sie steht als EINE Konstante da und nicht als zweites Register neben
+ * `EINORDNUNG` — es gibt genau eine, und fünfundzwanzig Einträge zu pflegen, von
+ * denen vierundzwanzig dasselbe sagen, ist eine Liste, die auseinanderläuft (harte
+ * Regel 53). Kommt je eine zweite dazu, wird daraus ein `Set`, und genau dann fällt
+ * es auf.
+ */
+const BEENDET_DIE_SITZUNG: SchreibAktion = 'kontoLoeschen';
+
+/**
+ * Wird nach dieser Aktion nachgeladen?
+ *
+ * ── Warum das überhaupt eine Frage ist ───────────────────────────────────────
+ * Bei vierundzwanzig Aktionen lautet die Antwort ja, und sie trägt Ians
+ * Entscheidung 46: **Das Nachladen IST die Rücknahme** (harte Regel 84). Deshalb
+ * sagt keine einzige Stelle voraus, was der Server tun wird.
+ *
+ * Bei `kontoLoeschen` gibt es danach **nichts mehr zu laden** — `auth.users` ist
+ * weg, das Token damit wertlos, und `datenHolen()` bekäme `42501`. Die Folge wäre
+ * nicht „nichts passiert", sondern das Gegenteil von Ians Entscheidung 52: Der
+ * Vollbild-Kasten aus `LadeSchirm` legte sich über den Anmelde-Bildschirm, auf dem
+ * die Quittung stehen soll. **Ein erfolgreicher Vorgang sähe aus wie ein Fehler.**
+ *
+ * Das ist harte Regel 87 an einer neuen Stelle: *„es wird geladen" und „es wird
+ * NACHgeladen" sind zwei Lagen* — hier kommt eine dritte dazu, **„es wird nie
+ * wieder geladen"**, und die gab es bis heute nicht.
+ */
+export function laedtDanachNach(aktion: SchreibAktion): boolean {
+  return aktion !== BEENDET_DIE_SITZUNG;
 }
 
 /**
@@ -222,6 +305,20 @@ export class SchreibFehler extends Error {
     readonly aktion: SchreibAktion,
     readonly code: string,
     grund: string,
+    /**
+     * Ein Satz für den BILDSCHIRM, wenn der Fehlercode allein zu wenig sagt.
+     *
+     * Es gibt genau einen Fall, und er ist Ians Entscheidung 53: Bricht
+     * `kontoLoeschen` ab, NACHDEM das Profilbild schon weg ist, hängt die Auskunft
+     * nicht am Code, sondern daran, **wie weit der Vorgang gekommen war**.
+     * `schreibFehlerFolgen()` kann das nicht wissen — es kennt Aktionen, keine
+     * Zwischenstände — und soll es auch nicht wissen müssen.
+     *
+     * ⚠️ Was hier steht, LIEST EIN MENSCH. Kein Tabellenname, kein Code, kein Pfad
+     * (der Fund vom 2026-09-03). Und kurz: Seit Entscheidung 48 schiebt die Leiste
+     * den Bildschirm, also kostet jede Zeile echten Platz.
+     */
+    readonly zusatz?: string,
   ) {
     super(`Schreiben "${aktion}" ging nicht durch (${code}): ${grund}`);
     this.name = 'SchreibFehler';
