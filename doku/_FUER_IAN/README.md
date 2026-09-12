@@ -4,6 +4,30 @@
 
 ---
 
+## 📍 Wo es gerade steht (12.09.2026, nachts)
+
+**Die App hängt nicht mehr an erfundenen Daten.** Sie kann sich bei deinem Supabase
+anmelden, von dort lesen, dorthin schreiben — und seit gestern auch Profilbilder.
+Alles am echten Server nachgemessen, nicht behauptet.
+
+| | |
+|---|---|
+| **Anmelden** | per E-Mail-Code. Du hast dich am 12.09. selbst angemeldet — der erste echte Login. |
+| **Lesen & Schreiben** | alle 24 Aktionen gehen über deine Datenbank. |
+| **Profilbilder** | ✅ **im Browser**. Am Handy noch nicht — dafür fehlt ein Baustein. |
+| **Kontolöschen** | fast fertig. Eine Stelle wartet auf **acht Zeilen von dir**. |
+
+**Was auf dich wartet:** Punkt 0 (Brevo, damit Anmelde-Mails ankommen) und Punkt 4
+(Google) in [OFFENE_SACHEN.md](OFFENE_SACHEN.md). Sonst nichts.
+
+> ⚠️ **Der Schalter ist bewusst noch nicht umgelegt.** Der Prototyp im Netz zeigt
+> weiter die erfundenen Daten — Zeichen für Zeichen wie vorher, das ist nachgemessen.
+> Umlegen geht erst, wenn Anmelden mit Apple und Google dabei ist.
+
+**Das Neueste ausführlich:** [NACH_DEM_CLEAR.md](NACH_DEM_CLEAR.md).
+
+---
+
 ## 🍏 NEU am 11.09.2026 — du hast das Apple Developer Program
 
 **Eines von drei Konten ist damit da.** Was daraus folgt, steht ausführlich in
@@ -432,10 +456,12 @@ inhaltlich sitzt.
 
 **Zwei Sachen liegen aber bei dir**, weil nur du sie erledigen kannst:
 - **Daria sagen, was „beides" heißt.** Das Alter ist voll drin — man sieht am Profil
-  „26+" und am Post, für wen er gedacht ist. Beim Foto ist nur der Platz gebaut: Die App
-  kann überall ein Profilbild zeigen, aber hochladen kann man keines, weil dafür ein
-  Server nötig ist und jemand, der aufpasst, was hochgeladen wird. Bis dahin stehen
-  Initialen dort, wo das Bild hinkommt. *(Ausführlich in OFFENE_SACHEN.md, Punkt 9.)*
+  „26+" und am Post, für wen er gedacht ist.
+  ✅ **Und das Foto geht seit dem 12.09. auch** — aussuchen, austauschen, wieder
+  entfernen, und es liegt wirklich in deiner Datenbank. **Im Browser.** Am Handy fehlt
+  noch der Baustein zum Aussuchen; der kommt mit demselben App-Update wie „Anmelden mit
+  Apple". Wo kein Bild gesetzt ist, stehen weiter die Initialen.
+  *(Ausführlich in OFFENE_SACHEN.md, Punkt 9.)*
 - **Leopold antworten** auf „Wäre das alles für die erste richtige Version?" — deine
   Antwort war: erst den Prototyp fertig machen, Backend danach.
 
