@@ -206,6 +206,20 @@ geändert werden.
    *(genau diese Schreibweise — sie steht schon in der App und auf deinem Handy)*
 4. In der Liste der Capabilities **„Sign In with Apple"** ankreuzen → **Continue** → **Register**
 
+### 1c. ~~Der Schlüssel für „Anmelden mit Apple"~~ ✅ *erledigt am 12.09.2026*
+
+> **Der Schlüssel ist da und liegt sicher.** Key-ID **`F2M3N3K9M5`**, abgelegt als
+> `~/.simplysocial/AuthKey_F2M3N3K9M5.p8` (Rechte 600, **außerhalb** des
+> Projektordners — der geht nach GitHub). Geprüft, nicht angenommen: `openssl` liest
+> ihn als gültigen P-256-Schlüssel, genau was Apple für Sign In with Apple verlangt.
+> Auf dem Schreibtisch liegt er nicht mehr, und es liegt auch sonst kein `.p8` mehr
+> offen herum (nachgesehen).
+>
+> **Was ich damit noch brauche:** nichts mehr von dir. Team-ID (`5TQTMP2L2H`) und
+> Bundle-ID (`at.simplysocial.app`) sind bekannt.
+
+<details><summary>Die ursprüngliche Anleitung, zum Nachlesen</summary>
+
 ### 1c. Der Schlüssel für „Anmelden mit Apple" · 8 Minuten
 1. Gleiche Seite → **Keys** → **+**
 2. Name: `SimplySocial Sign In` · **„Sign In with Apple"** ankreuzen → **Configure** →
@@ -218,6 +232,8 @@ geändert werden.
 
 **Was ich davon brauche:** die **Key-ID** (die zehn Zeichen im Dateinamen), deine
 **Team-ID** (steht unter *Membership details*) und die Datei selbst.
+
+</details>
 
 ---
 

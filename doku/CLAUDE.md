@@ -34,6 +34,13 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > (Code: `simplysocial/` · neu hochladen: `npm run deploy`)
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
+>
+> 📁 **Die Belege liegen seit dem 2026-09-12 in `_belege/`** (304 Screenshots, vorher
+> alle im Hauptordner). **Verschoben, nicht gelöscht** — die Dateinamen sind
+> unverändert, also geht jeder Verweis in PLAN.md weiter auf (`am01`, `ao01`, …).
+> Was Ian selbst geschickt hat, liegt in `_belege/von-ian/`. Im Hauptordner sind nur
+> die zwei Liquid-Glass-Vorbilder geblieben, weil sie als laufende Vorlage dienen
+> und nicht als Beleg. Einzelheiten in `_belege/LIESMICH.md`.
 
 ✅ **Phase 20.6-c ist fertig (2026-09-12): der Lösch-Knopf LÖSCHT — nach vier Wochen,
 in denen er nichts tat.** Seit Phase 7 stand `/account-loeschen` da und sagte beim
