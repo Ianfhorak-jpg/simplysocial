@@ -1,5 +1,84 @@
 # Was du nach dem Clear schreiben sollst
 
+## 🔴 ZUERST LESEN — was am 13.09. als Erstes dran ist
+
+> **Ians Aufgabe, fünf Minuten, und sie blockiert den nächsten Schritt:**
+> **Apple und Google in Supabase eintragen.** Alles ist vorbereitet, es fehlen nur
+> sieben Felder.
+>
+> ```bash
+> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run provider
+> ```
+>
+> Das Skript führt Feld für Feld und legt jeden Wert in die Zwischenablage — Ian
+> drückt nur ⌘V und Enter. **Die Seite dazu:**
+> `https://supabase.com/dashboard/project/iwvakdbefwpshzhlhmgj/auth/providers`
+>
+> ⚠️ **Am 12.09. nachts ist er dort ZWEIMAL falsch gelandet** — bei *Authentication →
+> Emails → Templates* statt bei *Sign In / Providers*. Beide liegen unter
+> „Authentication", und die Mail-Vorlagen hat er vorher schon bearbeitet, also ist
+> das die Seite, die er kennt. **Woran man die richtige erkennt:** eine lange
+> alphabetische Liste von Anbietern (Apple, Azure, Bitbucket, … Google, …). Kommen
+> stattdessen *Confirm sign up / Invite user / Magic link*, ist es die falsche.
+>
+> **Gemessen wird danach so** — nicht glauben, nachsehen:
+>
+> ```bash
+> URL=$(grep -o 'EXPO_PUBLIC_SUPABASE_URL=.*' .env | cut -d= -f2-)
+> KEY=$(grep -o 'EXPO_PUBLIC_SUPABASE_ANON_KEY=.*' .env | cut -d= -f2-)
+> curl -s "$URL/auth/v1/settings" -H "apikey: $KEY"
+> ```
+>
+> Darin steht `"apple": true` und `"google": true`, sobald es sitzt. Am 12.09. um
+> 00:30 standen beide auf `false`, `email` auf `true`.
+
+---
+
+## ✅ STAND 12.09.2026 (spät) — ALLE KONTEN STEHEN, DER BUILD IST VORBEREITET
+
+> **Supabase ✅ · Apple ✅ · Google ✅** — alle sechs Zugänge liegen in
+> `~/.simplysocial/` (Rechte 600), keiner im Repo, keiner mehr offen auf dem
+> Schreibtisch (nachgesehen).
+>
+> | | |
+> |---|---|
+> | `db-url` | Datenbank |
+> | `brevo-smtp-key` | Mailversand — **läuft, beide Vorlagen geprüft** |
+> | `AuthKey_F2M3N3K9M5.p8` | Apple Sign-in, Key-ID `F2M3N3K9M5` |
+> | `google-client-secret` · `google-web-client-id` · `google-ios-client-id` | Google |
+>
+> **Brevo ist fertig und in BEIDE Richtungen belegt.** Ian hat den Code als acht
+> Ziffern bekommen (Vorlage *Magic link or OTP*), und die zweite Vorlage
+> (*Confirm signup*, die jeder NEUE Nutzer auslöst) wurde mit einer Plus-Adresse
+> angestoßen — `ian.fhorak+neuzugang@gmail.com`. Gmail ignoriert alles nach dem `+`,
+> für Supabase ist es trotzdem ein Neuzugang. **Auch dort kam eine Zahl.** Damit ist
+> der Fehler vom 12.09. früh (Link statt Zahl) nachweislich behoben, ohne auf den
+> ersten echten Neuzugang zu warten.
+>
+> ⚠️ **Ein Testkonto ist dabei entstanden:** `ian.fhorak+neuzugang@gmail.com` in
+> `auth.users`. Es hat nie einen Code eingelöst, also kein Profil. **Gehört
+> gelöscht**, sobald jemand an der Datenbank ist.
+>
+> **Die fünf Native-Bausteine sind installiert und das iOS-Projekt neu gebaut:**
+> `expo-apple-authentication` · `expo-auth-session` + `expo-web-browser` ·
+> `expo-secure-store` · `@react-native-async-storage/async-storage` ·
+> `expo-image-picker` (+ `expo-crypto`). **Gemessen: keiner lag schon in
+> `node_modules`** — anders als `expo-glass-effect` in 19e-2, diesmal braucht es den
+> Build wirklich. 24 Treffer in `Podfile.lock`, `tsc` sauber.
+>
+> **Was beim Prebuild dreimal fast schiefging:**
+> 1. `expo install` konnte die Plugins nicht eintragen (`app.config.js` ist
+>    dynamisch — der baseUrl-Fix vom 07.09.). Von Hand in `app.json`.
+> 2. Der **Erlaubnis-Text für die Fotomediathek** fehlte. Ohne ihn zeigt iOS einen
+>    leeren Dialog und Apple lehnt im Review ab. Geprüft im GEBAUTEN `Info.plist`.
+> 3. **Die Signatur-Zeilen waren wieder weg** (`DEVELOPMENT_TEAM`,
+>    `CODE_SIGN_STYLE`) — die Falle vom 07.09. und 09.09. zum dritten Mal. Diesmal
+>    lag vorher eine Sicherung bereit. Wiederhergestellt in **beiden**
+>    Konfigurationen (2/2 gegengemessen); in nur einer versagt genau der Build, den
+>    man gerade nicht baut.
+
+---
+
 ## ✅ STAND 12.09.2026 (nachts) — DER LÖSCH-KNOPF LÖSCHT
 
 > **Seit Phase 7 stand „Account löschen" in der App und tat beim letzten Klick

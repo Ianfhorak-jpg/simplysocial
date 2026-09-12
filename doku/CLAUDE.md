@@ -42,6 +42,45 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > die zwei Liquid-Glass-Vorbilder geblieben, weil sie als laufende Vorlage dienen
 > und nicht als Beleg. Einzelheiten in `_belege/LIESMICH.md`.
 
+🔧 **Phase 20.3-b2 läuft (2026-09-12 nachts): die fünf Bausteine sind drin, der
+Code fehlt noch — und EINE Sache wartet auf Ian.**
+
+**Alle Konten stehen:** Supabase · Apple (Key-ID `F2M3N3K9M5`) · Google (beide
+Clients) · Brevo. Sechs Zugänge in `~/.simplysocial/` (600), keiner im Repo.
+⚠️ **Offen ist nur, dass Apple und Google in Supabase EINGETRAGEN werden** — sieben
+Felder, `npm run provider` führt durch. **Gemessen am 13.09. um 00:30:
+`apple: false`, `google: false`** (aus `/auth/v1/settings`, live). Ian ist dabei
+zweimal auf *Authentication → Emails* statt auf *Sign In / Providers* gelandet; das
+steht als Warnung in `_FUER_IAN/NACH_DEM_CLEAR.md`.
+
+**Was gebaut ist:** `expo-apple-authentication` · `expo-auth-session` +
+`expo-web-browser` · `expo-secure-store` · `@react-native-async-storage/async-storage`
+· `expo-image-picker` (+ `expo-crypto`), Prebuild durch, 24 Treffer in
+`Podfile.lock`, `tsc` sauber. **Gemessen: keiner lag schon in `node_modules`** —
+anders als `expo-glass-effect` in 19e-2. Vier Dinge:
+
+1. **`expo install` konnte die Plugins NICHT eintragen**, weil `app.config.js`
+   dynamisch ist (der baseUrl-Fix vom 07.09.). Von Hand nach `app.json`.
+2. **Der Erlaubnis-Text für die Fotomediathek fehlte.** Ohne ihn zeigt iOS beim
+   ersten Antippen einen **leeren Dialog**, und Apple lehnt das im Review ab.
+   Geprüft im GEBAUTEN `Info.plist`, nicht in `app.json` (Lehre 19h-2).
+3. **`ios.usesAppleSignIn` ist eine FÄHIGKEIT, kein Plugin.** Ohne die Zeile fehlt
+   das Entitlement, und der Knopf scheitert am Gerät mit einem Fehler, der nach
+   einem Schlüsselproblem aussieht — man sucht dann tagelang am Key.
+4. **Die Prebuild-Falle hat zum DRITTEN Mal zugeschlagen** (`DEVELOPMENT_TEAM`,
+   `CODE_SIGN_STYLE` weg). Diesmal lag vorher eine Sicherung bereit. Neu gelernt:
+   Die Zeilen müssen in **BEIDE** Konfigurationen — in nur einer versagt genau der
+   Build, den man gerade nicht baut, also merkt man es erst Tage später.
+
+⚠️ **Was 20.3-b2 NOCH NICHT ist: der Code.** Es gibt keine Funktion, die sich per
+Apple oder Google anmeldet; die zwei Knöpfe sind seit 20.3-a sichtbar und tot.
+`ANMELDE_QUELLE` steht weiter auf `'attrappe'`.
+
+⚠️ **Ein Testkonto liegt in `auth.users`:** `ian.fhorak+neuzugang@gmail.com`, am
+12.09. angelegt, um die *Confirm-signup*-Vorlage zu prüfen (Gmail ignoriert alles
+nach dem `+`, Supabase sieht einen Neuzugang). Nie eingelöst, also ohne Profil.
+**Gehört gelöscht.**
+
 ✅ **Phase 20.6-c ist fertig (2026-09-12): der Lösch-Knopf LÖSCHT — nach vier Wochen,
 in denen er nichts tat.** Seit Phase 7 stand `/account-loeschen` da und sagte beim
 letzten Klick selbst, dass nichts passiert; das war richtig, solange es kein Konto gab.

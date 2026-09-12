@@ -72,8 +72,11 @@ IOS_ID=""
 cat <<KOPF
 
 ═══════════════════════════════════════════════════════════════════════════
-  Supabase → Authentication → Sign In / Providers
-  Mach die Seite auf, dann hier [Enter] — ich gehe Feld für Feld mit dir durch.
+  Mach diese Seite auf:
+
+    https://supabase.com/dashboard/project/iwvakdbefwpshzhlhmgj/auth/providers
+
+  Dann hier [Enter] — ich gehe Feld für Feld mit dir durch.
 ═══════════════════════════════════════════════════════════════════════════
 KOPF
 printf '  [Enter] wenn die Seite offen ist: '

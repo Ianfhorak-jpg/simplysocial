@@ -3,7 +3,31 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 12.09.2026 (spät) — **alle drei Konten stehen, bis auf eine Zeile.**
+> 🔴 **Stand: 13.09.2026 — EINE Sache wartet auf dich, fünf Minuten, und sie hält
+> alles andere auf.**
+>
+> **Apple und Google in Supabase eintragen.** Alle Zugänge sind da, ein Skript führt
+> dich Feld für Feld:
+>
+> ```bash
+> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run provider
+> ```
+>
+> Seite: `https://supabase.com/dashboard/project/iwvakdbefwpshzhlhmgj/auth/providers`
+>
+> ⚠️ **Achtung, da bist du gestern zweimal falsch gelandet:** Es ist **nicht**
+> *Authentication → Emails*, sondern **Sign In / Providers** (im linken Menü unter
+> CONFIGURATION, direkt unter *Policies*). Richtig bist du, wenn eine lange Liste
+> von Anbietern kommt — Apple, Azure, Bitbucket, … Google.
+>
+> Bei **Apple** und bei **Google** jeweils: aufklappen, **Schalter auf AN**, Felder
+> ausfüllen (das macht das Skript), **Save**.
+>
+> **Alles andere ist fertig:** Supabase ✅ · Apple ✅ · Google ✅ · Brevo ✅ (beide
+> Mail-Vorlagen geprüft, es kommt eine Zahl und kein Link) · die fünf
+> Native-Bausteine sind eingebaut.
+>
+> Davor: 12.09.2026 (spät) — **alle drei Konten stehen, bis auf eine Zeile.**
 > Supabase ✅ · Apple ✅ · Google fast. **Was noch fehlt: die iOS-Client-ID**, 20
 > Sekunden — in der Google-Client-Liste bei *SimplySocial iOS* auf das Kopier-Symbol,
 > dann `cd simplysocial && npm run google-key sichern`.
