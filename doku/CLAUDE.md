@@ -82,11 +82,20 @@ weiter 121 Häkchen. Neun Dinge sind wichtiger als der Anmelde-Bildschirm:
 7. **Zwei Angriffe zum ersten Mal über PostgREST mit echtem Token:** ein Profil auf eine
    FREMDE UUID wird mit **`42501`** abgewiesen, ein Jahrgang 1800 mit `23514` — nicht
    als Kollision.
-8. **Was FEHLT, ist ein Klick von Ian und eine Runde mit einer echten Mail.** Supabases
-   Vorlage schickt einen LINK (`{{ .ConfirmationURL }}`), die App fragt nach einer ZAHL
-   (`{{ .Token }}`) — zwei Minuten im Dashboard, Punkt 0 in `KONTEN_EINRICHTEN.md`. Und
-   die Runde `codeAnfordern` → Postfach → `codePruefen` ist **ungeprüft**: Der Code
-   steht in einem Postfach, in der Datenbank liegt nur sein Hash.
+8. **Was FEHLT, ist ein eigener MAIL-VERSENDER — und eine Runde mit einer echten
+   Mail.** ❌ *Am 12.09. stand hier zuerst, Ian müsse nur die Vorlage von
+   `{{ .ConfirmationURL }}` auf `{{ .Token }}` umstellen. Das war falsch:* Seit Juni
+   2026 dürfen neue GRATIS-Projekte die Vorlagen gar nicht bearbeiten — Supabase
+   verlangt dafür eigenes SMTP. **Der wirkliche Grund ist ohnehin größer:** Der
+   eingebaute Dienst schickt **2 Mails pro Stunde** und ist laut Supabase nicht für den
+   Betrieb gedacht; bei vier Gründern ist nach zwei Anmeldungen eine Stunde Pause.
+   **Damit erledigt sich auch der naheliegende Ausweg**, die App den LINK statt einer
+   Zahl verarbeiten zu lassen — beide Wege scheitern an denselben zwei Mails. Ians
+   Entscheidung: **Brevo** (300/Tag gratis, kein eigener Domainname nötig — bei Resend
+   darf man ohne Domain nur an sich selbst schicken). Klick für Klick in
+   `KONTEN_EINRICHTEN.md`, Punkt 0. Und die Runde `codeAnfordern` → Postfach →
+   `codePruefen` bleibt **ungeprüft**: Der Code steht in einem Postfach, in der
+   Datenbank liegt nur sein Hash.
 9. **Der Preis: +3.398 B gzip (+0,70 %)** auf 486.870 B. Klein, weil `supabase-js` seit
    20.4-b ohnehin drin ist.
 

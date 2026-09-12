@@ -6,8 +6,9 @@
 >
 > ✅ **Apple Developer Program — hast du seit dem 11.09.**
 > ✅ **Supabase** — steht seit dem 12.09.2026
-> 🆕 ⬜ **EINE Einstellung in Supabase** (Punkt 0 gleich hier unten) · **2 Minuten**,
-> und danach funktioniert das Anmelden per E-Mail wirklich
+> 🆕 ⬜ **Ein Mail-Versender** (Punkt 0 gleich hier unten) · **15 Minuten** — ohne ihn
+> kommt beim Anmelden per E-Mail niemand hinein, und ihr könnt es zu viert gar nicht
+> ausprobieren (Supabase gratis: **2 Mails pro Stunde**)
 > ⬜ **Google** (der zweite Anmeldeweg) · ⬜ **zwei Apple-Handgriffe** (1b und 1c unten)
 >
 > Reihenfolge ist unten vorgegeben und **nicht beliebig**: Apple muss vor Google fertig
@@ -15,36 +16,114 @@
 
 ---
 
-## 0. 🆕 Supabase: die Mail soll eine ZAHL schicken, keinen Link · **2 Minuten**
+## 0. 🆕 Ein Mail-Versender (Brevo) · **15 Minuten** · **das Wichtigste gerade**
 
-**Das ist der kürzeste Punkt auf dieser Seite und im Moment der wichtigste.** Seit dem
-12.09. kann die App sich wirklich anmelden — du tippst deine E-Mail ein, bekommst eine
-Mail, tippst die Zahl daraus ein, fertig. Nur: **Supabase schickt von Haus aus einen
-Link statt einer Zahl**, und die App fragt nach einer Zahl.
+> **Deine Entscheidung vom 12.09.** — und der Grund ist ein anderer, als ich zuerst
+> geschrieben hatte. Meine erste Fassung dieses Punktes war falsch: Ich hatte dir
+> gesagt, du sollst die Mail-Vorlage in Supabase umstellen. **Das geht nicht** — seit
+> Juni 2026 dürfen neue Gratis-Projekte die Vorlagen gar nicht mehr bearbeiten. Genau
+> das stand in deinem Screenshot.
 
-So stellst du es um:
+**Der eigentliche Grund ist aber ein größerer, und er wäre so oder so gekommen:**
+Supabases eingebauter Mail-Dienst schickt **2 Mails pro Stunde** und ist laut Supabase
+ausdrücklich *nicht für den echten Betrieb* gedacht. Ihr seid zu viert — nach zwei
+Anmeldungen wäre eine Stunde Pause. **Ein eigener Mail-Versender ist also nicht die
+Lösung für die Vorlage, sondern ohnehin fällig; die Vorlage kommt gratis dazu.**
 
-1. [supabase.com](https://supabase.com) → dein Projekt → links unten **Authentication**
-2. → **Emails** (bei manchen Fassungen: *Email Templates*) → Reiter **Magic Link**
-3. Im Textfeld steht irgendwo `{{ .ConfirmationURL }}`. Ersetz die ganze Zeile mit dem
-   Link durch:
+Wir nehmen **Brevo**: 300 Mails am Tag gratis, und — das ist der Grund gegen Resend,
+das Supabase selbst zuerst empfiehlt — **es braucht keinen eigenen Domainnamen.** Bei
+Resend dürftest du gratis nur an dich selbst schicken, solange dir keine Domain gehört.
 
-   ```
-   Dein Code: {{ .Token }}
-   ```
+### 0a. Brevo-Konto anlegen · 5 Minuten
+
+1. [brevo.com](https://www.brevo.com) → **Sign up free** → mit deiner Gmail-Adresse
+2. Die Bestätigungsmail von Brevo anklicken
+3. Brevo fragt nach ein paar Sachen zur Firma — such dir was Passendes aus, das ist
+   nur für ihre Statistik
+
+> ⚠️ **Brevo prüft neue Konten von Hand, bevor sie senden dürfen.** Wenn oben eine
+> Meldung steht wie *„your account is under review"*, kann das ein paar Stunden
+> dauern. Das ist normal und kein Fehler.
+
+### 0b. Deine Absender-Adresse bestätigen · 2 Minuten
+
+Brevo will wissen, von welcher Adresse die Mails kommen sollen.
+
+1. Links auf deinen Namen (oben rechts) → **Senders, Domains & Dedicated IPs**
+2. → **Senders** → **Add a sender**
+3. Name: `SimplySocial` · Adresse: deine Gmail-Adresse
+4. Brevo schickt dir eine Bestätigungsmail — anklicken
+
+### 0c. Den SMTP-Schlüssel holen · 3 Minuten
+
+1. Oben rechts auf deinen Namen → **SMTP & API**
+2. Reiter **SMTP**
+3. **Generate a new SMTP key** → Name egal → erzeugen
+4. **Dieses Fenster jetzt offen lassen.** Auf derselben Seite stehen vier Sachen, die
+   wir gleich brauchen:
+   - **SMTP server** (`smtp-relay.brevo.com`)
+   - **Port** (`587`)
+   - **Login** — eine Adresse, die so aussieht: `8a1b2c@smtp-brevo.com`
+   - **Der Schlüssel**, den du gerade erzeugt hast (lange Zeichenkette)
+
+> ⚠️ **Der Schlüssel ist nur EINMAL zu sehen.** Kopier ihn dir weg, bevor du die Seite
+> schließt. Wenn er weg ist: einfach einen neuen erzeugen, den alten löschen.
+>
+> ⚠️ **Und das ist NICHT dein Brevo-Passwort.** Zwei verschiedene Dinge, die beide wie
+> ein Passwort aussehen.
+
+### 0d. In Supabase eintragen · 3 Minuten
+
+1. [supabase.com](https://supabase.com) → dein Projekt → **Authentication** → **Emails**
+2. Ganz oben der Kasten **„Set up custom SMTP"** → **Set up SMTP**
+3. Eintragen:
+
+   | Feld | Was hinein muss |
+   |---|---|
+   | Sender email | deine Gmail-Adresse (dieselbe wie in 0b!) |
+   | Sender name | `SimplySocial` |
+   | Host | `smtp-relay.brevo.com` |
+   | Port number | `587` |
+   | Username | **das, was Brevo auf der SMTP-Seite als „Login" anzeigt** |
+   | Password | der SMTP-Schlüssel aus 0c |
 
 4. **Save**
 
-Danach steht in der Mail eine sechsstellige Zahl. Sag mir Bescheid, wenn es erledigt
-ist — dann probieren wir es einmal mit deiner echten Adresse durch. **Das ist das
-einzige Stück am Anmelden, das ich nicht selbst prüfen kann**, weil der Code in deinem
-Postfach landet und nicht in der Datenbank.
+> ⚠️ **Zwei Fallen, beide schon von anderen bezahlt:**
+>
+> 1. **Beim Einfügen von `smtp-relay.brevo.com` rutscht leicht ein LEERZEICHEN mit
+>    hinein.** Dann geht gar nichts, und die Meldung sagt nicht, warum. Nach dem
+>    Einfügen einmal ans Ende und an den Anfang klicken und nachsehen.
+> 2. **Beim „Username" widersprechen sich die Anleitungen im Netz** — manche sagen
+>    deine Gmail-Adresse, manche die `…@smtp-brevo.com`. **Nimm, was auf Brevos
+>    SMTP-Seite unter „Login" steht.** Wenn es nicht geht, probier das andere; es ist
+>    eines von beiden und nichts kaputt.
 
-> ⚠️ **Eine Sache, die du wissen solltest, bevor Leute die App benutzen:** Supabase
-> verschickt gratis nur **ein paar Mails pro Stunde**. Zum Ausprobieren zu zweit
-> reicht das; sobald sich mehr Leute anmelden, brauchen wir einen eigenen
-> Mail-Versender (kostet ein paar Euro im Monat oder ist bis zu einer Menge gratis).
-> **Das ist noch nicht dringend, aber es ist auch nichts, was von selbst weggeht.**
+### 0e. Jetzt erst: die Mail soll eine ZAHL schicken · 2 Minuten
+
+**Das geht erst, wenn 0d erledigt ist** — vorher ist das Feld grau.
+
+1. **Authentication** → **Emails** → **Magic link or OTP**
+2. Bei **Body** auf **Source** umschalten (nicht *Preview*)
+3. Den ganzen Text ersetzen durch:
+
+   ```html
+   <h2>Dein Code für SimplySocial</h2>
+   <p>Gib diese Zahl in der App ein:</p>
+   <p style="font-size:32px;letter-spacing:6px;"><strong>{{ .Token }}</strong></p>
+   <p>Sie gilt eine Stunde und nur einmal. Wenn du das nicht warst, ignorier die Mail.</p>
+   ```
+
+4. Bei **Subject** hineinschreiben: `Dein Code für SimplySocial`
+5. **Save**
+
+### 0f. Und dann sagst du mir Bescheid
+
+Dann probieren wir es **einmal mit deiner echten Adresse durch** — du tippst sie in der
+App ein, bekommst die Mail, tippst die Zahl ein, gibst Name, Bezirk und Jahrgang an und
+bist drin. **Das ist das einzige Stück am Anmelden, das ich nicht selbst prüfen kann**,
+weil der Code in deinem Postfach landet und in der Datenbank nur ein Abdruck davon
+liegt. Alles danach ist am echten Server geprüft (29 Häkchen).
 
 ---
 

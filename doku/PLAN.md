@@ -6543,11 +6543,25 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > Bauen von 20.3-b1 herauskam". Sieben Dinge, die eine frische Sitzung zuerst wissen
 > muss:
 >
-> 1. **Es fehlt genau EIN Klick von Ian, und ohne ihn kommt niemand hinein:** Supabases
->    Mail-Vorlage steht auf `{{ .ConfirmationURL }}` (ein Link), die App fragt nach
->    `{{ .Token }}` (einer Zahl). Zwei Minuten im Dashboard, Punkt 0 in
->    `_FUER_IAN/KONTEN_EINRICHTEN.md`. **Am Code ändert das nichts** — `verifyOtp` nimmt
->    die Zahl.
+> 1. **Es fehlt ein eigener MAIL-VERSENDER, und ohne ihn kommt niemand hinein.**
+>    ❌ *Die erste Fassung dieses Punktes war falsch und ist berichtigt:* Sie sagte,
+>    Ian müsse die Mail-Vorlage von `{{ .ConfirmationURL }}` auf `{{ .Token }}`
+>    umstellen — zwei Minuten. **Das geht nicht.** Seit Juni 2026 dürfen neue
+>    Gratis-Projekte die Vorlagen gar nicht mehr bearbeiten; Supabase blendet dort
+>    „Set up custom SMTP to edit templates" ein. Ian hat den Screenshot geschickt.
+>
+>    **Und der wirkliche Grund ist größer als die Vorlage:** Supabases eingebauter
+>    Mail-Dienst schickt **2 Mails pro Stunde** und ist laut Supabase ausdrücklich
+>    nicht für den Betrieb gedacht. Bei vier Gründern ist nach zwei Anmeldungen eine
+>    Stunde Pause. **Ein eigener Versender war also ohnehin fällig; die Vorlage kommt
+>    gratis dazu** — das erledigt zugleich die Überlegung, ob man stattdessen die App
+>    den LINK verarbeiten lässt: Beide Wege scheitern an denselben zwei Mails.
+>
+>    **Ians Entscheidung vom 12.09.: Brevo** (300/Tag gratis, **kein eigener
+>    Domainname nötig** — der Grund gegen Resend, das Supabase selbst zuerst empfiehlt:
+>    dort darf man gratis nur an sich selbst schicken, solange einem keine Domain
+>    gehört). Klick für Klick in `_FUER_IAN/KONTEN_EINRICHTEN.md`, Punkt 0.
+>    **Am Code ändert das nichts** — `verifyOtp` nimmt die Zahl.
 > 2. **Und genau ein Stück ist deshalb UNGEPRÜFT: die Runde mit der echten Mail.** Der
 >    Code steht nach dem Verschicken in einem Postfach; in der Datenbank liegt nur sein
 >    Hash. Alles AB dem gültigen Token läuft im Prüfstand echt — dieselben Dateien,
