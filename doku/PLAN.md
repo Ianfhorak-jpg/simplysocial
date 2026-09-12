@@ -5718,6 +5718,68 @@ unverändert seit Phase 7 („der letzte Klick tut nichts, weil es ohne Login ke
 gibt"). Wer ihn anschließt, muss `profilbildEntfernen()` DAVOR setzen — sonst tritt die
 Lücke oben bei jedem Löschen ein statt nur bei einem Absturz.
 
+#### 20.6-c — Der Lösch-Screen wird angeschlossen ✅ *(2026-09-12)*
+
+Seit Phase 7 steht `/account-loeschen` in der App, zeigt echte Zahlen — und der letzte
+Klick tat nichts. Das war richtig, solange es ohne Login kein Konto gab, und der Screen
+sagte es selbst. **Mit 20.3-b1 gibt es Konten, mit 0003 die Funktion, mit 20.6-a das
+Bild — also war der Screen die letzte fehlende Hälfte einer Apple-1.2-Pflicht.**
+
+Gebaut ist `loeschVorgang()` in `features/safety/hooks.ts`: zwei Schritte, deren
+Reihenfolge keine Wahl ist (harte Regel 89 — `storage.objects` hängt an keinem
+Fremdschlüssel, Supabase verbietet dort jedes SQL-`delete`, und nach dem Löschen ist
+das Token tot). Dazu Ians Entscheidungen **52** und **53**, beide in Abschnitt 6.
+
+##### Was dabei herauskam
+
+**1. Der teuerste Fund ist ein Fall, den Entscheidung 53 nicht kannte: wer nie ein Bild
+hatte.** Der Satz aus `loeschFehlerText()` benennt einen Verlust. Wer nie ein Profilbild
+gesetzt hat, hat keinen — bekäme ihn aber trotzdem zu lesen, weil Schritt 1 bei ihm
+genauso läuft. **Das ist heute der Normalfall und nicht der Rand:** Bis 20.6-b lässt sich
+am Handy überhaupt kein Bild aussuchen. `hatteBild` wird deshalb VOR dem Entfernen
+gelesen; danach steht dort in jedem Fall `null`. ⚠️ **Eine Auslegung, keine Umsetzung** —
+sie folgt dem Geist der Entscheidung (*den Preis benennen*), nimmt aber an, dass ein
+Preis nur zählt, wenn ihn jemand gezahlt hat. Steht Ian zur Korrektur offen.
+
+**2. Die Messung, die wirklich zählt, betrifft die Apple-Pflicht selbst.**
+`profilbildEntfernen` läuft auch ohne vorhandenes Bild durch — gemessen in
+`80_bilder.mjs`, nicht geschlossen. **Hätte es geworfen, wäre das Konto UNLÖSCHBAR
+gewesen**, und zwar für genau die Mehrheit aus Punkt 1: Schritt 1 steht vor Schritt 2,
+ein Fehler dort verhindert das Löschen vollständig. Der Prüfstand hat drei Häkchen mehr
+(**27 statt 24**), und `konto.ts` wird dafür mitkompiliert — es hat keine
+Laufzeit-Imports und läuft deshalb in blankem Node (dieselbe Bauart wie `zeilen.ts` in
+40_uebersetzung).
+
+**3. Der Fall „Schritt 1 scheitert" ist durch das FEHLEN eines `try` beantwortet.**
+Die Aufgabenstellung legte eine mitgeschriebene Variable nahe. Richtig ist der frühe
+Ausstieg: Der `SchreibFehler` aus Schritt 1 verlässt die Funktion ungefangen, trägt
+keinen Zusatz, und die Leiste behauptet nichts. Weniger Zustand, dieselbe Aussage.
+
+**4. `SchreibFehler` führt seinen `grund` jetzt mit.** Er war nur Konstruktor-Parameter
+und ging in die `message` ein; ein Fehler mit Zusatz hätte die Meldung verschachtelt
+(`… (42501): Schreiben "…" ging nicht durch (42501): …`). Eine Lockerung ohne
+Verhaltensänderung — und `grund` steht wie `code` **nicht** auf dem Bildschirm.
+
+**5. Eine neue Falle fürs Messen, und sie hätte fast einen Fehlalarm ergeben.** Der
+Prototyp-Screenshot wich von der Referenz um **4 von 329.160 Pixeln** ab, je genau eine
+Farbstufe. Die Gegenprobe: Eine ZWEITE Aufnahme derselben, unveränderten Seite wich von
+der ERSTEN um dieselben 4 Pixel ab — und war mit der Referenz **exakt** identisch. Es
+war Aufnahme-Rauschen. Steht in der Fallen-Liste.
+
+##### Was 20.6-c nicht ist
+
+⚠️ **Im Prototyp sichtbar.** `kontoLoeschen()` kehrt bei `!LIEST_AUS_SUPABASE` mit
+`'prototyp'` um, der Screen sagt weiter „Hier wäre Schluss". Die Abfrage steht
+ausdrücklich VOR dem Schreibvorgang und nicht darin — sonst meldete `schreibVorgang` im
+Prototyp-Zweig „erfolgreich", darunter liefe `hinausNachLoeschen()`, und die öffentliche
+Adresse stünde auf dem Anmelde-Bildschirm mit der Quittung „Dein Konto wurde gelöscht".
+
+⚠️ **Von einem Menschen durchgeklickt.** Der Weg Knopf → Rückfrage → Löschen →
+Anmelde-Bildschirm ist nie am Stück gelaufen; gemessen sind seine Teile
+(`profilbildEntfernen`, `konto_loeschen`, `loeschFehlerText`) und die Reihenfolge im
+Prüfstand. Das gehört in denselben Durchgang wie das Umlegen des Schalters — **und es
+ist der einzige Weg der App, den man nur EINMAL gehen kann.**
+
 #### 20.7 — Die Meldungen bekommen einen Leser ⬜
 
 `Report` wird seit Phase 7 gespeichert und von niemandem gelesen. Für Apple 1.2 ist das
@@ -7059,6 +7121,66 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 > Regel 63). Die Kollision bestand schon vor dieser Phase; sie wird hier nur
 > benannt, damit die nächste Sitzung nicht nach einer Auflösung sucht, die es nicht
 > gibt. **Gemeint ist immer der Abschnitt, in dem die Nummer steht.**
+
+### 52. Was nach dem letzten Klick auf „Konto löschen" passiert ✅
+
+> **Entschieden am 2026-09-12**, als der Screen endlich an `konto_loeschen()` ging.
+> Bis dahin war es keine Frage: Der Screen setzte `schritt = 'fertig'`, zeigte
+> „Hier wäre Schluss" und sagte selbst, dass nichts gelöscht wurde. Sobald wirklich
+> gelöscht wird, zerfällt der letzte Klick in zwei Dinge — WAS am Server passiert
+> (das ist Entscheidung 39) und WAS der Mensch danach sieht.
+>
+> | | |
+> |---|---|
+> | **A: raus, und ein Satz beim Anmelden** *(gewählt)* | Gelöscht → abgemeldet → Anmelde-Bildschirm, darüber eine Zeile. Preis: Der Anmelde-Bildschirm trägt einen Zustand, den er sonst nie hat. |
+> | B: erst ein Abschluss-Bildschirm | Der Weg, den der Screen bis heute vormachte. **Preis ist kein Geschmack, sondern harte Regel 87:** Zwischen Löschen und Klick liefe die App mit einem TOTEN Konto weiter; ein Realtime-Anstoß in dieser Zeit lädt nach, bekommt `42501`, und der Vollbild-Kasten reißt den Abschluss-Bildschirm weg. |
+> | C: raus, ohne Satz | Am wenigsten Bau. Preis: Die stärkste Handlung der App endet ohne Quittung — von „Abmelden" nicht zu unterscheiden. |
+>
+> `LOESCH_ABSCHLUSS = 'raus-mit-satz'` in `features/safety/konto.ts`, die Quittung
+> als `LOESCH_QUITTUNG`. **Vergangenheit und kein Versprechen:** „Dein Konto wurde
+> gelöscht" — „wird gelöscht" läse sich beim kleinsten Zweifel wie „es läuft noch".
+> Und ausdrücklich **kein „schade, dass du gehst"**: Wer bis hierher gekommen ist,
+> hat zweimal bestätigt. **Nicht ohne Rückfrage ändern** — wer B einbaut, baut die
+> Falle aus 20.5-c ein zweites Mal.
+
+### 53. Was dasteht, wenn das Löschen MITTENDRIN scheitert ✅
+
+> **Entschieden am 2026-09-12.** Das Profilbild muss VOR dem Konto weg
+> (`BILD_ZUERST`, harte Regel 89: `storage.objects` hängt an keinem Fremdschlüssel,
+> und Supabase verbietet dort jedes SQL-`delete`; danach ist das Token tot). Geht
+> das Löschen schief, NACHDEM das Bild weg ist, steht ein Mensch mit einem Konto da,
+> dem etwas fehlt.
+>
+> | | |
+> |---|---|
+> | **A: ehrlich benennen** *(gewählt)* | Die Leiste sagt beides. Preis: eine Zeile mehr in einer Leiste, die seit Entscheidung 48 SCHIEBT, also echten Platz kostet. |
+> | B: nur „hat nicht geklappt" | Wie jeder andere Schreibvorgang. Preis: Das Bild ist still weg, und beim nächsten Blick aufs Profil ist da ein Loch, das niemand erklärt hat — dieselbe Familie wie „Noch nichts los in deinem Feed" bei einem Netzausfall. |
+> | C: Bild erst nach dem Löschen | Dann kostet ein Fehlschlag nichts. **Unmöglich**, siehe oben — wurde ihm vorgelegt und abgelehnt. |
+>
+> `loeschFehlerText()` in `konto.ts`. Der Satz steht dort und nicht in
+> `schreibFehlerFolgen()`, **weil die Auskunft nicht vom FEHLERCODE abhängt, sondern
+> davon, wie weit der Vorgang gekommen war** — `data/schreiben.ts` kennt Aktionen,
+> keine Zwischenstände.
+
+#### ❓ Eine Auslegung dazu wartet auf Ian *(2026-09-12, beim Schreiben von `loeschVorgang()`)*
+
+> **Wer nie ein Profilbild hatte, hat nichts verloren — bekäme aber denselben Satz.**
+> Entscheidung 53 heißt *„den Preis benennen"*; gebaut ist sie jetzt als *„den Preis
+> benennen, wenn ihn jemand gezahlt hat"*. `loeschVorgang()` liest deshalb VOR dem
+> Entfernen, ob überhaupt ein Bild da war (`hatteBild`), und gibt nur dann den Satz.
+>
+> **Das ist heute nicht der Randfall, sondern der Normalfall:** Am Handy lässt sich
+> bis 20.6-b überhaupt kein Bild aussuchen. Ohne die Zeile bekäme praktisch jeder,
+> bei dem das Löschen scheitert, eine Auskunft über einen Verlust, den es nie gab —
+> genau die Sorte Satz, gegen die Entscheidung 43 und Entscheidung 51 gebaut sind.
+>
+> **Gemessen in `80_bilder.mjs`** (drei neue Häkchen): `profilbildEntfernen` läuft
+> auch ohne vorhandenes Bild durch — *hätte es geworfen, wäre das Konto UNLÖSCHBAR
+> gewesen, und Kontolöschen ist eine Apple-1.2-Pflicht* —, `loeschFehlerText(false)`
+> gibt `null`, `loeschFehlerText(true)` nennt das Profilbild.
+>
+> **Falls Ian es anders will**, ist die Korrektur eine Zeile: `hatteBild` durch `true`
+> ersetzen. Dann sagt die Leiste den Satz immer.
 
 ## 7. Bewusst NICHT im Prototyp
 

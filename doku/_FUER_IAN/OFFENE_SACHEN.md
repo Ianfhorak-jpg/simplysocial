@@ -3,7 +3,29 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 12.09.2026 (nachts) — **Profilbilder gehen jetzt.** Darias Wunsch vom
+> Stand: 12.09.2026 (nachts) — **der Lösch-Knopf löscht jetzt wirklich.** Seit
+> Phase 7 stand der Bildschirm „Account löschen" da und tat beim letzten Klick
+> nichts; das war ehrlich, solange es keine Konten gab. Jetzt gibt es sie, und der
+> Knopf tut, was er sagt. **Deine zwei Entscheidungen (52 und 53) sind eingebaut**,
+> am echten Server geprüft (27 Messungen, alle grün, Datenbank danach sauber).
+>
+> **Eine Frage ist dabei neu entstanden — sie steht als Punkt 10 ganz unten** und
+> kostet dich eine Minute. Kurz: Wer nie ein Profilbild hatte, hat auch keines
+> verloren — soll die Fehlermeldung trotzdem von einem Bild reden? Ich habe „nein"
+> gebaut, weil es sonst die Mehrheit betrifft; ändern ist ein Wort.
+>
+> **Zwei Sachen, die beim Bauen herauskamen:**
+>
+> 1. **Fast wäre dein Konto unlöschbar geworden.** Die App räumt beim Löschen zuerst
+>    das Profilbild weg. Hätte dieser Schritt bei jemandem OHNE Bild einen Fehler
+>    geworfen, wäre der zweite Schritt nie gekommen — und Apple verlangt, dass man
+>    sein Konto löschen kann. Nachgemessen: Er läuft durch. Aber gewusst habe ich es
+>    vorher nicht.
+> 2. **Im Prototyp im Netz ändert sich nichts.** Dort gibt es keine Konten, also
+>    sagt der Bildschirm weiter „Hier wäre Schluss". Nachgemessen: Pixel für Pixel
+>    dieselbe Seite wie gestern.
+>
+> Davor: 12.09.2026 (nachts) — **Profilbilder gehen jetzt.** Darias Wunsch vom
 > 02.09. ist gebaut: Du kannst im Browser ein Bild aussuchen, austauschen und wieder
 > entfernen, und es liegt wirklich in deiner Datenbank. **Du hast dazu zwei
 > Entscheidungen getroffen (50 und 51)**, beide sind eingebaut und am echten Server
@@ -916,6 +938,34 @@ erst mit dem Backend**, und nicht so, wie du es dir gedacht hast:
 Bis dahin setzt sich der Bezirk beim Posten auf **den aus deinem Profil**. Das stimmt
 meistens und du siehst es in der Vorschau, bevor du postest — und seit dem 02.09. kannst
 du das Feld auch **einfach leer lassen**, dann steht am Post nur „Wien".
+
+### 10. ❓ Wer nie ein Bild hatte — soll die Fehlermeldung trotzdem davon reden? · **1 Minute** 🟢
+
+**Worum es geht.** Wenn du dein Konto löschst, räumt die App **zuerst dein Profilbild**
+weg und löscht **danach** das Konto. Diese Reihenfolge ist erzwungen: Danach ist deine
+Anmeldung tot, und an das Bild käme niemand mehr heran — es bliebe für immer im Netz
+abrufbar.
+
+Du hast entschieden (deine Nummer 53): Geht das Löschen in der Mitte schief, **soll die
+App den Preis benennen** statt ihn zu verschweigen. Der Satz lautet:
+
+> *„Dein Konto ist noch da — dein Profilbild ist aber schon entfernt."*
+
+**Die Frage, die dabei niemand gestellt hat:** Was, wenn jemand **gar kein Bild** hatte?
+Dann hat er auch keines verloren — bekäme aber denselben Satz zu lesen.
+
+**Das ist gerade nicht der Ausnahmefall, sondern der Normalfall:** Am Handy kann man
+bis zum nächsten App-Update überhaupt kein Bild aussuchen, also hat fast niemand eines.
+
+| | |
+|---|---|
+| **A: nur reden, wenn es ein Bild GAB** *(so ist es gebaut)* | Ehrlich. Wer nichts verloren hat, liest auch nichts davon. |
+| B: den Satz immer zeigen | Eine Regel weniger. Aber die App erzählt Leuten von einem Bild, das sie nie hatten — dieselbe Sorte wie „Noch nichts los in deinem Feed", wenn in Wirklichkeit das Netz weg ist. |
+
+**Ich habe A gebaut**, weil es deinem eigenen Maßstab folgt (ein Bildschirm soll nicht
+behaupten, was nicht stimmt — deine Entscheidungen 43 und 51). **Es ist aber meine
+Auslegung deiner Entscheidung und nicht deine Entscheidung**, deshalb steht es hier.
+**Wenn du B willst, ist es ein Wort.**
 
 ### 9. Profilbilder — der Platz steht, das Bild fehlt
 

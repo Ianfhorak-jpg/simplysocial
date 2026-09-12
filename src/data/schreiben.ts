@@ -304,7 +304,13 @@ export class SchreibFehler extends Error {
   constructor(
     readonly aktion: SchreibAktion,
     readonly code: string,
-    grund: string,
+    /**
+     * Der Wortlaut von PostgREST. Wird MITGEFÜHRT und nicht nur in die `message`
+     * eingebaut, damit ein Aufrufer einen Fehler mit Zusatz nachbauen kann, ohne
+     * dabei die Meldung zu verschachteln — `kontoLoeschen` tut genau das.
+     * Steht wie `code` NICHT auf dem Bildschirm (der Fund vom 2026-09-03).
+     */
+    readonly grund: string,
     /**
      * Ein Satz für den BILDSCHIRM, wenn der Fehlercode allein zu wenig sagt.
      *

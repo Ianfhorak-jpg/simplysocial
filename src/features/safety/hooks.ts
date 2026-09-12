@@ -2,14 +2,13 @@ import { useMemo } from 'react';
 
 import { getCurrentUserId, hinausNachLoeschen, useCurrentUserId } from '../auth/hooks';
 import { nachfolgerId } from '../groups/gruppe';
-import { profilbildEntfernen } from '../social/hooks';
 import { getState, neueId, schreibVorgang, useSlice } from '../store';
 import { SchreibFehler } from '@/data/schreiben';
 import * as senden from '@/data/senden';
 import { LIEST_AUS_SUPABASE } from '@/lib/supabase';
 
 import { BLOCK_WIRKUNG } from './block';
-import { BILD_ZUERST, loeschFehlerText } from './konto';
+import { loeschFehlerText } from './konto';
 
 import type { Report, ReportReason, ReportTarget, User } from '@/types/models';
 
@@ -438,41 +437,75 @@ export async function kontoLoeschen(): Promise<LoeschAusgang> {
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- *  ⬜ HIER SCHREIBT IAN — die Reihenfolge, in der wirklich gelöscht wird
+ *  DIE REIHENFOLGE, IN DER WIRKLICH GELÖSCHT WIRD — Ians Entscheidung 53 in Code
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Gib die Funktion zurück, die `schreibVorgang` mit dem Supabase-Client aufruft.
- * Sie muss ZWEI Dinge tun, und die Reihenfolge ist deine Entscheidung 53 in Code:
+ * Zwei Schritte, und die Reihenfolge ist keine Wahl, sondern harte Regel 89:
+ * `storage.objects` hängt an KEINEM Fremdschlüssel auf `auth.users`, und Supabase
+ * verbietet dort jedes SQL-`delete`. `konto_loeschen()` kann das Bild also nicht
+ * mitnehmen — und danach geht es auch nicht mehr, weil das Token tot ist. Bliebe
+ * es liegen, wäre es bei einem offenen Bucket (Entscheidung 50) dauerhaft im Netz.
  *
- *   1. **Das Profilbild zuerst weg** (`BILD_ZUERST`, harte Regel 89).
- *      `senden.profilbildEntfernen(sb, ichId)` — nicht der Haken aus
- *      `social/hooks.ts`, denn der startet einen EIGENEN Schreibvorgang, und zwei
- *      davon gleichzeitig überschreiben einander den `schreiben`-Zustand.
- *      Danach ist das Bild weg — merk dir das, Schritt 2 braucht es.
+ *   1. `senden.profilbildEntfernen(sb, ichId)` — ausdrücklich NICHT der Haken aus
+ *      `social/hooks.ts`: Der startet einen EIGENEN Schreibvorgang, und zwei davon
+ *      gleichzeitig überschreiben einander den `schreiben`-Zustand.
+ *   2. `senden.kontoLoeschen(sb)`.
  *
- *   2. **Dann `senden.kontoLoeschen(sb)`.**
- *      Geht DAS schief, wirft es einen `SchreibFehler` — und der soll Ians
- *      Entscheidung 53 tragen: den Satz aus `loeschFehlerText(bildSchonWeg)`.
- *      Ein `SchreibFehler` ist unveränderlich, also fängst du ihn und wirfst einen
- *      neuen mit demselben `aktion`/`code`/`message` plus dem Zusatz.
+ * ── Die zwei Fälle, die der Code beantwortet ─────────────────────────────────
+ * **Schritt 1 scheitert:** Es ist nichts passiert. Der `SchreibFehler` verlässt die
+ * Funktion ungefangen, trägt keinen Zusatz, und die Leiste behauptet keinen Schaden.
+ * Dafür steht ausdrücklich KEIN `try` um Schritt 1 — der frühe Ausstieg IST die
+ * Antwort, und eine mitgeschriebene Variable wäre die umständlichere Fassung davon.
  *
- * Die Denkaufgabe steckt im Fall, den die Beschreibung oben NICHT nennt:
- * **Was, wenn schon Schritt 1 scheitert?** Dann ist das Bild noch da, das Konto
- * auch — und `loeschFehlerText()` soll dann `null` liefern, nicht den Satz. Sonst
- * behauptet die Leiste einen Schaden, den es nicht gegeben hat.
+ * **Schritt 2 scheitert:** Ein Mensch steht mit einem Konto da, dem etwas fehlt.
+ * Genau das benennt Entscheidung 53, über `loeschFehlerText()`.
  *
- * `bildSchonWeg` ist deshalb kein Parameter, sondern etwas, das du im Verlauf der
- * Funktion mitschreibst.
+ * ── Und ein dritter Fall, den die Entscheidung nicht kannte ──────────────────
+ * **Wer gar kein Bild hatte, hat nichts verloren.** `hatteBild` wird deshalb VOR
+ * Schritt 1 gelesen; ohne diese Frage bekäme jeder ohne Profilbild einen Satz über
+ * einen Verlust, den es nie gegeben hat. Das ist eine Auslegung von Entscheidung 53
+ * und gehört Ian vorgelegt — sie folgt ihrem Geist (*den Preis benennen*), nimmt
+ * aber an, dass ein Preis nur zählt, wenn ihn jemand gezahlt hat.
  */
 function loeschVorgang(ichId: string) {
   return async (sb: Parameters<typeof senden.kontoLoeschen>[0]): Promise<void> => {
-    // TODO(Ian): siehe oben. Ungefähr acht Zeilen.
-    void ichId;
-    void sb;
-    void BILD_ZUERST;
-    void loeschFehlerText;
-    void SchreibFehler;
-    void profilbildEntfernen;
-    throw new Error('loeschVorgang ist noch nicht geschrieben');
+    // Ob überhaupt eines DA war — gelesen, bevor Schritt 1 es entfernt, denn danach
+    // steht dort in jedem Fall `null`.
+    //
+    // Das ist eine Auslegung von Ians Entscheidung 53 und keine Umsetzung: Er hat
+    // entschieden, den PREIS zu benennen, und einen Preis zahlt nur, wer ein Bild
+    // hatte. Ohne diese Zeile sagte die Leiste jedem ohne Profilbild „dein
+    // Profilbild ist aber schon entfernt" — ein Satz über einen Verlust, den es nie
+    // gegeben hat, und damit dieselbe Sorte wie „Noch nichts los in deinem Feed"
+    // bei einem Netzausfall. **Das trifft heute die Mehrheit:** Am Handy lässt sich
+    // bis 20.6-b gar kein Bild aussuchen.
+    const hatteBild = Boolean(getState().users.find((u) => u.id === ichId)?.photoUrl);
+
+    // ── Schritt 1: das Bild, und zwar ZUERST (`BILD_ZUERST`, harte Regel 89) ────
+    // Geht DAS schief, verlässt sein `SchreibFehler` die Funktion ungefangen — und
+    // genau das ist die Antwort auf „was, wenn schon Schritt 1 scheitert?": Dann ist
+    // nichts passiert, der Fehler trägt keinen Zusatz, und die Leiste behauptet
+    // keinen Schaden. Der Fall braucht deshalb keine mitgeschriebene Variable,
+    // sondern diese eine Zeile OHNE `try` — der frühe Ausstieg ist die Antwort.
+    await senden.profilbildEntfernen(sb, ichId);
+
+    // ── Schritt 2: das Konto ───────────────────────────────────────────────────
+    try {
+      await senden.kontoLoeschen(sb);
+    } catch (fehler) {
+      // Alles, was kein `SchreibFehler` ist, ist ein PROGRAMMfehler und bleibt laut
+      // — dieselbe Unterscheidung wie in `schreibVorgangIntern`.
+      if (!(fehler instanceof SchreibFehler)) throw fehler;
+
+      // Ab hier steht ein Mensch mit einem Konto da, dem etwas fehlt. `SchreibFehler`
+      // ist unveränderlich, also wird einer nachgebaut — mit demselben `grund`, damit
+      // die Zeile in der Konsole dieselbe bleibt und nicht zweifach verschachtelt.
+      throw new SchreibFehler(
+        fehler.aktion,
+        fehler.code,
+        fehler.grund,
+        loeschFehlerText(hatteBild) ?? undefined,
+      );
+    }
   };
 }

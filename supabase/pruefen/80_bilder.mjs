@@ -43,6 +43,7 @@ const JS = join(process.env.ARBEIT, 'js');
 const senden = await import(join(JS, 'data', 'senden.js'));
 const { SchreibFehler } = await import(join(JS, 'data', 'schreiben.js'));
 const bild = await import(join(JS, 'features', 'social', 'bild.js'));
+const konto = await import(join(JS, 'features', 'safety', 'konto.js'));
 
 let haken = 0;
 let kreuze = 0;
@@ -250,6 +251,29 @@ abschnitt('Entfernen');
 
   const weg = await abrufen(adresse2 + '?ohne-cache=' + Date.now());
   pruef('… und die Datei ist am Cache vorbei nicht mehr da', weg.status, 400);
+}
+
+abschnitt('Wer NIE ein Bild hatte — der Weg, den heute die Mehrheit geht');
+{
+  // `loeschVorgang()` in `safety/hooks.ts` räumt IMMER zuerst das Bild weg, auch bei
+  // jemandem, der nie eines gesetzt hat. **Würde das werfen, wäre sein Konto
+  // unlöschbar** — und Kontolöschen ist eine Apple-1.2-Pflicht. Das ist kein
+  // Randfall: Am Handy lässt sich bis 20.6-b überhaupt kein Bild aussuchen.
+  // Lea hat an dieser Stelle keines; der Abschnitt steht deshalb VOR dem nächsten.
+  let geworfen = null;
+  try {
+    await senden.profilbildEntfernen(lea, LEA);
+  } catch (f) {
+    geworfen = f;
+  }
+  pruef('profilbildEntfernen läuft durch, obwohl gar kein Bild da ist',
+        geworfen?.message ?? 'kein Fehler', 'kein Fehler');
+
+  // Und die zweite Hälfte desselben Falls: Die Leiste darf dann auch nichts
+  // behaupten. `loeschFehlerText` ist die eine Stelle, die das entscheidet.
+  pruef('… und die Fehlerleiste behauptet keinen Verlust', konto.loeschFehlerText(false), null);
+  pruefWahr('… während sie ihn benennt, wenn es eines gab',
+            (konto.loeschFehlerText(true) ?? '').includes('Profilbild'));
 }
 
 abschnitt('Kontolöschen — die Reihenfolge ist die ganze Zusage');

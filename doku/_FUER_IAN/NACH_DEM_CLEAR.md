@@ -1,5 +1,39 @@
 # Was du nach dem Clear schreiben sollst
 
+## ✅ STAND 12.09.2026 (nachts) — DER LÖSCH-KNOPF LÖSCHT
+
+> **Seit Phase 7 stand „Account löschen" in der App und tat beim letzten Klick
+> nichts.** Das war ehrlich, solange es keine Konten gab — der Bildschirm sagte es
+> selbst. Jetzt gibt es Konten, und der Knopf tut, was er verspricht.
+>
+> **Deine zwei Entscheidungen sind eingebaut (52 und 53):** Nach dem Löschen bist du
+> draußen, und auf dem Anmelde-Bildschirm steht eine Zeile, die es bestätigt. Geht
+> etwas in der Mitte schief, sagt die App, was schon passiert ist, statt es zu
+> verschweigen.
+>
+> **Geprüft am echten Server: 27 Messungen, alle grün**, Datenbank danach sauber.
+>
+> ⚠️ **Eine Frage wartet auf dich — `OFFENE_SACHEN.md`, Punkt 10, eine Minute.**
+> Wer nie ein Profilbild hatte, hat auch keines verloren. Soll die Fehlermeldung
+> trotzdem von einem reden? Ich habe „nein" gebaut; das ist meine Auslegung deiner
+> Entscheidung 53 und nicht deine Entscheidung.
+>
+> **Zwei Funde, die du kennen solltest:**
+>
+> 1. **Fast wäre ein Konto unlöschbar geworden.** Die App räumt beim Löschen zuerst
+>    das Bild weg — hätte dieser Schritt bei jemandem OHNE Bild einen Fehler
+>    geworfen, wäre der zweite nie gekommen, und Apple verlangt, dass man sein Konto
+>    löschen kann. Nachgemessen: läuft durch. Vorher gewusst hat es niemand.
+> 2. **Ein Fehlalarm beim Messen.** Der Prototyp-Screenshot wich um 4 von 329.160
+>    Pixeln ab — das sah nach einer echten Änderung aus. Zwei Aufnahmen derselben
+>    unveränderten Seite wichen um dieselben 4 Pixel ab: Es war das Messgerät.
+>    Steht jetzt in der Fallen-Liste.
+>
+> **Am Prototyp im Netz ändert sich nichts** — dort gibt es keine Konten, also sagt
+> der Bildschirm weiter „Hier wäre Schluss".
+
+---
+
 ## ✅ STAND 12.09.2026 (nachts) — PROFILBILDER GEHEN
 
 > **Darias Wunsch vom 02.09. ist gebaut.** Du kannst im Browser ein Profilbild

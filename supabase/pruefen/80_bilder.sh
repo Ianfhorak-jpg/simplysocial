@@ -158,7 +158,8 @@ cat > "$ARBEIT/tsconfig.json" <<JSON
     "$WURZEL/src/data/laden.ts",
     "$WURZEL/src/data/schreiben.ts",
     "$WURZEL/src/data/senden.ts",
-    "$WURZEL/src/features/social/bild.ts"
+    "$WURZEL/src/features/social/bild.ts",
+    "$WURZEL/src/features/safety/konto.ts"
   ]
 }
 JSON

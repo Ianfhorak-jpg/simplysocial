@@ -35,6 +35,48 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 20.6-c ist fertig (2026-09-12): der Lösch-Knopf LÖSCHT — nach vier Wochen,
+in denen er nichts tat.** Seit Phase 7 stand `/account-loeschen` da und sagte beim
+letzten Klick selbst, dass nichts passiert; das war richtig, solange es kein Konto gab.
+Jetzt ruft er `konto_loeschen()` wirklich auf. Zwei Entscheidungen von Ian (**52**: raus
+mit Quittung · **53**: den Preis benennen), gebaut in `loeschVorgang()`
+(`features/safety/hooks.ts`). `npm run pruef-bilder` — **27 statt 24 Häkchen, kein Kreuz
+am ECHTEN Server**, danach ist die Datenbank sauber. `tsc` sauber, **81 Lint-Probleme
+wie vorher**, lokal weiter **136 Häkchen**, Prototyp auf 390 × 844 **Pixel für Pixel
+identisch** (`ao01` gegen `an01`, 0 abweichende Pixel). Vier Dinge:
+
+1. **Der teuerste Fund ist ein Fall, den die Entscheidung gar nicht kannte: WER NIE EIN
+   BILD HATTE.** `loeschVorgang()` räumt immer zuerst das Bild weg (`BILD_ZUERST`, harte
+   Regel 89). Ohne eine zusätzliche Frage bekäme damit **jeder ohne Profilbild** den Satz
+   *„dein Profilbild ist aber schon entfernt"* — eine Auskunft über einen Verlust, den es
+   nie gegeben hat, dieselbe Familie wie „Noch nichts los in deinem Feed" bei einem
+   Netzausfall. **Und das ist heute nicht der Rand, sondern der Normalfall:** Am Handy
+   lässt sich bis 20.6-b überhaupt kein Bild aussuchen. Gelöst mit `hatteBild`, gelesen
+   **vor** dem Entfernen — danach steht dort in jedem Fall `null`. ⚠️ **Das ist eine
+   AUSLEGUNG von Entscheidung 53 und wartet auf Ians Urteil** (PLAN.md Abschnitt 6,
+   hinter Punkt 53); die Korrektur wäre ein Wort.
+2. **Die zweite Messung war die wichtigere, und sie betrifft eine Apple-Pflicht:
+   `profilbildEntfernen` läuft auch dann durch, wenn gar kein Bild da ist.** Hätte es
+   geworfen, wäre das Konto **UNLÖSCHBAR** gewesen — und zwar für genau die Mehrheit aus
+   Punkt 1. Gemessen in `80_bilder.mjs`, nicht geschlossen.
+3. **Der Fall „Schritt 1 scheitert" braucht keine Variable, sondern das Fehlen eines
+   `try`.** Geht das Bild-Entfernen schief, verlässt sein `SchreibFehler` die Funktion
+   ungefangen: Es ist dann nichts passiert, der Fehler trägt keinen Zusatz, die Leiste
+   behauptet keinen Schaden. Der frühe Ausstieg IST die Antwort — eine mitgeschriebene
+   `bildSchonWeg`-Variable wäre die umständlichere Fassung davon.
+4. **`SchreibFehler` führt seinen `grund` jetzt MIT.** Er stand vorher nur im
+   Konstruktor und wurde in die `message` eingebaut; um einen Fehler mit Zusatz
+   nachzubauen, hätte man die Meldung verschachteln müssen. Eine Lockerung, kein
+   Verhalten — und sie steht nicht auf dem Bildschirm (der Fund vom 2026-09-03).
+
+⚠️ **Was 20.6-c NICHT ist: im Prototyp sichtbar.** `LIEST_AUS_SUPABASE` ist dort `false`,
+und `kontoLoeschen()` kehrt vorher mit `'prototyp'` um — der Screen sagt weiter „Hier
+wäre Schluss". Das ist Absicht und die einzige Stelle, an der die Abfrage VOR dem
+Schreibvorgang steht statt darin: Im Prototyp-Zweig meldete `schreibVorgang` brav
+„erfolgreich", darunter liefe `hinausNachLoeschen()`, und die öffentliche Adresse stünde
+auf dem Anmelde-Bildschirm mit der Quittung „Dein Konto wurde gelöscht" — hinein käme
+niemand mehr.
+
 ✅ **Der erste DURCHGANG mit echten Daten ist gemacht (2026-09-12 abends) — und im
 ungeprüften Teil von 20.5 lag ein Fehler, der jeden Benutzer bei JEDER FREMDEN
 NACHRICHT aus dem Bildschirm geworfen hätte.** Hier stand am Nachmittag, der
@@ -2121,6 +2163,11 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    `node_modules`). **Davor liegt ein Zwei-Minuten-Klick von Ian**: Supabases Mail-Vorlage
    von `{{ .ConfirmationURL }}` auf `{{ .Token }}`, sonst schickt die App einen Link
    statt einer Zahl.* ·
+   ~~**Der Lösch-Screen wird angeschlossen (20.6-c)**~~ ✅ *2026-09-12: `/account-loeschen`
+   ruft `konto_loeschen()` wirklich auf, Entscheidungen 52 und 53, **27 Häkchen am echten
+   Server**. **Dabei kam heraus, dass jeder OHNE Profilbild einen Satz über einen Verlust
+   bekommen hätte, den es nie gab** — und dass ein Fehler beim Bild-Entfernen das Konto
+   unlöschbar gemacht hätte.* ·
    **Profilbilder am Gerät (20.6-b)** · Meldungen lesen (20.7).
    Danach fällt 19d-2 nebenbei ab.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
@@ -2594,7 +2641,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    (25 in 20.2, 78 nach 20.5-SQL, 121 seit 20.4-a, 124 seit 0006, 136 seit 0008).
    **Dazu VIER Prüfstände am ECHTEN Server, und die können etwas, das lokal
    prinzipiell nicht geht:** `npm run pruef-lesen` (29) · `npm run pruef-konto` (29) ·
-   `npm run pruef-schreiben` (50, seit 20.5) · `npm run pruef-bilder` (24, seit 20.6 —
+   `npm run pruef-schreiben` (50, seit 20.5) · `npm run pruef-bilder` (**27**, seit 20.6 —
    **der einzige, der den Weg über das CDN messen kann**, siehe harte Regel 89). Warum das nicht dasselbe ist, steht in
    harter Regel 85 — die Wegwerf-Datenbank war bis zum 2026-09-12 STRENGER als das
    Original. Jeder
@@ -3991,6 +4038,16 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - **`UID` ist in zsh reserviert.** (Phase 20.6) `UID=… node skript.mjs` scheitert mit
   *„failed to change user ID: operation not permitted"* — das sieht nach einem
   Rechteproblem aus und ist ein Namenskonflikt.
+- **Ein Pixelvergleich braucht eine Gegenprobe GEGEN SICH SELBST.** (2026-09-12,
+  Lösch-Screen) Der Screenshot nach dem Umbau wich von der Referenz um **4 von
+  329.160 Pixeln** ab — verstreut, je genau eine Farbstufe (250→249, 180→181). Das
+  sieht nach einer winzigen echten Änderung aus und ist keine: Eine ZWEITE Aufnahme
+  derselben, unveränderten Seite wich von der ERSTEN um genau dieselben 4 Pixel ab
+  und war mit der Referenz **exakt** identisch. Es ist Aufnahme-Rauschen (eine
+  Transition, die noch lief). **Wer „Pixel für Pixel identisch" behaupten oder
+  widerlegen will, nimmt zwei Aufnahmen und vergleicht zuerst die miteinander** —
+  sonst hält man das Messgerät für den Code. Dieselbe Familie wie der
+  hängengebliebene Seitenzoom in 19b und das veraltete Metro-Bündel in 20.4.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

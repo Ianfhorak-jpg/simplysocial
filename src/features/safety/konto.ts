@@ -246,7 +246,12 @@ export const BILD_ZUERST = true;
  * müssen — es kennt Aktionen, keine Zwischenstände. Der Satz wird deshalb hier
  * gebildet und vom Aufrufer angehängt.
  *
- * @param bildSchonWeg `true`, wenn `profilbildEntfernen()` bereits durch war.
+ * @param bildSchonWeg `true`, wenn es ein Bild GAB und `profilbildEntfernen()`
+ *   bereits durch war. **Beides zusammen** — wer nie eines hatte, hat nichts
+ *   verloren, und ein Satz über seinen Verlust wäre genau der lügende Bildschirm,
+ *   gegen den die Entscheidung gebaut ist. Gelesen wird das in `loeschVorgang()`
+ *   (`safety/hooks.ts`), und zwar VOR dem Entfernen: Danach steht dort in jedem
+ *   Fall `null`.
  */
 export function loeschFehlerText(bildSchonWeg: boolean): string | null {
   if (!bildSchonWeg) return null;
