@@ -66,11 +66,22 @@ Brevo will wissen, von welcher Adresse die Mails kommen sollen.
    - **Login** — eine Adresse, die so aussieht: `8a1b2c@smtp-brevo.com`
    - **Der Schlüssel**, den du gerade erzeugt hast (lange Zeichenkette)
 
-> ⚠️ **Der Schlüssel ist nur EINMAL zu sehen.** Kopier ihn dir weg, bevor du die Seite
-> schließt. Wenn er weg ist: einfach einen neuen erzeugen, den alten löschen.
+> ⚠️ **Der Schlüssel ist nur EINMAL zu sehen.**
+>
+> ✅ **Deiner ist gesichert** (12.09.) — er liegt in `~/.simplysocial/brevo-smtp-key`,
+> außerhalb des Projektordners, so wie der Datenbank-Zugang. **Wenn du ihn aus der
+> Zwischenablage verlierst, hol ihn dir mit einem Befehl zurück:**
+>
+> ```bash
+> cd simplysocial && npm run brevo-key
+> ```
+>
+> Danach steht er wieder in der Zwischenablage und du kannst mit ⌘V einfügen. (Genau
+> das ist an dem Tag passiert — deshalb gibt es den Befehl.)
 >
 > ⚠️ **Und das ist NICHT dein Brevo-Passwort.** Zwei verschiedene Dinge, die beide wie
-> ein Passwort aussehen.
+> ein Passwort aussehen. Am Anfang erkennst du es: Der SMTP-Schlüssel beginnt mit
+> `xsmtpsib-`. Beginnt er mit `xkeysib-`, ist es der API-Schlüssel und der falsche.
 
 ### 0d. In Supabase eintragen · 3 Minuten
 
