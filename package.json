@@ -58,7 +58,8 @@
     "pruef-schreiben": "bash supabase/pruefen/70_schreiben.sh",
     "brevo-key": "bash scripts/brevo-key.sh",
     "pruef-bilder": "bash supabase/pruefen/80_bilder.sh",
-    "google-key": "bash scripts/google-key.sh"
+    "google-key": "bash scripts/google-key.sh",
+    "provider": "bash scripts/provider-einrichten.sh"
   },
   "private": true
 }
