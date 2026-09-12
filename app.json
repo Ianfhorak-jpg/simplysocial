@@ -14,7 +14,8 @@
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -45,6 +46,15 @@
           "locationWhenInUsePermission": "Damit dein Feed von dir aus nach außen sortiert. Dein Standort wird niemandem gezeigt und steht an keinem Post.",
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
+      "expo-web-browser",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Damit du ein Profilbild aussuchen kannst. SimplySocial sieht nur das eine Bild, das du auswählst — nicht deine Mediathek.",
+          "cameraPermission": "Damit du dein Profilbild direkt aufnehmen kannst."
         }
       ]
     ],
