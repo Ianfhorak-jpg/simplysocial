@@ -101,10 +101,68 @@ export const ANMELDE_QUELLE: 'attrappe' | 'supabase' = 'attrappe';
  * und niemand hätte es gemerkt.
  */
 export type Sitzung =
+  /**
+   * Noch nicht nachgesehen — der ANFANGSZUSTAND mit `ANMELDE_QUELLE = 'supabase'`.
+   * Phase 20.3-b1.
+   *
+   * Er dauert einen Augenblick und ist trotzdem ein eigener Zustand, weil er sonst
+   * mit `'aus'` zusammenfiele — und das ist etwas anderes: „wir wissen es noch
+   * nicht" gegen „niemand ist angemeldet". Wer beides gleichsetzt, zeigt jedem, der
+   * die App mit gespeicherter Sitzung öffnet, für einen Lidschlag den
+   * Anmelde-Bildschirm. **Dieselbe Unterscheidung wie `laden.zustand === 'laeuft'`
+   * gegen neun leere Listen** (Ians Entscheidung 43): „ist nichts" und „kommt noch"
+   * dürfen nicht gleich aussehen.
+   */
+  | { zustand: 'unbekannt' }
   /** Niemand angemeldet. Ein Screen, der ein Ich braucht, wird gar nicht gezeichnet. */
   | { zustand: 'aus' }
+  /**
+   * Bei Supabase angemeldet — und noch OHNE Profil. Phase 20.3-b1.
+   *
+   * Der Zustand entsteht genau einmal je Mensch: Nach dem ersten richtigen Code hat
+   * jemand eine UUID und eine E-Mail, aber `profiles` verlangt vier Felder `not null`
+   * (siehe `auth/konto.ts`). Er trägt `authId` und NICHT `ichId`, und das ist kein
+   * Namensunterschied: `ichId` ist eine `User.id`, also der Verweis auf eine Zeile,
+   * die es noch nicht gibt. Hieße das Feld an beiden Stellen gleich, wäre
+   * `useCurrentUserId()` für diesen Zustand ohne Weiteres gültiger Code — und
+   * fünfzig Screens suchten einen Menschen, den niemand angelegt hat.
+   */
+  | { zustand: 'neu'; authId: string; email: string }
   /** Angemeldet. `ichId` ist eine `User.id`. */
   | { zustand: 'an'; ichId: string };
+
+/**
+ * Was der Torwächter in `app/_layout.tsx` zeichnet — **und warum das hier steht.**
+ *
+ * Ein drittes Glied an `Sitzung` ist eine LOCKERUNG, und die Phase-16-Lehre sagt
+ * dazu das Unangenehme: `tsc` meldet null Stellen. Der Torwächter fragte bis
+ * 20.3-a `zustand === 'an'`, und das bleibt gültiger Code — `'neu'` wäre still in
+ * den `else`-Zweig gefallen, und jemand mit gültigem Token säße wieder vor dem
+ * Anmelde-Bildschirm und bekäme einen zweiten Code geschickt.
+ *
+ * **Also entsteht die Enge eine Ebene höher**, genau wie `ChatEintrag.post` in
+ * Phase 16: Diese Funktion hat einen erschöpfenden `switch` mit `never`-Abschluss.
+ * Wer `Sitzung` um ein viertes Glied erweitert, bekommt hier einen Typfehler statt
+ * eines stillen Bildschirms.
+ */
+export type TorwaechterZeigt = 'wartet' | 'anmelden' | 'erstes-konto' | 'app';
+
+export function torwaechterZeigt(sitzung: Sitzung): TorwaechterZeigt {
+  switch (sitzung.zustand) {
+    case 'unbekannt':
+      return 'wartet';
+    case 'aus':
+      return 'anmelden';
+    case 'neu':
+      return 'erstes-konto';
+    case 'an':
+      return 'app';
+    default: {
+      const nie: never = sitzung;
+      return nie;
+    }
+  }
+}
 
 /**
  * Die Sätze, die die Oberfläche über einen Anmeldeweg sagt — an EINER Stelle.
@@ -120,28 +178,63 @@ export function anmeldeFolgen(weg: AnmeldeWeg): {
   hinweis: string;
   bereit: boolean;
 } {
-  const bereit = ANMELDE_QUELLE !== 'attrappe';
+  // `bereit` ist seit 20.3-b1 JE WEG verschieden, und genau das hatte der Kopf
+  // dieser Funktion vorhergesagt. Am Server nachgemessen (`/auth/v1/settings`):
+  // `email: true`, `apple: false`, `google: false`. Der E-Mail-Weg braucht nur
+  // Supabase und steht; die anderen beiden brauchen zusätzlich einen
+  // Sign-in-Schlüssel von Apple und ein OAuth-Konto bei Google.
+  const quelleSteht = ANMELDE_QUELLE !== 'attrappe';
+  const nochNicht = quelleSteht
+    ? 'Kommt als Nächstes — heute geht es über die E-Mail.'
+    : 'Kommt mit dem Konto — im Prototyp noch ohne Funktion.';
   switch (weg) {
     case 'apple':
-      return {
-        titel: 'Weiter mit Apple',
-        hinweis: bereit ? '' : 'Kommt mit dem Konto — im Prototyp noch ohne Funktion.',
-        bereit,
-      };
+      return { titel: 'Weiter mit Apple', hinweis: nochNicht, bereit: false };
     case 'google':
-      return {
-        titel: 'Weiter mit Google',
-        hinweis: bereit ? '' : 'Kommt mit dem Konto — im Prototyp noch ohne Funktion.',
-        bereit,
-      };
+      return { titel: 'Weiter mit Google', hinweis: nochNicht, bereit: false };
     case 'email-code':
     default:
       return {
         titel: 'Mit E-Mail-Code',
-        hinweis: bereit
-          ? 'Wir schicken dir eine Zahl, kein Passwort.'
-          : 'Kommt mit dem Konto — im Prototyp noch ohne Funktion.',
-        bereit,
+        hinweis: quelleSteht ? 'Wir schicken dir eine Zahl, kein Passwort.' : nochNicht,
+        bereit: quelleSteht,
       };
+  }
+}
+
+/**
+ * Was dasteht, wenn der Code nicht durchgeht — Phase 20.3-b1.
+ *
+ * ── Warum eine Funktion und nicht ein Satz ───────────────────────────────────
+ * Dieselbe Begründung wie bei `ladeFehlerFolgen()` (Ians Entscheidung 43): Ein
+ * abgelaufener Code, ein vertippter Code und „du hast es zu oft probiert" sehen für
+ * `supabase-js` gleich aus — es gibt `{ error }` zurück, sonst nichts — und führen
+ * für den Menschen davor zu **drei verschiedenen nächsten Handlungen**: neu
+ * anfordern, genauer hinsehen, warten. Ein einziger Satz („Das hat nicht geklappt")
+ * schickt zwei von drei Leuten in die falsche Richtung.
+ *
+ * **Und genau das ist harte Regel 57 für den Menschen statt für den Prüfstand:**
+ * „ist fehlgeschlagen" ist zu wenig, es braucht den Code.
+ *
+ * Der `code` selbst kommt NIE auf den Bildschirm (die Lehre vom 2026-09-03) — er
+ * steht in der Konsole, weil `KontoFehler` ihn trägt.
+ */
+export function codeFehlerText(code: string): string {
+  switch (code) {
+    case 'otp_expired':
+      return 'Der Code stimmt nicht oder ist abgelaufen. Fordere einen neuen an.';
+    case 'over_email_send_rate_limit':
+    case 'over_request_rate_limit':
+      // Die Freigrenze von Supabase liegt bei wenigen Mails je Stunde. Das ist kein
+      // Fehler, sondern eine Grenze — und sie gehört als solche dagestanden, sonst
+      // tippt jemand zehnmal auf einen Knopf, der nichts mehr tun darf.
+      return 'Gerade ging es zu schnell hintereinander. Probier es in ein paar Minuten.';
+    case 'email_address_invalid':
+    case 'validation_failed':
+      return 'Die Adresse sieht nicht richtig aus.';
+    case 'signup_disabled':
+      return 'Neue Konten sind gerade zu.';
+    default:
+      return 'Das hat gerade nicht geklappt. Prüf dein Netz und probier es noch einmal.';
   }
 }

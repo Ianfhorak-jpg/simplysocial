@@ -4675,7 +4675,38 @@ hatte, sie stünde bei allen drei Möglichkeiten schon fest — **eine Meldung �
 Konto dessen, der sie geschrieben hat**, sonst nimmt jeder Anzeigende beim Löschen den
 Beleg mit. Sie tut es jetzt auch wirklich.
 
-#### 20.3 — Anmelden · **20.3-a ✅ (2026-09-09)** · 20.3-b ⬜ *(Ians 27. Entscheidung)*
+### 🎥 Liquid Glass: Apple liefert es, wir bauen es NICHT nach *(2026-09-12)*
+
+**Ians Frage beim Bauen von 20.3-b1, und die Antwort ist ja.** Er hat ein Screen
+Recording ins Projekt gelegt, das echtes Liquid Glass in Bewegung zeigt —
+`vorbild-liquid-glass-video.MP4`, neben dem Standbild
+`vorbild-liquid-glass-bierbuddy.png`, aus dem schon Entscheidung 41 kam. Seine
+Ansage dazu: **nicht nachbauen, das ist viel zu aufwändig.** Sie ist richtig, und
+sie ist schon umgesetzt:
+
+1. **Der Effekt kommt von Apple, nicht von uns.** Ab iOS 26 ist er ein
+   Betriebssystem-Baustein (`UIGlassEffect`); Expo reicht ihn als
+   **`expo-glass-effect`** durch, und das Paket steht seit Phase 19e-2 in
+   `package.json` (`~57.0.1`) und wird benutzt — `components/ui/SsGlas.native.tsx`
+   ruft es, die Tab-Kapsel, die Umschalter-Pille und das Blatt hängen daran
+   (harte Regel 61). **Es gibt in diesem Projekt keine Nachbildung von Liquid
+   Glass.** Was `SsGlas.tsx` für Web und Android zeichnet, ist ausdrücklich der
+   RÜCKFALL für Plattformen, auf denen es Apples Glas nicht gibt — Ians
+   Entscheidung 43 aus Phase 19e-2, nicht ein Nachbau.
+2. **Und die 19i-Messung sagt dasselbe:** Das Glas LÄUFT. Das Blatt nimmt auf der
+   Karte einen Grünstich vom Untergrund an (Grün minus Blau **+9,2**) — eine
+   deckende Fläche könnte das nicht. **Was fehlt, ist Untergrund:** Bei Ians
+   Vorbild beträgt der Unterschied zum Hintergrund **33,2** Helligkeitsstufen,
+   bei uns **3,3** (Startbildschirm) bzw. **1,5** (über der hellen Apple-Karte).
+   Hinter unseren Flächen liegt überall Papierweiß.
+3. **Daraus folgt, was NICHT zu tun ist:** Wer „mehr Glas" baut, baut am falschen
+   Ende. Die Frage ist der Untergrund, und die hat Ian am 2026-09-09 ausdrücklich
+   offen gelassen (*„erst anschauen"*, `ae01`, `ae06` gegen `ae07`). Das Video
+   gehört in denselben Termin.
+
+---
+
+#### 20.3 — Anmelden · **20.3-a ✅ (09-09)** · **20.3-b1 ✅ (09-12)** · 20.3-b2 ⬜ *(Ians 27. Entscheidung)*
 
 **E-Mail-Code UND Google UND Apple.** Er hat gegen meine Empfehlung entschieden, und die
 Begründung dahinter zählt: Für 16-Jährige ist ein Tipp weniger Reibung als eine
@@ -4710,6 +4741,109 @@ Native-Bausteine, die dabei dazukommen — **alle vier zusammen, dann ein Build*
 > ausgeloggte Zustand wird **eine Ebene höher** behandelt: Ein Screen, der einen
 > angemeldeten Nutzer braucht, wird gar nicht erst gezeichnet.
 
+#### Was beim Bauen von 20.3-b1 herauskam *(2026-09-12)*
+
+**Gebaut ist der E-Mail-Weg, und zwar gegen Ians echtes Supabase.** `npm run
+pruef-konto` — **29 Häkchen, kein Kreuz**, danach ist die Datenbank wieder leer. `tsc`
+sauber, **81 Lint-Probleme wie vorher**, lokal weiter 121 Häkchen, `npm run pruef-lesen`
+weiter 29. **Der Schalter steht trotzdem weiter auf `'attrappe'`** (siehe Punkt 8).
+
+**Ians 44. Entscheidung** steht in Abschnitt 6 und in `features/auth/konto.ts`.
+
+**Neun Befunde:**
+
+**1. Der teuerste Fund war wieder eine ABWESENHEIT: der Anmelde-Bildschirm war
+unsichtbar.** Beim ersten Umlegen des Schalters zeigte die App den Schriftzug auf
+Papierweiß und rührte sich nicht — sie sah aus wie hängengeblieben. Sie war es nicht:
+`useStartFlaecheWeg(laden.zustand !== 'laeuft')` hängt die Abdeckung aus `+html.tsx` an
+das Laden der DATEN. **Ohne Anmeldung wird nie geladen**, `laden` bleibt für immer auf
+`'laeuft'`, und der fertig gezeichnete Anmelde-Bildschirm lag darunter. Bis zu diesem
+Tag konnte das niemand sehen, weil es den ausgeloggten Zustand mit `'supabase'` noch
+nie gegeben hat. **Dieselbe Familie wie der unsichtbare Startbildschirm vom 2026-09-11**
+(weißes Logo auf Papierweiß): Ein Fehler, der nur als Abwesenheit auftritt, überlebt
+jeden Typecheck und jeden grünen Lauf. Die Frage ist nicht „sind die Daten da?", sondern
+**„steht etwas zum Anschauen?"** — und das ist bei drei der vier Torwächter-Zustände
+sofort so.
+
+**2. `Sitzung` hat jetzt VIER Glieder, und `tsc` hätte zu den zwei neuen geschwiegen.**
+Dazugekommen sind `'neu'` (angemeldet, aber ohne Profil) und `'unbekannt'` (es wird noch
+nachgesehen). Beides sind LOCKERUNGEN — die Phase-16-Lehre sagt: null gemeldete Stellen.
+Der Torwächter fragte `zustand === 'an'`, und das bleibt gültiger Code: **Jemand mit
+gültigem Token wäre wieder vor dem Anmelde-Bildschirm gelandet und hätte einen zweiten
+Code bekommen.** Also entsteht die Enge eine Ebene höher, wie `ChatEintrag.post` in
+Phase 16 — `torwaechterZeigt()` hat einen erschöpfenden `switch` mit `never`-Abschluss.
+**Gegengemessen:** ein erfundenes fünftes Glied ergibt sofort
+`TS2322: Type '{ zustand: "gesperrt"; }' is not assignable to type 'never'`.
+
+**3. `'unbekannt'` ist kein Zierzustand, sondern Entscheidung 43 noch einmal.** Der
+naheliegende Anfangswert wäre `'aus'` gewesen. Dann sähe jeder, der die App mit
+gespeicherter Sitzung öffnet, für einen Lidschlag den Anmelde-Bildschirm — **„wir wissen
+es noch nicht" und „niemand ist angemeldet" sind zwei Lagen**, genau wie „kommt noch"
+und „ist nichts" bei den neun Listen.
+
+**4. `persistSession: false` war eine zu grobe FOLGERUNG, und Nachsehen hat sie
+halbiert.** Im Kopf von `lib/supabase.ts` stand: *eine gespeicherte Sitzung braucht
+einen Speicher, den es auf Native ohne nativen Baustein nicht gibt.* Die erste Hälfte
+stimmt. Nachgesehen in `GoTrueClient.js` (nicht vermutet): `auth-js` sucht sich seinen
+Speicher selbst und fällt ohne `localStorage` **still auf einen Speicher im
+Arbeitsspeicher zurück** — kein Absturz, keine Warnung. Also kostet `true` keinen Pod
+und keinen Build, und **der Preis ist halbiert statt beseitigt**: Im Browser überlebt
+die Sitzung das Neuladen, am iPhone nicht. Die zweite Hälfte bleibt bei 20.3-b2.
+
+**5. Der abgeleitete @-Name ist der Grund, warum `profilAnlegen()` eine Schleife hat.**
+`handle` ist `not null unique`; zwei Menschen, die „Ian" tippen, ergeben beide `@ian`.
+Vorher nachzusehen, ob er frei ist, wäre der naheliegende Weg und der falsche — zwischen
+Nachsehen und Schreiben liegt genau das Fenster aus **harter Regel 71**. Also wird
+geschrieben und `23505` als Antwort genommen. **Gegenprobe gemessen:** Mit nur einem
+Versuch scheitert der zweite „Ian" mit `KontoFehler (23505)`; die Rücknahme ist
+nachgewiesen.
+
+**6. Und `23505` bedeutet ZWEIERLEI — die zweite Bedeutung ist der Doppelklick.** Wer
+zweimal auf „Los geht's" tippt, verletzt beim zweiten Mal `profiles_pkey`, nicht den
+`handle`. Das ist **kein Fehler, sondern das gewünschte Ergebnis**: Das Profil steht ja.
+Dieselbe Überlegung wie die zwei Sicherheitsnetze in `anfrageBestaetigen()`. Jeder
+ANDERE Code bricht sofort ab — sonst liefe die Schleife zwanzigmal gegen eine
+abgelaufene Anmeldung und meldete am Ende „@-Name vergeben", eine Meldung, die in die
+Irre führt. **Gemessen:** ein Jahrgang 1800 kommt als `23514` heraus, nicht als
+Kollision.
+
+**7. Zwei Angriffe zum ersten Mal über PostgREST mit echtem Token.** `profil_anlegen`
+verlangt `id = auth.uid()` — der Versuch, ein Profil auf eine FREMDE UUID zu legen, wird
+mit **`42501`** abgewiesen. Das war in 20.2 lokal mit `set local role` geprüft; hier
+stellt GoTrue das Token aus und PostgREST liest es.
+
+**8. Was 20.3-b1 NICHT ist — und die Liste ist wichtiger als das Gebaute.**
+   • **Die Runde mit der echten Mail.** `codeAnfordern` → Postfach → `codePruefen` läuft
+     im Prüfstand nicht: Der Code steht nach dem Verschicken in einem POSTFACH, in der
+     Datenbank liegt nur sein Hash (`auth.one_time_tokens`). Eine Prüfung, die Mails an
+     erfundene Adressen schickt, handelt nach außen für etwas, das drinnen bleiben soll,
+     und verbraucht die Freigrenze. **Dieses eine Stück gehört Ian** und steht als
+     Punkt 0 in `_FUER_IAN/KONTEN_EINRICHTEN.md`.
+   • **Die Mail schickt heute einen LINK, keine Zahl.** Supabases Vorlage steht auf
+     `{{ .ConfirmationURL }}`; die App fragt nach `{{ .Token }}`. Am Code ändert das
+     nichts (`verifyOtp` nimmt die Zahl), aber **ohne diesen Handgriff kommt niemand
+     hinein.** Zwei Minuten, nur im Dashboard, nur von Ian.
+   • **Der Schalter.** `ANMELDE_QUELLE` steht weiter auf `'attrappe'`, der Prototyp ist
+     nachgemessen unverändert (`aj01`). Umlegen heißt: zwei tote Knöpfe auf der
+     öffentlichen Adresse und ein Prototyp-Hinweis, der „Es gibt keinen Login — du bist
+     gerade Ian" behauptet, während es einen gibt. **Der Satz gehört vor dem Umlegen
+     angefasst, und er ist Ians** (harte Regel 22).
+   • **Der Preis: +3.398 B gzip (+0,70 %)** auf 486.870 B, roh +13.041 B. Klein — weil
+     `supabase-js` seit 20.4-b ohnehin drin ist.
+
+**9. Ein Prüfstand, der EINMAL rot war und beim zweiten Lauf grün — und der Grund steht
+schon im Plan.** `pruef-lesen` meldete in einem Lauf `… und kommt am Kanal an: false`,
+bei `verbunden: true` und `geschrieben: 'ok'` — also Kanal da, Schreiben durch, Ereignis
+weg. Der zweite Lauf war grün. **Das ist keine Flocke, die man wegsehen darf:** Der
+20.4-b-Abschnitt nennt die Ursache wörtlich — *das Auth-Token muss an PostgREST UND an
+Realtime weitergereicht werden; vergisst man das zweite, greift RLS am Kanal nicht wie
+erwartet, und der Fehler ist still.* Im Prüfstand liegen Anmelden und `subscribe()`
+unmittelbar beieinander, in der App nicht (`realtimeStarten` läuft erst nach dem ersten
+`datenHolen()`). **Offen und aufgeschrieben, nicht erledigt.** Wer es angeht, misst
+`sb.realtime.accessToken` vor dem `subscribe`.
+
+---
+
 #### Was beim Bauen von 20.3-a herauskam *(2026-09-09)*
 
 **20.3 zerfällt in zwei Hälften, und nur die zweite braucht Ians Konten.** Das ist
@@ -4719,7 +4853,8 @@ eingerichtet?*) und wie „Simulator statt EAS-Build" in Phase 19. Gebaut ist di
 | | |
 |---|---|
 | **20.3-a ✅** | Die NAHT. `CURRENT_USER_ID` gelöscht, Sitzung im Zustand, `useCurrentUserId()`/`getCurrentUserId()`, Torwächter, Anmelde-Bildschirm, Abmelden. Kein Konto, kein neuer Baustein, kein Build. |
-| **20.3-b ⬜** | Die KONTEN. Supabase-Auth, Apple, Google, E-Mail-Code, `expo-secure-store`, die Bezirksfrage beim ersten Konto. Vier Native-Bausteine in EINEM Build. |
+| **20.3-b1 ✅** | Der E-MAIL-CODE, gegen Ians echtes Supabase. `signInWithOtp`/`verifyOtp`, der dritte und vierte Sitzungszustand, der Bildschirm fürs erste Konto (Entscheidung 44). **Kein neuer Baustein, kein Build** — `persistSession: true` kostet keinen Pod, weil `auth-js` sich seinen Speicher selbst sucht. |
+| **20.3-b2 ⬜** | APPLE und GOOGLE. Am Server nachgemessen aus (`/auth/v1/settings`: `apple: false`, `google: false`). Dazu die vier nativen Bausteine in EINEM Build (`expo-apple-authentication`, `expo-auth-session` + `expo-web-browser`, `expo-secure-store`, `async-storage`) — erst damit überlebt die Sitzung auch am iPhone den Neustart. |
 
 **Acht Befunde:**
 
@@ -6171,6 +6306,45 @@ Screens lesen die Konstante nie.
 
 ---
 
+### 44. Was beim ERSTEN Konto gefragt wird ✅
+
+**Ians Entscheidung vom 2026-09-12, gefragt beim Bauen von 20.3-b1.** Die zweite nach
+39, die aus dem SCHEMA kam statt aus einem Screen — und diesmal ohne jeden Widerspruch
+zu einer älteren Regel, dafür gegen eine: harte Regel 63.
+
+**Die Frage stellt die Datenbank.** Wer sich zum ersten Mal anmeldet, hat eine UUID und
+eine E-Mail und sonst nichts. `profiles` verlangt vier Felder `not null` — `handle`,
+`display_name`, `district`, `jahrgang` —, und ohne sie gibt es kein Profil und damit
+keinen Feed. Dagegen steht harte Regel 63: *ein Bildschirm zeigt nur, was für die
+Entscheidung HIER nötig ist.* Beim ersten Konto heißt die Entscheidung „ich will rein",
+und **jedes Feld davor ist eine Gelegenheit aufzuhören** — genau das Argument, mit dem
+er Entscheidung 27 getroffen hat.
+
+**Gewählt: Name · Bezirk · Jahrgang. Der @-Name wird ABGELEITET.**
+
+| | | |
+|---|---|---|
+| **A** | ✅ drei Felder, `@handle` abgeleitet | seine Wahl — die drei gefragten tragen alle eine schon getroffene Entscheidung; der `@handle` ist das einzige der vier, das niemand ENTSCHEIDEN muss |
+| **B** | alle vier fragen | ehrlicher, nichts wird geraten — verliert an dem Feld, das am wenigsten trägt: Ein vergebener @-Name hält jemanden auf, bevor er die App einmal gesehen hat |
+| **C** | nur Name und Bezirk | die kürzeste Fassung und die einzige mit einem Preis, den man nicht zurücknimmt: Der Jahrgang ist `not null`. Übrig blieben ein ERFUNDENER Jahrgang — der steht offen am Profil (Entscheidung 30) und ist eine Lüge über einen Menschen — oder ein kaputter Alters-Filter |
+
+**Der Haken, den er kennt:** Wer „Ian" heißt und `@ian` vergeben vorfindet, bekommt
+`@ian2`, ohne gefragt zu werden. Das ist der Preis dafür, dass niemand an „ist das noch
+frei?" hängenbleibt; ändern lässt er sich später in den Einstellungen.
+
+**Die Regel steht in `src/features/auth/konto.ts`** (`ERSTE_FRAGEN`, `fehltNoch()`,
+`handleVorschlag()`, `kontoFolgen()`) — dieselbe Bauart wie `safety/block.ts` (17),
+`groups/gruppe.ts` (32), `requests/kollision.ts` (46), `posts/standort.ts` (68),
+`auth/anmeldung.ts` (69) und `data/quelle.ts` (76). Der Screen weiß nicht, warum drei
+Felder dastehen und nicht vier.
+
+**Was ausdrücklich NICHT gefragt wird:** der Standort (`STANDORT_FRAGE = 'einstellung'`,
+Entscheidung 70 — iOS fragt EINMAL), Bio und Interessen (beide haben eine
+Voreinstellung, die für sich allein ein gültiges Profil ergibt) und ein Profilbild (den
+Upload gibt es erst in 20.6).
+
+---
+
 ---
 
 ## 7. Bewusst NICHT im Prototyp
@@ -6360,6 +6534,45 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > Erzeugt wird alles von `landing-vorschau/erzeugen-palette.py` (leitet die Palette ab
 > und misst jeden Kontrast) und `erzeugen-seiten.py` (baut die drei HTML-Hüllen). Eine
 > vierte Farbe ist damit ein Eintrag im `LEIT`-Wörterbuch.
+
+> ✅ **Phase 20.3-b1 ist fertig (2026-09-12): die App kann sich WIRKLICH anmelden — per
+> E-Mail-Code, gegen Ians echtes Supabase.** `npm run pruef-konto` — **29 Häkchen, kein
+> Kreuz am ECHTEN Server**, danach ist die Datenbank wieder leer. Eine neue Entscheidung
+> von Ian (44). `tsc` sauber, **81 Lint-Probleme wie vorher**, lokal weiter 121 Häkchen,
+> `pruef-lesen` weiter 29. Die vollständige Liste steht in Abschnitt 5b unter „Was beim
+> Bauen von 20.3-b1 herauskam". Sieben Dinge, die eine frische Sitzung zuerst wissen
+> muss:
+>
+> 1. **Es fehlt genau EIN Klick von Ian, und ohne ihn kommt niemand hinein:** Supabases
+>    Mail-Vorlage steht auf `{{ .ConfirmationURL }}` (ein Link), die App fragt nach
+>    `{{ .Token }}` (einer Zahl). Zwei Minuten im Dashboard, Punkt 0 in
+>    `_FUER_IAN/KONTEN_EINRICHTEN.md`. **Am Code ändert das nichts** — `verifyOtp` nimmt
+>    die Zahl.
+> 2. **Und genau ein Stück ist deshalb UNGEPRÜFT: die Runde mit der echten Mail.** Der
+>    Code steht nach dem Verschicken in einem Postfach; in der Datenbank liegt nur sein
+>    Hash. Alles AB dem gültigen Token läuft im Prüfstand echt — dieselben Dateien,
+>    dieselben Policies, dasselbe PostgREST. **Die eine Runde gehört in einen Termin mit
+>    Ian.**
+> 3. **`ANMELDE_QUELLE` steht weiter auf `'attrappe'`.** Umlegen hieße heute: zwei tote
+>    Knöpfe (Apple und Google sind am Server nachgemessen aus) und ein Prototyp-Hinweis,
+>    der „Es gibt keinen Login" behauptet, während es einen gibt. **Der Satz ist Ians**
+>    (harte Regel 22) und gehört vor dem Umlegen angefasst.
+> 4. **`Sitzung` hat jetzt VIER Glieder** — `'unbekannt'`, `'aus'`, `'neu'`, `'an'` — und
+>    wer sie liest, nimmt **`torwaechterZeigt()`** und nie `zustand === 'an'`. Ein
+>    fünftes Glied ergibt dort einen Typfehler; ein Vergleich hätte still den falschen
+>    Bildschirm gezeigt.
+> 5. **20.3-b2 ist der Rest und braucht einen Build:** Apple-Sign-in, Google und die vier
+>    nativen Bausteine zusammen. Erst damit überlebt die Sitzung am iPhone den Neustart —
+>    heute tut sie es nur im Browser (`localStorage`).
+> 6. **`npm run pruef-konto` ist neu** und läuft gegen die ECHTE Datenbank. Er bricht ab,
+>    wenn `auth.users` nicht leer ist — sobald echte Menschen drin sind, gehört er in ein
+>    zweites Supabase-Projekt.
+> 7. ⚠️ **Ein Befund liegt offen:** `pruef-lesen` war in einem von zwei Läufen rot, an
+>    der Realtime-Zeile (Kanal verbunden, Schreiben durch, Ereignis weg). Verdacht steht
+>    im 20.4-b-Abschnitt: das Token muss an PostgREST UND an Realtime. Aufgeschrieben,
+>    nicht erledigt.
+
+---
 
 > ✅ **Phase 20.4-b ist fertig (2026-09-12): die App KANN aus Supabase lesen — und der
 > Prototyp merkt davon nichts.** `npm run pruef-lesen` — **29 Häkchen, kein Kreuz am

@@ -1,15 +1,50 @@
 # Die Konten — was du klickst, damit es weitergeht
 
-> **Stand: 11.09.2026.** Die App ist fertig gebaut, die Datenbank auch (121 Prüfungen,
+> **Stand: 12.09.2026.** Die App ist fertig gebaut, die Datenbank auch (121 Prüfungen,
 > alle grün). Was fehlt, sind **Konten** — und die kann nur jemand anlegen, dem sie
 > gehören. Das bist du.
 >
 > ✅ **Apple Developer Program — hast du seit dem 11.09.**
 > ✅ **Supabase** — steht seit dem 12.09.2026
+> 🆕 ⬜ **EINE Einstellung in Supabase** (Punkt 0 gleich hier unten) · **2 Minuten**,
+> und danach funktioniert das Anmelden per E-Mail wirklich
 > ⬜ **Google** (der zweite Anmeldeweg) · ⬜ **zwei Apple-Handgriffe** (1b und 1c unten)
 >
 > Reihenfolge ist unten vorgegeben und **nicht beliebig**: Apple muss vor Google fertig
 > sein, sonst lehnt Apple die App später ab (Richtlinie 4.8).
+
+---
+
+## 0. 🆕 Supabase: die Mail soll eine ZAHL schicken, keinen Link · **2 Minuten**
+
+**Das ist der kürzeste Punkt auf dieser Seite und im Moment der wichtigste.** Seit dem
+12.09. kann die App sich wirklich anmelden — du tippst deine E-Mail ein, bekommst eine
+Mail, tippst die Zahl daraus ein, fertig. Nur: **Supabase schickt von Haus aus einen
+Link statt einer Zahl**, und die App fragt nach einer Zahl.
+
+So stellst du es um:
+
+1. [supabase.com](https://supabase.com) → dein Projekt → links unten **Authentication**
+2. → **Emails** (bei manchen Fassungen: *Email Templates*) → Reiter **Magic Link**
+3. Im Textfeld steht irgendwo `{{ .ConfirmationURL }}`. Ersetz die ganze Zeile mit dem
+   Link durch:
+
+   ```
+   Dein Code: {{ .Token }}
+   ```
+
+4. **Save**
+
+Danach steht in der Mail eine sechsstellige Zahl. Sag mir Bescheid, wenn es erledigt
+ist — dann probieren wir es einmal mit deiner echten Adresse durch. **Das ist das
+einzige Stück am Anmelden, das ich nicht selbst prüfen kann**, weil der Code in deinem
+Postfach landet und nicht in der Datenbank.
+
+> ⚠️ **Eine Sache, die du wissen solltest, bevor Leute die App benutzen:** Supabase
+> verschickt gratis nur **ein paar Mails pro Stunde**. Zum Ausprobieren zu zweit
+> reicht das; sobald sich mehr Leute anmelden, brauchen wir einen eigenen
+> Mail-Versender (kostet ein paar Euro im Monat oder ist bis zu einer Menge gratis).
+> **Das ist noch nicht dringend, aber es ist auch nichts, was von selbst weggeht.**
 
 ---
 

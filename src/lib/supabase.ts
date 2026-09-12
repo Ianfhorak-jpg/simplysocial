@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- *  DIE LEITUNG — Phase 20.4-b
+ *  DIE LEITUNG — Phase 20.4-b, erweitert in 20.3-b1
  *  Die einzige Datei, die einen Supabase-Client baut.
  * ═══════════════════════════════════════════════════════════════════════════════
  *
@@ -16,13 +16,17 @@
  * `requireNativeViewManager` beim Laden (harte Regel 61): Ein Nebeneffekt beim
  * IMPORT trifft jeden, der die Datei anfasst, nicht nur den, der sie benutzt.
  *
- * ── Warum `persistSession: false` — und was das kostet ────────────────────────
- * Eine gespeicherte Sitzung braucht einen Speicher, den es auf Native nicht ohne
- * einen NATIVEN Baustein gibt (`@react-native-async-storage/async-storage`, sonst
- * `expo-secure-store`). **Genau deshalb steht sie hier auf `false`:** So ist
- * 20.4-b — das Lesen — ohne einen einzigen neuen Pod und ohne neuen Build zu haben.
- * Der Preis ist benannt und gehört zu 20.3-b: Wer die App schließt, ist ausgeloggt.
- * Dieselbe Trennung wie 20.3-a/20.3-b und wie „Simulator statt EAS-Build".
+ * ── `persistSession` stand bis 20.3-b1 auf `false`, und warum es jetzt `true` ist ─
+ * Der Satz hier lautete: *eine gespeicherte Sitzung braucht einen Speicher, den es
+ * auf Native ohne einen NATIVEN Baustein nicht gibt.* Die erste Hälfte stimmt, die
+ * Folgerung war zu grob — **nachgesehen in `GoTrueClient.js` statt vermutet**:
+ * `auth-js` sucht sich seinen Speicher selbst und fällt ohne `localStorage` STILL
+ * auf einen Speicher im Arbeitsspeicher zurück. Es stürzt nicht ab, es warnt nicht.
+ *
+ * Also kostet `true` keinen Pod und keinen Build, und **der Preis ist halbiert statt
+ * beseitigt**: Im Browser überlebt die Sitzung das Neuladen, am iPhone nicht. Die
+ * zweite Hälfte gehört zu 20.3-b2, wo `expo-secure-store` und `AsyncStorage` mit den
+ * anderen beiden Bausteinen in EINEN Build gehen. Einzelheiten stehen unten am Feld.
  *
  * ── Die Falle bei `EXPO_PUBLIC_*` ────────────────────────────────────────────
  * Metro ersetzt `process.env.EXPO_PUBLIC_FOO` **textuell beim Bauen**. Es gibt zur
@@ -116,9 +120,24 @@ export function client(): SupabaseClient {
 
   zwischengespeichert = createClient(URL as string, ANON_KEY as string, {
     auth: {
-      // Siehe Kopf: Das ist der Grund, warum 20.4-b ohne neuen Build geht.
-      persistSession: false,
-      autoRefreshToken: false,
+      // ── Seit 20.3-b1 `true` — und das kostet trotzdem KEINEN neuen Build ─────
+      // `auth-js` sucht sich seinen Speicher selbst: Gibt es `localStorage`
+      // (Browser), benutzt es das; gibt es keines (React Native), fällt es
+      // **still auf einen Speicher im Arbeitsspeicher zurück** — nachgesehen in
+      // `GoTrueClient.js`, nicht vermutet. Es stürzt also nicht ab und warnt
+      // nicht, die Sitzung überlebt auf Native nur den Neustart nicht.
+      //
+      // **Damit ist der Preis genau halbiert statt beseitigt**, und die zweite
+      // Hälfte gehört weiter zu 20.3-b2: Erst `expo-secure-store` bzw.
+      // `AsyncStorage` machen daraus auch am iPhone eine gespeicherte Sitzung.
+      // Genau das ist der Grund, warum die vier nativen Bausteine dort zusammen
+      // in EINEN Build gehen und nicht einzeln hier.
+      persistSession: true,
+      autoRefreshToken: true,
+      // Bleibt aus: Ians Anmeldeweg ist eine ZAHL, kein Link (`anmeldeFolgen`
+      // sagt es wörtlich — „Wir schicken dir eine Zahl, kein Passwort"). `true`
+      // würde bei jedem Seitenaufruf die Adresse nach Token durchsuchen und ist
+      // für einen Weg da, den es hier nicht gibt.
       detectSessionInUrl: false,
     },
   });

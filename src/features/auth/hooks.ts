@@ -1,6 +1,16 @@
-import type { Sitzung } from './anmeldung';
+import { LIEST_AUS_SUPABASE } from '@/lib/supabase';
 
-import { aendern, attrappeSitzung, getState, useSlice, zwischenspeicherLeeren } from '../store';
+import type { Sitzung } from './anmeldung';
+import {
+  codeAnfordern,
+  codePruefen,
+  profilAnlegen,
+  sitzungLesen,
+  supabaseAbmelden,
+  type NeuesProfil,
+} from './konten';
+
+import { aendern, attrappeSitzung, datenHolen, getState, useSlice, zwischenspeicherLeeren } from '../store';
 
 /**
  * Der Zugang zur Sitzung — die Stelle, die `CURRENT_USER_ID` ersetzt.
@@ -86,6 +96,11 @@ export function attrappeAnmelden(): void {
  * zweiten verbietet harte Regel 47 ausdrücklich.
  */
 export function abmelden(): void {
+  // Am SERVER abmelden, ohne darauf zu warten. Das ist Absicht: Wer auf „Abmelden"
+  // tippt, will jetzt weg — und ein `await` vor dem Leeren hieße, dass bei einem
+  // langsamen Netz sekundenlang fremde Chats sichtbar bleiben. Der Aufruf räumt
+  // den gespeicherten Token auf; scheitert er, sagt `konten.ts` es der Konsole.
+  if (LIEST_AUS_SUPABASE) void supabaseAbmelden();
   // Die neun Listen aus der Datenbank gehen MIT — aus derselben Begründung wie
   // `weggewischt` und `standort`, nur schärfer: Das sind FREMDE Daten. Siehe
   // `zwischenspeicherLeeren()` in `store.ts`. Zuerst, damit zwischen dem Leeren und
@@ -96,4 +111,78 @@ export function abmelden(): void {
     weggewischt: [],
     standort: { zustand: 'aus', ort: null, gemessenUm: null },
   }));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ *  DER ECHTE WEG HINEIN — Phase 20.3-b1
+ *
+ *  Alles darunter ruft `features/auth/konten.ts`; alles darüber ist seit 20.3-a
+ *  unverändert. Das ist die Naht, die `ANMELDE_QUELLE` schaltet — **und sie ist
+ *  hier und nicht im Screen**, weil sonst der Anmelde-Bildschirm wüsste, welcher
+ *  Anmeldedienst dahintersteht.
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Beim Start nachsehen, ob noch eine Sitzung liegt.
+ *
+ * ── Warum das ein eigener Schritt ist und nicht `startSitzung()` ─────────────
+ * Weil es NETZ braucht: Ob hinter einem gespeicherten Token noch ein Profil steht,
+ * weiß nur die Datenbank. `store.ts` baut seinen Anfangszustand beim Laden der
+ * Datei auf — dort kann nichts warten. Also beginnt die Sitzung auf `'unbekannt'`,
+ * und diese Funktion löst sie auf.
+ *
+ * ── Und warum ein FEHLER hier zu `'aus'` wird ────────────────────────────────
+ * Er ist die einzige Antwort, die nicht in eine Sackgasse führt: Ein Token, das
+ * sich nicht prüfen lässt, ist für die App wertlos, und `'unbekannt'` stehen zu
+ * lassen hieße, jemanden für immer vor einem wartenden Bildschirm sitzen zu lassen.
+ * **Das ist NICHT dieselbe Lage wie beim Lesen** (Entscheidung 43, wo ein Fehler
+ * sichtbar werden muss): Dort ist der Ausweg „nochmal versuchen", hier ist der
+ * Ausweg der Anmelde-Bildschirm, und der steht dann ja da.
+ */
+export async function sitzungWiederherstellen(): Promise<void> {
+  if (!LIEST_AUS_SUPABASE) return;
+  try {
+    const sitzung = await sitzungLesen();
+    aendern(() => ({ sitzung }));
+    if (sitzung.zustand === 'an') void datenHolen();
+  } catch (fehler) {
+    console.warn(`Sitzung nicht lesbar, also abgemeldet: ${String(fehler)}`);
+    aendern(() => ({ sitzung: { zustand: 'aus' } }));
+  }
+}
+
+/** Schritt 1: „Schick mir eine Zahl." Wirft einen `KontoFehler`, der Screen zeigt ihn. */
+export async function codeSchicken(email: string): Promise<void> {
+  await codeAnfordern(email);
+}
+
+/**
+ * Schritt 2: Code eintippen. Danach steht die Sitzung — auf `'an'`, wenn es schon
+ * ein Profil gibt, sonst auf `'neu'`, und dann übernimmt der Torwächter.
+ *
+ * **Das Laden startet NUR bei `'an'`.** Ohne Profil hat es keinen Sinn: Der eigene
+ * Feed hängt an der eigenen Zeile in `profiles`, und dreizehn Abfragen, die
+ * garantiert nichts finden, wären dreizehn Umläufe nach Irland für einen leeren
+ * Bildschirm, den sowieso niemand sieht.
+ */
+export async function anmeldenMitCode(email: string, code: string): Promise<void> {
+  await codePruefen(email, code);
+  const sitzung = await sitzungLesen();
+  aendern(() => ({ sitzung }));
+  if (sitzung.zustand === 'an') void datenHolen();
+}
+
+/**
+ * Das erste Konto fertig machen — Ians Entscheidung 44.
+ *
+ * Sie nimmt `authId` als Argument und liest sie NICHT aus dem Speicher, obwohl sie
+ * dort steht. Grund: Eine Aktion, die sich ihr eigenes Ziel sucht, kann das falsche
+ * finden — meldet sich jemand während des Tippens ab, schriebe sie das Profil auf
+ * eine UUID, die inzwischen einer anderen Sitzung gehört. Der Screen hat die ID
+ * ohnehin, er zeichnet ja den Zustand, in dem sie steht.
+ */
+export async function kontoAnlegen(neu: NeuesProfil): Promise<void> {
+  const sitzung = await profilAnlegen(neu);
+  aendern(() => ({ sitzung }));
+  void datenHolen();
 }

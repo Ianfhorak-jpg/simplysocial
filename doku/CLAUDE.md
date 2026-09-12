@@ -35,6 +35,84 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 20.3-b1 ist fertig (2026-09-12): die App kann sich WIRKLICH anmelden — per
+E-Mail-Code, gegen Ians echtes Supabase.** Der Teil von 20.3-b, der OHNE Apple und
+Google geht, und wieder ohne neuen Baustein und ohne Build. `npm run pruef-konto` —
+**29 Häkchen, kein Kreuz am ECHTEN Server**, danach ist die Datenbank wieder leer. Eine
+neue Entscheidung von Ian (44). `tsc` sauber, **81 Lint-Probleme wie vorher**, lokal
+weiter 121 Häkchen. Neun Dinge sind wichtiger als der Anmelde-Bildschirm:
+
+1. **Der teuerste Fund war wieder eine ABWESENHEIT: der Anmelde-Bildschirm war
+   unsichtbar.** Beim ersten Umlegen des Schalters zeigte die App den Schriftzug auf
+   Papierweiß und rührte sich nicht — sie sah aus wie hängengeblieben. Sie war es
+   nicht: `useStartFlaecheWeg` hing die Abdeckung aus `+html.tsx` an `laden.zustand`,
+   also an den DATEN. **Ohne Anmeldung wird nie geladen**, `laden` bleibt für immer auf
+   `'laeuft'`, und der fertig gezeichnete Anmelde-Bildschirm lag darunter. Bis zu diesem
+   Tag konnte das niemand sehen, weil es den ausgeloggten Zustand mit `'supabase'` noch
+   nie gegeben hat. **Dieselbe Familie wie der unsichtbare Startbildschirm vom
+   2026-09-11.** Die Frage ist nicht „sind die Daten da?", sondern **„steht etwas zum
+   Anschauen?"**
+2. **`Sitzung` hat jetzt VIER Glieder, und `tsc` hätte zu den zwei neuen geschwiegen.**
+   `'neu'` (angemeldet, ohne Profil) und `'unbekannt'` (es wird noch nachgesehen) sind
+   LOCKERUNGEN — die Phase-16-Lehre: null gemeldete Stellen. Der Torwächter fragte
+   `zustand === 'an'`, und das bleibt gültiger Code: **Jemand mit gültigem Token wäre
+   wieder vor dem Anmelde-Bildschirm gelandet und hätte einen zweiten Code bekommen.**
+   Die Enge sitzt deshalb in `torwaechterZeigt()`, einem erschöpfenden `switch` mit
+   `never`. **Gegengemessen:** ein erfundenes fünftes Glied ergibt sofort einen
+   Typfehler.
+3. **`'unbekannt'` ist Entscheidung 43 noch einmal.** Der naheliegende Anfangswert
+   `'aus'` hätte jedem mit gespeicherter Sitzung für einen Lidschlag den
+   Anmelde-Bildschirm gezeigt — **„wir wissen es noch nicht" und „niemand ist
+   angemeldet" sind zwei Lagen**, wie „kommt noch" und „ist nichts".
+4. **`persistSession: false` war eine zu grobe FOLGERUNG, und Nachsehen hat sie
+   halbiert.** Der Kopf von `lib/supabase.ts` sagte, eine gespeicherte Sitzung brauche
+   einen nativen Baustein. Nachgesehen in `GoTrueClient.js`: `auth-js` sucht sich seinen
+   Speicher selbst und fällt ohne `localStorage` **still auf Arbeitsspeicher zurück** —
+   kein Absturz, keine Warnung. Also kostet `true` keinen Pod. **Der Preis ist halbiert
+   statt beseitigt:** im Browser überlebt die Sitzung das Neuladen, am iPhone nicht.
+5. **Der abgeleitete @-Name ist der Grund für die Schleife in `profilAnlegen()`.**
+   `handle` ist `unique`; zwei „Ian" ergeben beide `@ian`. Vorher nachzusehen wäre der
+   naheliegende Weg und der falsche — dazwischen liegt das Fenster aus harter Regel 71.
+   Also wird geschrieben und **`23505` als Antwort genommen**. Gegenprobe gemessen: mit
+   nur einem Versuch scheitert der zweite „Ian".
+6. **`23505` bedeutet ZWEIERLEI, und die zweite Bedeutung ist der Doppelklick.** Beim
+   zweiten „Los geht's" verletzt man `profiles_pkey`, nicht den `handle` — **kein
+   Fehler, sondern das Ergebnis.** Jeder ANDERE Code bricht sofort ab, sonst liefe die
+   Schleife zwanzigmal gegen eine abgelaufene Anmeldung und meldete „@-Name vergeben".
+7. **Zwei Angriffe zum ersten Mal über PostgREST mit echtem Token:** ein Profil auf eine
+   FREMDE UUID wird mit **`42501`** abgewiesen, ein Jahrgang 1800 mit `23514` — nicht
+   als Kollision.
+8. **Was FEHLT, ist ein Klick von Ian und eine Runde mit einer echten Mail.** Supabases
+   Vorlage schickt einen LINK (`{{ .ConfirmationURL }}`), die App fragt nach einer ZAHL
+   (`{{ .Token }}`) — zwei Minuten im Dashboard, Punkt 0 in `KONTEN_EINRICHTEN.md`. Und
+   die Runde `codeAnfordern` → Postfach → `codePruefen` ist **ungeprüft**: Der Code
+   steht in einem Postfach, in der Datenbank liegt nur sein Hash.
+9. **Der Preis: +3.398 B gzip (+0,70 %)** auf 486.870 B. Klein, weil `supabase-js` seit
+   20.4-b ohnehin drin ist.
+
+⚠️ **Was 20.3-b1 NICHT ist: der Schalter.** `ANMELDE_QUELLE` steht weiter auf
+`'attrappe'`, der Prototyp ist nachgemessen unverändert (`aj01`). Umlegen hieße heute
+zwei tote Knöpfe auf der öffentlichen Adresse — Apple und Google sind am Server
+nachgemessen aus — und einen Prototyp-Hinweis, der „Es gibt keinen Login" behauptet,
+während es einen gibt. **Der Satz ist Ians** (harte Regel 22).
+
+⚠️ **Ein Befund liegt offen und ist NICHT erledigt:** `pruef-lesen` war in einem von
+zwei Läufen rot, an der Realtime-Zeile — Kanal verbunden, Schreiben durch, Ereignis weg.
+Der Verdacht steht wörtlich schon im 20.4-b-Abschnitt: *das Token muss an PostgREST UND
+an Realtime weitergereicht werden, sonst greift RLS am Kanal nicht wie erwartet, und
+der Fehler ist still.* Wer es angeht, misst `sb.realtime.accessToken` vor dem
+`subscribe`.
+
+🎥 **Und eine Frage von Ian ist beantwortet: Liquid Glass liefert APPLE, wir bauen es
+nicht nach.** Sein Screen Recording liegt als `vorbild-liquid-glass-video.MP4` im
+Projekt. Der Effekt ist ab iOS 26 ein Betriebssystem-Baustein (`UIGlassEffect`); Expo
+reicht ihn als **`expo-glass-effect`** durch, und das Paket ist seit Phase 19e-2 in
+Benutzung (`SsGlas.native.tsx`, harte Regel 61). **Es gibt in diesem Projekt keine
+Nachbildung** — was `SsGlas.tsx` für Web und Android zeichnet, ist der Rückfall für
+Plattformen ohne Apples Glas. Und die 19i-Messung sagt dasselbe: Das Glas LÄUFT
+(Grünstich vom Untergrund, +9,2); **was fehlt, ist Untergrund** (33,2 Helligkeitsstufen
+bei Ians Vorbild gegen 1,5 bei uns). Wer „mehr Glas" baut, baut am falschen Ende.
+
 ✅ **Phase 20.4-b ist fertig (2026-09-12): die App KANN aus Supabase lesen — und der
 Prototyp merkt davon nichts.** Der Client, die dreizehn Abfragen, Realtime, der
 Ladezustand und Ians Entscheidung 43. `npm run pruef-lesen` — **29 Häkchen, kein Kreuz
@@ -1718,8 +1796,14 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    Schulden bezahlt, 121 Häkchen* · ~~**Lesen, die Abfragen (20.4-b)**~~ ✅ *2026-09-12
    am echten Server: Client, dreizehn Abfragen, Realtime, Ladezustand, 29 Häkchen —
    **der Schalter bleibt aber auf `'attrappe'`, umlegen geht erst mit 20.3-b*** ·
-   **Anmelden, die Konten (20.3-b)** ← *hier geht es weiter — und es ist das EINZIGE,
-   was noch an Ians Konten hängt (Apple-Sign-in und Google; Supabase steht)* ·
+   ~~**Anmelden, der E-Mail-Code (20.3-b1)**~~ ✅ *2026-09-12 am echten Server: echte
+   Anmeldung per Code, vierter Sitzungszustand, Bildschirm fürs erste Konto
+   (Entscheidung 44), 29 Häkchen — **ohne neuen Baustein und ohne Build*** ·
+   **Anmelden, Apple und Google (20.3-b2)** ← *hier geht es weiter — und es hängt an
+   zwei Konten (Apple-Sign-in-Schlüssel, Google) plus den vier nativen Bausteinen in
+   EINEM Build. **Davor liegt ein Zwei-Minuten-Klick von Ian**: Supabases Mail-Vorlage
+   von `{{ .ConfirmationURL }}` auf `{{ .Token }}`, sonst schickt die App einen Link
+   statt einer Zahl.* ·
    Profilbilder · Meldungen lesen.
    Danach fällt 19d-2 nebenbei ab.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
@@ -2457,6 +2541,46 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    entscheidet `anmeldenNoetig` in der Regel-Datei, nicht die Oberfläche: Bei `42501`
    ist ein neuer Ladeversuch sinnlos, und ein Knopf, der „Anmelden" sagt und neu lädt,
    ist eine Schleife, die wie ein Defekt aussieht.
+
+77. **Wer den Torwächter liest, nimmt `torwaechterZeigt()` — nie `zustand === 'an'`.**
+   *(Phase 20.3-b1, 2026-09-12.)* `Sitzung` hat seit heute VIER Glieder: `'unbekannt'`
+   (es wird noch nachgesehen), `'aus'`, `'neu'` (angemeldet, aber ohne Profil) und
+   `'an'`. Die zwei neuen sind LOCKERUNGEN, und die Phase-16-Lehre gilt: **`tsc` meldet
+   dazu null Stellen.** Der alte Vergleich bleibt gültiger Code und hätte jemanden mit
+   gültigem Token wieder vor den Anmelde-Bildschirm gesetzt — samt zweitem Code.
+   Deshalb sitzt die Enge in `features/auth/anmeldung.ts`: ein erschöpfender `switch`
+   mit `never`-Abschluss. Wer ein fünftes Glied einführt, bekommt dort einen Typfehler
+   statt eines stillen Bildschirms. **Und `'neu'` trägt `authId`, nicht `ichId`** — das
+   ist kein Namensunterschied: `ichId` ist eine `User.id`, also der Verweis auf eine
+   Zeile, die es noch nicht gibt.
+78. **Was beim ERSTEN Konto gefragt wird, steht in `features/auth/konto.ts`.**
+   *(Ians Entscheidung 44.)* Dieselbe Bauart wie `safety/block.ts` (17),
+   `groups/gruppe.ts` (32), `requests/kollision.ts` (46), `posts/standort.ts` (68),
+   `auth/anmeldung.ts` (69) und `data/quelle.ts` (76): Screens lesen `ERSTE_FRAGEN` nie,
+   die Sätze kommen aus `kontoFolgen()`. Gefragt werden **Name · Bezirk · Jahrgang**;
+   der `@handle` wird ABGELEITET (`handleVorschlag()`) und ist Ergebnis, keine Frage.
+   Wer ihn eintippbar macht, macht aus Entscheidung 44 die verworfene Möglichkeit B.
+   **Und wer ein viertes Feld ergänzt, begründet es gegen harte Regel 63** — beim ersten
+   Konto heißt die Entscheidung „ich will rein", und jedes Feld davor ist eine
+   Gelegenheit aufzuhören.
+79. **Ein abgeleiteter Wert, der `unique` sein muss, wird GESCHRIEBEN und der Fehler als
+   Antwort genommen.** *(Phase 20.3-b1.)* `profilAnlegen()` probiert `@ian`, `@ian2`, …
+   und liest `23505`. Vorher nachzusehen, ob der Name frei ist, wäre der naheliegende
+   Weg und der falsche: Zwischen Nachsehen und Schreiben liegt genau das Fenster aus
+   harter Regel 71 — zwei Menschen, die gleichzeitig „Ian" tippen, bekommen beide ein
+   „ist frei". **Die Datenbank ist die einzige Stelle, die es wirklich weiß.**
+   Dazu: **`23505` bedeutet zweierlei.** Am `handle` ist es die Kollision, an
+   `profiles_pkey` der Doppelklick — und der ist **kein Fehler, sondern das Ergebnis**.
+   Jeder andere Code bricht sofort ab, sonst läuft die Schleife zwanzigmal gegen eine
+   abgelaufene Anmeldung und meldet am Ende etwas, das in die Irre führt.
+80. **Die Startfläche aus `+html.tsx` hängt am TORWÄCHTER, nicht am Laden der Daten.**
+   *(Phase 20.3-b1.)* Bis 20.4-b stand dort `laden.zustand !== 'laeuft'`, und das war
+   richtig, solange es keinen ausgeloggten Zustand gab. Jetzt gibt es ihn: **Ohne
+   Anmeldung wird nie geladen**, `laden` bleibt für immer auf `'laeuft'`, und die
+   Abdeckung ginge nie weg — der Anmelde-Bildschirm läge fertig gezeichnet darunter, und
+   die App sähe aus wie hängengeblieben. Die Frage ist nicht *„sind die Daten da?"*,
+   sondern **„steht etwas zum Anschauen?"**. Gemessen am 2026-09-12 beim ersten Umlegen
+   des Schalters; dieselbe Familie wie das weiße Logo auf Papierweiß.
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
@@ -3232,6 +3356,39 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   Prozess dazu; der `SingletonLock` in `~/Library/Caches/ms-playwright-mcp/` war zwei
   Tage alt. Löschen (samt `SingletonCookie` und `SingletonSocket`) genügt. Dritte
   Fassung von „prüf zuerst, ob das Messgerät verstellt ist".
+- **`auth-js` fällt ohne `localStorage` STILL auf Arbeitsspeicher zurück.** (Phase
+  20.3-b1, 2026-09-12) Die Annahme war, `persistSession: true` brauche auf React Native
+  zwingend `AsyncStorage` — sonst Absturz oder wenigstens eine Warnung. Nachgesehen in
+  `GoTrueClient.js`: Es prüft `supportsLocalStorage()` und nimmt sonst
+  `memoryLocalStorageAdapter`. **Kein Absturz, keine Warnung, die Sitzung überlebt nur
+  den Neustart nicht.** Damit kostet der Schalter keinen Pod und keinen Build — und die
+  Notiz im Dateikopf, die das Gegenteil behauptete, war eine FOLGERUNG und keine
+  Messung. Wer eine Bibliothek als Begründung für einen Build anführt, sieht vorher in
+  ihren Quelltext.
+- **Ein ESM-Import in blankem Node braucht die `.js`-Endung, tsc schreibt sie nicht.**
+  (Phase 20.3-b1) Mit `moduleResolution: bundler` bleibt `from './konto'` stehen, weil
+  tsc davon ausgeht, dass ein Bundler folgt. Node meldet `ERR_MODULE_NOT_FOUND` mit
+  einem Pfad, der **bis auf die fehlenden drei Zeichen richtig aussieht** — man liest
+  ihn dreimal, bevor man es sieht. In `60_konto.sh` erledigt das ein `sed` neben den
+  `@/`-Aliasen.
+- **Ein Prüfstand, der eigenes `node_modules` braucht, gehört INS Projekt.** (Phase
+  20.3-b1) `50_lesen.sh` baut nach `mktemp -d` und prüft ausdrücklich, dass kein
+  Laufzeit-Import von `supabase-js` übrig bleibt. `konten.ts` hat einen — der
+  Standardwert `sb = client()` zieht `lib/supabase.ts` und damit das Paket mit. Von
+  außerhalb des Projekts findet Node es nicht. Der Ausweg ist ein git-ignorierter Ordner
+  **im** Projekt (`.pruef-konto/`), nicht eine Attrappe für `client()`: Eine Nachbildung
+  im Prüfstand prüft die Nachbildung.
+- **Ein Screenshot beantwortet nicht, was man ihn fragt.** (2026-09-12) Auf dem
+  Prototyp-Bild stand am rechten Stapel-Knopf „Verstanden" statt „Bin dabei", und das
+  sah nach einer Regression aus. Es ist die ANLEITUNGSKARTE — deren rechter Knopf heißt
+  seit Phase 11 so (`WischStapel.tsx`, `oben.art === 'post'`). **Vor der Fehlersuche
+  nachlesen, welcher Zustand gerade gezeichnet ist**; dieselbe Familie wie „ein Bild,
+  das falsch aussieht, ist noch kein Fehler" (19e-2).
+- **Ein Playwright-Lock ist NICHT immer verwaist.** (2026-09-12) Die Fallen-Liste sagt
+  seit dem Vortag, `SingletonLock` löschen genüge. Diesmal liefen **12 echte Prozesse**,
+  und die PID im Lock zeigte auf einen davon — ein Browser aus einer früheren Sitzung.
+  **Erst `pgrep` gegen die PID im Lock halten, dann entscheiden**, ob man löscht oder
+  schließt.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

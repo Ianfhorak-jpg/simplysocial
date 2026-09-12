@@ -46,7 +46,8 @@
     "geraet": "bash scripts/geraet-bauen.sh",
     "asc": "python3 scripts/asc.py",
     "anon-key": "bash scripts/anon-key.sh",
-    "pruef-lesen": "bash supabase/pruefen/50_lesen.sh"
+    "pruef-lesen": "bash supabase/pruefen/50_lesen.sh",
+    "pruef-konto": "bash supabase/pruefen/60_konto.sh"
   },
   "private": true
 }

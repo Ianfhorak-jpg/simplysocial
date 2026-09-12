@@ -7,10 +7,12 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Anmelden } from '@/components/Anmelden';
+import { ErstesKonto } from '@/components/ErstesKonto';
 import { LadeSchirm } from '@/components/LadeSchirm';
 import { PrototypHinweis } from '@/components/PrototypHinweis';
 import { BRAND } from '@/config/brand';
-import { useSitzung } from '@/features/auth/hooks';
+import { torwaechterZeigt } from '@/features/auth/anmeldung';
+import { sitzungWiederherstellen, useSitzung } from '@/features/auth/hooks';
 import { datenHolen, useSlice } from '@/features/store';
 import { realtimeStarten, realtimeStoppen } from '@/data/realtime';
 import { client, LIEST_AUS_SUPABASE } from '@/lib/supabase';
@@ -51,10 +53,26 @@ import { colors } from '@/theme';
  */
 export default function RootLayout() {
   useTabTitel();
-  const angemeldet = useSitzung().zustand === 'an';
+  const sitzung = useSitzung();
+  // **NICHT `zustand === 'an'`.** Seit 20.3-b1 hat `Sitzung` vier Glieder, und ein
+  // Vergleich hier hätte die zwei neuen still in den Anmelde-Zweig fallen lassen —
+  // die Phase-16-Lehre (eine Lockerung meldet der Compiler nicht). Die Enge steht
+  // deshalb in `torwaechterZeigt()`: ein erschöpfender `switch` mit `never`.
+  const zeigt = torwaechterZeigt(sitzung);
+  const angemeldet = zeigt === 'app';
   const laden = useSlice('laden');
+  useSitzungLesen();
   useDatenLaden(angemeldet);
-  useStartFlaecheWeg(laden.zustand !== 'laeuft');
+  // **NICHT `laden.zustand !== 'laeuft'`.** Bis 20.4-b war das richtig, weil es
+  // mit `'supabase'` gar keinen ausgeloggten Zustand gab. Jetzt gibt es ihn — und
+  // ohne Anmeldung wird NIE geladen, `laden` bleibt also für immer auf `'laeuft'`.
+  // Die Abdeckung aus `+html.tsx` ginge nie weg, und der Anmelde-Bildschirm läge
+  // fertig gezeichnet darunter. Am Bild sieht das aus wie eine hängende App;
+  // gemessen am 2026-09-12 beim ersten Umlegen des Schalters.
+  //
+  // Die Frage ist nicht „sind die Daten da?", sondern **„steht etwas zum
+  // Anschauen?"** — und das ist bei drei der vier Torwächter-Zustände sofort so.
+  useStartFlaecheWeg(zeigt !== 'wartet' && (zeigt !== 'app' || laden.zustand !== 'laeuft'));
 
   return (
     <SafeAreaProvider>
@@ -68,8 +86,17 @@ export default function RootLayout() {
               überdeckt zu werden: Ein Screen im Baum zeichnet, und ein Feed mit
               neun leeren Listen sagt „Noch nichts los in deinem Feed" — genau der
               Satz, den Ians Entscheidung 43 verbietet. */}
-          {!angemeldet ? (
+          {zeigt === 'wartet' ? (
+            // Es wird noch nachgesehen, ob eine Sitzung liegt. Bewusst NICHTS —
+            // auf Web deckt `#ss-start` aus `+html.tsx`, auf Native der Splash.
+            // Ein eigenes Wartebild wäre ein zweites über dem ersten.
+            null
+          ) : zeigt === 'anmelden' ? (
             <Anmelden />
+          ) : zeigt === 'erstes-konto' ? (
+            // `authId` kommt aus dem ZUSTAND und nicht aus einem Haken im Screen:
+            // Nur hier ist typsicher bekannt, dass es sie gibt.
+            <ErstesKonto authId={sitzung.zustand === 'neu' ? sitzung.authId : ''} />
           ) : laden.zustand === 'fehler' ? (
             <LadeSchirm fehler={laden.fehler} nochmal={datenHolen} />
           ) : laden.zustand === 'laeuft' ? (
@@ -195,3 +222,22 @@ const styles = StyleSheet.create({
   // mehr weg. `flex: 1` bleibt trotzdem richtig, nur die Begründung ist eine andere.
   buehne: { flex: 1 },
 });
+
+/**
+ * Beim Start einmal nachsehen, ob noch eine Sitzung liegt — Phase 20.3-b1.
+ *
+ * ── Warum ein Effekt und kein Aufruf in `store.ts` ───────────────────────────
+ * Weil es NETZ braucht. `store.ts` baut seinen Anfangszustand beim Laden der Datei
+ * auf; dort kann nichts warten, und deshalb beginnt die Sitzung auf `'unbekannt'`.
+ *
+ * ── Die leere Abhängigkeitsliste ist Absicht ─────────────────────────────────
+ * Genau EINMAL je Start. Hinge der Effekt an der Sitzung, liefe er nach jedem
+ * Anmelden erneut und überschriebe das Ergebnis mit demselben — und nach jedem
+ * ABMELDEN würde er nachsehen, ob nicht doch noch jemand da ist. Das ist keine
+ * Theorie: `abmelden()` setzt die Sitzung, und ein Effekt darauf ist ein Kreis.
+ */
+function useSitzungLesen() {
+  useEffect(() => {
+    void sitzungWiederherstellen();
+  }, []);
+}

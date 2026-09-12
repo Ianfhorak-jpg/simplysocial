@@ -67,3 +67,4 @@ db-url
 .env
 .env.*
 !.env.example
+.pruef-konto/

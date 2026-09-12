@@ -205,7 +205,16 @@ let state: AppState = {
  */
 function startSitzung(): Sitzung {
   if (ANMELDE_QUELLE === 'attrappe') return attrappeSitzung();
-  return { zustand: 'aus' };
+  // **NICHT `'aus'`** — seit 20.3-b1 kann eine Sitzung gespeichert sein, und ob sie
+  // noch gilt, weiß nur der Server. Diese Datei baut ihren Anfangszustand beim
+  // LADEN auf, hier kann also nichts warten; aufgelöst wird er von
+  // `sitzungWiederherstellen()` aus `features/auth/hooks.ts`.
+  //
+  // Stünde hier `'aus'`, sähe jeder mit gespeicherter Sitzung beim Öffnen für einen
+  // Lidschlag den Anmelde-Bildschirm — und das ist derselbe Fehler wie neun leere
+  // Listen mit `laden.zustand === 'da'`: „ist nichts" und „kommt noch" dürfen nicht
+  // gleich aussehen.
+  return { zustand: 'unbekannt' };
 }
 
 /**
