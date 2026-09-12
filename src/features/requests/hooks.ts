@@ -4,7 +4,8 @@ import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
 import { mitChatFuerTreffen } from '../chat/logic';
 import { istBlockiert } from '../safety/hooks';
 import { useUserMap } from '../social/hooks';
-import { aendern, neueId, useSlice } from '../store';
+import { getState, neueId, schreibVorgang, useSlice } from '../store';
+import * as senden from '@/data/senden';
 
 import { kollidiert, zaehltAlsTermin, type Termin } from './kollision';
 import { istDannVoll, postNachBestaetigung, uebrigeAnfragenBeiVollemPost } from './logic';
@@ -34,16 +35,18 @@ export function useMeineAnfrage(postId: string | undefined): JoinRequest | undef
  * nichts neu, sie ändert nur den Speicher. Die Screens, die davon betroffen sind,
  * erfahren es über ihre Haken von selbst.
  */
-export function anfrageSenden(postId: string, message: string): void {
+export function anfrageSenden(postId: string, message: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => {
-    // Doppelt drücken darf keine zweite Anfrage erzeugen — auf Web ist ein
-    // Doppelklick schnell passiert.
-    const schonDa = alt.joinRequests.some(
-      (a) => a.postId === postId && a.fromUserId === ichId,
-    );
-    if (schonDa) return {};
+  // Doppelt drücken darf keine zweite Anfrage erzeugen — auf Web ist ein Doppelklick
+  // schnell passiert. Die Prüfung ist aus dem `aendern` herausgewandert und steht
+  // jetzt DAVOR: Sonst liefe der Schreibvorgang trotzdem los und liefe in `23505`
+  // (`unique (post_id, from_user_id)` in 0001) — ein Fehler für etwas, das in
+  // Ordnung ist.
+  if (getState().joinRequests.some((a) => a.postId === postId && a.fromUserId === ichId)) {
+    return Promise.resolve();
+  }
 
+  return schreibVorgang('anfrageSenden', postId, (alt) => {
     // Phase 7: Steht ein Block dazwischen, entsteht keine Anfrage. Der Screen bietet
     // den Knopf gar nicht erst an — diese Prüfung ist das Netz darunter, für den Fall,
     // dass jemand den Post über einen direkten Link öffnet und der Screen ihn wegen
@@ -63,17 +66,22 @@ export function anfrageSenden(postId: string, message: string): void {
       createdAt: new Date().toISOString(),
     };
     return { joinRequests: [...alt.joinRequests, neu] };
-  });
+  }, (sb) => senden.anfrageSenden(sb, postId, message, ichId));
 }
 
 /** Anfrage zurückziehen, solange sie noch nicht bestätigt ist. */
-export function anfrageZuruecknehmen(postId: string): void {
+export function anfrageZuruecknehmen(postId: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => ({
-    joinRequests: alt.joinRequests.filter(
-      (a) => !(a.postId === postId && a.fromUserId === ichId && a.status === 'pending'),
-    ),
-  }));
+  return schreibVorgang(
+    'anfrageZuruecknehmen',
+    postId,
+    (alt) => ({
+      joinRequests: alt.joinRequests.filter(
+        (a) => !(a.postId === postId && a.fromUserId === ichId && a.status === 'pending'),
+      ),
+    }),
+    (sb) => senden.anfrageZuruecknehmen(sb, postId, ichId),
+  );
 }
 
 /**
@@ -205,9 +213,14 @@ export function useGesendeteAnfragen(): AnfrageEintrag[] {
  * getrennte Aufrufe hätten dazwischen einen Zustand, in dem die Anfrage schon
  * bestätigt, der Platz aber noch frei ist — und React würde ihn zeichnen.
  */
-export function anfrageBestaetigen(anfrageId: string): void {
+export function anfrageBestaetigen(anfrageId: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => {
+  // **Die teuerste der acht wartenden Aktionen.** Die zwei Netze hier unten sind
+  // gegen zwei Klicks DERSELBEN Person richtig und gegen zwei gleichzeitige
+  // Verbindungen wirkungslos — das ist gemessen (`30_wettlauf.sh`), nicht überlegt.
+  // Mit Supabase entscheidet `anfrage_bestaetigen()` mit `select … for update`, und
+  // genau deshalb darf der Bildschirm das Ergebnis nicht vorwegnehmen.
+  return schreibVorgang('anfrageBestaetigen', anfrageId, (alt) => {
     const anfrage = alt.joinRequests.find((a) => a.id === anfrageId);
     if (!anfrage || anfrage.status !== 'pending') return {};
 
@@ -239,7 +252,7 @@ export function anfrageBestaetigen(anfrageId: string): void {
       posts: alt.posts.map((p) => (p.id === post.id ? neuerPost : p)),
       chatThreads: mitChatFuerTreffen(alt.chatThreads, post.id, post.authorId, anfrage.fromUserId),
     };
-  });
+  }, (sb) => senden.anfrageBestaetigen(sb, anfrageId));
 }
 
 /**
@@ -249,12 +262,17 @@ export function anfrageBestaetigen(anfrageId: string): void {
  * anfühlen, und eine Absage ist nichts Unwiderrufliches — der andere kann erneut
  * anfragen, solange Plätze frei sind.
  */
-export function anfrageAblehnen(anfrageId: string): void {
-  aendern((alt) => ({
-    joinRequests: alt.joinRequests.map((a) =>
-      a.id === anfrageId && a.status === 'pending' ? { ...a, status: 'declined' as const } : a,
-    ),
-  }));
+export function anfrageAblehnen(anfrageId: string): Promise<void> {
+  return schreibVorgang(
+    'anfrageAblehnen',
+    anfrageId,
+    (alt) => ({
+      joinRequests: alt.joinRequests.map((a) =>
+        a.id === anfrageId && a.status === 'pending' ? { ...a, status: 'declined' as const } : a,
+      ),
+    }),
+    (sb) => senden.anfrageAblehnen(sb, anfrageId),
+  );
 }
 
 // ── Phase 18d: zwei Sachen gleichzeitig ──────────────────────────────────────

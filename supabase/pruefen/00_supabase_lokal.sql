@@ -50,6 +50,29 @@ end $$;
 grant usage on schema public to anon, authenticated;
 grant usage on schema auth  to anon, authenticated;
 
+-- ── Und was Supabase SONST NOCH mitbringt, ohne dass es jemand hinschreibt ───
+--
+-- ⚠️ **Gefunden am 2026-09-12, beim ersten Lauf von `70_schreiben.sh`, und es ist
+-- der teuerste Unterschied zwischen dieser Attrappe und dem Original.**
+--
+-- Ein echtes Supabase-Projekt trägt für das Schema `public` eine Voreinstellung
+-- (`alter default privileges`), die JEDER neuen Tabelle automatisch ALLE Rechte an
+-- `anon`, `authenticated` und `service_role` gibt. Gemessen, nicht gelesen:
+--
+--     group_members   lokal: SELECT
+--     group_members   echt : DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+--
+-- **Damit wirkt harte Regel 70 an den zwei Orten verschieden.** Lokal sperrt der
+-- fehlende Grant, und er sperrt LAUT (`42501`). Am Original sperrt nur die
+-- fehlende Policy — und bei DELETE und UPDATE heißt das **null Zeilen, still**.
+-- Beides schützt; aber wer lokal prüft, misst die falsche Sorte Sperre.
+--
+-- Das ist die Attrappen-Falle vom 2026-09-06 in ihrer scharfen Form: *Eine
+-- Nachbildung, die WENIGER mitbringt als das Original, lässt eine Messung
+-- durchgehen, die am Original falsch ist.* Deshalb bringt sie es ab heute mit —
+-- und `0007_rechte.sql` nimmt es beiden gleichermaßen wieder weg.
+alter default privileges in schema public grant all on tables to anon, authenticated;
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Die Realtime-Publication — nachgetragen am 2026-09-12 für Migration 0005.
 --

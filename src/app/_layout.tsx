@@ -2,19 +2,23 @@ import '../global.css';
 
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+// `AppState` heißt in React Native genauso wie der Typ des eigenen Speichers.
+// Umbenannt statt verwechselt: Ein `AppState` in dieser Datei wäre sonst je nach
+// Importzeile etwas anderes.
+import { AppState as RnAppState, Platform, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Anmelden } from '@/components/Anmelden';
 import { ErstesKonto } from '@/components/ErstesKonto';
 import { LadeSchirm } from '@/components/LadeSchirm';
+import { SchreibFehlerLeiste } from '@/components/SchreibFehler';
 import { PrototypHinweis } from '@/components/PrototypHinweis';
 import { BRAND } from '@/config/brand';
 import { torwaechterZeigt } from '@/features/auth/anmeldung';
 import { sitzungWiederherstellen, useSitzung } from '@/features/auth/hooks';
-import { datenHolen, useSlice } from '@/features/store';
-import { realtimeStarten, realtimeStoppen } from '@/data/realtime';
+import { datenHolen, useSchreibStand, useSlice, type LadeStand } from '@/features/store';
+import { NACHLADEN, realtimeStarten, realtimeStoppen } from '@/data/realtime';
 import { client, LIEST_AUS_SUPABASE } from '@/lib/supabase';
 import { colors } from '@/theme';
 
@@ -61,8 +65,10 @@ export default function RootLayout() {
   const zeigt = torwaechterZeigt(sitzung);
   const angemeldet = zeigt === 'app';
   const laden = useSlice('laden');
+  const schreiben = useSchreibStand();
   useSitzungLesen();
   useDatenLaden(angemeldet);
+  useNachladenBeimHervorholen(angemeldet, laden.zustand);
   // **NICHT `laden.zustand !== 'laeuft'`.** Bis 20.4-b war das richtig, weil es
   // mit `'supabase'` gar keinen ausgeloggten Zustand gab. Jetzt gibt es ihn — und
   // ohne Anmeldung wird NIE geladen, `laden` bleibt also für immer auf `'laeuft'`.
@@ -114,6 +120,13 @@ export default function RootLayout() {
             />
           )}
         </View>
+        {/* Ein gescheiterter Schreibvorgang — Phase 20.5. Er steht HIER und nicht in
+            den vierzehn Screens, aus demselben Grund wie der Ladezustand: Alle 22
+            Aktionen enden in demselben Feld, und eine Leiste je Screen wären
+            vierzehn Gelegenheiten, eine zu vergessen. Der Bildschirm darunter ist
+            schon wieder richtig — `schreibVorgang` hat nachgeladen, und das
+            Nachladen IST die Rücknahme. */}
+        {schreiben.zustand === 'fehler' ? <SchreibFehlerLeiste fehler={schreiben.fehler} /> : null}
         {/* NACH der Bühne und damit darüber: Das Vollbild überdeckt, statt den Inhalt
             zu schieben — sonst wackelt beim Wegdrücken der ganze Bildschirm. Und es
             liegt ÜBER der Tab-Leiste, was seit Entscheidung 48 kein Preis mehr ist,
@@ -175,10 +188,16 @@ function useDatenLaden(angemeldet: boolean) {
     let abgebaut = false;
     void datenHolen().then(() => {
       if (abgebaut) return;
-      // Erst NACH dem ersten Laden zuhören. Andersherum käme ein Anstoß an, während
-      // die dreizehn Abfragen noch unterwegs sind — der Wächter in `datenHolen()`
-      // verwirft ihn dann stillschweigend, und die Änderung wäre verloren, bis die
-      // nächste kommt. Ein Fehler, den man nur in der ersten Sekunde treffen kann.
+      // Erst NACH dem ersten Laden zuhören — sonst käme ein Anstoß an, während die
+      // dreizehn Abfragen noch unterwegs sind.
+      //
+      // ⚠️ **Hier stand bis 20.5, der Wächter in `datenHolen()` verwerfe so einen
+      // Anstoß stillschweigend. Das stimmt seit 20.5 nicht mehr** — er merkt ihn
+      // sich jetzt (`nochmalHolen`) und holt die Runde nach. Der Grund für die
+      // Reihenfolge bleibt trotzdem: Eine zweite volle Abfragerunde in der ersten
+      // Sekunde ist sechsundzwanzig Abfragen für nichts. Berichtigt statt
+      // stehengelassen — ein Kommentar, der eine Zusage begründet, veraltet
+      // lautlos (die Lehre vom 2026-09-12).
       realtimeStarten(client(), () => void datenHolen());
     });
     return () => {
@@ -186,6 +205,40 @@ function useDatenLaden(angemeldet: boolean) {
       realtimeStoppen(client());
     };
   }, [angemeldet]);
+}
+
+/**
+ * Nachladen, wenn die App wieder nach vorn kommt — Ians 47. Entscheidung.
+ *
+ * ── Warum `AppState` von React Native und kein `visibilitychange` ────────────
+ * Es gibt beides nur EINMAL, und `react-native-web` setzt `AppState` auf genau
+ * jenes `visibilitychange` um. Ein eigener Web-Zweig wäre eine zweite Fassung
+ * derselben Sache — dieselbe Überlegung, aus der `SsIcon` einen Zeichner hat und
+ * `SsKarte` zwei: Hier tun beide Plattformen dasselbe.
+ *
+ * ── Warum auf `'active'` und nicht auf jeden Wechsel ─────────────────────────
+ * iOS kennt `'inactive'` — den Augenblick beim Hochziehen des Kontrollzentrums,
+ * beim Anruf, beim App-Umschalter. Das ist kein Weggehen und kein Wiederkommen;
+ * wer darauf lädt, lädt beim Vorbeiwischen.
+ *
+ * ── Und warum das den Fehlerfall NICHT anfasst ───────────────────────────────
+ * Steht `laden` auf `'fehler'`, liegt Ians Vollbild-Kasten aus Entscheidung 43
+ * davor, und der Weg heraus ist SEIN Knopf. Ein Nachladen im Hintergrund würde
+ * daran vorbei entweder still heilen (dann stand der Kasten grundlos da) oder
+ * still scheitern. `datenHolen()` setzt den Zustand ohnehin auf `'laeuft'` —
+ * hier wird deshalb nur geladen, wenn schon etwas dasteht.
+ */
+function useNachladenBeimHervorholen(angemeldet: boolean, zustand: LadeStand['zustand']) {
+  useEffect(() => {
+    if (!LIEST_AUS_SUPABASE || !angemeldet) return;
+    if (NACHLADEN === 'nie') return;
+    const abo = RnAppState.addEventListener('change', (neu) => {
+      if (neu !== 'active') return;
+      if (zustand !== 'da') return;
+      void datenHolen();
+    });
+    return () => abo.remove();
+  }, [angemeldet, zustand]);
 }
 
 /**

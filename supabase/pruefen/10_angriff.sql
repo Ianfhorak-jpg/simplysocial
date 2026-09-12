@@ -344,3 +344,62 @@ begin;
     end if;
   end $$;
 rollback;
+
+\echo '── 0006: eine Beitritts-Anfrage zurückziehen ────────────────────────────'
+
+-- Die Zeile entsteht in JEDEM Block neu, statt in `05_daten.sql` zu stehen: Dort
+-- läge sie bis zum Ende herum, und `20_transaktionen.sql` legt dieselbe Anfrage
+-- für seine eigene Prüfung an — mit fester ID, also als Schlüsselkonflikt.
+-- Noras Gruppe (`bbbb…`) ist die einzige mit `offen = true`; ohne sie gäbe es
+-- gar keine Anfrage zu prüfen (die 18d-Lehre).
+
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333"}';
+  insert into group_requests (id, group_id, from_user_id, message)
+    values ('0d000002-0000-0000-0000-000000000002','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+            '33333333-3333-3333-3333-333333333333','Darf ich dazu?');
+  -- Mara hat die Anfrage gestellt, Mara zieht sie zurück. Bis 0006 ging das GAR
+  -- NICHT: kein delete-Recht, und die einzige update-Policy lässt nur den Gründer
+  -- durch. Ein Knopf, der seit Phase 17 in der App steht, ohne Weg am Server.
+  delete from group_requests where id = '0d000002-0000-0000-0000-000000000002';
+  select case when count(*) = 0 then '  ✓ ' else '  ✗ GEHT NICHT — ' end
+      || 'Mara kann ihre eigene Beitritts-Anfrage zurückziehen'
+    from group_requests where id = '0d000002-0000-0000-0000-000000000002';
+rollback;
+
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333"}';
+  insert into group_requests (id, group_id, from_user_id, message)
+    values ('0d000002-0000-0000-0000-000000000002','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+            '33333333-3333-3333-3333-333333333333','Darf ich dazu?');
+  -- Lea geht die Anfrage nichts an — sie sieht sie nicht einmal
+  -- (`gruppenanfrage_lesen`), und ein `delete` ohne sichtbare Zeile trifft nichts.
+  set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222"}';
+  delete from group_requests where id = '0d000002-0000-0000-0000-000000000002';
+  set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333"}';
+  select case when count(*) = 1 then '  ✓ ' else '  ✗ DURCHGELASSEN — ' end
+      || 'eine Fremde kann Maras Anfrage NICHT löschen'
+    from group_requests where id = '0d000002-0000-0000-0000-000000000002';
+rollback;
+
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333"}';
+  insert into group_requests (id, group_id, from_user_id, message)
+    values ('0d000002-0000-0000-0000-000000000002','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+            '33333333-3333-3333-3333-333333333333','Darf ich dazu?');
+  -- **Das ist die Prüfung, auf die es ankommt.** Die GRÜNDERIN sieht die Anfrage
+  -- (`gruppenanfrage_lesen`) und darf sie beantworten (`gruppenanfrage_beantworten`)
+  -- — zurückziehen kann sie trotzdem nur, wer sie gestellt hat. Ohne diesen Fall
+  -- wäre `from_user_id = auth.uid()` von einem blanken `true` nicht zu unterscheiden,
+  -- denn die zwei Prüfungen darüber liefen auch bei offener Tür grün bzw. an der
+  -- Lesesperre.
+  set local request.jwt.claims = '{"sub":"55555555-5555-5555-5555-555555555555"}';
+  delete from group_requests where id = '0d000002-0000-0000-0000-000000000002';
+  set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333"}';
+  select case when count(*) = 1 then '  ✓ ' else '  ✗ DURCHGELASSEN — ' end
+      || 'die Gründerin kann eine fremde Anfrage nicht löschen (nur beantworten)'
+    from group_requests where id = '0d000002-0000-0000-0000-000000000002';
+rollback;

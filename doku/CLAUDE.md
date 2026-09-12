@@ -35,6 +35,65 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > 🔗 **Landing-Page: https://ianfhorak-jpg.github.io/simplysocial-landing/**
 > (Code: `landing/` · kein Build, `git push` genügt)
 
+✅ **Phase 20.5 ist FERTIG (2026-09-12): die App SCHREIBT wirklich nach Supabase — und
+der Prototyp merkt davon nichts.** Alle 22 Schreib-Aktionen gehen über `data/senden.ts`;
+zwei neue Entscheidungen von Ian (**46**: wie sich ein Knopf beim Schreiben verhält ·
+**47**: Nachladen beim Hervorholen), zwei neue Migrationen. `npm run pruef-schreiben` —
+**49 Häkchen, kein Kreuz am ECHTEN Server**, danach ist die Datenbank wieder sauber.
+Lokal **124 statt 121 Häkchen**, `pruef-lesen` und `pruef-konto` weiter 29/29, `tsc`
+sauber, **81 Lint-Probleme wie vorher**, Prototyp auf 390 × 844 **Pixel für Pixel
+identisch**. Preis: **+3.920 B gzip (+0,80 %)** auf 490.790 B. Sieben Dinge sind
+wichtiger als die 22 Aktionen:
+
+1. **Der teuerste Fund war eine ZUSAGE, die am echten Server NIE GALT.** Der Fuß von
+   `0002_policies.sql` ist eine Rechteliste, und auf ihr steht das halbe Gebäude dieses
+   Projekts — harte Regel 55, harte Regel 70, die Begründung für die sieben Funktionen
+   in 0004. Gemessen: `group_members` lokal **SELECT**, echt
+   **DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE**. Supabase trägt für
+   `public` eine Voreinstellung (`alter default privileges`), die jeder neuen Tabelle
+   ALLE Rechte an `anon` und `authenticated` gibt; unsere `grant`-Zeilen kommen danach
+   und fügen nur hinzu. **Offen war deswegen nichts** — RLS weist auch mit Grant ab.
+   **Was sich unterscheidet, ist die ART der Abweisung, und die ist hier alles:** ein
+   fehlender GRANT meldet `42501`, **laut**; eine fehlende POLICY liefert bei DELETE und
+   UPDATE **null Zeilen ohne jeden Fehler — still.** Genau so ist es aufgefallen:
+   `beitrittZuruecknehmen` löschte am echten Server nichts und meldete nichts. Behoben in
+   `0007_rechte.sql`; nachgemessen **`anon` 0 Rechte, `authenticated` 34** an beiden Orten.
+2. **Und die Attrappe war schuld, dass es niemand sah.** `00_supabase_lokal.sql` bringt
+   die Voreinstellung jetzt MIT. Die Gegenprobe ist der Beleg: **Ohne 0007 sieht die
+   Wegwerf-Datenbank seither genauso aus wie der echte Server vorher** — `anon` mit 91
+   Grants. Die Attrappen-Falle vom 2026-09-06 in ihrer schärfsten Form.
+3. **Die Rechteliste hat zum ZWEITEN Mal die Arbeitsliste geschrieben — diesmal fand sie
+   eine LÜCKE.** `beitrittZuruecknehmen` hatte am Server gar keinen Weg: kein
+   delete-Recht auf `group_requests`, und die einzige update-Policy lässt nur den
+   Gründer durch. **Der Knopf steht seit Phase 17 in der App.** Harte Regel 70 verlangt
+   dort die Frage *Zusage oder Lücke?* — bei `group_members` ist es eine Zusage, hier
+   eine Lücke, weil die Schwestertabelle `join_requests` es kann. `0006_zuruecknehmen.sql`.
+4. **„Zurückrollen" gibt es in dieser Phase NICHT, und das ist der Entwurf.** Der
+   naheliegende Weg wären 22 Umkehrfunktionen gewesen — 22 Gelegenheiten, eine falsch zu
+   schreiben. **Stattdessen wird NACHGELADEN: Das Nachladen IST die Rücknahme.** Damit
+   sagt keine einzige Stelle voraus, was der Server tun wird — genau der Einwand, an dem
+   Möglichkeit B gescheitert ist.
+5. **Der wichtigste einzelne Knopf steht im Anfragen-Tab.** Er bestätigte UND sprang
+   sofort aufs Konfetti. Am Server entscheidet `anfrage_bestaetigen()` mit
+   `select … for update`; dass zwei gleichzeitige Bestätigungen ohne die Sperre BEIDE
+   durchgehen, ist seit 20.5-SQL gemessen. **Ein Konfetti, das zurückspringt, wäre der
+   übelste denkbare Fehler dieser App.**
+6. **Drei Prüfungen sind beim Umbau ROT geworden, und das war ihr Zweck.** „anon bekommt
+   HTTP 200 · und NULL Posts · RLS filtert, es verweigert nicht" — das stimmte aus dem
+   falschen Grund (Punkt 1). `0002` enthält keine Zeile `to anon`; die Regel lautet
+   **„anon kommt gar nicht erst heran"**, und seit 0007 gilt sie.
+7. **Ein schreibender Prüfstand muss aufräumen, was er beim Start noch nicht kennt.**
+   Der Server vergibt IDs. Besonders übel: eine Gruppe, die der Lauf gründet und dann
+   VERLÄSST — danach ist `creator_id` vererbt oder `null`, und `52_abraeumen.sql` findet
+   Gruppen über ihren Gründer. Nach Entscheidung 45 darf er auch nicht „alle Gruppen ohne
+   Chef" löschen. Also schreibt `70_schreiben.mjs` **jede erzeugte ID sofort mit** — bei
+   einem Sammeln bis zum Schluss wäre die Liste nach einem Abbruch leer, also genau dann,
+   wenn man sie braucht.
+
+⚠️ **Was 20.5 NICHT ist: der Schalter.** `ANMELDE_QUELLE` steht weiter auf `'attrappe'`;
+das Umlegen hängt unverändert an 20.3-b2 und an dem Prototyp-Hinweis, der „Es gibt
+keinen Login" behauptet (harte Regel 22, der Satz ist Ians).
+
 🎉 **Die Anmeldung LÄUFT — Ian hat sich am 2026-09-12 mit seiner eigenen Mailadresse
 am echten Supabase angemeldet.** Der erste echte Login in SimplySocial. Drei Befunde aus
 dem Durchgang, zwei davon meine Fehler, und **alle drei hätten ausgerechnet jeden NEUEN
@@ -1896,6 +1955,11 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    ~~**Anmelden, der E-Mail-Code (20.3-b1)**~~ ✅ *2026-09-12 am echten Server: echte
    Anmeldung per Code, vierter Sitzungszustand, Bildschirm fürs erste Konto
    (Entscheidung 44), 29 Häkchen — **ohne neuen Baustein und ohne Build*** ·
+   ~~**Schreiben, die App-Seite (20.5)**~~ ✅ *2026-09-12 am echten Server: alle 22
+   Schreib-Aktionen über `data/senden.ts`, Entscheidungen 46 und 47, zwei neue
+   Migrationen (0006, 0007), **49 Häkchen am echten Server** — und der Prototyp ist
+   Pixel für Pixel unverändert. **Dabei kam heraus, dass die Rechteliste aus 0002 am
+   echten Supabase nie galt** (harte Regel 85).* ·
    **Anmelden, Apple und Google (20.3-b2)** ← *hier geht es weiter — und es hängt an
    zwei Konten (Apple-Sign-in-Schlüssel, Google) plus den vier nativen Bausteinen in
    EINEM Build. **Davor liegt ein Zwei-Minuten-Klick von Ian**: Supabases Mail-Vorlage
@@ -2370,8 +2434,13 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    nicht als Nebenwirkung.
 
 57. **Was am Server gilt, wird ANGEGRIFFEN, nicht angeschaut.**
-   `bash supabase/pruefen/aufbauen.sh` — **erwartet sind 121 Häkchen und kein Kreuz**
-   (25 in 20.2, 78 nach 20.5, 121 seit 20.4-a). Jeder
+   `bash supabase/pruefen/aufbauen.sh` — **erwartet sind 124 Häkchen und kein Kreuz**
+   (25 in 20.2, 78 nach 20.5-SQL, 121 seit 20.4-a, 124 seit 0006).
+   **Dazu drei Prüfstände am ECHTEN Server, und die können etwas, das lokal
+   prinzipiell nicht geht:** `npm run pruef-lesen` (29) · `npm run pruef-konto` (29) ·
+   `npm run pruef-schreiben` (49, seit 20.5). Warum das nicht dasselbe ist, steht in
+   harter Regel 85 — die Wegwerf-Datenbank war bis zum 2026-09-12 STRENGER als das
+   Original. Jeder
    Block setzt `set local role authenticated` — **wer als `postgres` prüft, prüft
    nichts**, denn der Eigentümer einer Tabelle umgeht seine eigenen Policies. Und ein
    Test, der nur „ist fehlgeschlagen" abfragt, prüft zu wenig: Er muss `SQLSTATE =
@@ -2559,6 +2628,14 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    fehlender Grant verlangt eine Funktion, WENN etwas zu entscheiden ist. Beim
    `last_message_at` ist nichts zu entscheiden — dort wäre eine Funktion sogar
    schlechter, weil sie Ians `SCHREIB_REGEL` ein zweites Mal hinschreiben müsste.
+   ⚠️ **Und die Regel verlangt an jeder Stelle eine ANTWORT auf die Frage *Zusage oder
+   Lücke?* — beide kommen vor** (Phase 20.5, 2026-09-12). Bei `group_members` ist das
+   fehlende Insert-Recht eine Zusage; bei `group_requests` war das fehlende
+   delete-Recht eine **Lücke**, denn die Schwestertabelle `join_requests` kann es, und
+   der Knopf „Anfrage zurückziehen" steht seit Phase 17 in der App
+   (`0006_zuruecknehmen.sql`). Wer einen fehlenden Grant findet, sucht zuerst die
+   Schwestertabelle und dann den Knopf. **Und ob die Rechteliste überhaupt gilt, sagt
+   harte Regel 85** — am echten Supabase galt sie bis zum 2026-09-12 nicht.
 71. **Ein Sicherheitsnetz gegen den Doppelklick ist KEINES gegen zwei Verbindungen.**
    *(Phase 20.5.)* `anfrage_bestaetigen()` liest die Post-Zeile mit
    `select … for update`. Ohne die Sperre lesen zwei gleichzeitige Bestätigungen
@@ -2725,6 +2802,49 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Satz, der zum Zeitpunkt des Sperrens nicht mehr stimmte. Ein Kommentar, der eine
    Sicherheitszusage begründet, ist so viel wert wie eine Messung — nämlich keine,
    wenn er veraltet ist.
+
+84. **Was der Bildschirm macht, während geschrieben wird, steht in
+   `data/schreiben.ts` — und „Zurückrollen" gibt es nicht.** *(Ians Entscheidung 46,
+   Phase 20.5.)* Dieselbe Bauart wie `safety/block.ts` (17), `groups/gruppe.ts` (32),
+   `requests/kollision.ts` (46), `posts/standort.ts` (68), `auth/anmeldung.ts` (69),
+   `data/quelle.ts` (76) und `auth/konto.ts` (78): Screens lesen `SCHREIB_ANTWORT` nie,
+   sie fragen `useWartetAuf(aktion, marke)` und sehen sonst nur das Ergebnis.
+   **Der Trennstrich ist eine FRAGE und keine Liste von Ausnahmen:** *Kann die App das
+   Ergebnis selbst hinschreiben, ohne zu raten?* „Nein" hat zwei Gestalten — der Server
+   ENTSCHEIDET (ist noch ein Platz frei? wer erbt?), oder er VERGIBT eine ID, zu der
+   der Bildschirm springt. Acht Aktionen warten, vierzehn nicht; `EINORDNUNG` ist ein
+   `Record<SchreibAktion, …>`, **eine neue Aktion ohne Eintrag ist ein Typfehler** —
+   dieselbe Technik wie `IconName` (Phase 14) und `torwaechterZeigt()` (Regel 77).
+   **Und der wichtigste Teil ist, was NICHT dasteht:** Es gibt zu keiner der 22
+   Änderungen eine Umkehrfunktion. Geht ein Schreibvorgang schief, wird
+   **NACHGELADEN — das Nachladen IST die Rücknahme.** Wer hier ein „Rückgängig" baut,
+   schreibt 22 Vorhersagen über das Verhalten des Servers hin, und genau daran ist
+   Möglichkeit B gescheitert.
+85. **Am echten Supabase bekommt JEDE neue Tabelle in `public` alle Rechte — eine
+   Rechteliste gilt erst nach einem `revoke`.** *(Gemessen am 2026-09-12, Phase 20.5.)*
+   Supabase trägt dort eine Voreinstellung (`alter default privileges`) für `anon`,
+   `authenticated` und `service_role`; ein `grant` in einer Migration kommt danach und
+   **fügt nur hinzu**. Der Fuß von `0002_policies.sql` war deshalb am Original eine
+   Absichtserklärung — `group_members` hatte lokal `SELECT` und echt alles.
+   **Gefährlich ist nicht, dass etwas offen wäre** (RLS weist auch mit Grant ab),
+   sondern die Art der Abweisung: fehlender GRANT → `42501`, **laut**; fehlende POLICY
+   bei DELETE/UPDATE → **null Zeilen, still.** In diesem Projekt ist still die teure
+   Sorte. `0007_rechte.sql` nimmt alles weg und erteilt genau die Liste aus 0002 wieder;
+   `service_role` bleibt unangetastet. `einspielen.sh` misst die Zahlen nach
+   (**`anon` 0 · `authenticated` 34**). Und `00_supabase_lokal.sql` bringt die
+   Voreinstellung seither MIT — sonst prüft die Wegwerf-Datenbank etwas Strengeres als
+   das Original, und das ist die Attrappen-Falle vom 2026-09-06.
+86. **Ein Prüfstand, der SCHREIBT, schreibt jede erzeugte ID sofort mit.**
+   *(Phase 20.5, und es ist die Fortsetzung von harter Regel 83.)* Beim Lesen entstehen
+   keine Zeilen; beim Schreiben vergibt der SERVER sie (`gen_random_uuid()`), und die
+   stehen in keiner festen Liste. Der teure Fall ist eine Gruppe, die der Lauf gründet
+   und dann VERLÄSST: Danach ist `creator_id` vererbt oder `null` (Entscheidung 41),
+   und `52_abraeumen.sql` findet Gruppen über ihren Gründer — sie bliebe für immer in
+   der echten Datenbank liegen. **Der naheliegende Ausweg ist verboten:** „alle Gruppen
+   ohne Chef löschen" ist genau der Rundumschlag, den Entscheidung 45 am selben Tag
+   entfernt hat. Also `merken(art, id)` **unmittelbar nach dem Anlegen**, in eine Datei
+   ausserhalb von `$ARBEIT` — bei einem Sammeln bis zum Schluss wäre die Liste nach
+   einem Abbruch in der Mitte leer, also genau dann, wenn man sie braucht.
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
@@ -3581,6 +3701,35 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   frische Prozesse, je vier pro Seite, gaben die Antwort (8/8 grün, kein Unterschied).
   Dieselbe Lehre wie „ein Sortierer, den man nur in EINER Stellung sieht, ist nicht
   geprüft" (19h-1), nur auf den Prüfaufbau angewandt statt auf das Geprüfte.
+- **Ein `grant` in einer Migration NIMMT am echten Supabase nichts weg.** (Phase 20.5,
+  2026-09-12) Dort gilt für `public` eine Voreinstellung, die jeder neuen Tabelle alle
+  Rechte an `anon` und `authenticated` gibt; eine Migration fügt danach nur hinzu.
+  Gemessen: `group_members` lokal `SELECT`, echt alles. **Das Symptom war ein stilles
+  Nichts** — `beitrittZuruecknehmen` löschte am Server nichts und meldete nichts, weil
+  bei DELETE eine fehlende Policy null Zeilen ergibt statt eines Fehlers. Wer eine
+  Rechteliste durchsetzen will, braucht ein `revoke` davor (harte Regel 85).
+- **Ein Wächter, der auch Dateien prüft, die niemand öffnet, sperrt zu viel.**
+  (Phase 20.5) Die erste Fassung von `70_schreiben.sh` verlangte, dass in KEINER
+  gebauten Datei ein `@/`-Alias steht — und schlug an `mock.js` an. Die wird mitgebaut,
+  weil `laden.ts` über `import type { AppState }` bis `store.ts` reicht und **tsc alles
+  TYPPRÜFT, was es erreicht, auch das, was zur Laufzeit nie geladen wird.** Gefragt
+  werden jetzt die vier Dateien, die wirklich geladen werden, plus eine Gegenprobe, dass
+  `senden.js` und `laden.js` `mock` auch über keinen Umweg ziehen.
+- **Ein falscher Enum-Wert meldet sich als `22P02` und ist ein guter Beleg.**
+  (Phase 20.5) `level: 'egal'` statt `'any'` im Prüfstand — der Fehler kam nicht aus
+  TypeScript (das Prüfskript ist `.mjs`), sondern aus Postgres, durch PostgREST hindurch.
+  **Damit war nebenbei belegt, dass die ganze Kette wirklich steht**, bevor die erste
+  richtige Messung lief.
+- **Ein Playwright-Lock ist NICHT immer verwaist — und diesmal war es keines.**
+  (2026-09-12, zweite Fassung) `pgrep` gegen die PID im `SingletonLock` fand einen
+  echten Chrome aus einer früheren Sitzung. Geschlossen statt gelöscht; danach lief es.
+  **Erst messen, dann entscheiden, ob man löscht oder schliesst.**
+- **Zwei Screenshots im gleichen Zustand vergleichen, nicht zwei Screenshots.**
+  (Phase 20.5) Der erste Vergleich meldete „das ganze Bild ist anders" — der eine zeigte
+  den Prototyp-Hinweis beim ersten Öffnen, der andere den Stapel danach. Nach einem
+  Klick auf „Verstanden" war die Bounding-Box der Unterschiede **leer**. Dieselbe Familie
+  wie „ein Screenshot beantwortet nicht, was man ihn fragt" — hier lag es nicht an der
+  Fassung, sondern am ZUSTAND.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

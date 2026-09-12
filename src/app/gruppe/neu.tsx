@@ -13,6 +13,7 @@ import {
   SsSegment,
   SsText,
 } from '@/components/ui';
+import { useWartetAuf } from '@/features/store';
 import { kategorieVorschlag, mitgliederText, NEUE_GRUPPE_OFFEN } from '@/features/groups/gruppe';
 import { gruppeErstellen } from '@/features/groups/hooks';
 import { useCurrentUser } from '@/features/social/hooks';
@@ -50,6 +51,10 @@ export default function GruppeNeuScreen() {
   // Phase 12 mit `STANDARD.plaetze`).
   const [offen, setOffen] = useState<boolean>(NEUE_GRUPPE_OFFEN);
   const [geprueft, setGeprueft] = useState(false);
+  // Die Marke ist `'neu'` — beim Anlegen gibt es noch nichts, worauf sie zeigen
+  // könnte (siehe `SchreibStand` in `features/store.ts`).
+  const wartet = useWartetAuf('gruppeErstellen', 'neu');
+
 
   const nameSauber = name.trim();
   const bezirkLeer = bezirk.trim() === '';
@@ -64,17 +69,25 @@ export default function GruppeNeuScreen() {
   const allesOk = Object.values(fehler).every((f) => f === '');
   const zeigen = (feld: keyof typeof fehler) => (geprueft ? fehler[feld] : '');
 
-  function absenden() {
+  async function absenden() {
     setGeprueft(true);
     if (!allesOk) return;
 
-    const id = gruppeErstellen({
+    // Seit 20.5 ein `await`: Die ID vergibt `gruppe_gruenden()` am Server, und
+    // `/gruppe/<erfundene id>` wäre eine Gruppe, die es dort nicht gibt. Im
+    // Prototyp ist das Warten nachgemessen null.
+    const id = await gruppeErstellen({
       name: nameSauber,
       description: beschreibung,
       category: kategorie,
       district: bezirkLeer ? null : bezirk.trim(),
       offen,
     });
+
+    // Ohne ID ist es gescheitert — dann steht der Fehler auf dem Bildschirm, und
+    // wegzuspringen wäre das Falscheste: Das Formular wäre weg und die Gruppe nicht
+    // da. Dieselbe Überlegung wie im Erstellen-Screen.
+    if (!id) return;
 
     // `replace` wie beim Posten: Das halb ausgefüllte Formular soll nicht hinter der
     // fertigen Gruppe liegen bleiben.
@@ -181,7 +194,14 @@ export default function GruppeNeuScreen() {
         </SsText>
       </View>
 
-      <SsButton label="Gruppe erstellen" icon="personen" block size="lg" onPress={absenden} />
+      <SsButton
+        label="Gruppe erstellen"
+        icon="personen"
+        block
+        size="lg"
+        wartet={wartet}
+        onPress={() => void absenden()}
+      />
     </SsScreen>
   );
 }

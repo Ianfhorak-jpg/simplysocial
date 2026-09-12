@@ -39,6 +39,7 @@ import {
   useMitglieder,
   type EinladbarEintrag,
 } from '@/features/groups/hooks';
+import { useWartetAuf } from '@/features/store';
 import { useGruppenPosts } from '@/features/posts/hooks';
 import { useIstBlockiert } from '@/features/safety/hooks';
 import { useCurrentUser, useUser } from '@/features/social/hooks';
@@ -83,6 +84,7 @@ export default function GruppeScreen() {
   const meineAnfrage = useMeineGruppenAnfrage(id);
   const meineEinladung = useMeineEinladung(id);
   const einladbare = useEinladbare(gruppe);
+  const wartetVerlassen = useWartetAuf('gruppeVerlassen', id);
   // `?? undefined`, weil eine aufgelöste Gruppe keinen Gründer mehr hat
   // (`creator_id` steht dann auf `null`) — und `useUser` fragt nach einer ID oder
   // nach gar keiner, nicht nach „ausdrücklich keine“.
@@ -260,9 +262,11 @@ export default function GruppeScreen() {
                 variant="danger"
                 label="Ja, verlassen"
                 block
+                wartet={wartetVerlassen}
                 onPress={() => {
-                  gruppeVerlassen(gruppe.id);
-                  setFragt(false);
+                  // Warten, weil der Server entscheidet, WER ERBT (`nachfolgerId`
+                  // in `gruppe_verlassen()`, Ians Entscheidungen 13 und 41).
+                  void gruppeVerlassen(gruppe.id).then(() => setFragt(false));
                   // Nach dem Austritt zeigt dieser Screen die Außenseite — oder, wenn
                   // die Gruppe sich aufgelöst hat, die Nicht-mehr-da-Seite. Beides ist
                   // richtig, also bleibt man hier stehen.
@@ -334,6 +338,10 @@ function Aussenseite({
   setNachricht: (t: string) => void;
 }) {
   const huerde = beitrittHuerdeText(gruppe);
+  // Die Marke ist die Einladungs-ID; `einladungId` kann fehlen, dann gibt es hier
+  // auch keinen Knopf. Der Haken steht trotzdem bedingungslos da — Haken dürfen
+  // nicht hinter einem `if` liegen.
+  const wartetEinladung = useWartetAuf('einladungAnnehmen', einladungId ?? '');
 
   if (blockiert) {
     return (
@@ -369,9 +377,10 @@ function Aussenseite({
           category={gruppe.category}
           block
           size="lg"
-          onPress={() => einladungAnnehmen(einladungId)}
+          wartet={wartetEinladung}
+          onPress={() => void einladungAnnehmen(einladungId)}
         />
-        <SsButton label="Nein danke" block onPress={() => einladungAblehnen(einladungId)} />
+        <SsButton label="Nein danke" block onPress={() => void einladungAblehnen(einladungId)} />
       </View>
     );
   }

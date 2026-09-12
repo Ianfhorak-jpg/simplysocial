@@ -24,6 +24,7 @@ import {
 import { BRAND } from '@/config/brand';
 import { ALLE_LABEL, jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
 import { LEVEL_LABELS } from '@/config/categories';
+import { useWartetAuf } from '@/features/store';
 import { sichtbarkeitBauen } from '@/features/groups/gruppe';
 import { useMeineGruppen } from '@/features/groups/hooks';
 import { useKollisionen } from '@/features/requests/hooks';
@@ -292,6 +293,10 @@ export default function CreateScreen() {
   // Fehler erst nach dem ersten Versuch zu posten. Ein Formular, das einen anmeckert,
   // bevor man angefangen hat, liest sich wie ein Vorwurf.
   const [geprueft, setGeprueft] = useState(false);
+  // Die Marke ist `'neu'` — beim Anlegen gibt es noch nichts, worauf sie zeigen
+  // könnte (siehe `SchreibStand` in `features/store.ts`).
+  const wartet = useWartetAuf('postErstellen', 'neu');
+
 
   const meineGruppen = useMeineGruppen();
   /**
@@ -390,7 +395,7 @@ export default function CreateScreen() {
     return () => cancelAnimationFrame(id);
   }, [sprungZiel]);
 
-  function absenden() {
+  async function absenden() {
     setGeprueft(true);
 
     if (!allesOk) {
@@ -404,7 +409,11 @@ export default function CreateScreen() {
     }
     if (!kategorie || !startsAt || !sichtbarkeit) return;
 
-    const id = postErstellen({
+    // Seit 20.5 ein `await`: Die ID vergibt die Datenbank (`.select('id')` in
+    // `senden.ts`), und `/post/<erfundene id>` wäre „Diesen Post gibt es nicht
+    // mehr" — eine halbe Sekunde nach dem Schreiben. Im Prototyp ist das Warten
+    // nachgemessen null, `schreibVorgang` löst ohne Supabase sofort auf.
+    const id = await postErstellen({
       category: kategorie,
       title: titelSauber,
       district: bezirkLeer ? null : bezirk.trim(),
@@ -417,6 +426,12 @@ export default function CreateScreen() {
       meetingPoint: treffpunkt,
       visibility: sichtbarkeit,
     });
+
+    // Ohne ID ist der Schreibvorgang gescheitert — dann steht der Fehler aus
+    // `schreibFehlerFolgen()` auf dem Bildschirm, und wegzuspringen wäre das
+    // Falscheste: Der Entwurf wäre weg, und die Person stünde im Feed ohne ihren
+    // Post. Sie bleibt hier stehen und kann es noch einmal versuchen.
+    if (!id) return;
 
     // `replace` und nicht `push`: der halb ausgefüllte Erstellen-Screen soll nicht
     // hinter dem fertigen Post liegen bleiben. Zurück führt von dort in den Feed.
@@ -719,7 +734,14 @@ export default function CreateScreen() {
             {fehlerSatz(fehler)}
           </SsText>
         ) : null}
-        <SsButton label="Posten" icon="stift" block size="lg" onPress={absenden} />
+        <SsButton
+          label="Posten"
+          icon="stift"
+          block
+          size="lg"
+          wartet={wartet}
+          onPress={() => void absenden()}
+        />
       </View>
     </SsScreen>
   );

@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 
 import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
 import { useCurrentUser, useUserMap } from '../social/hooks';
-import { aendern, getState, neueId, useSlice } from '../store';
+import { getState, neueId, schreibVorgang, schreibVorgangMitId, useSlice } from '../store';
+import * as senden from '@/data/senden';
 
 import { ENTSTEHUNG, darfSchreiben, istDirektChat } from './direkt';
 import { chatZustand, type ChatZustand } from './lifecycle';
@@ -254,14 +255,22 @@ export function useChatZuPost(postId: string | undefined, gastId?: string): Chat
  * das hier ist das Netz darunter, weil der Knopf nicht der einzige Weg bleiben muss
  * (Enter-Taste, später eine Tastatur-Aktion auf iOS).
  */
-export function nachrichtSenden(threadId: string, text: string): void {
+export function nachrichtSenden(threadId: string, text: string): Promise<void> {
   const inhalt = text.trim();
-  if (!inhalt) return;
+  if (!inhalt) return Promise.resolve();
 
   const ichId = getCurrentUserId();
-  aendern((alt) => {
+  // **Diese Aktion ist der Grund, warum Möglichkeit C verworfen ist** (siehe
+  // `data/schreiben.ts`): Der Text steht sofort da, wie bei WhatsApp, und reist
+  // nebenher nach Irland. `last_message_at` zieht am Server der Trigger
+  // `nachricht_notiert` nach — hier steht dieselbe Zeit lokal, und das nächste
+  // Nachladen ersetzt sie durch die des Servers.
+  const faden = getState().chatThreads.find((t) => t.id === threadId);
+  if (!faden || !faden.participantIds.includes(ichId)) return Promise.resolve();
+
+  return schreibVorgang('nachrichtSenden', threadId, (alt) => {
     const thread = alt.chatThreads.find((t) => t.id === threadId);
-    if (!thread || !thread.participantIds.includes(ichId)) return {};
+    if (!thread) return {};
 
     const sentAt = new Date().toISOString();
     const neu: Message = {
@@ -276,7 +285,7 @@ export function nachrichtSenden(threadId: string, text: string): void {
       messages: [...alt.messages, neu],
       chatThreads: alt.chatThreads.map((t) => (t.id === threadId ? { ...t, lastMessageAt: sentAt } : t)),
     };
-  });
+  }, (sb) => senden.nachrichtSenden(sb, threadId, inhalt, ichId));
 }
 
 // ── Direktnachrichten (Phase 16) ─────────────────────────────────────────────
@@ -349,7 +358,7 @@ export function useDirektChat(id: string | undefined): ChatThread | undefined {
  *
  * `undefined` heißt „darf nicht" — der Screen navigiert dann einfach nicht.
  */
-export function direktChatOeffnen(id: string): string | undefined {
+export async function direktChatOeffnen(id: string): Promise<string | undefined> {
   const ichId = getCurrentUserId();
   const vorher = getState();
   const ich = vorher.users.find((u) => u.id === ichId);
@@ -366,13 +375,26 @@ export function direktChatOeffnen(id: string): string | undefined {
   );
   if (!darfSchreiben(ich, andere, schonGetroffen)) return undefined;
 
-  aendern((alt) => ({ chatThreads: mitDirektChat(alt.chatThreads, ichId, id) }));
-
-  // Nach dem Ändern nachsehen: `mitDirektChat` gibt entweder den vorhandenen Faden
-  // unverändert zurück oder legt einen an, und in beiden Fällen ist die gesuchte ID
-  // danach die eine passende in der Liste. Sie aus `neueId()` vorherzusagen wäre die
-  // Alternative — dann wüssten zwei Stellen, wie IDs entstehen.
-  return getState().chatThreads.find(
-    (t) => istDirektChat(t) && t.participantIds.includes(ichId) && t.participantIds.includes(id),
-  )?.id;
+  // **Eine der drei Aktionen, bei denen der Server eine ID VERGIBT** — der Screen
+  // springt gleich auf `/chat/<id>`. Deshalb `schreibVorgangMitId` und deshalb
+  // `'warten'`. Die Prüfung darüber bleibt trotzdem stehen: Sie ist Ians
+  // `SCHREIB_REGEL`, und `direktchat_oeffnen()` prüft sie am Server ein zweites Mal
+  // (harte Regel 70 — die Funktion umgeht mit `security definer` die Policies und
+  // darf sich deshalb auf nichts darunter verlassen).
+  const fadenId = await schreibVorgangMitId(
+    'direktChatOeffnen',
+    id,
+    (alt) => ({ chatThreads: mitDirektChat(alt.chatThreads, ichId, id) }),
+    (sb) => senden.direktChatOeffnen(sb, id),
+    // Im Prototyp: nach dem Ändern nachsehen. `mitDirektChat` gibt entweder den
+    // vorhandenen Faden unverändert zurück oder legt einen an, und in beiden Fällen
+    // ist die gesuchte ID danach die eine passende in der Liste. Sie aus `neueId()`
+    // vorherzusagen wäre die Alternative — dann wüssten zwei Stellen, wie IDs
+    // entstehen.
+    () =>
+      getState().chatThreads.find(
+        (t) => istDirektChat(t) && t.participantIds.includes(ichId) && t.participantIds.includes(id),
+      )?.id ?? '',
+  );
+  return fadenId || undefined;
 }

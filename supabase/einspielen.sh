@@ -1,6 +1,6 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════════
-#  Die fünf Migrationen in ein ECHTES Supabase-Projekt einspielen.
+#  Die sieben Migrationen in ein ECHTES Supabase-Projekt einspielen.
 #
 #  Aufruf:  npm run einspielen
 #
@@ -65,7 +65,7 @@ fi
 # diese Zahlen — dann gehören sie hier nachgezogen, nachdem `aufbauen.sh` wieder
 # grün ist. Eine Zahl, die niemand nachzieht, wird zur nächsten Vorhersage 19.4.
 ERWARTET_TABELLEN=13
-ERWARTET_POLICIES=33
+ERWARTET_POLICIES=34
 ERWARTET_RLS=13
 ERWARTET_REGEL_FN=6
 ERWARTET_PUBLIC_FN=9
@@ -79,6 +79,15 @@ ERWARTET_TRIGGER=1
 # passierte in Wien nichts.
 ERWARTET_REALTIME=11
 ERWARTET_REALTIME_VERBOTEN=0
+# Neu mit 0007 (Phase 20.5). **Der Wächter, der am nötigsten war:** Supabase gibt
+# jeder neuen Tabelle in `public` per Voreinstellung ALLE Rechte an `anon` und
+# `authenticated` — die Liste im Fuß von 0002 kam nur hinzu und nahm nichts weg.
+# Lokal fiel das nie auf, weil die Wegwerf-Datenbank diese Voreinstellung nicht
+# hatte (dieselbe Attrappen-Falle wie am 2026-09-06, und sie ist jetzt auch dort
+# eingebaut). Gezählt werden die Einträge aus `information_schema`, nicht die
+# Zeilen in der Datei — sonst prüfte sich die Datei selbst.
+ERWARTET_ANON_RECHTE=0
+ERWARTET_AUTH_RECHTE=34
 
 if [ ! -f "$URL_DATEI" ]; then
   cat <<HINWEIS
@@ -129,7 +138,7 @@ echo "✓ Schema 'storage' und Rolle 'service_role' sind da — das ist Supabase
 
 AUTHFN="$(frage "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='auth' and p.proname='uid';")"
 [ "$AUTHFN" = "1" ] && echo "✓ auth.uid() bringt Supabase selbst mit — die Attrappe bleibt, wo sie ist." \
-                    || { echo "✗ auth.uid() fehlt. Ohne sie wären alle 33 Policies still wirkungslos."; exit 1; }
+                    || { echo "✗ auth.uid() fehlt. Ohne sie wären alle 34 Policies still wirkungslos."; exit 1; }
 
 echo
 echo "── 2. Ist die Datenbank noch leer? ──"
@@ -158,13 +167,15 @@ if [ "$NUR_MESSEN" = "1" ] && [ -n "$NUR_DIESE" ]; then
 elif [ "$NUR_MESSEN" = "1" ]; then
   echo "── 3. Einspielen übersprungen (siehe oben) ──"
 else
-echo "── 3. Einspielen (alle fünf in EINER Transaktion) ──"
+echo "── 3. Einspielen (alle sieben in EINER Transaktion) ──"
 psql "$DB_URL" -v ON_ERROR_STOP=1 --single-transaction -q \
   -f "$HIER/migrations/0001_schema.sql" \
   -f "$HIER/migrations/0002_policies.sql" \
   -f "$HIER/migrations/0003_konto_loeschen.sql" \
   -f "$HIER/migrations/0004_transaktionen.sql" \
-  -f "$HIER/migrations/0005_realtime.sql" 2>&1 | filtern
+  -f "$HIER/migrations/0005_realtime.sql" \
+  -f "$HIER/migrations/0006_zuruecknehmen.sql" \
+  -f "$HIER/migrations/0007_rechte.sql" 2>&1 | filtern
 echo "✓ durchgelaufen — aber das ist noch kein Beleg."
 fi
 
@@ -199,6 +210,8 @@ mess "Realtime-Tabellen"  "select count(*) from pg_publication_tables where pubn
 # daneben statt in ihr: Wer `blocks` gegen `follows` tauscht, bleibt bei elf. Beim
 # Bauen von 0005 hing die Gegenprobe zuerst am Zähler, und die Regel-10-Prüfung
 # dahinter kam nie dran — ein Wächter hinter einem anderen ist ein ungeprüfter.
+mess "Rechte für anon"    "select count(*) from information_schema.role_table_grants where table_schema='public' and grantee='anon';" "$ERWARTET_ANON_RECHTE"
+mess "Rechte für auth."   "select count(*) from information_schema.role_table_grants where table_schema='public' and grantee='authenticated';" "$ERWARTET_AUTH_RECHTE"
 mess "Realtime verboten"  "select count(*) from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename in ('blocks','reports');" "$ERWARTET_REALTIME_VERBOTEN"
 
 echo

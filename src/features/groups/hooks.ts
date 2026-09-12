@@ -3,7 +3,8 @@ import { useMemo } from 'react';
 import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
 import { istBlockiert } from '../safety/hooks';
 import { useUserMap } from '../social/hooks';
-import { aendern, neueId, useSlice } from '../store';
+import { getState, neueId, schreibVorgang, schreibVorgangMitId, useSlice } from '../store';
+import * as senden from '@/data/senden';
 
 import {
   darfEinladen,
@@ -150,11 +151,17 @@ export interface GruppenEntwurf {
 }
 
 /** Gruppe anlegen. Gibt die neue ID zurück, damit der Screen dorthin springen kann. */
-export function gruppeErstellen(entwurf: GruppenEntwurf): string {
+export function gruppeErstellen(entwurf: GruppenEntwurf): Promise<string> {
   const ichId = getCurrentUserId();
-  const id = neueId('g');
 
-  aendern((alt) => {
+  // **Warten, weil der Server die ID vergibt** — der Screen springt auf
+  // `/gruppe/<id>`. Am Server ist das `gruppe_gruenden()` und kein `insert into
+  // groups`: `group_members` hat nur `select` (harte Regel 55), ein blankes Insert
+  // ergäbe eine Gruppe ohne ihren eigenen Gründer.
+  let prototypId = '';
+  return schreibVorgangMitId('gruppeErstellen', 'neu', (alt) => {
+    prototypId = neueId('g');
+    const id = prototypId;
     const neu: Group = {
       id,
       name: entwurf.name.trim(),
@@ -170,9 +177,7 @@ export function gruppeErstellen(entwurf: GruppenEntwurf): string {
       createdAt: new Date().toISOString(),
     };
     return { groups: [...alt.groups, neu] };
-  });
-
-  return id;
+  }, (sb) => senden.gruppeErstellen(sb, entwurf), () => prototypId);
 }
 
 // ── Beitreten ────────────────────────────────────────────────────────────────
@@ -191,9 +196,21 @@ export function useMeineGruppenAnfrage(gruppeId: string | undefined): GroupReque
  * sofort eine Mitgliedschaft — deshalb steht die Verzweigung hier und nicht im
  * Screen: Ein Wort in `gruppe.ts` soll den Ablauf ändern, nicht einen Screen.
  */
-export function beitrittAnfragen(gruppeId: string, message: string): void {
+export function beitrittAnfragen(gruppeId: string, message: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => {
+  // Doppelt drücken darf keine zweite Anfrage erzeugen. Die Prüfung ist aus dem
+  // `aendern` herausgewandert und steht jetzt DAVOR: Sonst liefe der Schreibvorgang
+  // trotzdem los und liefe in `23505` (`unique (group_id, from_user_id)`) — ein
+  // Fehler für etwas, das in Ordnung ist. Dieselbe Umstellung wie in `anfrageSenden`.
+  if (
+    getState().groupRequests.some(
+      (a) => a.groupId === gruppeId && a.fromUserId === ichId && a.status === 'pending',
+    )
+  ) {
+    return Promise.resolve();
+  }
+
+  return schreibVorgang('beitrittAnfragen', gruppeId, (alt) => {
     const gruppe = alt.groups.find((g) => g.id === gruppeId);
     if (!gruppe) return {};
     if (istMitglied(gruppe, ichId)) return {};
@@ -233,18 +250,27 @@ export function beitrittAnfragen(gruppeId: string, message: string): void {
       createdAt: new Date().toISOString(),
     };
     return { groupRequests: [...alt.groupRequests, neu] };
-  });
+  }, (sb) => senden.beitrittAnfragen(sb, gruppeId, message, ichId));
 }
 
 /** Anfrage zurückziehen, solange sie noch offen ist. */
-export function beitrittZuruecknehmen(gruppeId: string): void {
+export function beitrittZuruecknehmen(gruppeId: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => ({
-    groupRequests: alt.groupRequests.filter(
-      (a) =>
-        !(a.groupId === gruppeId && a.fromUserId === ichId && a.status === 'pending'),
-    ),
-  }));
+  // **Der Weg dafür am Server ist erst am 2026-09-12 entstanden** — bis dahin hatte
+  // `group_requests` kein delete-Recht und die einzige update-Policy liess nur den
+  // Gründer durch. Der Knopf stand seit Phase 17 hier und kam nicht durch; gefunden
+  // hat es die Rechteliste, nicht der Plan (`0006_zuruecknehmen.sql`).
+  return schreibVorgang(
+    'beitrittZuruecknehmen',
+    gruppeId,
+    (alt) => ({
+      groupRequests: alt.groupRequests.filter(
+        (a) =>
+          !(a.groupId === gruppeId && a.fromUserId === ichId && a.status === 'pending'),
+      ),
+    }),
+    (sb) => senden.beitrittZuruecknehmen(sb, gruppeId, ichId),
+  );
 }
 
 /**
@@ -258,9 +284,11 @@ export function beitrittZuruecknehmen(gruppeId: string): void {
  * KEIN Platz belegt. Eine Gruppe ist kein Treffen; sie hat weder Plätze noch einen
  * Termin, an dem sie stattfindet.
  */
-export function beitrittBestaetigen(anfrageId: string): void {
+export function beitrittBestaetigen(anfrageId: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => {
+  // Warten, weil der Server die MITGLIEDSCHAFT anlegt: `group_members` hat nur
+  // `select` (harte Regel 55), der Weg ist `beitritt_bestaetigen()` aus 0004.
+  return schreibVorgang('beitrittBestaetigen', anfrageId, (alt) => {
     const anfrage = alt.groupRequests.find((a) => a.id === anfrageId);
     if (!anfrage || anfrage.status !== 'pending') return {};
 
@@ -277,13 +305,13 @@ export function beitrittBestaetigen(anfrageId: string): void {
       ),
       groups: mitMitglied(alt.groups, gruppe.id, anfrage.fromUserId),
     };
-  });
+  }, (sb) => senden.beitrittBestaetigen(sb, anfrageId));
 }
 
 /** Ablehnen. Ohne Rückfrage — man kann erneut anfragen, wie bei einer Post-Absage. */
-export function beitrittAblehnen(anfrageId: string): void {
+export function beitrittAblehnen(anfrageId: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => {
+  return schreibVorgang('beitrittAblehnen', anfrageId, (alt) => {
     const anfrage = alt.groupRequests.find((a) => a.id === anfrageId);
     if (!anfrage || anfrage.status !== 'pending') return {};
     const gruppe = alt.groups.find((g) => g.id === anfrage.groupId);
@@ -294,7 +322,7 @@ export function beitrittAblehnen(anfrageId: string): void {
         a.id === anfrageId ? { ...a, status: 'declined' as const } : a,
       ),
     };
-  });
+  }, (sb) => senden.beitrittAblehnen(sb, anfrageId));
 }
 
 // ── Verlassen ────────────────────────────────────────────────────────────────
@@ -308,9 +336,14 @@ export function beitrittAblehnen(anfrageId: string): void {
  * Gruppe aber noch mir gehört — und genau dann rechnet der Screen, ob er den
  * Verlassen-Knopf zeigt.
  */
-export function gruppeVerlassen(gruppeId: string): void {
+export function gruppeVerlassen(gruppeId: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => {
+  // **Warten, weil der Server entscheidet, WER ERBT.** `nachfolgerId()` steht hier
+  // lokal und in `gruppe_verlassen()` (0004) am Server — und nur die zweite Fassung
+  // gilt, wenn zwei Leute gleichzeitig gehen. Dazu hat `group_members` kein
+  // delete-Recht (harte Regel 55): Ein Austritt ist kein Schreibvorgang, er ist der
+  // Vollzug von Ians Entscheidungen 13 und 41.
+  return schreibVorgang('gruppeVerlassen', gruppeId, (alt) => {
     const gruppe = alt.groups.find((g) => g.id === gruppeId);
     if (!gruppe || !istMitglied(gruppe, ichId)) return {};
 
@@ -370,7 +403,7 @@ export function gruppeVerlassen(gruppeId: string): void {
             (a) => !(a.groupId === gruppeId && a.fromUserId === ichId),
           ),
     };
-  });
+  }, (sb) => senden.gruppeVerlassen(sb, gruppeId));
 }
 
 /**
@@ -600,9 +633,21 @@ export function useEinladbare(gruppe: Group | undefined): EinladbarEintrag[] {
  * die eine Stelle in diesem Ordner, an der ein Wechsel der Regel mehr ist als ein
  * Wort — deshalb steht es hier und nicht nur im Kopf von `gruppe.ts`.
  */
-export function einladen(gruppeId: string, toUserId: string): void {
+export function einladen(gruppeId: string, toUserId: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => {
+  // Zweimal tippen darf keine zweite Einladung erzeugen. Die Prüfung steht DAVOR
+  // statt im `aendern`, sonst liefe der Schreibvorgang trotzdem los und liefe in
+  // `23505` (`unique (group_id, to_user_id)`) — dieselbe Umstellung wie in
+  // `anfrageSenden` und `beitrittAnfragen`.
+  if (
+    getState().groupInvites.some(
+      (e) => e.groupId === gruppeId && e.toUserId === toUserId && e.status === 'pending',
+    )
+  ) {
+    return Promise.resolve();
+  }
+
+  return schreibVorgang('einladen', toUserId, (alt) => {
     const gruppe = alt.groups.find((g) => g.id === gruppeId);
     if (!gruppe) return {};
     if (!darfEinladen(gruppe, ichId)) return {};
@@ -632,7 +677,7 @@ export function einladen(gruppeId: string, toUserId: string): void {
       createdAt: new Date().toISOString(),
     };
     return { groupInvites: [...alt.groupInvites, neu] };
-  });
+  }, (sb) => senden.einladen(sb, gruppeId, toUserId, ichId));
 }
 
 /**
@@ -646,9 +691,11 @@ export function einladen(gruppeId: string, toUserId: string): void {
  * Anfrage stehen, stünde im Anfragen-Tab „Wartet" bei einer Gruppe, in der man
  * schon drin ist — und im Tab des Gründers eine Zeile, die er beantworten soll.
  */
-export function einladungAnnehmen(einladungId: string): void {
+export function einladungAnnehmen(einladungId: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => {
+  // Warten, weil der Server die MITGLIEDSCHAFT anlegt — `einladung_annehmen()` aus
+  // 0004, aus demselben Grund wie `beitrittBestaetigen`.
+  return schreibVorgang('einladungAnnehmen', einladungId, (alt) => {
     const einladung = alt.groupInvites.find((e) => e.id === einladungId);
     if (!einladung || einladung.status !== 'pending') return {};
     if (einladung.toUserId !== ichId) return {};
@@ -670,16 +717,19 @@ export function einladungAnnehmen(einladungId: string): void {
         (a) => !(a.groupId === gruppe.id && a.fromUserId === ichId),
       ),
     };
-  });
+  }, (sb) => senden.einladungAnnehmen(sb, einladungId));
 }
 
 /**
  * Eine Einladung ablehnen. Ohne Rückfrage — wie eine abgelehnte Anfrage: Man kann
  * erneut eingeladen werden, es geht nichts unwiederbringlich verloren.
  */
-export function einladungAblehnen(einladungId: string): void {
+export function einladungAblehnen(einladungId: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => {
+  // Ablehnen heisst hier `status` und nicht löschen: `group_invites` hat kein
+  // delete-Recht, und das ist eine Zusage (harte Regel 70). Eine abgelehnte
+  // Einladung bleibt stehen, damit sie nicht endlos wiederholt wird.
+  return schreibVorgang('einladungAblehnen', einladungId, (alt) => {
     const einladung = alt.groupInvites.find((e) => e.id === einladungId);
     if (!einladung || einladung.status !== 'pending') return {};
     if (einladung.toUserId !== ichId) return {};
@@ -689,7 +739,7 @@ export function einladungAblehnen(einladungId: string): void {
         e.id === einladungId ? { ...e, status: 'declined' as const } : e,
       ),
     };
-  });
+  }, (sb) => senden.einladungAblehnen(sb, einladungId));
 }
 
 /** Meine offene Einladung in DIESE Gruppe — für die Gruppenseite. */

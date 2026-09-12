@@ -3,7 +3,9 @@ import { useSyncExternalStore } from 'react';
 import { ANMELDE_QUELLE, type Sitzung } from '@/features/auth/anmeldung';
 import type { StandortStand } from '@/features/posts/standort';
 import { allesLaden, LadeFehler } from '@/data/laden';
+import { SchreibFehler, wartetAufServer, type SchreibAktion } from '@/data/schreiben';
 import { client, LIEST_AUS_SUPABASE } from '@/lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
   ATTRAPPE_ICH_ID,
@@ -119,6 +121,20 @@ export interface AppState {
    * nichts merkt.**
    */
   laden: LadeStand;
+  /**
+   * Ob gerade etwas zum Server unterwegs ist — Phase 20.5, Ians Entscheidung 46.
+   *
+   * **Den Zustand gab es im Prototyp nicht.** `aendern()` war augenblicklich; zwischen
+   * „Bin dabei" und dem neu gezeichneten Bildschirm lag nichts. Mit einer Datenbank in
+   * Irland liegen dort ein paar Zehntelsekunden, und wer sie nicht benennt, bekommt
+   * sie trotzdem — als Knopf, der scheinbar nichts tut, und als zweiter Tipp darauf.
+   *
+   * Betroffen sind nur die acht Aktionen, bei denen `wartetAufServer()` wahr sagt.
+   * Die vierzehn anderen ändern den Speicher sofort und schreiben nebenher; sie
+   * berühren dieses Feld gar nicht. Warum die Teilung so verläuft, steht in
+   * `data/schreiben.ts` und nirgends sonst.
+   */
+  schreiben: SchreibStand;
 }
 
 /**
@@ -134,6 +150,27 @@ export type LadeStand =
   | { zustand: 'laeuft' }
   | { zustand: 'da' }
   | { zustand: 'fehler'; fehler: LadeFehler };
+
+/**
+ * Die drei Lagen beim Schreiben — ein Union und keine zwei Felder.
+ *
+ * Mit `laeuft: boolean` plus `fehler: SchreibFehler | null` wäre „wartet gerade UND
+ * ein Fehler liegt an" tippbar gewesen, und das ist kein Zustand, sondern ein Bug,
+ * den niemand sieht. Dieselbe Bauart wie `LadeStand` darüber, `Sitzung` und
+ * `Visibility` (harte Regel 31).
+ *
+ * ── Warum eine MARKE und nicht nur die Aktion ────────────────────────────────
+ * Die Marke ist die ID dessen, woran gerade gearbeitet wird — eine Anfrage, eine
+ * Gruppe, ein Mensch. Ohne sie müsste der Anfragen-Screen bei drei offenen Anfragen
+ * alle drei Knöpfe ausgrauen, weil er nur wüsste, dass *irgendein*
+ * `anfrageBestaetigen` läuft. Mit ihr wartet genau der Knopf, den jemand gedrückt
+ * hat. Beim Anlegen (`postErstellen`, `gruppeErstellen`) gibt es noch nichts, worauf
+ * sie zeigen könnte — dort steht `'neu'`.
+ */
+export type SchreibStand =
+  | { zustand: 'nichts' }
+  | { zustand: 'laeuft'; aktion: SchreibAktion; marke: string }
+  | { zustand: 'fehler'; fehler: SchreibFehler };
 
 /**
  * Die neun Listen beim Start.
@@ -191,6 +228,7 @@ let state: AppState = {
   standort: { zustand: 'aus', ort: null, gemessenUm: null },
   sitzung: startSitzung(),
   laden: LIEST_AUS_SUPABASE ? { zustand: 'laeuft' } : { zustand: 'da' },
+  schreiben: { zustand: 'nichts' },
 };
 
 /**
@@ -299,6 +337,19 @@ export function neueId(praefix: string): string {
 let holtGerade = false;
 
 /**
+ * Kam ein Anlass zum Nachladen, WÄHREND schon geladen wurde?
+ *
+ * Ohne dieses Feld war `datenHolen()` bei laufendem Lauf ein stilles `return`, und
+ * das war richtig, solange der einzige Anlass ein Realtime-Anstoß war: Der laufende
+ * Lauf holt ohnehin denselben Stand. **Seit 20.5 stimmt das nicht mehr.** Ein
+ * Schreibvorgang, der mitten in einen Ladevorgang fällt, ändert etwas, das der
+ * laufende Lauf schon gelesen hatte — sein Ergebnis ist dann ohne die eigene
+ * Änderung, und der Bildschirm zeigt sie nicht. Bis zufällig der nächste Anstoß
+ * kommt. Genau der Fall aus Ians Entscheidung 47, nur selbst verursacht.
+ */
+let nochmalHolen = false;
+
+/**
  * Alles holen und in den Speicher legen.
  *
  * ── Wann sie gerufen wird ────────────────────────────────────────────────────
@@ -313,8 +364,13 @@ let holtGerade = false;
  * Ians Entscheidung 43 verlangt aber, dass er auf dem BILDSCHIRM ankommt.
  */
 export async function datenHolen(): Promise<void> {
-  if (!LIEST_AUS_SUPABASE || holtGerade) return;
+  if (!LIEST_AUS_SUPABASE) return;
+  if (holtGerade) {
+    nochmalHolen = true;
+    return;
+  }
   holtGerade = true;
+  nochmalHolen = false;
   aendern(() => ({ laden: { zustand: 'laeuft' } }));
   try {
     const daten = await allesLaden(client());
@@ -333,6 +389,13 @@ export async function datenHolen(): Promise<void> {
     aendern(() => ({ laden: { zustand: 'fehler', fehler } }));
   } finally {
     holtGerade = false;
+  }
+  // Nicht im `finally`: Nach einem Fehler wäre ein sofortiger zweiter Versuch eine
+  // Schleife gegen eine Leitung, die gerade nicht geht. Ians Entscheidung 43 sagt,
+  // was dann dasteht — ein Kasten mit einem Knopf, und der gehört dem Menschen.
+  if (nochmalHolen) {
+    nochmalHolen = false;
+    await datenHolen();
   }
 }
 
@@ -354,4 +417,134 @@ export async function datenHolen(): Promise<void> {
 export function zwischenspeicherLeeren(): void {
   if (!LIEST_AUS_SUPABASE) return;
   aendern(() => ({ ...startListen(), laden: { zustand: 'laeuft' } }));
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  Das Schreiben — Phase 20.5 (App-Seite), Ians Entscheidung 46
+// ═════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Ein Schreibvorgang — die EINE Stelle, an der Entscheidung 46 wirklich wirkt.
+ *
+ * ── Was hier NICHT steht: eine Rückgängig-Funktion ───────────────────────────
+ * Der naheliegende Weg für „sofort zeichnen" ist ein Gegenstück zu jeder Änderung,
+ * das sie im Fehlerfall zurücknimmt — 22 Umkehrungen, 22 Gelegenheiten, eine falsch
+ * zu schreiben, und der Fehler wäre ein Bildschirm, der still etwas Erfundenes
+ * zeigt. **Hier wird stattdessen NACHGELADEN.** Die Datenbank weiß, was wirklich
+ * dasteht; die App muss es nicht rekonstruieren. Damit gibt es in dieser ganzen
+ * Phase keine einzige Stelle, die das Verhalten des Servers vorhersagt — genau der
+ * Einwand, an dem Möglichkeit B in `data/schreiben.ts` gescheitert ist.
+ *
+ * ── Die zwei Wege ────────────────────────────────────────────────────────────
+ *   WARTEN   → `schreiben` auf `'laeuft'`, Aufruf, nachladen, `'nichts'`.
+ *              Der lokale Schritt wird gar nicht ausgeführt: Was dabei herauskommt,
+ *              bestimmt der Server, und alles andere wäre geraten.
+ *   SOFORT   → lokal ändern, dann schreiben. Geht es schief: Fehler melden UND
+ *              nachladen — das Nachladen ist die Rücknahme.
+ *
+ * ── Und was im Prototyp passiert: GENAU DAS WIE BISHER ───────────────────────
+ * Ohne Supabase wird nur `lokal` ausgeführt, synchron, wie seit Phase 1. Das ist
+ * der Grund, warum die öffentliche Adresse von dieser Phase nichts merkt.
+ */
+async function schreibVorgangIntern<T>(
+  aktion: SchreibAktion,
+  marke: string,
+  lokal: (alt: AppState) => Partial<AppState>,
+  server: (sb: SupabaseClient) => Promise<T>,
+  ohneServer: () => T,
+): Promise<T> {
+  if (!LIEST_AUS_SUPABASE) {
+    aendern(lokal);
+    return ohneServer();
+  }
+
+  const wartet = wartetAufServer(aktion);
+  if (!wartet) aendern(lokal);
+  else aendern(() => ({ schreiben: { zustand: 'laeuft', aktion, marke } }));
+
+  try {
+    const ergebnis = await server(client());
+    await datenHolen();
+    if (wartet) aendern(() => ({ schreiben: { zustand: 'nichts' } }));
+    return ergebnis;
+  } catch (fehler) {
+    // Dieselbe Unterscheidung wie in `datenHolen()`: Ein `SchreibFehler` trägt
+    // Aktion und `code` und ist damit beantwortbar. Alles andere — ein Tippfehler
+    // in einem Spaltennamen, ein fehlender Zugang — ist ein PROGRAMMfehler und
+    // soll laut sein statt als „Keine Verbindung" verkleidet.
+    if (!(fehler instanceof SchreibFehler)) {
+      aendern(() => ({ schreiben: { zustand: 'nichts' } }));
+      throw fehler;
+    }
+    console.warn(fehler.message);
+    aendern(() => ({ schreiben: { zustand: 'fehler', fehler } }));
+    // **Das Nachladen IST die Rücknahme** — nur nötig, wenn vorher lokal schon
+    // etwas geändert wurde. Beim Warten steht der Bildschirm ohnehin auf dem alten
+    // Stand, und ein Nachladen wäre eine zweite Abfragerunde gegen eine Leitung,
+    // die gerade nicht geht.
+    if (!wartet) await datenHolen();
+    return ohneServer();
+  }
+}
+
+/**
+ * Ein Schreibvorgang ohne Rückgabewert — neunzehn der zweiundzwanzig.
+ *
+ * Gibt ein `Promise` zurück, das **nie** abgelehnt wird (der Fehler wird oben zu
+ * einem Zustand). Screens dürfen es deshalb liegen lassen; wer nach dem Schreiben
+ * etwas tun will, wartet darauf.
+ */
+export function schreibVorgang(
+  aktion: SchreibAktion,
+  marke: string,
+  lokal: (alt: AppState) => Partial<AppState>,
+  server: (sb: SupabaseClient) => Promise<void>,
+): Promise<void> {
+  return schreibVorgangIntern(aktion, marke, lokal, server, () => undefined);
+}
+
+/**
+ * Ein Schreibvorgang, dessen ID der Bildschirm gleich braucht — die drei aus
+ * `EINORDNUNG`, die genau deshalb warten.
+ *
+ * `ohneServer` liefert die ID im Prototyp (aus `neueId()`) und ist ein Aufruf und
+ * kein Wert: Sonst liefe der Zähler auch dann hoch, wenn die ID vom Server kommt.
+ * **Im Fehlerfall kommt sie ebenfalls heraus** — der Aufrufer erkennt das nicht am
+ * Rückgabewert, sondern am `schreiben.zustand`, und genau deshalb springt der
+ * Screen erst, wenn dort `'nichts'` steht.
+ */
+export function schreibVorgangMitId(
+  aktion: SchreibAktion,
+  marke: string,
+  lokal: (alt: AppState) => Partial<AppState>,
+  server: (sb: SupabaseClient) => Promise<string>,
+  ohneServer: () => string,
+): Promise<string> {
+  return schreibVorgangIntern(aktion, marke, lokal, server, ohneServer);
+}
+
+/** Einen Schreibfehler wegklicken. Der Bildschirm steht danach auf dem Stand der Datenbank. */
+export function schreibFehlerWeg(): void {
+  aendern(() => ({ schreiben: { zustand: 'nichts' } }));
+}
+
+/**
+ * Wartet gerade genau DIESE Sache auf den Server?
+ *
+ * ── Warum Aktion UND Marke gefragt werden ────────────────────────────────────
+ * Der Anfragen-Tab zeigt mehrere Bestätigen-Knöpfe untereinander. Fragte er nur
+ * nach der Aktion, würden beim Drücken eines Knopfes alle grau — und das sähe aus,
+ * als wäre der ganze Bildschirm eingefroren. Mit der Marke wartet genau der eine.
+ *
+ * Bei `postErstellen` und `gruppeErstellen` gibt es noch nichts, worauf eine Marke
+ * zeigen könnte; dort ist sie `'neu'` (siehe `SchreibStand`).
+ */
+export function useWartetAuf(aktion: SchreibAktion, marke: string): boolean {
+  const schreiben = useSlice('schreiben');
+  return schreiben.zustand === 'laeuft' && schreiben.aktion === aktion && schreiben.marke === marke;
+}
+
+/** Der Schreib-Zustand als Ganzes — für die Fehlerleiste in `app/_layout.tsx`. */
+export function useSchreibStand(): SchreibStand {
+  return useSlice('schreiben');
 }

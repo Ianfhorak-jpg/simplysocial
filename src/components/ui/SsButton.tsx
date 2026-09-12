@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'rea
 import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
 
+import { WARTE_TEXT } from '@/data/schreiben';
 import { accent, categoryColors, colors, danger, DEPTH, radius, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
 import type { ActivityCategory } from '@/types/models';
@@ -13,6 +14,18 @@ interface SsButtonBase {
   label: string;
   onPress?: () => void;
   disabled?: boolean;
+  /**
+   * Wartet dieser Knopf gerade auf den Server? — Phase 20.5, Ians Entscheidung 46.
+   *
+   * Setzt `disabled` UND tauscht die Beschriftung gegen `WARTE_TEXT`. Beides
+   * zusammen, weil einzeln jeweils die Hälfte fehlt: Nur ausgrauen sieht aus wie
+   * „geht gerade nicht", nur beschriften lässt sich weiterdrücken.
+   *
+   * **Nur die acht Aktionen, bei denen `wartetAufServer()` wahr sagt, setzen das
+   * je.** Bei den vierzehn anderen steht das Ergebnis schon da, bevor irgendetwas
+   * zu warten hätte — das ist Entscheidung 46 und keine Nachlässigkeit.
+   */
+  wartet?: boolean;
   /**
    * Icon links vom Text — ein Name aus `theme/icons.ts`, seit Phase 14 kein Emoji
    * mehr. Der Typ ist bewusst eng: Als `string` war jede vergessene Ersetzung
@@ -57,7 +70,8 @@ export type SsButtonProps = SsButtonBase & SsButtonVariantProps;
 export function SsButton({
   label,
   onPress,
-  disabled,
+  disabled: disabledRoh,
+  wartet,
   icon,
   block,
   size = 'md',
@@ -65,6 +79,9 @@ export function SsButton({
   category,
   style,
 }: SsButtonProps) {
+  const disabled = disabledRoh || wartet;
+  const beschriftung = wartet ? WARTE_TEXT : label;
+
   // `primary` und `category` sind gefüllt, `ghost` und `danger` sind Umrisse auf Weiß.
   const gefuellt = variant === 'primary' || variant === 'category';
   const palette = variant === 'category' && category ? categoryColors[category] : accent;
@@ -123,7 +140,7 @@ export function SsButton({
               einem farbigen Knopf wie ein Aufkleber saß. */}
           {icon ? <SsIcon name={icon} size={size === 'lg' ? 20 : 17} color={textColor} /> : null}
           <SsText variant="label" color={textColor} numberOfLines={1} style={size === 'lg' && styles.labelLg}>
-            {label}
+            {beschriftung}
           </SsText>
         </View>
       )}

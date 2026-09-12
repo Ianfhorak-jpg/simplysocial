@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
 import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
-import { aendern, useSlice } from '../store';
+import { schreibVorgang, useSlice } from '../store';
+import * as senden from '@/data/senden';
 
 import { istWienerBezirk } from '@/lib/bezirk';
 import type { User } from '@/types/models';
@@ -67,14 +68,29 @@ export function useFolgeIch(id: string): boolean {
  * Moment entscheidet `darfIchSehen` in `posts/hooks.ts` über ihre Follower-Posts.
  * Harte Regel 9 aus PLAN.md.
  */
-export function folgen(id: string): void {
+export function folgen(id: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => ({ users: mitFolgeKante(alt.users, ichId, id, true) }));
+  // Der Griff steht hier und nicht nur in `mitFolgeKante`: Dort lässt er das lokale
+  // `aendern` folgenlos durchlaufen — der SERVER bekäme die Zeile trotzdem, und
+  // `follows` hat keinen CHECK dagegen. Zwei Wege müssen dieselbe Antwort geben.
+  if (id === ichId) return Promise.resolve();
+  return schreibVorgang(
+    'folgen',
+    id,
+    (alt) => ({ users: mitFolgeKante(alt.users, ichId, id, true) }),
+    (sb) => senden.folgen(sb, id, ichId),
+  );
 }
 
-export function entfolgen(id: string): void {
+export function entfolgen(id: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => ({ users: mitFolgeKante(alt.users, ichId, id, false) }));
+  if (id === ichId) return Promise.resolve();
+  return schreibVorgang(
+    'entfolgen',
+    id,
+    (alt) => ({ users: mitFolgeKante(alt.users, ichId, id, false) }),
+    (sb) => senden.entfolgen(sb, id, ichId),
+  );
 }
 
 /**
@@ -91,12 +107,17 @@ export function entfolgen(id: string): void {
  * eine Auswahl aus `BEZIRKS_LISTE`, kann also gar nichts Falsches schicken — und
  * ein Absturz an dieser Stelle wäre teurer als ein Klick, der nichts tut.
  */
-export function bezirkSetzen(plz: string): void {
-  if (!istWienerBezirk(plz)) return;
+export function bezirkSetzen(plz: string): Promise<void> {
+  if (!istWienerBezirk(plz)) return Promise.resolve();
   const ichId = getCurrentUserId();
-  aendern((alt) => ({
-    users: alt.users.map((u) => (u.id === ichId ? { ...u, district: plz } : u)),
-  }));
+  return schreibVorgang(
+    'bezirkSetzen',
+    ichId,
+    (alt) => ({
+      users: alt.users.map((u) => (u.id === ichId ? { ...u, district: plz } : u)),
+    }),
+    (sb) => senden.bezirkSetzen(sb, plz, ichId),
+  );
 }
 
 /** Setzt die Kante `vonId → zuId` auf an oder aus und pflegt dabei beide Seiten. */

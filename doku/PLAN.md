@@ -5243,7 +5243,7 @@ Zeilen durchlassen. Belegt ist bis dahin die ganze Kette darunter — inklusive 
 Sichtbarkeitsregeln über PostgREST — und der Ladefehler-Schirm an der App selbst
 (erzwungen und per `diff` nachweislich zurückgenommen, die 19d-Methode).
 
-#### 20.5 — `store.ts` austauschen, Teil 2: Schreiben · **SQL-Seite ✅ (2026-09-10)** · App-Seite ⬜
+#### 20.5 — `store.ts` austauschen, Teil 2: Schreiben · **SQL-Seite ✅ (2026-09-10)** · **App-Seite ✅ (2026-09-12)**
 
 > ✅ **Die SQL-Seite ist gebaut und bewiesen, ohne Konto — dieselbe Trennung wie bei
 > 20.1/20.2** (*halten die Regeln?* gegen *ist das Projekt eingerichtet?*).
@@ -5334,6 +5334,127 @@ stand.
 steht eine tote Gruppe unter „Deine Gruppen". Dieselbe abgesprochene Schuld wie
 `aus_aktivitaet` (harte Regel 56) — sie steht am Feld in 0001 und hier, nicht nur an
 einer Stelle.
+
+#### Was beim Bauen von 20.5 (App-Seite) herauskam *(2026-09-12)*
+
+**Fertig: die App SCHREIBT wirklich nach Supabase — und der Prototyp merkt davon
+nichts.** Alle 22 Schreib-Aktionen gehen über `data/senden.ts`, zwei neue
+Entscheidungen von Ian (46 und 47), zwei neue Migrationen. Gemessen:
+
+| | |
+|---|---|
+| `npm run pruef-schreiben` | **49 Häkchen, 0 Kreuze am ECHTEN Server** (neu) |
+| `npm run pruef-lesen` | 29 / 0 |
+| `npm run pruef-konto` | 29 / 0 |
+| `bash supabase/pruefen/aufbauen.sh` | **124 statt 121 Häkchen**, 0 Kreuze |
+| `npx tsc --noEmit` | sauber |
+| `npx expo lint` | **81 Probleme, wie vorher** |
+| Prototyp auf 390 × 844 | **Pixel für Pixel identisch**, 0 Konsolenfehler |
+| Web-Bündel | 490.790 B gzip (**+3.920 B, +0,80 %**) |
+
+**Sieben Dinge sind wichtiger als die 22 Aktionen:**
+
+**1. Der teuerste Fund war eine ZUSAGE, die am echten Server nie galt.** Der Fuß von
+`0002_policies.sql` ist eine Rechteliste, und auf ihr steht das halbe Gebäude dieses
+Projekts — harte Regel 55 („auf `group_members` gibt es KEIN Insert-Recht, und das ist
+die Aussage"), harte Regel 70 („ein fehlender `grant` ist eine Zusage, keine Lücke")
+und die ganze Begründung für die sieben Funktionen in 0004. **Gemessen am echten
+Supabase:**
+
+```
+group_members   lokal: SELECT
+group_members   echt : DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE
+```
+
+Supabase trägt für `public` eine Voreinstellung (`alter default privileges`), die jeder
+neuen Tabelle **alle** Rechte an `anon` und `authenticated` gibt; unsere `grant`-Zeilen
+kommen danach und fügen nur hinzu. **Offen war deswegen nichts** — RLS ist auf allen 13
+Tabellen an, und eine Tabelle mit RLS ohne passende Policy weist auch mit Grant ab. Was
+sich unterscheidet, ist die ART der Abweisung, und genau darauf kommt es in diesem
+Projekt an:
+
+```
+fehlender GRANT   →  42501, sofort, LAUT
+fehlende POLICY   →  bei INSERT 42501; bei DELETE und UPDATE
+                     null Zeilen, ohne jeden Fehler — STILL
+```
+
+Und still ist die teure Sorte. Genau so ist es aufgefallen: `beitrittZuruecknehmen`
+löschte am echten Server **nichts und meldete nichts**. Behoben in `0007_rechte.sql`
+(alles wegnehmen, dann genau die Liste aus 0002 wieder erteilen; `service_role` bleibt
+unangetastet). Nachgemessen: `anon` 0 Rechte, `authenticated` 34 — an beiden Orten.
+
+**2. Und die Attrappe war schuld, dass es vier Wochen niemand sah.**
+`00_supabase_lokal.sql` bringt diese Voreinstellung jetzt MIT
+(`alter default privileges … grant all`), damit `0007` lokal überhaupt etwas zu tun hat.
+Die Gegenprobe ist der Beleg: **Ohne 0007 sieht die Wegwerf-Datenbank seither genauso
+aus wie der echte Server vorher** — `group_members` mit allen Rechten, `anon` mit 91
+Grants. Das ist die Attrappen-Falle vom 2026-09-06 in ihrer schärfsten Form: *Eine
+Nachbildung, die WENIGER mitbringt als das Original, lässt eine Messung durchgehen, die
+am Original falsch ist.*
+
+**3. Die Rechteliste hat zum ZWEITEN Mal die Arbeitsliste geschrieben — und diesmal
+eine LÜCKE gefunden.** Beim Einordnen der 22 Aktionen nach Entscheidung 46 fiel auf:
+`beitrittZuruecknehmen` hatte am Server gar keinen Weg. `join_requests` hat eine Policy
+`anfragen_zuruecknehmen` (delete); `group_requests` hatte kein delete-Recht, und die
+einzige update-Policy (`gruppenanfrage_beantworten`) lässt nur den GRÜNDER durch. **Der
+Knopf steht seit Phase 17 in der App.** Harte Regel 70 verlangt an so einer Stelle die
+Frage *Zusage oder Lücke?* — und beide Antworten kommen vor: Bei `group_members` ist es
+eine Zusage (Regel 55), hier eine Lücke, weil die Schwestertabelle es kann und weil es
+den Knopf gibt. `0006_zuruecknehmen.sql`, gelöscht statt `status` umgestellt (das
+`unique (group_id, from_user_id)` macht sonst aus einer erneuten Anfrage einen zweiten
+Schreibweg).
+
+**4. „Zurückrollen" gibt es in dieser Phase NICHT — und das ist der Entwurf.** Der
+naheliegende Weg für Entscheidung 46 wäre zu jeder der 22 Änderungen eine Umkehrung
+gewesen, die sie im Fehlerfall zurücknimmt: 22 Gelegenheiten, eine falsch zu schreiben,
+und der Fehler wäre ein Bildschirm, der still etwas Erfundenes zeigt. **Stattdessen
+wird NACHGELADEN.** Die Datenbank weiß, was dasteht; die App muss es nicht
+rekonstruieren. Damit gibt es in der ganzen Phase keine einzige Stelle, die das
+Verhalten des Servers vorhersagt — genau der Einwand, an dem Möglichkeit B in
+`data/schreiben.ts` gescheitert ist.
+
+**5. Der wichtigste einzelne Knopf ist der im Anfragen-Tab.** Er bestätigte UND sprang
+sofort aufs Konfetti. Am Server entscheidet `anfrage_bestaetigen()` mit
+`select … for update`, ob noch ein Platz frei ist — und dass zwei gleichzeitige
+Bestätigungen ohne diese Sperre BEIDE durchgehen, ist seit 20.5-SQL gemessen
+(`30_wettlauf.sh`). **Ein Konfetti, das zurückspringt, wäre der übelste denkbare
+Fehler dieser App.** Jetzt ein `await`, und gesprungen wird nur, wenn
+`getState().schreiben.zustand !== 'fehler'`.
+
+**6. Drei Prüfungen sind beim Umbau ROT geworden, und das war ihr Zweck.** In
+`50_lesen.mjs` stand „anon bekommt HTTP 200 · und NULL Posts · ohne Fehlermeldung — RLS
+filtert, es verweigert nicht". Das stimmte, und es stimmte aus dem falschen Grund (siehe
+Punkt 1). `0002` enthält keine einzige Zeile `to anon`; die Regel lautet also **„anon
+kommt gar nicht erst heran"**, und seit 0007 gilt sie auch. Zweite Fassung der Lehre aus
+20.5-SQL: *Eine Prüfung, die eine Bedeutungsänderung nicht merkt, prüft die Umsetzung
+und nicht die Regel.*
+
+**7. Der Prüfstand musste etwas lernen, das `50_lesen.sh` nicht braucht: Aufräumen nach
+IDs, die er beim Start noch nicht kennt.** Beim Lesen entstehen keine Zeilen; beim
+Schreiben vergibt der SERVER sie (`gen_random_uuid()`). Besonders übel ist eine Gruppe,
+die der Lauf gründet und dann VERLÄSST — danach ist `creator_id` vererbt oder `null`
+(Entscheidung 41), und `52_abraeumen.sql` findet Gruppen über ihren Gründer. Sie fiele
+durch das Netz und bliebe für immer in Ians echter Datenbank liegen. Und nach seiner
+Entscheidung 45 darf der Prüfstand **nicht** einfach „alle Gruppen ohne Chef" löschen —
+das wäre der Rundumschlag, der am selben Tag entfernt wurde. Also schreibt
+`70_schreiben.mjs` **jede erzeugte ID sofort mit**, nicht am Ende: Bricht der Lauf in
+der Mitte ab, ist die Liste genau dann da, wenn man sie braucht. Nachgemessen: „4 Zeilen
+hat der Server angelegt — die gehen beim Namen weg", und danach 0 übrig.
+
+**Zwei eigene Fehler beim Prüfstand, beide beim ERSTEN Lauf sichtbar:** ein falscher
+Enum-Wert (`level: 'egal'` statt `'any'` — der Fehler `22P02` war zugleich der Beleg,
+dass die Kette bis Postgres wirklich steht), und ein Wächter, der zu viel prüfte: Er
+verlangte, dass in KEINER gebauten Datei ein `@/`-Alias steht, und schlug an `mock.js`
+an — die wird mitgebaut, weil `laden.ts` über `import type` bis `store.ts` reicht und
+tsc alles typprüft, was es erreicht. **Geladen wird sie nie.** Jetzt werden die vier
+Dateien geprüft, die wirklich geladen werden, plus eine Gegenprobe, dass `senden.js`
+und `laden.js` `mock` auch über keinen Umweg ziehen.
+
+⚠️ **Was 20.5 NICHT ist: der Schalter.** `ANMELDE_QUELLE` steht weiter auf
+`'attrappe'`. Das Umlegen hängt unverändert an 20.3-b2 (Apple und Google) und an dem
+Satz im Prototyp-Hinweis, der „Es gibt keinen Login" behauptet — harte Regel 22, der
+Satz ist Ians.
 
 #### 20.6 — Profilbilder ⬜
 
@@ -6483,6 +6604,61 @@ fremden Konten, und beide Konten standen danach unverändert da.
 ---
 
 ---
+
+### 46. Was der Bildschirm macht, während geschrieben wird ✅
+
+**Datei:** `src/data/schreiben.ts` · **entschieden am 2026-09-12: GEMISCHT — je
+nachdem, wer das Ergebnis bestimmt.**
+
+Die Frage gab es im Prototyp nicht: `aendern()` war augenblicklich, zwischen „Bin
+dabei" und dem neu gezeichneten Bildschirm lag nichts. Mit einer Datenbank in Irland
+liegen dort ein paar Zehntelsekunden — und damit ein dritter Zustand, den die App nicht
+kannte: *abgeschickt, aber noch nicht bestätigt.* Wer ihn nicht benennt, bekommt ihn
+trotzdem; er sieht dann so aus, dass jemand zweimal tippt.
+
+**Der Trennstrich ist eine Frage und keine Liste von Ausnahmen:** *Kann die App das
+Ergebnis selbst hinschreiben, ohne zu raten?* „Nein" hat genau zwei Gestalten — der
+Server ENTSCHEIDET (ist noch ein Platz frei? wer erbt die Gruppe?), oder er VERGIBT
+eine ID, zu der der Bildschirm gleich hinspringt. Acht Aktionen warten, vierzehn nicht;
+`EINORDNUNG` ist ein `Record` über alle 22, eine neue ohne Eintrag ist ein Typfehler.
+
+**Verworfen: B) immer sofort, Fehler nimmt es zurück.** Jeder Knopf wirkt
+augenblicklich — und die App müsste VORHERSAGEN, was der Server tut. Bei
+`anfrageBestaetigen` hieße das, Ians Platz-Regel steht zweimal da (einmal als
+`select … for update` in 0004, einmal als `if` in TypeScript), also genau die zwei
+Wahrheiten, gegen die harte Regel 70 gebaut ist. Und der sichtbare Preis wäre der
+übelste: ein Konfetti, das zurückspringt.
+
+**Verworfen: C) immer warten.** Die ehrlichste, und keine Regel stünde zweimal da.
+Verloren hat sie im Chat: Eine getippte Nachricht, die erst nach dem Umlauf nach Irland
+erscheint, fühlt sich kaputt an — bei WhatsApp steht sie sofort.
+
+**Den Haken kennt er:** zwei Verhaltensweisen in einer App. Das ist nur zu
+rechtfertigen, solange der Trennstrich eine Sache benennt und kein Gefühl. **Nicht ohne
+Rückfrage ändern.**
+
+### 47. Ob die App merkt, wenn sie eine Änderung verpasst ✅
+
+**Datei:** `src/data/realtime.ts` (`NACHLADEN`) · **entschieden am 2026-09-12: B —
+nachladen, wenn die App wieder nach vorn kommt.**
+
+Nach dem ersten Laden war ein Realtime-Anstoß der EINZIGE Anlass nachzuladen. Dass so
+ein Anstoß verlorengehen kann, ist gemessen und nicht befürchtet (2026-09-12,
+reproduziert): Nach zwölf Minuten ohne Verbindung ging der erste Anstoß nach
+`SUBSCRIBED` verloren, warm kamen in fünf von fünf Läufen beide an. Dazu die Fälle, die
+niemand nachstellen muss — Netz weg, Tunnel, WLAN-Wechsel, abgelaufenes Token.
+
+Gebaut als `AppState`-Zuhörer in `app/_layout.tsx`, und zwar nur auf `'active'`: iOS
+kennt `'inactive'` für das Hochziehen des Kontrollzentrums, und wer darauf lädt, lädt
+beim Vorbeiwischen. Im Fehlerfall passiert nichts — dort liegt Ians Vollbild-Kasten aus
+Entscheidung 43, und der Weg heraus ist SEIN Knopf.
+
+**Verworfen: A) nichts machen** (der nächste Anstoß holt es meistens schnell nach — und
+„meistens" kostet hier nichts zu beheben) und **C) zusätzlich alle paar Minuten von
+selbst** (am sichersten und das einzige mit einem LAUFENDEN Preis: dreizehn Abfragen je
+Runde für jeden, der die App offen hat). **Den Haken kennt er:** Wer die App
+stundenlang offen liegen lässt, ohne zu wechseln, bekommt kein Netz — dafür wäre C da,
+und C ist nachrüstbar, ohne etwas zurückzunehmen.
 
 ## 7. Bewusst NICHT im Prototyp
 

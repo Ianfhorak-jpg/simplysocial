@@ -40,6 +40,43 @@
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  DAS SICHERHEITSNETZ — Ians 47. Entscheidung, vom 2026-09-12
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * ── Warum es eines braucht ───────────────────────────────────────────────────
+ * Nach dem ersten Laden ist ein Realtime-Anstoß der EINZIGE Anlass nachzuladen.
+ * Geht einer verloren, steht der Bildschirm still, bis zufällig der nächste kommt
+ * — und die App sieht aus wie leer oder kaputt.
+ *
+ * **Dass so ein Anstoß verlorengehen kann, ist gemessen und nicht befürchtet**
+ * (2026-09-12, reproduziert): Nach zwölf Minuten ohne Verbindung ging der ERSTE
+ * Anstoß nach `SUBSCRIBED` verloren, der zweite 1,5 s später kam an; warm kamen in
+ * fünf von fünf Läufen beide an. Supabase bestätigt den Beitritt also, bevor sein
+ * WAL-Leser an der aktuellen Stelle steht. Dazu kommen die Fälle, die niemand
+ * nachstellen muss: Netz weg, Tunnel, WLAN-Wechsel, abgelaufenes Token.
+ *
+ * ── Drei Möglichkeiten — Ians Wahl ist B ─────────────────────────────────────
+ *
+ *   A. NICHTS MACHEN  (verworfen)
+ *      Der nächste Anstoß holt es nach, und meistens kommt er schnell. Verloren
+ *      hat sie daran, dass „meistens" hier nichts kostet zu beheben.
+ *
+ *   B. NACHLADEN, WENN DIE APP WIEDER NACH VORN KOMMT   ← **seine Wahl**
+ *      Genau der Augenblick, in dem jemand hinsieht. Kein laufender Preis: Wer die
+ *      App nicht anfasst, löst nichts aus.
+ *      **Der Haken, den er kennt:** Wer die App stundenlang offen vor sich liegen
+ *      hat, ohne zu wechseln, bekommt kein Netz. Genau dafür wäre C da.
+ *
+ *   C. ZUSÄTZLICH ALLE PAAR MINUTEN VON SELBST  (verworfen)
+ *      Am sichersten und das einzige mit einem LAUFENDEN Preis: dreizehn Abfragen
+ *      je Runde, für jeden Menschen, der die App offen hat — auch wenn sich nichts
+ *      geändert hat. Bei vier Gründern ist das nichts und bei vierhundert nicht
+ *      mehr nichts. Nachrüstbar, ohne etwas zurückzunehmen.
+ */
+export const NACHLADEN: 'nie' | 'beim-hervorholen' | 'auch-getaktet' = 'beim-hervorholen';
+
+/**
  * Wie lange auf weitere Anstöße gewartet wird, bevor nachgeladen wird.
  *
  * 250 ms sind kürzer als jede Wahrnehmung („sofort" fängt bei ~100 ms an, lästig

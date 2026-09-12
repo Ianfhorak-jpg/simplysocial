@@ -2,7 +2,8 @@ import * as Location from 'expo-location';
 import { useEffect, useMemo } from 'react';
 
 import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
-import { aendern, getState, neueId, useSlice } from '../store';
+import { aendern, getState, neueId, schreibVorgangMitId, useSlice } from '../store';
+import * as senden from '@/data/senden';
 import { istMitglied } from '../groups/gruppe';
 import { istBlockiert } from '../safety/hooks';
 import { useUserMap } from '../social/hooks';
@@ -368,11 +369,18 @@ export type PostEntwurf = {
  * Kein Haken (`use…`), sondern eine reine Aktion: sie liest nichts und zeichnet
  * nichts neu, sie ändert nur den Speicher. Die Screens erfahren es über ihre Haken.
  */
-export function postErstellen(entwurf: PostEntwurf): string {
+export function postErstellen(entwurf: PostEntwurf): Promise<string> {
   const ichId = getCurrentUserId();
-  const id = neueId('p');
 
-  aendern((alt) => {
+  // **Eine der drei Aktionen, bei denen der Server die ID vergibt** — der Screen
+  // springt anschliessend auf `/post/<id>`. Eine erfundene ID führte dort auf
+  // „Diesen Post gibt es nicht mehr", eine halbe Sekunde nach dem Schreiben.
+  // Im Prototyp kommt die ID weiter aus `neueId()`, und zwar erst im Rückfall
+  // unten — dadurch läuft der Zähler nicht mit, wenn Supabase die ID vergibt.
+  let prototypId = '';
+  return schreibVorgangMitId('postErstellen', 'neu', (alt) => {
+    prototypId = neueId('p');
+    const id = prototypId;
     const neu: Post = {
       ...entwurf,
       id,
@@ -388,9 +396,7 @@ export function postErstellen(entwurf: PostEntwurf): string {
       note: entwurf.note.trim(),
     };
     return { posts: [...alt.posts, neu] };
-  });
-
-  return id;
+  }, (sb) => senden.postErstellen(sb, entwurf, ichId), () => prototypId);
 }
 
 // ── Phase 6: die Posts einer Person ──────────────────────────────────────────

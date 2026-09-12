@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Profil } from '@/components/Profil';
 import { SsAvatar, SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
+import { useWartetAuf } from '@/features/store';
 import { schreibHuerdeText } from '@/features/chat/direkt';
 import { direktChatOeffnen, useDarfSchreiben } from '@/features/chat/hooks';
 import { blockFolgen } from '@/features/safety/block';
@@ -57,6 +58,8 @@ export default function UserProfileScreen() {
   const meldung = useMeineMeldung('user', id);
   const [fragt, setFragt] = useState(false);
   const ichId = useCurrentUserId();
+  const wartetBlock = useWartetAuf('blockieren', id);
+  const wartetChat = useWartetAuf('direktChatOeffnen', id);
 
   // Erst NACH allen Haken aussteigen — React verlangt in jedem Durchlauf dieselben
   // Haken in derselben Reihenfolge.
@@ -113,13 +116,22 @@ export default function UserProfileScreen() {
                 label="Nachricht"
                 icon="sprechblase"
                 block
+                wartet={wartetChat}
                 onPress={() => {
                   // `direktChatOeffnen` prüft die Regel selbst und gibt `undefined`
                   // zurück, wenn sie nicht gilt — dann passiert nichts. Der Knopf
                   // steht dann ohnehin nicht da; die Prüfung ist die Sperre, nicht
                   // der Knopf (Begründung in `chat/hooks.ts`).
-                  const threadId = direktChatOeffnen(person.id);
-                  if (threadId) router.push({ pathname: '/chat/[id]', params: { id: threadId } });
+                  //
+                  // Seit 20.5 ist das ein `await`: Die Faden-ID vergibt der Server
+                  // (`direktchat_oeffnen()` aus 0004), und `/chat/<erfundene id>`
+                  // wäre ein Chat, den es dort nicht gibt. Im Prototyp ist das
+                  // Warten nachgemessen null — `schreibVorgang` löst ohne Supabase
+                  // sofort auf.
+                  void (async () => {
+                    const threadId = await direktChatOeffnen(person.id);
+                    if (threadId) router.push({ pathname: '/chat/[id]', params: { id: threadId } });
+                  })();
                 }}
               />
             ) : (
@@ -151,9 +163,14 @@ export default function UserProfileScreen() {
                   variant="danger"
                   label="Ja, blockieren"
                   block
+                  wartet={wartetBlock}
                   onPress={() => {
-                    blockieren(person.id);
-                    setFragt(false);
+                    // Warten, weil `public.blockieren()` (0004) Ians Entscheidung 7
+                    // vollzieht: Chat weg, Zusage abgesagt, Platz frei — in EINER
+                    // Transaktion. Die Rückfrage schliesst erst danach: Bliebe sie
+                    // offen stehen, während der Knopf „Moment …" sagt, sähe es aus,
+                    // als hätte man nicht getroffen.
+                    void blockieren(person.id).then(() => setFragt(false));
                   }}
                 />
                 <SsButton label="Abbrechen" block onPress={() => setFragt(false)} />

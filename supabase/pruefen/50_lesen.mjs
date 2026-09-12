@@ -77,9 +77,21 @@ console.log('\n── Ohne Anmeldung: die Policies halten ───────�
 {
   const anon = neuerClient();
   const { data, error, status } = await anon.from('posts').select('*');
-  pruef('anon bekommt HTTP 200 …', status, 200);
-  pruef('… und NULL Posts (nicht etwa einen Fehler)', data?.length, 0);
-  pruef('… ohne Fehlermeldung — RLS filtert, es verweigert nicht', error, null);
+  // ⚠️ **Am 2026-09-12 in Phase 20.5 umgeschrieben, und sie sind dabei ROT
+  // geworden — das war ihr Zweck.** Hier stand: „anon bekommt HTTP 200 · und NULL
+  // Posts · ohne Fehlermeldung — RLS filtert, es verweigert nicht." Das stimmte,
+  // und es stimmte aus dem falschen Grund: Supabase hatte dem `anon` per
+  // Voreinstellung `SELECT` auf jede Tabelle gegeben, also FILTERTE RLS wirklich.
+  //
+  // `0002_policies.sql` enthält keine einzige Zeile `to anon`. Die Regel lautet
+  // also nicht „anon sieht nichts, weil gefiltert wird", sondern **„anon kommt
+  // gar nicht erst heran"** — und seit `0007_rechte.sql` gilt sie auch am Server.
+  //
+  // Eine Prüfung, die eine Bedeutungsänderung nicht merkt, prüft die Umsetzung und
+  // nicht die Regel (die Lehre aus 20.5-SQL). Diese drei haben sie gemerkt.
+  pruef('anon kommt gar nicht heran — HTTP 401', status, 401);
+  pruef('… und bekommt keine Zeilen', data, null);
+  pruef('… mit SQLSTATE 42501 (harte Regel 57: der Code, nicht „ging nicht")', error?.code, '42501');
 
   // Die Gegenprobe, ohne die „0 Zeilen" alles sein könnte, was dieses Skript sagt.
   const { error: e404, status: s404 } = await anon.from('gibt_es_nicht').select('*');

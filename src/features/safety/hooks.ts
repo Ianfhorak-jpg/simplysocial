@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 
 import { getCurrentUserId, useCurrentUserId } from '../auth/hooks';
 import { nachfolgerId } from '../groups/gruppe';
-import { aendern, neueId, useSlice } from '../store';
+import { getState, neueId, schreibVorgang, useSlice } from '../store';
+import * as senden from '@/data/senden';
 
 import { BLOCK_WIRKUNG } from './block';
 
@@ -110,11 +111,16 @@ export function useBlockierte(): User[] {
  * Was mit dem laufenden Chat und einer bestätigten Verabredung passiert, kommt aus
  * `BLOCK_WIRKUNG` — das ist Ians offene Entscheidung.
  */
-export function blockieren(id: string): void {
+export function blockieren(id: string): Promise<void> {
   const ichId = getCurrentUserId();
-  if (id === ichId) return;
+  if (id === ichId) return Promise.resolve();
 
-  aendern((alt) => {
+  // **Eine der acht wartenden Aktionen** (`data/schreiben.ts`). Was hier lokal
+  // steht, ist Ians Entscheidung 7 noch einmal in TypeScript — mit Supabase läuft
+  // stattdessen `public.blockieren()` aus 0004, und der lokale Zweig kommt gar nicht
+  // dran. Er bleibt trotzdem stehen: Er IST der Prototyp, und `ANMELDE_QUELLE`
+  // steht weiter auf `'attrappe'`.
+  return schreibVorgang('blockieren', id, (alt) => {
     const ich = alt.users.find((u) => u.id === ichId);
     if (!ich || ich.blockedIds.includes(id)) return {};
 
@@ -202,7 +208,7 @@ export function blockieren(id: string): void {
     }
 
     return { users, joinRequests, posts, chatThreads, messages };
-  });
+  }, (sb) => senden.blockieren(sb, id));
 }
 
 /**
@@ -215,13 +221,18 @@ export function blockieren(id: string): void {
  * eine Liste im Speicher, die nur für den Fall existiert, dass jemand es sich anders
  * überlegt. Das ist genau die Art Nebenwahrheit, die später auseinanderläuft.
  */
-export function entblocken(id: string): void {
+export function entblocken(id: string): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => ({
-    users: alt.users.map((u) =>
-      u.id === ichId ? { ...u, blockedIds: u.blockedIds.filter((x) => x !== id) } : u,
-    ),
-  }));
+  return schreibVorgang(
+    'entblocken',
+    id,
+    (alt) => ({
+      users: alt.users.map((u) =>
+        u.id === ichId ? { ...u, blockedIds: u.blockedIds.filter((x) => x !== id) } : u,
+      ),
+    }),
+    (sb) => senden.entblocken(sb, id, ichId),
+  );
 }
 
 // ── Melden ───────────────────────────────────────────────────────────────────
@@ -257,26 +268,37 @@ export function melden(
   targetId: string,
   reason: ReportReason,
   note: string,
-): void {
+): Promise<void> {
   const ichId = getCurrentUserId();
-  aendern((alt) => {
-    const schonDa = alt.reports.some(
-      (r) =>
-        r.fromUserId === ichId && r.targetType === targetType && r.targetId === targetId,
-    );
-    if (schonDa) return {};
+  // Zweimal dasselbe melden gibt es nicht — im Prototyp sagt das dieser Vergleich,
+  // in der Datenbank ein `unique`. Der Vergleich bleibt trotzdem stehen, weil er
+  // verhindert, dass überhaupt geschrieben wird: Sonst käme `23505` zurück, und die
+  // Person läse „Das hat schon geklappt" für etwas, das sie gar nicht getan hat.
+  if (
+    getState().reports.some(
+      (r) => r.fromUserId === ichId && r.targetType === targetType && r.targetId === targetId,
+    )
+  ) {
+    return Promise.resolve();
+  }
 
-    const neu: Report = {
-      id: neueId('rep'),
-      targetType,
-      targetId,
-      fromUserId: ichId,
-      reason,
-      note: note.trim(),
-      createdAt: new Date().toISOString(),
-    };
-    return { reports: [...alt.reports, neu] };
-  });
+  return schreibVorgang(
+    'melden',
+    targetId,
+    (alt) => {
+      const neu: Report = {
+        id: neueId('rep'),
+        targetType,
+        targetId,
+        fromUserId: ichId,
+        reason,
+        note: note.trim(),
+        createdAt: new Date().toISOString(),
+      };
+      return { reports: [...alt.reports, neu] };
+    },
+    (sb) => senden.melden(sb, targetType, targetId, reason, note, ichId),
+  );
 }
 
 // ── Account löschen ──────────────────────────────────────────────────────────

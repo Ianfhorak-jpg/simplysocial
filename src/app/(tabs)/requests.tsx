@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, SectionList, StyleSheet, View } from 'react-native';
 
 import { SsAvatar, SsButton, SsCard, SsChip, SsIcon, SsIconText, SsScreen, SsSegment, SsText } from '@/components/ui';
+import { getState, useWartetAuf } from '@/features/store';
 import { mitgliederText } from '@/features/groups/gruppe';
 import {
   beitrittAblehnen,
@@ -264,6 +265,10 @@ function EingehendeZeile({ eintrag }: { eintrag: AnfrageEintrag }) {
   const { anfrage, person, post } = eintrag;
   const frei = freiePlaetze(post);
   const voll = frei <= 0;
+  // Die MARKE ist die Anfrage-ID und nicht die Aktion allein: Hier stehen mehrere
+  // Bestätigen-Knöpfe untereinander, und ohne sie würden beim Drücken eines
+  // Knopfes alle grau — das sähe aus, als wäre der Bildschirm eingefroren.
+  const wartet = useWartetAuf('anfrageBestaetigen', anfrage.id);
 
   return (
     <SsCard>
@@ -315,13 +320,28 @@ function EingehendeZeile({ eintrag }: { eintrag: AnfrageEintrag }) {
           label="Bestätigen"
           block
           disabled={voll}
+          wartet={wartet}
           style={styles.knopf}
           onPress={() => {
-            anfrageBestaetigen(anfrage.id);
-            router.push({
-              pathname: '/match',
-              params: { postId: post.id, userId: person.id },
-            });
+            // **Der wichtigste Fall der ganzen Phase.** Hier wurde bestätigt UND
+            // sofort aufs Konfetti gesprungen — und genau das ist der Einwand, an
+            // dem Möglichkeit B in `data/schreiben.ts` gescheitert ist: ein
+            // Konfetti für eine Bestätigung, die der Server ablehnt, weil der
+            // letzte Platz inzwischen weg ist. Am Server entscheidet das
+            // `anfrage_bestaetigen()` mit `select … for update` (0004), und dass
+            // zwei gleichzeitige Bestätigungen ohne diese Sperre BEIDE durchgehen,
+            // ist gemessen (`30_wettlauf.sh`) und nicht befürchtet.
+            void (async () => {
+              await anfrageBestaetigen(anfrage.id);
+              // Gesprungen wird nur, wenn es wirklich durchging. Steht dort
+              // `'fehler'`, liegt die Leiste aus `app/_layout.tsx` schon oben, und
+              // der Bildschirm darunter zeigt bereits den Stand der Datenbank.
+              if (getState().schreiben.zustand === 'fehler') return;
+              router.push({
+                pathname: '/match',
+                params: { postId: post.id, userId: person.id },
+              });
+            })();
           }}
         />
       </View>
@@ -402,6 +422,7 @@ function GruppeKopf({ gruppe }: { gruppe: Group }) {
  */
 function GruppenAnfrageZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) {
   const { anfrage, person, gruppe } = eintrag;
+  const wartet = useWartetAuf('beitrittBestaetigen', anfrage.id);
 
   return (
     <SsCard>
@@ -441,8 +462,9 @@ function GruppenAnfrageZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) {
           category={gruppe.category}
           label="Aufnehmen"
           block
+          wartet={wartet}
           style={styles.knopf}
-          onPress={() => beitrittBestaetigen(anfrage.id)}
+          onPress={() => void beitrittBestaetigen(anfrage.id)}
         />
       </View>
     </SsCard>
@@ -484,6 +506,7 @@ function EinladungenKopf() {
  */
 function EinladungZeile({ eintrag }: { eintrag: EinladungEintrag }) {
   const { einladung, von, gruppe } = eintrag;
+  const wartet = useWartetAuf('einladungAnnehmen', einladung.id);
 
   return (
     <SsCard category={gruppe.category}>
@@ -524,8 +547,9 @@ function EinladungZeile({ eintrag }: { eintrag: EinladungEintrag }) {
           category={gruppe.category}
           label="Annehmen"
           block
+          wartet={wartet}
           style={styles.knopf}
-          onPress={() => einladungAnnehmen(einladung.id)}
+          onPress={() => void einladungAnnehmen(einladung.id)}
         />
       </View>
     </SsCard>
