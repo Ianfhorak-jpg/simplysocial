@@ -3,7 +3,27 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> Stand: 12.09.2026 (nachts) — **der Lösch-Knopf löscht jetzt wirklich.** Seit
+> Stand: 12.09.2026 (spät) — **alle drei Konten stehen, bis auf eine Zeile.**
+> Supabase ✅ · Apple ✅ · Google fast. **Was noch fehlt: die iOS-Client-ID**, 20
+> Sekunden — in der Google-Client-Liste bei *SimplySocial iOS* auf das Kopier-Symbol,
+> dann `cd simplysocial && npm run google-key sichern`.
+>
+> **Dein Apple-Sign-in-Schlüssel liegt sicher** (Key-ID `F2M3N3K9M5`), zusammen mit
+> dem Datenbank-Zugang, dem Brevo-Schlüssel und den Google-Zugängen in
+> `~/.simplysocial/` — **außerhalb des Projektordners**, denn der geht nach GitHub.
+> Nachgesehen: Es liegt kein Schlüssel mehr offen auf dem Schreibtisch.
+>
+> ⚠️ **Und eine Frage von vorhin ist noch offen: Punkt 10** (eine Minute) — wer nie
+> ein Profilbild hatte, soll der trotzdem lesen, dass eines entfernt wurde?
+>
+> ℹ️ **Was mir aufgefallen ist, fürs nächste Mal:** Du hast die Schlüssel per
+> Screenshot auf den Schreibtisch gelegt. Das ist verständlich — sie verschwinden ja
+> sofort —, aber der Schreibtisch wird von iCloud synchronisiert, und damit liegt ein
+> Passwort als Bild in der Cloud. **Dafür gibt es jetzt Befehle** (`npm run
+> google-key sichern`, `npm run brevo-key`), die das sicher erledigen. Sag beim
+> nächsten Dienst einfach Bescheid, bevor du den Schlüssel wegklickst.
+>
+> Davor: 12.09.2026 (nachts) — **der Lösch-Knopf löscht jetzt wirklich.** Seit
 > Phase 7 stand der Bildschirm „Account löschen" da und tat beim letzten Klick
 > nichts; das war ehrlich, solange es keine Konten gab. Jetzt gibt es sie, und der
 > Knopf tut, was er sagt. **Deine zwei Entscheidungen (52 und 53) sind eingebaut**,

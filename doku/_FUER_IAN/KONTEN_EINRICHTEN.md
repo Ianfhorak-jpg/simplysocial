@@ -301,7 +301,26 @@ waren gegen 121 Angriffe geprüft.
 
 ---
 
-## 3. Google — der zweite Anmeldeweg · **15 Minuten**
+## 3. Google — der zweite Anmeldeweg · **fast fertig** ✅🟡 *(12.09.2026)*
+
+> **Erledigt:** Projekt `simplysocial-508421`, Zielgruppe *Extern*, Branding, und
+> **beide Clients sind angelegt** — `SimplySocial Web` und `SimplySocial iOS`.
+> Client Secret und Web-Client-ID liegen gesichert in `~/.simplysocial/`
+> (Rechte 600), aus der heruntergeladenen JSON gelesen und gegengeprüft; die JSON
+> ist danach gelöscht worden.
+>
+> **Was fehlt: die iOS-Client-ID.** In der Client-Liste bei *SimplySocial iOS* auf
+> das Kopier-Symbol, dann `cd simplysocial && npm run google-key sichern`.
+>
+> **Und eine Sache kommt später:** Bei *Extern* steht die App auf **Testmodus** —
+> da darf sich nur anmelden, wer unter *Zielgruppe → Testnutzer* eingetragen ist.
+> Christoph, Leopold und Daria brauchen also je einen Eintrag, sonst sieht „Mit
+> Google anmelden" bei ihnen aus wie ein kaputter Knopf. **Schick mir ihre drei
+> Mailadressen**, dann mache ich das mit.
+
+<details><summary>Die Anleitung, zum Nachlesen</summary>
+
+### Google einrichten · 15 Minuten
 
 **Erst machen, wenn Punkt 1 fertig ist.** Grund: Sobald Google dabei ist, verlangt Apple
 laut Richtlinie 4.8, dass „Anmelden mit Apple" daneben steht. Andersherum ist es eine
@@ -352,6 +371,8 @@ Ablehnung im Review.
 > zurück in die Zwischenablage, falls das Einfügen in Supabase schiefgeht.
 
 ---
+
+</details>
 
 ## Und dann?
 
