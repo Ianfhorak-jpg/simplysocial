@@ -21,6 +21,31 @@ function pruef(was, ist, soll) {
   }
 }
 
+/**
+ * Felder rekursiv nach Namen ordnen, damit ZWEI Objekte mit denselben Feldern
+ * gleich sind, egal in welcher Reihenfolge sie geschrieben wurden.
+ *
+ * **Warum das hier gebraucht wird und `pruef()` trotzdem streng bleibt:**
+ * `pruef()` vergleicht Text, und bei einem Objekt hängt der an der Reihenfolge.
+ * Für alles andere in dieser Datei ist das richtig. Bei der Sitzung ist es
+ * falsch, und zwar nachweisbar: `aufteilen()` LÖSCHT `refresh_token` aus dem
+ * Datei-Teil — die Prüfung eine Zeile darüber verlangt das ausdrücklich —, und
+ * damit ist die ursprüngliche Position des Feldes weg. Eine Prüfung auf die alte
+ * Reihenfolge könnte also KEINE Fassung von `zusammensetzen()` bestehen.
+ *
+ * Gemessen am 2026-09-13: Der Inhalt stimmte aufs Zeichen, nur `refresh_token`
+ * stand hinten statt in der Mitte. Der Kommentar an der Prüfung sagte das
+ * Richtige (*„verglichen wird das GEPARSTE"*), der Code darunter tat es nicht —
+ * dieselbe Familie wie harte Regel 83.
+ */
+function kanonisch(wert) {
+  if (Array.isArray(wert)) return wert.map(kanonisch);
+  if (wert === null || typeof wert !== 'object') return wert;
+  return Object.fromEntries(
+    Object.keys(wert).sort().map((k) => [k, kanonisch(wert[k])]),
+  );
+}
+
 // ── Die Sitzungen, gegen die geprüft wird ────────────────────────────────────
 // Die FELDER und ihre GRÖSSEN sind am 2026-09-13 am echten Supabase gemessen
 // (Client mit untergeschobener Speicher-Attrappe). Die Werte selbst sind
@@ -68,7 +93,11 @@ for (const [name, s] of [['E-Mail-Konto', EMAIL], ['Google-Konto', GOOGLE]]) {
   // `JSON.parse`, also ist die Reihenfolge der Felder ohne Bedeutung — ein
   // Textvergleich würde hier eine Ordnung verlangen, die niemand zugesagt hat.
   const zurueck = zusammensetzen(teile);
-  pruef(`${name}: kommt vollständig zurück`, zurueck === null ? null : JSON.parse(zurueck), s);
+  pruef(
+    `${name}: kommt vollständig zurück`,
+    zurueck === null ? null : kanonisch(JSON.parse(zurueck)),
+    kanonisch(s),
+  );
 }
 
 console.log('\n── Beide Hälften gegen die 2048-Byte-Warnung ──');
@@ -90,6 +119,26 @@ console.log('\n── Wenn nur eine Hälfte da ist (Ians zweiter Halbsatz) ─�
   pruef('nur der Schlüssel, kein Ausweis → abgemeldet',
     zusammensetzen({ tresor: teile.tresor, datei: null }), null);
   pruef('gar nichts → abgemeldet', zusammensetzen({ tresor: null, datei: null }), null);
+}
+
+console.log('\n── Tresor heil, Datei kaputt (Ians Wahl A: nachsehen) ──');
+// **Die Gegenprobe, auf die es bei DIESER Funktion ankommt.** Ohne sie besteht
+// eine Fassung, die den Schlüssel ungeprüft in den Dateitext schreibt, jede
+// andere Prüfung hier — gemessen am 2026-09-13: 24 Häkchen, 0 Kreuze. Ians
+// Entscheidung wäre dann von nichts bewacht, und die nächste „Vereinfachung"
+// nähme sie still zurück.
+//
+// Der Fall ist nicht ausgedacht, er steht in `lib/sitzungsspeicher.native.ts`:
+// `setItem()` legt bei einer Sitzung OHNE Dauerschlüssel erst einen LEEREN Text
+// in die Datei und löscht erst danach den Tresor. Stürzt die App dazwischen ab,
+// liegt ein gültiger alter Schlüssel neben einem leeren Dateitext — und das ist
+// eine halbe Sitzung, auch wenn beide Plätze belegt sind.
+{
+  const tresor = 'z3k9pq2mx7wt';
+  for (const datei of ['', 'nicht-json', '"nur ein string"', '[1,2,3]', 'null']) {
+    pruef(`Schlüssel + ${datei === '' ? '(leere Datei)' : datei} → abgemeldet`,
+      zusammensetzen({ tresor, datei }), null);
+  }
 }
 
 console.log('\n── Was keine Sitzung ist, ist keine Sitzung ──');

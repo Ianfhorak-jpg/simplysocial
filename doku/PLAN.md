@@ -7397,10 +7397,11 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 > 12-Megapixel-Foto wird nur der Ausschnitt hochgeladen. Das ist weniger Wartezeit und
 > weniger von der einen Gigabyte, die Supabase gratis gibt.
 
-36. ⬜ **Wie die Anmeldung auf dem GERÄT liegt** (`src/features/auth/sitzungsspeicher.ts`)
+36. ✅ **Wie die Anmeldung auf dem GERÄT liegt** (`src/features/auth/sitzungsspeicher.ts`)
     — **entschieden am 2026-09-13: GETEILT.** *(Ians fünfundfünfzigste Entscheidung,
-    `SITZUNG_TEILUNG`.)* **Der Code dazu wartet auf ihn** — `zusammensetzen()` trägt ein
-    `TODO(Ian)`, und `npm run pruef-sitzung` meldet deshalb 22 Häkchen und 2 Kreuze.
+    `SITZUNG_TEILUNG`.)* **Das `TODO(Ian)` ist am selben Tag weg** — Ian hat die
+    verbliebene Wahl getroffen (unten, „Ians Wahl A"), den Code dazu habe ich
+    geschrieben. `npm run pruef-sitzung` meldet **29 Häkchen und kein Kreuz**.
 
     ⚠️ **Zur Nummer:** Die **55** ist in diesem Plan ZWEIMAL vergeben — sie steht in
     Phase 19f schon an *„beim Antippen des Eingabefelds bleibt der Chat unten"*
@@ -7452,10 +7453,42 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
     stirbt und dabei aussieht wie ein Fehler; nur der Dauerschlüssel ergibt einen
     `auth-js`-Zustand, den es in dessen eigenem Typ gar nicht gibt.
 
-    **Solange das TODO steht, ist die App am iPhone bei jedem Start abgemeldet.**
-    Geprüft wird mit `npm run pruef-sitzung` — sind die 2 Kreuze weg, stimmt die
-    Funktion. Sie ist ohne Gerät und ohne Datenbank prüfbar, weil die Regel-Datei nur
-    Typen importiert (dieselbe Bauart wie `lib/base64.ts` und `data/zeilen.ts`).
+    ✅ **Ians Wahl A (2026-09-13): NACHSEHEN, nicht glauben.** Offen war, ob
+    `zusammensetzen()` den Datei-Teil prüft, bevor es ihm den Schlüssel beilegt.
+    Verworfen ist B (den Schlüssel ungeprüft in den Dateitext schreiben) — drei Zeilen
+    kürzer und in einem Fall falsch, der wirklich vorkommt: `setItem()` legt bei einer
+    Sitzung ohne Dauerschlüssel erst einen **leeren** Text in die Datei und löscht erst
+    danach den Tresor. Ein Absturz dazwischen hinterlässt einen gültigen alten Schlüssel
+    neben einem leeren Dateitext — unter B käme daraus ein leerer Text zurück, an dem
+    `auth-js` beim Start zerbricht.
+
+    **Zwei Dinge daran waren teurer als die Funktion, und beide betrafen den
+    PRÜFSTAND:**
+
+    1. **Er verlangte eine Reihenfolge, die keine Fassung liefern kann.** `pruef()`
+       vergleicht `JSON.stringify(ist) === JSON.stringify(soll)`, und das hängt bei
+       einem Objekt an der Feldreihenfolge — drei Zeilen darüber stand aber wörtlich
+       *„verglichen wird das GEPARSTE … die Reihenfolge ist ohne Bedeutung"*. Kommentar
+       und Code waren auseinandergelaufen (harte Regel 83, diesmal in einer Prüfdatei).
+       **Und die alte Ordnung ist gar nicht wiederherstellbar:** `aufteilen()` macht
+       `delete ohneSchluessel[TRESOR_FELD]`, womit die Position des Feldes weg ist — und
+       die Schwesterprüfung eine Zeile darüber verlangt ausdrücklich, dass sie weg ist.
+       Behoben mit `kanonisch()` an genau dieser einen Stelle; `pruef()` bleibt sonst
+       streng. **Gegengemessen**, damit das Entschärfen nicht das Bestehen erzeugt: eine
+       Fassung, die den Schlüssel gar nicht wieder einsetzt, wird weiter rot — `kanonisch()`
+       sortiert, es verdeckt kein fehlendes Feld.
+    2. **Ians Entscheidung war von KEINER Prüfung bewacht.** Variante B bestand alle 24
+       Häkchen (gemessen, nicht überlegt) — die nächste „Vereinfachung" hätte A still
+       zurückgenommen. Die fehlende Gegenprobe ist jetzt drin (Tresor heil, Datei kaputt
+       → abgemeldet, fünf Fälle), damit sind es 29; B fällt damit mit **5 Kreuzen** durch.
+
+    Geprüft wird mit `npm run pruef-sitzung`. Er läuft ohne Gerät und ohne Datenbank,
+    weil die Regel-Datei nur Typen importiert (dieselbe Bauart wie `lib/base64.ts` und
+    `data/zeilen.ts`).
+
+    ⚠️ **Was damit NICHT geprüft ist:** ob der iOS-Schlüsselbund die 14 Byte wirklich
+    annimmt und ob sie einen Neustart überleben. Das kann kein Mac beantworten und
+    gehört in denselben Gerätedurchgang wie Apple, Google und der Bildwähler.
 
     ⚠️ **Und eine AUSLEGUNG daneben wartet auch auf ihn:** In
     `lib/sitzungsspeicher.native.ts` steht `WHEN_UNLOCKED_THIS_DEVICE_ONLY` — lesbar nur

@@ -165,11 +165,49 @@ export function aufteilen(roh: string): SitzungsTeile {
  * Gibt `null` zurück, wenn daraus keine vollständige Sitzung wird — `auth-js`
  * liest das als „niemand angemeldet" und zeigt den Anmelde-Bildschirm.
  *
- * TODO(Ian): Diese Funktion schreibt Ian selbst — siehe PLAN.md, Abschnitt 6,
- * Punkt 36. Vorbereitet ist alles drumherum; hier steckt das Urteil.
+ * ── Was hereinkommt ─────────────────────────────────────────────────────────
+ * `teile.tresor` ist der Dauerschlüssel aus dem Schlüsselbund, `teile.datei` der
+ * Rest als JSON-Text aus der gewöhnlichen Datei. **Es sind ZWEI unabhängige
+ * Speicher** — jeder ist einzeln gelesen worden, und jeder kann für sich fehlen,
+ * leer oder alt sein. `null` an einem der beiden Plätze heißt „dort liegt nichts".
+ *
+ * ── Ians Wahl am 2026-09-13: NACHSEHEN, nicht glauben ───────────────────────
+ * Die Frage war, ob der Datei-Teil geprüft wird, bevor man ihm den Schlüssel
+ * beilegt. Seine Antwort ist die strengere, und sie ist derselbe Satz wie der
+ * zweite Halbsatz von Entscheidung 55: **Eine Datei, die keine Sitzung enthält,
+ * ist dasselbe wie eine fehlende Datei.**
+ *
+ * Verworfen war, den Schlüssel ohne Prüfung in den Dateitext zu schreiben — drei
+ * Zeilen kürzer und in genau einem Fall falsch, der nicht selten ist: `setItem()`
+ * legt bei einer Sitzung ohne Dauerschlüssel ausdrücklich einen **leeren** Text
+ * ab. Ohne Prüfung käme daraus etwas zurück, das `auth-js` nicht lesen kann, und
+ * zwar beim Start der App auf einem fremden Gerät.
+ *
+ * ── Warum nichts wirft ──────────────────────────────────────────────────────
+ * `JSON.parse` auf diesen leeren Text ist kein Randfall, sondern der Normalfall
+ * nach jedem Abmelden. Ein `catch` gibt es hier deshalb nicht „für alle Fälle",
+ * sondern für den häufigsten: Ohne ihn stürzte die App beim Start ab, statt den
+ * Anmelde-Bildschirm zu zeigen (siehe den Kopf von `lib/sitzungsspeicher.native.ts`).
  */
 export function zusammensetzen(teile: SitzungsTeile): string | null {
-  // TODO(Ian)
-  void teile;
-  return null;
+  // Ein leerer Dauerschlüssel zählt wie keiner — dieselbe Grenze, die `aufteilen()`
+  // beim Hineinlegen zieht. Liefen die beiden auseinander, entstünde eine Sitzung
+  // mit leerem `refresh_token`: Sie lebt eine Stunde und sieht danach aus wie ein
+  // Fehler — genau der Zustand, den Entscheidung 55 ausschließt.
+  if (teile.tresor === null || teile.tresor.length === 0 || teile.datei === null) {
+    return null;
+  }
+
+  let rest: unknown;
+  try {
+    rest = JSON.parse(teile.datei);
+  } catch {
+    return null;
+  }
+  if (rest === null || typeof rest !== 'object' || Array.isArray(rest)) return null;
+
+  // `TRESOR_FELD` steht ABSICHTLICH hinten: Stünde im Datei-Teil je ein alter
+  // Dauerschlüssel, gewinnt der aus dem Tresor. Der Spread davor kann ihn nicht
+  // überschreiben.
+  return JSON.stringify({ ...rest, [TRESOR_FELD]: teile.tresor });
 }

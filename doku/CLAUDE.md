@@ -123,13 +123,35 @@ Prototyp-Hinweis, der „Es gibt keinen Login" behauptet, während es drei gibt 
 Satz ist Ians** (harte Regel 22). Dazu stünden auf der öffentlichen Adresse zwei
 gesperrte Knöpfe mit „Geht nur in der App am Handy".
 
-🔧 **Daneben liegt die GETEILTE SITZUNG halb fertig — und eine Funktion wartet auf
-Ian.** `expo-secure-store` + `AsyncStorage` sind verdrahtet (Ians Entscheidung 55: der
+✅ **Die GETEILTE SITZUNG ist fertig (2026-09-13) — das `TODO(Ian)` ist weg.**
+`expo-secure-store` + `AsyncStorage` sind verdrahtet (Ians Entscheidung 55: der
 14-Byte-Dauerschlüssel in den Schlüsselbund, die 2459 Byte Ausweis in eine gewöhnliche
-Datei), `npm run pruef-sitzung` meldet **22 Häkchen und 2 Kreuze**. Die zwei Kreuze sind
-das `TODO(Ian)` an `zusammensetzen()` in `features/auth/sitzungsspeicher.ts` (PLAN.md,
-Abschnitt 6, Punkt 36). **Solange es steht, überlebt am iPhone keine Sitzung den
-Neustart** — die App wäre bei jedem Start abgemeldet.
+Datei), und `zusammensetzen()` in `features/auth/sitzungsspeicher.ts` steht.
+**Ians Wahl an der offenen Stelle: A — NACHSEHEN, nicht glauben.** Der Datei-Teil wird
+geprüft, bevor ihm der Schlüssel beigelegt wird; was kein Sitzungs-Objekt ist, gilt als
+abgemeldet. `npm run pruef-sitzung` meldet **29 statt 22 Häkchen, kein Kreuz**, `tsc`
+sauber, **81 Lint-Probleme wie vorher**. **Zwei Dinge waren teurer als die Funktion, und
+beide betrafen den PRÜFSTAND:**
+
+1. **Er verlangte eine Reihenfolge, die KEINE Fassung liefern kann.** `pruef()`
+   vergleicht `JSON.stringify(ist) === JSON.stringify(soll)` — bei einem Objekt hängt das
+   an der Feldreihenfolge. Drei Zeilen darüber stand wörtlich das Gegenteil (*„verglichen
+   wird das GEPARSTE … die Reihenfolge ist ohne Bedeutung"*): Kommentar und Code waren
+   auseinandergelaufen, harte Regel 83 in einer Prüfdatei. **Und die alte Ordnung ist
+   nicht wiederherstellbar** — `aufteilen()` LÖSCHT `refresh_token` aus dem Datei-Teil,
+   und die Schwesterprüfung eine Zeile darüber verlangt genau das. Behoben mit
+   `kanonisch()` an dieser einen Stelle; `pruef()` bleibt sonst streng.
+2. **Ians Entscheidung war von KEINER Prüfung bewacht — gemessen, nicht vermutet.**
+   Variante B (den Schlüssel ungeprüft in den Dateitext schreiben) bestand alle 24
+   Häkchen. Die nächste „Vereinfachung" hätte A also still zurückgenommen. Die fehlende
+   Gegenprobe ist drin (Tresor heil, Datei kaputt → abgemeldet), **B fällt jetzt mit 5
+   Kreuzen durch.** Und der Fall ist nicht ausgedacht: `setItem()` legt bei einer Sitzung
+   ohne Dauerschlüssel erst einen LEEREN Text in die Datei und löscht erst danach den
+   Tresor — ein Absturz dazwischen hinterlässt genau diese Lage.
+
+⚠️ **Was daran NICHT geprüft ist: das Gerät.** Ob der iOS-Schlüsselbund die 14 Byte
+annimmt und ob sie einen Neustart überleben, kann kein Mac beantworten. Gehört in
+denselben Durchgang wie Apple, Google und der Bildwähler.
 
 ⚠️ **Ein Testkonto liegt in `auth.users`:** `ian.fhorak+neuzugang@gmail.com`, am
 12.09. angelegt, um die *Confirm-signup*-Vorlage zu prüfen. Nie eingelöst, also ohne
@@ -2314,11 +2336,12 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    seit derselben Nacht (`apple: true, google: true`, live gemessen). **Dabei kam
    heraus, dass ein NONCE die Anmeldung am Gerät gekippt hätte** — Apple hasht nicht,
    Supabase schon (harte Regeln 93 und 94).* ·
-   **Die geteilte Sitzung am Gerät** ← *hier geht es weiter — `expo-secure-store` +
-   `AsyncStorage` sind verdrahtet, `npm run pruef-sitzung` meldet 22 Häkchen und 2
-   Kreuze. **Die zwei Kreuze sind das `TODO(Ian)` an `zusammensetzen()`** (PLAN.md,
-   Abschnitt 6, Punkt 36); solange es steht, ist die App am iPhone bei jedem Start
-   abgemeldet.* ·
+   ~~**Die geteilte Sitzung am Gerät**~~ ✅ *2026-09-13: `zusammensetzen()` steht,
+   **Ians Wahl A — nachsehen, nicht glauben**, **29 Häkchen, kein Kreuz**. **Dabei kam
+   heraus, dass der Prüfstand eine Feldreihenfolge verlangte, die nach `aufteilen()`
+   gar nicht mehr existiert — und dass Ians Entscheidung von keiner einzigen Prüfung
+   bewacht war**: Die naheliegende Vereinfachung bestand alle 24 Häkchen. Beides
+   behoben, B fällt jetzt mit 5 Kreuzen durch.* ·
    ~~**Der Lösch-Screen wird angeschlossen (20.6-c)**~~ ✅ *2026-09-12: `/account-loeschen`
    ruft `konto_loeschen()` wirklich auf, Entscheidungen 52 und 53, **27 Häkchen am echten
    Server**. **Dabei kam heraus, dass jeder OHNE Profilbild einen Satz über einen Verlust
@@ -2809,7 +2832,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    importfreie Regel-Dateien in blankem Node (dieselbe Bauart wie `40_uebersetzung.sh`):
    `npm run pruef-bildwahl` (35) hält `lib/base64.ts` gegen echte Bilddateien — **wer
    dort Beispiele auswählt, liest zuerst harte Regel 92** · `npm run pruef-sitzung`
-   (**24**, solange `zusammensetzen()` auf dem `TODO(Ian)` steht: 22 + 2 Kreuze) ·
+   (**29**, seit dem 2026-09-13 ohne `TODO`) ·
    `npm run pruef-anbieter` (48, seit 20.3-b2). **Der letzte kann etwas, das die
    anderen nicht können:** Er bringt `anmeldung.ts` ZWEIMAL nach JS — einmal wie sie
    ist, einmal mit `ANMELDE_QUELLE = 'supabase'` in einem Wegwerf-Ordner — und misst
@@ -4365,6 +4388,28 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   `None`, und `external_google_client_id` trug beide, mit Komma getrennt (72 + 1 + 72
   = 145 Zeichen). Geprüft wird deshalb, ob die iOS-ID **im** Wert steht — nicht, ob
   das Feld gefüllt ist, in das man sie geschrieben hat.
+
+- **Ein Prüfstand kann eine Ordnung verlangen, die seine eigene Schwesterprüfung
+  ZERSTÖRT.** (2026-09-13, geteilte Sitzung) `pruef()` vergleicht Text; bei einem Objekt
+  hängt das an der Feldreihenfolge. `aufteilen()` löscht aber `refresh_token` aus dem
+  Datei-Teil — und die Prüfung eine Zeile darüber verlangt ausdrücklich, dass es weg
+  ist. Damit war die alte Position unwiederbringlich, und **keine Fassung von
+  `zusammensetzen()` hätte bestehen können.** Der Kommentar an der Stelle sagte längst
+  das Richtige (*„verglichen wird das GEPARSTE"*), der Code darunter tat es nicht.
+  **Am Ausgabetext war der Fehler kaum zu sehen** — 2366 Byte, identisch bis auf ein
+  verschobenes Feld. Wer zwei lange JSON-Texte ungleich findet, vergleicht zuerst die
+  SORTIERTEN Felder; sind die gleich, ist es die Reihenfolge und kein Inhalt.
+  ⚠️ **Und wer eine Prüfung entschärft, um zu bestehen, misst hinterher, ob sie noch
+  scharf ist:** Eine Fassung, die das Feld gar nicht wieder einsetzt, muss weiter rot
+  werden. Sonst hat man nicht die Prüfung berichtigt, sondern sie abgeschafft.
+- **Eine ENTSCHEIDUNG kann von keiner einzigen Prüfung bewacht sein, und das sieht man
+  nur, indem man die verworfene Möglichkeit BAUT.** (2026-09-13) Ians Wahl A („den
+  Datei-Teil nachsehen") gegen B („ihm glauben") — die verworfene Fassung B bestand alle
+  24 Häkchen. Grün heißt dann nur „A ist erlaubt", nicht „A gilt": Die nächste
+  Vereinfachung nimmt die Entscheidung still zurück. **Nach jeder Entscheidung von Ian
+  also die verworfene Möglichkeit in einem Wegwerf-Ordner gegen den Prüfstand halten** —
+  bleibt sie grün, fehlt die Gegenprobe. Dasselbe Muster, das `95_sitzung.mjs` beim
+  Tresor-Teil schon selbst anwendet (*„Die Gegenprobe, auf die es ankommt"*).
 
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
