@@ -43,7 +43,8 @@ cat > "$ARBEIT/tsconfig.json" <<JSON
   },
   "files": [
     "$WURZEL/src/lib/base64.ts",
-    "$WURZEL/src/features/social/bild.ts"
+    "$WURZEL/src/features/social/bild.ts",
+    "$WURZEL/src/lib/zufall.ts"
   ]
 }
 JSON

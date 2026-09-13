@@ -159,13 +159,20 @@ cat > "$ARBEIT/tsconfig.json" <<JSON
     "$WURZEL/src/data/schreiben.ts",
     "$WURZEL/src/data/senden.ts",
     "$WURZEL/src/features/social/bild.ts",
-    "$WURZEL/src/features/safety/konto.ts"
+    "$WURZEL/src/features/safety/konto.ts",
+    "$WURZEL/src/lib/zufall.ts"
   ]
 }
 JSON
 (cd "$WURZEL" && npx tsc -p "$ARBEIT/tsconfig.json") || { echo "✗ tsc"; exit 1; }
-sed -i '' "s#'@/data/zeilen'#'./zeilen.js'#g;s#'@/data/schreiben'#'./schreiben.js'#g;s#'@/features/social/bild'#'../features/social/bild.js'#g" "$ARBEIT"/js/data/*.js
-for DATEI in data/zeilen data/laden data/schreiben data/senden features/social/bild; do
+# `@/lib/zufall` ist seit dem 2026-09-13 dabei: `senden.ts` holt den Dateinamen
+# jetzt von dort statt aus `globalThis.crypto` in `bild.ts` — der Fehler, der Ians
+# Profilbild am iPhone lautlos scheitern liess (siehe den Kopf von `lib/zufall.ts`).
+# **In Node läuft die WEB-Fassung**, und das ist hier richtig: Gemessen wird der
+# Weg durch storage-js, nicht die Zufallsquelle. Dass es am Gerät keine gibt, misst
+# `90_bildwahl.mjs`, indem es `crypto` wegnimmt.
+sed -i '' "s#'@/data/zeilen'#'./zeilen.js'#g;s#'@/data/schreiben'#'./schreiben.js'#g;s#'@/features/social/bild'#'../features/social/bild.js'#g;s#'@/lib/zufall'#'../lib/zufall.js'#g" "$ARBEIT"/js/data/*.js
+for DATEI in data/zeilen data/laden data/schreiben data/senden features/social/bild lib/zufall; do
   if grep -qE "from '@/" "$ARBEIT/js/$DATEI.js"; then
     echo "✗ In $DATEI.js steht noch ein @/-Alias, den Node nicht kennt:"
     grep -nE "from '@/" "$ARBEIT/js/$DATEI.js"

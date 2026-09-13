@@ -37,6 +37,7 @@ import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 
 import { SchreibFehler, type SchreibAktion } from '@/data/schreiben';
 import { BILD_BUCKET, BILD_CACHE_SEKUNDEN, bildPfad } from '@/features/social/bild';
+import { zufallsHex } from '@/lib/zufall';
 import type { Bilddatei } from '@/lib/bild-waehlen-typen';
 import type { PostEntwurf } from '@/features/posts/hooks';
 import type { GruppenEntwurf } from '@/features/groups/hooks';
@@ -458,7 +459,11 @@ export async function profilbildSetzen(
   bild: Bilddatei,
   ichId: string,
 ): Promise<string> {
-  const pfad = bildPfad(ichId, bild.typ);
+  // Der Zufall kommt aus `lib/zufall` — auf Web aus `globalThis.crypto`, am
+  // Gerät aus `expo-crypto`. **Genau hier lag der Fehler vom 2026-09-13:**
+  // `bild.ts` holte ihn selbst aus `globalThis.crypto`, und das gibt es auf
+  // React Native nicht. Siehe den Kopf von `lib/zufall.ts`.
+  const pfad = bildPfad(ichId, bild.typ, zufallsHex());
 
   // `cacheControl` ist Ians Entscheidung 51 und steht deshalb NICHT als Zahl hier,
   // sondern in `bild.ts`. Ohne die Angabe nimmt `supabase-js` 3600 — und das ist

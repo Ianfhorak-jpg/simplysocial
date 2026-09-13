@@ -23,7 +23,12 @@ import {
   profilbildSetzen,
   useCurrentUser,
 } from '@/features/social/hooks';
-import { bildFolgen, bildHuerdeText } from '@/features/social/bild';
+import {
+  bildFehlerText,
+  bildFolgen,
+  bildHuerdeText,
+  BildWahlFehler,
+} from '@/features/social/bild';
 import { BILDWAHL_LAEUFT, bildWaehlen } from '@/lib/bild-waehlen';
 import { WARTE_TEXT } from '@/data/schreiben';
 import { useWartetAuf } from '@/features/store';
@@ -68,10 +73,41 @@ export default function EinstellungenScreen() {
   const [bildHuerde, setBildHuerde] = useState<string | null>(null);
   const bildLaeuft = useWartetAuf('profilbildSetzen', ich.id);
 
-  async function bildAussuchen() {
-    const wahl = await bildWaehlen();
+  // ⚠️ **`void` und nicht `async` — das ist die Lehre vom 2026-09-13.**
+  // Hier stand `onPress={bildAussuchen}` mit einer `async`-Funktion: React ruft sie,
+  // bekommt ein Promise und wirft es weg. Wirft irgendetwas darin, ist das eine
+  // unbehandelte Ablehnung — im Entwicklungs-Build eine gelbe Warnung, **im
+  // Release-Build gar nichts.** Ian hat am iPhone ein Foto ausgesucht,
+  // zugeschnitten, und danach war der Bildschirm unverändert: kein Bild, keine
+  // Meldung. Nachgemessen war der Bucket leer, es war also nie etwas losgelaufen.
+  //
+  // Gemessen: `checksVoidReturn: true` findet **15 solche Stellen** in der App.
+  function bildAussuchen() {
+    void bildAussuchenAsync();
+  }
+
+  async function bildAussuchenAsync() {
+    let wahl;
+    try {
+      wahl = await bildWaehlen();
+    } catch (fehler) {
+      // Die Sätze kommen aus `bild.ts` und nicht von hier (harte Regel 88). Was
+      // wirklich passiert ist, trägt der Fehler in seiner `cause` — auf den
+      // Bildschirm kommt es nicht (der Fund vom 2026-09-03).
+      setBildHuerde(
+        fehler instanceof BildWahlFehler
+          ? bildFehlerText(fehler.stufe)
+          : bildFehlerText('lesen'),
+      );
+      return;
+    }
+
     // Abgebrochen ist kein Fehler — und vor allem keine Meldung wert.
     if (!wahl) return;
+
+    // Ein neuer Versuch räumt die alte Meldung weg. Ohne diese Zeile stünde nach
+    // einem geglückten zweiten Anlauf immer noch der Satz vom ersten da.
+    setBildHuerde(null);
 
     // Vor dem Hochladen fragen, nicht danach: Der Bucket weist dieselben Fälle ab
     // (gemessen in `80_bilder.mjs`), aber erst nach dem Warten und mit einer
@@ -80,7 +116,23 @@ export default function EinstellungenScreen() {
     setBildHuerde(huerde);
     if (huerde) return;
 
-    await profilbildSetzen(wahl);
+    // ⚠️ **`schreibVorgang` fängt NICHT alles, und das war der zweite Teil des
+    // Fehlers vom 2026-09-13.** Ein `SchreibFehler` landet in der Leiste oben
+    // (Ians Entscheidung 48) — alles andere wird in `schreibVorgangIntern`
+    // ausdrücklich WEITERGEWORFEN, damit ein Programmfehler „laut" ist statt als
+    // „Keine Verbindung" verkleidet. Die Absicht stimmt; nur gibt es in einem
+    // Release-Build kein Lautes: Der Wurf lief durch dieses `await` hinaus und
+    // verschwand. Genau so ist `zufallsName()` gestorben, ohne ein Zeichen.
+    //
+    // Also: Der Fall bleibt vom gewöhnlichen unterschieden (ein Programmfehler
+    // bekommt einen anderen Satz als eine abgewiesene Datei), aber er ist nicht
+    // mehr unsichtbar. **Ein Fehler, den nur ein Entwickler-Build zeigt, ist auf
+    // einem fremden Handy kein Fehler, sondern eine App, die nichts tut.**
+    try {
+      await profilbildSetzen(wahl);
+    } catch {
+      setBildHuerde('Das Hochladen ist an etwas Unerwartetem gescheitert. Sag Ian Bescheid.');
+    }
   }
   // Der Entwurf steht NEBEN dem gespeicherten Wert und nicht an seiner Stelle: Beim
   // Tippen durchläuft das Feld `1`, `12`, `122` — Zustände, die kein Bezirk sind. Wer

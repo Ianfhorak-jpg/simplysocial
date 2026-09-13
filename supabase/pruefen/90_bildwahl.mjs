@@ -200,5 +200,91 @@ pruef('image/heic ist NICHT erlaubt — deshalb darf `uri` nicht die Quelle sein
 pruef('image/jpeg ist erlaubt — und base64 liefert immer JPEG',
   bildHuerdeText('image/jpeg', 1000), null);
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  6. DER FUND VOM GERÄT — ES GIBT DORT KEIN `crypto`
+//
+//  Am 2026-09-13 ist Ians Profilbild am iPhone lautlos gescheitert: Bildwähler und
+//  Zuschnitt liefen, danach war der Bildschirm unverändert, `photo_url` leer und
+//  der Bucket leer. Ursache war `zufallsName()` in `bild.ts` — sie holte den
+//  Dateinamen aus `globalThis.crypto`, und **React Native hat keines**.
+//
+//  ⚠️ **Warum dieser Prüfstand ihn nicht finden KONNTE, und das ist die Lehre:**
+//  Er läuft in Node, und Node HAT `globalThis.crypto`. Der Browser auch. Die
+//  Attrappen-Falle in ihrer schärfsten Form — die Prüfumgebung bringt etwas mit,
+//  das das Gerät nicht hat, und deshalb war jede Messung grün und wertlos.
+//
+//  Der Wächter dagegen muss die Umgebung ÄRMER machen, nicht reicher: `crypto`
+//  wird für die Dauer der Messung weggenommen. Das ist dasselbe Vorgehen wie die
+//  Gegenprobe in 96_anbieter (beide Schalterstellungen erzwingen) — nicht messen,
+//  was hier gilt, sondern was DORT gilt.
+// ═══════════════════════════════════════════════════════════════════════════════
+abschnitt('Kein `crypto` — die Lage auf dem Gerät');
+
+const { bildPfad, ZUFALL_MUSTER } = await import(`${ARBEIT}/js/features/social/bild.mjs`);
+const { zufallsHex } = await import(`${ARBEIT}/js/lib/zufall.mjs`);
+
+const ICH = '11111111-1111-1111-1111-111111111111';
+
+// Erst: Tut der Pfad, was er soll, wenn der Zufall in Ordnung ist?
+const guterZufall = zufallsHex();
+pruef('zufallsHex() gibt 32 Hex-Zeichen', ZUFALL_MUSTER.test(guterZufall), true);
+pruef('zwei Aufrufe sind verschieden', zufallsHex() !== zufallsHex(), true);
+pruef('der Pfad fängt mit meiner UUID an',
+  bildPfad(ICH, 'image/jpeg', guterZufall).startsWith(`${ICH}/`), true);
+pruef('und endet auf die Endung des Typs',
+  bildPfad(ICH, 'image/jpeg', guterZufall).endsWith('.jpg'), true);
+
+// **Die Gegenprobe, auf die es ankommt.** `bildPfad()` muss einen schwachen Namen
+// ABWEISEN — bei einem offenen Bucket ist er die ganze Absicherung (Entscheidung
+// 50). Ohne diese Prüfung sähe ein Pfad mit `Math.random()` genauso aus.
+for (const [was, wert] of [
+  ['zu kurz', 'abc'],
+  ['keine Hex-Zeichen', 'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'],
+  ['leer', ''],
+  ['Großbuchstaben (nicht unser Format)', 'A'.repeat(32)],
+]) {
+  let geworfen = false;
+  try { bildPfad(ICH, 'image/jpeg', wert); } catch { geworfen = true; }
+  pruef(`ein Zufall, der ${was} ist, wird abgewiesen`, geworfen, true);
+}
+
+// **Und jetzt die Lage auf dem Gerät, nachgestellt.** Ohne `globalThis.crypto`
+// muss die WEB-Fassung werfen — ein stiller Rückfall auf `Math.random()` wäre
+// genau der Fehler, den `bild.ts` in seinem Kommentar ausschließt. Am Gerät nimmt
+// `zufall.native.ts` diesen Weg gar nicht erst; geprüft wird hier, dass der
+// Rückfall NICHT existiert.
+const echtesCrypto = globalThis.crypto;
+let ohneCryptoGeworfen = false;
+try {
+  Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true });
+  zufallsHex();
+} catch {
+  ohneCryptoGeworfen = true;
+} finally {
+  Object.defineProperty(globalThis, 'crypto', { value: echtesCrypto, configurable: true });
+}
+pruef('ohne globalThis.crypto wird geworfen statt schwach geraten', ohneCryptoGeworfen, true);
+pruef('und danach geht es wieder', ZUFALL_MUSTER.test(zufallsHex()), true);
+
+// Der Wächter gegen den Rückweg: `bild.ts` darf `globalThis.crypto` nicht mehr
+// kennen. Stünde es wieder drin, wäre der Fehler vom 13.09. zurück — und dieser
+// Prüfstand bliebe grün, weil Node ein `crypto` hat.
+const quelle = readFileSync(new URL('../../src/features/social/bild.ts', import.meta.url), 'utf8');
+// ⚠️ Die KOMMENTARE werden vorher weggeschnitten, und das ist kein Feinschliff:
+// Die erste Fassung greppte den rohen Text und schlug sofort an — an dem Absatz,
+// der den Fehler vom 13.09. ERKLÄRT. In diesem Projekt steht die Begründung immer
+// neben dem Code; ein Wächter, der Prosa nicht von Code unterscheidet, zwingt
+// jemanden dazu, die Begründung zu löschen, um grün zu werden. Dann ist die Prüfung
+// scharf und das Gedächtnis weg — und das ist der schlechtere Tausch.
+const ohneKommentare = quelle
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .split('\n')
+  .filter((z) => !z.trimStart().startsWith('//'))
+  .join('\n');
+pruef('bild.ts fragt `globalThis.crypto` NICHT mehr (im CODE)',
+  ohneKommentare.includes('globalThis.crypto'), false);
+pruef('bild.ts hat weiterhin keine Laufzeit-Importe',
+  /^import (?!type )/m.test(quelle), false);
+
 console.log(`\n  ${haken} Häkchen, ${kreuze} Kreuze\n`);
 process.exit(kreuze === 0 ? 0 : 1);

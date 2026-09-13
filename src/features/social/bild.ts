@@ -202,17 +202,26 @@ export function istErlaubterTyp(typ: string): boolean {
  * Also wird geworfen, wenn die Umgebung keinen sicheren Zufall hat. Dann merkt man es
  * beim ersten Upload; ein Rückfall merkt man nie.
  */
-function zufallsName(): string {
-  const c: Crypto | undefined = globalThis.crypto;
-  if (c?.randomUUID) return c.randomUUID().replace(/-/g, '');
-  if (c?.getRandomValues) {
-    const b = c.getRandomValues(new Uint8Array(16));
-    return Array.from(b, (n) => n.toString(16).padStart(2, '0')).join('');
-  }
-  throw new Error(
-    'Kein sicherer Zufall verfügbar — ein Profilbild bekäme einen erratbaren Namen.',
-  );
-}
+/**
+ * ❌ **Hier stand bis zum 2026-09-13 `zufallsName()`, und sie hat am GERÄT jedes
+ * Profilbild lautlos scheitern lassen.** Sie fragte `globalThis.crypto` und warf,
+ * wenn es keines gibt — die Absicht oben stimmt weiter, nur gibt es auf React
+ * Native keines (gemessen: `InitializeCore.js` richtet keines ein, `expo-crypto`
+ * setzt ein globales nur auf Web, und im gebauten Bundle kamen `getRandomValues`
+ * und `randomUUID` je genau EINMAL vor — das waren diese Zeilen).
+ *
+ * Der Wurf war ein gewöhnlicher `Error` und kein `SchreibFehler`, also hat
+ * `schreibVorgangIntern` ihn WEITERGEWORFEN statt in die Fehlerleiste zu legen —
+ * und von dort lief er durch `onPress={async …}` ins Nichts. Bildwähler und
+ * Zuschnitt liefen tadellos, danach passierte gar nichts.
+ *
+ * **Der Zufall kommt jetzt von außen** (`lib/zufall.ts` / `.native.ts`), und diese
+ * Datei bleibt importfrei — das trägt `80_bilder.mjs` und `90_bildwahl.mjs`, die
+ * sie in blankem Node laden. Die REGEL bleibt trotzdem hier: `bildPfad()` prüft,
+ * was es bekommt, statt es zu glauben. Die Plattform liefert die Entropie, die
+ * Regel-Datei sagt, wie sie auszusehen hat.
+ */
+export const ZUFALL_MUSTER = /^[0-9a-f]{32}$/;
 
 /**
  * Wo ein Bild liegt: `<meine uuid>/<zufall>.<endung>`.
@@ -237,10 +246,18 @@ function zufallsName(): string {
  * die alte Datei weg ist — und kein CDN zeigt noch tagelang das vorige Bild, weil es
  * unter derselben Adresse lag.
  */
-export function bildPfad(ichId: string, typ: string): string {
+export function bildPfad(ichId: string, typ: string, zufall: string): string {
   const endung = ENDUNGEN[typ];
   if (!endung) throw new Error(`Kein Bildtyp für ${typ} — vorher \`istErlaubterTyp\` fragen.`);
-  return `${ichId}/${zufallsName()}.${endung}`;
+  // **Geprüft, nicht geglaubt.** Der Name IST die Absicherung bei einem offenen
+  // Bucket (Entscheidung 50); käme hier ein kurzer oder ein aus `Math.random()`
+  // gebauter Wert an, sähe der Pfad genauso aus und wäre wertlos. Ein Aufrufer,
+  // der etwas anderes liefert, soll es beim ersten Upload merken — nicht ein
+  // Fremder Monate später.
+  if (!ZUFALL_MUSTER.test(zufall)) {
+    throw new Error(`Unbrauchbarer Zufall für einen Bildnamen: ${zufall.length} Zeichen.`);
+  }
+  return `${ichId}/${zufall}.${endung}`;
 }
 
 /**
@@ -291,4 +308,71 @@ export function bildHuerdeText(typ: string, bytes: number): string | null {
     return `Das Bild ist zu groß — ${Math.round(BILD_MAX_BYTES / 1024 / 1024)} MB sind das Höchste.`;
   }
   return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  WENN DAS AUSSUCHEN SELBST SCHIEFGEHT
+//
+//  Gebaut am 2026-09-13, nachdem Ian am iPhone ein Bild ausgesucht, zugeschnitten
+//  und danach **gar nichts** gesehen hat: kein Bild, keine Meldung, keine Leiste.
+//  Nachgemessen war `profiles.photo_url` leer UND der Bucket leer — es ist also
+//  nichts losgelaufen.
+//
+//  ── Warum das so still war ──────────────────────────────────────────────────
+//  `onPress={bildAussuchen}` mit einer `async`-Funktion: React ruft sie auf,
+//  bekommt ein Promise und wirft es weg. Wirft irgendetwas darin, ist das eine
+//  unbehandelte Ablehnung — im Entwicklungs-Build eine gelbe Warnung, **im
+//  Release-Build nichts.** Gemessen: `checksVoidReturn: true` meldet **15 solche
+//  Stellen** in der App; der Wächter kam am 12.09. ins Projekt und war an genau
+//  diesem Schalter ausgeschaltet.
+//
+//  ── Warum es DREI Sätze sind und nicht einer ────────────────────────────────
+//  Ein einzelnes „Das hat nicht geklappt" wäre ehrlich und nutzlos: Es kann am
+//  Foto liegen, am Handy oder an uns, und der Mensch davor kann nur bei einem der
+//  drei etwas tun. Die Stufen sind deshalb die drei Orte, an denen es aufhören
+//  kann — und sie sagen jeweils, was der nächste Griff ist.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Wo es beim Aussuchen aufgehört hat. */
+export type BildWahlStufe =
+  | 'oeffnen' // die Foto-Auswahl ging nicht auf
+  | 'lesen' // das Foto kam zurück, ließ sich aber nicht lesen
+  | 'umwandeln'; // gelesen, aber nicht in Bytes zu bringen
+
+export function bildFehlerText(stufe: BildWahlStufe): string {
+  switch (stufe) {
+    case 'oeffnen':
+      return 'Deine Fotos ließen sich nicht öffnen. Schau in den Einstellungen nach, ob SimplySocial darauf zugreifen darf.';
+    case 'lesen':
+      // Der wahrscheinlichste Fall bei einem modernen iPhone: ein Foto, das nicht
+      // einfach ein Bild ist (Live Photo, ProRAW, HDR mit Gain Map). Der Rat ist
+      // deshalb „ein anderes" und nicht „nochmal" — nochmal scheitert genauso.
+      return 'Dieses Foto konnte dein Handy nicht umwandeln. Nimm ein anderes — bei Live Photos und RAW kommt das vor.';
+    case 'umwandeln':
+      return 'Das Foto ließ sich nicht vorbereiten. Meistens hilft ein kleineres.';
+  }
+  // Erschöpfend, mit `never` abgeschlossen — dieselbe Technik wie
+  // `torwaechterZeigt()` (harte Regel 77): Eine vierte Stufe ist dann ein
+  // Typfehler und kein stiller Bildschirm.
+  const nie: never = stufe;
+  return nie;
+}
+
+/**
+ * Ein Fehlschlag beim Aussuchen — **nicht** dasselbe wie ein Abbruch.
+ *
+ * Abbrechen gibt weiter `null` zurück und sagt nichts (harte Regel 94, dieselbe
+ * Überlegung wie `anbieterFehlerText('abgebrochen')`): Wer den Bildwähler
+ * wegwischt, hat entschieden. Was hier geworfen wird, ist das Gegenteil — etwas
+ * ist schiefgegangen, und der Mensch erfährt es.
+ */
+export class BildWahlFehler extends Error {
+  constructor(readonly stufe: BildWahlStufe, ursache?: unknown) {
+    super(`Bildwahl gescheitert bei: ${stufe}`);
+    this.name = 'BildWahlFehler';
+    // Die Ursache reist MIT, steht aber nie auf dem Bildschirm — der Fund vom
+    // 2026-09-03 (Entwickler-Notizen in JSX sind öffentlich). Auf dem Schirm steht
+    // `bildFehlerText()`, hier drin das, was ein Protokoll braucht.
+    if (ursache !== undefined) this.cause = ursache;
+  }
 }

@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 
-import { BILD_QUALITAET, BILD_TYP_VOM_GERAET, ZUSCHNEIDEN } from '@/features/social/bild';
+import { BILD_QUALITAET, BILD_TYP_VOM_GERAET, ZUSCHNEIDEN, BildWahlFehler } from '@/features/social/bild';
 import { base64Bytes, base64ZuBytes } from '@/lib/base64';
 import type { Bilddatei } from '@/lib/bild-waehlen-typen';
 
@@ -51,7 +51,14 @@ export async function bildWaehlen(): Promise<Bilddatei | null> {
   // kann „abgebrochen" nicht von „darf nicht" unterscheiden. Hier wird deshalb
   // ausdrücklich gefragt — der Erlaubnis-Text dazu steht im gebauten `Info.plist`
   // (geprüft dort, nicht in `app.json` — die Lehre aus 19h-2).
-  const erlaubnis = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  let erlaubnis;
+  try {
+    erlaubnis = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  } catch (fehler) {
+    // Bis zum 2026-09-13 lief jeder Wurf von hier bis zum Screen durch und
+    // verschwand dort spurlos (`onPress={async …}`). Jetzt trägt er eine Stufe.
+    throw new BildWahlFehler('oeffnen', fehler);
+  }
   if (!erlaubnis.granted) {
     // `null` wie beim Abbrechen: Der Screen sagt dann nichts. Das ist Absicht —
     // wer gerade selbst „Nicht erlauben" getippt hat, weiß, warum nichts passiert;
@@ -60,25 +67,37 @@ export async function bildWaehlen(): Promise<Bilddatei | null> {
     return null;
   }
 
-  const ergebnis = await ImagePicker.launchImageLibraryAsync({
-    // Nur Bilder. Ohne diese Zeile stünden auch Videos zur Wahl — und ein Video
-    // als Profilbild wäre ein Fehler, den erst der Bucket meldet.
-    mediaTypes: ['images'],
-    // Ians Entscheidung 54. Steht als benannte Konstante in der Regel-Datei, damit
-    // sie sich mit einem Wort zurücknehmen lässt (harte Regel 88).
-    allowsEditing: ZUSCHNEIDEN,
-    quality: BILD_QUALITAET,
-    // **Das ist die Zeile, an der die Phase hängt** — siehe der HEIC-Absatz oben.
-    base64: true,
-    // Ein Bild, nicht mehrere. `allowsMultipleSelection` schließt `allowsEditing`
-    // ohnehin aus, aber ein ausdrückliches `false` sagt, dass das gewollt ist.
-    allowsMultipleSelection: false,
-    // EXIF bleibt draußen. Ein Foto trägt dort den Aufnahmeort — und was die App
-    // über den Ort eines Menschen weiß, sagt sie nach harter Regel 68 niemandem,
-    // nicht einmal sich selbst. Wir würden es nie lesen; aber was man nicht holt,
-    // kann man auch nicht versehentlich weiterreichen.
-    exif: false,
-  });
+  // ⚠️ **Hier ist Ians Fehler vom 13.09. herausgekommen, und zwar dem Ort nach:**
+  // Der Bildwähler ging auf, der Zuschnitt kam, und danach war der Bildschirm
+  // unverändert. `launchImageLibraryAsync` löst sich nicht nur mit `canceled` auf,
+  // es WIRFT auch — die Bibliothek baut das base64 im nativen Code, NACHDEM der
+  // Mensch zugeschnitten hat (`MediaHandler.swift`, Zeile 94), und
+  // `readJpegBase64From` wirft `FailedToReadImageDataForBase64Exception`, wenn
+  // `UIImage.jpegData()` nichts hergibt. Genau dieser Wurf kam bis heute nirgends an.
+  let ergebnis;
+  try {
+    ergebnis = await ImagePicker.launchImageLibraryAsync({
+      // Nur Bilder. Ohne diese Zeile stünden auch Videos zur Wahl — und ein Video
+      // als Profilbild wäre ein Fehler, den erst der Bucket meldet.
+      mediaTypes: ['images'],
+      // Ians Entscheidung 54. Steht als benannte Konstante in der Regel-Datei, damit
+      // sie sich mit einem Wort zurücknehmen lässt (harte Regel 88).
+      allowsEditing: ZUSCHNEIDEN,
+      quality: BILD_QUALITAET,
+      // **Das ist die Zeile, an der die Phase hängt** — siehe der HEIC-Absatz oben.
+      base64: true,
+      // Ein Bild, nicht mehrere. `allowsMultipleSelection` schließt `allowsEditing`
+      // ohnehin aus, aber ein ausdrückliches `false` sagt, dass das gewollt ist.
+      allowsMultipleSelection: false,
+      // EXIF bleibt draußen. Ein Foto trägt dort den Aufnahmeort — und was die App
+      // über den Ort eines Menschen weiß, sagt sie nach harter Regel 68 niemandem,
+      // nicht einmal sich selbst. Wir würden es nie lesen; aber was man nicht holt,
+      // kann man auch nicht versehentlich weiterreichen.
+      exif: false,
+    });
+  } catch (fehler) {
+    throw new BildWahlFehler('lesen', fehler);
+  }
 
   // Abgebrochen ist kein Fehler, sondern die häufigste Antwort auf „Bild aussuchen".
   if (ergebnis.canceled) return null;
@@ -88,16 +107,31 @@ export async function bildWaehlen(): Promise<Bilddatei | null> {
   // Zustand, den die Bibliothek nicht ausschließt. Ohne diese Zeile wäre die Folge
   // kein Fehler, sondern ein `undefined`, das sich zwei Zeilen später als leeres
   // Bild tarnt.
-  if (!bild?.base64) return null;
+  // Bis heute war das ein stilles `return null` — also nicht von „abgebrochen" zu
+  // unterscheiden, und der Screen sagte nichts. Die Bibliothek gibt `base64` aber
+  // nie absichtlich als `nil` zurück (nachgelesen in `MediaHandler.swift`): Ist es
+  // weg, ist etwas schiefgegangen, und das gehört gesagt.
+  if (!bild) throw new BildWahlFehler('lesen');
+  if (!bild.base64) throw new BildWahlFehler('lesen');
 
   // Die GRÖSSE wird gerechnet, BEVOR dekodiert wird — `base64Bytes()` fasst den
   // Text nicht an. Bei einem versehentlich gewählten Panorama ist das der
   // Unterschied zwischen einer Meldung und einem Speicher voller Bytes, die gleich
   // wieder weggeworfen werden.
-  const bytes = base64Bytes(bild.base64);
+  let bytes: number;
+  let inhalt;
+  try {
+    bytes = base64Bytes(bild.base64);
+    inhalt = base64ZuBytes(bild.base64);
+  } catch (fehler) {
+    // `lib/base64.ts` ist von `pruef-bildwahl` an echten Bilddateien gemessen (35
+    // Häkchen), also ist dieser Zweig unwahrscheinlich — aber ein unwahrscheinlicher
+    // Zweig, der schweigt, ist genau der, an dem man später eine Stunde sucht.
+    throw new BildWahlFehler('umwandeln', fehler);
+  }
 
   return {
-    inhalt: base64ZuBytes(bild.base64),
+    inhalt,
     // NICHT `bild.mimeType`: Der beschreibt die Datei hinter `uri`, und die ist bei
     // einem iPhone-Foto HEIC — während der Inhalt hier nachweislich JPEG ist.
     typ: BILD_TYP_VOM_GERAET,
