@@ -27,16 +27,40 @@ import { getState } from '@/features/store';
  * der Anfangszustand, und das ist hier richtig: gefragt sind die Adressen, die es
  * beim Ausliefern gibt, nicht die, die ein Nutzer später erzeugt.
  *
- * ── ⚠️ Was mit dem echten Backend passieren MUSS ──────────────────────────────
- * Diese Datei ist eine Prototyp-Krücke und gehört dann WEG, nicht angepasst.
- * Zwei Gründe:
- *   1. Statisches Vorrendern backt den INHALT in die HTML-Datei. Bei Fake-Daten ist
- *      das ein Vorteil (die Seite steht da, bevor das JavaScript geladen hat), bei
- *      echten Daten wäre `chat/t1.html` ein öffentlich abrufbarer fremder Chat.
- *   2. Mit einer Datenbank sind die IDs beim Bauen nicht mehr bekannt.
- * Der Ersatz ist dann eine Umschreibe-Regel auf dem Server (`/post/:id` →
- * `/post/[id].html`) oder gleich Server-Rendering. Beides braucht einen Hoster,
- * der mehr kann als Dateien ausliefern — und ein Backend, das es beantwortet.
+ * ── ✅ Was mit dem echten Backend WIRKLICH passiert ist (2026-09-13, Phase 20.8) ─
+ * Hier stand bis heute: *„Diese Datei ist eine Prototyp-Krücke und gehört dann WEG,
+ * nicht angepasst"* — mit zwei Gründen. **Beide sind nachgemessen, und keiner trägt
+ * das Löschen noch.** Gemessen wurde mit zwei vollständigen Web-Exporten, einer je
+ * Schalterstellung:
+ *
+ *                        HTML-Dateien   konkrete Adressen   mit Inhalt vorgerendert
+ *   ANMELDE_QUELLE='attrappe'      72                  47                 17 Dateien
+ *   ANMELDE_QUELLE='supabase'      25                   0                  0 Dateien
+ *
+ *   1. **Die GEFAHR ist weg — aber durch eine ANDERE Phase.** Der alte Grund 1 war,
+ *      `chat/t1.html` wäre mit echten Daten ein öffentlich abrufbarer fremder Chat.
+ *      Bei `'supabase'` entsteht die Datei überhaupt nicht: `startListen()` in
+ *      `features/store.ts` gibt seit 20.4-b neun LEERE Listen zurück, also findet
+ *      `generateStaticParams` nichts vor. Beseitigt hat das der leere Startzustand,
+ *      nicht diese Datei — **und wer nur den alten Kommentar liest, hält eine
+ *      erledigte Gefahr für offen** (harte Regel 83, innerhalb einer Datei).
+ *   2. **Grund 2 stimmt und ist trotzdem kein Löschgrund.** Ja, mit einer Datenbank
+ *      sind die IDs beim Bauen unbekannt — das ist genau die Zeile `0` oben. Nur
+ *      deployt `scripts/deploy.sh` seit dem 2026-09-13 ausschließlich aus
+ *      `'attrappe'` heraus (es bricht sonst ab). **Die öffentliche Adresse und die
+ *      echte App sind zwei getrennte Stände**, und diese Datei gehört dem einen.
+ *
+ * **Ians Entscheidung am 2026-09-13: die öffentliche Adresse BLEIBT der Prototyp.**
+ * Herzeigen mit echten Daten läuft über TestFlight; die Webseite ist das, was per
+ * WhatsApp weitergeht, und ein Link auf einen einzelnen Post ist dort der Normalfall
+ * (harte Regel 5). Damit ist diese Datei keine Krücke mehr, sondern das, was die 47
+ * Direktlinks des Prototyps überhaupt gibt.
+ *
+ * ⚠️ **Wer sie trotzdem löscht, bekommt keine Fehlermeldung — er bekommt 404.** Der
+ * Schalter-Wächter in `deploy.sh` merkt es nicht: Er fragt nach `'attrappe'`, und das
+ * steht dann ja da. Deshalb misst der Deploy seit Phase 20.8 nach, ob die konkreten
+ * Adressen wirklich entstanden sind. **Wer hier eine Funktion entfernt, entfernt den
+ * Aufruf in ihrem Screen mit — und dann schlägt dort der Wächter an.**
  */
 
 /** Die Form, die `generateStaticParams` erwartet: ein Objekt je zu bauender Seite. */

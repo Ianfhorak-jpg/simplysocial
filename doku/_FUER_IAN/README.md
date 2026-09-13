@@ -4,33 +4,48 @@
 
 ---
 
-## 📍 Wo es gerade steht (13.09.2026, nachts)
+## 📍 Wo es gerade steht (13.09.2026, spätabends)
 
-**Der Engpass ist weg.** Seit Wochen stand über allem „das geht erst, wenn Ian die
-Konten einrichtet". Heute Nacht ist der letzte Punkt gefallen: **Apple und Google
-sind in Supabase eingetragen** — gemessen an der Stelle, an der die App selbst
-nachsieht (`apple: true`, `google: true`).
+**Es läuft auf deinem echten iPhone.** Nicht mehr am Mac, nicht mehr „müsste
+gehen" — du hast dich am 13.09. nachmittags durch sieben Punkte geklickt, und
+**alle sieben haben gehalten**: Anmelden mit Apple, Anmelden mit Google,
+angemeldet bleiben nach dem Neustart, Profilbild aussuchen, die Anleitungskarte
+bleibt weg, kein Prototyp-Kasten, die @-Namen stehen richtig da.
 
 | | |
 |---|---|
 | **Anmelden per E-Mail-Code** | ✅ läuft. Du hast dich am 12.09. selbst angemeldet. |
+| **Anmelden mit Apple** | ✅ **am Handy geprüft** — Dialog kam, Anmeldung durch. |
+| **Anmelden mit Google** | ✅ **am Handy geprüft** — Browserfenster auf, Rücksprung in die App. |
+| **Angemeldet bleiben** | ✅ überlebt den Neustart. |
 | **Lesen & Schreiben** | ✅ alle 24 Aktionen gehen über deine Datenbank. |
-| **Profilbilder** | ✅ im Browser **und am Handy** (seit 13.09.). |
+| **Profilbilder** | ✅ im Browser **und am Handy**. |
 | **Kontolöschen** | ✅ der Knopf löscht wirklich. |
-| **Apple & Google** | 🟡 in Supabase **eingetragen** — aber die zwei Knöpfe in der App sind noch ohne Funktion. Das ist jetzt reine Programmierarbeit und braucht dich nicht. |
 
-**Was auf dich wartet:** nichts Dringendes mehr. Zwei Sachen stehen ganz oben in
+🎉 **Und damit ist Apples Pflichtliste voll.** Das war die Liste, die seit Anfang
+September offen stand — melden, blockieren, Nutzungsbedingungen, Konto löschen,
+**Meldungen lesen und auch etwas dagegen tun**. Der letzte Punkt kam am 13.09.
+abends dazu: Du kannst seither selbst einen Beitrag entfernen oder jemanden
+ausschließen. Beide Befehle zeigen dir **erst nur, was passieren würde** —
+es passiert nichts, solange du nicht `--wirklich` dahinterschreibst. Wie das geht,
+steht in [NACH_DEM_CLEAR.md](NACH_DEM_CLEAR.md).
+
+⚠️ **Was noch fehlt, ist kein Programmierstück, sondern ein Text:** die
+Nutzungsbedingungen. Der Rahmen steht in der App, der Inhalt ist bewusst leer —
+das ist nichts, was ich erfinden darf. Siehe [OFFENE_SACHEN.md](OFFENE_SACHEN.md).
+
+**Was sonst auf dich wartet:** nichts Dringendes. Zwei Sachen stehen ganz oben in
 [OFFENE_SACHEN.md](OFFENE_SACHEN.md) — ein Datum im März 2027, an dem der
 Apple-Zugang abläuft, und die Frage, ob du ein Google-Geheimnis austauschen willst.
-Dazu deine acht Zeilen Code (Entscheidung 55), wenn du Lust hast.
 
-> ⚠️ **Zwei Dinge, die man leicht verwechselt.**
-> **1.** Der Prototyp im Netz zeigt weiter erfundene Daten — Zeichen für Zeichen wie
-> vorher, nachgemessen. Der Schalter wird erst umgelegt, wenn Anmelden mit Apple und
-> Google wirklich funktioniert.
-> **2.** Auf deinem iPhone liegt der Stand vom **11.09.** Alles, was seitdem gebaut
-> wurde — Profilbilder, echtes Anmelden, Löschen —, hast du noch nicht in der Hand.
-> Der nächste Build nimmt alles auf einmal mit.
+> ⚠️ **Eine Sache, die man leicht verwechselt: Handy und Webseite sind zwei Dinge.**
+> Auf deinem **iPhone** liegt der neue Stand mit echten Daten — der ist oben
+> beschrieben und gilt bis September 2027.
+> Die **öffentliche Adresse**, die du per WhatsApp weiterschickst, zeigt weiter
+> erfundene Namen. Das ist Absicht und kein vergessener Schritt: Es sind zwei
+> getrennte Befehle, und die Webseite bekommt ihren Stand nur aus dem einen, den
+> ich nicht gemacht habe. **Ob sie nachziehen soll, ist deine Entscheidung** —
+> sie steht unten in diesem Ordner als offene Frage.
 
 **Das Neueste ausführlich:** [NACH_DEM_CLEAR.md](NACH_DEM_CLEAR.md).
 

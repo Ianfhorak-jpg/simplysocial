@@ -229,6 +229,37 @@
 
 ---
 
+## 🟡 NEU (13.09.2026, spätabends) — soll die Webseite nachziehen? · **deine Entscheidung**
+
+**Es gibt ab jetzt zwei Stände, und das ist Absicht.**
+
+| | |
+|---|---|
+| **Auf deinem iPhone** | die echte App: echtes Anmelden, deine Datenbank, Profilbilder. |
+| **Die öffentliche Adresse**, die du weiterschickst | weiter der Prototyp mit erfundenen Namen. |
+
+Das sind **zwei getrennte Befehle** — die Webseite bekommt ihren Stand nur aus dem
+einen, den ich nicht gemacht habe. Es ist also kein vergessener Schritt.
+
+**Die Frage an dich: soll die Webseite den echten Stand bekommen?**
+
+- **Nein, alles bleibt** (was gerade gilt). Wer den Link aufmacht, klickt sich durch
+  erfundene Daten, ohne sich anzumelden — genau das, wofür du ihn herumschickst.
+- **Ja, umstellen.** Dann verlangt die Seite eine echte Anmeldung. **Zwei Sachen
+  kommen damit mit, und beide musst du wollen:** Apple- und Google-Anmeldung gehen im
+  Browser prinzipiell nicht (das braucht bei Apple eine eigene Kennung, die es noch
+  nicht gibt) — es bliebe der E-Mail-Code. Und jeder, der den Link bekommt, legt dann
+  ein echtes Konto in deiner Datenbank an.
+
+**Mein Rat: lass es vorerst.** Solange du den Link zum Herzeigen benutzt, ist der
+Prototyp dafür das bessere Werkzeug — man sieht sofort etwas, ohne Postfach.
+Umstellen lohnt sich an dem Tag, an dem echte Leute die App wirklich benutzen sollen.
+
+> ⚠️ **Es passiert nichts von allein.** Ein Wächter bricht den Vorgang ab, falls die
+> Seite versehentlich mit echten Daten hochgeladen würde.
+
+---
+
 ## 🔴 NEU (13.09.2026) — zwei Sachen aus dem Apple/Google-Abend
 
 ### A. Der Apple-Schlüssel läuft am **12.03.2027** ab · **später, aber unbedingt** 🔴
@@ -320,7 +351,22 @@ Liegt seit dem 06.09. fertig da: `landing-vorschau/` — Olivgrün, Weinrot, Tü
 Offen ist **Farbe UND A oder B** (A: auch die sechs Kategoriefarben werden Abstufungen
 der Leitfarbe · B: nur die Marke, Kategorien bleiben bunt). Blockiert sonst still.
 
-### 2. Der Durchgang am Handy · **15 Minuten** 🟢
+### 2. ~~Der Durchgang am Handy~~ ✅ *erledigt, 13.09.*
+
+> ✅ **Am 13.09.2026 nachmittags gemacht — sieben von sieben.** Anmelden mit Apple,
+> Anmelden mit Google, angemeldet bleiben nach dem Neustart, Profilbild, die
+> Anleitungskarte bleibt weg, kein Prototyp-Kasten, die @-Namen. **Alles gehalten.**
+>
+> Dabei ist ein Fehler herausgekommen, den kein Mac hätte finden können: Das
+> Profilbild scheiterte am Handy **lautlos** — Bildwähler und Zuschnitt liefen
+> tadellos, danach passierte gar nichts. Repariert und im selben Durchgang
+> nachgemessen.
+>
+> ⚠️ **Die 7-Tage-Angabe unten ist überholt:** Seit dem Developer Program gilt die
+> App auf deinem Handy **bis September 2027**.
+
+<details><summary>Wie es dorthin kam (erledigt, zum Nachlesen)</summary>
+
 > ✅ **Am 08.09.2026 erledigt: Die App LÄUFT auf deinem iPhone.** Aufgespielt,
 > Entwickler bestätigt, gestartet (`Launched application with at.simplysocial.app`).
 > Sie läuft **ohne Kabel und ohne Mac** — du kannst sie mitnehmen und herzeigen.
@@ -336,7 +382,7 @@ der Leitfarbe · B: nur die Marke, Kategorien bleiben bunt). Blockiert sonst sti
 > Zu jedem Punkt reicht „geht" oder was schiefgeht. Bei Gesten ist ein kurzes Video
 > mehr wert als eine Beschreibung.
 
-<details><summary>Was am 07.09. schiefging (erledigt, zum Nachlesen)</summary>
+**Was am 07.09. schiefging:**
 
 > 🔄 **Am 07.09. abends fast geschafft — die App ist FERTIG GEBAUT.** Dein iPhone war
 > angesteckt, die Signatur stimmt, der Build lief durch (48 MB, alles eingebacken).
@@ -466,7 +512,15 @@ Unterschied. Genau dafür ist es gebaut — nach dem Abend vom 11.09., an dem ei
 > Antwort „Ian". **Es fehlen buchstäblich nur noch die Konten** — dieses hier, das von
 > Apple und das von Google. Danach ist Anmelden ein Umschalten, kein Bauen.
 
-### 4. Google-Login — und warum es das überhaupt braucht · **15 Minuten** 🟡
+### 4. ~~Google-Login~~ ✅ *erledigt, 13.09.* — die Erklärung bleibt stehen
+
+> ✅ **Google steht** und ist **am Handy geprüft**: Browserfenster geht auf, du
+> kommst in der App wieder heraus. Eingetragen wurde es in der Nacht auf den 13.09.,
+> und Apple war vorher fertig — die Reihenfolge unten ist also eingehalten.
+>
+> *Warum es das überhaupt braucht, steht weiter unten unverändert — es erklärt, was
+> da eigentlich passiert, wenn jemand auf den Knopf tippt.*
+
 
 > **Du hast gesagt, du verstehst das nicht ganz. Hier in normalen Worten:**
 >

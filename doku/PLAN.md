@@ -6071,16 +6071,102 @@ getan."*). **Der naheliegende Fix bricht die App:** Ein
 `revoke select (erledigt_von)` macht aus `laden.ts`' `select('*')` einen `42501` — die
 Abfrage verlangt alle Spalten. Wer es schließen will, nennt dort die Spalten einzeln.
 
-#### 20.8 — Was WEGFÄLLT ⬜
+#### 20.8 — Was WEGFÄLLT ✅ *(2026-09-13 — und es fällt weniger weg als geplant)*
 
-- **`features/statisch.ts` gehört gelöscht, nicht angepasst.** Es existiert nur, weil
-  der statische Web-Export für jede dynamische Route beim Bauen alle IDs kennen muss
-  (harte Regel 11). Mit echten Daten gibt es die beim Bauen nicht mehr — und braucht sie
-  auch nicht. Steht so schon in PLAN.md, Phase 8.
-- **`data/mock.ts` wird zu Startdaten**, nicht zu Müll. Die vierzehn Posts sind über
-  Wochen so gebaut worden, dass jede Regel an ihnen sichtbar wird (`p7` ohne Bezirk,
-  `p16` in einer fremden Gruppe, `p18` als Terminkollision). Als Seed für eine leere
-  Datenbank sind sie genau das, was ein Kaltstart braucht. **Harte Regel 12 gilt weiter.**
+> **Hier stand bis zum 2026-09-13:** *„`features/statisch.ts` gehört gelöscht, nicht
+> angepasst. Mit echten Daten gibt es die IDs beim Bauen nicht mehr — und braucht sie
+> auch nicht."* **Der zweite Halbsatz ist gemessen falsch.**
+
+**Zwei vollständige Web-Exporte, einer je Schalterstellung** (`'attrappe'` per `sed`
+erzwungen, Rücknahme mit `git diff` belegt — die 19d-Methode):
+
+| `ANMELDE_QUELLE` | HTML-Dateien | konkrete Adressen | mit Inhalt vorgerendert |
+|---|---|---|---|
+| `'attrappe'` | **72** | **47** (20 Posts · 18 Profile · 4 Chats · 5 Gruppen) | 17 Dateien |
+| `'supabase'` | **25** | **0** | **0** |
+
+Daraus **drei** Dinge, und nur das erste stand im Plan:
+
+1. **Grund 2 der alten Fassung stimmt** — mit `'supabase'` entstehen wirklich null
+   Adressen. Der Grund dafür ist aber `startListen()` in `features/store.ts`: Es gibt
+   seit 20.4-b neun LEERE Listen zurück, und `generateStaticParams` läuft in Node gegen
+   genau diesen Anfangszustand. **Ein Schalter, der für die Laufzeit gedacht war,
+   entscheidet damit auch, welche DATEIEN entstehen.**
+2. 🔴 **Grund 1 ist erledigt — aber durch eine ANDERE Phase.** Er lautete, mit echten
+   Daten wäre `chat/t1.html` ein öffentlich abrufbarer fremder Chat. Gemessen: Die Datei
+   entsteht gar nicht, und **null** HTML trägt Mock-Inhalt. Beseitigt hat das derselbe
+   leere Startzustand aus Punkt 1, nicht diese Phase — **und wer nur den Kommentar in
+   `statisch.ts` las, hielt eine erledigte Gefahr für offen.** Harte Regel 83 innerhalb
+   einer Datei, zum wiederholten Mal.
+3. 🔴 **Und deshalb ist Löschen trotzdem falsch: `deploy.sh` lässt seit dem 2026-09-13
+   NUR aus `'attrappe'` heraus deployen** (harte Regel 96, es bricht sonst ab). Die
+   öffentliche Adresse und die echte App sind zwei getrennte Stände — und `statisch.ts`
+   ist das, was dem einen davon seine 47 Direktlinks gibt.
+
+> ✅ **Ians Entscheidung 75, 2026-09-13: die öffentliche Adresse BLEIBT der Prototyp.**
+> Verworfen: sie abschalten (Herzeigen nur noch über TestFlight — dann wäre `statisch.ts`
+> wirklich Müll) und sie auf echte Daten nachziehen (bräuchte einen 404-Umweg auf GitHub
+> Pages, und Apple/Google gehen im Browser prinzipiell nicht, harte Regel 94).
+> **Damit ist `data/mock.ts` doppelt begründet**: Startdaten für eine leere Datenbank
+> UND der Inhalt der Adresse, die per WhatsApp weitergeht. Harte Regel 12 gilt weiter.
+
+##### Was daraus GEBAUT wurde: der vierte Wächter in `deploy.sh`
+
+Der Deploy prüfte bisher `baseUrl` (zweimal), `.nojekyll` und den Schalter — **nicht
+aber, ob die Direktlinks überhaupt entstanden sind.** Das ist die Lücke, und sie ist
+größer als sie aussieht: Wer `statisch.ts` löscht oder einem der **sechs** Screens sein
+`generateStaticParams` nimmt, lässt den Schalter dabei unberührt. Der Schalter-Wächter
+ist zufrieden, der Deploy läuft durch, und danach ist jeder weitergeschickte Link ein
+404 — **ohne eine einzige Fehlermeldung**, weil Expo Router dann schlicht
+`post/[id].html` schreibt, mit eckigen Klammern im Dateinamen.
+
+**Zwei Gründe an einem Wächter sind einer zu viel.** Der Schalter-Wächter deckt den Fall
+heute nebenbei mit ab; sein eigener Text lädt aber ausdrücklich dazu ein, ihn neu zu
+fassen, sobald Entscheidung 56 neu gefasst wird — und dann fiele dieser Schutz lautlos
+mit weg. Dieselbe Familie wie *„ein Wächter hinter einem anderen ist ein ungeprüfter
+Wächter"* (20.4-b).
+
+🔴 **Der teuerste Fund der Phase war mein eigener erster Entwurf — er hätte genau den
+Zustand durchgelassen, gegen den er gebaut ist.** Gezählt wurde mit
+`find … | grep -v '\['`, also „alles ohne eckige Klammern". Gemessen ergab das bei
+`'supabase'` nicht 0, sondern **1**: `gruppe/neu.html`. Die ist keine erzeugte Adresse,
+sondern eine **statische Route** (`src/app/gruppe/neu.tsx`). `[ "$ECHTE" -eq 0 ]` wäre
+damit falsch gewesen — grüner Wächter, kaputter Deploy. **Der Kommentar in `statisch.ts`
+warnt wörtlich davor** (*„`/gruppe/neu` ist KEINE davon"*); gelesen und trotzdem
+hineingelaufen. Ausgenommen wird deshalb kein NAME (das wäre eine zweite Quelle, die beim
+nächsten statischen Screen veraltet), sondern die EIGENSCHAFT: Zu einer statischen Route
+gibt es eine gleichnamige Quelldatei unter `src/app/` — **der Wächter sieht selbst nach.**
+
+⚠️ **Und eine zweite Falle hat nur zufällig nicht zugeschlagen.** Unter
+`set -euo pipefail` gibt `grep -v` bei **null** übrigen Zeilen `exit 1`; `pipefail` reicht
+das durch, `set -e` tötet das Skript — **stumm, vor jeder Fehlermeldung**, also genau in
+dem Fall, für den die Meldung geschrieben ist. Gerettet hat mich ausgerechnet die Datei,
+die nicht mitzählen darf. Die Zählung läuft seither als `while read`-Schleife ohne Pipe.
+Dieselbe Familie wie *„ohne `PGCONNECT_TIMEOUT` hängt psql"* und *„`set -e` tötete das
+Skript, bevor die Diagnose lief"* (2026-09-12).
+
+**Gemessen, beide Richtungen, mit der ECHTEN Funktion aus `deploy.sh`** (per `sed`
+extrahiert, nicht nachgebaut — eine Nachbildung prüft die Nachbildung):
+
+    'attrappe' → Posts=20  Profile=18  Chats=4  Gruppen=5  Summe=47   → läuft durch
+    'supabase' → Posts=0   Profile=0   Chats=0  Gruppen=0  Summe=0    → ABBRUCH
+
+`tsc` sauber · **81 Lint-Probleme wie vorher** · an `statisch.ts` und `deploy.sh` keine
+Zeile Logik im App-Code, also kein Pixelvergleich nötig.
+
+❓ **Offen und bei Ian: wie streng die Latte ist** (`TODO(Ian)` in `deploy.sh`, Abschnitt 6
+Punkt 38). Die vier Zahlen stehen bereit; die Bedingung fängt heute nur den Totalausfall
+und ist ausdrücklich als **Platzhalter** markiert — *ein Platzhalter, der zufällig richtig
+ist, und eine Entscheidung sind zwei verschiedene Zustände* (18d-Lehre).
+
+##### Was NICHT wegfällt
+
+- **`data/mock.ts`** — siehe Entscheidung 75 oben. Die zwanzig Posts sind über Wochen so
+  gebaut worden, dass jede Regel an ihnen sichtbar wird (`p7` ohne Bezirk, `p16` in einer
+  fremden Gruppe, `p18` als Terminkollision, `g5` aufgelöst). *(Der Plan sprach hier bis
+  heute von „den vierzehn Posts" — seit Phase 18d sind es zwanzig. Nachgezählt.)*
+- **`features/statisch.ts`** — der Kommentarkopf ist am 2026-09-13 berichtigt: Die alte
+  Warnung „gehört dann WEG" steht dort jetzt als das, was sie ist, samt beider Messungen.
 
 ---
 
@@ -6413,9 +6499,11 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
 > Punkt 35 ist Entscheidung 27.
 >
 > **Folgen, die man kennen muss:**
-> - Ein Verweis „Abschnitt 6, Punkt 39" (oder 42, 44, 55) zeigt ins LEERE — dieser
->   Abschnitt endet bei **37**. Gemeint ist dort die ENTSCHEIDUNG dieser Nummer;
->   gefunden wird sie mit `grep -n "Entscheidung 39" PLAN.md`.
+> - Ein Verweis „Abschnitt 6, Punkt 42" (oder 44, 55) zeigt ins LEERE — dieser
+>   Abschnitt endet bei **40**. Gemeint ist dort die ENTSCHEIDUNG dieser Nummer;
+>   gefunden wird sie mit `grep -n "Entscheidung 42" PLAN.md`.
+>   *(Diese Zeile sagte bis zum 2026-09-13 „endet bei 37" — sie war selbst der Fall,
+>   vor dem sie warnt. Beim Anhängen eines Punktes gehört sie nachgezogen.)*
 > - Und die **55 ist doppelt vergeben**: einmal in Phase 19f („beim Antippen des
 >   Eingabefelds bleibt der Chat unten") und einmal am 2026-09-13 für den geteilten
 >   Sitzungsspeicher. Wer einem solchen Verweis folgt, **prüft am DATUM**, welche
@@ -8105,6 +8193,36 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
     mit dem alten Einzeiler wieder eingebaut **83 statt 81**, mit der Stelle im
     Klartext.
 
+
+40. ⬜ **Wie streng der Direktlink-Wächter misst** (`scripts/deploy.sh`, Phase 20.8)
+    — **vorbereitet am 2026-09-13, die Bedingung ist ein PLATZHALTER.**
+
+    **Worum es geht.** Damit `/post/p4` auf GitHub Pages etwas findet, muss beim Bauen
+    eine echte `dist/post/p4.html` entstehen — ein Link auf EINEN Post ist auf dieser
+    Adresse der Normalfall (harte Regel 5). Bisher prüfte der Deploy das nicht. Jetzt
+    zählt er, und die vier Zahlen stehen als `$POSTS $PROFILE $CHATS $GRUPPEN` bereit.
+    Gemessen: `'attrappe'` → 20 / 18 / 4 / 5, `'supabase'` → 0 / 0 / 0 / 0.
+
+    **Offen ist allein die Latte:**
+
+    - **(c) „je Familie mindestens eine"** — vier Vergleiche auf `> 0`. Fängt: Datei
+      gelöscht, ein Screen-Aufruf entfernt, falsche Schalterstellung, und auch den
+      Ausfall EINER Familie (etwa: nur die Chats fehlen). Fängt nicht, wenn von zwanzig
+      Posts nur noch einer entsteht. **Kostet keine zweite Quelle** — der Wächter weiß
+      nichts, was er nicht selbst sieht.
+    - **(d) „genau die erwarteten Zahlen"** — 20 / 18 / 4 / 5 hart hingeschrieben.
+      Schärfer, fängt auch den Teilausfall. **Der Preis:** Diese Zahlen stünden dann
+      ZWEIMAL da (in `mock.ts` und hier). Wer einen Post ergänzt, muss hier nachziehen,
+      sonst bricht ein Deploy ab, an dem nichts kaputt ist — die Falle aus harter
+      Regel 53 (`PROJEKTION`), und sie trifft dann ausgerechnet den, der gerade etwas
+      Richtiges getan hat.
+
+    **Meine Empfehlung ist (c)**, und der Grund ist nicht „einfacher": Eine Prüfung, die
+    bei einer harmlosen Änderung rot wird, wird beim dritten Mal entschärft — dann ist
+    sie weg, und zwar in dem Moment, in dem niemand hinsieht. (c) kann das nicht
+    passieren. **Es ist trotzdem Ians Entscheidung**, weil der Teilausfall ein echter
+    Fall ist: Eine Familie, von der nur noch ein Eintrag entsteht, sieht im Browser
+    vollständig aus und ist es nicht.
 
 
 ## 7. Bewusst NICHT im Prototyp

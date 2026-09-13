@@ -42,6 +42,65 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > die zwei Liquid-Glass-Vorbilder geblieben, weil sie als laufende Vorlage dienen
 > und nicht als Beleg. Einzelheiten in `_belege/LIESMICH.md`.
 
+✅ **Phase 20.8 ist FERTIG (2026-09-13) — und sie heißt „Was WEGFÄLLT", es fällt aber
+das Gegenteil von dem weg, was der Plan sagte.** Er verlangte seit Phase 8:
+*„`features/statisch.ts` gehört gelöscht, nicht angepasst."* **Gemessen mit zwei
+vollständigen Web-Exporten, einer je Schalterstellung** (`'attrappe'` per `sed` erzwungen,
+Rücknahme mit `git diff` belegt):
+
+    ANMELDE_QUELLE='attrappe'   72 HTML-Dateien   47 konkrete Adressen   17 mit Inhalt
+    ANMELDE_QUELLE='supabase'   25 HTML-Dateien    0 konkrete Adressen    0 mit Inhalt
+
+Eine neue Entscheidung von Ian (**75**: die öffentliche Adresse bleibt der Prototyp), ein
+neuer Wächter in `deploy.sh`, ein berichtigter Kommentarkopf. `tsc` sauber · **81
+Lint-Probleme wie vorher**. Vier Dinge:
+
+1. 🔴 **Die GEFAHR, wegen der gelöscht werden sollte, war längst weg — beseitigt von
+   einer ANDEREN Phase.** Der Kommentar in `statisch.ts` warnte, mit echten Daten wäre
+   `chat/t1.html` ein öffentlich abrufbarer fremder Chat. Gemessen: Die Datei entsteht
+   gar nicht, **null** HTML trägt Mock-Inhalt — weil `startListen()` (`features/store.ts`)
+   seit 20.4-b bei `'supabase'` neun LEERE Listen zurückgibt und `generateStaticParams`
+   in Node gegen genau diesen Anfangszustand läuft. **Ein Schalter, der für die Laufzeit
+   gedacht war, entscheidet auch, welche DATEIEN entstehen.** Wer nur den alten Kommentar
+   las, hielt eine erledigte Gefahr für offen — harte Regel 83 innerhalb einer Datei.
+2. 🔴 **Und Löschen wäre trotzdem falsch, weil `deploy.sh` seit dem 13.09. NUR aus
+   `'attrappe'` heraus deployt** (harte Regel 96). Öffentliche Adresse und echte App sind
+   zwei getrennte Stände, und `statisch.ts` gibt dem einen seine 47 Direktlinks.
+   **Ians Entscheidung 75** hält das fest; verworfen: abschalten, und auf echte Daten
+   nachziehen (bräuchte einen 404-Umweg, und Apple/Google gehen im Browser nicht).
+3. 🔴 **Der teuerste Fund war mein EIGENER erster Wächter — er hätte den Zustand
+   durchgelassen, gegen den er gebaut ist.** Gezählt wurde mit `grep -v '\['`; bei
+   `'supabase'` ergab das nicht 0, sondern **1**: `gruppe/neu.html`, eine STATISCHE Route
+   (`src/app/gruppe/neu.tsx`) und keine erzeugte Adresse. **Der Kommentar in `statisch.ts`
+   warnt wörtlich davor** — gelesen und trotzdem hineingelaufen. Ausgenommen wird jetzt
+   kein NAME (zweite Quelle), sondern die EIGENSCHAFT: Zu einer statischen Route gibt es
+   eine gleichnamige Quelldatei unter `src/app/`, **und der Wächter sieht selbst nach.**
+   ⚠️ Dazu eine zweite Falle, die nur zufällig nicht zuschlug: Unter `set -euo pipefail`
+   gibt `grep -v` bei **null** übrigen Zeilen `exit 1` — `pipefail` reicht es durch,
+   `set -e` tötet das Skript **stumm, vor der Fehlermeldung**, also genau im gemeinten
+   Fall. Gerettet hat die Datei, die nicht mitzählen darf. Jetzt eine `while read`-Schleife
+   ohne Pipe, beide Richtungen mit der ECHTEN Funktion aus `deploy.sh` gemessen (per `sed`
+   extrahiert, nicht nachgebaut): `'attrappe'` 20/18/4/5 = **47** durch · `'supabase'`
+   0/0/0/0 = **0** Abbruch.
+4. **Die Lücke war größer, als sie aussieht, und das ist der Grund für den vierten
+   Wächter.** Wer `statisch.ts` löscht oder einem der **sechs** Screens sein
+   `generateStaticParams` nimmt, lässt den Schalter unberührt — der Schalter-Wächter ist
+   zufrieden, der Deploy läuft durch, **und es gibt keine Fehlermeldung**, weil Expo
+   Router dann `post/[id].html` schreibt, mit eckigen Klammern im Namen. **Zwei Gründe an
+   einem Wächter sind einer zu viel:** Der Schalter-Wächter deckt es heute nebenbei mit
+   ab, und sein eigener Text lädt dazu ein, ihn neu zu fassen.
+
+❓ **Eine Entscheidung wartet auf Ian** (blockiert nichts, `TODO(Ian)` in `deploy.sh`,
+PLAN.md Abschnitt 6 **Punkt 40**): **wie streng die Latte ist.** (c) „je Familie
+mindestens eine" — kostet keine zweite Quelle; (d) „genau 20/18/4/5" — schärfer, aber die
+Zahlen stünden zweimal da (harte Regel 53). Die Bedingung im Skript fängt heute nur den
+Totalausfall und ist ausdrücklich als **Platzhalter** markiert, nicht als Entscheidung
+(18d-Lehre). Empfehlung: (c).
+
+ℹ️ **Nebenbei berichtigt:** Der Kopf von PLAN.md Abschnitt 6 sagte *„dieser Abschnitt
+endet bei 37"* — er endet bei 40. **Die Warnung war selbst der Fall, vor dem sie warnt.**
+Und der Plan sprach von „den vierzehn Posts" in `mock.ts`; seit Phase 18d sind es zwanzig.
+
 🎉 **Phase 20.7-b ist FERTIG (2026-09-13 spätabends) — und damit ist die
 Apple-1.2-Pflicht VOLLSTÄNDIG.** Melden · Blockieren · Nutzungsbedingungen · Konto
 löschen · Meldungen lesen (20.7) · **und jetzt auch handeln.** Der Leser darf
@@ -2722,7 +2781,12 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    ein Konto UNLÖSCHBAR gemacht hätte** (harte Regel 98) — und dass zehn Screens den
    @-Namen ohne `@` gezeigt hätten, sobald der Schalter steht (harte Regel 99).
    **Was fehlt, ist HANDELN:** Inhalte entfernen und Nutzer ausschließen, beides
-   Apple 1.2, gehört in dasselbe Werkzeug.* · Aufräumen (20.8).
+   Apple 1.2, gehört in dasselbe Werkzeug.* ·
+   ~~**Aufräumen (20.8)**~~ ✅ *2026-09-13 — und es fällt das Gegenteil von dem weg, was
+   der Plan sagte: `statisch.ts` BLEIBT (Ians Entscheidung 75), dafür bekommt `deploy.sh`
+   seinen vierten Wächter. **Dabei kam heraus, dass mein eigener erster Wächter genau den
+   Zustand durchgelassen hätte, gegen den er gebaut ist** — `gruppe/neu.html` ist eine
+   statische Route und zählte mit.*
    Danach fällt 19d-2 nebenbei ab.
 
 10b. ✅ **DER GERÄTEDURCHGANG IST GEMACHT** *(2026-09-13 nachmittags, 7 von 7)*.
@@ -4037,6 +4101,34 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    *Kann sie selbst prüfen, wer sie ruft?* Wenn nein, ist das `revoke` Pflicht
    und kein Feinschliff.**
 
+105. **`deploy.sh` hat VIER Wächter, und jeder deckt genau eine Frage — wer einen
+   anfasst, liest zuerst, was er allein trägt.** *(Phase 20.8, 2026-09-13.)*
+   `baseUrl` in `app.json` (die Absicht) · `baseUrl` im gebauten HTML (das
+   Ergebnis, weil die Wahrheit seit dem 07.09. in `app.config.js` steht) ·
+   `ANMELDE_QUELLE = 'attrappe'` (ausnahmsweise die QUELLE, weil der Minifier die
+   Zeichenkette auflöst) · und seit 20.8 **die konkreten Adressen**.
+   **Der vierte ist der, den man für überflüssig hält.** Er misst, ob
+   `dist/post/p1.html` & Co. wirklich entstanden sind — also den ZWECK der Adresse,
+   denn ein Link auf EINEN Post ist dort der Normalfall (harte Regel 5). Der
+   Schalter-Wächter deckt das heute nebenbei mit ab und ist deshalb **kein Ersatz**:
+   Wer `statisch.ts` löscht oder einem der sechs Screens sein `generateStaticParams`
+   nimmt, lässt den Schalter unberührt — der Deploy läuft durch, **ohne eine einzige
+   Fehlermeldung**, weil Expo Router dann `post/[id].html` schreibt. Zwei Gründe an
+   einem Wächter sind einer zu viel (die 20.4-b-Lehre *„ein Wächter hinter einem
+   anderen ist ein ungeprüfter Wächter"*).
+   ⚠️ **Und ein Wächter, der ZÄHLT, muss sagen können, was NICHT mitzählt.** Der
+   erste Entwurf nahm „alles ohne eckige Klammern" und zählte damit
+   `gruppe/neu.html` mit — eine STATISCHE Route, keine erzeugte Adresse. Bei
+   `'supabase'` stand dadurch **1** statt 0, und `-eq 0` hätte den Deploy genau in
+   dem Zustand durchgelassen, gegen den er gebaut ist. Ausgenommen wird deshalb kein
+   NAME (das wäre eine zweite Quelle, die beim nächsten statischen Screen veraltet),
+   sondern die EIGENSCHAFT: Zu einer statischen Route gibt es eine gleichnamige
+   Quelldatei unter `src/app/`, und der Wächter sieht selbst nach.
+   **Gegengemessen gehört jeder dieser vier in BEIDEN Richtungen** — die Zählung ist
+   es mit der per `sed` extrahierten ECHTEN Funktion an zwei fertigen Exporten
+   (`'attrappe'` 20/18/4/5 = 47 durch · `'supabase'` 0/0/0/0 = Abbruch); eine
+   nachgebaute Fassung hätte die Nachbildung geprüft.
+
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
 - **Große Display-Fonts clippen auf iOS.** `lineHeight ≈ 1.2 × fontSize` setzen, sonst
@@ -5171,6 +5263,22 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   ohne je eine Regel gemessen zu haben. Der Wegwerf-Ordner liegt deshalb IM Projekt
   (`.pruef-programmfehler/`, git-ignoriert wie `.pruef-konto/`). `baseUrl` + `paths`
   wären der andere Weg und sind seit TypeScript 7 abgeschafft.
+- **`find … | grep -v …` unter `set -euo pipefail` tötet das Skript STUMM, sobald
+  nichts übrig bleibt.** (Phase 20.8, 2026-09-13) `grep` gibt bei null passenden Zeilen
+  `exit 1` zurück, `pipefail` reicht es durch, `set -e` beendet — **vor** der eigens
+  dafür geschriebenen Fehlermeldung, also genau in dem Fall, für den sie da ist.
+  Zugeschlagen hat es nicht, und zwar aus dem falschen Grund: Es blieb zufällig eine
+  Zeile übrig (`gruppe/neu.html`), und die durfte gar nicht mitzählen. **Wo eine Zählung
+  auch null ergeben darf, gehört keine Pipe hin** — `while IFS= read -r … done < <(find …)`.
+  Dieselbe Familie wie „`set -e` tötete das Skript, bevor die Diagnose lief" (2026-09-12)
+  und „ohne `PGCONNECT_TIMEOUT` hängt psql".
+- **Ein Export erzeugt ZWEI Sorten Dateien, und nur eine davon ist eine Adresse.**
+  (Phase 20.8) `dist/gruppe/neu.html` kommt aus `src/app/gruppe/neu.tsx` (statische
+  Route), `dist/gruppe/g1.html` aus `generateStaticParams`. Beide sehen im Dateisystem
+  gleich aus; nur die zweite Sorte verschwindet, wenn das Backend die IDs nicht mehr
+  beim Bauen kennt. **Wer gebaute Dateien zählt, um eine Aussage über die Daten zu
+  treffen, trennt die Sorten vorher** — und zwar an der Eigenschaft (gibt es eine
+  gleichnamige Quelldatei?), nicht an einer Namensliste.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)
