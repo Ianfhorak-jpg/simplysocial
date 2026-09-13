@@ -6084,42 +6084,101 @@ Abfrage verlangt alle Spalten. Wer es schließen will, nennt dort die Spalten ei
 
 ---
 
-### Phase 20.9 — Kein Knopf schweigt mehr ⬜ *(als NÄCHSTES, JS-only)*
+### Phase 20.9 — Kein Knopf schweigt mehr ✅ *(gebaut am 2026-09-13 abends)*
 
-> **Warum das vor allem anderen steht:** Ians Profilbild ist am 13.09. lautlos
-> gescheitert, weil ein Wurf durch `onPress={async …}` hinausläuft und React das
-> Promise wegwirft. **Gemessen: 15 solche Stellen, 14 davon sind noch offen** — und
-> jede ist heute auf seinem iPhone ein Ort, an dem die App jemandem stillschweigend
-> nichts tut. Harte Regel 102.
+> **Woher es kommt.** Ians Profilbild ist am 13.09. am Gerät lautlos gescheitert, weil
+> ein Wurf durch `onPress={async …}` hinauslief und React das Promise wegwarf.
+> **Gemessen waren 15 solche Stellen, 14 davon offen** — jede ein Ort, an dem die App
+> jemandem stillschweigend nichts tut. Harte Regel 102.
 
-**Die Arbeit selbst ist mechanisch:** `onPress={xAsync}` → `onPress={() => void xAsync()}`,
-und `xAsync` fängt auch das Unerwartete. Gefunden werden die Stellen mit einem Handgriff —
-`checksVoidReturn: true` in `eslint.config.js`, dann nennt `npx expo lint` sie alle mit
-Datei und Zeile (gegengemessen: **96 Probleme statt 81**, der Unterschied sind genau die 15).
+**Gemessen danach:** `tsc` sauber · Lint **81 Probleme AUCH mit `checksVoidReturn: true`**
+(der Beleg, dass alle 14 zu sind) · lokal **136 Häkchen, 0 Kreuze** · `pruef-schreiben`
+**50** · `pruef-bilder` **32** · `pruef-lesen` **29** · `pruef-konto` **32** ·
+`pruef-sitzung` **29** · `pruef-bildwahl` **47** · `pruef-anbieter` **48** · neu
+`pruef-programmfehler` **25** · Prototyp auf 390 × 844 **Pixel für Pixel identisch**
+(`as01` gegen `ar01`, **0** abweichende Pixel, Messgerät gegengeprüft) · 0
+Konsolenfehler · Schalter nachweislich zurück auf `'supabase'` (`git diff` leer).
 
-**Am Ende steht der Schalter dauerhaft auf `true`.** Das ist der eigentliche Ertrag: Ohne
-ihn kommt die Familie beim nächsten Screen zurück, und sie kommt still zurück.
+**Sieben Dinge sind wichtiger als die 14 Zeilen:**
 
-⚠️ **Die eine Frage, die dabei zu entscheiden ist — und sie gehört Ian.** Wohin geht ein
-UNERWARTETER Fehler auf dem Bildschirm? Heute gibt es zwei Orte, und beide sind belegt:
-die Fehlerleiste oben (`schreiben.zustand === 'fehler'`, Entscheidung 48) für einen
-`SchreibFehler`, und ein Satz neben dem Knopf für eine Hürde, die der Mensch beheben kann.
-Ein Programmfehler ist keines von beidem.
+1. 🔴 **Der teuerste Fund ist ein KOMMENTAR, der eine Erlaubnis erteilt, die es nicht
+   mehr gab.** Über `schreibVorgang` in `features/store.ts` steht seit Phase 20.5:
+   *„Gibt ein Promise zurück, das **nie** abgelehnt wird — Screens dürfen es deshalb
+   liegen lassen."* Genau das tun die 14 Stellen. **Die Zusage stimmt seit dem Tag
+   nicht mehr, an dem `schreibVorgangIntern` das `throw fehler` für einen
+   Nicht-`SchreibFehler` bekam.** Die 14 `onPress` waren also nicht schlampig
+   geschrieben, sie folgten einem Satz, der still weggefallen war — dieselbe Familie
+   wie der veraltete Wächter-Kommentar in `50_lesen.sh` (2026-09-12).
+   **Daraus folgt der Entwurf:** Ein reines `void` an 14 Stellen hätte den Lint grün
+   gemacht und den Fehler trotzdem unsichtbar gelassen — er wäre dann ein abgelehntes
+   Promise, das niemand liest, statt eines geworfenen, das niemand fängt. Repariert
+   sind deshalb **beide Hälften**: die 14 Stellen, damit der Wächter dauerhaft an
+   bleiben kann, und die EINE Stelle, an der der Wurf wieder ein Zustand wird.
+2. 🔴 **Die dritte Familie stand daneben und war schlimmer: `datenHolen()` warf
+   genauso — und ZWEI der 14 Stellen sind `nochmal={datenHolen}`.** Der Knopf, den
+   Ians Entscheidung 43 dem Menschen als einzigen Ausweg aus dem Vollbild-Kasten in
+   die Hand gibt, konnte selbst lautlos scheitern: Man steht vor dem Kasten, drückt,
+   und nichts passiert — für immer. Auch dort wird jetzt umgewandelt statt geworfen.
+3. ✅ **Ians Entscheidung 71: A — derselbe Ort, ein EIGENER Satz.** Verworfen: B (eine
+   zweite andersfarbige Leiste — ehrlich getrennt, aber ein zweites Ding auf dem
+   Schirm, gegen seine eigene Entscheidung 50) und C (ein Satz je Screen — am nächsten
+   am Ort des Geschehens, aber 14-mal eine passende Stelle suchen, und in einer Liste
+   gibt es keine). Alles in `lib/programmfehler.ts`, importfrei wie `lib/handle.ts`,
+   weil **zwei** Regel-Dateien sie brauchen und `schreiben.ts` in blankem Node läuft.
+   ⚠️ **Der Knopf unter dem KASTEN ist eine Auslegung und wartet auf sein Urteil:**
+   Bei der Leiste steht „Alles klar", weil ein neuer Versuch in denselben
+   Programmfehler liefe (harte Regel 76). Unter dem Kasten steht NICHTS, und ohne
+   Knopf verlässt man ihn nur durch einen Neustart — dort ist „Nochmal versuchen"
+   geblieben. **Ein nutzloser Knopf ist besser als eine Sackgasse, aber das ist meine
+   Abwägung.** Die Korrektur wäre ein Wort.
+4. **Der Code-Wert trägt einen Schrägstrich, und das ist kein Schmuck.** Er landet in
+   demselben Feld wie ein SQLSTATE (`42501`) und ein PostgREST-Code (`PGRST301`). Ein
+   Wert wie `'P0001'` sähe aus wie beides — **und `P0001` ist ein echter SQLSTATE**
+   (`raise_exception`), den eine der neun Funktionen eines Tages wirklich werfen kann.
+   Ein SQLSTATE ist fünf alphanumerische Zeichen; ein `/` kann darin nicht vorkommen.
+   Die Kollision ist damit nicht unwahrscheinlich, sondern unmöglich — und gemessen.
+5. 🔴 **DREI Prüfstände waren schon vor dieser Phase ROT, und alle drei seit HEUTE
+   FRÜH.** Aufgefallen nur, weil sie hier zum ersten Mal wieder liefen:
+   - `pruef-schreiben` — `senden.ts` bekam mit der `crypto`-Reparatur `@/lib/zufall`.
+     **`80_bilder.sh` wurde nachgezogen, `70_schreiben.sh` vergessen.**
+   - `pruef-konto` — `lib/supabase.ts` bekam mit der geteilten Sitzung
+     `@/lib/sitzungsspeicher`. Der Lauf starb an einem nackten
+     `ERR_MODULE_NOT_FOUND: Cannot find package '@/lib'`, tief im Stapelauszug und
+     **nach** dem Anlegen der Prüfkonten — das sieht nach kaputtem Node aus.
+     **Der Grund ist, dass dieser Prüfstand als einziger den Alias-WÄCHTER nicht
+     hatte**, den 70 und 80 seit jeher tragen. Er hat ihn jetzt.
+   - Und dabei kam heraus, dass `kontoLoeschen` in `70_schreiben.mjs` **in keiner der
+     beiden Aktionslisten** stand (seit 20.6-c). Gefunden hat es die dritte Prüfung,
+     die genau dafür gebaut wurde — zum zweiten Mal.
+   **`pruef-konto` meldet jetzt 32 statt 29** — die drei @-Häkchen aus 20.7 sind nie
+   gemessen worden, weil der Prüfstand seither nicht mehr lief.
+6. **Der neue Prüfstand misst nicht, dass Ians Satz dasteht, sondern dass er OHNE die
+   Zweige FEHLTE.** `npm run pruef-programmfehler` — 25 Häkchen, und danach baut er
+   eine Kopie der Quelle, in der die drei `if`-Zweige auf `false` stehen: **dort fällt
+   er mit 8 Kreuzen durch.** Ohne diesen Block wäre ein grüner Lauf ohne Aussage — die
+   Lehre vom selben Morgen, als auffiel, dass Entscheidung 55 von keiner Prüfung
+   bewacht war. Verglichen wird dabei GEGEN den Netz-Rückfall, nicht gegen eine
+   Zeichenkette: Genau die Verwechslung schafft Entscheidung 71 ab.
+7. **Drei eigene Fehler, alle am MESSAUFBAU, alle schon einmal aufgeschrieben.** Ein
+   `sed` auf `checksVoidReturn: false` traf auch den KOMMENTAR daneben, der danach das
+   Gegenteil seiner eigenen Begründung behauptete (gefangen von einem `assert`). Die
+   nachgebaute tsconfig ließ `"types": ["node"]` weg — dieselbe Falle wie am selben
+   Morgen in 20.7. Und der Alias-Wächter des neuen Prüfstands fragte erst ALLE
+   gebauten Dateien statt der drei geladenen, obwohl die Verengung samt Begründung in
+   `70_schreiben.sh` steht.
 
-| | |
-|---|---|
-| A: dieselbe Leiste oben | Ein Ort für „etwas ging schief", egal warum. Preis: Die Leiste sagt heute Dinge wie „Du bist nicht mehr angemeldet" — ein Programmfehler würde darin wie ein Netzproblem aussehen, und genau diese Verwechslung sollte `schreibVorgangIntern` vermeiden. |
-| B: eine zweite, andersfarbige Leiste | Ehrlich getrennt. Preis: ein zweites Ding auf dem Schirm, gegen harte Regel 63. |
-| C: ein Satz je Screen, wie beim Bild | Am nächsten an der Stelle, an der es passiert ist. Preis: 14-mal eine Stelle finden, wo der Satz hinpasst — und auf manchen Screens gibt es keine. |
+⚠️ **Was 20.9 NICHT ist: am Gerät geprüft.** Dass die Leiste am iPhone wirklich
+erscheint, hängt an der Verdrahtung in `features/store.ts` — und die zieht React und
+`supabase-js` herein, läuft also in keinem Node. Gemessen ist die REGEL: was dasteht,
+wenn der Zustand gesetzt ist. **Dass er gesetzt WIRD, gehört in den nächsten
+Gerätedurchgang** — und der ist ohnehin fällig (20.6-d).
 
-**Empfehlung: A mit einem eigenen Wortlaut** — eine Leiste, aber ein Satz, der nicht
-nach Netzproblem klingt („Da ist etwas schiefgegangen, das nicht an dir liegt."). Der
-Grund: Ein Mensch kann bei einem Programmfehler ohnehin nichts tun; was er braucht, ist
-die Auskunft, dass es nicht an ihm lag und dass es nicht stillschweigend passiert ist.
-
-**Gemessen wird danach:** `tsc` sauber · Lint **81 Probleme AUCH mit `checksVoidReturn:
-true`** (das ist der Beleg, dass alle 15 zu sind) · lokal 136 · Prototyp Pixel für Pixel
-identisch · und ein neuer Build aufs Gerät, weil es dort auffällt und nirgends sonst.
+⚠️ **Und eine Stelle bleibt bewusst offen, weil sie eine ANDERE Familie ist.** Wirft
+eine Haken-Funktion SYNCHRON, bevor `schreibVorgang` überhaupt läuft — `meineId()` tut
+das, wenn keine Sitzung steht —, fliegt der Fehler aus dem `onPress`-Handler und ist
+wieder still. **Heute ist das durch den Torwächter gedeckt** (harte Regel 69: ein
+Screen, der ein Ich braucht, wird ohne Sitzung gar nicht gezeichnet), also ist es kein
+Loch, sondern eine Zusage. Wer den Torwächter aufweicht, macht daraus eines.
 
 ---
 
@@ -7638,6 +7697,42 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 > Offen ist nur, ob sie in die **Lage** und damit in die Fußzeile eingeht.
 > **Ian schreibt die fünf Zeilen selbst** — `fristEndeAm()` und `erledigtAm` liegen
 > bereit, es sind zwei Zeitpunkte.
+
+### 61. Wohin ein UNERWARTETER Fehler auf den Bildschirm geht ✅
+
+> **Entschieden am 2026-09-13 — Ians Entscheidung 71**, gebaut in
+> `src/lib/programmfehler.ts` (Phase 20.9, Abschnitt 5b). ⚠️ **Die Nummer 61 ist der
+> PUNKT dieses Abschnitts, die 71 die fortlaufende Nummer seiner Entscheidungen** —
+> siehe die Warnung am Kopf von Abschnitt 6.
+>
+> Bis zu diesem Tag gab es zwei Orte für einen Fehler und keiner passte: die
+> **Fehlerleiste** oben (Entscheidung 48) für einen `SchreibFehler`, und ein **Satz
+> neben dem Knopf** für eine Hürde, die der Mensch beheben kann. Ein PROGRAMMfehler ist
+> keines von beidem — und ging deshalb nirgendwohin: Er verschwand lautlos, genau wie
+> Ians Profilbild am selben Morgen.
+>
+> | | |
+> |---|---|
+> | **A: dieselbe Leiste, eigener Satz** ✅ | Ein Ort für „etwas ging schief", egal warum — aber mit einem Satz, der nicht nach Netzproblem klingt. |
+> | B: eine zweite, andersfarbige Leiste | Ehrlich getrennt. Preis: ein zweites Ding auf dem Schirm, gegen seine eigene Entscheidung 50 (harte Regel 63). |
+> | C: ein Satz je Screen, wie beim Bild | Am nächsten am Ort des Geschehens. Preis: 14-mal eine passende Stelle suchen — und in einer Liste (Anfragen-Tab) gibt es keine. |
+>
+> **Seine Begründung, sinngemäß:** Ein Mensch kann bei einem Programmfehler ohnehin
+> nichts tun. Was er braucht, ist die Auskunft, **dass es nicht an ihm lag** und dass es
+> nicht stillschweigend passiert ist. Der Satz heißt deshalb
+> *„Da ist etwas schiefgegangen, das nicht an dir liegt."*
+>
+> Den Haken kennt er: Es ist derselbe Kasten, in dem sonst „Du bist nicht mehr
+> angemeldet" steht — wer nur hinsieht und nicht liest, hält beides für dasselbe. Dagegen
+> hilft nur der Wortlaut, und der ist deshalb bewacht (`npm run pruef-programmfehler`,
+> 25 Häkchen; ohne die drei Zweige 8 Kreuze).
+>
+> ⚠️ **Eine AUSLEGUNG wartet auf ihn** (blockiert nichts): der Knopf unter dem
+> Vollbild-KASTEN. Bei der Leiste steht „Alles klar", weil ein neuer Versuch in denselben
+> Fehler liefe. Unter dem Kasten steht nichts, und ohne Knopf verlässt man ihn nur durch
+> einen Neustart — dort ist „Nochmal versuchen" geblieben. **Ein nutzloser Knopf ist
+> besser als eine Sackgasse, aber das ist meine Abwägung.** Die Korrektur ist ein Wort
+> (`PROGRAMM_KNOPF_LADEN`).
 
 ### 54. Darf man am Handy den Ausschnitt wählen? ✅
 

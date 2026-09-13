@@ -42,6 +42,66 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > die zwei Liquid-Glass-Vorbilder geblieben, weil sie als laufende Vorlage dienen
 > und nicht als Beleg. Einzelheiten in `_belege/LIESMICH.md`.
 
+✅ **Phase 20.9 ist FERTIG (2026-09-13 abends): kein Knopf schweigt mehr — und der
+teuerste Fund war ein KOMMENTAR, der eine Erlaubnis erteilte, die es nicht mehr gab.**
+Die 14 Stellen, an denen eine `async`-Funktion an eine `void`-Prop ging, sind zu; der
+Lint-Schalter `checksVoidReturn` steht seither dauerhaft auf `true` — **81 Probleme wie
+vorher**, und das IST der Beleg. Eine neue Entscheidung von Ian (**71**: derselbe Ort,
+ein eigener Satz), eine neue Regel-Datei (`lib/programmfehler.ts`), ein neuer Prüfstand
+(`npm run pruef-programmfehler` — **25 Häkchen, und ohne Ians Zweige 8 Kreuze**).
+Gemessen: `tsc` sauber · lokal weiter **136** · `pruef-schreiben` **50** ·
+`pruef-bilder` **32** · `pruef-lesen` **29** · `pruef-konto` **32** · `pruef-sitzung`
+**29** · `pruef-bildwahl` **47** · `pruef-anbieter` **48** · Prototyp auf 390 × 844
+**Pixel für Pixel identisch** (`as01` gegen `ar01`, **0** abweichende Pixel) · Schalter
+nachweislich zurück auf `'supabase'`. Sechs Dinge:
+
+1. **Der Kommentar an `schreibVorgang` sagt seit Phase 20.5: *„Gibt ein Promise zurück,
+   das NIE abgelehnt wird — Screens dürfen es deshalb liegen lassen."*** Genau darauf
+   verlassen sich die 14 Stellen. **Der Satz stimmte seit dem Tag nicht mehr, an dem
+   `schreibVorgangIntern` das `throw` für einen Nicht-`SchreibFehler` bekam** — die 14
+   `onPress` waren also nicht schlampig, sie folgten einer still weggefallenen Zusage.
+   Dieselbe Familie wie der veraltete Wächter-Kommentar in `50_lesen.sh`. **Daraus kam
+   der Entwurf:** Ein reines `void` hätte den Lint grün gemacht und den Fehler trotzdem
+   unsichtbar gelassen. Repariert sind beide Hälften.
+2. **Die dritte Familie war schlimmer als die zwei bekannten: `datenHolen()` warf
+   genauso — und ZWEI der 14 Stellen sind `nochmal={datenHolen}`.** Der Knopf, den Ians
+   Entscheidung 43 dem Menschen als einzigen Ausweg aus dem Vollbild-Kasten gibt, konnte
+   selbst lautlos scheitern: Man steht vor dem Kasten, drückt, und nichts passiert —
+   für immer.
+3. 🔴 **DREI Prüfstände waren schon vor dieser Phase rot, alle drei seit demselben
+   Morgen — und aufgefallen ist es nur, weil sie hier zum ersten Mal wieder liefen.**
+   `pruef-schreiben` (die `crypto`-Reparatur zog `80_bilder.sh` nach und vergaß
+   `70_schreiben.sh`), `pruef-konto` (die geteilte Sitzung, **und dieser Prüfstand war
+   als einziger ohne Alias-Wächter** — der Fehler kam als nacktes
+   `ERR_MODULE_NOT_FOUND`), und darin versteckt eine Aktionsliste, in der
+   `kontoLoeschen` seit 20.6-c fehlte. **Gefunden hat das Letzte die dritte Prüfung aus
+   20.6, die genau dafür gebaut wurde — zum zweiten Mal.**
+4. **Ians Entscheidung 71 ist bewacht, und zwar durch die verworfene Fassung.** Der neue
+   Prüfstand misst nicht nur, dass sein Satz dasteht, sondern baut danach eine Kopie der
+   Quelle mit abgeschalteten Zweigen: dort **8 Kreuze**. Das ist die Lehre vom selben
+   Morgen — eine Entscheidung, deren verworfene Variante alle Häkchen besteht, ist
+   unbewacht.
+5. **`PROGRAMM_CODE` trägt einen Schrägstrich, und das ist gemessen.** Er landet im
+   selben Feld wie ein SQLSTATE; `'P0001'` wäre naheliegend und ist ein ECHTER SQLSTATE
+   (`raise_exception`), den eine der neun Funktionen werfen kann. Ein `/` kann in einem
+   SQLSTATE nicht vorkommen. Harte Regel 103.
+6. **Drei eigene Fehler, alle am MESSAUFBAU, alle schon aufgeschrieben.** Ein `sed` traf
+   den KOMMENTAR neben dem Wert (er behauptete danach das Gegenteil seiner Begründung,
+   gefangen von einem `assert`); eine nachgebaute tsconfig ließ `"types": ["node"]` weg
+   (dieselbe Falle wie am Morgen); und der Alias-Wächter des neuen Prüfstands fragte
+   erst ALLE gebauten Dateien statt der drei geladenen.
+
+⚠️ **Was 20.9 NICHT ist: am Gerät geprüft.** Dass die Leiste am iPhone wirklich
+erscheint, hängt an `features/store.ts` — und die zieht React und `supabase-js` herein,
+läuft in keinem Node. Gemessen ist die REGEL; **dass der Zustand gesetzt WIRD, gehört in
+den nächsten Gerätedurchgang.**
+
+❓ **Eine Auslegung wartet auf Ian** (blockiert nichts): der Knopf unter dem
+Vollbild-KASTEN. Bei der Leiste steht „Alles klar", weil ein neuer Versuch in denselben
+Fehler liefe; unter dem Kasten steht nichts, und ohne Knopf verlässt man ihn nur durch
+einen Neustart — dort blieb „Nochmal versuchen". **Ein nutzloser Knopf ist besser als
+eine Sackgasse, aber das ist meine Abwägung.** Die Korrektur ist ein Wort.
+
 🎉 **DER GERÄTEDURCHGANG IST GEMACHT (2026-09-13, nachmittags) — sieben von sieben,
 und der siebte hat drei Anläufe gekostet.** Ians iPhone 16, iOS 26.6.1, Release-Build
 über WLAN. **Damit ist das Backend am echten Gerät bewiesen**, nicht mehr nur am Mac:
@@ -2579,16 +2639,15 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
 
 10b. ✅ **DER GERÄTEDURCHGANG IST GEMACHT** *(2026-09-13 nachmittags, 7 von 7)*.
 
-10c. 🔴 **Kein Knopf schweigt mehr (20.9)** ← *HIER GEHT ES WEITER*. **14 Stellen** in
-   der App geben eine `async`-Funktion an eine Prop, die `void` erwartet — dieselbe
-   Familie, an der Ians Profilbild lautlos gescheitert ist (harte Regel 102). Jede ist
-   heute auf seinem iPhone ein Ort, an dem die App stillschweigend nichts tut.
-   **JS-only, kein neuer Baustein.** Gefunden werden sie mit einem Handgriff:
-   `checksVoidReturn: true` in `eslint.config.js` nennt alle mit Datei und Zeile
-   (gegengemessen 96 statt 81 Probleme). **Am Ende bleibt der Schalter auf `true`** —
-   das ist der eigentliche Ertrag, sonst kommt die Familie beim nächsten Screen still
-   zurück. ⚠️ **Eine Entscheidung von Ian steckt darin** (wohin ein unerwarteter Fehler
-   auf den Bildschirm geht), ausgeschrieben in PLAN.md 5b, Phase 20.9.
+10c. ~~**Kein Knopf schweigt mehr (20.9)**~~ ✅ *2026-09-13 abends: alle 14 Stellen zu,
+   `checksVoidReturn` steht dauerhaft auf `true` (**81 Probleme wie vorher**), und der
+   Wurf selbst ist keiner mehr — Ians **Entscheidung 71** (harte Regel 103) macht aus
+   einem Programmfehler einen Zustand statt eines Nichts. Neuer Prüfstand
+   `npm run pruef-programmfehler` (**25 Häkchen**, ohne die Zweige 8 Kreuze).*
+   🔴 **Dabei kamen DREI Prüfstände heraus, die schon seit demselben Morgen rot waren**
+   — `pruef-schreiben`, `pruef-konto` und, darin versteckt, eine Aktionsliste, in der
+   `kontoLoeschen` seit 20.6-c fehlte. Alle drei repariert; `pruef-konto` meldet
+   seither **32 statt 29**.
 
 10d. **Der Leser darf auch handeln (20.7-b)** — `npm run meldungen -- post-loeschen` und
    `-- konto-sperren`. Die letzte Hälfte der Apple-1.2-Pflicht; ohne Gerät zu bauen.
@@ -3094,7 +3153,9 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    `bash supabase/pruefen/aufbauen.sh` — **erwartet sind 136 Häkchen und kein Kreuz**
    (25 in 20.2, 78 nach 20.5-SQL, 121 seit 20.4-a, 124 seit 0006, 136 seit 0008).
    **Dazu VIER Prüfstände am ECHTEN Server, und die können etwas, das lokal
-   prinzipiell nicht geht:** `npm run pruef-lesen` (29) · `npm run pruef-konto` (29) ·
+   prinzipiell nicht geht:** `npm run pruef-lesen` (29) · `npm run pruef-konto` (**32** seit 20.7 —
+   die drei @-Häkchen; bis zum 13.09. abends stand hier 29, **weil der Prüfstand
+   seit dem Morgen gar nicht mehr lief**) ·
    `npm run pruef-schreiben` (50, seit 20.5) · `npm run pruef-bilder` (**32**, seit 20.6 —
    **der einzige, der den Weg über das CDN messen kann**, siehe harte Regel 89).
    **Und DREI, die WEDER Server NOCH Datenbank brauchen** — alle drei messen
@@ -3102,8 +3163,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    `npm run pruef-bildwahl` (35) hält `lib/base64.ts` gegen echte Bilddateien — **wer
    dort Beispiele auswählt, liest zuerst harte Regel 92** · `npm run pruef-sitzung`
    (**29**, seit dem 2026-09-13 ohne `TODO`) ·
-   `npm run pruef-anbieter` (48, seit 20.3-b2). **Der letzte kann etwas, das die
-   anderen nicht können:** Er bringt `anmeldung.ts` ZWEIMAL nach JS — einmal wie sie
+   `npm run pruef-anbieter` (48, seit 20.3-b2) ·
+   `npm run pruef-programmfehler` (**25**, seit 20.9 — er misst Ians Entscheidung 71
+   und **baut danach die verworfene Fassung**, in der sie fehlt: dort 8 Kreuze. Ohne
+   diesen zweiten Teil wäre er grün und ohne Aussage). **`pruef-anbieter` kann etwas,
+   das die anderen nicht können:** Er bringt `anmeldung.ts` ZWEIMAL nach JS — einmal wie sie
    ist, einmal mit `ANMELDE_QUELLE = 'supabase'` in einem Wegwerf-Ordner — und misst
    damit, was am Tag des Umlegens passiert, **ohne dass jemand den Schalter umlegt und
    ohne dass das Repo angefasst wird.** Ohne das wäre er grün und ohne Aussage, weil
@@ -3804,9 +3868,32 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    xAsync()}` und fängt in `xAsync` auch das Unerwartete** — mit einem Satz, den ein
    Mensch versteht. Ein Fehler, den nur ein Entwickler-Build zeigt, ist auf einem
    fremden Handy kein Fehler, sondern eine App, die nichts tut.
-   ⚠️ **14 dieser Stellen sind noch offen** (Stand 2026-09-13). Sie gehören als
-   eigener Durchgang aufgeräumt und nicht nebenbei — vier gleichzeitige Änderungen
-   heben ihren eigenen Nutzen wieder auf.
+   ✅ **Alle 15 sind zu (Phase 20.9, 2026-09-13 abends)** — und der Wächter steht
+   seither auf `checksVoidReturn: true`, gegengemessen **81 Probleme wie vorher**.
+   **Der Wurf selbst ist auch keiner mehr:** `schreibVorgangIntern` und `datenHolen()`
+   machen aus einem Programmfehler einen ZUSTAND (Ians Entscheidung 71, harte
+   Regel 103). Wer eines von beidem zurückdreht, nimmt vierzehn Screens still die
+   Erlaubnis weg, die der Kommentar an `schreibVorgang` ihnen gibt.
+
+103. **Ein PROGRAMMfehler hat einen Ort, und er steht in `lib/programmfehler.ts`.**
+   *(Ians Entscheidung 71, Phase 20.9, 2026-09-13.)* Dieselbe Bauart wie `lib/handle.ts`
+   und `lib/bezirk.ts` — **importfrei**, weil ZWEI Regel-Dateien sie brauchen
+   (`data/schreiben.ts` für die Leiste, `data/quelle.ts` für Kasten und Zeile) und
+   `schreiben.ts` in blankem Node läuft. Screens lesen `PROGRAMM_TEXT` nie; sie sehen
+   das Ergebnis von `schreibFehlerFolgen()` bzw. `ladeFehlerFolgen()`.
+   **Der Unterschied zu den zehn anderen Regel-Dateien ist, WAS sie verhindert:** Bis
+   zum 13.09. wurde ein Nicht-`SchreibFehler` weitergeworfen, damit er „laut" ist statt
+   als „Keine Verbindung" verkleidet. Die Unterscheidung stimmt — **nur gibt es in einem
+   Release-Build nichts Lautes** (harte Regel 102). Jetzt wird er UMGEWANDELT:
+   `console.error` bekommt das ganze Objekt samt Stapel, der Mensch bekommt einen Satz.
+   Das ist mehr als vorher, nicht weniger.
+   ⚠️ **`PROGRAMM_CODE` trägt einen Schrägstrich, und das ist kein Schmuck:** Er landet
+   im selben Feld wie ein SQLSTATE und ein PostgREST-Code. `'P0001'` ist ein ECHTER
+   SQLSTATE (`raise_exception`), den eine der neun Funktionen eines Tages werfen kann —
+   dann bekäme ein Datenbankfehler Ians Satz. Ein SQLSTATE ist fünf alphanumerische
+   Zeichen; ein `/` kann darin nicht vorkommen. **Unmöglich, nicht unwahrscheinlich.**
+   Wer einen zweiten solchen Code einführt, misst dasselbe nach
+   (`npm run pruef-programmfehler`).
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
@@ -4909,6 +4996,39 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   deutscher Satz mit Umlaut steht also NUR in UTF-16 drin. Dieselbe Suche zählt auch,
   wie oft ein Bezeichner vorkommt: `getRandomValues` und `randomUUID` **je einmal** war
   der Beleg, dass niemand sie definiert.
+- **Ein neuer Import in einer Regel-Datei bricht JEDEN Prüfstand, der sie lädt — und
+  das merkt nur, wer ihn laufen lässt.** (Phase 20.9, 2026-09-13) Beim Aufräumen der
+  stillen Knöpfe kamen **drei** Prüfstände heraus, die schon vorher rot waren, alle
+  drei seit demselben Morgen: `pruef-schreiben` (`senden.ts` bekam mit der
+  `crypto`-Reparatur `@/lib/zufall` — **`80_bilder.sh` wurde nachgezogen,
+  `70_schreiben.sh` vergessen**) und `pruef-konto` (`lib/supabase.ts` bekam mit der
+  geteilten Sitzung `@/lib/sitzungsspeicher`). **Wer eine Regel-Datei um einen
+  Laufzeit-Import erweitert, sucht ALLE Prüfstände, die sie nach JS bringen** —
+  `grep -rln "<dateiname>" supabase/pruefen/` — und zieht `files`, die `sed`-Zeile und
+  den Wächter mit. Eine Liste von Dateinamen in einem Skript wird sonst irgendwann
+  nicht nachgezogen (die 20.7-Lehre an `einspielen.sh`, zum zweiten Mal).
+- **Ein Prüfstand OHNE Alias-Wächter stirbt mit einer Meldung, die nach kaputtem Node
+  aussieht.** (2026-09-13) `60_konto.sh` war der einzige ohne, und der Fehler kam als
+  nacktes `ERR_MODULE_NOT_FOUND: Cannot find package '@/lib'`, tief in einem
+  Stapelauszug und **nach** dem Anlegen der Prüfkonten. Mit Wächter steht dort eine
+  Zeile im Klartext. **Und der Wächter fragt nur, was wirklich GELADEN wird** — der
+  erste Entwurf des neuen `97_programmfehler.sh` fragte alles im Ausgabeordner und
+  schlug an zwölf Dateien an, die tsc über Typ-Importe nur MITBAUT. Die Verengung samt
+  Begründung steht seit 20.5 in `70_schreiben.sh`, und ich bin trotzdem hineingelaufen.
+- **Ein `sed` auf einen Wert trifft auch den KOMMENTAR daneben.** (2026-09-13)
+  `s/checksVoidReturn: false/checksVoidReturn: true/` hat in `eslint.config.js` die
+  Konfiguration UND den erklärenden Absatz geändert — der behauptete danach das
+  Gegenteil seiner eigenen Begründung („`true` ist Absicht … sie hätte nur Lärm
+  gemacht"). Gefangen hat es ein `assert` im nächsten Skript, nicht das Auge.
+  **Wer einen Wert per `sed` umstellt, greppt hinterher nach dem alten Wort im
+  Kommentar** — sonst ist die Datei still auseinandergelaufen (harte Regel 83).
+- **Eine Gegenprobe, die aus dem FALSCHEN Grund rot ist, belegt gar nichts.**
+  (Phase 20.9) Der neue Prüfstand baut eine Kopie der Quelle ohne Ians Zweige und
+  erwartet, dass sie durchfällt. Lag die Kopie in `/tmp`, scheiterte schon `tsc` an
+  `@supabase/supabase-js` — **es gibt dort kein `node_modules`**, und der Lauf war rot,
+  ohne je eine Regel gemessen zu haben. Der Wegwerf-Ordner liegt deshalb IM Projekt
+  (`.pruef-programmfehler/`, git-ignoriert wie `.pruef-konto/`). `baseUrl` + `paths`
+  wären der andere Weg und sind seit TypeScript 7 abgeschafft.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

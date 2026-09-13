@@ -63,6 +63,13 @@
  */
 
 import type { LadeFehler } from '@/data/laden';
+import {
+  istProgrammFehler,
+  PROGRAMM_ERKLAERUNG,
+  PROGRAMM_KNOPF_LADEN,
+  PROGRAMM_TEXT,
+  PROGRAMM_TITEL,
+} from '@/lib/programmfehler';
 
 /**
  * Ians 43. Entscheidung — **und seit dem 2026-09-12 abends seine 49.** Nicht ohne
@@ -231,6 +238,11 @@ export function ladeZeileFolgen(fehler: LadeFehler): {
 } {
   // Dieselbe Unterscheidung wie in `ladeFehlerFolgen()`: Eine abgelaufene Anmeldung
   // ist kein Netzproblem, und „Nochmal versuchen" wäre dort eine Schleife.
+  // Hier steht der Bildschirm noch voll da, also passt Ians kurzer Satz — dieselbe
+  // Fassung wie in der Schreib-Leiste, und aus demselben Grund: Beide SCHIEBEN.
+  if (istProgrammFehler(fehler.code)) {
+    return { text: PROGRAMM_TEXT, knopf: PROGRAMM_KNOPF_LADEN };
+  }
   if (fehler.code === '42501' || fehler.code === 'PGRST301') {
     return { text: 'Du bist nicht mehr angemeldet.', knopf: 'Anmelden' };
   }
@@ -258,6 +270,17 @@ export function ladeFehlerFolgen(fehler: LadeFehler): {
   /** `true`, wenn ein neuer Versuch die Lage gar nicht ändern kann. */
   anmeldenNoetig: boolean;
 } {
+  // Ians Entscheidung 71 — steht vor allen anderen, sonst fiele ein Programm-
+  // fehler in den Rückfall und behauptete „Keine Verbindung". Der Knopf ist eine
+  // Auslegung und begründet in `lib/programmfehler.ts`.
+  if (istProgrammFehler(fehler.code)) {
+    return {
+      titel: PROGRAMM_TITEL,
+      text: PROGRAMM_ERKLAERUNG,
+      knopf: PROGRAMM_KNOPF_LADEN,
+      anmeldenNoetig: false,
+    };
+  }
   if (fehler.code === '42501' || fehler.code === 'PGRST301') {
     return {
       titel: 'Du bist nicht mehr angemeldet',

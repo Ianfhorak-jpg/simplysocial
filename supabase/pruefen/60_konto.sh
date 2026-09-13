@@ -145,14 +145,31 @@ find "$ARBEIT/js" -name '*.js' -exec sed -i '' \
   -e "s#'@/lib/bezirk'#'../../lib/bezirk.js'#g" \
   -e "s#'@/data/wien-bezirke'#'../data/wien-bezirke.js'#g" \
   -e "s#'@/lib/supabase'#'../../lib/supabase.js'#g" \
-  -e "s#'@/features/auth/anmeldung'#'../features/auth/anmeldung.js'#g" {} +
+  -e "s#'@/features/auth/anmeldung'#'../features/auth/anmeldung.js'#g" \
+  -e "s#'@/lib/sitzungsspeicher'#'./sitzungsspeicher.js'#g" {} +
 # Und die RELATIVEN Importe bekommen ihre `.js`-Endung. tsc schreibt sie nicht
 # dazu (`moduleResolution: bundler` geht davon aus, dass ein Bundler folgt) —
 # blankes Node besteht bei ESM aber darauf und meldet `ERR_MODULE_NOT_FOUND` mit
 # einem Pfad, der bis auf die fehlenden drei Zeichen richtig aussieht.
 find "$ARBEIT/js" -name '*.js' -exec sed -i '' -E \
   "s#from '(\.\.?/[^']*[^.js'])';#from '\1.js';#g" {} +
-echo "✓ anmeldung.js, konto.js, konten.js laufen in blankem Node."
+# ── Der Wächter, der hier bis zum 2026-09-13 FEHLTE ────────────────────────
+# Am 13.09. bekam `lib/supabase.ts` mit der geteilten Sitzung einen Import auf
+# `@/lib/sitzungsspeicher` — und dieser Prüfstand starb danach an einem nackten
+# `ERR_MODULE_NOT_FOUND: Cannot find package '@/lib'`, tief in einem Stapelauszug,
+# **nach** dem Anlegen der Prüfkonten. Das sieht nach kaputtem Node aus und ist
+# ein nicht umgeschriebener Alias. `70_schreiben.sh` und `80_bilder.sh` haben
+# diesen Wächter seit jeher; hier war er nie, und deshalb hat es niemand gemerkt.
+# Gefragt wird, was wirklich GELADEN wird — nicht alles im Ausgabeordner (die
+# Verengung aus 70_schreiben.sh).
+for DATEI in features/auth/anmeldung features/auth/konto features/auth/konten lib/supabase lib/sitzungsspeicher; do
+  if grep -qE "from '@/" "$ARBEIT/js/$DATEI.js"; then
+    echo "✗ In $DATEI.js steht noch ein @/-Alias, den Node nicht kennt:"
+    grep -nE "from '@/" "$ARBEIT/js/$DATEI.js"
+    exit 1
+  fi
+done
+echo "✓ anmeldung.js, konto.js, konten.js, supabase.js und sitzungsspeicher.js laufen in blankem Node."
 
 echo
 echo "── 4. Messen ──"

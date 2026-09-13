@@ -68,3 +68,4 @@ db-url
 .env.*
 !.env.example
 .pruef-konto/
+.pruef-programmfehler/

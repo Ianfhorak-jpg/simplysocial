@@ -333,7 +333,7 @@ export default function EinstellungenScreen() {
                 </View>
                 {/* „Aufheben" und nicht „Entblocken": Das Wort steht neben einem Namen,
                     und es soll die harmlosere der beiden Richtungen sein. */}
-                <SsButton variant="ghost" label="Aufheben" onPress={() => entblocken(person.id)} />
+                <SsButton variant="ghost" label="Aufheben" onPress={() => void entblocken(person.id)} />
               </View>
             </SsCard>
           ))

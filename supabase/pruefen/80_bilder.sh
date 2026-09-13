@@ -160,7 +160,8 @@ cat > "$ARBEIT/tsconfig.json" <<JSON
     "$WURZEL/src/data/senden.ts",
     "$WURZEL/src/features/social/bild.ts",
     "$WURZEL/src/features/safety/konto.ts",
-    "$WURZEL/src/lib/zufall.ts"
+    "$WURZEL/src/lib/zufall.ts",
+    "$WURZEL/src/lib/programmfehler.ts"
   ]
 }
 JSON
@@ -171,8 +172,8 @@ JSON
 # **In Node läuft die WEB-Fassung**, und das ist hier richtig: Gemessen wird der
 # Weg durch storage-js, nicht die Zufallsquelle. Dass es am Gerät keine gibt, misst
 # `90_bildwahl.mjs`, indem es `crypto` wegnimmt.
-sed -i '' "s#'@/data/zeilen'#'./zeilen.js'#g;s#'@/data/schreiben'#'./schreiben.js'#g;s#'@/features/social/bild'#'../features/social/bild.js'#g;s#'@/lib/zufall'#'../lib/zufall.js'#g" "$ARBEIT"/js/data/*.js
-for DATEI in data/zeilen data/laden data/schreiben data/senden features/social/bild lib/zufall; do
+sed -i '' "s#'@/data/zeilen'#'./zeilen.js'#g;s#'@/data/schreiben'#'./schreiben.js'#g;s#'@/features/social/bild'#'../features/social/bild.js'#g;s#'@/lib/zufall'#'../lib/zufall.js'#g;s#'@/lib/programmfehler'#'../lib/programmfehler.js'#g" "$ARBEIT"/js/data/*.js
+for DATEI in data/zeilen data/laden data/schreiben data/senden features/social/bild lib/zufall lib/programmfehler; do
   if grep -qE "from '@/" "$ARBEIT/js/$DATEI.js"; then
     echo "✗ In $DATEI.js steht noch ein @/-Alias, den Node nicht kennt:"
     grep -nE "from '@/" "$ARBEIT/js/$DATEI.js"

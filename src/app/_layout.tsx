@@ -114,7 +114,7 @@ export default function RootLayout() {
             vergessen. */}
         {schreiben.zustand === 'fehler' ? <SchreibFehlerLeiste fehler={schreiben.fehler} /> : null}
         {sicht === 'app-mit-zeile' && laden.zustand === 'fehler-nachladen' ? (
-          <LadeZeile fehler={laden.fehler} nochmal={datenHolen} />
+          <LadeZeile fehler={laden.fehler} nochmal={() => void datenHolen()} />
         ) : null}
         <OhneOberenRand aus={schreiben.zustand === 'fehler' || sicht === 'app-mit-zeile'}>
           <View style={styles.buehne}>
@@ -147,7 +147,7 @@ export default function RootLayout() {
               // `LADE_FEHLER = 'immer-vollbild'` — dort gibt `ladeSichtFuer()` auch
               // für `'fehler-nachladen'` den Kasten zurück. Ohne ihn wäre die
               // verworfene Möglichkeit eine Behauptung im Kommentar (harte Regel 84).
-              <LadeSchirm fehler={laden.fehler} nochmal={datenHolen} />
+              <LadeSchirm fehler={laden.fehler} nochmal={() => void datenHolen()} />
             ) : sicht ===
               'nichts' ? // `useStartFlaecheWeg`), auf Native der Splash. Kein Ladekringel: Er wäre // Nichts. Auf Web liegt `#ss-start` aus `+html.tsx` darüber (siehe
             // ein zweites Warte-Bild über dem ersten, und Entscheidung 50 verlangt

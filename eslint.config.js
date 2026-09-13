@@ -36,10 +36,23 @@ module.exports = defineConfig([
   // value in a boolean conditional"*. Eine Regel, die nur schweigt, wäre kein
   // Wächter (die 18d-Lehre).
   //
-  // `checksVoidReturn: false` ist Absicht und kein Weglassen: Diese Teilregel
-  // beanstandet `onPress={async () => …}` und ähnliche Handler. Das ist in React
-  // Native der übliche und richtige Weg, sie hätte also nur Lärm gemacht — und ein
-  // Wächter, den man wegen Lärm abschaltet, bewacht danach gar nichts mehr.
+  // ── `checksVoidReturn: true` seit dem 2026-09-13 abends (Phase 20.9) ───────
+  // **Hier stand `false`, und die Begründung war falsch.** Sie lautete: Diese
+  // Teilregel beanstande `onPress={async () => …}`, das sei in React Native „der
+  // übliche und richtige Weg", sie hätte also nur Lärm gemacht.
+  //
+  // Üblich ja, richtig nein — und gemessen am selben Tag: Ians Profilbild ist am
+  // Gerät lautlos gescheitert, weil ein Wurf durch genau so eine Prop hinauslief
+  // und React das Promise wegwarf. Der Schalter stand also mit GENAU dem Auge zu,
+  // das diese Familie sieht; er kam am 12.09. ins Projekt und war am 13.09. schon
+  // zu spät. **Es waren 15 Stellen, nicht null Lärm.**
+  //
+  // Aufgeräumt sind sie alle (Phase 20.9): `onPress={() => void xAsync()}`, und
+  // der Wurf selbst ist keiner mehr — `schreibVorgangIntern` und `datenHolen()`
+  // machen aus einem Programmfehler seit Ians Entscheidung 71 einen ZUSTAND.
+  // Gegengemessen: **81 Probleme mit `true` wie vorher mit `false`.** Der Schalter
+  // bleibt an, und das ist der eigentliche Ertrag der Phase — ohne ihn kommt die
+  // Familie beim nächsten Screen still zurück.
   {
     files: ['src/**/*.ts', 'src/**/*.tsx'],
     languageOptions: {
@@ -50,7 +63,7 @@ module.exports = defineConfig([
     rules: {
       '@typescript-eslint/no-misused-promises': [
         'error',
-        { checksVoidReturn: false, checksConditionals: true, checksSpreads: false },
+        { checksVoidReturn: true, checksConditionals: true, checksSpreads: false },
       ],
     },
   },

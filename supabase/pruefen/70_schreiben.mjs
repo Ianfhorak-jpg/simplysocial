@@ -133,6 +133,12 @@ const WARTEN = [
   'anfrageBestaetigen', 'blockieren', 'gruppeVerlassen', 'beitrittBestaetigen',
   'einladungAnnehmen', 'postErstellen', 'gruppeErstellen', 'direktChatOeffnen',
   'profilbildSetzen',
+  // **Nachgetragen am 2026-09-13, und die dritte Prüfung unten hat es gefunden.**
+  // `kontoLoeschen` kam mit 20.6-c dazu und stand in KEINER der beiden Listen —
+  // die zwei Zählprüfungen blieben grün, weil sie nur aufzählen, was sie kennen.
+  // Genau der Fall, für den die dritte gebaut wurde (siehe ihren Kommentar), und
+  // sie hat ein zweites Mal recht behalten.
+  'kontoLoeschen',
 ];
 const SOFORT = [
   'anfrageSenden', 'anfrageZuruecknehmen', 'anfrageAblehnen', 'nachrichtSenden',
@@ -140,7 +146,7 @@ const SOFORT = [
   'einladungAblehnen', 'folgen', 'entfolgen', 'bezirkSetzen', 'entblocken', 'melden',
   'profilbildEntfernen',
 ];
-pruef('neun Aktionen warten auf den Server', WARTEN.every(wartetAufServer), true);
+pruef('zehn Aktionen warten auf den Server', WARTEN.every(wartetAufServer), true);
 pruef('und die fünfzehn anderen nicht', SOFORT.some(wartetAufServer), false);
 
 // ⚠️ **Die dritte Prüfung ist die, die in 20.6 gefehlt hat.** Die zwei oben zählen

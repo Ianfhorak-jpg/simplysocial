@@ -86,6 +86,8 @@
  * `weggewischt` ist das Ians Regel `'sitzung'` aus `posts/wisch.ts`, beim Standort
  * die Zusage aus harter Regel 68), also gibt es dort auch nichts zu warten.
  */
+import { istProgrammFehler, PROGRAMM_TEXT } from '@/lib/programmfehler';
+
 export type SchreibAktion =
   // ── Posts ──
   | 'postErstellen'
@@ -358,6 +360,19 @@ export function schreibFehlerFolgen(fehler: SchreibFehler): {
   // die den halben Bildschirm nach unten schoben. Harte Regel 63 gilt für eine
   // Leiste schärfer als für einen Vollbild-Kasten: Der Kasten IST der Bildschirm,
   // die Leiste steht vor dem, weswegen man gekommen ist.
+  // ── Ians Entscheidung 71 (2026-09-13): derselbe Ort, ein EIGENER Satz ───────
+  // Steht vor allen anderen, und das ist kein Zufall: Ein Programmfehler trägt
+  // keinen Code, den die Zweige darunter deuten könnten — ohne diese Zeile fiele
+  // er in den Rückfall und behauptete „meistens liegt es am Netz". Genau diese
+  // Verwechslung soll `schreibVorgangIntern` seit jeher vermeiden; bis heute hat
+  // sie es getan, indem sie gar nichts sagte.
+  //
+  // **Kein „Nochmal".** Ein neuer Versuch läuft in denselben Fehler — derselbe
+  // Grund, aus dem `anmeldenNoetig` existiert (harte Regel 76): Ein Knopf, der
+  // erkennbar nichts ändert, ist eine Schleife, die wie ein Defekt aussieht.
+  if (istProgrammFehler(fehler.code)) {
+    return { text: PROGRAMM_TEXT, knopf: 'Alles klar', anmeldenNoetig: false };
+  }
   if (fehler.code === '42501' || fehler.code === 'PGRST301') {
     return {
       text: 'Du bist nicht mehr angemeldet.',

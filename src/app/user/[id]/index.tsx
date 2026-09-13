@@ -86,7 +86,7 @@ export default function UserProfileScreen() {
                 icon="haken"
                 variant="ghost"
                 block
-                onPress={() => entfolgen(person.id)}
+                onPress={() => void entfolgen(person.id)}
               />
             ) : (
               <>
@@ -96,7 +96,7 @@ export default function UserProfileScreen() {
                     nimmt es die Textfarbe an — dasselbe Weiß wie die Beschriftung.
                     Und es steht dem Haken gegenüber, der beim Entfolgen dasteht:
                     zwei Zustände, zwei Zeichen, statt einem und keinem. */}
-                <SsButton label="Folgen" icon="plus" block onPress={() => folgen(person.id)} />
+                <SsButton label="Folgen" icon="plus" block onPress={() => void folgen(person.id)} />
                 <SsText variant="caption" color={colors.inkSoft} center>
                   Dann steht {person.displayName} im Feed unter „Wem ich folge" — und du siehst
                   Posts, die nur für Follower sind.
@@ -258,7 +258,7 @@ function BlockiertesProfil({ person }: { person: User }) {
       </SsCard>
 
       <View style={styles.fuss}>
-        <SsButton label="Blockierung aufheben" block onPress={() => entblocken(person.id)} />
+        <SsButton label="Blockierung aufheben" block onPress={() => void entblocken(person.id)} />
         <SsText variant="caption" color={colors.inkSoft} center>
           Ihr seht dann wieder die Posts des anderen. Was der Block mitgenommen hat,
           kommt nicht zurück — wer wem gefolgt ist, euer Chat und abgesagte Zusagen

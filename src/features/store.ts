@@ -11,6 +11,7 @@ import {
   type SchreibAktion,
 } from '@/data/schreiben';
 import { client, LIEST_AUS_SUPABASE } from '@/lib/supabase';
+import { PROGRAMM_CODE, PROGRAMM_TABELLE } from '@/lib/programmfehler';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
@@ -402,17 +403,24 @@ export async function datenHolen(): Promise<void> {
   try {
     const daten = await allesLaden(client());
     aendern(() => ({ ...daten, laden: { zustand: 'da' } }));
-  } catch (fehler) {
-    // Ein `LadeFehler` trägt Tabelle und `code` und ist damit beantwortbar (siehe
+  } catch (roh) {
+    // ── Dieselbe Umwandlung wie beim Schreiben, und sie war HIER noch nötiger ───
+    // Ein `LadeFehler` trägt Tabelle und `code` und ist beantwortbar (siehe
     // `ladeFehlerFolgen()`). Alles andere — ein fehlender Zugang, ein Tippfehler in
-    // einer Übersetzung — ist ein PROGRAMMfehler und soll laut sein, nicht als
-    // „Keine Verbindung" verkleidet werden. Das ist dieselbe Unterscheidung wie bei
-    // `ZeilenFehler` in `zeilen.ts`.
-    if (!(fehler instanceof LadeFehler)) {
-      holtGerade = false;
-      throw fehler;
-    }
-    console.warn(fehler.message);
+    // einer Übersetzung — ist ein PROGRAMMfehler. Bis zum 2026-09-13 wurde er
+    // geworfen, und **zwei der vierzehn stillen Stellen waren `nochmal={datenHolen}`**:
+    // Der Knopf, den Ians Entscheidung 43 dem Menschen als einzigen Ausweg in die
+    // Hand gibt, konnte selbst lautlos scheitern. Man steht vor dem Kasten, drückt,
+    // und nichts passiert — für immer.
+    //
+    // `holtGerade = false` steht nicht mehr hier: Das `finally` darunter tut es
+    // ohnehin, und zwei Stellen für dieselbe Zeile sind eine Gelegenheit zu driften.
+    const fehler =
+      roh instanceof LadeFehler
+        ? roh
+        : new LadeFehler(PROGRAMM_TABELLE, PROGRAMM_CODE, String(roh));
+    if (roh instanceof LadeFehler) console.warn(fehler.message);
+    else console.error('Programmfehler beim Laden:', roh);
     // **Zwei Lagen, zwei Glieder** (Ians Entscheidung 49): Scheitert das ERSTE
     // Laden, ist nichts da — Vollbild-Kasten (Entscheidung 43). Scheitert ein
     // NACHladen, steht alles noch im Speicher, und es wäre der Haken aus
@@ -505,16 +513,32 @@ async function schreibVorgangIntern<T>(
     if (laedtDanachNach(aktion)) await datenHolen();
     if (wartet) aendern(() => ({ schreiben: { zustand: 'nichts' } }));
     return ergebnis;
-  } catch (fehler) {
-    // Dieselbe Unterscheidung wie in `datenHolen()`: Ein `SchreibFehler` trägt
-    // Aktion und `code` und ist damit beantwortbar. Alles andere — ein Tippfehler
-    // in einem Spaltennamen, ein fehlender Zugang — ist ein PROGRAMMfehler und
-    // soll laut sein statt als „Keine Verbindung" verkleidet.
-    if (!(fehler instanceof SchreibFehler)) {
-      aendern(() => ({ schreiben: { zustand: 'nichts' } }));
-      throw fehler;
-    }
-    console.warn(fehler.message);
+  } catch (roh) {
+    // ── Was hier bis zum 2026-09-13 stand, und warum es Ians Profilbild kostete ──
+    // Hier stand `if (!(fehler instanceof SchreibFehler)) throw fehler;` — mit der
+    // Begründung, ein PROGRAMMfehler solle „laut" sein statt als „Keine Verbindung"
+    // verkleidet. **Die Unterscheidung stimmt bis heute; nur gibt es in einem
+    // Release-Build nichts Lautes.** Der Wurf lief durch `onPress={async …}`
+    // hinaus, React warf das Promise weg, und am Gerät passierte GAR NICHTS: kein
+    // Bild, keine Meldung, keine Leiste (harte Regeln 101 und 102).
+    //
+    // Jetzt wird er UMGEWANDELT statt geworfen — Ians Entscheidung 71: derselbe
+    // Ort, ein eigener Satz. „Laut" bleibt er trotzdem, nur für den Richtigen:
+    // `console.error` bekommt das ganze Objekt samt Stapel, der Mensch bekommt
+    // einen Satz. Das ist mehr als vorher, nicht weniger.
+    //
+    // ── Und die Zusage an `schreibVorgang` gilt damit WIEDER ────────────────────
+    // Dort steht seit Phase 20.5 „gibt ein Promise zurück, das **nie** abgelehnt
+    // wird — Screens dürfen es deshalb liegen lassen". Genau darauf verlassen sich
+    // vierzehn Aufrufstellen, und seit dem `throw` stimmte der Satz nicht mehr:
+    // Kommentar und Code waren auseinandergelaufen, und der Kommentar war die
+    // ERLAUBNIS für die vierzehn.
+    const fehler =
+      roh instanceof SchreibFehler
+        ? roh
+        : new SchreibFehler(aktion, PROGRAMM_CODE, String(roh));
+    if (roh instanceof SchreibFehler) console.warn(fehler.message);
+    else console.error(`Programmfehler beim Schreiben ("${aktion}"):`, roh);
     aendern(() => ({ schreiben: { zustand: 'fehler', fehler } }));
     // **Das Nachladen IST die Rücknahme** — nur nötig, wenn vorher lokal schon
     // etwas geändert wurde. Beim Warten steht der Bildschirm ohnehin auf dem alten
@@ -531,6 +555,14 @@ async function schreibVorgangIntern<T>(
  * Gibt ein `Promise` zurück, das **nie** abgelehnt wird (der Fehler wird oben zu
  * einem Zustand). Screens dürfen es deshalb liegen lassen; wer nach dem Schreiben
  * etwas tun will, wartet darauf.
+ *
+ * ⚠️ **Dieser Satz ist eine ZUSAGE, auf die sich vierzehn Aufrufstellen verlassen —
+ * und er war vom 2026-09-12 bis zum 13.09. abends falsch.** Solange
+ * `schreibVorgangIntern` einen Nicht-`SchreibFehler` weiterwarf, war das Promise
+ * sehr wohl ablehnbar, und der Fehler fiel durch `onPress={async …}` ins Nichts.
+ * Wer hier je wieder ein `throw` einbaut, nimmt vierzehn Screens still die
+ * Erlaubnis weg, die dieser Satz ihnen gibt — und merkt es nicht, weil dort nichts
+ * Falsches steht, sondern nur nichts passiert (harte Regel 102).
  */
 export function schreibVorgang(
   aktion: SchreibAktion,

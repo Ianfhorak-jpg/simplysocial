@@ -66,7 +66,8 @@
     "provider-api": "python3 scripts/provider-api.py",
     "google-app-id": "bash scripts/google-app-id.sh",
     "pruef-anbieter": "bash supabase/pruefen/96_anbieter.sh",
-    "meldungen": "bash scripts/meldungen.sh"
+    "meldungen": "bash scripts/meldungen.sh",
+    "pruef-programmfehler": "bash supabase/pruefen/97_programmfehler.sh"
   },
   "private": true
 }

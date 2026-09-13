@@ -392,7 +392,7 @@ function Aussenseite({
         <SsText variant="caption" color={colors.inkSoft}>
           Solange siehst du noch nicht, was in der Gruppe läuft.
         </SsText>
-        <SsButton label="Anfrage zurückziehen" block onPress={() => beitrittZuruecknehmen(gruppe.id)} />
+        <SsButton label="Anfrage zurückziehen" block onPress={() => void beitrittZuruecknehmen(gruppe.id)} />
       </View>
     );
   }
@@ -443,7 +443,7 @@ function Aussenseite({
         category={gruppe.category}
         block
         size="lg"
-        onPress={() => beitrittAnfragen(gruppe.id, nachricht)}
+        onPress={() => void beitrittAnfragen(gruppe.id, nachricht)}
       />
     </View>
   );
@@ -478,7 +478,7 @@ function EinladbarZeile({ eintrag, gruppe }: { eintrag: EinladbarEintrag; gruppe
             label="Einladen"
             variant="category"
             category={gruppe.category}
-            onPress={() => einladen(gruppe.id, person.id)}
+            onPress={() => void einladen(gruppe.id, person.id)}
           />
         ) : zustand === 'eingeladen' ? (
           <SsIconText icon="uhr">Eingeladen</SsIconText>

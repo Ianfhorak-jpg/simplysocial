@@ -206,12 +206,14 @@ cat > "$ARBEIT/tsconfig.json" <<JSON
     "$WURZEL/src/data/laden.ts",
     "$WURZEL/src/data/schreiben.ts",
     "$WURZEL/src/data/senden.ts",
-    "$WURZEL/src/features/social/bild.ts"
+    "$WURZEL/src/features/social/bild.ts",
+    "$WURZEL/src/lib/programmfehler.ts",
+    "$WURZEL/src/lib/zufall.ts"
   ]
 }
 JSON
 (cd "$WURZEL" && npx tsc -p "$ARBEIT/tsconfig.json") || { echo "✗ tsc"; exit 1; }
-sed -i '' "s#'@/data/zeilen'#'./zeilen.js'#g;s#'@/data/schreiben'#'./schreiben.js'#g;s#'@/features/social/bild'#'../features/social/bild.js'#g" "$ARBEIT"/js/data/*.js
+sed -i '' "s#'@/data/zeilen'#'./zeilen.js'#g;s#'@/data/schreiben'#'./schreiben.js'#g;s#'@/features/social/bild'#'../features/social/bild.js'#g;s#'@/lib/programmfehler'#'../lib/programmfehler.js'#g;s#'@/lib/zufall'#'../lib/zufall.js'#g" "$ARBEIT"/js/data/*.js
 # `supabase-js` steht als Typ-Import drin und ist nach tsc weg — geprüft, nicht
 # gehofft: Bliebe er stehen, fände Node ihn von $ARBEIT aus nicht.
 if grep -q "@supabase/supabase-js" "$ARBEIT"/js/data/*.js; then
@@ -229,7 +231,7 @@ fi
 # erreicht. **Geladen wird davon nichts** — der Typ-Import erzeugt keine
 # Abhängigkeit, und in `laden.js` steht nach tsc kein Import auf `mock` mehr.
 # Ein Wächter, der auch Dateien prüft, die niemand öffnet, sperrt zu viel.
-for DATEI in data/zeilen data/laden data/schreiben data/senden features/social/bild; do
+for DATEI in data/zeilen data/laden data/schreiben data/senden features/social/bild lib/programmfehler lib/zufall; do
   if grep -qE "from '@/" "$ARBEIT/js/$DATEI.js"; then
     echo "✗ In $DATEI.js steht noch ein @/-Alias, den Node nicht kennt:"
     grep -nE "from '@/" "$ARBEIT/js/$DATEI.js"
@@ -242,7 +244,7 @@ if grep -rn "mock" "$ARBEIT/js/data/senden.js" "$ARBEIT/js/data/laden.js" >/dev/
   echo "✗ senden.js oder laden.js zieht `mock` zur Laufzeit — das gehört nie in den Prüfstand."
   exit 1
 fi
-echo "✓ zeilen.js, laden.js, schreiben.js, senden.js und bild.js laufen in blankem Node."
+echo "✓ zeilen.js, laden.js, schreiben.js, senden.js, bild.js, programmfehler.js und zufall.js laufen in blankem Node."
 
 echo
 echo "── 4. Messen ──"

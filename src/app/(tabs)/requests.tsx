@@ -313,7 +313,7 @@ function EingehendeZeile({ eintrag }: { eintrag: AnfrageEintrag }) {
           label="Ablehnen"
           block
           style={styles.knopf}
-          onPress={() => anfrageAblehnen(anfrage.id)}
+          onPress={() => void anfrageAblehnen(anfrage.id)}
         />
         <SsButton
           variant="category"
@@ -456,7 +456,7 @@ function GruppenAnfrageZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) {
           label="Ablehnen"
           block
           style={styles.knopf}
-          onPress={() => beitrittAblehnen(anfrage.id)}
+          onPress={() => void beitrittAblehnen(anfrage.id)}
         />
         <SsButton
           variant="category"
@@ -541,7 +541,7 @@ function EinladungZeile({ eintrag }: { eintrag: EinladungEintrag }) {
           label="Nein danke"
           block
           style={styles.knopf}
-          onPress={() => einladungAblehnen(einladung.id)}
+          onPress={() => void einladungAblehnen(einladung.id)}
         />
         <SsButton
           variant="category"

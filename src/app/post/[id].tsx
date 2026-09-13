@@ -228,7 +228,7 @@ export default function PostDetailScreen() {
                 variant="ghost"
                 label="Anfrage zurücknehmen"
                 block
-                onPress={() => anfrageZuruecknehmen(post.id)}
+                onPress={() => void anfrageZuruecknehmen(post.id)}
               />
             ) : null}
           </>
@@ -252,7 +252,7 @@ export default function PostDetailScreen() {
               icon="hand"
               block
               size="lg"
-              onPress={() => anfrageSenden(post.id, nachricht)}
+              onPress={() => void anfrageSenden(post.id, nachricht)}
             />
             <SsText variant="caption" color={colors.inkSoft} center>
               {author.displayName} entscheidet, wer mitkommt.
