@@ -6,16 +6,13 @@
 > und ECHTE Daten am Gerät laufen. Vier Sachen haben sich gestapelt, und **keine davon
 > kann ein Mac beantworten.**
 >
-> ✅ **Der Build ist gemacht (13.09., Mittag) — du brauchst nur noch dein iPhone.**
-> Anstecken oder gleiches WLAN, **entsperrt lassen**, dann:
+> ✅ **SIE IST DRAUF (13.09., 15:04).** iPhone 16, iOS 26.6.1, über WLAN aufgespielt.
+> Gültig bis **13.09.2027**, `ANMELDE_QUELLE = supabase` im Bundle nachgemessen.
+> (Falls iOS beim ersten Start meckert: Einstellungen → Allgemein → VPN &
+> Geräteverwaltung → Profil → Vertrauen.)
 >
-> ```bash
-> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run geraet
-> ```
->
-> Etwa **20 Sekunden**, dann ist sie drauf — sie gilt bis **13.09.2027**. (Beim
-> allerersten Mal mit einem neuen Team fragt iOS einmal nach: Einstellungen →
-> Allgemein → VPN & Geräteverwaltung → Profil → Vertrauen.)
+> 🆕 **Dieser Build ist NEUER als der von Mittag** — die `@`-Korrektur von 20.7 ist
+> drin. Deshalb ist Punkt 7 unten dazugekommen.
 >
 > 🔑 **Die Webseite ändert sich dabei NICHT.** Sie bekommt ihren Stand nur aus
 > `npm run deploy`, und das läuft hier nicht — nachgemessen, sie ist unverändert.
@@ -31,6 +28,8 @@
 
 | 5 | **Beim ZWEITEN Start auf den Wischstapel schauen** | Steht die Karte „So funktioniert der Stapel" noch da? Sie **soll weg sein** — einmal weggewischt, nie wieder. Bis heute kam sie am Handy bei jedem Start zurück, weil der Merker den Neustart nicht überlebte. |
 | 6 | **Ganz am Anfang: kommt ein Vollbild?** | Es **soll KEINES kommen.** Der Kasten „Das hier ist ein Prototyp" gilt nur noch der Webseite; am Handy meldest du dich ja wirklich an, und seine drei Sätze wären alle falsch. Kommt er trotzdem, stimmt der Schalter nicht. |
+
+| 7 | **Auf einen @-Namen schauen** (Profil, Chat-Kopf, oder unter einem Post) | Steht dort **`@ian`** oder nur **`ian`**? Heute Mittag ist herausgekommen, dass die App das `@` gar nicht selbst gesetzt hat — es steckte in den Fake-Daten. Mit echten Daten wäre es überall verschwunden. Behoben, aber **nur hier am Gerät zu sehen**, weil die Webseite noch auf Fake-Daten läuft. |
 
 ### Und nebenbei, wenn du schon drin bist
 
