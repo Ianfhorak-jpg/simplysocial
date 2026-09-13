@@ -147,30 +147,39 @@ CHATS=$(zaehle_familie chat)
 GRUPPEN=$(zaehle_familie gruppe)
 ECHTE=$((POSTS + PROFILE + CHATS + GRUPPEN))
 
-# ── TODO(Ian): wie streng ist die Latte? ─────────────────────────────────────
-# Gezählt ist jetzt sauber — offen ist, wann der Deploy abbrechen soll. Die vier
-# Zahlen stehen als $POSTS $PROFILE $CHATS $GRUPPEN bereit, die Summe als $ECHTE.
-# Gemessen am 2026-09-13: 'attrappe' → 20 / 18 / 4 / 5 (= 47), 'supabase' → 0 / 0 / 0 / 0.
+# ── Die Latte: JE FAMILIE mindestens eine ────────────────────────────────────
 #
-#   (c) "je Familie mindestens eine" — vier Vergleiche auf > 0.
-#       Fängt: Datei gelöscht, ein Screen-Aufruf entfernt, falsche Stellung,
-#              und auch den Ausfall EINER Familie (z. B. nur die Chats fehlen).
-#       Fängt NICHT: wenn von zwanzig Posts nur noch einer entsteht.
-#       Kostet keine zweite Quelle — der Wächter weiss nichts, was er nicht sieht.
+# ✅ **Ians Entscheidung 76, 2026-09-13.** Gefragt war, wie streng gemessen wird.
+# Verworfen ist (d) „genau die erwarteten Zahlen" — 20 / 18 / 4 / 5 hart
+# hingeschrieben. Das wäre schärfer (es fängt auch, wenn von zwanzig Posts nur
+# noch einer entsteht), und der Preis war der Grund dagegen: Die Zahlen stünden
+# ZWEIMAL da, hier und in `data/mock.ts`. Wer einen Post ergänzt, müsste hier
+# nachziehen — sonst bricht ein Deploy ab, an dem nichts kaputt ist, und zwar
+# ausgerechnet dem, der gerade etwas Richtiges getan hat. Das ist die Falle aus
+# harter Regel 53 (`PROJEKTION`), und sie hat eine Folge, die schlimmer ist als
+# der ungefangene Teilausfall: **Eine Prüfung, die bei harmlosen Änderungen rot
+# wird, wird beim dritten Mal entschärft** — dann ist sie ganz weg, und zwar in
+# dem Moment, in dem niemand hinsieht.
 #
-#   (d) "genau die erwarteten Zahlen" — 20 / 18 / 4 / 5 hart hingeschrieben.
-#       Schärfer, fängt auch den Teilausfall.
-#       Der Preis: Diese Zahlen stünden ZWEIMAL da (in mock.ts und hier). Wer
-#       einen Post ergänzt, muss hier nachziehen, sonst bricht ein Deploy ab, an
-#       dem nichts kaputt ist — die Falle aus harter Regel 53 (PROJEKTION).
+# Vier einzelne Vergleiche und nicht die Summe: Die Summe (`$ECHTE`) bliebe auch
+# dann gross, wenn EINE Familie komplett ausfällt — etwa weil jemand das
+# `generateStaticParams` aus `chat/[id].tsx` nimmt. Gemessen mit einem Export,
+# aus dem die vier Chat-Adressen entfernt wurden: Summe 43 (eine Latte auf der
+# Summe hätte durchgelassen), `$CHATS` = 0 (diese hier bricht ab).
 #
-# Die Bedingung unten ist ein PLATZHALTER, keine Entscheidung (18d-Lehre):
-# Sie fängt heute nur den Totalausfall.
-if [ "$ECHTE" -eq 0 ]; then
-  echo "ABBRUCH: keine einzige konkrete Adresse gebaut (dist/post/p1.html & Co.)." >&2
+# Was die Latte NICHT fängt, steht hier, damit es niemand für gefangen hält:
+# Wenn von zwanzig Posts nur noch einer entsteht, läuft der Deploy durch. Der
+# Wächter sagt „es kommt aus jeder Familie etwas an", nicht „es ist vollständig"
+# — und mehr kann er nicht sagen, ohne die Zahlen ein zweites Mal zu kennen.
+if [ "$POSTS" -eq 0 ] || [ "$PROFILE" -eq 0 ] || \
+   [ "$CHATS" -eq 0 ] || [ "$GRUPPEN" -eq 0 ]; then
+  echo "ABBRUCH: eine Routen-Familie hat keine einzige konkrete Adresse." >&2
   echo "         Gezählt: $POSTS Posts, $PROFILE Profile, $CHATS Chats, $GRUPPEN Gruppen." >&2
+  echo "         Erwartet (Stand 2026-09-13): 20 / 18 / 4 / 5 — jede > 0." >&2
   echo >&2
-  echo "  Jeder weitergeschickte Link wäre ein 404. Drei mögliche Ursachen:" >&2
+  echo "  Jeder weitergeschickte Link dieser Familie wäre ein 404, und zwar ohne" >&2
+  echo "  Fehlermeldung: Expo Router schreibt dann post/[id].html, mit eckigen" >&2
+  echo "  Klammern im Dateinamen. Drei mögliche Ursachen:" >&2
   echo "    1. src/features/statisch.ts fehlt oder gibt leere Listen zurück" >&2
   echo "    2. ein Screen hat sein generateStaticParams verloren — es sind sechs:" >&2
   echo "       post/[id], user/[id]/index, .../follower, .../following," >&2

@@ -6154,10 +6154,24 @@ extrahiert, nicht nachgebaut — eine Nachbildung prüft die Nachbildung):
 `tsc` sauber · **81 Lint-Probleme wie vorher** · an `statisch.ts` und `deploy.sh` keine
 Zeile Logik im App-Code, also kein Pixelvergleich nötig.
 
-❓ **Offen und bei Ian: wie streng die Latte ist** (`TODO(Ian)` in `deploy.sh`, Abschnitt 6
-Punkt 38). Die vier Zahlen stehen bereit; die Bedingung fängt heute nur den Totalausfall
-und ist ausdrücklich als **Platzhalter** markiert — *ein Platzhalter, der zufällig richtig
-ist, und eine Entscheidung sind zwei verschiedene Zustände* (18d-Lehre).
+✅ **Die Latte ist entschieden — Ians Entscheidung 76 am selben Tag: (c), je Familie
+mindestens eine** (Abschnitt 6, Punkt 40). Vier einzelne Vergleiche statt einer Latte auf
+der Summe. Verworfen ist (d) „genau 20 / 18 / 4 / 5": schärfer, aber die Zahlen stünden
+zweimal da (harte Regel 53), und eine Prüfung, die bei harmlosen Änderungen rot wird,
+wird beim dritten Mal entschärft.
+
+**Bewacht ist sie durch die verworfene Fassung**, nicht durch einen grünen Lauf. Gebaut
+wurde dafür ein dritter Export, den es in echt nicht gibt — `'attrappe'` ohne die vier
+Chat-Adressen:
+
+| Fall | Platzhalter (`$ECHTE -eq 0`) | **(c)** je Familie `> 0` |
+|---|---|---|
+| `'attrappe'` vollständig — 20/18/4/5 | durch | **durch** |
+| `'supabase'` — 0/0/0/0 | Abbruch | **Abbruch** |
+| `'attrappe'` ohne Chats — 20/18/**0**/5 | **durch** (Summe 43) | **Abbruch** |
+
+Die dritte Zeile ist der Beleg. ⚠️ Und was (c) nicht fängt, steht im Skript daneben:
+Entsteht von zwanzig Posts nur noch einer, läuft der Deploy durch.
 
 ##### Was NICHT wegfällt
 
@@ -8194,35 +8208,47 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
     Klartext.
 
 
-40. ⬜ **Wie streng der Direktlink-Wächter misst** (`scripts/deploy.sh`, Phase 20.8)
-    — **vorbereitet am 2026-09-13, die Bedingung ist ein PLATZHALTER.**
+40. ✅ **Wie streng der Direktlink-Wächter misst** (`scripts/deploy.sh`, Phase 20.8)
+    — **entschieden am 2026-09-13: (c), je Familie mindestens eine.**
+    *(Ians sechsundsiebzigste Entscheidung.)*
 
-    **Worum es geht.** Damit `/post/p4` auf GitHub Pages etwas findet, muss beim Bauen
+    **Worum es ging.** Damit `/post/p4` auf GitHub Pages etwas findet, muss beim Bauen
     eine echte `dist/post/p4.html` entstehen — ein Link auf EINEN Post ist auf dieser
-    Adresse der Normalfall (harte Regel 5). Bisher prüfte der Deploy das nicht. Jetzt
-    zählt er, und die vier Zahlen stehen als `$POSTS $PROFILE $CHATS $GRUPPEN` bereit.
-    Gemessen: `'attrappe'` → 20 / 18 / 4 / 5, `'supabase'` → 0 / 0 / 0 / 0.
+    Adresse der Normalfall (harte Regel 5). Der Deploy zählt das seit 20.8; offen war
+    allein die Latte.
 
-    **Offen ist allein die Latte:**
+    **Verworfen ist (d) „genau die erwarteten Zahlen"** — 20 / 18 / 4 / 5 hart
+    hingeschrieben. Sie wäre schärfer: Sie fängt auch, wenn von zwanzig Posts nur noch
+    einer entsteht. **Der Preis war der Grund dagegen:** Die Zahlen stünden ZWEIMAL da,
+    hier und in `data/mock.ts`. Wer einen Post ergänzt, müsste hier nachziehen — sonst
+    bricht ein Deploy ab, an dem nichts kaputt ist, und zwar ausgerechnet dem, der
+    gerade etwas Richtiges getan hat. Das ist die Falle aus harter Regel 53
+    (`PROJEKTION`), und ihre Folge wiegt schwerer als der ungefangene Teilausfall:
+    **Eine Prüfung, die bei harmlosen Änderungen rot wird, wird beim dritten Mal
+    entschärft** — dann ist sie ganz weg, in dem Moment, in dem niemand hinsieht.
 
-    - **(c) „je Familie mindestens eine"** — vier Vergleiche auf `> 0`. Fängt: Datei
-      gelöscht, ein Screen-Aufruf entfernt, falsche Schalterstellung, und auch den
-      Ausfall EINER Familie (etwa: nur die Chats fehlen). Fängt nicht, wenn von zwanzig
-      Posts nur noch einer entsteht. **Kostet keine zweite Quelle** — der Wächter weiß
-      nichts, was er nicht selbst sieht.
-    - **(d) „genau die erwarteten Zahlen"** — 20 / 18 / 4 / 5 hart hingeschrieben.
-      Schärfer, fängt auch den Teilausfall. **Der Preis:** Diese Zahlen stünden dann
-      ZWEIMAL da (in `mock.ts` und hier). Wer einen Post ergänzt, muss hier nachziehen,
-      sonst bricht ein Deploy ab, an dem nichts kaputt ist — die Falle aus harter
-      Regel 53 (`PROJEKTION`), und sie trifft dann ausgerechnet den, der gerade etwas
-      Richtiges getan hat.
+    **Vier einzelne Vergleiche und nicht die Summe**, und das ist der ganze Inhalt der
+    Entscheidung: Die Summe bliebe auch dann groß, wenn EINE Familie komplett ausfällt.
 
-    **Meine Empfehlung ist (c)**, und der Grund ist nicht „einfacher": Eine Prüfung, die
-    bei einer harmlosen Änderung rot wird, wird beim dritten Mal entschärft — dann ist
-    sie weg, und zwar in dem Moment, in dem niemand hinsieht. (c) kann das nicht
-    passieren. **Es ist trotzdem Ians Entscheidung**, weil der Teilausfall ein echter
-    Fall ist: Eine Familie, von der nur noch ein Eintrag entsteht, sieht im Browser
-    vollständig aus und ist es nicht.
+    **Die Gegenprobe ist gebaut, nicht überlegt** (die Lehre vom selben Morgen: *eine
+    Entscheidung, deren verworfene Variante alle Häkchen besteht, ist unbewacht*). Dafür
+    wurde ein dritter Export erzeugt, den es in echt nicht gibt — `'attrappe'`, aus dem
+    die vier Chat-Adressen entfernt sind. Gemessen mit dem per `sed` extrahierten
+    ECHTEN Wächterblock aus `deploy.sh`:
+
+    | Fall | Platzhalter (`$ECHTE -eq 0`) | **(c)** je Familie `> 0` |
+    |---|---|---|
+    | `'attrappe'` vollständig — 20/18/4/5 | durch | **durch** |
+    | `'supabase'` — 0/0/0/0 | Abbruch | **Abbruch** |
+    | `'attrappe'` ohne Chats — 20/18/**0**/5 | **durch** (Summe 43) | **Abbruch** |
+
+    Die dritte Zeile ist der Beleg: Der Platzhalter hätte den Ausfall einer ganzen
+    Familie unbemerkt durchgelassen.
+
+    ⚠️ **Was (c) NICHT fängt, steht im Skript daneben**, damit es niemand für gefangen
+    hält: Entsteht von zwanzig Posts nur noch einer, läuft der Deploy durch. Der Wächter
+    sagt *„es kommt aus jeder Familie etwas an"*, nicht *„es ist vollständig"* — und
+    mehr kann er nicht sagen, ohne die Zahlen ein zweites Mal zu kennen.
 
 
 ## 7. Bewusst NICHT im Prototyp
