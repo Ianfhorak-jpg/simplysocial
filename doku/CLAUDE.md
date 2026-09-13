@@ -128,7 +128,7 @@ Ian.** `expo-secure-store` + `AsyncStorage` sind verdrahtet (Ians Entscheidung 5
 14-Byte-Dauerschlüssel in den Schlüsselbund, die 2459 Byte Ausweis in eine gewöhnliche
 Datei), `npm run pruef-sitzung` meldet **22 Häkchen und 2 Kreuze**. Die zwei Kreuze sind
 das `TODO(Ian)` an `zusammensetzen()` in `features/auth/sitzungsspeicher.ts` (PLAN.md,
-Abschnitt 6, Punkt 55). **Solange es steht, überlebt am iPhone keine Sitzung den
+Abschnitt 6, Punkt 36). **Solange es steht, überlebt am iPhone keine Sitzung den
 Neustart** — die App wäre bei jedem Start abgemeldet.
 
 ⚠️ **Ein Testkonto liegt in `auth.users`:** `ian.fhorak+neuzugang@gmail.com`, am
@@ -2317,7 +2317,7 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    **Die geteilte Sitzung am Gerät** ← *hier geht es weiter — `expo-secure-store` +
    `AsyncStorage` sind verdrahtet, `npm run pruef-sitzung` meldet 22 Häkchen und 2
    Kreuze. **Die zwei Kreuze sind das `TODO(Ian)` an `zusammensetzen()`** (PLAN.md,
-   Abschnitt 6, Punkt 55); solange es steht, ist die App am iPhone bei jedem Start
+   Abschnitt 6, Punkt 36); solange es steht, ist die App am iPhone bei jedem Start
    abgemeldet.* ·
    ~~**Der Lösch-Screen wird angeschlossen (20.6-c)**~~ ✅ *2026-09-12: `/account-loeschen`
    ruft `konto_loeschen()` wirklich auf, Entscheidungen 52 und 53, **27 Häkchen am echten

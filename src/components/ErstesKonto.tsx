@@ -56,7 +56,7 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
    * Antwort auf eine Frage, die Ians Entscheidung 44 ausdrücklich STELLT.
    *
    * ⚠️ **Das Vorausfüllen ist meine Auslegung und wartet auf Ians Urteil**
-   * (PLAN.md, Abschnitt 6, hinter Punkt 44). Verworfen wäre es mit einer Zeile:
+   * (PLAN.md, Abschnitt 6, Punkt 37). Verworfen wäre es mit einer Zeile:
    * `useState('')`.
    */
   const [name, setName] = useState(vorschlag ?? '');

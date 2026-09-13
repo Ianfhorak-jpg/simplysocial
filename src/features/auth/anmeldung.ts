@@ -169,7 +169,7 @@ export type Sitzung =
    * Namensfeld — änderbar, nicht festgeschrieben.
    *
    * ⚠️ **Das Vorausfüllen ist meine AUSLEGUNG von Entscheidung 44 und wartet
-   * auf Ians Urteil** (PLAN.md, Abschnitt 6, hinter Punkt 44): Gefragt werden
+   * auf Ians Urteil** (PLAN.md, Abschnitt 6, Punkt 37): Gefragt werden
    * weiter drei Dinge, nur ist eines davon schon beantwortet. Die Korrektur
    * wäre, das Feld nicht durchzureichen — eine Zeile.
    *

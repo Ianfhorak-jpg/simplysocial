@@ -108,6 +108,6 @@ for (const fremd of ['nicht-json', '"nur ein string"', '[1,2,3]', 'null', '{"a":
 console.log(`\n════ ${haken} Häkchen · ${kreuze} Kreuze ════`);
 if (kreuze > 0) {
   console.log('\nSteht `zusammensetzen()` noch auf dem TODO? Dann ist das erwartet —');
-  console.log('die Funktion schreibt Ian selbst (PLAN.md, Abschnitt 6, Punkt 55).');
+  console.log('die Funktion schreibt Ian selbst (PLAN.md, Abschnitt 6, Punkt 36).');
 }
 process.exit(kreuze > 0 ? 1 : 0);

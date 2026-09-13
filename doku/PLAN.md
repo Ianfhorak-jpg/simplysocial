@@ -5022,7 +5022,7 @@ Credentials the first time users sign into your app"* — ab der zweiten Anmeldu
 `fullName` `null`, auch nach dem Neuinstallieren. Er reist deshalb durch die Sitzung
 (`{ zustand: 'neu'; …; name?: string }`) bis ins Namensfeld des Bildschirms fürs erste
 Konto. ⚠️ **Das Vorausfüllen ist eine AUSLEGUNG von Entscheidung 44 und wartet auf
-Ians Urteil** (Abschnitt 6, hinter Punkt 44); die Korrektur wäre `useState('')`.
+Ians Urteil** (Abschnitt 6, Punkt 37); die Korrektur wäre `useState('')`.
 
 **Und der Prüfstand misst beide Schalterstellungen — das ist der eigentliche Entwurf
 an `96_anbieter.sh`.** `ANMELDE_QUELLE` steht auf `'attrappe'`, und in dieser Stellung
@@ -6055,6 +6055,25 @@ sieben stille Tage nicht mehr vorkommen. Das ist ein gutes Problem.
 
 Stellen mit echten Trade-offs, an denen Ians Meinung das Produkt formt. Jeweils
 Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
+
+> ⚠️ **ZWEI Nummern, und sie laufen auseinander — das ist die häufigste Zeitfalle
+> in diesem Plan.** Die Punkte **hier unten** (1, 2, 3 …) sind die Stellen dieses
+> Abschnitts; **„Ians Entscheidung 27/44/55"** ist die fortlaufende Nummer aller
+> seiner Entscheidungen, und die steht meistens in **Abschnitt 5b** bei der Phase,
+> aus der sie kam. Beide fangen bei 1 an, und ab hier decken sie sich nicht mehr:
+> Punkt 35 ist Entscheidung 27.
+>
+> **Folgen, die man kennen muss:**
+> - Ein Verweis „Abschnitt 6, Punkt 39" (oder 42, 44, 55) zeigt ins LEERE — dieser
+>   Abschnitt endet bei **37**. Gemeint ist dort die ENTSCHEIDUNG dieser Nummer;
+>   gefunden wird sie mit `grep -n "Entscheidung 39" PLAN.md`.
+> - Und die **55 ist doppelt vergeben**: einmal in Phase 19f („beim Antippen des
+>   Eingabefelds bleibt der Chat unten") und einmal am 2026-09-13 für den geteilten
+>   Sitzungsspeicher. Wer einem solchen Verweis folgt, **prüft am DATUM**, welche
+>   gemeint ist.
+>
+> **Beim Schreiben einer neuen Entscheidung deshalb:** zuerst
+> `grep -c "Entscheidung <N>" PLAN.md` — steht dort schon etwas, ist die Nummer weg.
 
 1. ✅ **Feed-Sortierung** (`src/features/posts/sort.ts`) — **entschieden am 2026-08-31:
    das Neueste zuerst.** Ians Begründung sinngemäß: Wer postet, soll gesehen werden.
@@ -7377,6 +7396,88 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 > **Der Nebeneffekt war nicht der Grund und zählt trotzdem:** Aus einem
 > 12-Megapixel-Foto wird nur der Ausschnitt hochgeladen. Das ist weniger Wartezeit und
 > weniger von der einen Gigabyte, die Supabase gratis gibt.
+
+36. ⬜ **Wie die Anmeldung auf dem GERÄT liegt** (`src/features/auth/sitzungsspeicher.ts`)
+    — **entschieden am 2026-09-13: GETEILT.** *(Ians fünfundfünfzigste Entscheidung,
+    `SITZUNG_TEILUNG`.)* **Der Code dazu wartet auf ihn** — `zusammensetzen()` trägt ein
+    `TODO(Ian)`, und `npm run pruef-sitzung` meldet deshalb 22 Häkchen und 2 Kreuze.
+
+    ⚠️ **Zur Nummer:** Die **55** ist in diesem Plan ZWEIMAL vergeben — sie steht in
+    Phase 19f schon an *„beim Antippen des Eingabefelds bleibt der Chat unten"*
+    (Abschnitt 5b). Das ist ein Buchhaltungsfehler und keine Bedeutungsfrage; wer einem
+    Verweis „Entscheidung 55" folgt, prüft am DATUM, welche gemeint ist. **Dieser Punkt
+    hier ist die eine Stelle, an der der Sitzungsspeicher steht.**
+
+    **Die Messung, aus der die Entscheidung wurde.** `auth-js` legt genau EINEN
+    Schlüssel ab (`sb-<ref>-auth-token`), darin die ganze Sitzung als schlichtes JSON.
+    Am 2026-09-13 mit einer untergeschobenen Speicher-Attrappe am echten Server
+    gemessen:
+
+    | | |
+    |---|---|
+    | E-Mail-Konto | 1.412 B — 69 % der Warngrenze |
+    | Google-/Apple-Konto | **2.473 B — 121 % der Warngrenze** |
+    | davon `access_token` | 1.390 B (nach 1 h wertlos) |
+    | davon `user` | 942 B (Name, Bild, Anbieter-ID) |
+    | davon `refresh_token` | **14 B** ← der eigentliche Schlüssel |
+
+    **Der teuerste Teil ist die VERTEILUNG, nicht die Zahl.** Der naheliegende Weg —
+    alles in `expo-secure-store` — läuft bei einem E-Mail-Konto tadellos und trifft bei
+    Google und Apple die 2048-Byte-Warnung von Expo. Also genau bei den zwei Wegen, um
+    die 20.3-b2 geht, und **nicht** bei dem, mit dem man selbst testet. Dieselbe Familie
+    wie „ein iPhone-Foto ist HEIC" (20.6-b) und „wer nie ein Profilbild hatte" (20.6-c):
+    *der Normalfall fällt aus, der eigene Fall läuft.* Und die Meldung hilft niemandem —
+    `SecureStoreModule.swift` prüft **keine Größe** (nachgesehen: im ganzen Paket steht
+    keine `2048`), es reicht die Bytes an den Schlüsselbund weiter und wirft bei
+    Ablehnung eine nackte `OSStatus`-Zahl.
+
+    **Ians Wahl:** Die 14 Byte, die dauerhaft ins Konto lassen, in den Schlüsselbund;
+    die 2.459 Byte, die nach einer Stunde wertlos sind, in eine gewöhnliche Datei. Der
+    Gewinn ist nicht die Größe, sondern was ein Diebstahl noch wert ist — **eine Stunde
+    statt für immer.**
+
+    Verworfen, beide samt Grund: **A) Alles in den Schlüsselbund** — der sicherste Ort,
+    den iOS hat, und gemessen 121 % der Warngrenze; ob ein echtes iPhone das annimmt,
+    ist vom Mac aus PRINZIPIELL nicht zu messen. **C) Alles in eine gewöhnliche Datei** —
+    läuft garantiert, am wenigsten Code, und legt den Dauerschlüssel unverschlüsselt in
+    den App-Ordner.
+
+    **Was Ian selbst schreibt, und warum genau das:** `zusammensetzen(teile)` macht aus
+    den zwei Hälften wieder das, was `auth-js` erwartet — oder `null`. Das Urteil darin
+    ist der **zweite Halbsatz seiner Entscheidung**: Liegt nur EINE Hälfte da (Absturz
+    zwischen zwei Schreibvorgängen, Platz aus, Zugriff verweigert), gilt das als
+    abgemeldet (`HALBE_SITZUNG = 'abgemeldet'`), und die Person meldet sich neu an. Die
+    Alternative wäre, mit der vorhandenen Hälfte weiterzumachen, und die ist in BEIDE
+    Richtungen schlecht: Nur der Ausweis ergibt eine Sitzung, die nach einer Stunde
+    stirbt und dabei aussieht wie ein Fehler; nur der Dauerschlüssel ergibt einen
+    `auth-js`-Zustand, den es in dessen eigenem Typ gar nicht gibt.
+
+    **Solange das TODO steht, ist die App am iPhone bei jedem Start abgemeldet.**
+    Geprüft wird mit `npm run pruef-sitzung` — sind die 2 Kreuze weg, stimmt die
+    Funktion. Sie ist ohne Gerät und ohne Datenbank prüfbar, weil die Regel-Datei nur
+    Typen importiert (dieselbe Bauart wie `lib/base64.ts` und `data/zeilen.ts`).
+
+    ⚠️ **Und eine AUSLEGUNG daneben wartet auch auf ihn:** In
+    `lib/sitzungsspeicher.native.ts` steht `WHEN_UNLOCKED_THIS_DEVICE_ONLY` — lesbar nur
+    bei entsperrtem Gerät, und **niemals in einem Backup oder im iCloud-Schlüsselbund**.
+    Der Preis steht fest und ist klein: Auf einem neuen iPhone meldet man sich einmal neu
+    an. Kommt später etwas dazu, das im Hintergrund läuft, muss dort
+    `AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY` stehen.
+
+37. ⬜ **Ob Apples Name vorausgefüllt wird** (`src/components/ErstesKonto.tsx`)
+    — **meine Auslegung von Entscheidung 44, gebaut am 2026-09-13, wartet auf sein
+    Urteil.** Apple gibt den vollen Namen **nur bei der allerersten Freigabe** heraus
+    (steht wörtlich im Paket: *„you will only receive Apple Authentication Credentials
+    the first time users sign into your app"*); ab der zweiten Anmeldung ist `fullName`
+    `null`, auch nach dem Neuinstallieren. Wer ihn in dieser Sekunde wegwirft, bekommt
+    ihn nie zurück — also reist er durch die Sitzung (`{ zustand: 'neu'; …; name?: string }`)
+    ins Namensfeld und steht dort **änderbar** da.
+
+    **Warum das überhaupt eine Frage ist:** Entscheidung 44 sagt, beim ersten Konto
+    werden drei Dinge GEFRAGT. Eines davon ist damit schon beantwortet, und der Name
+    aus dem Apple-Konto ist oft der amtliche — in dieser App steht er unter jedem Post
+    und in jedem Chat. Die Korrektur wäre eine Zeile: `useState('')`.
+
 
 ## 7. Bewusst NICHT im Prototyp
 

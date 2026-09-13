@@ -166,7 +166,7 @@ export function aufteilen(roh: string): SitzungsTeile {
  * liest das als „niemand angemeldet" und zeigt den Anmelde-Bildschirm.
  *
  * TODO(Ian): Diese Funktion schreibt Ian selbst — siehe PLAN.md, Abschnitt 6,
- * Punkt 55. Vorbereitet ist alles drumherum; hier steckt das Urteil.
+ * Punkt 36. Vorbereitet ist alles drumherum; hier steckt das Urteil.
  */
 export function zusammensetzen(teile: SitzungsTeile): string | null {
   // TODO(Ian)

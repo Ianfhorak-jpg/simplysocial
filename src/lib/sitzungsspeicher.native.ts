@@ -48,7 +48,7 @@ import { aufteilen, zusammensetzen } from '@/features/auth/sitzungsspeicher';
  * nicht tun soll.
  *
  * ⚠️ **Das ist meine AUSLEGUNG von Entscheidung 55 und wartet auf Ians Urteil**
- * (PLAN.md, Abschnitt 6, hinter Punkt 55). Der Preis steht fest und ist klein:
+ * (PLAN.md, Abschnitt 6, Punkt 36). Der Preis steht fest und ist klein:
  * Auf einem neuen iPhone meldet man sich einmal neu an. Kommt später etwas dazu,
  * das im Hintergrund läuft, muss hier `AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY`
  * stehen — sonst schlägt genau dann das Lesen fehl, wenn niemand hinsieht.
