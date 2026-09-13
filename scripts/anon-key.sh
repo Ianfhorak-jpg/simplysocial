@@ -72,6 +72,17 @@ else
   exit 1
 fi
 
+# ── Was in `.env` sonst noch steht, wird MITGENOMMEN ───────────────────────────
+# Seit 20.3-b2 legt `google-app-id.sh` eine zweite Zeile dazu. Dieses Skript
+# schreibt die Datei mit `>` neu — ohne die nächsten drei Zeilen wäre die
+# Google-Client-ID nach jedem `npm run anon-key` weg, und der Google-Knopf am
+# Handy meldete „nicht eingerichtet". Ein Fehler, der erst beim nächsten
+# Schlüsseltausch auftritt, ist einer, den niemand mit seiner Ursache verbindet.
+ANHANG=""
+if [ -f "$HIER/.env" ]; then
+  ANHANG="$(grep -E '^EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=' "$HIER/.env" || true)"
+fi
+
 cat > "$HIER/.env" <<EOF
 # Erzeugt von scripts/anon-key.sh — nicht von Hand ändern, nicht committen.
 # Beide Werte sind dafür gemacht, in der App zu stehen; was sie DÜRFEN, sagen die
@@ -79,6 +90,10 @@ cat > "$HIER/.env" <<EOF
 EXPO_PUBLIC_SUPABASE_URL=$PROJEKT_URL
 EXPO_PUBLIC_SUPABASE_ANON_KEY=$KEY
 EOF
+if [ -n "$ANHANG" ]; then
+  printf '\n# Von scripts/google-app-id.sh — hier nur durchgereicht.\n%s\n' "$ANHANG" >> "$HIER/.env"
+  echo "✓ Google-Client-ID aus der alten .env übernommen"
+fi
 chmod 600 "$HIER/.env"
 
 echo "✓ .env geschrieben (${#KEY} Zeichen Schlüssel)"

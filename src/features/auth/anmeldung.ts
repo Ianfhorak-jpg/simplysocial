@@ -154,7 +154,30 @@ export type Sitzung =
    * `useCurrentUserId()` für diesen Zustand ohne Weiteres gültiger Code — und
    * fünfzig Screens suchten einen Menschen, den niemand angelegt hat.
    */
-  | { zustand: 'neu'; authId: string; email: string }
+  /**
+   * `name` seit 20.3-b2, und dieses Feld ist ein MESSERGEBNIS.
+   *
+   * Apple gibt den vollen Namen **ausschließlich bei der allerersten
+   * Freigabe** heraus (steht wörtlich in `AppleAuthentication.js`: *„you will
+   * only receive Apple Authentication Credentials the first time users sign
+   * into your app, so you must store it for later use"*). Bei jeder späteren
+   * Anmeldung ist `fullName` `null` — auch nach dem Löschen und
+   * Neuinstallieren der App.
+   *
+   * Wer ihn in diesem einen Augenblick wegwirft, bekommt ihn NIE zurück. Also
+   * reist er mit bis zum Bildschirm fürs erste Konto und steht dort im
+   * Namensfeld — änderbar, nicht festgeschrieben.
+   *
+   * ⚠️ **Das Vorausfüllen ist meine AUSLEGUNG von Entscheidung 44 und wartet
+   * auf Ians Urteil** (PLAN.md, Abschnitt 6, hinter Punkt 44): Gefragt werden
+   * weiter drei Dinge, nur ist eines davon schon beantwortet. Die Korrektur
+   * wäre, das Feld nicht durchzureichen — eine Zeile.
+   *
+   * Optional, und der Preis ist benannt: `tsc` meldet zu einer Lockerung
+   * nichts (die Phase-16-Lehre). Es gibt genau EINE Stelle, die es liest —
+   * `components/ErstesKonto.tsx` —, und die ist von Hand geprüft.
+   */
+  | { zustand: 'neu'; authId: string; email: string; name?: string }
   /** Angemeldet. `ichId` ist eine `User.id`. */
   | { zustand: 'an'; ichId: string };
 
@@ -192,38 +215,218 @@ export function torwaechterZeigt(sitzung: Sitzung): TorwaechterZeigt {
 }
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  APPLE UND GOOGLE — Phase 20.3-b2 (2026-09-13)
+ *  Was gemessen wurde, bevor eine Zeile davon gebaut war.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Am Server steht seit dem 13.09. nachts `apple: true, google: true` — gemessen
+ * an `/auth/v1/settings`, live. Damit ist die KONTEN-Seite fertig, und die drei
+ * Entscheidungen darunter sind reine Technik. Sie stehen trotzdem hier und nicht
+ * im Zeichner, weil jede von ihnen aus einer MESSUNG kommt, die niemand ein
+ * zweites Mal machen soll.
+ *
+ * ── 1. Beide Wege gehen über einen AUSWEIS, nicht über einen Browser ─────────
+ * Der naheliegende Weg wäre `signInWithOAuth()` gewesen: eine Funktion für beide
+ * Anbieter, dieselbe auf Web und Gerät, Supabase erledigt den ganzen Tanz. Er
+ * scheitert an einer Kleinigkeit mit Folgen — der Rücksprung ginge dann DURCH
+ * Supabase zurück in die App (`simplysocial://…`), und diese Adresse muss in
+ * Supabases Erlaubnisliste stehen. Das ist ein Dashboard-Feld, also **ein neuer
+ * Handgriff von Ian**, und der Management-Token dafür ist widerrufen (richtig
+ * so — er darf alles im Konto).
+ *
+ * `signInWithIdToken()` braucht davon nichts: Der Ausweis entsteht zwischen dem
+ * GERÄT und dem Anbieter, Supabase bekommt ihn fertig gereicht und prüft nur
+ * Unterschrift und Empfänger. **Kein neues Feld, kein neuer Klick, kein neuer
+ * Baustein.**
+ *
+ * ── 2. Beide Wege sind GERÄTE-Wege, und bei Apple ist das keine Bequemlichkeit ─
+ * Apples Client-ID in Supabase ist die Bundle-ID `at.simplysocial.app`. Das ist
+ * eine NATIVE Kennung; Apples Anmeldung im Browser verlangt eine eigene
+ * *Services ID*, die es nicht gibt. „Anmelden mit Apple" ist im Browser also
+ * nicht halb fertig, sondern **unmöglich** — und ein Knopf dafür wäre ein Knopf,
+ * der lügt. Deshalb gibt es `AnbieterLage`, und deshalb ist sie ein PFLICHTFELD
+ * (siehe dort).
+ *
+ * ── 3. NONCE: keiner bei Apple, PKCE bei Google — und das ist gemessen ───────
+ * Der übliche Schutz gegen einen wiederverwendeten Ausweis ist ein Nonce. Er ist
+ * hier eine Falle, und zwar eine, die nur am Gerät zuschlägt:
+ *
+ *     `expo-apple-authentication/ios/AppleAuthenticationRequest.swift`, Zeile 31:
+ *         request.nonce = options.nonce          ← reicht durch, hasht NICHT
+ *     `@supabase/auth-js/…/types.d.ts`, Zeile 639:
+ *         „If the ID token contains a `nonce` claim, then the HASH of this value
+ *          is compared to the value in the ID token."
+ *
+ * Wer denselben Rohwert an beide gibt, bekommt eine Absage, die nach einem
+ * kaputten Schlüssel aussieht. Richtig wäre: gehashten Wert an Apple, rohen an
+ * Supabase. **Nur ist nicht nachprüfbar, WIE Supabase hasht** — hex oder
+ * base64url —, und ein geratenes Format scheitert ausschließlich auf einem
+ * fremden iPhone, mit einer Meldung, die niemand lesen wird. Ein Zustand, den man
+ * nur beim Nutzer sieht, ist keiner, den man annimmt (dieselbe Überlegung wie bei
+ * Ians Entscheidung 55, Möglichkeit A).
+ *
+ * Also **kein Nonce bei Apple** — das ist zugleich der Weg, den Supabase selbst
+ * dokumentiert. Was damit fehlt, ist benannt und klein: Der Ausweis reist
+ * unmittelbar vom Betriebssystem zu Supabase, lebt zehn Minuten und trägt
+ * `at.simplysocial.app` als Empfänger. Ihn abzufangen hieße, schon IN der App zu
+ * sein.
+ *
+ * Bei Google entsteht der Ausweis dagegen über ein Browserfenster, und dort gäbe
+ * es wirklich etwas abzufangen. Deshalb nimmt Google **nicht** den kurzen Weg
+ * (`response_type=id_token`, der einen Nonce ERZWINGT), sondern den Code-Weg mit
+ * **PKCE**: Der zurückkommende Code ist an ein Geheimnis gebunden, das diese eine
+ * Anfrage erzeugt hat und das nie durch den Browser lief. Das ist derselbe Schutz,
+ * ohne das ungeprüfte Hash-Format.
+ */
+
+/**
+ * Was dieses GERÄT kann — **ein Pflichtfeld, kein `?`.**
+ *
+ * `anmeldeFolgen()` hatte bis heute einen Parameter und braucht jetzt zwei. Das
+ * ist Absicht und dieselbe Technik wie `meinOrt` in `SortKontext` (Phase 19h-2):
+ * Mit einem optionalen Feld wäre jede Aufrufstelle stumm durchgelaufen, und der
+ * Apple-Knopf stünde im Browser als klickbarer Knopf da, der gar nicht kann.
+ * So schreibt `tsc` die Arbeitsliste.
+ *
+ * Woher die Antwort kommt, steht in `lib/anmelde-anbieter.ts` (Web) bzw.
+ * `.native.ts` (Gerät) — eine Plattform-ENDUNG, weil dort die Bausteine liegen.
+ */
+export type AnbieterLage = { apple: boolean; google: boolean };
+
+/**
+ * Die zwei Wege, hinter denen ein fremder Dienst steht — **abgeleitet, nicht
+ * aufgezählt.**
+ *
+ * `Exclude<AnmeldeWeg, 'email-code'>` statt `'apple' | 'google'`: Käme je ein
+ * vierter Weg dazu, wäre er hier automatisch dabei und müsste beantwortet
+ * werden, statt still zu fehlen. Dieselbe Überlegung wie `AgeBand =
+ * Exclude<AgeGroup, 'egal'>` aus Phase 15 und wie `LIEST_AUS_SUPABASE`
+ * (harte Regel 74): zwei Aufzählungen für dieselbe Menge laufen auseinander.
+ */
+export type Anbieter = Exclude<AnmeldeWeg, 'email-code'>;
+
+/**
+ * Wohin Google zurückspringt — **ABGELEITET aus der Client-ID, nicht danebengelegt.**
+ *
+ * Google verlangt für einen iOS-Client die umgedrehte Client-ID als Schema: aus
+ * `132215-abc.apps.googleusercontent.com` wird
+ * `com.googleusercontent.apps.132215-abc:/oauthredirect`. Dieselbe Angabe zweimal
+ * abzulegen wären zwei Gelegenheiten, dass sie auseinanderlaufen — genau die
+ * Überlegung hinter `PROJEKTION` (harte Regel 53) und hinter der Project URL, die
+ * `anon-key.sh` aus dem Token liest statt sie abzutippen.
+ *
+ * ── Warum sie HIER steht und nicht beim Zeichner ────────────────────────────
+ * Sie stand zuerst in `lib/anmelde-anbieter.native.ts`, zwischen den nativen
+ * Importen — und war damit **nur am Gerät prüfbar.** Das ist genau der Fehler,
+ * vor dem `95_sitzung.sh` in seinem eigenen Kopf warnt, und er wiegt hier
+ * schwer: Stimmt ein Zeichen nicht, weist Google die Anmeldung mit
+ * `redirect_uri_mismatch` ab — in einem Browserfenster, auf einem fremden
+ * iPhone, wo niemand danebensteht. Als reine Funktion in einer importfreien
+ * Datei misst sie `npm run pruef-anbieter` in blankem Node.
+ *
+ * ── Und warum dafür NICHTS in die Info.plist muss ───────────────────────────
+ * `expo-auth-session` öffnet auf iOS eine `ASWebAuthenticationSession`, und die
+ * fängt ihr Rücksprung-Schema **selbst ab** — kein `CFBundleURLScheme` nötig.
+ * Stünde dort eines, wäre das ein Prebuild und damit ein neuer Build (und die
+ * Prebuild-Falle zum vierten Mal).
+ */
+export function googleRueckweg(clientId: string): string {
+  const kurz = clientId.replace(/\.apps\.googleusercontent\.com$/, '');
+  return `com.googleusercontent.apps.${kurz}:/oauthredirect`;
+}
+
+/**
+ * Ein Anbieter-Weg ist gescheitert — mit `code`, wie `KontoFehler`.
+ *
+ * Er steht in dieser importfreien Regel-Datei und nicht in `konten.ts`, weil ihn
+ * BEIDE Zweige von `lib/anmelde-anbieter` werfen: Ein Import von `konten.ts`
+ * zöge über `lib/supabase.ts` die ganze Leitung in eine Datei, die nur ein
+ * Betriebssystem fragt.
+ */
+export class AnbieterFehler extends Error {
+  constructor(
+    readonly weg: Anbieter,
+    readonly code: string,
+    grund: string,
+  ) {
+    super(`Anmelden über "${weg}" gescheitert (${code}): ${grund}`);
+    this.name = 'AnbieterFehler';
+  }
+}
+
+/**
+ * Was dasteht, wenn ein Anbieter-Weg nicht durchgeht — **`null` heißt: gar nichts.**
+ *
+ * ── Warum eine eigene Funktion neben `codeFehlerText()` ──────────────────────
+ * Weil es hier einen Fall gibt, den der E-Mail-Weg nicht kennt: **Abbrechen.**
+ * Wer den Apple-Dialog wegwischt, hat keinen Fehler erlebt, sondern eine
+ * Entscheidung getroffen — und eine rote Zeile danach behauptet, etwas sei
+ * schiefgegangen. Dieselbe Familie wie „Noch nichts los in deinem Feed" bei einem
+ * Netzausfall (Ians Entscheidung 43): ein Satz, der lügt. `null` ist deshalb ein
+ * gültiges Ergebnis und kein Versäumnis.
+ */
+export function anbieterFehlerText(code: string): string | null {
+  switch (code) {
+    case 'abgebrochen':
+      return null;
+    case 'nicht-hier':
+      return 'Das geht nur in der App am Handy. Nimm hier die E-Mail.';
+    case 'kein-zugang':
+      // Die Client-ID fehlt in `.env`. Für den Menschen davor ist das dasselbe
+      // wie „geht gerade nicht" — der Grund steht in der Konsole, nicht hier
+      // (der Fund vom 2026-09-03: Entwickler-Notizen in JSX-Text sind öffentlich).
+      return 'Dieser Weg ist gerade nicht eingerichtet. Nimm die E-Mail.';
+    case 'kein-ausweis':
+      return 'Der Anbieter hat nichts zurückgeschickt. Probier es noch einmal.';
+    default:
+      return 'Das hat gerade nicht geklappt. Prüf dein Netz und probier es noch einmal.';
+  }
+}
+
+/**
  * Die Sätze, die die Oberfläche über einen Anmeldeweg sagt — an EINER Stelle.
  *
- * `bereit` sagt, ob der Weg WIRKLICH funktioniert. Er steht hier und nicht im Screen,
- * weil er sich in Phase 20.3-b je Weg einzeln ändert (Apple zuerst, dann Google) —
- * und weil ein Knopf, der nichts tut, ohne diese Auskunft aussieht wie ein Fehler.
- * Dasselbe Muster wie `schreibHuerdeText()` in `chat/direkt.ts`: Steht der Knopf
- * nicht da, steht ein Satz da.
+ * `bereit` sagt, ob der Weg WIRKLICH funktioniert — und seit 20.3-b2 hängt das an
+ * ZWEI Dingen: ob es überhaupt ein Konto gibt (`ANMELDE_QUELLE`) und ob dieses
+ * Gerät den Weg kann (`lage`). Der zweite Teil ist neu und der Grund für das
+ * Pflichtfeld: Apple im Browser ist nicht „noch nicht", sondern „nie" (siehe
+ * Kopf). Dasselbe Muster wie `schreibHuerdeText()` in `chat/direkt.ts`: Steht der
+ * Knopf nicht da, steht ein Satz da.
  */
-export function anmeldeFolgen(weg: AnmeldeWeg): {
+export function anmeldeFolgen(
+  weg: AnmeldeWeg,
+  lage: AnbieterLage,
+): {
   titel: string;
   hinweis: string;
   bereit: boolean;
 } {
-  // `bereit` ist seit 20.3-b1 JE WEG verschieden, und genau das hatte der Kopf
-  // dieser Funktion vorhergesagt. Am Server nachgemessen (`/auth/v1/settings`):
-  // `email: true`, `apple: false`, `google: false`. Der E-Mail-Weg braucht nur
-  // Supabase und steht; die anderen beiden brauchen zusätzlich einen
-  // Sign-in-Schlüssel von Apple und ein OAuth-Konto bei Google.
   const quelleSteht = ANMELDE_QUELLE !== 'attrappe';
-  const nochNicht = quelleSteht
-    ? 'Kommt als Nächstes — heute geht es über die E-Mail.'
-    : 'Kommt mit dem Konto — im Prototyp noch ohne Funktion.';
+  // Ohne Konto sagen alle drei dasselbe, und der Bildschirm zeigt den Satz
+  // deshalb EINMAL unter der ganzen Gruppe (Ians Entscheidung 50).
+  const ohneKonto = 'Kommt mit dem Konto — im Prototyp noch ohne Funktion.';
+  // Der leere Satz ist kein Platzhalter: Ein fertiger Weg BRINGT keinen Hinweis
+  // mit, und der Bildschirm filtert Leeres weg. Harte Regel 63 — wegräumen, was
+  // für die Entscheidung hier nicht nötig ist.
+  const fertig = '';
+
+  function anbieter(titel: string, kann: boolean) {
+    if (!quelleSteht) return { titel, hinweis: ohneKonto, bereit: false };
+    if (!kann) return { titel, hinweis: 'Geht nur in der App am Handy.', bereit: false };
+    return { titel, hinweis: fertig, bereit: true };
+  }
+
   switch (weg) {
     case 'apple':
-      return { titel: 'Weiter mit Apple', hinweis: nochNicht, bereit: false };
+      return anbieter('Weiter mit Apple', lage.apple);
     case 'google':
-      return { titel: 'Weiter mit Google', hinweis: nochNicht, bereit: false };
+      return anbieter('Weiter mit Google', lage.google);
     case 'email-code':
     default:
       return {
         titel: 'Mit E-Mail-Code',
-        hinweis: quelleSteht ? 'Wir schicken dir eine Zahl, kein Passwort.' : nochNicht,
+        hinweis: quelleSteht ? 'Wir schicken dir eine Zahl, kein Passwort.' : ohneKonto,
         bereit: quelleSteht,
       };
   }

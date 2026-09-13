@@ -133,7 +133,14 @@ export default function RootLayout() {
             ) : zeigt === 'erstes-konto' ? (
               // `authId` kommt aus dem ZUSTAND und nicht aus einem Haken im Screen:
               // Nur hier ist typsicher bekannt, dass es sie gibt.
-              <ErstesKonto authId={sitzung.zustand === 'neu' ? sitzung.authId : ''} />
+              // `name` seit 20.3-b2: Apple gibt ihn NUR beim allerersten Mal
+              // heraus. Er reist von `anmeldenMitAnbieter()` durch die Sitzung
+              // bis hierher, weil es keinen zweiten Weg zu ihm gibt — nicht
+              // einmal ein Neuinstallieren holt ihn zurück.
+              <ErstesKonto
+                authId={sitzung.zustand === 'neu' ? sitzung.authId : ''}
+                name={sitzung.zustand === 'neu' ? sitzung.name : undefined}
+              />
             ) : sicht === 'fehler' &&
               (laden.zustand === 'fehler' || laden.zustand === 'fehler-nachladen') ? (
               // Der zweite Zweig gilt nur in der verworfenen Fassung

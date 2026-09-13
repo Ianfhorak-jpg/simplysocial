@@ -8,12 +8,16 @@
  * daneben (`anmeldung.ts`, `konto.ts`), hier steht nur der Weg nach draußen. Kein
  * Screen importiert diese Datei — die Screens reden mit `hooks.ts`.
  *
- * ── Was 20.3-b1 ist und was nicht ────────────────────────────────────────────
- * Gebaut ist der E-MAIL-CODE, und zwar gegen Ians echtes Supabase. Apple und Google
- * sind am Server nachgemessen aus (`/auth/v1/settings` meldet `apple: false`,
- * `google: false`) und kommen in 20.3-b2 zusammen mit den vier nativen Bausteinen
- * in EINEM Build. Dieselbe Trennung wie 20.1/20.2, 20.3-a/b und 20.4-a/b:
- * *hält der Weg?* und *ist das Konto eingerichtet?* sind zwei Fragen.
+ * ── Seit 20.3-b2 sind alle DREI Wege hier ───────────────────────────────────
+ * Am 12.09. stand an dieser Stelle, Apple und Google seien am Server nachgemessen
+ * AUS. Das gilt nicht mehr: `/auth/v1/settings` meldet seit dem 13.09. nachts
+ * `apple: true, google: true, email: true` — gemessen, live. Dazugekommen ist
+ * `mitAusweisAnmelden()`; die zwei Anbieter-Wege brauchten dafür **keinen neuen
+ * Baustein und keinen neuen Build**, weil die fünf aus dem 12.09.-Build reichen.
+ *
+ * Die Trennung von 20.1/20.2, 20.3-a/b und 20.4-a/b hat damit ein zweites Mal
+ * getragen: *hält der Weg?* und *ist das Konto eingerichtet?* sind zwei Fragen,
+ * und diesmal war die zweite zuerst fertig.
  *
  * ── `supabase-js` wirft nicht, und das ist hier gefährlicher als beim Lesen ───
  * Beim Lesen machte `data ?? []` aus einem Fehler eine leere Liste (Entscheidung 43).
@@ -33,7 +37,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { client } from '@/lib/supabase';
 
-import type { Sitzung } from './anmeldung';
+import type { Anbieter, Sitzung } from './anmeldung';
 import { HANDLE_VERSUCHE, handleVorschlag, naechsterHandle } from './konto';
 
 /**
@@ -103,6 +107,43 @@ export async function codePruefen(
   });
   if (error) {
     throw new KontoFehler('code-pruefen', error.code ?? String(error.status ?? '?'), error.message);
+  }
+}
+
+/**
+ * Schritt 1 UND 2 in einem — Apple und Google. Phase 20.3-b2.
+ *
+ * ── Warum EINE Funktion für zwei Anbieter ───────────────────────────────────
+ * Weil sich hier nichts unterscheidet: Beide liefern einen OIDC-Ausweis, und
+ * Supabase prüft bei beiden Unterschrift und Empfänger. Was verschieden IST —
+ * wie man an den Ausweis kommt — steht in `lib/anmelde-anbieter.native.ts` und
+ * geht diese Datei nichts an. Zwei gleich geformte Funktionen mit zwei Namen
+ * wären eine Unterscheidung, die niemand anwenden kann (die 18b-Lehre über
+ * Filter und Post).
+ *
+ * ── Der Ausweis wird NICHT aufgemacht ───────────────────────────────────────
+ * Weder hier noch im Zeichner liest jemand ein Feld aus dem JWT. Wer das täte,
+ * hätte eine ZWEITE Fassung der Frage „wer ist das?" — und die schwächere, weil
+ * ohne Schlüssel. Dieselbe Regel wie beim Realtime-`payload` (harte Regel 75):
+ * Der Anstoß kommt von aussen, die Auskunft von der Stelle mit den Policies.
+ *
+ * ── Kein `nonce`, und das ist eine Entscheidung mit Begründung ──────────────
+ * Sie steht ausgeschrieben im Kopf von `anmeldung.ts`, weil sie aus zwei
+ * Messungen in fremdem Quelltext kommt. Kurz: Apple hasht nicht, Supabase schon,
+ * und WIE es hasht ist von hier aus nicht nachprüfbar.
+ */
+export async function mitAusweisAnmelden(
+  anbieter: Anbieter,
+  idToken: string,
+  sb: SupabaseClient = client(),
+): Promise<void> {
+  const { error } = await sb.auth.signInWithIdToken({ provider: anbieter, token: idToken });
+  if (error) {
+    throw new KontoFehler(
+      `anmelden-${anbieter}`,
+      error.code ?? String(error.status ?? '?'),
+      error.message,
+    );
   }
 }
 

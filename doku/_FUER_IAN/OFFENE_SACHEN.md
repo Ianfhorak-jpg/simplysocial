@@ -142,6 +142,61 @@
 
 ---
 
+## 🔴 NEU (13.09.2026) — zwei Sachen aus dem Apple/Google-Abend
+
+### A. Der Apple-Schlüssel läuft am **12.03.2027** ab · **später, aber unbedingt** 🔴
+
+Apple und Google sind seit dem 13.09. in Supabase eingetragen — **gemessen, nicht
+geglaubt** (`apple: true`, `google: true` an `/auth/v1/settings`, also dort, wo die
+App selbst nachsieht).
+
+**Aber ein Teil davon hat ein Verfallsdatum, und das ist keine Kleinigkeit.** Das
+Geheimnis, mit dem sich SimplySocial bei Apple ausweist, ist kein Schlüssel, den man
+einträgt und vergisst: Es ist ein Token, das mit deiner `.p8`-Datei unterschrieben
+wird, und **Apple lässt höchstens 180 Tage zu.**
+
+> **Am 12.03.2027 steht „Anmelden mit Apple" da und tut nichts.**
+> Kein Fehler im Protokoll, keine Warnung, nichts Rotes — es geht einfach nicht mehr.
+> Dieselbe Falle wie das 7-Tage-Profil vom 07.09.: alles grün und trotzdem tot.
+
+**Erneuern dauert zwei Minuten** und braucht keinen neuen Apple-Zugang — die `.p8`
+bleibt dieselbe, nur die Unterschrift darauf ist neu:
+
+```bash
+# 1. Neuen Management-Token holen (Auth Config, read-write):
+#    https://supabase.com/dashboard/account/tokens   → kopieren
+cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
+npm run mgmt-token
+npm run provider-api        # erzeugt ein frisches Geheimnis und trägt es ein
+# 2. Token wieder widerrufen
+```
+
+Das Skript sagt dir jedes Mal das neue Ablaufdatum. **Trag dir den 12.03.2027 ein,
+wo du ihn siehst** — in einer Datei findet ihn niemand rechtzeitig.
+
+---
+
+### B. Dein Google-Geheimnis stand kurz auf dem Bildschirm · **deine Entscheidung** 🟡
+
+Beim ersten Lauf am 13.09. hat mein Skript den **Google-Client-Secret im Klartext
+ausgegeben**. Die Ursache ist behoben (es maskierte nach LÄNGE — dein Geheimnis ist
+35 Zeichen lang, die Schwelle stand bei 40; jetzt wird nach Identität maskiert). Der
+Wert steht damit aber im Gesprächsverlauf und in deinem Terminal.
+
+**Öffentlich ist er nicht** — das ist kein Notfall. Trotzdem meine Empfehlung, ihn
+auszutauschen, weil es zwei Minuten kostet und die Frage vom Tisch nimmt:
+
+> Google Cloud Console → **APIs & Services → Credentials** → dein **Web**-Client
+> (`…v1edj7b2…`) → neuen Secret erzeugen → kopieren → dann:
+> ```bash
+> npm run google-key && npm run mgmt-token && npm run provider-api
+> ```
+
+Die Client-**IDs** sind kein Problem und dürfen offen stehen — die landen ohnehin in
+der gebauten App.
+
+---
+
 ## 🔵 NEU (07.09.2026) — deine Liste, in der Reihenfolge, in der sie dich am wenigsten kostet
 
 Du hast an dem Abend zehn Design-Entscheidungen getroffen (Phase 19e steht fertig im

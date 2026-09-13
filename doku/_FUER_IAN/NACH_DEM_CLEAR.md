@@ -1,36 +1,114 @@
 # Was du nach dem Clear schreiben sollst
 
-## 🔴 ZUERST LESEN — was am 13.09. als Erstes dran ist
+## ✅ STAND 13.09.2026 — MAN KANN SICH MIT APPLE UND GOOGLE ANMELDEN
 
-> **Ians Aufgabe, fünf Minuten, und sie blockiert den nächsten Schritt:**
-> **Apple und Google in Supabase eintragen.** Alles ist vorbereitet, es fehlen nur
-> sieben Felder.
+> **Die zwei Knöpfe tun jetzt etwas.** Sie standen seit dem 09.09. auf dem
+> Anmelde-Bildschirm und waren tot; seit heute steckt Code dahinter.
 >
-> ```bash
-> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run provider
+> **Und das Beste zuerst: Es hat dich keinen einzigen Klick gekostet.** Im Plan stand,
+> dafür brauche es zwei Konten, fünf neue Bausteine und einen neuen Build. Nachgesehen:
+> Die Bausteine liegen seit Donnerstagnacht in der App, und deine sieben Felder in
+> Supabase sind seit derselben Nacht eingetragen. Gemessen, nicht geglaubt — der Server
+> sagt live `apple: true, google: true`.
+>
+> **Drei Funde, die du kennen solltest:**
+>
+> 1. **Eine Sicherheitszeile hätte „Anmelden mit Apple" gekippt — und zwar NUR auf
+>    deinem Handy.** Es gibt eine Zufallszahl, die man üblicherweise mitschickt, damit
+>    niemand eine fremde Anmeldung wiederverwenden kann. Beim Nachlesen im Quelltext
+>    von Apple UND von Supabase kam heraus: Die zwei erwarten sie in verschiedener
+>    Form, und **welche Form Supabase will, lässt sich vom Mac aus nicht herausfinden.**
+>    Hätte ich geraten, wäre die Fehlermeldung am iPhone „ungültiger Ausweis" gewesen —
+>    also genau die Meldung, bei der man tagelang beim falschen Schlüssel sucht. Jetzt
+>    geht es ohne diese Zahl (das ist auch der Weg, den Supabase selbst beschreibt), und
+>    bei Google schützt stattdessen ein Verfahren, das gar kein Raten braucht.
+> 2. **„Anmelden mit Apple" geht im Browser NIE — nicht „noch nicht".** Was bei Supabase
+>    für Apple eingetragen ist, ist die Kennung deiner *iPhone-App*. Für den Browser
+>    bräuchte Apple eine zweite, eigene Kennung, die es nicht gibt. Deshalb stehen die
+>    zwei Knöpfe im Browser grau da und sagen *„Geht nur in der App am Handy."* Das ist
+>    ehrlicher als ein Knopf, der beim Antippen scheitert.
+> 3. **Apple verrät deinen Namen genau EINMAL im Leben.** Beim allerersten „Anmelden
+>    mit Apple" schickt es Vor- und Nachnamen mit — ab dem zweiten Mal nie wieder, auch
+>    nicht nach dem Löschen und Neuinstallieren der App. Wer ihn in dieser Sekunde
+>    wegwirft, bekommt ihn nicht zurück. Jetzt steht er auf dem Bildschirm „Dein Konto"
+>    schon im Namensfeld — **du kannst ihn überschreiben.**
+>    ❓ *Das Vorausfüllen ist meine Auslegung. Sag Bescheid, wenn das Feld lieber leer
+>    bleiben soll.*
+>
+> **Am Prototyp im Internet ändert sich nichts** — Pixel für Pixel dasselbe Bild wie
+> vorher, nachgemessen.
+
+---
+
+## ❗ EINE SACHE WARTET AUF DICH — und sie ist eine Entscheidung, kein Klick
+
+> **Am iPhone bleibt man nach dem Schließen der App noch nicht angemeldet.** Daran fehlt
+> genau eine kleine Funktion, und die gehört dir: `zusammensetzen()` in
+> `simplysocial/src/features/auth/sitzungsspeicher.ts`. Drumherum ist alles fertig,
+> darüber steht ein langer Kommentar, der erklärt, worum es geht.
+>
+> **Worum es geht:** Deine Anmeldung wird auf dem Handy in ZWEI Teile gelegt (deine
+> Entscheidung 55) — der eine Teil, mit dem man dauerhaft ins Konto kommt, liegt im
+> iOS-Schlüsselbund; der größere Rest, der nach einer Stunde wertlos ist, in einer
+> gewöhnlichen Datei. Deine Funktion setzt die zwei beim Starten wieder zusammen.
+>
+> **Die Frage darin:** Was, wenn nur EIN Teil da ist? Du hast gesagt: dann gilt man als
+> abgemeldet. Genau das schreibst du hin — es sind etwa sechs Zeilen.
+>
+> **Prüfen kannst du dich selbst:** `npm run pruef-sitzung`. Heute steht dort
+> **22 Häkchen und 2 Kreuze**; die zwei Kreuze sind deine Funktion. Sind sie weg, stimmt
+> sie.
+
+---
+
+## 📅 UND ZWEI TERMINE, DIE LAUTLOS ABLAUFEN
+
+> - **12.03.2027** — dann läuft das Apple-Geheimnis in Supabase ab, und „Anmelden mit
+>   Apple" hört ohne Meldung auf zu funktionieren. Neu erzeugen mit
+>   `npm run provider-api`.
+> - 🔑 **Jetzt gleich:** Der Management-Token von Donnerstagnacht gehört **widerrufen**
+>   — er darf alles in deinem Supabase-Konto und wird nie wieder gebraucht.
+>   `https://supabase.com/dashboard/account/tokens` → Revoke.
+
+---
+
+## ✅ ERLEDIGT (13.09.2026 nachts) — APPLE UND GOOGLE STEHEN
+
+> **Hier stand seit dem 12.09.: „Ians Aufgabe, fünf Minuten, und sie blockiert den
+> nächsten Schritt."** Sie ist erledigt — und zwar nicht mit den sieben Feldern im
+> Dashboard, sondern über die **Management-API**. Gemessen an derselben Stelle, an
+> der am 13.09. um 00:30 noch `apple: false` stand:
+>
+> ```
+> apple: True   google: True   email: True      ← /auth/v1/settings, live
 > ```
 >
-> Das Skript führt Feld für Feld und legt jeden Wert in die Zwischenablage — Ian
-> drückt nur ⌘V und Enter. **Die Seite dazu:**
-> `https://supabase.com/dashboard/project/iwvakdbefwpshzhlhmgj/auth/providers`
+> **Warum der Weg gewechselt wurde:** Ian ist auf der Provider-Seite zweimal falsch
+> gelandet (*Authentication → Emails* statt *Sign In / Providers*). Das Skript
+> `provider-einrichten.sh` sagte in seinem eigenen Kopf, es gehe nicht anders —
+> *„dafür bräuchte es sonst einen Management-Token, und den gibt es hier nicht."*
+> Den gibt es in einer halben Minute, und damit klickt niemand mehr ein Feld.
 >
-> ⚠️ **Am 12.09. nachts ist er dort ZWEIMAL falsch gelandet** — bei *Authentication →
-> Emails → Templates* statt bei *Sign In / Providers*. Beide liegen unter
-> „Authentication", und die Mail-Vorlagen hat er vorher schon bearbeitet, also ist
-> das die Seite, die er kennt. **Woran man die richtige erkennt:** eine lange
-> alphabetische Liste von Anbietern (Apple, Azure, Bitbucket, … Google, …). Kommen
-> stattdessen *Confirm sign up / Invite user / Magic link*, ist es die falsche.
+> **Neu und beide in `package.json`:**
 >
-> **Gemessen wird danach so** — nicht glauben, nachsehen:
+> | Befehl | was er tut |
+> |---|---|
+> | `npm run mgmt-token` | nimmt den Token aus der Zwischenablage, **prüft Lesen UND Ändern**, legt ihn 600 ab, überschreibt die Ablage |
+> | `npm run provider-api` | erzeugt das Apple-Geheimnis aus der `.p8`, sieht nach wie die Felder heißen, trägt ein, **misst nach** |
 >
-> ```bash
-> URL=$(grep -o 'EXPO_PUBLIC_SUPABASE_URL=.*' .env | cut -d= -f2-)
-> KEY=$(grep -o 'EXPO_PUBLIC_SUPABASE_ANON_KEY=.*' .env | cut -d= -f2-)
-> curl -s "$URL/auth/v1/settings" -H "apikey: $KEY"
-> ```
+> **Was dabei belegt wurde:** beide Google-Client-IDs (Web **und** iOS) sind
+> eingetragen — ohne die iOS-ID weist Supabase die Anmeldung aus der iPhone-App ab,
+> und im Browser fiele das nie auf. Apples Client-ID ist die Bundle-ID
+> `at.simplysocial.app`, weil das native Anmelde-Token genau die als Empfänger trägt.
 >
-> Darin steht `"apple": true` und `"google": true`, sobald es sitzt. Am 12.09. um
-> 00:30 standen beide auf `false`, `email` auf `true`.
+> ⚠️ **Zwei Dinge daraus stehen in `OFFENE_SACHEN.md` ganz oben und warten auf Ian:**
+> der **12.03.2027** (dann läuft das Apple-Geheimnis ab und „Anmelden mit Apple" hört
+> lautlos auf) und der **Google-Secret**, der beim ersten Lauf versehentlich auf dem
+> Bildschirm stand.
+>
+> 🔑 **Und der Management-Token gehört widerrufen**, sobald das hier gelesen wird —
+> er darf alles im Supabase-Konto und wird nie wieder gebraucht:
+> `https://supabase.com/dashboard/account/tokens` → Revoke.
 
 ---
 

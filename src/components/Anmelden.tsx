@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SsButton, SsInput, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import {
+  type Anbieter,
+  AnbieterFehler,
+  anbieterFehlerText,
   ANMELDE_QUELLE,
   ANMELDE_WEGE,
   anmeldeFolgen,
@@ -12,7 +15,14 @@ import {
   CODE_MIN,
   codeFehlerText,
 } from '@/features/auth/anmeldung';
-import { anmeldenMitCode, attrappeAnmelden, codeSchicken, useSitzung } from '@/features/auth/hooks';
+import {
+  anmeldenMitAnbieter,
+  anmeldenMitCode,
+  attrappeAnmelden,
+  codeSchicken,
+  useSitzung,
+} from '@/features/auth/hooks';
+import { anbieterLage } from '@/lib/anmelde-anbieter';
 import { LOESCH_QUITTUNG } from '@/features/safety/konto';
 import { KontoFehler } from '@/features/auth/konten';
 import { categoryColors, colors, MAX_CONTENT_WIDTH, radius, spacing, status } from '@/theme';
@@ -62,7 +72,42 @@ export function Anmelden() {
   // passiert?", nicht auf „was tue ich jetzt?".
   const quittung =
     schritt === 'wahl' && sitzung.zustand === 'aus' && sitzung.grund === 'konto-geloescht';
-  const hinweise = [...new Set(ANMELDE_WEGE.map((weg) => anmeldeFolgen(weg).hinweis))].filter(
+
+  // Was dieses Gerät kann — EINMAL gelesen und nicht je Knopf. Die Antwort
+  // hängt an der Plattform und ändert sich innerhalb einer Sitzung nie; ein
+  // Aufruf je Zeile wäre dieselbe Verschwendung wie ein `useCurrentUserId()`
+  // je Listenzeile (Phase 20.3-a).
+  const lage = useMemo(() => anbieterLage(), []);
+
+  // Welcher Anbieter-Knopf gerade wartet, und was danebensteht. Beides liegt
+  // HIER und nicht in einem Knopf: Während Apple läuft, darf Google nicht auch
+  // noch losgehen — zwei offene Anmeldedialoge sind ein Zustand, aus dem man
+  // nur durch Neustart herauskommt.
+  const [laeuft, setLaeuft] = useState<Anbieter | null>(null);
+  const [fehler, setFehler] = useState<string | null>(null);
+
+  async function ueberAnbieter(weg: Anbieter) {
+    if (laeuft) return;
+    setLaeuft(weg);
+    setFehler(null);
+    try {
+      await anmeldenMitAnbieter(weg);
+      // Kein `setLaeuft(null)`: Der Torwächter tauscht diesen Bildschirm im
+      // selben Augenblick aus — ein `setState` danach ist eine Warnung ohne
+      // Adressaten. Dieselbe Stelle und derselbe Grund wie in `pruefen()`.
+    } catch (f) {
+      // Ein Abbruch ist keine Fehlermeldung wert: `anbieterFehlerText` gibt
+      // dafür `null`, und dann steht danach nichts da. Wer den Apple-Dialog
+      // wegwischt, hat entschieden — eine rote Zeile würde behaupten, es sei
+      // etwas schiefgegangen (Ians Entscheidung 43, dieselbe Familie).
+      const code = f instanceof AnbieterFehler ? f.code : 'unbekannt';
+      console.warn(String(f));
+      setFehler(anbieterFehlerText(code));
+      setLaeuft(null);
+    }
+  }
+
+  const hinweise = [...new Set(ANMELDE_WEGE.map((weg) => anmeldeFolgen(weg, lage).hinweis))].filter(
     Boolean,
   );
 
@@ -103,22 +148,34 @@ export function Anmelden() {
           <>
             <View style={styles.wege}>
               {ANMELDE_WEGE.map((weg) => {
-                const { titel, bereit } = anmeldeFolgen(weg);
+                const { titel, bereit } = anmeldeFolgen(weg, lage);
+                const wartet = laeuft === weg;
                 return (
                   <SsButton
                     key={weg}
-                    label={titel}
+                    label={wartet ? 'Einen Moment …' : titel}
                     block
                     size="lg"
-                    disabled={!bereit}
-                    // Nur der E-Mail-Weg tut seit 20.3-b1 etwas. Die anderen beiden
-                    // sind `disabled` und tragen den Satz aus `anmeldeFolgen()` —
-                    // ein Knopf, der nichts tut UND nichts sagt, sieht aus wie ein
-                    // Fehler (dieselbe Überlegung wie `schreibHuerdeText()`).
-                    onPress={weg === 'email-code' ? () => setSchritt('email') : undefined}
+                    // `laeuft` sperrt ALLE drei, nicht nur den laufenden: Während
+                    // der Anmeldedialog offen ist, darf daneben kein zweiter Weg
+                    // anfangen. Ein Knopf, der nicht kann, bleibt ohnehin gesperrt
+                    // und trägt den Satz aus `anmeldeFolgen()` — ein Knopf, der
+                    // nichts tut UND nichts sagt, sieht aus wie ein Fehler
+                    // (dieselbe Überlegung wie `schreibHuerdeText()`).
+                    disabled={!bereit || laeuft !== null}
+                    onPress={
+                      weg === 'email-code'
+                        ? () => setSchritt('email')
+                        : () => void ueberAnbieter(weg)
+                    }
                   />
                 );
               })}
+              {fehler ? (
+                <SsText variant="caption" center color={status.danger}>
+                  {fehler}
+                </SsText>
+              ) : null}
             </View>
             {/* Die Hinweise stehen nur bei der WAHL. In den beiden Schritten danach
                 wäre „Apple kommt als Nächstes" ein Satz über etwas, das gerade

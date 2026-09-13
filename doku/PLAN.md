@@ -4706,7 +4706,7 @@ sie ist schon umgesetzt:
 
 ---
 
-#### 20.3 — Anmelden · **20.3-a ✅ (09-09)** · **20.3-b1 ✅ (09-12)** · 20.3-b2 ⬜ *(Ians 27. Entscheidung)*
+#### 20.3 — Anmelden · **20.3-a ✅ (09-09)** · **20.3-b1 ✅ (09-12)** · **20.3-b2 ✅ (09-13)** *(Ians 27. Entscheidung)*
 
 **E-Mail-Code UND Google UND Apple.** Er hat gegen meine Empfehlung entschieden, und die
 Begründung dahinter zählt: Für 16-Jährige ist ein Tipp weniger Reibung als eine
@@ -4945,7 +4945,104 @@ eingerichtet?*) und wie „Simulator statt EAS-Build" in Phase 19. Gebaut ist di
 |---|---|
 | **20.3-a ✅** | Die NAHT. `CURRENT_USER_ID` gelöscht, Sitzung im Zustand, `useCurrentUserId()`/`getCurrentUserId()`, Torwächter, Anmelde-Bildschirm, Abmelden. Kein Konto, kein neuer Baustein, kein Build. |
 | **20.3-b1 ✅** | Der E-MAIL-CODE, gegen Ians echtes Supabase. `signInWithOtp`/`verifyOtp`, der dritte und vierte Sitzungszustand, der Bildschirm fürs erste Konto (Entscheidung 44). **Kein neuer Baustein, kein Build** — `persistSession: true` kostet keinen Pod, weil `auth-js` sich seinen Speicher selbst sucht. |
-| **20.3-b2 ⬜** | APPLE und GOOGLE. Am Server nachgemessen aus (`/auth/v1/settings`: `apple: false`, `google: false`). Dazu die vier nativen Bausteine in EINEM Build (`expo-apple-authentication`, `expo-auth-session` + `expo-web-browser`, `expo-secure-store`, `async-storage`) — erst damit überlebt die Sitzung auch am iPhone den Neustart. |
+| **20.3-b2 ✅** *(2026-09-13)* | APPLE und GOOGLE. Am Server nachgemessen **an**: `/auth/v1/settings` meldet `apple: true, google: true, email: true`. Beide Wege gehen über `signInWithIdToken()` — Apple nativ über `expo-apple-authentication`, Google über `expo-auth-session` mit Code-Weg und PKCE. **Kein neuer Baustein, kein neuer Build, kein neuer Handgriff von Ian.** `npm run pruef-anbieter`: **48 Häkchen, 0 Kreuze**, und er misst BEIDE Schalterstellungen. |
+
+### 20.3-b2 — Apple und Google (2026-09-13) ✅
+
+**Der Teil, der zwei Konten und einen Build gebraucht hätte — und keines von beidem
+gebraucht hat.** Die fünf Bausteine lagen seit dem 12.09. nachts im Binary, die
+Provider stehen seit derselben Nacht am Server. Geblieben ist der Code.
+
+Gemessen: `tsc` sauber · **81 Lint-Probleme wie vorher** · `npm run pruef-anbieter`
+**48 Häkchen, 0 Kreuze** · Prototyp auf 390 × 844 **Pixel für Pixel identisch**
+(`aq01` gegen `ap01`, 0 abweichende Pixel — und A gegen B ebenfalls 0, also ist das
+Messgerät selbst belegt) · 360 × 600 Überlauf **0** · null Konsolenfehler ·
+Web-Bündel **494.960 B gzip**.
+
+**Sechs Dinge sind wichtiger als die zwei Knöpfe:**
+
+**1. Der teuerste Fund ist ein NONCE, den es nicht gibt — und er hätte nur am Gerät
+zugeschlagen.** Der übliche Schutz gegen einen wiederverwendeten Ausweis ist ein
+Nonce, und zwei Zeilen fremder Quelltext machen ihn hier zur Falle:
+
+    expo-apple-authentication/ios/AppleAuthenticationRequest.swift:31
+        request.nonce = options.nonce          ← reicht durch, hasht NICHT
+    @supabase/auth-js/…/lib/types.d.ts:639
+        „If the ID token contains a `nonce` claim, then the HASH of this value
+         is compared to the value in the ID token."
+
+Wer denselben Rohwert an beide gibt, bekommt `invalid_id_token` — eine Absage, die
+nach einem kaputten Schlüssel aussieht, und man sucht tagelang am Key (dieselbe
+Familie wie das fehlende `usesAppleSignIn` in 20.3-b2-a). Richtig wäre: gehashter
+Wert an Apple, roher an Supabase. **Nur ist von hier aus nicht nachprüfbar, WIE
+Supabase hasht** — hex oder base64url —, und ein geratenes Format scheitert
+ausschließlich auf einem fremden iPhone. Ein Zustand, den man nur beim Nutzer sieht,
+ist keiner, den man annimmt (Ians Entscheidung 55, Möglichkeit A, in einer zweiten
+Gestalt). Also **kein Nonce bei Apple** — der Weg, den Supabase selbst dokumentiert —
+und bei Google stattdessen **PKCE**, das denselben Schutz ohne ungeprüftes Format
+gibt.
+
+**2. Apple im Browser ist nicht „noch nicht", sondern NIE — und das ist der Grund für
+ein Pflichtfeld.** Apples Client-ID in Supabase ist die Bundle-ID
+`at.simplysocial.app`, eine NATIVE Kennung; Apples Web-Anmeldung verlangt eine eigene
+*Services ID*. Ein Apple-Knopf im Browser wäre ein Knopf, der lügt. Deshalb hat
+`anmeldeFolgen()` seit heute einen zweiten Parameter (`AnbieterLage`), und der ist
+**Pflicht und nicht `?`**: Mit einem optionalen Feld wären alle Aufrufstellen stumm
+durchgelaufen. Dieselbe Technik wie `meinOrt` in `SortKontext` (19h-2) — so schreibt
+`tsc` die Arbeitsliste.
+
+**3. Der naheliegende Google-Weg hätte einen neuen Handgriff von Ian gekostet.**
+`signInWithOAuth()` wäre eine Funktion für beide Anbieter gewesen, gleich auf Web und
+Gerät. Er scheitert an einer Kleinigkeit mit Folgen: Der Rücksprung ginge DURCH
+Supabase zurück in die App (`simplysocial://…`), und diese Adresse muss in Supabases
+Erlaubnisliste stehen — ein Dashboard-Feld, und der Management-Token dafür ist
+widerrufen (richtig so). `signInWithIdToken()` braucht davon nichts: Der Ausweis
+entsteht zwischen GERÄT und Anbieter. **Kein Feld, kein Klick, kein Baustein.**
+
+**4. Eine reine Funktion lag in der falschen Datei, und das ist mein eigener Fehler
+gewesen.** `googleRueckweg()` rechnet aus der Client-ID Googles Rücksprung-Schema
+(`com.googleusercontent.apps.<id>:/oauthredirect`). Ich hatte sie zwischen die nativen
+Importe geschrieben — damit wäre sie **nur am Gerät prüfbar** gewesen, also genau der
+Fehler, vor dem `95_sitzung.sh` in seinem eigenen Kopf warnt. Und sie wiegt schwer:
+Ein falsches Zeichen ergibt `redirect_uri_mismatch`, in einem Browserfenster, auf
+einem fremden iPhone. Jetzt steht sie in der importfreien Regel-Datei, und drei der
+48 Häkchen messen sie — darunter der Fall, den man beim Schreiben übersieht: Der
+Suffix darf **nur am Ende** abgeschnitten werden.
+
+**5. Ein ABBRUCH ist kein Fehler, und das musste eine eigene Zusage werden.** Wer den
+Apple-Dialog wegwischt, hat entschieden. Eine rote Zeile danach behauptet, es sei
+etwas schiefgegangen — dieselbe Familie wie „Noch nichts los in deinem Feed" bei einem
+Netzausfall (Entscheidung 43). Deshalb gibt `anbieterFehlerText('abgebrochen')`
+**`null` zurück**, und `null` ist dort ein gültiges Ergebnis und kein Versäumnis. Die
+Gegenprobe ist gemessen: Mit einem Satz statt `null` wird der Prüfstand rot.
+
+**6. Apples Name kommt EINMAL im Leben, und wer ihn wegwirft, bekommt ihn nie
+zurück.** Steht wörtlich im Paket: *„you will only receive Apple Authentication
+Credentials the first time users sign into your app"* — ab der zweiten Anmeldung ist
+`fullName` `null`, auch nach dem Neuinstallieren. Er reist deshalb durch die Sitzung
+(`{ zustand: 'neu'; …; name?: string }`) bis ins Namensfeld des Bildschirms fürs erste
+Konto. ⚠️ **Das Vorausfüllen ist eine AUSLEGUNG von Entscheidung 44 und wartet auf
+Ians Urteil** (Abschnitt 6, hinter Punkt 44); die Korrektur wäre `useState('')`.
+
+**Und der Prüfstand misst beide Schalterstellungen — das ist der eigentliche Entwurf
+an `96_anbieter.sh`.** `ANMELDE_QUELLE` steht auf `'attrappe'`, und in dieser Stellung
+geben ALLE drei Wege `bereit: false` zurück; die ganze neue Regel wäre unsichtbar, und
+ein grüner Lauf hätte nichts gemessen (die 18d-Lehre). Also wird `anmeldung.ts`
+zweimal nach JS gebracht — einmal wie sie ist, einmal mit `'supabase'` an dieser einen
+Stelle, in einem Wegwerf-Ordner, **das Repo unberührt**. Ein Wächter belegt, dass die
+Ersetzung gegriffen hat; ohne ihn liefe der zweite Block still gegen dieselbe Fassung.
+Damit ist beantwortet, was am Tag des Umlegens passiert, ohne dass jemand umlegt.
+
+⚠️ **Was 20.3-b2 NICHT ist: am Gerät geprüft.** Ob Apple seinen Dialog zeigt, ob
+Googles Fenster aufgeht und ob Supabase die zwei Ausweise annimmt, kann kein Mac
+beantworten. Das gehört in denselben Durchgang wie der Bildwähler aus 20.6-b und die
+`BILD_QUALITAET`-Messung.
+
+⚠️ **Und der Schalter steht weiter auf `'attrappe'`.** Umlegen hieße heute einen
+Prototyp-Hinweis, der „Es gibt keinen Login" behauptet, während es drei gibt — **der
+Satz ist Ians** (harte Regel 22). Dazu käme, dass im Browser nur der E-Mail-Weg geht:
+Auf der öffentlichen Adresse stünden zwei gesperrte Knöpfe mit „Geht nur in der App am
+Handy", und eine App am Handy gibt es für Fremde noch nicht.
 
 **Acht Befunde:**
 

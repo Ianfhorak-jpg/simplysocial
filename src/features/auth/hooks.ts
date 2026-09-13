@@ -1,9 +1,12 @@
 import { LIEST_AUS_SUPABASE } from '@/lib/supabase';
 
-import type { AbmeldeGrund, Sitzung } from './anmeldung';
+import { appleAusweis, googleAusweis } from '@/lib/anmelde-anbieter';
+
+import type { AbmeldeGrund, Anbieter, Sitzung } from './anmeldung';
 import {
   codeAnfordern,
   codePruefen,
+  mitAusweisAnmelden,
   profilAnlegen,
   sitzungLesen,
   supabaseAbmelden,
@@ -198,7 +201,56 @@ export async function codeSchicken(email: string): Promise<void> {
  */
 export async function anmeldenMitCode(email: string, code: string): Promise<void> {
   await codePruefen(email, code);
-  const sitzung = await sitzungLesen();
+  await sitzungUebernehmen();
+}
+
+/**
+ * Der Weg über Apple oder Google — Phase 20.3-b2.
+ *
+ * Drei Schritte, und der mittlere ist der einzige, der Supabase kennt:
+ * Ausweis holen (`lib/anmelde-anbieter`, Plattform-Endung) → Ausweis einlösen
+ * (`konten.ts`) → nachsehen, ob ein Profil dahintersteht.
+ *
+ * ── Warum EIN `weg` als Argument und nicht zwei Funktionen ───────────────────
+ * Weil der Unterschied genau eine Zeile ist — welchen Ausweis man holt — und der
+ * Rest Wort für Wort derselbe. Zwei Funktionen wären zwei Gelegenheiten, eine der
+ * beiden beim nächsten Umbau zu vergessen. `Anbieter` ist dabei abgeleitet
+ * (`Exclude<AnmeldeWeg, 'email-code'>`): Ein `switch` ohne Rückfallzweig, also
+ * meldet `tsc` einen vierten Weg.
+ */
+export async function anmeldenMitAnbieter(weg: Anbieter): Promise<void> {
+  const ausweis = weg === 'apple' ? await appleAusweis() : await googleAusweis();
+  await mitAusweisAnmelden(weg, ausweis.idToken);
+  await sitzungUebernehmen(ausweis.name);
+}
+
+/**
+ * Was nach JEDEM erfolgreichen Anmelden passiert — an EINER Stelle.
+ *
+ * Vorher stand dieser Absatz in `anmeldenMitCode()`, und mit Apple und Google
+ * hätte er dreimal dagestanden. Der teure Teil daran ist nicht die Wiederholung,
+ * sondern die Zeile darunter: **Das Laden startet NUR bei `'an'`.** Ohne Profil
+ * hat es keinen Sinn — der eigene Feed hängt an der eigenen Zeile in `profiles`,
+ * und dreizehn Abfragen, die garantiert nichts finden, wären dreizehn Umläufe
+ * nach Irland für einen Bildschirm, den niemand sieht. Eine von drei Kopien ohne
+ * diese Bedingung hätte niemand bemerkt.
+ *
+ * ── `name` ist der Grund, warum die Funktion überhaupt ein Argument hat ──────
+ * Apple gibt den vollen Namen **nur bei der allerersten Freigabe** heraus (steht
+ * wörtlich in `AppleAuthentication.js`) — danach nie wieder, auch nicht nach dem
+ * Neuinstallieren. Er kommt aus dem Anmelde-Dialog und steht in KEINER Antwort
+ * von Supabase; wer ihn in diesem Augenblick nicht weiterreicht, wirft ihn
+ * endgültig weg. Also reist er in die Sitzung und von dort ins Namensfeld des
+ * Bildschirms fürs erste Konto.
+ *
+ * Er wird nur an `'neu'` gehängt. An `'an'` wäre er sinnlos: Dort gibt es längst
+ * ein Profil mit einem Namen, den ein Mensch selbst gewählt hat, und der zählt
+ * mehr als der aus dem Ausweis.
+ */
+async function sitzungUebernehmen(name?: string | null): Promise<void> {
+  const gelesen = await sitzungLesen();
+  const sitzung: Sitzung =
+    gelesen.zustand === 'neu' && name ? { ...gelesen, name } : gelesen;
   aendern(() => ({ sitzung }));
   if (sitzung.zustand === 'an') void datenHolen();
 }

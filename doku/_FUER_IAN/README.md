@@ -4,25 +4,33 @@
 
 ---
 
-## 📍 Wo es gerade steht (12.09.2026, nachts)
+## 📍 Wo es gerade steht (13.09.2026, nachts)
 
-**Die App hängt nicht mehr an erfundenen Daten.** Sie kann sich bei deinem Supabase
-anmelden, von dort lesen, dorthin schreiben — und seit gestern auch Profilbilder.
-Alles am echten Server nachgemessen, nicht behauptet.
+**Der Engpass ist weg.** Seit Wochen stand über allem „das geht erst, wenn Ian die
+Konten einrichtet". Heute Nacht ist der letzte Punkt gefallen: **Apple und Google
+sind in Supabase eingetragen** — gemessen an der Stelle, an der die App selbst
+nachsieht (`apple: true`, `google: true`).
 
 | | |
 |---|---|
-| **Anmelden** | per E-Mail-Code. Du hast dich am 12.09. selbst angemeldet — der erste echte Login. |
-| **Lesen & Schreiben** | alle 24 Aktionen gehen über deine Datenbank. |
-| **Profilbilder** | ✅ **im Browser**. Am Handy noch nicht — dafür fehlt ein Baustein. |
-| **Kontolöschen** | fast fertig. Eine Stelle wartet auf **acht Zeilen von dir**. |
+| **Anmelden per E-Mail-Code** | ✅ läuft. Du hast dich am 12.09. selbst angemeldet. |
+| **Lesen & Schreiben** | ✅ alle 24 Aktionen gehen über deine Datenbank. |
+| **Profilbilder** | ✅ im Browser **und am Handy** (seit 13.09.). |
+| **Kontolöschen** | ✅ der Knopf löscht wirklich. |
+| **Apple & Google** | 🟡 in Supabase **eingetragen** — aber die zwei Knöpfe in der App sind noch ohne Funktion. Das ist jetzt reine Programmierarbeit und braucht dich nicht. |
 
-**Was auf dich wartet:** Punkt 0 (Brevo, damit Anmelde-Mails ankommen) und Punkt 4
-(Google) in [OFFENE_SACHEN.md](OFFENE_SACHEN.md). Sonst nichts.
+**Was auf dich wartet:** nichts Dringendes mehr. Zwei Sachen stehen ganz oben in
+[OFFENE_SACHEN.md](OFFENE_SACHEN.md) — ein Datum im März 2027, an dem der
+Apple-Zugang abläuft, und die Frage, ob du ein Google-Geheimnis austauschen willst.
+Dazu deine acht Zeilen Code (Entscheidung 55), wenn du Lust hast.
 
-> ⚠️ **Der Schalter ist bewusst noch nicht umgelegt.** Der Prototyp im Netz zeigt
-> weiter die erfundenen Daten — Zeichen für Zeichen wie vorher, das ist nachgemessen.
-> Umlegen geht erst, wenn Anmelden mit Apple und Google dabei ist.
+> ⚠️ **Zwei Dinge, die man leicht verwechselt.**
+> **1.** Der Prototyp im Netz zeigt weiter erfundene Daten — Zeichen für Zeichen wie
+> vorher, nachgemessen. Der Schalter wird erst umgelegt, wenn Anmelden mit Apple und
+> Google wirklich funktioniert.
+> **2.** Auf deinem iPhone liegt der Stand vom **11.09.** Alles, was seitdem gebaut
+> wurde — Profilbilder, echtes Anmelden, Löschen —, hast du noch nicht in der Hand.
+> Der nächste Build nimmt alles auf einmal mit.
 
 **Das Neueste ausführlich:** [NACH_DEM_CLEAR.md](NACH_DEM_CLEAR.md).
 

@@ -42,44 +42,98 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > die zwei Liquid-Glass-Vorbilder geblieben, weil sie als laufende Vorlage dienen
 > und nicht als Beleg. Einzelheiten in `_belege/LIESMICH.md`.
 
-🔧 **Phase 20.3-b2 läuft (2026-09-12 nachts): die fünf Bausteine sind drin, der
-Code fehlt noch — und EINE Sache wartet auf Ian.**
+✅ **Phase 20.3-b2 ist FERTIG (2026-09-13): man kann sich mit APPLE und GOOGLE
+anmelden — und es hat weder einen neuen Baustein noch einen neuen Build noch einen
+weiteren Handgriff von Ian gekostet.**
+
+Hier stand seit dem 12.09.: *„die fünf Bausteine sind drin, der Code fehlt noch — und
+EINE Sache wartet auf Ian."* Beides ist erledigt. Die sieben Felder hat Ian in der
+Nacht auf den 13.09. über die **Management-API** eintragen lassen statt im Dashboard
+(`npm run mgmt-token` + `npm run provider-api`), und heute gemessen an derselben
+Stelle, an der am 13.09. um 00:30 noch `apple: false` stand:
+
+    apple: true   google: true   email: true      ← /auth/v1/settings, live
 
 **Alle Konten stehen:** Supabase · Apple (Key-ID `F2M3N3K9M5`) · Google (beide
 Clients) · Brevo. Sechs Zugänge in `~/.simplysocial/` (600), keiner im Repo.
-⚠️ **Offen ist nur, dass Apple und Google in Supabase EINGETRAGEN werden** — sieben
-Felder, `npm run provider` führt durch. **Gemessen am 13.09. um 00:30:
-`apple: false`, `google: false`** (aus `/auth/v1/settings`, live). Ian ist dabei
-zweimal auf *Authentication → Emails* statt auf *Sign In / Providers* gelandet; das
-steht als Warnung in `_FUER_IAN/NACH_DEM_CLEAR.md`.
+🔑 **Der Management-Token gehört widerrufen** — er darf alles im Supabase-Konto und
+wird nie wieder gebraucht (`https://supabase.com/dashboard/account/tokens` → Revoke).
 
-**Was gebaut ist:** `expo-apple-authentication` · `expo-auth-session` +
-`expo-web-browser` · `expo-secure-store` · `@react-native-async-storage/async-storage`
-· `expo-image-picker` (+ `expo-crypto`), Prebuild durch, 24 Treffer in
-`Podfile.lock`, `tsc` sauber. **Gemessen: keiner lag schon in `node_modules`** —
-anders als `expo-glass-effect` in 19e-2. Vier Dinge:
+Gemessen: `tsc` sauber · **81 Lint-Probleme wie vorher** · `npm run pruef-anbieter`
+**48 Häkchen, kein Kreuz** · Prototyp auf 390 × 844 **Pixel für Pixel identisch**
+(`aq01` gegen `ap01`, **0** abweichende Pixel) · 360 × 600 Überlauf **0** · null
+Konsolenfehler · Web-Bündel **494.960 B gzip**. Sechs Dinge:
 
-1. **`expo install` konnte die Plugins NICHT eintragen**, weil `app.config.js`
-   dynamisch ist (der baseUrl-Fix vom 07.09.). Von Hand nach `app.json`.
-2. **Der Erlaubnis-Text für die Fotomediathek fehlte.** Ohne ihn zeigt iOS beim
-   ersten Antippen einen **leeren Dialog**, und Apple lehnt das im Review ab.
-   Geprüft im GEBAUTEN `Info.plist`, nicht in `app.json` (Lehre 19h-2).
-3. **`ios.usesAppleSignIn` ist eine FÄHIGKEIT, kein Plugin.** Ohne die Zeile fehlt
-   das Entitlement, und der Knopf scheitert am Gerät mit einem Fehler, der nach
-   einem Schlüsselproblem aussieht — man sucht dann tagelang am Key.
-4. **Die Prebuild-Falle hat zum DRITTEN Mal zugeschlagen** (`DEVELOPMENT_TEAM`,
-   `CODE_SIGN_STYLE` weg). Diesmal lag vorher eine Sicherung bereit. Neu gelernt:
-   Die Zeilen müssen in **BEIDE** Konfigurationen — in nur einer versagt genau der
-   Build, den man gerade nicht baut, also merkt man es erst Tage später.
+1. **Der teuerste Fund ist ein NONCE, den es nicht gibt — und er hätte NUR am Gerät
+   zugeschlagen.** Zwei Zeilen fremder Quelltext: `expo-apple-authentication` macht in
+   `ios/AppleAuthenticationRequest.swift` Zeile 31 `request.nonce = options.nonce` —
+   es **reicht durch und hasht nicht**; `auth-js` sagt in `types.d.ts` Zeile 639, es
+   vergleiche *„the HASH of this value"*. Wer denselben Rohwert an beide gibt, bekommt
+   `invalid_id_token` — eine Absage, die nach einem kaputten Schlüssel aussieht, und
+   man sucht tagelang am Key. Richtig wäre gehashter Wert an Apple, roher an Supabase.
+   **Nur ist von hier aus nicht nachprüfbar, WIE Supabase hasht** (hex oder base64url),
+   und ein geratenes Format scheitert ausschließlich auf einem fremden iPhone. Also
+   **kein Nonce bei Apple** — der Weg, den Supabase selbst dokumentiert — und bei
+   Google stattdessen **PKCE**, derselbe Schutz ohne ungeprüftes Format. Harte
+   Regel 93.
+2. **Apple im Browser ist nicht „noch nicht", sondern NIE.** Apples Client-ID in
+   Supabase ist die Bundle-ID `at.simplysocial.app`, eine NATIVE Kennung; Apples
+   Web-Anmeldung verlangt eine eigene *Services ID*. Ein Apple-Knopf im Browser wäre
+   ein Knopf, der lügt. Deshalb hat `anmeldeFolgen()` seit heute einen zweiten
+   Parameter (`AnbieterLage`), **Pflicht und nicht `?`** — mit einem optionalen Feld
+   wären alle Aufrufstellen stumm durchgelaufen (dieselbe Technik wie `meinOrt` in
+   `SortKontext`, 19h-2). Harte Regel 94.
+3. **Der naheliegende Google-Weg hätte einen neuen Handgriff von Ian gekostet.**
+   `signInWithOAuth()` wäre eine Funktion für beide Anbieter gewesen — sein Rücksprung
+   ginge aber DURCH Supabase (`simplysocial://…`) und müsste in Supabases
+   Erlaubnisliste stehen. Das ist ein Dashboard-Feld, und der Management-Token dafür
+   ist widerrufen. `signInWithIdToken()` braucht davon nichts.
+4. **Eine reine Funktion lag in der falschen Datei, und das war mein eigener Fehler.**
+   `googleRueckweg()` rechnet aus der Client-ID Googles Rücksprung-Schema. Ich hatte
+   sie zwischen die nativen Importe geschrieben — damit wäre sie **nur am Gerät
+   prüfbar** gewesen, genau der Fehler, vor dem `95_sitzung.sh` in seinem eigenen Kopf
+   warnt. Ein falsches Zeichen ergibt `redirect_uri_mismatch`, in einem Browserfenster,
+   auf einem fremden iPhone. Jetzt in der importfreien Regel-Datei, drei Häkchen messen
+   sie.
+5. **Ein ABBRUCH ist kein Fehler und musste eine eigene Zusage werden.**
+   `anbieterFehlerText('abgebrochen')` gibt **`null`** zurück, und dann steht nichts auf
+   dem Bildschirm. Wer den Apple-Dialog wegwischt, hat entschieden; eine rote Zeile
+   behauptet, es sei etwas schiefgegangen — dieselbe Familie wie „Noch nichts los in
+   deinem Feed" bei einem Netzausfall.
+6. **Apples Name kommt EINMAL im Leben.** Steht wörtlich im Paket: *„you will only
+   receive Apple Authentication Credentials the first time users sign into your app"*
+   — ab der zweiten Anmeldung ist `fullName` `null`, auch nach dem Neuinstallieren. Er
+   reist durch die Sitzung (`{ zustand: 'neu'; …; name?: string }`) ins Namensfeld des
+   Bildschirms fürs erste Konto. ⚠️ **Das Vorausfüllen ist eine AUSLEGUNG von
+   Entscheidung 44 und wartet auf Ians Urteil**; die Korrektur wäre `useState('')`.
 
-⚠️ **Was 20.3-b2 NOCH NICHT ist: der Code.** Es gibt keine Funktion, die sich per
-Apple oder Google anmeldet; die zwei Knöpfe sind seit 20.3-a sichtbar und tot.
-`ANMELDE_QUELLE` steht weiter auf `'attrappe'`.
+**Und der Prüfstand misst BEIDE Schalterstellungen — das ist der Entwurf an
+`96_anbieter.sh`.** Mit `ANMELDE_QUELLE = 'attrappe'` geben alle drei Wege
+`bereit: false` zurück; die ganze neue Regel wäre unsichtbar, und ein grüner Lauf hätte
+nichts gemessen (die 18d-Lehre). Also wird `anmeldung.ts` zweimal nach JS gebracht,
+einmal mit `'supabase'` an dieser einen Stelle, in einem Wegwerf-Ordner — **das Repo
+unberührt**, und ein Wächter belegt, dass die Ersetzung gegriffen hat.
+
+⚠️ **Was 20.3-b2 NICHT ist: am Gerät geprüft.** Ob Apple seinen Dialog zeigt, ob
+Googles Fenster aufgeht und ob Supabase die zwei Ausweise annimmt, kann kein Mac
+beantworten. Gehört in denselben Durchgang wie der Bildwähler aus 20.6-b.
+
+⚠️ **Und der Schalter steht weiter auf `'attrappe'`.** Umlegen hieße heute einen
+Prototyp-Hinweis, der „Es gibt keinen Login" behauptet, während es drei gibt — **der
+Satz ist Ians** (harte Regel 22). Dazu stünden auf der öffentlichen Adresse zwei
+gesperrte Knöpfe mit „Geht nur in der App am Handy".
+
+🔧 **Daneben liegt die GETEILTE SITZUNG halb fertig — und eine Funktion wartet auf
+Ian.** `expo-secure-store` + `AsyncStorage` sind verdrahtet (Ians Entscheidung 55: der
+14-Byte-Dauerschlüssel in den Schlüsselbund, die 2459 Byte Ausweis in eine gewöhnliche
+Datei), `npm run pruef-sitzung` meldet **22 Häkchen und 2 Kreuze**. Die zwei Kreuze sind
+das `TODO(Ian)` an `zusammensetzen()` in `features/auth/sitzungsspeicher.ts` (PLAN.md,
+Abschnitt 6, Punkt 55). **Solange es steht, überlebt am iPhone keine Sitzung den
+Neustart** — die App wäre bei jedem Start abgemeldet.
 
 ⚠️ **Ein Testkonto liegt in `auth.users`:** `ian.fhorak+neuzugang@gmail.com`, am
-12.09. angelegt, um die *Confirm-signup*-Vorlage zu prüfen (Gmail ignoriert alles
-nach dem `+`, Supabase sieht einen Neuzugang). Nie eingelöst, also ohne Profil.
-**Gehört gelöscht.**
+12.09. angelegt, um die *Confirm-signup*-Vorlage zu prüfen. Nie eingelöst, also ohne
+Profil. **Gehört gelöscht.**
 
 ✅ **Phase 20.6-b ist fertig (2026-09-13): man kann am HANDY ein Bild aussuchen — und
 sie hing NICHT an Ians Supabase-Klick.** Hier stand, der Bildwähler gehöre „in denselben
@@ -2252,13 +2306,19 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    Pixel unverändert. **Dabei kam heraus, dass `storage.objects` an keinem
    Fremdschlüssel hängt und Supabase dort jedes SQL-`delete` verbietet** (harte
    Regeln 88 und 89).* ·
-   **Anmelden, Apple und Google (20.3-b2)** ← *hier geht es weiter — und es hängt an
-   zwei Konten (Apple-Sign-in-Schlüssel, Google) plus den nativen Bausteinen in
-   EINEM Build. **Seit 20.6 sind es FÜNF statt vier**: `expo-image-picker` kommt dazu,
-   sonst kann man am Handy kein Bild aussuchen (gemessen — es liegt nicht schon in
-   `node_modules`). **Davor liegt ein Zwei-Minuten-Klick von Ian**: Supabases Mail-Vorlage
-   von `{{ .ConfirmationURL }}` auf `{{ .Token }}`, sonst schickt die App einen Link
-   statt einer Zahl.* ·
+   ~~**Anmelden, Apple und Google (20.3-b2)**~~ ✅ *2026-09-13: beide Wege über
+   `signInWithIdToken()` — Apple nativ, Google über Code-Weg mit PKCE. **48 Häkchen**
+   in `npm run pruef-anbieter`, der beide Schalterstellungen misst. **Es hat weder
+   einen neuen Baustein noch einen neuen Build noch einen weiteren Klick von Ian
+   gekostet**: Die fünf Bausteine lagen seit dem 12.09. im Binary, die Provider stehen
+   seit derselben Nacht (`apple: true, google: true`, live gemessen). **Dabei kam
+   heraus, dass ein NONCE die Anmeldung am Gerät gekippt hätte** — Apple hasht nicht,
+   Supabase schon (harte Regeln 93 und 94).* ·
+   **Die geteilte Sitzung am Gerät** ← *hier geht es weiter — `expo-secure-store` +
+   `AsyncStorage` sind verdrahtet, `npm run pruef-sitzung` meldet 22 Häkchen und 2
+   Kreuze. **Die zwei Kreuze sind das `TODO(Ian)` an `zusammensetzen()`** (PLAN.md,
+   Abschnitt 6, Punkt 55); solange es steht, ist die App am iPhone bei jedem Start
+   abgemeldet.* ·
    ~~**Der Lösch-Screen wird angeschlossen (20.6-c)**~~ ✅ *2026-09-12: `/account-loeschen`
    ruft `konto_loeschen()` wirklich auf, Entscheidungen 52 und 53, **27 Häkchen am echten
    Server**. **Dabei kam heraus, dass jeder OHNE Profilbild einen Satz über einen Verlust
@@ -2745,10 +2805,17 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    prinzipiell nicht geht:** `npm run pruef-lesen` (29) · `npm run pruef-konto` (29) ·
    `npm run pruef-schreiben` (50, seit 20.5) · `npm run pruef-bilder` (**32**, seit 20.6 —
    **der einzige, der den Weg über das CDN messen kann**, siehe harte Regel 89).
-   **Und seit 20.6-b einer, der WEDER Server NOCH Datenbank braucht:**
-   `npm run pruef-bildwahl` (35) hält `lib/base64.ts` gegen echte Bilddateien — sie hat
-   keinen einzigen Import und läuft deshalb in blankem Node (dieselbe Bauart wie
-   `40_uebersetzung.sh`). **Wer dort Beispiele auswählt, liest zuerst harte Regel 92.**
+   **Und DREI, die WEDER Server NOCH Datenbank brauchen** — alle drei messen
+   importfreie Regel-Dateien in blankem Node (dieselbe Bauart wie `40_uebersetzung.sh`):
+   `npm run pruef-bildwahl` (35) hält `lib/base64.ts` gegen echte Bilddateien — **wer
+   dort Beispiele auswählt, liest zuerst harte Regel 92** · `npm run pruef-sitzung`
+   (**24**, solange `zusammensetzen()` auf dem `TODO(Ian)` steht: 22 + 2 Kreuze) ·
+   `npm run pruef-anbieter` (48, seit 20.3-b2). **Der letzte kann etwas, das die
+   anderen nicht können:** Er bringt `anmeldung.ts` ZWEIMAL nach JS — einmal wie sie
+   ist, einmal mit `ANMELDE_QUELLE = 'supabase'` in einem Wegwerf-Ordner — und misst
+   damit, was am Tag des Umlegens passiert, **ohne dass jemand den Schalter umlegt und
+   ohne dass das Repo angefasst wird.** Ohne das wäre er grün und ohne Aussage, weil
+   mit `'attrappe'` alle drei Wege `bereit: false` melden (die 18d-Lehre).
    Warum das nicht dasselbe ist, steht in
    harter Regel 85 — die Wegwerf-Datenbank war bis zum 2026-09-12 STRENGER als das
    Original. Jeder
@@ -3270,6 +3337,46 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    allen drei Restklassen angeschnitten; drei verschiedene eingebaute Fehler ergeben
    5, 13 und 3 Kreuze. **Allgemein: Erst benennen, woran der Fehler hängt, dann die
    Auswahl danach bauen — nicht nach der Größe, die man gerade zur Hand hat.**
+
+93. **Bei Apple und Google gibt es KEINEN Nonce — und das ist gemessen, nicht
+   vergessen.** *(Phase 20.3-b2, 2026-09-13.)* Zwei Zeilen fremder Quelltext machen
+   ihn zur Falle: `expo-apple-authentication/ios/AppleAuthenticationRequest.swift`
+   Zeile 31 macht `request.nonce = options.nonce` — es **reicht durch und hasht
+   nicht**; `@supabase/auth-js/…/lib/types.d.ts` Zeile 639 sagt, verglichen werde
+   *„the HASH of this value"*. Derselbe Rohwert an beide ergibt `invalid_id_token`,
+   also eine Absage, die nach einem kaputten Schlüssel aussieht — und man sucht
+   tagelang am Key (dieselbe Familie wie das fehlende `usesAppleSignIn`). Richtig
+   wäre der gehashte Wert an Apple und der rohe an Supabase. **Nur ist von hier aus
+   nicht nachprüfbar, WIE Supabase hasht** (hex oder base64url), und ein geratenes
+   Format scheitert ausschließlich auf einem fremden iPhone, mit einer Meldung, die
+   niemand liest. Ein Zustand, den man nur beim Nutzer sieht, ist keiner, den man
+   annimmt (Ians Entscheidung 55, Möglichkeit A, in zweiter Gestalt).
+   **Was stattdessen schützt:** Bei Apple der Weg selbst — der Ausweis geht
+   unmittelbar vom Betriebssystem zu Supabase, lebt zehn Minuten und trägt
+   `at.simplysocial.app` als Empfänger. Bei Google **PKCE**: Deshalb nimmt
+   `googleAusweis()` den Code-Weg und nicht `response_type=id_token`, der einen
+   Nonce ERZWINGT. **Wer hier einen Nonce ergänzt, prüft ihn am GERÄT nach und nicht
+   im Kopf** — und schreibt dazu, in welchem Format.
+94. **Ein Anmeldeweg ist eine Frage an das GERÄT, nicht an die Plattform — und die
+   Antwort ist ein Pflichtfeld.** *(Phase 20.3-b2.)* `anmeldeFolgen(weg, lage)` hat
+   seit 20.3-b2 einen zweiten Parameter, und der ist absichtlich **Pflicht und nicht
+   `?`**: Mit einem optionalen Feld wären alle Aufrufstellen stumm durchgelaufen, und
+   der Apple-Knopf stünde im Browser als klickbarer Knopf da (dieselbe Technik wie
+   `meinOrt` in `SortKontext`, 19h-2). Woher die Antwort kommt, steht in
+   `lib/anmelde-anbieter.ts` / `.native.ts` — Plattform-ENDUNG, und **gemessen ist,
+   dass sie hält**: Im Web-Bündel stehen `expo-apple-authentication`,
+   `expo-auth-session` und `expo-secure-store` **null Mal**, und die Google-Client-ID
+   aus `.env` ebenfalls nicht.
+   **Der Grund ist keine Bequemlichkeit, sondern eine Tatsache über die Konten:**
+   Apples Client-ID in Supabase ist die Bundle-ID `at.simplysocial.app` — eine native
+   Kennung. Apples Web-Anmeldung verlangt eine eigene *Services ID* samt Schlüssel.
+   „Apple im Browser" ist also nicht halb fertig, sondern **unmöglich**, und ein Knopf
+   dafür wäre ein Knopf, der lügt. **Wer den Weg im Browser öffnen will, legt zuerst
+   die Services ID an — nicht zuerst den Knopf.**
+   ⚠️ **Und ein ABBRUCH ist kein Fehler:** `anbieterFehlerText('abgebrochen')` gibt
+   `null` zurück, und dann steht nichts da. Wer den Apple-Dialog wegwischt, hat
+   entschieden; eine rote Zeile behauptet, es sei etwas schiefgegangen — dieselbe
+   Familie wie „Noch nichts los in deinem Feed" bei einem Netzausfall.
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
@@ -4205,6 +4312,60 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   widerlegen will, nimmt zwei Aufnahmen und vergleicht zuerst die miteinander** —
   sonst hält man das Messgerät für den Code. Dieselbe Familie wie der
   hängengebliebene Seitenzoom in 19b und das veraltete Metro-Bündel in 20.4.
+- **Länge ist keine Geheimhaltung.** (2026-09-13) `provider-api.py` maskierte seine
+  Ausgabe mit `len(v) > 40 → «gesetzt»`. Ians Google-Client-Secret ist **35 Zeichen**
+  lang und stand damit im Klartext auf dem Bildschirm. Das Bittere: Die Filterfunktion
+  dagegen (`ohne_geheimnisse()`) gab es in derselben Datei längst — sie wurde an der
+  einen Stelle nicht benutzt, an der es darauf ankam. **Ein vorhandener Schutz, der
+  an einer Stelle umgangen wird, ist schlimmer als keiner**, weil man ihn für
+  vorhanden hält. Maskiert wird nach IDENTITÄT (der Wert steht in einer Liste), nie
+  nach einer Heuristik. Dieselbe Familie wie „ein Wächter hinter einem anderen ist
+  ein ungeprüfter Wächter" (20.4-b).
+- **Ein Wächter, der eine ÄHNLICHE Frage stellt, ist kein Wächter.** (2026-09-13)
+  `mgmt-token.sh` prüfte einen Management-Token über `/v1/projects` — bequem, weil die
+  Antwort den Projekt-Verweis enthält. Falsch aus zwei Gründen, beide gemessen: Ein
+  fein zugeschnittener Token DARF dort mit 403 antworten und trotzdem können, wofür er
+  geholt wurde; und ein Token, der die Auth-Einstellungen nur LESEN darf, kam glatt
+  durch und scheiterte eine Minute später am PATCH — nachdem das Apple-Geheimnis schon
+  erzeugt war. **Geprüft wird genau der Aufruf, den man benutzt** — beim Schreiben mit
+  einem `PATCH`, der ein vorhandenes Feld auf seinen EIGENEN, aus der GET-Antwort
+  gelesenen Wert setzt. Ein geratener Wert wäre selbst eine Änderung.
+- **Ein `403` auf mehreren Endpunkten heißt NICHT „der Token kann gar nichts".**
+  (2026-09-13, eigene Fehldiagnose) Aus `403` auf Organisationen, Projekten UND
+  Auth-Config wurde geschlossen, es sei keine Berechtigung angekommen. Bei einem eng
+  zugeschnittenen Token sind die ersten beiden 403 **das erwartete Verhalten**;
+  aussagekräftig war nur der dritte. Zweite Lehre daneben: Supabases *scoped* Token
+  liefern an manchen Endpunkten 403, wo ein **klassischer** PAT durchgeht — ein
+  offener Fehler bei Supabase (Issue #50244), also keine Einstellungssache. **Wer
+  Berechtigungen diagnostiziert, fragt die Endpunkte einzeln und weiß vorher, welche
+  Antwort bei welchem normal ist.**
+- **Eine Einstellung ist angenommen, bevor sie gilt — und eine Prüfung, die zu früh
+  fragt, ist ein Fehlalarm.** (2026-09-13) Die Management-API bestätigte den PATCH mit
+  200, `/auth/v1/settings` meldete Sekunden später weiter `apple: false`. Nichts war
+  kaputt: GoTrue liest seine Konfiguration verzögert neu. Der Lauf meldete trotzdem
+  „✗ Nicht alles steht" — und ein Fehlalarm an dieser Stelle schickt jemanden zurück
+  ins Dashboard, um etwas zu reparieren, das steht. Jetzt wird in Stufen nachgefragt
+  (0 · 3 · 5 · 8 · 12 s) und erst danach geurteilt. **Und die Unterscheidung, die den
+  Fall löst, ist billig:** die KONFIGURATION gegen die AUSKUNFT halten — steht es
+  dort schon, hinkt nur die Auskunft.
+- **Apples `.p8` ist der Stempel, nicht das Dokument.** (2026-09-13) Was Apple „private
+  key" nennt, taugt als Geheimnis für Supabase nicht: Verlangt wird ein **JWT, das mit
+  dieser Datei unterschrieben ist** (`iss` = Team-ID, `kid` = Key-ID, `sub` =
+  Client-ID, `aud` = `https://appleid.apple.com`, ES256). Trägt man den Dateiinhalt
+  dort ein, meldet Apple beim ersten Anmeldeversuch `invalid_client` — was nach einer
+  falschen Client-ID klingt und keine ist. **Es läuft nach höchstens 180 Tagen ab**
+  (Apple weist längere Laufzeiten rundheraus ab), also ist es nichts, was man einmal
+  einträgt: `scripts/apple-secret.py` erzeugt es, prüft die eigene Unterschrift im
+  selben Lauf gegen den öffentlichen Teil und schreibt das Ablaufdatum hin.
+- **Supabase gibt eingetragene Geheimnisse als ABDRUCK zurück, nicht als Wert.**
+  (2026-09-13) `external_apple_secret` kam mit 64 Zeichen zurück, obwohl das
+  geschickte JWT 306 lang war. Wer daraus schließt, es sei abgeschnitten worden,
+  sucht einen Fehler, den es nicht gibt. **Mehrere Client-IDs landen dagegen
+  zusammengeführt in EINEM Feld:** `external_google_additional_client_ids` meldete
+  `None`, und `external_google_client_id` trug beide, mit Komma getrennt (72 + 1 + 72
+  = 145 Zeichen). Geprüft wird deshalb, ob die iOS-ID **im** Wert steht — nicht, ob
+  das Feld gefüllt ist, in das man sie geschrieben hat.
+
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

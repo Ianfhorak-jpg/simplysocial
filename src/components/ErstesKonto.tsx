@@ -36,11 +36,30 @@ import { colors, MAX_CONTENT_WIDTH, radius, spacing, status } from '@/theme';
  * offener Tastatur ist das hier höher als der Schirm, und ein Knopf, den man nicht
  * erreicht, ist kein Knopf (die Lehre vom 2026-09-03, `VERSTECKTER_FEHLER`).
  */
-export function ErstesKonto({ authId }: { authId: string }) {
+export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?: string }) {
   const insets = useSafeAreaInsets();
   const texte = kontoFolgen();
 
-  const [name, setName] = useState('');
+  /**
+   * Der Name kommt VORAUSGEFÜLLT, wenn Apple ihn mitgegeben hat — Phase 20.3-b2.
+   *
+   * ── Warum als Anfangswert und nicht per Effekt ──────────────────────────────
+   * `useState(vorschlag ?? '')` liest ihn genau einmal, beim ersten Zeichnen. Ein
+   * `useEffect`, der ihn nachträglich hineinschreibt, würde jemandem, der gerade
+   * tippt, das Feld unter den Fingern überschreiben — dieser Bildschirm steht
+   * seinerseits nur einmal je Mensch, also gibt es nichts nachzuziehen.
+   *
+   * ── Und warum er ÄNDERBAR bleibt ───────────────────────────────────────────
+   * Apple schickt den Namen aus dem Apple-Konto, und der ist oft der amtliche.
+   * In dieser App steht der Name unter jedem Post und in jedem Chat; wer dort
+   * anders heißen will, tippt darüber. Ein festgeschriebenes Feld wäre eine
+   * Antwort auf eine Frage, die Ians Entscheidung 44 ausdrücklich STELLT.
+   *
+   * ⚠️ **Das Vorausfüllen ist meine Auslegung und wartet auf Ians Urteil**
+   * (PLAN.md, Abschnitt 6, hinter Punkt 44). Verworfen wäre es mit einer Zeile:
+   * `useState('')`.
+   */
+  const [name, setName] = useState(vorschlag ?? '');
   const [bezirk, setBezirk] = useState('');
   const [jahrgang, setJahrgang] = useState('');
   const [gezeigt, setGezeigt] = useState(false);

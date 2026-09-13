@@ -23,10 +23,19 @@
  * `auth-js` sucht sich seinen Speicher selbst und fällt ohne `localStorage` STILL
  * auf einen Speicher im Arbeitsspeicher zurück. Es stürzt nicht ab, es warnt nicht.
  *
- * Also kostet `true` keinen Pod und keinen Build, und **der Preis ist halbiert statt
- * beseitigt**: Im Browser überlebt die Sitzung das Neuladen, am iPhone nicht. Die
- * zweite Hälfte gehört zu 20.3-b2, wo `expo-secure-store` und `AsyncStorage` mit den
- * anderen beiden Bausteinen in EINEN Build gehen. Einzelheiten stehen unten am Feld.
+ * Also kostet `true` keinen Pod und keinen Build, und der Preis war bis 20.3-b2
+ * **halbiert statt beseitigt**: Im Browser überlebte die Sitzung das Neuladen, am
+ * iPhone nicht.
+ *
+ * ── Seit 20.3-b2 ist die zweite Hälfte bezahlt: `storage` ─────────────────────
+ * Der Speicher kommt jetzt von aussen, aus `lib/sitzungsspeicher`. Auf Web gibt
+ * er `undefined` zurück (`auth-js` nimmt weiter `localStorage`), am Gerät den
+ * GETEILTEN Speicher aus Ians Entscheidung 55: der 14-Byte-Dauerschlüssel in den
+ * iOS-Schlüsselbund, die 2459 Byte Ausweis in eine gewöhnliche Datei. Warum
+ * geteilt und nicht alles in den Tresor, steht in
+ * `features/auth/sitzungsspeicher.ts` — kurz: ein Google-Konto ergibt gemessen
+ * 2473 Byte gegen eine Warngrenze von 2048, und das trifft genau die Nutzer, um
+ * die es geht, und nicht den, der selbst testet.
  *
  * ── Die Falle bei `EXPO_PUBLIC_*` ────────────────────────────────────────────
  * Metro ersetzt `process.env.EXPO_PUBLIC_FOO` **textuell beim Bauen**. Es gibt zur
@@ -49,6 +58,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 import { ANMELDE_QUELLE } from '@/features/auth/anmeldung';
+import { sitzungsSpeicher } from '@/lib/sitzungsspeicher';
 
 /**
  * Woher die Daten kommen — **ABGELEITET, nicht danebengeschrieben.**
@@ -127,12 +137,14 @@ export function client(): SupabaseClient {
       // `GoTrueClient.js`, nicht vermutet. Es stürzt also nicht ab und warnt
       // nicht, die Sitzung überlebt auf Native nur den Neustart nicht.
       //
-      // **Damit ist der Preis genau halbiert statt beseitigt**, und die zweite
-      // Hälfte gehört weiter zu 20.3-b2: Erst `expo-secure-store` bzw.
-      // `AsyncStorage` machen daraus auch am iPhone eine gespeicherte Sitzung.
-      // Genau das ist der Grund, warum die vier nativen Bausteine dort zusammen
-      // in EINEN Build gehen und nicht einzeln hier.
+      // **Seit 20.3-b2 ist der Preis ganz bezahlt**: `storage` eine Zeile
+      // tiefer schiebt am Gerät `expo-secure-store` und `AsyncStorage` unter.
       persistSession: true,
+      // Auf Web `undefined` — `auth-js` sucht sich `localStorage` selbst; am
+      // Gerät der geteilte Speicher (Ians Entscheidung 55). Die Weiche ist eine
+      // Plattform-ENDUNG und kein `Platform.OS`, weil beide Bausteine beim Laden
+      // nativ werden (harte Regel 61).
+      storage: sitzungsSpeicher(),
       autoRefreshToken: true,
       // Bleibt aus: Ians Anmeldeweg ist eine ZAHL, kein Link (`anmeldeFolgen`
       // sagt es wörtlich — „Wir schicken dir eine Zahl, kein Passwort"). `true`
