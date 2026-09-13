@@ -110,6 +110,15 @@ alle zwölf Zahlen grün, darunter die neue **„Moderation dicht: 0"**. Sieben 
 Ians Entscheidung 58. Auf `reports` steht weiterhin nur `select, insert` — **kein
 `update`**, also kann niemand in der App etwas abhaken.
 
+ℹ️ **Und hier steht ausnahmsweise KEIN Pixelvergleich — belegt statt weggelassen.** Die
+einzige Änderung an App-Code ist ein Glied eines TYPS (`'spaet-erledigt'` aus
+`MeldungsLage`), und Typen existieren zur Laufzeit nicht; `programmfehler.ts` hat null
+Code-Zeilen geändert, nur Kommentare. Gemessen dazu: Aus `meldung.ts` importiert die App
+allein `zusageText()` (in `nutzungsbedingungen.tsx`), und die ist unverändert. **Ein
+Bundle-Effekt ist damit ausgeschlossen, nicht bloß unwahrscheinlich** — wer hier
+trotzdem misst, misst Aufnahme-Rauschen (die 20.6-c-Lehre: zwei Aufnahmen derselben
+Seite weichen um vier Pixel voneinander ab).
+
 ✅ **Zwei Entscheidungen an dem Abend haben FAST KEIN Zeichen Code geändert, und sind
 trotzdem nicht dasselbe wie vorher.** Bei **73** (`meldungLage()`) stand A als
 Platzhalter und steht jetzt als Entscheidung — dabei fiel `'spaet-erledigt'` aus dem
