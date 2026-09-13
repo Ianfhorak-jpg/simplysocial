@@ -6399,25 +6399,94 @@ macht)? Eine Sperrliste ist mehr Arbeit und die ehrlichere Antwort auf Wiederhol
 
 ---
 
-### Phase 20.6-d — Der runde Zuschnitt ⬜ *(Ians Wunsch vom 13.09.)*
+### Phase 20.6-d — Der runde Zuschnitt ✅ *(gebaut am 2026-09-13 nachts)*
 
-> Sein Satz: *„bitte kreisförmiges Zuschneiden."* Mit `expo-image-picker` geht das auf
-> iOS **nicht** — steht in dessen eigenen Typen: `aspect` ist Android-only *„since on iOS
-> the crop rectangle is always a square"*, `shape: 'oval'` trägt `@platform android`.
+> Ians Satz vom 13.09.: *„bitte kreisförmiges Zuschneiden."* Mit `expo-image-picker`
+> geht das auf iOS **nicht** — steht in dessen eigenen Typen: `aspect` ist Android-only
+> *„since on iOS the crop rectangle is always a square"*, `shape: 'oval'` trägt
+> `@platform android`.
 
 ⚠️ **Der Denkfehler, den ein frischer Kopf hier macht — und er kostet einen Tag:** Ein
 rundes BILD gibt es nicht. JPEG hat keinen Alphakanal, und ein PNG mit runder Maske wäre
 größer und stünde in `BILD_TYPEN` als dritter Fall herum. **Was Ian will, ist nicht ein
-rundes Bild, sondern ein rundes FENSTER beim Aussuchen** — damit er sieht, was vom Foto im
-Kreis landet. `SsAvatar` zeichnet ohnehin rund; gespeichert wird weiter ein Quadrat.
+rundes Bild, sondern ein rundes FENSTER beim Aussuchen.** Gespeichert wird weiter ein
+Quadrat; `SsAvatar` zeichnet es rund. Das ist jetzt **harte Regel 106**.
 
-**Also: ein eigener Zuschneide-Bildschirm.** Bild schieben und zoomen hinter einer runden
-Maske, darunter „Übernehmen". Gebraucht wird `expo-image-manipulator` (**liegt NICHT in
-`node_modules`** — nachgemessen, also ein neuer Baustein und ein neuer Build), dazu
-`allowsEditing: false` im Wähler, weil unser Fenster das ersetzt.
+#### Was gebaut wurde
 
-**Reihenfolge:** Nach 20.9, und gern im selben Build wie etwas anderes Natives — ein Build
-für einen Schönheitsschritt allein ist der teuerste.
+| Datei | Was drinsteht |
+|---|---|
+| `features/social/zuschnitt.ts` | **Die Regel.** Wo das Quadrat im Foto liegt, wie weit man zoomen darf, in welche Richtung ein Finger schiebt. Importfrei, damit sie in blankem Node läuft. |
+| `components/BildZuschneiden.tsx` | **Das Fenster.** Ein `Modal`, ein `PanResponder`, ein Ring — und keine einzige eigene Rechnung. |
+| `lib/bild-zuschneiden.native.ts` | Führt aus, was die Regel sagt: `crop` → `resize` → JPEG, alles im nativen Baustein. |
+| `lib/bild-zuschneiden.ts` | Der Web-Zweig, absichtlich leer. Er WIRFT, statt still etwas zurückzugeben. |
+| `supabase/pruefen/91_zuschnitt.mjs/.sh` | `npm run pruef-zuschnitt` — **47 Häkchen, zwei Gegenproben.** |
+
+#### ✅ Ians Entscheidung 77: 512 Pixel
+
+Der größte Avatar der App ist `SIZES.lg.box` = **72 Punkte**, auf einem 3x-iPhone also
+**216 echte Pixel**. Alles darüber ist Vorrat. Gemessen an zwei echten Fotos (JPEG, q0,8):
+
+| Kante | Datei | 1 GB gratis reicht für |
+|---|---|---|
+| 256 px | ~8–10 KB | ~110.000 Bilder |
+| **512 px** *(gewählt)* | **~25–30 KB** | **~35.000** |
+| 1024 px | ~85–160 KB | ~8.000 |
+| ohne Verkleinern (~3000 px) | 0,7–1,5 MB | ~1.000 |
+
+**Verworfen: 256** — genau der heutige Bedarf und damit ohne jeden Vorrat; sobald ein
+Profilbild irgendwo größer als 72 Punkte steht, ist es unscharf, und die schon
+hochgeladenen Bilder lassen sich nicht nachschärfen. **Verworfen: ohne Verkleinern**
+(der bisherige Zustand) — dreißigmal so viel Speicher und Wartezeit für einen
+72-Punkte-Kreis. Ausgeschrieben in Abschnitt 6, Punkt 64.
+
+#### Entscheidung 54 wird ABGELÖST, nicht zurückgenommen
+
+Harte Regel 58 verlangt das ausdrücklich. Entscheidung 54 („zugeschnitten wird") gilt
+unverändert — ihr Grund war, dass `SsAvatar` ein Querformat MITTIG beschneidet. Nur das
+Werkzeug ist ein anderes: `allowsEditing` ist aus, `ZUSCHNITT_EIGENES_FENSTER = true` an.
+**Beide Konstanten stehen weiter da** — `ZUSCHNEIDEN` sagt OB, die neue sagt VON WEM.
+Wer die neue abstellt, bekommt Apples Dialog zurück, statt dass gar nichts zuschneidet.
+
+#### Drei Dinge, die man beim Lesen übersieht
+
+1. **Die Anzeige kommt aus demselben Rechteck wie der Schnitt.** `BildZuschneiden`
+   rechnet nicht aus `sicht` nach, sondern zeichnet aus `zuschnittRechteck()` — also aus
+   genau der Zahl, die gleich bei `crop` ankommt, gerundet und geklemmt und alles. Es
+   gibt keine zweite Rechnung, die davon abweichen könnte. **Was im Kreis steht, IST der
+   Ausschnitt.**
+2. **Die Maße kommen NICHT vom Bildwähler.** Dessen `asset.width` trägt in den eigenen
+   Typen den Satz *„Can be `0` if the system did not provide the width"*, und die
+   EXIF-Drehung kann Breite und Höhe vertauschen. Gelesen wird aus dem DEKODIERTEN Bild
+   (`bildQuelleLesen()`).
+3. **Aus einer Beobachtung wurde eine Anweisung.** Dass ein iPhone-Foto als JPEG
+   ankommt, stand bisher als Fund aus fremdem Quelltext in `bild.ts`. Jetzt steht es als
+   `format: SaveFormat.JPEG` bei uns. *Ein Mechanismus, den man im fremden Quelltext
+   findet, ist eine Hypothese* (FALLEN.md) — diese ist keine mehr. Nebenbei fallen die
+   ~4 MB base64-Text je Versuch weg: Es kommt gleich ein fertiger 512er an.
+
+#### Gemessen
+
+| | |
+|---|---|
+| `npm run pruef-zuschnitt` | **47 Häkchen, 0 Kreuze**, zwei Gegenproben fallen durch |
+| `bash supabase/pruefen/aufbauen.sh` | **171** — unverändert |
+| `npx tsc --noEmit` | sauber |
+| `expo lint` | **82** statt 81 — siehe unten, das ist ein Befund mit Namen |
+| Web-Bündel | `expo-image-manipulator` kommt **0-mal** vor, der Web-Zweig **2-mal** |
+
+⚠️ **Die 82 ist kein Rauschen.** Der eine neue Fehler ist `react-hooks/refs` in
+`BildZuschneiden.tsx` — derselbe, den `SsWienKarte.tsx:552` seit Phase 19b trägt, und
+aus demselben Grund: Ein `PanResponder` wird EINMAL gebaut und muss seine Werte aus
+einem Ref holen, sonst sieht er für immer den ersten Render. Die zwei anderen neuen
+Meldungen sind weg (Zustand vor Ref, Maße ins `masse`-Ref wie in `SsWienKarte`).
+
+#### Was NICHT geprüft ist
+
+**Ob sich Schieben und Kneifen am Handy richtig anfühlen** — das beantwortet kein Node
+und kein Browser. Und ob `ImageRef.width` die GEDREHTE Breite meldet: Der Prüfstein
+dafür ist ein **quer aufgenommenes Foto**. Sitzt der Kreis dort, wo er im Fenster stand,
+stimmt es. Beides steht in `HANDY_DURCHGANG.md`, Durchgang 4.
 
 ### Phase 21 — In den App Store ⬜
 
@@ -7980,6 +8049,52 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 > besser als eine Sackgasse, aber das ist meine Abwägung.** Die Korrektur ist ein Wort
 > (`PROGRAMM_KNOPF_LADEN`).
 
+### 64. Wie groß ein Profilbild hochgeladen wird ✅ *(Entscheidung 77)*
+
+> **Entschieden am 2026-09-13 nachts**, beim Bau von Phase 20.6-d. Seit dem runden
+> Fenster kann die App den Ausschnitt selbst rechnen — also ist zum ersten Mal
+> entscheidbar, wie groß er ankommt. Vorher gab es die Frage gar nicht: Es kam, was aus
+> Apples Dialog fiel.
+>
+> **Der Maßstab wurde zuerst gemessen, nicht geschätzt.** Der größte Avatar der App ist
+> `SIZES.lg.box` = 72 Punkte (`SsAvatar.tsx`), auf einem 3x-iPhone also **216 echte
+> Pixel**. Alles darüber ist Vorrat für später, kein heutiger Bedarf. Dateigrößen an
+> zwei echten Fotos, JPEG mit `BILD_QUALITAET` = 0,8:
+>
+> | | Datei | 1 GB gratis reicht für | |
+> |---|---|---|---|
+> | 256 px | ~8–10 KB | ~110.000 Bilder | genau der heutige Bedarf, **kein Vorrat** |
+> | **512 px** | **~25–30 KB** | **~35.000** | **gewählt** |
+> | 1024 px | ~85–160 KB | ~8.000 | scharf auf allem, auch auf einem iPad |
+> | ohne Verkleinern | 0,7–1,5 MB | ~1.000 | der bisherige Zustand |
+>
+> **Ians Wahl: 512** — das 2,4-fache des heutigen Bedarfs.
+>
+> **Warum nicht 256:** Es ist genau das, was heute gebraucht wird, und damit ohne jeden
+> Vorrat. Sobald ein Profilbild irgendwo größer als 72 Punkte gezeigt wird — ein
+> Profilkopf, ein Vollbild — ist es sichtbar unscharf. Und das ist nicht reparabel: Die
+> Originale liegen auf keinem Server, nachschärfen kann man nichts, und alle bis dahin
+> hochgeladenen Bilder blieben, wie sie sind. **Ein Fehler, den man nur durch „alle
+> bitten, ihr Bild neu zu setzen" behebt, ist teurer als 20 KB je Bild.**
+>
+> **Warum nicht ohne Verkleinern:** dreißigmal so viel Speicher und Wartezeit für einen
+> Kreis von 72 Punkten — und die Wartezeit fällt im Handynetz an, also dort, wo sie am
+> meisten stört.
+>
+> Steht als `ZUSCHNITT_KANTE = 512` in `features/social/zuschnitt.ts`, ein Wort (harte
+> Regel 88). **Und sie ist bewacht:** `91_zuschnitt.mjs` misst nicht nur die Zahl,
+> sondern auch die Begründung daneben — dass bei Vollzoom ein 12-MP-Foto immer noch
+> mindestens 512 px liefert, der höchste Zoom also keine Schärfe kostet. Ein Kommentar,
+> der eine Zusage begründet, veraltet sonst lautlos (FALLEN.md).
+>
+> ⚠️ **Es wird NIE hochgerechnet.** Ist der Ausschnitt kleiner als 512 (ein kleines Bild
+> aus WhatsApp, ein weit hineingezoomter Ausschnitt), bleibt er, wie er ist —
+> `zuschnittZielKante()`. Hochrechnen fügt keine Information hinzu, kostet Bytes und ist
+> schlimmer als nutzlos: Die Datei sähe danach aus wie ein scharfes Bild und wäre erst
+> auf dem Schirm unscharf. Die zweite Gegenprobe des Prüfstands bewacht genau diese
+> Zeile — sie sieht nämlich aus wie eine unnötige Verkomplizierung, die jemand
+> „vereinfacht".
+
 ### 54. Darf man am Handy den Ausschnitt wählen? ✅
 
 > **Entschieden am 2026-09-13.** Beim Bildwähler am Gerät (Phase 20.6-b) fragt iOS auf
@@ -8005,6 +8120,14 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 > **Der Nebeneffekt war nicht der Grund und zählt trotzdem:** Aus einem
 > 12-Megapixel-Foto wird nur der Ausschnitt hochgeladen. Das ist weniger Wartezeit und
 > weniger von der einen Gigabyte, die Supabase gratis gibt.
+
+> 🔄 **Nachtrag 2026-09-13 nachts: die AUSFÜHRUNG ist abgelöst, die Entscheidung nicht.**
+> Seit Phase 20.6-d schneidet nicht mehr Apples quadratischer Dialog zu, sondern unser
+> eigenes rundes Fenster (Entscheidung 77, Punkt 64). Ians Begründung oben gilt Wort für
+> Wort weiter — sie war ja nie eine über den Dialog, sondern eine über die Frage
+> „welcher Teil des Fotos bin ich". `ZUSCHNEIDEN = true` steht unverändert da und sagt
+> weiterhin OB; `ZUSCHNITT_EIGENES_FENSTER` in `features/social/zuschnitt.ts` sagt VON
+> WEM. Harte Regel 58: eine neue Entscheidung überschreibt nie still eine alte.
 
 36. ✅ **Wie die Anmeldung auf dem GERÄT liegt** (`src/features/auth/sitzungsspeicher.ts`)
     — **entschieden am 2026-09-13: GETEILT.** *(Ians fünfundfünfzigste Entscheidung,
@@ -8433,18 +8556,39 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > jeden Angemeldeten offen.** Die neun alten prüfen selbst und sind sicher;
 > `konto_entfernen` kann das nicht und hat deshalb ein `revoke` plus zwei Wächter.
 >
-> 🔜 **Was als Nächstes ansteht — drei Möglichkeiten, keine ist dringend:**
+> ✅ **Seither gebaut: Phase 20.6-d, der runde Zuschnitt** (2026-09-13 nachts) — Ians
+> Wunsch vom Nachmittag, dazu **Entscheidung 77: 512 px**. Ausgeschrieben in
+> Abschnitt 5b und in Abschnitt 6, Punkt 64. Neue harte Regel **106**, neuer Prüfstand
+> `npm run pruef-zuschnitt` (**47 Häkchen**, zwei Gegenproben). `expo-image-manipulator`
+> ist nachinstalliert und liegt im `Podfile.lock`; der Gerätebuild ist **gebaut, aber
+> noch nicht aufgespielt**.
 >
-> 1. **20.6-d, der runde Zuschnitt** (Ians Wunsch vom 13.09.). Braucht
->    `expo-image-manipulator`, also einen neuen Baustein und einen neuen Build —
->    **gern im selben Build wie etwas anderes Natives**, ein Build für einen
->    Schönheitsschritt allein ist der teuerste.
-> 2. **20.8, Aufräumen.** Steht in Abschnitt 5b unter „Was WEGFÄLLT".
-> 3. **Die öffentliche Adresse nachziehen.** `ANMELDE_QUELLE` steht auf
->    `'supabase'`, und `npm run deploy` ist dadurch gesperrt (harte Regel 96) — das
->    ist Absicht. **Ob die Webseite nachzieht, ist Ians getrennte Entscheidung** und
->    steht weiter aus.
+> 🔜 **Was als Nächstes ansteht:**
 >
+> 1. **Aufspielen und Gerätedurchgang 4.** `npm run geraet` (iPhone entsperrt) — jetzt
+>    ein Aufruf von Sekunden, der Build ist durch. Die eine Frage, die kein Mac
+>    beantwortet: **Sitzt der Kreis bei einem QUER aufgenommenen Foto richtig?** Dahinter
+>    steht die Annahme, dass `ImageRef.width` die gedrehte und nicht die gespeicherte
+>    Breite meldet — begründet, aber nicht gemessen.
+> 2. **Phase 21, App Store.** Der letzte inhaltliche Punkt ist der Rechtstext, und der
+>    wartet auf Ian. Was NICHT auf ihn wartet und vorgezogen werden kann: **21.3, das
+>    Datenschutz-Etikett** (die Liste ist aus dem Code messbar) und **21.5 Punkt 1, der
+>    Demo-Zugang** — ein Testkonto für den Reviewer, der am häufigsten vergessene Grund
+>    für eine Ablehnung.
+> 3. **Die öffentliche Adresse nachziehen.** `ANMELDE_QUELLE` steht auf `'supabase'`,
+>    `npm run deploy` ist dadurch gesperrt (harte Regel 96) — das ist Absicht. **Ob die
+>    Webseite nachzieht, ist Ians getrennte Entscheidung** und steht weiter aus.
+>
+> 🔴 **Ein Befund, der nichts mit 20.6-d zu tun hat und trotzdem jemandem gehört:**
+> `98_moderation.sh` schickt seinen Aufbau durch ein **unquoted Heredoc**, und in den
+> SQL-Kommentaren darin stehen Backticks. Die Shell führt sie als Befehle aus — der Lauf
+> ist voll von `05_daten.sql: command not found` und `syntax error: unexpected end of
+> file`. Das ist wörtlich die Falle *„Eine Prüfung mit Backticks in doppelten
+> Anführungszeichen misst NICHTS"*, nur eine Etage tiefer. **Der Prüfstand läuft
+> trotzdem grün** (31 Häkchen), weil die zerschossenen Zeilen nur Kommentare sind — aber
+> er ist einen Tippfehler davon entfernt, etwas anderes zu zerschießen. Behebung:
+> `<<'SQL'` statt `<<SQL`.
+
 > ⚠️ **Und die Landing-Page-Farbe wartet unverändert** (siehe direkt darunter) — sie
 > kostet keine Arbeitszeit und blockiert sonst still.
 

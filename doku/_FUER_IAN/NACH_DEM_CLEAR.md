@@ -1,5 +1,80 @@
 # Was du nach dem Clear schreiben sollst
 
+## 📋 STAND 13.09.2026, NACHTS — schreib einfach: „mit plan weitermachen"
+
+> **Dein rundes Zuschneiden ist gebaut.** Es fehlt nur noch das Aufspielen — siehe
+> ganz unten, das ist ein Befehl und dauert Sekunden.
+
+### Was passiert ist
+
+> 🎉 **Phase 20.6-d: der runde Zuschnitt.** Dein Satz vom Nachmittag war *„bitte
+> kreisförmiges Zuschneiden"*. Wenn du jetzt ein Profilbild aussuchst, kommt nicht
+> mehr Apples quadratischer Dialog, sondern ein eigener Bildschirm: Foto schieben und
+> kneifen, hinter einem runden Fenster, darunter „Übernehmen".
+>
+> ⚠️ **Eine Sache, die man leicht falsch versteht und die einen Tag kostet:**
+> **Ein rundes BILD gibt es nicht.** Das Dateiformat (JPEG) kann keine durchsichtigen
+> Ecken. Gespeichert wird deshalb weiter ein Quadrat — rund ist das Fenster, durch das
+> du schaust, und rund ist der Kreis, in dem die App es später zeigt. Das Ergebnis
+> sieht genauso aus, wie du es dir vorgestellt hast; nur die Bauart dahinter ist eine
+> andere.
+
+### ✅ Deine Entscheidung von heute Nacht — Nummer 77
+
+> **Wie groß ein Profilbild hochgeladen wird: 512 Pixel.**
+>
+> Der größte Kreis in der App ist 72 Punkte groß, also 216 echte Pixel auf deinem
+> iPhone. 512 ist damit das 2,4-fache — Vorrat für später, ohne Verschwendung.
+>
+> | | eine Datei | dein freies Gigabyte reicht für |
+> |---|---|---|
+> | vorher (gar nicht verkleinert) | 0,7–1,5 MB | ~1.000 Bilder |
+> | **jetzt: 512 px** | **~30 KB** | **~35.000 Bilder** |
+>
+> **Warum nicht kleiner (256):** Das wäre genau das, was heute gebraucht wird — und
+> keinen Pixel mehr. Wenn ein Profilbild irgendwann irgendwo größer gezeigt wird, wäre
+> es unscharf, und das ließe sich nicht mehr reparieren: Die Originale liegen nirgends,
+> und alle schon hochgeladenen Bilder blieben, wie sie sind.
+
+### 🔎 Was dabei nebenbei herauskam
+
+> 1. **Ein alter Verdacht ist zur Gewissheit geworden.** Dass ein iPhone-Foto bei uns
+>    als JPEG ankommt, hatte ich bisher aus fremdem Quelltext *gelesen*. Jetzt sagen
+>    wir es selbst an — dieselbe Wirkung, aber es kann sich nicht mehr unter uns
+>    ändern, ohne dass wir es merken.
+> 2. **Jeder Versuch schleppte 4 MB Text durch den Speicher.** Das ganze Foto wurde
+>    nach JavaScript gereicht und dort erst verkleinert. Jetzt macht das Handy den
+>    Zuschnitt fertig, bevor irgendetwas zurückkommt — etwa ein Fünfzigstel.
+> 3. **Ein Prüfstand von mir hatte unrecht, nicht der Code.** Ich hatte erwartet, dass
+>    der Ausschnitt nach dem Herauszoomen wieder in die Mitte springt. Tut er nicht —
+>    er bleibt, wo du ihn hingeschoben hast, und rutscht nur so weit zurück, bis er
+>    passt. Das ist besser. Die Prüfung fragt jetzt das Richtige.
+
+### 🟢 Das Einzige, was noch offen ist: aufspielen
+
+> Der Build ist **fertig gebaut** — die 20 Minuten sind durch, die brauchte ich nicht
+> von dir. Zum Aufspielen: **iPhone anstecken und entsperrt lassen**, dann
+>
+> ```
+> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run geraet
+> ```
+>
+> Danach steht in `HANDY_DURCHGANG.md` **Durchgang 4** — sechs Punkte. Der wichtigste
+> ist Nummer 5: **ein QUER aufgenommenes Foto.** Ob der Kreis dort richtig sitzt, kann
+> kein Mac beantworten, und es ist die einzige Stelle, an der ich raten musste.
+
+### ❓ Was unverändert auf dich wartet
+
+> | | |
+> |---|---|
+> | **Management-Token widerrufen** | `supabase.com/dashboard/account/tokens` → Revoke. Offen seit 13.09. |
+> | **Rechtstexte** | Der rote Kasten in den Nutzungsbedingungen — **der letzte inhaltliche Punkt vor dem App Store.** Nur mit einem Erwachsenen. |
+> | **Apple-Programm: auf wessen Namen?** | Offen seit 11.09., wird später teuer. |
+> | **Landing-Page-Farbe** | Offen seit 06.09. Drei Vorschauen in `landing-vorschau/`. |
+> | **Der Satz beim Kontolöschen** | `OFFENE_SACHEN.md` Punkt 10, eine Minute. |
+
+---
+
 ## 📋 STAND 13.09.2026, SPÄTABENDS — schreib einfach: „mit plan weitermachen"
 
 > Alles Nötige steht in Dateien. Der nächste Schritt ist entschieden und begründet;

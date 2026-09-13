@@ -72,9 +72,14 @@ Nutzungsbedingungen · Konto löschen — und sie werden gelesen UND beantwortet
 `npm run meldungen`, dazu `-- post-loeschen <id>` und `-- konto-loeschen <@name>`
 (beide zeigen ohne `--wirklich` nur eine Vorschau).
 
-**Fertige Phasen:** 0–19i · 20.1 bis 20.9. Zuletzt **20.8** (was wegfällt — und es fiel
-das Gegenteil weg: `statisch.ts` bleibt, gibt der öffentlichen Adresse ihre 47
-Direktlinks). Volltext aller Phasen in `_gedaechtnis/HISTORIE.md`.
+**Fertige Phasen:** 0–19i · 20.1 bis 20.9 · **20.6-d**. Zuletzt **20.6-d, der runde
+Zuschnitt** (Ians Wunsch vom 13.09.): ein eigener Zuschneide-Bildschirm mit rundem
+Fenster, dazu **Ians Entscheidung 77 — 512 px**. Volltext aller Phasen in
+`_gedaechtnis/HISTORIE.md`.
+
+⚠️ **Der Gerätebuild dazu ist gebaut, aber noch NICHT aufgespielt** — `npm run geraet`
+ist danach ein Aufruf von Sekunden (iPhone entsperrt lassen). Bis dahin trägt die App
+auf Ians iPhone den Stand vom 13.09. nachmittags **ohne** den runden Zuschnitt.
 
 ### Gemessene Zahlen (grün, Stand 20.9/20.8)
 
@@ -90,9 +95,12 @@ Direktlinks). Volltext aller Phasen in `_gedaechtnis/HISTORIE.md`.
 | `npm run pruef-moderation` | 31 | nichts |
 | `npm run pruef-sitzung` | 29 | nichts |
 | `npm run pruef-programmfehler` | 25 | nichts |
+| `npm run pruef-zuschnitt` | **47** | nichts |
 
-Dazu: `npx tsc --noEmit` sauber · `expo lint` **81 Probleme** (alle vorbestehend — eine
-andere Zahl ist ein Befund, kein Rauschen).
+Dazu: `npx tsc --noEmit` sauber · `expo lint` **82 Probleme** (81 vorbestehend plus
+**einer mit Namen**: `react-hooks/refs` in `BildZuschneiden.tsx` — derselbe, den
+`SsWienKarte.tsx:552` trägt, und aus demselben Grund, ein `PanResponder` muss seine
+Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 
 ---
 
@@ -100,10 +108,10 @@ andere Zahl ist ein Befund, kein Rauschen).
 
 1. **Phase 21 — App Store.** 13+ (Apples neue Altersfrage ist seit Sept. 2026 Pflicht,
    die Antwort ist ja), Rechtstexte, TestFlight, einreichen.
-2. **Phase 20.6-d — runder Zuschnitt.** Ians Wunsch. ⚠️ Kein rundes BILD (JPEG hat keinen
-   Alphakanal), sondern ein rundes FENSTER beim Aussuchen. Braucht
-   `expo-image-manipulator` (liegt NICHT in `node_modules`) und damit **einen neuen
-   Build** — gern im selben Build wie etwas anderes Natives.
+2. ~~**Phase 20.6-d — runder Zuschnitt.**~~ ✅ **fertig am 2026-09-13 nachts.** Offen ist
+   nur noch das Aufspielen und der Gerätedurchgang 4 (`HANDY_DURCHGANG.md`): Fühlt sich
+   Schieben und Kneifen richtig an, und sitzt der Kreis bei einem QUER aufgenommenen
+   Foto dort, wo er im Fenster stand?
 3. **19d-2** (MapKit JS im Browser) — fällt nach Phase 20 nebenbei ab.
 
 ## Was auf Ian wartet
@@ -250,6 +258,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 103. Ein PROGRAMMfehler hat einen Ort, und er steht in `lib/programmfehler.ts`
 104. In Postgres darf `PUBLIC` jede neue Funktion AUSFÜHREN — ein fehlender `grant` ist bei Funktionen KEINE Zusage
 105. `deploy.sh` hat VIER Wächter, und jeder deckt genau eine Frage — wer einen anfasst, liest zuerst, was er allein trägt
+106. Ein rundes BILD gibt es nicht — rund ist das FENSTER, und wo das Quadrat liegt, steht in `features/social/zuschnitt.ts`
 ## Fallen — Index
 
 > **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 166 Stück, jede schon
@@ -422,6 +431,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - `find … | grep -v …` unter `set -euo pipefail` tötet das Skript STUMM, sobald nichts übrig bleibt
 - Ein Export erzeugt ZWEI Sorten Dateien, und nur eine davon ist eine Adresse
 - Expo-Docs versioniert lesen
+- Ein `asset.width` vom Bildwähler darf `0` sein — und die EXIF-Drehung vertauscht Breite und Höhe
+- `geraet-bauen.sh` macht KEIN `prebuild` und KEIN `pod install` — ein neuer nativer Baustein kommt so nie im Xcode-Projekt an
+- React Native kennt keine Maske — ein Kreis entsteht aus einem RING der doppelten Kantenlänge
+- Eine Textsuche mit NULL Treffern beweist nichts — sie braucht die Gegenprobe im selben Ordner
+- Eine Prüf-Erwartung, die BEQUEMLICHKEIT verlangt, prüft nicht die Regel
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

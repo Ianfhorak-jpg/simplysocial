@@ -65,3 +65,51 @@ export type Bilddatei = {
    */
   vorschau: string;
 };
+
+/**
+ * Ein Foto, so wie es auf dem Gerät LIEGT — noch nicht zugeschnitten, noch nicht
+ * gelesen. Phase 20.6-d.
+ *
+ * ⚠️ **Die Maße kommen NICHT von `expo-image-picker`, und das ist ein Fund.** Sein
+ * `asset.width` trägt in den eigenen Typen den Satz *„Can be `0` if the system did
+ * not provide the width"* — eine Null, die durch `zuschnittRechteck()` als „Bild
+ * ohne Fläche" ginge. Dazu kommt die Drehung: Ein quer gehaltenes iPhone speichert
+ * das Foto aufrecht und merkt sich im EXIF, dass es gedreht gehört. Wer die Maße
+ * vor dem Dekodieren nimmt und den Zuschnitt danach rechnet, vertauscht bei solchen
+ * Fotos Breite und Höhe — und der Kreis sitzt woanders, als er aussah.
+ *
+ * Deshalb liest `bildQuelleLesen()` die Maße aus dem DEKODIERTEN Bild, also aus
+ * derselben Quelle, die gleich auch zuschneidet.
+ */
+export type Bildquelle = {
+  /** Die Datei auf dem Gerät. Bei einem iPhone-Foto ein HEIC — zum Anschauen richtig. */
+  uri: string;
+  /** Breite des dekodierten Bildes in echten Pixeln. */
+  breite: number;
+  /** Höhe des dekodierten Bildes in echten Pixeln. */
+  hoehe: number;
+};
+
+/**
+ * Was beim Aussuchen herauskommt — **und es sind zwei verschiedene Dinge, nicht
+ * eines mit einem Zusatzfeld.**
+ *
+ * ── Warum ein Union und kein `Bilddatei` mit optionalem `quelle` ────────────
+ * Weil die zwei Fälle nicht zusammen vorkommen und der Bildschirm mit ihnen
+ * VERSCHIEDENES tut: `'fertig'` geht direkt hochladen, `'zuschneiden'` öffnet erst
+ * das runde Fenster. Mit zwei optionalen Feldern wäre „beides gesetzt" und „keines
+ * gesetzt" je ein Zustand, den es nicht gibt und den trotzdem jemand prüfen müsste.
+ *
+ * Dieselbe Überlegung wie bei `Post.alter` (harte Regel 27) und `Post.visibility`
+ * (31): *„Ein Union-Typ ist ein Werkzeug, kein bloßer Typ"* — er macht einen
+ * vergessenen Fall zu einem Übersetzungsfehler statt zu einem leeren Bildschirm.
+ *
+ * ── Warum es auf Web KEIN `'zuschneiden'` gibt ─────────────────────────────
+ * Die öffentliche Adresse ist der Prototyp mit erfundenen Daten; dort wird nichts
+ * hochgeladen, was zugeschnitten werden müsste. Ein rundes Fenster auch dort wäre
+ * Arbeit für einen Bildschirm, den nach harter Regel 63 niemand braucht. Der Typ
+ * lässt es offen — kommt es doch, ist es kein Umbau, sondern ein zweiter Zweig.
+ */
+export type Bildwahl =
+  | { art: 'fertig'; datei: Bilddatei }
+  | { art: 'zuschneiden'; quelle: Bildquelle };

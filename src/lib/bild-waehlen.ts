@@ -1,5 +1,5 @@
 import { BILD_TYPEN } from '@/features/social/bild';
-import type { Bilddatei } from '@/lib/bild-waehlen-typen';
+import type { Bildwahl } from '@/lib/bild-waehlen-typen';
 
 /**
  * Ein Bild vom Gerät holen — **der Web-Zweig.**
@@ -24,7 +24,7 @@ import type { Bilddatei } from '@/lib/bild-waehlen-typen';
 /** Kann diese Plattform überhaupt ein Bild aussuchen? Siehe den nativen Zweig. */
 export const BILDWAHL_LAEUFT = true;
 
-export async function bildWaehlen(): Promise<Bilddatei | null> {
+export async function bildWaehlen(): Promise<Bildwahl | null> {
   return new Promise((fertig) => {
     const feld = document.createElement('input');
     feld.type = 'file';
@@ -41,17 +41,26 @@ export async function bildWaehlen(): Promise<Bilddatei | null> {
       // wäre `false`. Hier IST es ein `Blob`; die Zeile sieht deshalb überflüssig
       // aus und ist die Hälfte, die verhindert, dass die Prüfung drüben still
       // ausfällt.
+      // ── Seit Phase 20.6-d ist die Antwort ein UNION ───────────────────────
+      // `art: 'fertig'` heißt: Hier ist nichts mehr zuzuschneiden, das Bild kann
+      // so hochgeladen werden. Im Browser gibt es kein rundes Fenster (die
+      // Begründung steht am Typ `Bildwahl`), also ist es hier immer dieser Fall —
+      // und weil der Screen den anderen Fall trotzdem behandeln MUSS, kann er
+      // nicht vergessen werden.
       fertig(
         datei
           ? {
-              inhalt: datei,
-              typ: datei.type,
-              bytes: datei.size,
-              // Im Browser sind Inhalt und Vorschau dieselbe Sache — auf dem Gerät
-              // nicht (siehe `Bilddatei`). Die Adresse wird beim Hochladen an den
-              // echten Server nicht gebraucht und kostet dort nichts: Ein Object-URL
-              // ist ein Eintrag in einer Tabelle, kein Umkopieren der Bytes.
-              vorschau: URL.createObjectURL(datei),
+              art: 'fertig',
+              datei: {
+                inhalt: datei,
+                typ: datei.type,
+                bytes: datei.size,
+                // Im Browser sind Inhalt und Vorschau dieselbe Sache — auf dem
+                // Gerät nicht (siehe `Bilddatei`). Die Adresse wird beim Hochladen
+                // an den echten Server nicht gebraucht und kostet dort nichts: Ein
+                // Object-URL ist ein Eintrag in einer Tabelle, kein Umkopieren.
+                vorschau: URL.createObjectURL(datei),
+              },
             }
           : null,
       );

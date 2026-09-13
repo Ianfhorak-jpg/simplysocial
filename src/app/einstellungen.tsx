@@ -30,6 +30,10 @@ import {
   BildWahlFehler,
 } from '@/features/social/bild';
 import { BILDWAHL_LAEUFT, bildWaehlen } from '@/lib/bild-waehlen';
+import { bildZuschneiden } from '@/lib/bild-zuschneiden';
+import { BildZuschneiden } from '@/components/BildZuschneiden';
+import { istZuschneidbar, type ZuschnittSicht } from '@/features/social/zuschnitt';
+import type { Bilddatei, Bildquelle } from '@/lib/bild-waehlen-typen';
 import { WARTE_TEXT } from '@/data/schreiben';
 import { useWartetAuf } from '@/features/store';
 import { istWienerBezirk } from '@/lib/bezirk';
@@ -73,6 +77,17 @@ export default function EinstellungenScreen() {
   const [bildHuerde, setBildHuerde] = useState<string | null>(null);
   const bildLaeuft = useWartetAuf('profilbildSetzen', ich.id);
 
+  // ── Phase 20.6-d: das runde Fenster ──────────────────────────────────────
+  // Ein Zustand und kein eigener Screen unter `app/`: Das ausgesuchte Foto müsste
+  // sonst als Adressparameter durch `expo-router` reisen, und eine `Bildquelle`
+  // ist kein Text. Dazu die Falle vom 2026-09-09 — beim ABBAU eines Navigators
+  // schreibt `expo-router` die Adresse neu. Ein `Modal` hat beides nicht.
+  const [zuschnitt, setZuschnitt] = useState<Bildquelle | null>(null);
+  // Getrennt von `bildLaeuft`: Das Zuschneiden passiert VOR dem Hochladen und
+  // dauert selbst einen Moment (das Foto wird nativ dekodiert und neu kodiert).
+  // Ohne eigenen Zustand sähe der „Übernehmen"-Knopf in dieser Zeit untätig aus.
+  const [schneidet, setSchneidet] = useState(false);
+
   // ⚠️ **`void` und nicht `async` — das ist die Lehre vom 2026-09-13.**
   // Hier stand `onPress={bildAussuchen}` mit einer `async`-Funktion: React ruft sie,
   // bekommt ein Promise und wirft es weg. Wirft irgendetwas darin, ist das eine
@@ -109,10 +124,73 @@ export default function EinstellungenScreen() {
     // einem geglückten zweiten Anlauf immer noch der Satz vom ersten da.
     setBildHuerde(null);
 
+    // ── Seit 20.6-d gibt es ZWEI Antworten, und der Compiler zählt mit ───────
+    // Am Gerät kommt ein Foto zurück, das erst durchs runde Fenster muss; im
+    // Browser ein fertiges Bild (siehe `Bildwahl`). Ein vergessener Fall wäre hier
+    // ein Übersetzungsfehler und kein leerer Bildschirm — genau dafür ist das
+    // Union da (harte Regel 27).
+    if (wahl.art === 'zuschneiden') {
+      if (!istZuschneidbar(wahl.quelle)) {
+        // Ein Foto ohne Fläche. `zuschnittRechteck()` würde werfen, und der Wurf
+        // käme aus dem Render heraus — also aus einer Stelle, an der ihn niemand
+        // fängt. Gefragt wird deshalb HIER, bevor das Fenster aufgeht.
+        setBildHuerde(bildFehlerText('lesen'));
+        return;
+      }
+      setZuschnitt(wahl.quelle);
+      return;
+    }
+    await hochladen(wahl.datei);
+  }
+
+  /** `void` und nicht `async` — dieselbe Lehre wie oben bei `bildAussuchen`. */
+  function uebernehmen(sicht: ZuschnittSicht) {
+    void uebernehmenAsync(sicht);
+  }
+
+  async function uebernehmenAsync(sicht: ZuschnittSicht) {
+    const quelle = zuschnitt;
+    if (!quelle) return;
+
+    let datei;
+    setSchneidet(true);
+    try {
+      datei = await bildZuschneiden(quelle, sicht);
+    } catch (fehler) {
+      // Das Fenster geht ZU, und die Meldung steht darunter auf dem Screen. Der
+      // Grund ist der Rat selbst: `bildFehlerText('lesen')` sagt „nimm ein
+      // anderes" — das kann man im offenen Zuschneide-Fenster gar nicht.
+      setZuschnitt(null);
+      setBildHuerde(
+        fehler instanceof BildWahlFehler
+          ? bildFehlerText(fehler.stufe)
+          : bildFehlerText('umwandeln'),
+      );
+      return;
+    } finally {
+      // `finally` und nicht am Ende: Auf dem Erfolgsweg steht unten ein `await`,
+      // und bis das zurückkommt, stünde der Knopf sonst weiter auf „warte".
+      setSchneidet(false);
+    }
+
+    setZuschnitt(null);
+    await hochladen(datei);
+  }
+
+  /**
+   * Der gemeinsame letzte Abschnitt beider Wege.
+   *
+   * **Die Hürde wird hier gefragt und nicht zweimal:** Im Browser liegt eine
+   * fremde Datei vor (sie kann ein 20-MB-SVG sein), am Gerät ein eigener 512er
+   * JPEG. Der zweite Fall kommt nie an die Grenzen — die Prüfung steht trotzdem
+   * auf beiden Wegen, weil eine Prüfung, die nur der Theorie nach überflüssig ist,
+   * genau dann fehlt, wenn sich die Theorie ändert.
+   */
+  async function hochladen(datei: Bilddatei) {
     // Vor dem Hochladen fragen, nicht danach: Der Bucket weist dieselben Fälle ab
     // (gemessen in `80_bilder.mjs`), aber erst nach dem Warten und mit einer
     // Meldung auf Englisch. Die Regel steht in `bild.ts`, nicht hier.
-    const huerde = bildHuerdeText(wahl.typ, wahl.bytes);
+    const huerde = bildHuerdeText(datei.typ, datei.bytes);
     setBildHuerde(huerde);
     if (huerde) return;
 
@@ -123,17 +201,13 @@ export default function EinstellungenScreen() {
     // „Keine Verbindung" verkleidet. Die Absicht stimmt; nur gibt es in einem
     // Release-Build kein Lautes: Der Wurf lief durch dieses `await` hinaus und
     // verschwand. Genau so ist `zufallsName()` gestorben, ohne ein Zeichen.
-    //
-    // Also: Der Fall bleibt vom gewöhnlichen unterschieden (ein Programmfehler
-    // bekommt einen anderen Satz als eine abgewiesene Datei), aber er ist nicht
-    // mehr unsichtbar. **Ein Fehler, den nur ein Entwickler-Build zeigt, ist auf
-    // einem fremden Handy kein Fehler, sondern eine App, die nichts tut.**
     try {
-      await profilbildSetzen(wahl);
+      await profilbildSetzen(datei);
     } catch {
       setBildHuerde('Das Hochladen ist an etwas Unerwartetem gescheitert. Sag Ian Bescheid.');
     }
   }
+
   // Der Entwurf steht NEBEN dem gespeicherten Wert und nicht an seiner Stelle: Beim
   // Tippen durchläuft das Feld `1`, `12`, `122` — Zustände, die kein Bezirk sind. Wer
   // sie direkt ins Profil schreibt, sortiert den Feed zwischendurch ab einem Ort, den
@@ -196,6 +270,18 @@ export default function EinstellungenScreen() {
             )}
           </View>
         </View>
+
+        {/* Das runde Fenster liegt als `Modal` über allem und wird nur gezeichnet,
+            wenn wirklich ein Foto darauf wartet. Kein `visible`-Prop von außen:
+            Ein Fenster ohne Foto hätte keinen Zustand, den es zeigen könnte. */}
+        {zuschnitt ? (
+          <BildZuschneiden
+            quelle={zuschnitt}
+            wartet={schneidet}
+            onAbbrechen={() => setZuschnitt(null)}
+            onUebernehmen={uebernehmen}
+          />
+        ) : null}
 
         {bildHuerde ? (
           <SsText variant="caption" color={danger.base}>

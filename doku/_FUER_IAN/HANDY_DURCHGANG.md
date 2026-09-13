@@ -1,5 +1,43 @@
 # Der Durchgang am Handy
 
+## 🟢 DURCHGANG 4 — der runde Zuschnitt *(bereit, 13.09.2026 nachts)*
+
+> **Was neu ist:** Wenn du jetzt ein Profilbild aussuchst, kommt nicht mehr Apples
+> quadratischer Zuschneide-Dialog, sondern **ein eigener Bildschirm mit einem runden
+> Fenster.** Du schiebst und ziehst das Foto, bis im Kreis steht, was du willst.
+>
+> **Was ich vorher gemacht habe:** Der Build ist fertig gebaut (die 20 Minuten sind
+> durch). Zum Aufspielen: iPhone anstecken, **entsperrt lassen**, dann
+>
+> ```
+> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run geraet
+> ```
+>
+> Das dauert jetzt Sekunden, nicht Minuten.
+
+### Was du durchklickst
+
+| | Was du tust | Worauf es ankommt |
+|---|---|---|
+| 1 | Einstellungen → **Bild aussuchen** | Es kommt **kein** quadratischer Apple-Dialog mehr, sondern unser Bildschirm mit dem Kreis. |
+| 2 | Foto mit **einem Finger** schieben | Es zieht mit, und es lässt sich **nicht** aus dem Kreis herausziehen — es bleibt immer gefüllt, nie eine weiße Ecke. |
+| 3 | Mit **zwei Fingern** kneifen | Größer und kleiner. Ganz herausgezoomt ist das ganze Foto in seiner kurzen Seite drin, mehr geht nicht. |
+| 4 | **Übernehmen** | Das Bild, das danach im Kreis auf „Dein Bild" steht, ist genau das, was im Fenster stand. |
+| 5 | ⭐ **Ein QUER aufgenommenes Foto** (Handy seitlich gehalten) | **Die wichtigste Frage des Durchgangs.** Sitzt der Kreis dort, wo er im Fenster stand — oder ist er verdreht? Das kann kein Mac beantworten. |
+| 6 | Nochmal, aber **Abbrechen** statt Übernehmen | Es passiert nichts, und dein altes Bild steht unverändert da. |
+
+> 💬 **Sag mir, wie es sich ANFÜHLT.** Ob Schieben und Kneifen zäh sind oder flüssig,
+> kann ich am Mac nicht messen — und wenn es zäh ist, gibt es dafür einen anderen Weg
+> (`react-native-reanimated`, liegt schon in der App).
+
+### Nebenbei: dein Bild ist jetzt viel kleiner
+
+> Du hast **512 Pixel** gewählt (Entscheidung 77). Vorher gingen bei jedem Versuch rund
+> 1,5 MB durchs Netz, jetzt sind es **etwa 30 KB** — und das freie Gigabyte bei Supabase
+> reicht damit für ungefähr 35.000 Profilbilder statt für 1.000.
+
+---
+
 ## ✅ DURCHGANG 3 — das Backend am Handy *(GEMACHT am 13.09.2026, 7 von 7)*
 
 > **Alles hält.** Apple ✅ · Google ✅ · angemeldet über den Neustart ✅ · Profilbild ✅
