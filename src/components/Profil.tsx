@@ -10,6 +10,7 @@ import { useProfilPosts } from '@/features/posts/hooks';
 import { useCurrentUserId } from '@/features/auth/hooks';
 import { colors, radius, spacing } from '@/theme';
 import type { User } from '@/types/models';
+import { handleText } from '@/lib/handle';
 
 /**
  * Der Inhalt eines Profils — für das eigene (`(tabs)/profile.tsx`) und für fremde
@@ -85,7 +86,7 @@ export function Profil({
                 deshalb direkt geschrieben; nur ein Post darf ohne auskommen (harte
                 Regel 20). */}
             <SsText variant="caption" color={colors.inkSoft}>
-              {person.handle} · {person.district} Wien · {alterAmProfil(person.jahrgang)}
+              {handleText(person.handle)} · {person.district} Wien · {alterAmProfil(person.jahrgang)}
             </SsText>
           </View>
         </View>

@@ -29,6 +29,7 @@ import { startOderSeit, vergangen } from '@/lib/zeit';
 import { colors, radius, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
 import type { Group, Post, RequestStatus } from '@/types/models';
+import { handleText } from '@/lib/handle';
 
 /**
  * Der Anfragen-Tab: hier wird aus einem „Bin dabei" eine Verabredung.
@@ -280,7 +281,7 @@ function EingehendeZeile({ eintrag }: { eintrag: AnfrageEintrag }) {
         <View style={styles.personText}>
           <SsText variant="bodyStrong">{person.displayName}</SsText>
           <SsText variant="caption" color={colors.inkSoft}>
-            {person.handle} · {person.district} Wien · {vergangen(anfrage.createdAt)}
+            {handleText(person.handle)} · {person.district} Wien · {vergangen(anfrage.createdAt)}
           </SsText>
         </View>
       </Pressable>
@@ -434,7 +435,7 @@ function GruppenAnfrageZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) {
         <View style={styles.personText}>
           <SsText variant="bodyStrong">{person.displayName}</SsText>
           <SsText variant="caption" color={colors.inkSoft}>
-            {person.handle} · {person.district} Wien · {vergangen(anfrage.createdAt)}
+            {handleText(person.handle)} · {person.district} Wien · {vergangen(anfrage.createdAt)}
           </SsText>
         </View>
       </Pressable>

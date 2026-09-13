@@ -136,6 +136,18 @@ export function fehltNoch(frage: ErsteFrage, wert: string, jetzt: Date = new Dat
  *   3. **Es muss etwas übrig bleiben.** Wer sich „🙂" nennt, bekäme sonst einen
  *      leeren `handle`, und `not null` ist gegen `''` machtlos.
  */
+/**
+ * Der @-Name, wie ein Mensch ihn SIEHT, steht NICHT hier, sondern in
+ * `lib/handle.ts` (`handleText()`) — dieselbe Teilung wie `Post.district`
+ * gegenüber `ortText()` in `lib/bezirk.ts` (harte Regel 20): Was gespeichert
+ * wird, ist eine Regel; wie es dasteht, ist Anzeige.
+ *
+ * Der Grund ist hier aber zusätzlich ein handfester: Diese Datei importiert
+ * `@/config/alter` und `@/lib/bezirk` zur LAUFZEIT, läuft also nicht in blankem
+ * Node. `scripts/meldungen.sh` braucht `handleText()` genau dort — gemessen am
+ * 2026-09-13, der Aufruf starb mit `ERR_MODULE_NOT_FOUND: '@/config'`.
+ */
+
 export function handleVorschlag(name: string): string {
   const ersetzt = name
     .toLowerCase()

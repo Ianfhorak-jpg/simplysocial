@@ -30,6 +30,7 @@ import { useWartetAuf } from '@/features/store';
 import { istWienerBezirk } from '@/lib/bezirk';
 import { accent, colors, danger, radius, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
+import { handleText } from '@/lib/handle';
 
 /**
  * Einstellungen — der Ort für alles, was kein Screen für sich ist.
@@ -275,7 +276,7 @@ export default function EinstellungenScreen() {
                     {person.displayName}
                   </SsText>
                   <SsText variant="caption" color={colors.inkSoft}>
-                    {person.handle}
+                    {handleText(person.handle)}
                   </SsText>
                 </View>
                 {/* „Aufheben" und nicht „Entblocken": Das Wort steht neben einem Namen,

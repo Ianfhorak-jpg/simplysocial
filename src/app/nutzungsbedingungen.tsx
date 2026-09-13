@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { SsBack, SsCard, SsIconText, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { colors, danger, spacing } from '@/theme';
+import { zusageText } from '@/features/safety/meldung';
 
 /**
  * Nutzungsbedingungen.
@@ -65,10 +66,22 @@ export default function NutzungsbedingungenScreen() {
           titel="Triff dich zuerst öffentlich"
           text="Beim ersten Mal an einem Ort, an dem andere Leute sind. Sag jemandem, wo du hingehst. Das ist keine Vorschrift, sondern der Rat, den dir jeder geben würde."
         />
+        {/*
+          Der zweite Satz kommt aus `features/safety/meldung.ts` und ist NICHT hier
+          getippt — Ians Entscheidung 59 (24 h bei Gefahr und Belästigung, 48 h
+          sonst). Er steht damit an genau einer Stelle, aus der auch der Befehl am
+          Mac (`npm run meldungen`) seine Fristen nimmt.
+
+          **Der Grund ist ein Fehler, den dieses Projekt schon einmal gemacht hat:**
+          Der Lösch-Screen versprach seit Phase 7 im JSX das GEGENTEIL dessen, was
+          Ians Entscheidung 39 später festlegte (PLAN.md 20.1/20.2, Punkt 7) — ein
+          getippter Satz wandert nicht mit. Hier wiegt das schwerer als dort: Diese
+          Zusage liest ein Apple-Reviewer, und sie ist eine Zusage in Ians Namen.
+        */}
         <Regel
           nr="6"
           titel="Melden statt streiten"
-          text="Wenn jemand sich danebenbenimmt: melden und blockieren. Beides erfährt die andere Person nicht."
+          text={`Wenn jemand sich danebenbenimmt: melden und blockieren. Beides erfährt die andere Person nicht. ${zusageText()}`}
         />
       </View>
 

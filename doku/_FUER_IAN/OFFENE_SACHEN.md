@@ -3,6 +3,41 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
+> 🆕 **Nachmittag: die Meldungen haben jetzt einen Leser.** Wenn jemand einen Post
+> oder eine Person meldet, lag das bis heute in der Datenbank und **niemand konnte es
+> sehen** — auch du nicht. Apple verlangt das. Jetzt gibt es einen Befehl:
+>
+> ```bash
+> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run meldungen
+> ```
+>
+> Er zeigt dir, was gemeldet wurde, von wem, warum, und wie lange es schon liegt —
+> das Dringendste oben. Abhaken geht mit
+> `npm run meldungen -- erledigt <id> "was du gemacht hast"`.
+>
+> **Einmalig musst du ihm sagen, wer du bist** (er schreibt sonst nicht auf, wer eine
+> Meldung bearbeitet hat):
+>
+> ```bash
+> printf '%s' 'ian' > ~/.simplysocial/ich && chmod 600 ~/.simplysocial/ich
+> ```
+>
+> ⚠️ **Was noch fehlt und was du wissen sollst:** Du kannst Meldungen SEHEN, aber noch
+> nichts LÖSCHEN — einen fremden Post entfernen oder jemanden rauswerfen geht heute
+> nirgends, auch nicht von Hand. Das ist auch eine Apple-Pflicht und kommt als
+> Nächstes in denselben Befehl.
+>
+> ❓ **Und eine Frage an dich, fünf Zeilen Code, du schreibst sie selbst** — steht als
+> `TODO(Ian)` in `simplysocial/src/features/safety/meldung.ts`: Eine Meldung wegen
+> „Gefahr" kommt Freitagabend, niemand sieht sie, Montag nach 62 Stunden wird sie
+> bearbeitet. **Soll in der Liste danach „erledigt" stehen — oder „erledigt, zu
+> spät"?** Beim einzelnen Eintrag steht die Verspätung schon da; die Frage ist, ob sie
+> auch unten mitgezählt wird. Zählt man sie nicht, kann der Befehl nie sagen, wie oft
+> wir unsere eigene Zusage gebrochen haben — und genau das will Apple wissen. Zählt
+> man sie, steht eine abgehakte Sache dauerhaft als Vorwurf da. **Blockiert nichts.**
+>
+> ---
+>
 > 📱 **Stand: 13.09.2026, Mittag — es wartet EINE Sache auf dich, und sie braucht
 > nur dein iPhone.**
 >

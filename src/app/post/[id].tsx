@@ -23,6 +23,7 @@ import { ortText } from '@/lib/bezirk';
 import { startOderSeit, vergangen } from '@/lib/zeit';
 import { categoryColors, colors, radius, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
+import { handleText } from '@/lib/handle';
 
 /**
  * Welche Adressen beim Bauen entstehen — siehe `features/statisch.ts`.
@@ -142,7 +143,7 @@ export default function PostDetailScreen() {
           <View style={styles.personText}>
             <SsText variant="bodyStrong">{author.displayName}</SsText>
             <SsText variant="caption" color={colors.inkSoft}>
-              {author.handle} · {author.district} Wien
+              {handleText(author.handle)} · {author.district} Wien
             </SsText>
           </View>
           <SsIcon name="chevronRechts" size={18} color={colors.inkSoft} />

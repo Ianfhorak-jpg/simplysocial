@@ -5950,12 +5950,124 @@ Anmelde-Bildschirm ist nie am Stück gelaufen; gemessen sind seine Teile
 Prüfstand. Das gehört in denselben Durchgang wie das Umlegen des Schalters — **und es
 ist der einzige Weg der App, den man nur EINMAL gehen kann.**
 
-#### 20.7 — Die Meldungen bekommen einen Leser ⬜
+#### 20.7 — Die Meldungen bekommen einen Leser ✅ *(2026-09-13)*
 
-`Report` wird seit Phase 7 gespeichert und von niemandem gelesen. Für Apple 1.2 ist das
-die letzte offene Zusage: **ein Mensch, der Meldungen sieht und handeln kann.** Es
-braucht keine Oberfläche — die Supabase-Tabellenansicht genügt für vier Gründer. Es
-braucht eine **Zusage, wie schnell**, und die gehört in die Nutzungsbedingungen.
+`Report` wurde seit Phase 7 gespeichert und von niemandem gelesen — für Apple 1.2 die
+letzte offene Zusage. Jetzt gibt es **`npm run meldungen`**: Ians Entscheidungen **58**
+(ein Befehl am Mac) und **59** (24 h bei Gefahr und Belästigung, 48 h sonst), eine neue
+Migration (`0009_meldungen.sql`), eine neue Regel-Datei
+(`src/features/safety/meldung.ts`) und eine neue `lib/handle.ts`.
+
+Gemessen: `tsc` sauber · **81 Lint-Probleme wie vorher** · lokal weiter **136 Häkchen,
+0 Kreuze** · `pruef-sitzung` **29** · `pruef-bildwahl` **35** · `pruef-anbieter` **48** ·
+Prototyp auf 390 × 844 und 360 × 600 ohne Überlauf und ohne abgeschnittenen Text ·
+Deploy-Wächter bricht weiter ab · Schalter nachweislich zurück auf `'supabase'`
+(`git diff` leer).
+
+**Der Plan sagte: „Es braucht keine Oberfläche — die Supabase-Tabellenansicht genügt für
+vier Gründer." Das war falsch, und zwar messbar.** Dort steht
+`gefahr · 8f3a-… · 11e2-…`; welcher Post gemeint ist und wer gemeldet hat, sieht man
+nicht, und handeln kann man nur mit SQL von Hand. Sieben Dinge sind wichtiger als das
+Werkzeug:
+
+1. **Der teuerste Fund macht ein Konto UNLÖSCHBAR — und die Spalte, die ihn verursacht,
+   gibt es NUR wegen Apple 1.2.** `reports.erledigt_von` verwies auf `profiles (id)`
+   **ohne `on delete`-Klausel**, also `NO ACTION`. Die Schwesterspalte drei Zeilen
+   darüber trägt seit dem 2026-09-06 `on delete set null`. Gemessen am Katalog
+   (`confdeltype`: `a` gegen `n`) und an der Wirkung:
+
+       insert into reports (…, erledigt_von) values (…, ians-uuid);
+       delete from auth.users where id = ians-uuid;
+       → FEHLER: … verletzt Fremdschlüssel-Constraint »reports_erledigt_von_fkey«
+
+   Und `delete from auth.users where id = ich` ist die **letzte Zeile von
+   `konto_loeschen()`**. Wer je eine Meldung bearbeitet, könnte sein Konto nie wieder
+   löschen — **also hätte die Moderations-Spalte die Lösch-Pflicht gebrochen, beides
+   Apple 1.2.** Dieselbe Familie wie `groups_creator_id_fkey` (Entscheidung 39), und der
+   Kommentar in 0001 warnt sieben Zeilen darüber wörtlich davor: *„scheitert erst, wenn
+   wirklich jemand sein Konto löscht — also genau an dem Tag, an dem es niemand mehr in
+   Ruhe nachsehen kann."* **Die eine Spalte hat die Lehre bekommen, die andere nicht.**
+
+2. **Der zweite Fund gehört gar nicht zu 20.7 und hing an der App, die auf Ians iPhone
+   wartet: das `@` im @-Namen.** Drei Quellen, zwei Schreibweisen —
+
+   | Quelle | `handle` |
+   |---|---|
+   | `mock.ts` (Prototyp) | `'@ian'` |
+   | `05_daten.sql` (lokale Prüfdaten) | `'@ian'` |
+   | `handleVorschlag()`, was `profilAnlegen()` wirklich schreibt | `'ian'` |
+
+   **Zehn Screens zeichneten `{person.handle}` roh**, keiner setzte ein `@`. Mit
+   `mock.ts` sah das vier Wochen lang richtig aus; mit `ANMELDE_QUELLE = 'supabase'` —
+   der Stellung, in der die App für den Gerätedurchgang gebaut ist — hätte **jeder
+   @-Name sein `@` verloren**: Profil, Chat-Kopf, Post-Detail, Anfragen-Tab,
+   Löschbestätigung. `tsc` schweigt, beides ist `string`. Aufgefallen ist es, weil das
+   Werkzeug `@@tobi` ausgab.
+
+   Behoben wie `ortText()` (harte Regel 20): **`handleText()` in `lib/handle.ts`**, das
+   `@` aus den Daten heraus, drei Häkchen in `60_konto.mjs`, die die zwei Hälften
+   **gegeneinander** halten statt je gegen einen festen Wert — das Auseinanderlaufen war
+   ja der Fehler. Und ein `@` in einer `unique`-Spalte ist ohnehin Inhalt, der keiner
+   ist: `'@ian'` und `'ian'` wären zwei verschiedene Namen.
+
+3. **`einspielen.sh` hörte bei 0007 auf — 0008 fehlte seit dem Vortag.** Wer die
+   Datenbank frisch aufgebaut hätte, bekäme keinen `avatars`-Bucket und keine seiner
+   vier Policies, **und keine der neun nachgemessenen Zahlen hätte es gefunden.**
+   Dieselbe Sorte Drift wie harte Regel 83. Jetzt kommt die Liste aus dem ORDNER, und
+   ein Wächter verlangt vierstellige Nummern, damit die Sortierung die Reihenfolge trägt.
+
+4. **Entscheidung 58 kostet KEINE einzige neue Berechtigung.** Auf `reports` steht
+   weiterhin nur `select, insert` für `authenticated` — **es gibt kein `update`**, also
+   kann niemand in der App `erledigt_am` setzen. Das Werkzeug arbeitet über die db-url,
+   also als `postgres`, und umgeht RLS ohnehin. Die verworfene Möglichkeit B (Admin-Rolle
+   in der App) wäre eine Rolle gewesen, die jeden Chat lesen und jeden fremden Post
+   löschen darf — **auf einem Gerät, das man verliert.** Der stärkste Schlüssel des
+   Projekts liegt auf einem Mac.
+
+5. **Zweimal hat mein eigener MESSAUFBAU falsch gemeldet, und beide Male sah es aus wie
+   ein kaputter Wächter.** Die erste Gegenprobe an 0009 meldete dreimal „kein Alarm" —
+   sie schickte den Datenbankaufbau nach `/dev/null`, der scheiterte, und 0009 fand keine
+   Tabelle. Die zweite Nachbildung einer tsconfig ließ `"types": ["node"]` weg und meldete
+   `process`-Fehler. **Beides ist die Fallen-Listen-Lehre „prüf zuerst, ob das Messgerät
+   verstellt ist", zweimal an einem Tag.** Der Aufbau prüft sich jetzt selbst (13 Tabellen),
+   bevor er misst; die drei Gegenproben schlagen danach alle drei an, mit Text.
+
+6. **Ein `update … returning` in psql meldete Erfolg, obwohl nichts geschah.** psql hängt
+   IMMER seinen Befehlszähler an, auch mit `-tA` — die Ausgabe war `UPDATE 0`, also nicht
+   leer, also „✓ Abgehakt". **Gefunden nur dadurch, dass derselbe Aufruf zweimal gemacht
+   wurde**; ein einzelner Lauf sah tadellos aus. Jetzt ein `with … select`, und beide
+   Fehlwege (schon erledigt, erfundene ID) geben Exit 1.
+
+7. **Der Wächter im Werkzeug prüfte EINE Datei, während drei geladen wurden.** Er fragt,
+   ob eine Regel-Datei nach dem Übersetzen noch Laufzeit-Importe hat — und der Lauf starb
+   trotzdem mit `ERR_MODULE_NOT_FOUND: '@/config'`, weil der Import in
+   `auth/konto.ts` stand. **Das war zugleich der Grund, `handleText()` nach `lib/handle.ts`
+   zu legen**: `konto.ts` zieht `@/config/alter` und `@/lib/bezirk` und läuft nicht in
+   blankem Node. Jetzt fragt der Wächter alle übersetzten Dateien.
+
+⚠️ **Was 20.7 NICHT ist: handeln.** Gemessen: `posts_loeschen` lässt nur
+`author_id = auth.uid()` durch, auf `profiles` gibt es gar kein delete, und
+`konto_loeschen()` nimmt **absichtlich keine ID** — ihr eigener Kommentar in 0003 sagt,
+mit einem Parameter wäre sie *„ein Werkzeug, mit dem man fremde Konten löscht"*. Für
+Apple 1.2 („die Möglichkeit, Inhalte zu entfernen und Nutzer auszuschließen") fehlt der
+Weg also noch. **Er gehört als `npm run meldungen -- post-loeschen` / `-- konto-sperren`
+in dasselbe Werkzeug** (der Schlüssel dafür liegt schon da), und der Wächter in 0009
+bricht ab, falls jemand stattdessen `konto_loeschen()` einen Parameter gibt.
+
+⚠️ **Und eine Auslegung wartet auf Ian, sie steht als `TODO(Ian)` im Code:**
+`meldungLage()` in `features/safety/meldung.ts`. Was steht in der Liste, wenn eine
+Meldung ZU SPÄT bearbeitet wurde — `'erledigt'` oder `'spaet-erledigt'`? Drin steht A
+als **Platzhalter, nicht als Entscheidung**. Die Einzelmeldung nennt die Verspätung
+schon („46 h nach der Zusage"), aber die Fußzeile zählt sie nicht — **damit kann das
+Werkzeug heute nicht sagen, wie oft die Zusage gebrochen wurde**, und genau diese Zahl
+ist die, auf die es gegenüber Apple ankommt.
+
+⚠️ **Der Melder kann sehen, DASS und von WEM seine Meldung bearbeitet wurde.**
+`melder_sieht_eigene` gilt für die ganze Zeile; der Kommentar in 0002 hat das am
+2026-09-06 schon notiert (*„wer sie schützen will, braucht eine View. Notiert, nicht
+getan."*). **Der naheliegende Fix bricht die App:** Ein
+`revoke select (erledigt_von)` macht aus `laden.ts`' `select('*')` einen `42501` — die
+Abfrage verlangt alle Spalten. Wer es schließen will, nennt dort die Spalten einzeln.
 
 #### 20.8 — Was WEGFÄLLT ⬜
 
@@ -7370,6 +7482,68 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 >
 > **Falls Ian es anders will**, ist die Korrektur eine Zeile: `hatteBild` durch `true`
 > ersetzen. Dann sagt die Leiste den Satz immer.
+
+### 58. Wer die Meldungen liest — und von wo ✅
+
+> **Entschieden am 2026-09-13** (Phase 20.7). Meldungen liegen seit Phase 7 in der
+> Datenbank; lesen darf sie bis heute **niemand** — die einzige select-Policy ist
+> `melder_sieht_eigene`. Für Apple 1.2 ist das die letzte offene Zusage.
+>
+> | | |
+> |---|---|
+> | **A: ein Befehl am Mac** *(gewählt)* | `npm run meldungen`, über die db-url aus `~/.simplysocial/` (600, außerhalb des Repos) — also als `postgres`. **Kostet keine einzige neue Berechtigung in der App**, die 34 Policies bleiben Zeichen für Zeichen. Preis: Es geht nur an Ians Mac; Christoph, Leopold und Daria können es nicht. |
+> | B: ein Admin-Bereich in der App | Vom Handy, jederzeit, für alle vier. Preis: eine Rolle, die JEDEN Chat lesen und jeden fremden Post löschen darf — auf einem Gerät, das man verliert, verleiht oder ungesperrt liegen lässt. Dazu neue Policies neben den 34. |
+> | C: Supabase im Browser | Gar kein Code, das hatte der Plan vorgesehen. Preis, **gemessen**: Dort steht `gefahr · 8f3a-… · 11e2-…`. Welcher Post gemeint ist und wer gemeldet hat, sieht man nicht; handeln kann man nur mit SQL von Hand. |
+>
+> **Der Preis von A ist benannt und nicht klein:** Die Moderation hängt an einem
+> Menschen mit einem Mac. Solange es vier Gründer und keine Nutzer gibt, ist das die
+> richtige Seite des Tauschs — der stärkste Schlüssel des Projekts liegt dann nicht auf
+> einem Telefon. **Wächst die App, wird daraus B**, und dann gehört die Rolle
+> entschieden, nicht nachgerüstet.
+
+### 59. Wie schnell auf eine Meldung reagiert wird ✅
+
+> **Entschieden am 2026-09-13.** Apple verlangt für nutzergenerierte Inhalte
+> ausdrücklich *„timely responses to concerns"*; der Satz landet in den
+> Nutzungsbedingungen und ein Reviewer liest ihn.
+>
+> | | |
+> |---|---|
+> | A: 24 h für alles | Apples Erwartung. Preis: jemand muss JEDEN Tag nachsehen, auch in der Schulwoche — und **es benachrichtigt niemand**. |
+> | B: 48 h für alles | Haltbar. Preis: Bei `gefahr` sind zwei Tage lang. |
+> | **C: 24 h bei Gefahr und Belästigung, 48 h sonst** *(gewählt)* | Die Zusage hängt an dem, worum es geht. Ehrlich, begründbar, haltbar. Preis: zwei Zahlen im Rechtstext — **und die Einteilung muss im Werkzeug SICHTBAR sein**, sonst ist sie nur eine Behauptung. |
+> | D: keine Zahl | Nichts, was man brechen kann. Preis: die schwächste Antwort im Review, und sie kann eine Ablehnung kosten. |
+>
+> **Der Preis von C ist eingelöst, nicht behauptet:** `npm run meldungen` sortiert nach
+> Fälligkeit statt nach Eingang, schreibt „dringend" an den Grund, und der Index in 0009
+> steht auf `(reason, created_at)` statt auf `(created_at desc)`.
+>
+> Die Zahlen stehen in `features/safety/meldung.ts` und **nur dort** — von da liest sie
+> sowohl der Befehl am Mac als auch `/nutzungsbedingungen` (`zusageText()`). Der Grund
+> ist ein Fehler, den dieses Projekt schon einmal gemacht hat: Der Lösch-Screen versprach
+> seit Phase 7 im JSX das Gegenteil dessen, was Entscheidung 39 später festlegte. **Ein
+> getippter Satz wandert nicht mit** — und hier wiegt das schwerer, weil die Zusage in
+> Ians Namen gegeben wird.
+
+### 60. Was in der Liste steht, wenn zu SPÄT bearbeitet wurde ❓ *(wartet auf Ian)*
+
+> **Offen seit 2026-09-13.** Steht als `TODO(Ian)` in `meldungLage()`
+> (`features/safety/meldung.ts`), blockiert nichts — drin ist A als **Platzhalter, nicht
+> als Entscheidung** (dieselbe Unterscheidung wie `SPERR_ANTWORT` und
+> `zaehltAlsTermin()`).
+>
+> Eine Meldung wegen `gefahr` kommt Freitagabend. Niemand sieht sie. Montag, nach 62
+> Stunden, wird sie bearbeitet. **Was steht danach in der Liste?**
+>
+> | | |
+> |---|---|
+> | A: `'erledigt'` | Erledigt ist erledigt, die Liste bleibt ruhig. Preis: Das Werkzeug kann dann NIE sagen „wir haben die Zusage diesen Monat viermal gebrochen" — und das ist die Zahl, auf die es gegenüber Apple ankommt. Eine Zusage, deren Bruch sich selbst aufräumt, ist keine. |
+> | B: `'spaet-erledigt'` | Die Verspätung bleibt zählbar; beim nächsten Mal weiß man, ob 24 h realistisch waren. Preis: Eine abgehakte Sache steht dauerhaft als Vorwurf da — und eine Liste, die nur aus Vorwürfen besteht, sieht irgendwann niemand mehr an. |
+>
+> Die EINZELNE Meldung nennt die Verspätung schon („46 h nach der Zusage", gemessen).
+> Offen ist nur, ob sie in die **Lage** und damit in die Fußzeile eingeht.
+> **Ian schreibt die fünf Zeilen selbst** — `fristEndeAm()` und `erledigtAm` liegen
+> bereit, es sind zwei Zeitpunkte.
 
 ### 54. Darf man am Handy den Ausschnitt wählen? ✅
 

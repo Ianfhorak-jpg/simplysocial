@@ -37,6 +37,7 @@ $PSQL -q -d ss -f "$HIER/../migrations/0005_realtime.sql"
 $PSQL -q -d ss -f "$HIER/../migrations/0006_zuruecknehmen.sql"
 $PSQL -q -d ss -f "$HIER/../migrations/0007_rechte.sql"
 $PSQL -q -d ss -f "$HIER/../migrations/0008_bilder.sql"
+$PSQL -q -d ss -f "$HIER/../migrations/0009_meldungen.sql"
 $PSQL -q -d ss -f "$HIER/05_daten.sql"
 echo "Datenbank steht. Jetzt der Angriff:"
 echo

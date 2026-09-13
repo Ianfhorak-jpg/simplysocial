@@ -14,6 +14,7 @@ import { userIds } from '@/features/statisch';
 import { useCurrentUserId } from '@/features/auth/hooks';
 import { colors, danger, spacing } from '@/theme';
 import type { User } from '@/types/models';
+import { handleText } from '@/lib/handle';
 
 /**
  * Welche Adressen beim Bauen entstehen — siehe `features/statisch.ts`.
@@ -241,7 +242,7 @@ function BlockiertesProfil({ person }: { person: User }) {
               {person.displayName}
             </SsText>
             <SsText variant="caption" color={colors.inkSoft}>
-              {person.handle}
+              {handleText(person.handle)}
             </SsText>
           </View>
         </View>

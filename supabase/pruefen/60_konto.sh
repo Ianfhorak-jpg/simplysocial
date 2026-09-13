@@ -132,7 +132,8 @@ cat > "$ARBEIT/tsconfig.json" <<JSON
   "files": [
     "$WURZEL/src/features/auth/anmeldung.ts",
     "$WURZEL/src/features/auth/konto.ts",
-    "$WURZEL/src/features/auth/konten.ts"
+    "$WURZEL/src/features/auth/konten.ts",
+    "$WURZEL/src/lib/handle.ts"
   ]
 }
 JSON

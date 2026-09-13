@@ -167,15 +167,32 @@ if [ "$NUR_MESSEN" = "1" ] && [ -n "$NUR_DIESE" ]; then
 elif [ "$NUR_MESSEN" = "1" ]; then
   echo "── 3. Einspielen übersprungen (siehe oben) ──"
 else
-echo "── 3. Einspielen (alle sieben in EINER Transaktion) ──"
-psql "$DB_URL" -v ON_ERROR_STOP=1 --single-transaction -q \
-  -f "$HIER/migrations/0001_schema.sql" \
-  -f "$HIER/migrations/0002_policies.sql" \
-  -f "$HIER/migrations/0003_konto_loeschen.sql" \
-  -f "$HIER/migrations/0004_transaktionen.sql" \
-  -f "$HIER/migrations/0005_realtime.sql" \
-  -f "$HIER/migrations/0006_zuruecknehmen.sql" \
-  -f "$HIER/migrations/0007_rechte.sql" 2>&1 | filtern
+# ⚠️ Hier stand bis zum 2026-09-13 eine Liste von Hand, und sie hörte bei 0007 auf
+# — **0008 (die Bilder) fehlte darin**, obwohl die Migration seit dem 12.09. im
+# Ordner liegt und `aufbauen.sh` sie längst einspielt. Wer die Datenbank frisch
+# aufgebaut hätte, bekäme keinen `avatars`-Bucket und keine der vier Policies
+# darauf; das Nachmessen unten hätte es NICHT gefunden, weil keine seiner neun
+# Zahlen den Bucket zählt. Dieselbe Sorte Drift wie harte Regel 83: eine Liste,
+# die jemand nachziehen muss, wird irgendwann nicht nachgezogen.
+#
+# Jetzt kommt die Liste aus dem ORDNER. Die lexikalische Sortierung ist hier die
+# richtige (`0001` … `0009` … `0010`), weil jede Migration vier Ziffern trägt —
+# und genau das prüft der Wächter, bevor irgendetwas läuft.
+MIGRATIONEN=()
+while IFS= read -r DATEI; do
+  BASIS="$(basename "$DATEI")"
+  if ! [[ "$BASIS" =~ ^[0-9]{4}_ ]]; then
+    echo "✗ Migration ohne vierstellige Nummer: $BASIS"
+    echo "  Die Reihenfolge hängt an der Sortierung des Dateinamens — ohne feste"
+    echo "  Stellenzahl liefe 0010 vor 0009, und ein Abbruch fiele erst am Ergebnis auf."
+    exit 1
+  fi
+  MIGRATIONEN+=(-f "$DATEI")
+done < <(ls -1 "$HIER"/migrations/*.sql | sort)
+
+echo "── 3. Einspielen (alle $(( ${#MIGRATIONEN[@]} / 2 )) in EINER Transaktion) ──"
+ls -1 "$HIER"/migrations/*.sql | sort | xargs -n1 basename | sed 's/^/     /'
+psql "$DB_URL" -v ON_ERROR_STOP=1 --single-transaction -q "${MIGRATIONEN[@]}" 2>&1 | filtern
 echo "✓ durchgelaufen — aber das ist noch kein Beleg."
 fi
 

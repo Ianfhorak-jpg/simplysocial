@@ -11,6 +11,7 @@ import {
 } from '@/features/social/hooks';
 import { colors, spacing } from '@/theme';
 import type { User } from '@/types/models';
+import { handleText } from '@/lib/handle';
 
 /**
  * Wer jemandem folgt bzw. wem jemand folgt — der Inhalt beider Listen-Screens.
@@ -92,7 +93,7 @@ function PersonZeile({
             {person.displayName}
           </SsText>
           <SsText variant="caption" color={colors.inkSoft} numberOfLines={1}>
-            {person.handle} · {person.district} Wien
+            {handleText(person.handle)} · {person.district} Wien
           </SsText>
         </View>
 

@@ -139,7 +139,7 @@ type UserSeed = Omit<User, 'followerIds' | 'followingIds' | 'blockedIds'>;
 const USER_SEEDS: UserSeed[] = [
   {
     id: 'u_ian',
-    handle: '@ian',
+    handle: 'ian',
     displayName: 'Ian',
     bio: 'Bau gerade diese App. Immer für spontan zu haben.',
     district: '1070',
@@ -148,7 +148,7 @@ const USER_SEEDS: UserSeed[] = [
   },
   {
     id: 'u_lea',
-    handle: '@lea',
+    handle: 'lea',
     displayName: 'Lea',
     bio: 'Draußen lieber als drinnen. Tennis seit ich acht bin.',
     district: '1220',
@@ -157,7 +157,7 @@ const USER_SEEDS: UserSeed[] = [
   },
   {
     id: 'u_tobi',
-    handle: '@tobi',
+    handle: 'tobi',
     displayName: 'Tobias',
     bio: 'Koffein und Kletterhalle. Sag Bescheid, wenn wer mit will.',
     district: '1100',
@@ -166,7 +166,7 @@ const USER_SEEDS: UserSeed[] = [
   },
   {
     id: 'u_mira',
-    handle: '@mira',
+    handle: 'mira',
     displayName: 'Mira',
     bio: 'Fotografiere analog, esse zu viel Ramen. Zeig dir gern, wie die Kamera geht.',
     district: '1050',
@@ -175,7 +175,7 @@ const USER_SEEDS: UserSeed[] = [
   },
   {
     id: 'u_flo',
-    handle: '@flo',
+    handle: 'flo',
     displayName: 'Florian',
     bio: 'Käfig, Kahlenberg, alles was draußen ist.',
     district: '1020',
@@ -184,7 +184,7 @@ const USER_SEEDS: UserSeed[] = [
   },
   {
     id: 'u_sara',
-    handle: '@sara',
+    handle: 'sara',
     displayName: 'Sara',
     bio: 'Lerne lieber zu zweit als allein. Und geh gern ins Kino.',
     district: '1030',

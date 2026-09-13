@@ -65,7 +65,8 @@
     "mgmt-token": "bash scripts/mgmt-token.sh",
     "provider-api": "python3 scripts/provider-api.py",
     "google-app-id": "bash scripts/google-app-id.sh",
-    "pruef-anbieter": "bash supabase/pruefen/96_anbieter.sh"
+    "pruef-anbieter": "bash supabase/pruefen/96_anbieter.sh",
+    "meldungen": "bash scripts/meldungen.sh"
   },
   "private": true
 }

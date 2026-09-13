@@ -42,6 +42,68 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > die zwei Liquid-Glass-Vorbilder geblieben, weil sie als laufende Vorlage dienen
 > und nicht als Beleg. Einzelheiten in `_belege/LIESMICH.md`.
 
+✅ **Phase 20.7 ist FERTIG (2026-09-13): die Meldungen haben einen Leser — `npm run
+meldungen`.** Die letzte offene Apple-1.2-Zusage. Zwei Entscheidungen von Ian (**58**:
+ein Befehl am Mac · **59**: 24 h bei Gefahr und Belästigung, 48 h sonst), eine neue
+Migration (`0009_meldungen.sql`), zwei neue Dateien (`features/safety/meldung.ts`,
+`lib/handle.ts`). Gemessen: `tsc` sauber · **81 Lint-Probleme wie vorher** · lokal weiter
+**136 Häkchen, 0 Kreuze** · `pruef-sitzung` **29** · `pruef-bildwahl` **35** ·
+`pruef-anbieter` **48** · kein Überlauf auf 390 × 844 und 360 × 600 · Deploy-Wächter
+bricht weiter ab · Schalter nachweislich zurück auf `'supabase'`. Sieben Dinge:
+
+1. **Der teuerste Fund macht ein Konto UNLÖSCHBAR — und die Spalte, die ihn verursacht,
+   gibt es NUR wegen Apple 1.2.** `reports.erledigt_von` verwies auf `profiles (id)`
+   **ohne `on delete`-Klausel** (`NO ACTION`); die Schwesterspalte drei Zeilen darüber
+   trägt seit dem 06.09. `on delete set null`. Gemessen am Katalog UND an der Wirkung:
+   Nach einer bearbeiteten Meldung scheitert `delete from auth.users where id = ich` —
+   **die letzte Zeile von `konto_loeschen()`.** Wer je moderiert, könnte sein Konto nie
+   mehr löschen; **die Moderations-Spalte hätte also die Lösch-Pflicht gebrochen, beides
+   Apple 1.2.** Der Kommentar in 0001 warnt sieben Zeilen darüber wörtlich davor
+   (*„scheitert erst … an dem Tag, an dem es niemand mehr in Ruhe nachsehen kann"*) —
+   **die eine Spalte hat die Lehre bekommen, die andere nicht.** Harte Regel 98.
+2. **Der zweite Fund gehört gar nicht zu 20.7 und hing an der App, die auf Ians iPhone
+   wartet: das `@`.** `mock.ts` und die Prüfdaten trugen es IM WERT (`'@ian'`),
+   `handleVorschlag()` gibt `'ian'` zurück — und **zehn Screens zeichneten
+   `{person.handle}` roh.** Mit `'attrappe'` sah das vier Wochen richtig aus; mit
+   `'supabase'` — der Stellung, in der die App GEBAUT ist — hätte **jeder @-Name sein `@`
+   verloren**: Profil, Chat-Kopf, Post-Detail, Anfragen-Tab, Löschbestätigung. `tsc`
+   schweigt, beides ist `string`. Aufgefallen, weil das Werkzeug `@@tobi` ausgab. Jetzt
+   `handleText()` in `lib/handle.ts` wie `ortText()` (harte Regel 20), drei Häkchen
+   halten die zwei Hälften **gegeneinander**. Harte Regel 99.
+3. **`einspielen.sh` hörte bei 0007 auf — 0008 fehlte seit dem Vortag**, und **keine der
+   neun nachgemessenen Zahlen hätte es gefunden.** Wer frisch aufbaut, bekäme keinen
+   Bilder-Bucket. Jetzt kommt die Liste aus dem ORDNER, mit einem Wächter auf
+   vierstellige Nummern.
+4. **Entscheidung 58 kostet KEINE neue Berechtigung.** Auf `reports` steht weiter nur
+   `select, insert` — **kein `update`**, also kann niemand in der App `erledigt_am`
+   setzen. Das Werkzeug geht über die db-url, also `postgres`. Möglichkeit B wäre eine
+   Rolle gewesen, die jeden Chat liest und jeden Post löscht — **auf einem Handy.**
+5. **Zweimal hat mein MESSAUFBAU falsch gemeldet, beide Male sah es nach kaputtem
+   Wächter aus.** Die Gegenprobe an 0009 schickte den Datenbankaufbau nach `/dev/null`
+   und meldete dreimal „kein Alarm"; eine nachgebaute tsconfig ließ `"types": ["node"]`
+   weg. **Zweimal an einem Tag die Lehre „prüf zuerst, ob das Messgerät verstellt ist".**
+   Der Aufbau prüft sich jetzt selbst (13 Tabellen), danach schlagen alle drei
+   Gegenproben an.
+6. **Ein `update … returning` in psql meldete Erfolg, obwohl nichts geschah.** psql hängt
+   IMMER seinen Befehlszähler an, auch mit `-tA` — die Ausgabe `UPDATE 0` ist nicht leer.
+   **Gefunden nur dadurch, dass derselbe Aufruf ZWEIMAL gemacht wurde.** Jetzt
+   `with … select`.
+7. **Der Wächter im Werkzeug prüfte EINE Datei, während drei geladen wurden** — der Lauf
+   starb trotzdem an `ERR_MODULE_NOT_FOUND`, weil der Import in `auth/konto.ts` stand.
+   Das war zugleich der Grund, `handleText()` nach `lib/handle.ts` zu legen.
+
+⚠️ **Was 20.7 NICHT ist: handeln.** Gemessen: `posts_loeschen` lässt nur den Autor durch,
+auf `profiles` gibt es kein delete, und `konto_loeschen()` nimmt **absichtlich keine
+ID**. Für Apple 1.2 („Inhalte entfernen, Nutzer ausschließen") fehlt der Weg — er gehört
+als `-- post-loeschen` / `-- konto-sperren` in dasselbe Werkzeug, **nicht als Parameter
+an `konto_loeschen()`** (der Wächter in 0009 bricht dann ab).
+
+❓ **Eine Auslegung wartet auf Ian, als `TODO(Ian)` im Code:** `meldungLage()` — was
+steht in der Liste, wenn ZU SPÄT bearbeitet wurde? Die Einzelmeldung nennt die
+Verspätung schon („46 h nach der Zusage"), die Fußzeile zählt sie nicht. **Damit kann das
+Werkzeug heute nicht sagen, wie oft die Zusage gebrochen wurde** — und das ist die Zahl,
+auf die es gegenüber Apple ankommt. PLAN.md Abschnitt 6, Punkt 60.
+
 🔴 **DIE APP FÜR DEN GERÄTEDURCHGANG IST GEBAUT (2026-09-13) — sie wartet auf Ians
 iPhone, und mehr fehlt nicht.** Der Schalter steht auf `'supabase'`, das Binary liegt
 fertig da, gültig bis **2027-09-13** (`TimeToLive: 365`). **Für Ian ist es ein
@@ -2434,7 +2496,12 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    `asset.uri` bei einem iPhone-Foto HEIC bleibt und `asset.base64` immer JPEG ist**
    — der naheliegende Weg hätte jedes gewöhnliche Handyfoto abgewiesen (harte
    Regeln 90 und 91). **Hing nachgemessen NICHT an Ians Supabase-Klick.*** ·
-   Meldungen lesen (20.7) · Aufräumen (20.8).
+   ~~**Meldungen lesen (20.7)**~~ ✅ *2026-09-13: `npm run meldungen`, Entscheidungen
+   58 und 59, `0009_meldungen.sql`. **Dabei kam heraus, dass `reports.erledigt_von`
+   ein Konto UNLÖSCHBAR gemacht hätte** (harte Regel 98) — und dass zehn Screens den
+   @-Namen ohne `@` gezeigt hätten, sobald der Schalter steht (harte Regel 99).
+   **Was fehlt, ist HANDELN:** Inhalte entfernen und Nutzer ausschließen, beides
+   Apple 1.2, gehört in dasselbe Werkzeug.* · Aufräumen (20.8).
    Danach fällt 19d-2 nebenbei ab.
 
 10b. 🔴 **DER GERÄTEDURCHGANG** ← *hier geht es weiter (Stand 2026-09-13)*.
@@ -3553,6 +3620,55 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    ist der Unterschied zum Zwischenspeicher in `store.ts`, der beim Abmelden geleert
    werden MUSS (Phase 20.4-b).
 
+98. **Zwei Spalten, die auf dieselbe Tabelle zeigen, werden GEGENEINANDER geprüft —
+   nicht je gegen einen festen Wert.** *(Phase 20.7, 2026-09-13, gemessen.)*
+   `reports.from_user_id` und `reports.erledigt_von` verweisen beide auf `profiles`.
+   Die eine hat `on delete set null`, die andere hatte **gar keine Klausel**, also
+   `NO ACTION` — und damit war ein Konto nach der ersten bearbeiteten Meldung
+   **unlöschbar**, weil `konto_loeschen()` als letzte Zeile `delete from auth.users`
+   macht. **Die Spalte, die es nur wegen Apple 1.2 gibt, hätte die andere
+   Apple-1.2-Pflicht gebrochen.** Dieselbe Familie wie `groups_creator_id_fkey`
+   (Entscheidung 39) und wie das `not null` an `from_user_id`, vor dem 0001 wörtlich
+   warnt: **Postgres nimmt die Kombination an und scheitert erst, wenn wirklich jemand
+   sein Konto löscht** — also an dem Tag, an dem es niemand mehr in Ruhe nachsehen kann.
+   Der Wächter in `0009_meldungen.sql` fragt deshalb nicht „steht `n` da?", sondern
+   **„sind die beiden gleich?"**: Das Auseinanderlaufen war der Fehler, und zwei
+   getrennte Prüfungen hätten ihn nie als Unterschied gezeigt. Wer eine dritte solche
+   Spalte ergänzt, zieht den Vergleich mit.
+99. **Ein Sigil gehört der ANZEIGE — `handleText()` aus `lib/handle.ts`, nie
+   `@{person.handle}` im Screen.** *(Phase 20.7, gemessen.)* Was gespeichert wird, sagt
+   `handleVorschlag()` in `features/auth/konto.ts`: **`'ian'`, ohne `@`** (von
+   `60_konto.mjs` am echten Server gemessen, und genau das schreibt `profilAnlegen()`).
+   Was dasteht, sagt `handleText()`: `'@ian'`. Bis zum 2026-09-13 trugen `mock.ts` und
+   `05_daten.sql` das Zeichen IM WERT und zehn Screens zeichneten roh — **der Prototyp
+   sah vier Wochen richtig aus, und mit `ANMELDE_QUELLE = 'supabase'` hätte jeder
+   @-Name sein `@` verloren.** `tsc` schweigt, beides ist `string`; dieselbe Familie wie
+   `Post.district` und harte Regel 20, deren `ortText()` die Vorlage ist.
+   **Zwei Gründe, warum das Zeichen nicht in die Spalte darf:** `handle` ist `unique`,
+   und ein Zeichen, das jeder Wert trägt, unterscheidet nichts — es macht nur `'@ian'`
+   und `'ian'` zu zwei Namen. Und zehn getippte `@` sind zehn Gelegenheiten zu driften,
+   **still**. `handleText()` ist nachsichtig gegen einen alten Wert mit `@` (kein
+   `@@ian`); ob der Wert sauber ist, misst `60_konto.mjs`, und zwar indem es die zwei
+   Hälften gegeneinander hält.
+100. **Was eine Meldung ist und wie schnell sie beantwortet wird, steht in
+   `features/safety/meldung.ts` — und das Werkzeug LIEST sie, statt die Zahl zu
+   wiederholen.** *(Ians Entscheidungen 58 und 59, Phase 20.7.)* Dieselbe Bauart wie
+   `safety/block.ts` (17), `groups/gruppe.ts` (32), `requests/kollision.ts` (46),
+   `posts/standort.ts` (68), `auth/anmeldung.ts` (69), `data/quelle.ts` (76),
+   `auth/konto.ts` (78), `data/schreiben.ts` (84) und `social/bild.ts` (88).
+   **Der Unterschied zu den neun ist, WER liest:** nicht nur ein Screen, sondern auch
+   ein Befehl am Mac (`npm run meldungen`). Beide holen sich `zusageText()` und
+   `fristStunden()` aus derselben Datei — sie hat **keine Laufzeit-Importe** und läuft
+   deshalb in blankem Node (die Technik aus `40_uebersetzung.sh`). Stünde die 24 zweimal
+   da, verspräche `/nutzungsbedingungen` eines Tages etwas anderes, als das Werkzeug
+   misst; das ist der Lösch-Screen-Fehler vom 2026-09-06 an einer Stelle, die ein
+   Apple-Reviewer liest.
+   ⚠️ **Moderiert wird über die db-url, nicht über eine Rolle in der App** (Entscheidung
+   58). Auf `reports` gibt es deshalb weiter **kein `update`** — wer eines nachträgt,
+   hebt die Entscheidung auf. Und wer `konto_loeschen()` eine ID gibt, damit das
+   Werkzeug jemanden ausschließen kann, macht aus ihr genau das, wovor ihr Kommentar in
+   0003 warnt; der Wächter in 0009 bricht dann ab.
+
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
 - **Große Display-Fonts clippen auf iOS.** `lineHeight ≈ 1.2 × fontSize` setzen, sonst
@@ -4605,6 +4721,38 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   Profil-Prüfung vom 2026-09-11, und aus demselben Grund: `BUILD SUCCEEDED`
   beantwortet *„hat er gebaut?"*, nicht *„kann man sich damit anmelden?"*.
 
+- **Ein `update … returning` in psql meldet Erfolg, auch wenn es nichts getan hat.**
+  (Phase 20.7, 2026-09-13) psql hängt IMMER seinen Befehlszähler an die Ausgabe, auch
+  mit `-tA` und auch mit `returning`. Beim Abhaken einer Meldung stand deshalb
+  `✓ Abgehakt: UPDATE 0` da — **das Werkzeug meldete Erfolg, obwohl die Zeile längst
+  erledigt war**, weil die Leerprüfung einen nicht-leeren Text sah. **Gefunden nur
+  dadurch, dass derselbe Aufruf ZWEIMAL gemacht wurde**; ein einzelner Lauf sah tadellos
+  aus. Als `with … select` ist es eine SELECT-Abfrage und gibt genau die Zeilen zurück,
+  die es gibt. Dieselbe Familie wie „`expo run:ios` gibt EXIT 0 zurück".
+- **Ein Gegenproben-Aufbau, der Fehler verschluckt, kann NUR falsche Entwarnung geben.**
+  (Phase 20.7) Die erste Gegenprobe an 0009 meldete dreimal „Wächter schlägt nicht an" —
+  und der Wächter war heil. Der Aufbau schickte `drop/create database` und die acht
+  Migrationen nach `/dev/null`; scheiterte davon etwas, fand 0009 keine Tabelle und
+  meldete etwas anderes als seinen eigenen Text. **Ein Messaufbau versagt in die
+  Richtung, die aussieht, als wäre das Geprüfte kaputt.** Er prüft sich seither selbst
+  (13 Tabellen), bevor er misst. Dritte Fassung von „prüf zuerst, ob das Messgerät
+  verstellt ist" — und am selben Tag noch eine vierte: eine nachgebaute tsconfig ohne
+  `"types": ["node"]` meldete `process`-Fehler, die es im echten Prüfstand nicht gibt.
+- **Ein Wächter, der EINE Datei prüft, während drei geladen werden, deckt zwei nicht
+  ab.** (Phase 20.7) `meldungen.sh` fragt, ob eine Regel-Datei nach dem Übersetzen noch
+  Laufzeit-Importe hat — er fragte nur `meldung.mjs`, und der Lauf starb trotzdem mit
+  `ERR_MODULE_NOT_FOUND: '@/config'`, weil der Import in `auth/konto.ts` stand.
+  **Daraus kam die richtige Ablage:** `konto.ts` zieht `@/config/alter` und
+  `@/lib/bezirk`, ist also keine importfreie Regel-Datei — `handleText()` gehört nach
+  `lib/handle.ts`. Dieselbe Familie wie „ein Wächter hinter einem anderen ist ein
+  ungeprüfter Wächter".
+- **Eine Liste von Dateinamen in einem Skript wird irgendwann nicht nachgezogen.**
+  (Phase 20.7) `einspielen.sh` zählte die Migrationen von Hand auf und hörte bei **0007**
+  auf — `0008_bilder.sql` lag seit dem Vortag im Ordner und wurde bei einem frischen
+  Aufbau schlicht nicht eingespielt. **Und keine der neun nachgemessenen Zahlen hätte es
+  gefunden**, weil keine den Bucket zählt. Jetzt kommt die Liste aus dem ORDNER, mit
+  einem Wächter auf vierstellige Nummern (ohne feste Stellenzahl liefe `0010` vor
+  `0009`). Harte Regel 83 in einer zweiten Gestalt.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)

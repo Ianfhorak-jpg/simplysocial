@@ -13,6 +13,7 @@ import { ortText } from '@/lib/bezirk';
 import { startOderSeit, tagText, uhrzeit } from '@/lib/zeit';
 import { accent, categoryColors, colors, radius, spacing, type CategoryPalette } from '@/theme';
 import type { Message, Post, User } from '@/types/models';
+import { handleText } from '@/lib/handle';
 
 /**
  * Welche Adressen beim Bauen entstehen — siehe `features/statisch.ts`.
@@ -253,7 +254,7 @@ function PersonKopf({ person, herkunft }: { person: User; herkunft?: string }) {
           {person.displayName}
         </SsText>
         <SsText variant="caption" color={colors.inkSoft} numberOfLines={1}>
-          {`${person.handle}   ·   ${person.district} Wien`}
+          {`${handleText(person.handle)}   ·   ${person.district} Wien`}
         </SsText>
         {/* Ians Entscheidung 42: Ist die Aktivität gelöscht, steht der Chat NICHT
             als Direktchat da — der Satz kommt aus `herkunftText()` und nicht von

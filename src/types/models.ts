@@ -330,7 +330,7 @@ export interface GroupInvite {
 
 export interface User {
   id: string;
-  handle: string; // "@ian"
+  handle: string; // "ian" — OHNE @; das Zeichen setzt `handleText()`
   displayName: string;
   /**
    * KEIN Avatarfeld mehr.

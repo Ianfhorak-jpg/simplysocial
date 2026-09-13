@@ -11,6 +11,7 @@ import { useCurrentUserId } from '@/features/auth/hooks';
 import { ortText } from '@/lib/bezirk';
 import { colors, danger, radius, spacing } from '@/theme';
 import type { ReportReason, ReportTarget } from '@/types/models';
+import { handleText } from '@/lib/handle';
 
 /**
  * Melden — für einen Post (`/melden?art=post&id=p4`) oder für eine Person
@@ -85,7 +86,7 @@ export default function MeldenScreen() {
             <View style={styles.personText}>
               <SsText variant="bodyStrong">{person.displayName}</SsText>
               <SsText variant="caption" color={colors.inkSoft}>
-                {person.handle}
+                {handleText(person.handle)}
               </SsText>
             </View>
           </View>

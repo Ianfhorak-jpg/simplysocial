@@ -9,6 +9,7 @@ import { kontoLoeschen, useMeineSpuren } from '@/features/safety/hooks';
 import { useWartetAuf } from '@/features/store';
 import { useCurrentUser } from '@/features/social/hooks';
 import { colors, danger, spacing } from '@/theme';
+import { handleText } from '@/lib/handle';
 
 /**
  * Account löschen — der vierte Punkt aus Apples Guideline 1.2.
@@ -88,7 +89,7 @@ export default function AccountLoeschenScreen() {
 
       <SsText variant="title">Account löschen</SsText>
       <SsText variant="body" color={colors.inkSoft}>
-        Du bist {ich.displayName} ({ich.handle}). Wenn du dein Konto löschst, ist das
+        Du bist {ich.displayName} ({handleText(ich.handle)}). Wenn du dein Konto löschst, ist das
         endgültig — es gibt keinen Weg zurück.
       </SsText>
 

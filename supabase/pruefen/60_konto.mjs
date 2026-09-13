@@ -15,6 +15,7 @@ const { torwaechterZeigt } = await import(`${ARBEIT}/js/features/auth/anmeldung.
 const { handleVorschlag, fehltNoch, naechsterHandle } = await import(
   `${ARBEIT}/js/features/auth/konto.js`
 );
+const { handleText } = await import(`${ARBEIT}/js/lib/handle.js`);
 const { sitzungLesen, profilAnlegen, KontoFehler } = await import(
   `${ARBEIT}/js/features/auth/konten.js`
 );
@@ -63,6 +64,23 @@ pruef('ß wird zu ss', handleVorschlag('Straßer'), 'strasser');
 // ist für Postgres ein gültiger Wert.
 pruef('Name ganz ohne Buchstaben', handleVorschlag('🙂'), 'mensch');
 pruef('zweiter Versuch heißt ian2', naechsterHandle('ian', 1), 'ian2');
+
+// ── Das `@` gehört der ANZEIGE, nicht der Spalte ────────────────────────────
+// Gefunden am 2026-09-13 beim Bauen von 20.7, und es war vier Wochen unsichtbar:
+// `mock.ts` und `05_daten.sql` trugen das `@` IM WERT (`'@ian'`), zehn Screens
+// zeichneten `{person.handle}` roh — also sah der Prototyp richtig aus. Was
+// `profilAnlegen()` wirklich schreibt, steht eine Zeile darüber: `'ian'`. Mit
+// `ANMELDE_QUELLE = 'supabase'` hätte jeder @-Name sein `@` verloren, und `tsc`
+// hätte geschwiegen, weil beides `string` ist.
+//
+// Diese drei Häkchen halten die zwei Hälften GEGENEINANDER statt je gegen einen
+// festen Wert — dieselbe Technik wie der Löschregel-Vergleich in 0009. Genau das
+// Auseinanderlaufen war der Fehler; zwei getrennte Prüfungen hätten ihn nie als
+// Unterschied gezeigt.
+pruef('was gespeichert wird, trägt KEIN @', handleVorschlag('Ian').startsWith('@'), false);
+pruef('was dasteht, trägt eins', handleText(handleVorschlag('Ian')), '@ian');
+// Und die Anzeige verdoppelt nicht, falls doch ein alter Wert mit @ herumliegt.
+pruef('kein @@ bei einem alten Wert', handleText('@ian'), '@ian');
 pruef('leerer Name wird gemeldet', typeof fehltNoch('name', ''), 'string');
 pruef('1220 ist in Ordnung', fehltNoch('bezirk', '1220'), null);
 // 1240 gibt es nicht. Die Regel „vierstellig, fängt mit 1 an" ließe sie durch.
