@@ -40,24 +40,55 @@
 
 ---
 
-## ❗ EINE SACHE WARTET AUF DICH — und sie ist eine Entscheidung, kein Klick
+## ✅ ERLEDIGT AM 13.09. — DEINE FUNKTION STEHT, UND DU HAST SIE ENTSCHIEDEN
 
-> **Am iPhone bleibt man nach dem Schließen der App noch nicht angemeldet.** Daran fehlt
-> genau eine kleine Funktion, und die gehört dir: `zusammensetzen()` in
-> `simplysocial/src/features/auth/sitzungsspeicher.ts`. Drumherum ist alles fertig,
-> darüber steht ein langer Kommentar, der erklärt, worum es geht.
+> **Hier stand: „Am iPhone bleibt man nach dem Schließen der App noch nicht
+> angemeldet."** Das ist gebaut. Du hast die offene Wahl getroffen — **A: nachsehen,
+> nicht glauben.** Bevor die zwei Hälften deiner Anmeldung wieder zusammengesetzt
+> werden, wird geprüft, ob die gewöhnliche Datei überhaupt eine Anmeldung enthält. Was
+> keine ist, gilt als abgemeldet.
 >
-> **Worum es geht:** Deine Anmeldung wird auf dem Handy in ZWEI Teile gelegt (deine
-> Entscheidung 55) — der eine Teil, mit dem man dauerhaft ins Konto kommt, liegt im
-> iOS-Schlüsselbund; der größere Rest, der nach einer Stunde wertlos ist, in einer
-> gewöhnlichen Datei. Deine Funktion setzt die zwei beim Starten wieder zusammen.
+> `npm run pruef-sitzung` sagt jetzt **29 Häkchen, kein Kreuz** (vorher 22 und 2).
 >
-> **Die Frage darin:** Was, wenn nur EIN Teil da ist? Du hast gesagt: dann gilt man als
-> abgemeldet. Genau das schreibst du hin — es sind etwa sechs Zeilen.
+> **Zwei Sachen daran waren teurer als die Funktion selbst, und beide betrafen nicht
+> deinen Code, sondern die PRÜFUNG:**
 >
-> **Prüfen kannst du dich selbst:** `npm run pruef-sitzung`. Heute steht dort
-> **22 Häkchen und 2 Kreuze**; die zwei Kreuze sind deine Funktion. Sind sie weg, stimmt
-> sie.
+> 1. **Die Prüfung verlangte etwas, das niemand liefern kann.** Sie wollte, dass die
+>    Felder in derselben REIHENFOLGE zurückkommen — aber genau dieses eine Feld wird
+>    vorher herausgelöscht, und das verlangt die Prüfung eine Zeile darüber selbst. In
+>    ihrem eigenen Kommentar stand längst das Richtige; nur der Code darunter tat etwas
+>    anderes. Berichtigt.
+> 2. **Deine Entscheidung war von KEINER Prüfung bewacht.** Ich habe die Möglichkeit,
+>    die du verworfen hast, testweise gebaut — sie bestand alle Prüfungen. Heißt: Jemand
+>    hätte deine Wahl später „vereinfachen" können, und nichts wäre rot geworden. Die
+>    fehlende Gegenprobe ist jetzt drin; die verworfene Fassung fällt mit 5 Kreuzen
+>    durch.
+>
+> ⚠️ **Was das NICHT ist: am Handy geprüft.** Ob der iOS-Schlüsselbund die 14 Byte
+> wirklich annimmt, kann kein Mac beantworten. Steht unten im Durchgang.
+
+---
+
+## 🟢 DAS NÄCHSTE: DER GERÄTEDURCHGANG — und er ist die einzige offene Baustelle
+
+> **Vier Sachen haben sich auf deinem iPhone gestapelt**, alle vom 13.09.:
+> Apple-Login · Google-Login · der Bildwähler · und ob die Anmeldung einen Neustart
+> überlebt. **Keine davon kann ein Mac beantworten.**
+>
+> Was du tust, steht Schritt für Schritt in **`HANDY_DURCHGANG.md`, Durchgang 3.**
+>
+> **Was Claude vorher macht** (sag einfach „mach den Build"):
+>
+> 1. `ANMELDE_QUELLE` in `src/features/auth/anmeldung.ts` auf `'supabase'` stellen
+> 2. `npm run geraet` — etwa 20 Minuten. **Kein neuer Baustein nötig**, die liegen alle
+>    seit dem 12.09. in der App; nur das JavaScript ist neuer.
+> 3. Danach das eingebettete Profil nachmessen (muss `TimeToLive: 365` sagen)
+>
+> 🔑 **Wichtig und oft verwechselt: Der Schalter betrifft die WEBSEITE NICHT.**
+> `https://ianfhorak-jpg.github.io/simplysocial/` bekommt ihren Stand nur aus
+> `npm run deploy`, und das läuft dabei nicht. Die Seite bleibt, wie sie ist — mit
+> deinem Satz „Es gibt keinen Login". Ob sie nachzieht, entscheidest du danach
+> getrennt.
 
 ---
 

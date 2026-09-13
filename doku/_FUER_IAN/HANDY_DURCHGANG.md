@@ -1,5 +1,41 @@
 # Der Durchgang am Handy
 
+## 🔴 DURCHGANG 3 — das Backend am Handy *(vorbereitet 13.09.2026)*
+
+> **Das ist der wichtigste Durchgang bisher**, weil hier zum ersten Mal ECHTE Anmeldung
+> und ECHTE Daten am Gerät laufen. Vier Sachen haben sich gestapelt, und **keine davon
+> kann ein Mac beantworten.**
+>
+> ⚠️ **Vorher muss Claude einen neuen Build machen** — sag einfach *„mach den Build"*.
+> Etwa 20 Minuten, kein neuer Baustein nötig. Erst danach hat das, was unten steht,
+> überhaupt eine Chance zu funktionieren.
+>
+> 🔑 **Die Webseite ändert sich dabei NICHT.** Sie bekommt ihren Stand nur aus
+> `npm run deploy`, und das läuft hier nicht.
+
+### Was du durchklickst
+
+| # | Was tun | Worauf achten · was mir sagen |
+|---|---------|-------------------------------|
+| 1 | **App öffnen → „Weiter mit Apple"** | Kommt Apples eigener Dialog (Face ID / „Mit Apple fortfahren")? **Sag mir, was im Namensfeld danach steht** — Apple gibt deinen Namen nur EIN einziges Mal heraus. Steht dort dein voller, amtlicher Name und willst du das nicht, sag es: eine Zeile, dann bleibt das Feld leer. |
+| 2 | **Abmelden → „Weiter mit Google"** | Geht ein Browserfenster auf und kommst du danach **in der App** wieder heraus? Wenn dort `redirect_uri_mismatch` steht, **mach einen Screenshot** — das ist eine Zeile in Googles Konsole. |
+| 3 | **App ganz schließen (hochwischen) → neu öffnen** | **Bist du noch angemeldet?** Das ist die Funktion von heute. Wenn du auf dem Anmelde-Bildschirm landest, hat der iOS-Schlüsselbund die Bytes nicht angenommen — sag es, das ist keine Kleinigkeit. |
+| 4 | **Profil → Bild ändern** | Fragt iOS nach Erlaubnis? Kommt das quadratische Zuschneide-Fenster? **Und wie lange dauert das Hochladen?** Wenn es zäh ist, drehen wir `BILD_QUALITAET` von 0,8 herunter — die Zahl ist begründet, aber nie an einem echten Foto gemessen. |
+
+### Und nebenbei, wenn du schon drin bist
+
+- **Poste etwas Echtes** und schau, ob es nach einem Neustart noch da ist. Das ist der
+  erste Beweis, dass die Datenbank wirklich trägt.
+- **Wisch den Apple-Dialog einmal weg**, statt ihn zu bestätigen. Es darf **keine rote
+  Fehlerzeile** kommen — abbrechen ist eine Entscheidung und kein Fehler. Kommt doch
+  eine, ist das ein Fehler von mir.
+
+**Wenn dir etwas auffällt: Screenshot.** Und sag dazu, ob er von *nach dem neuen Build*
+ist — beim letzten Mal habe ich eine Stunde an einem Fehler gesucht, den es schon nicht
+mehr gab, weil das Bild eine ältere Fassung zeigte.
+
+---
+
 ## 🔵 DURCHGANG 2 — die Fassung vom 08.09.2026 nachts ist drauf
 
 > Frisch installiert, wieder 7 Tage gültig. **Fünf Sachen, und nur die ersten zwei

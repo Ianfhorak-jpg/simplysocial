@@ -2300,8 +2300,7 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    eine der Ursachen für „das ist kein Liquid Glass"** ·
    ~~**19h-2** „Standort" (`expo-location`, mit neuem Build)~~ ✅ *2026-09-09 — der
    Feed misst ab dem gemessenen Ort; **der Zielpunkt bleibt die Bezirksmitte, und
-   deshalb überlebt Entscheidung 1**.* ← *hier geht es weiter: **Phase 20.3
-   (Anmelden)**, und das braucht Ians Konten*. **Von den zwei Kartenfehlern war einer keiner** (der 14.
+   deshalb überlebt Entscheidung 1**.* *(Phase 20.3 ist seither fertig.)* **Von den zwei Kartenfehlern war einer keiner** (der 14.
    Bezirk stimmt, gegen die amtlichen Daten nachgerechnet) und einer gehörte einer
    älteren Fassung (der Filter-Knopf, erledigt durch 19f).
 10. **Backend** (Phase 20) ← *hier sind wir* — ~~Schema (20.1)~~ ✅ · ~~Policies
@@ -2353,8 +2352,27 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    `asset.uri` bei einem iPhone-Foto HEIC bleibt und `asset.base64` immer JPEG ist**
    — der naheliegende Weg hätte jedes gewöhnliche Handyfoto abgewiesen (harte
    Regeln 90 und 91). **Hing nachgemessen NICHT an Ians Supabase-Klick.*** ·
-   Meldungen lesen (20.7).
+   Meldungen lesen (20.7) · Aufräumen (20.8).
    Danach fällt 19d-2 nebenbei ab.
+
+10b. 🔴 **DER GERÄTEDURCHGANG** ← *hier geht es weiter (Stand 2026-09-13)*.
+   **Vier ungeprüfte Sachen haben sich auf Ians iPhone gestapelt, alle vom 13.09.:**
+   Apple-Login · Google-Login · der Bildwähler (Erlaubnis-Dialog, Zuschnitt, echte
+   Dateigröße bei `BILD_QUALITAET = 0.8`) · und ob die Anmeldung einen Neustart
+   überlebt (nimmt der Schlüsselbund die 14 Byte an?). **Keine davon kann ein Mac
+   beantworten**, und vier ungeprüfte Sachen auf einem Haufen sind die Lage, aus der
+   bei ACTA die teuren Tage wurden.
+   **Was davor zu tun ist:** `ANMELDE_QUELLE` auf `'supabase'`, dann `npm run geraet`
+   (~20 Min). **Kein neuer Baustein** — die fünf liegen seit dem 12.09. im Binary, nur
+   das JavaScript ist neuer. Danach das eingebettete Profil nachmessen
+   (`TimeToLive: 365`, die Falle vom 2026-09-11).
+   🔑 **Der Schalter blockiert das NICHT — das wurde bis zum 13.09. zusammengeworfen.**
+   `'attrappe'` steht im Weg, weil auf der ÖFFENTLICHEN Adresse zwei tote Knöpfe
+   stünden und Ians Prototyp-Hinweis „Es gibt keinen Login" behauptet (harte Regel 22).
+   Die öffentliche Adresse bekommt ihren Stand aber **nur aus `npm run deploy`** (harte
+   Regel 35) — ein Gerätebuild ist etwas anderes. Umlegen, bauen, prüfen; die Webseite
+   bleibt unberührt. Ob sie nachzieht, ist Ians getrennte Entscheidung.
+   Die Schritte für Ian stehen in `_FUER_IAN/HANDY_DURCHGANG.md`, **Durchgang 3**.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 
 > Der Plan dazu steht ausgeschrieben in **[PLAN.md, Abschnitt 5b](PLAN.md)**. Die drei
