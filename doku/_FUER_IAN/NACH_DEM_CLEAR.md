@@ -1,6 +1,6 @@
 # Was du nach dem Clear schreiben sollst
 
-## 📋 STAND 13.09.2026, ABENDS — schreib einfach: „mit plan weitermachen"
+## 📋 STAND 13.09.2026, SPÄTABENDS — schreib einfach: „mit plan weitermachen"
 
 > Alles Nötige steht in Dateien. Der nächste Schritt ist entschieden und begründet;
 > du musst nichts erklären.
@@ -9,47 +9,71 @@
 
 > 🎉 **Der Handy-Durchgang ist gemacht — sieben von sieben.** Anmelden mit Apple, mit
 > Google, angemeldet bleiben über den Neustart, Profilbild, der Merker, kein
-> Prototyp-Kasten, die @-Namen. **Das Backend läuft damit auf einem echten iPhone**
-> und nicht mehr nur auf meinem Rechner. Das war der größte offene Punkt seit Wochen.
+> Prototyp-Kasten, die @-Namen. **Das Backend läuft damit auf einem echten iPhone.**
 >
-> ✅ **Und die Meldungen haben einen Leser bekommen** (`npm run meldungen`) — die
-> letzte offene Apple-Pflicht aus der Kategorie „lesen".
-
-### Die drei Fehler, die dabei herauskamen
-
-> 1. **Dein Profilbild scheiterte lautlos**, weil die App den Dateinamen mit etwas
->    baute, das es nur im Browser gibt. Behoben und am Server nachgemessen: dein Bild
->    ist 176 kB, ein echtes JPEG, liegt richtig.
-> 2. **Eine Datenbankzeile hätte dein Konto UNLÖSCHBAR gemacht**, sobald du je eine
->    Meldung bearbeitest. Behoben, am echten Server eingespielt und nachgemessen.
-> 3. **Die @-Namen hätten ihr `@` verloren**, sobald echte Daten laufen. Behoben —
->    du hast es am Handy geprüft.
-
-### 🔴 Was als NÄCHSTES gebaut wird (entschieden, du musst nichts tun)
-
-> **„Kein Knopf schweigt mehr."** Dein Profilbild war eine von **15 Stellen**, an denen
-> ein Fehler spurlos verschwinden kann — der Knopf tut dann einfach nichts, ohne ein
-> Wort. **14 sind noch offen**, und jede ist heute auf deinem Handy so eine Stelle.
-> Das ist mechanische Arbeit, braucht keinen neuen Baustein, und danach steht ein
-> Wächter, der die Familie nicht mehr zurückkommen lässt.
+> ✅ **Danach zwei Phasen an einem Abend:** „Kein Knopf schweigt mehr" (20.9 — die
+> 14 Stellen, an denen ein Fehler spurlos verschwinden konnte, sind zu) und **„der
+> Leser darf auch handeln" (20.7-b).**
 >
-> ❓ **Eine Frage kommt dabei auf dich zu** (ich stelle sie dir, wenn es soweit ist):
-> Wohin soll ein *unerwarteter* Fehler auf dem Bildschirm? Heute gibt es die rote
-> Leiste oben für „der Server hat abgelehnt" und einen Satz neben dem Knopf für
-> „daran kannst du was ändern". Ein Programmfehler ist keins von beidem.
+> 🎉 **Und damit ist Apples Guideline 1.2 VOLLSTÄNDIG.** Das war die Liste, die seit
+> Phase 7 offen stand:
 >
-> Danach: **der Lösch-Knopf für Meldungen** (Apple verlangt, dass wir gemeldete Posts
-> auch entfernen können), und dann **dein runder Zuschnitt**.
+> | | |
+> |---|---|
+> | Melden | ✅ seit Phase 7 |
+> | Blockieren | ✅ seit Phase 7 |
+> | Nutzungsbedingungen | ✅ der Rahmen steht — **der Text fehlt noch, siehe unten** |
+> | Konto löschen | ✅ wirkt seit 20.6-c |
+> | Meldungen **lesen** | ✅ seit heute früh (`npm run meldungen`) |
+> | Inhalte entfernen, Leute ausschließen | ✅ **seit heute Abend** |
+
+### 🛠 Das kannst du ab jetzt selbst — zwei Befehle
+
+> Beide zeigen dir **erst nur, was passieren würde.** Es passiert nichts, solange du
+> nicht `--wirklich` dahinterschreibst.
+>
+> ```
+> npm run meldungen                              was gemeldet wurde
+> npm run meldungen -- post-loeschen  <id>       einen Post entfernen
+> npm run meldungen -- konto-loeschen @name      jemanden rauswerfen
+> ```
+>
+> Die Vorschau sagt dir vorher, **was drankommt** — bei einem Post: von wem er ist,
+> wie viele Anfragen mitgehen. Bei einem Konto: wie viele Posts und Chats, **und was
+> mit seinen Gruppen passiert** (wer sie erbt, oder ob sie aufhört).
+>
+> ⚠️ **Danach ist es weg und kommt nicht zurück.** Deshalb die zwei Schritte.
+
+### ✅ Deine drei Entscheidungen von heute Abend
+
+> | Du hast gewählt | Was das heißt |
+> |---|---|
+> | **Rauswerfen = Konto löschen** | Alles von ihm ist weg. Den Haken kennst du: Er kann sich mit einer anderen Mailadresse neu anmelden. Eine echte Sperrliste wäre viel mehr Arbeit — sie kann später dazukommen. |
+> | **„Erledigt" bleibt „erledigt"** | Auch wenn eine Meldung zu spät bearbeitet wurde. Die Liste bleibt ruhig. Bei der einzelnen Meldung steht die Verspätung weiter dran („46 h nach der Zusage") — was wegfällt, ist nur das Zusammenzählen. |
+> | **„Nochmal versuchen" bleibt** | Unter dem Fehler-Kasten. Er hilft oft nicht, aber ohne ihn kommt man da nur durch Neustarten raus. |
+>
+> **Damit ist dein `TODO(Ian)` aus `meldung.ts` weg** — du musstest dafür keine Zeile
+> tippen, deine Antwort war die Arbeit.
+
+### 🔴 Zwei Sachen, die dabei herauskamen
+
+> 1. **Fast hätte JEDER deiner Nutzer fremde Konten löschen können.** In der Datenbank
+>    darf standardmäßig *jeder* jede neue Funktion aufrufen — das musste ausdrücklich
+>    verboten werden. Gemessen an deinem echten Supabase und an der Testdatenbank;
+>    jetzt bewacht an drei Stellen.
+> 2. **Eine Prüfung lief seit Wochen ins Leere.** Wenn du dein Konto löschst und eine
+>    Gruppe gegründet hast, soll sie an das Mitglied gehen, das am längsten dabei ist.
+>    In den Testdaten gab es **keine einzige Gruppe**, bei der das hätte passieren
+>    können — die Regel war also nie wirklich geprüft. Jetzt ist sie es.
 
 ### ❓ Was auf DICH wartet — nichts davon blockiert mich
 
 > | | |
 > |---|---|
-> | **5 Zeilen Code, die du schreibst** | `TODO(Ian)` in `simplysocial/src/features/safety/meldung.ts` — soll eine zu spät bearbeitete Meldung als „erledigt" oder als „erledigt, zu spät" gelten? Die Begründung steht daneben. |
 > | **Management-Token widerrufen** | `supabase.com/dashboard/account/tokens` → Revoke. Er darf alles in deinem Supabase-Konto und wird nie wieder gebraucht. |
 > | **Landing-Page-Farbe** | Offen seit 06.09. Drei Vorschauen liegen in `landing-vorschau/`. Farbe *und* ob die Kategoriefarben mitgehen. |
 > | **Der Satz beim Kontolöschen** | Punkt 10 in `OFFENE_SACHEN.md`, eine Minute. |
-> | **Rechtstexte** | Für den App Store, und nur mit einem Erwachsenen. Der größte Brocken vor der Einreichung. |
+> | **Rechtstexte** | Der rote Kasten in den Nutzungsbedingungen. **Seit heute Abend ist das der letzte inhaltliche Punkt vor dem App Store** — alles andere an Apples Guideline 1.2 steht. Nur mit einem Erwachsenen; ich darf ihn nicht erfinden. |
 > | **Apple-Programm: auf wessen Namen?** | Steht seit 11.09. offen und wird später teuer — daran hängt der Sign-in-Schlüssel. |
 
 ### ⚠️ Zwei Sachen, die du über den Stand wissen solltest

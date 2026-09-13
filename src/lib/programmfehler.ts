@@ -94,7 +94,12 @@ export const PROGRAMM_ERKLAERUNG =
 /**
  * Der Knopf unter dem Kasten und neben der Zeile.
  *
- * ⚠️ **Das ist eine AUSLEGUNG von Entscheidung 71 und wartet auf Ians Urteil.**
+ * ✅ **Ians Entscheidung 74 vom 2026-09-13** — er hat die Abwägung unten
+ * bestätigt, nachdem sie ihm als Frage vorlag. Bis dahin stand hier
+ * „AUSLEGUNG, wartet auf Ians Urteil"; **das ist nicht dasselbe**, auch wenn
+ * sich kein Zeichen Code geändert hat (die 18d-Lehre: ein Platzhalter, der
+ * zufällig richtig ist, und eine Entscheidung sind zwei verschiedene Zustände).
+ *
  * Bei der LEISTE steht „Alles klar", und die Begründung ist hart: Ein neuer
  * Versuch läuft in denselben Programmfehler, und ein Knopf, der erkennbar nichts
  * ändert, ist eine Schleife, die wie ein Defekt aussieht (harte Regel 76).
@@ -104,8 +109,7 @@ export const PROGRAMM_ERKLAERUNG =
  * Kasten steht NICHTS. `LadeSchirm` zeichnet seinen Knopf immer, und er ruft
  * `nochmal` — ein Knopf namens „Alles klar", der neu lädt, wäre eine Lüge, und
  * gar kein Knopf wäre ein Bildschirm, den man nur durch Neustarten verlässt.
- * **Ein nutzloser Knopf ist besser als eine Sackgasse — aber das ist meine
- * Abwägung, nicht seine.** Die Korrektur wäre ein Wort.
+ * **Ein nutzloser Knopf ist besser als eine Sackgasse.**
  */
 export const PROGRAMM_KNOPF_LADEN = 'Nochmal versuchen';
 

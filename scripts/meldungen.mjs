@@ -38,7 +38,6 @@ const LAGE_MARKE = {
   faellig: '🟠 wird knapp',
   offen: '🟡 offen',
   erledigt: '✓  erledigt',
-  'spaet-erledigt': '✓! erledigt, zu spät',
 };
 
 // Sortiert wird nach LAGE und dann nach Fälligkeit — nicht nach Eingang. Das ist
@@ -46,7 +45,7 @@ const LAGE_MARKE = {
 // unterscheidet, muss in der Liste unterscheidbar sein, sonst ist sie nur ein
 // Satz im Rechtstext. Der Index in 0009 steht aus demselben Grund auf
 // (reason, created_at) statt auf (created_at desc).
-const RANG = { ueberfaellig: 0, faellig: 1, offen: 2, 'spaet-erledigt': 3, erledigt: 4 };
+const RANG = { ueberfaellig: 0, faellig: 1, offen: 2, erledigt: 3 };
 
 const stunden = (von, bis) => (new Date(bis) - new Date(von)) / 3600_000;
 const dauer = (h) => {
@@ -139,10 +138,14 @@ if (angereichert.length === 0) {
 
   const offen = angereichert.filter((z) => !z.erledigt_am).length;
   const ueber = angereichert.filter((z) => z.lage === 'ueberfaellig').length;
-  const spaet = angereichert.filter((z) => z.lage === 'spaet-erledigt').length;
   console.log('───────────────────────────────────────────────────────────────────────');
   console.log(`  ${angereichert.length} angezeigt · ${offen} offen · ${ueber} überfällig`);
-  if (spaet > 0) console.log(`  ${spaet} wurden zu spät bearbeitet — die Zusage war zu knapp?`);
+  // Hier stand bis zum 2026-09-13 eine Zeile „N wurden zu spät bearbeitet".
+  // Sie ist mit Ians Entscheidung 73 (A) weggefallen und NICHT vergessen: Eine
+  // erledigte Meldung ist erledigt, also gäbe es nie etwas zu zählen. Die
+  // Verspätung der EINZELNEN Meldung steht weiter oben im Klartext — was
+  // wegfällt, ist das Aufaddieren. Der Preis ist benannt: Diese Liste kann
+  // nicht sagen, wie oft die Zusage gebrochen wurde.
   console.log('');
   console.log('  Abhaken:  npm run meldungen -- erledigt <id> "was getan wurde"');
   console.log('');

@@ -67,7 +67,8 @@
     "google-app-id": "bash scripts/google-app-id.sh",
     "pruef-anbieter": "bash supabase/pruefen/96_anbieter.sh",
     "meldungen": "bash scripts/meldungen.sh",
-    "pruef-programmfehler": "bash supabase/pruefen/97_programmfehler.sh"
+    "pruef-programmfehler": "bash supabase/pruefen/97_programmfehler.sh",
+    "pruef-moderation": "bash supabase/pruefen/98_moderation.sh"
   },
   "private": true
 }

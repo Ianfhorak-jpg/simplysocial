@@ -42,6 +42,83 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > die zwei Liquid-Glass-Vorbilder geblieben, weil sie als laufende Vorlage dienen
 > und nicht als Beleg. Einzelheiten in `_belege/LIESMICH.md`.
 
+🎉 **Phase 20.7-b ist FERTIG (2026-09-13 spätabends) — und damit ist die
+Apple-1.2-Pflicht VOLLSTÄNDIG.** Melden · Blockieren · Nutzungsbedingungen · Konto
+löschen · Meldungen lesen (20.7) · **und jetzt auch handeln.** Der Leser darf
+entfernen und ausschließen: `npm run meldungen -- post-loeschen <id>` und
+`-- konto-loeschen <@name>`, beide zeigen ohne `--wirklich` nur eine Vorschau.
+
+Drei Entscheidungen von Ian (**72**: ausschließen heißt löschen · **73**: erledigt ist
+erledigt · **74**: der Kasten-Knopf bleibt), eine neue Migration
+(`0010_moderation.sql`), ein neuer Prüfstand (`npm run pruef-moderation` — **31
+Häkchen**). Gemessen: `tsc` sauber · **81 Lint-Probleme wie vorher** · lokal **171
+statt 136** · `pruef-konto` **32** · `pruef-bilder` **32** · `pruef-schreiben` **50** ·
+`pruef-lesen` **29** · `pruef-sitzung` **29** · `pruef-bildwahl` **47** ·
+`pruef-anbieter` **48** · `pruef-programmfehler` **25** · am echten Server eingespielt,
+alle zwölf Zahlen grün, darunter die neue **„Moderation dicht: 0"**. Sieben Dinge:
+
+1. 🔴 **Der teuerste Fund: In Postgres darf `PUBLIC` JEDE neue Funktion ausführen — und
+   ohne ein `revoke` wäre `konto_entfernen` ein Knopf gewesen, mit dem jeder
+   Angemeldete jedes Konto der App löscht.** Gemessen an der Wegwerf-Datenbank UND am
+   echten Supabase, an allen neun bestehenden Funktionen: `anon: true | auth: true`,
+   ausnahmslos. Die `grant execute` in 0004 erteilen also etwas, das ohnehin da war —
+   **dieselbe Familie wie die Rechteliste aus 0002** (harte Regel 85), nur bei
+   Funktionen statt Tabellen. Für die neun ist es folgenlos, **weil jede SELBST prüft,
+   wer sie ruft** (harte Regel 70). Genau das kann `konto_entfernen` nicht: Ihr Zweck
+   IST das fremde Konto. Harte Regel 104.
+2. **`konto_loeschen()` wurde UMGEBAUT, obwohl sie lief.** Der naheliegende Weg wäre
+   gewesen, ihren Rumpf zu kopieren und `auth.uid()` durch `wen` zu ersetzen — dann
+   stünde die Erbfolge aus Entscheidung 13 **zweimal** da, und wer sie ändert, ändert
+   eine von beiden. **Das fällt nie auf, weil man selten fremde Konten löscht.** Jetzt:
+   ein gemeinsamer Rumpf (`konto_weg`), zwei Türen davor. `konto_loeschen()` nimmt
+   **weiter keine Argumente** — der Wächter aus 0009 bleibt Zeichen für Zeichen
+   erfüllt, und ihr Kommentar in 0003 stimmt unverändert.
+3. **Es gibt bewusst KEIN `post_entfernen()`**, und das ist harte Regel 70 wörtlich
+   angewandt: *Eine Funktion verlangt es, WENN etwas zu entscheiden ist.* Beim Post ist
+   nichts zu entscheiden — gemessen: `join_requests` geht per CASCADE mit,
+   `chat_threads.post_id` wird `SET NULL`, **der Chat BLEIBT** (Entscheidung 42). Zwei
+   Leute, die sich getroffen haben, verlieren ihr Gespräch nicht, weil ein Dritter den
+   Aushang gemeldet hat.
+4. 🔴 **Der zweitteuerste Fund ist ÄLTER als diese Phase: In `05_daten.sql` gibt es
+   keine Gruppe, in der eine Erbfolge stattfinden könnte.** „Marswiese Tennis" ist
+   schon aufgelöst, in „Nora allein" ist Nora allein. **Damit war der Erbfolge-Pfad in
+   `konto_loeschen()` nie gelaufen** — ausgerechnet der Teil, der die Funktion
+   überhaupt rechtfertigt. Die 18d-Lehre: *Eine Regel, die nichts vorfindet, sieht aus
+   wie eine Regel, die tut.* `98_moderation.sh` legt seinen Fall jetzt selbst an und
+   misst, dass **Lea** erbt und nicht Nora — ein Test auf „irgendwer erbt" hätte eine
+   verkehrte Reihenfolge durchgelassen.
+5. **`aufbauen.sh` zählte die Migrationen von HAND auf** — genau die Bauart, die in
+   20.7 an `einspielen.sh` `0008_bilder.sql` verschluckt hat. Hier wäre es schlimmer
+   gewesen: **Ein Prüfstand, der eine Migration auslässt, misst grün an einer
+   Datenbank, die es nicht gibt.** Jetzt kommt die Liste aus dem Ordner.
+6. **Das `--wirklich`-Gate ist die einzige Zeile zwischen einem Tippfehler und einem
+   gelöschten Konto — und gegen den echten Server ist sie prinzipiell nicht prüfbar:**
+   Der Beleg wäre ein wirklich gelöschtes Konto. Deshalb nimmt `meldungen.sh` seit
+   20.7-b `SS_DB_URL` entgegen, und der Prüfstand misst beide Richtungen. **Die
+   Vorschau ist hier kein Komfort:** Eine UUID sagt einem Menschen nichts, und sie
+   nennt auch, was Entscheidung 13 tun wird — welche Gruppe an wen geht und welche
+   aufhört.
+7. **Zwei eigene Fehler, beide am MESSAUFBAU.** Der Gruppen-Aufbau im neuen Prüfstand
+   lief durch `>/dev/null`, und als das `insert` an einem falschen Spaltennamen
+   scheiterte (**das Schema ist GEMISCHT**: `offen` und `aufgeloest_am` deutsch,
+   `description`, `category`, `district` englisch), sah der Lauf aus, als wäre die
+   ERBFOLGE kaputt — vier Kreuze, keines am geprüften Code. Und ein `grep -c '@nora'`
+   erwartete genau 1 und fand 2: **Ein Test, der an einer ZAHL hängt, wo die Aussage
+   „kommt vor" ist, wird beim nächsten Satz rot, ohne dass etwas kaputt ist.**
+
+⚠️ **Was 20.7-b NICHT ist: in der App sichtbar.** Es ist ein Befehl am Mac, und das IST
+Ians Entscheidung 58. Auf `reports` steht weiterhin nur `select, insert` — **kein
+`update`**, also kann niemand in der App etwas abhaken.
+
+✅ **Zwei Entscheidungen an dem Abend haben FAST KEIN Zeichen Code geändert, und sind
+trotzdem nicht dasselbe wie vorher.** Bei **73** (`meldungLage()`) stand A als
+Platzhalter und steht jetzt als Entscheidung — dabei fiel `'spaet-erledigt'` aus dem
+Union, weil ein Glied, das nie entsteht, genau der Zustand ist, den harte Regel 31
+undarstellbar machen will. Bei **74** (`PROGRAMM_KNOPF_LADEN`) stand „das ist meine
+Abwägung, nicht seine". **Die 18d-Lehre: Ein Platzhalter, der zufällig richtig ist, und
+eine Entscheidung sind zwei verschiedene Zustände** — der Unterschied liegt vollständig
+in dem, was die nächste Sitzung liest.
+
 ✅ **Phase 20.9 ist FERTIG (2026-09-13 abends): kein Knopf schweigt mehr — und der
 teuerste Fund war ein KOMMENTAR, der eine Erlaubnis erteilte, die es nicht mehr gab.**
 Die 14 Stellen, an denen eine `async`-Funktion an eine `void`-Prop ging, sind zu; der
@@ -225,11 +302,13 @@ bricht weiter ab · Schalter nachweislich zurück auf `'supabase'`. Sieben Dinge
    starb trotzdem an `ERR_MODULE_NOT_FOUND`, weil der Import in `auth/konto.ts` stand.
    Das war zugleich der Grund, `handleText()` nach `lib/handle.ts` zu legen.
 
-⚠️ **Was 20.7 NICHT ist: handeln.** Gemessen: `posts_loeschen` lässt nur den Autor durch,
-auf `profiles` gibt es kein delete, und `konto_loeschen()` nimmt **absichtlich keine
-ID**. Für Apple 1.2 („Inhalte entfernen, Nutzer ausschließen") fehlt der Weg — er gehört
-als `-- post-loeschen` / `-- konto-sperren` in dasselbe Werkzeug, **nicht als Parameter
-an `konto_loeschen()`** (der Wächter in 0009 bricht dann ab).
+✅ **Was 20.7 noch NICHT war — handeln — ist seit dem 2026-09-13 abends gebaut
+(20.7-b, siehe oben).** Hier stand, `posts_loeschen` lasse nur den Autor durch, auf
+`profiles` gebe es kein delete und `konto_loeschen()` nehme **absichtlich keine ID**.
+Alle drei Messungen stimmen unverändert — **der Weg geht nicht durch sie hindurch,
+sondern daneben:** `konto_entfernen(wen)` ist eine EIGENE Tür (kein `grant`, nur über
+die db-url), und `konto_loeschen()` nimmt weiter keinen Parameter, so wie der Wächter
+in 0009 es verlangt.
 
 ❓ **Eine Auslegung wartet auf Ian, als `TODO(Ian)` im Code:** `meldungLage()` — was
 steht in der Liste, wenn ZU SPÄT bearbeitet wurde? Die Einzelmeldung nennt die
@@ -2649,12 +2728,24 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    `kontoLoeschen` seit 20.6-c fehlte. Alle drei repariert; `pruef-konto` meldet
    seither **32 statt 29**.
 
-10d. **Der Leser darf auch handeln (20.7-b)** — `npm run meldungen -- post-loeschen` und
-   `-- konto-sperren`. Die letzte Hälfte der Apple-1.2-Pflicht; ohne Gerät zu bauen.
-   ⚠️ **Zwei Fallen sind schon gemessen** und stehen in PLAN.md: `konto_loeschen()` darf
-   keinen Parameter bekommen (der Wächter in 0009 bricht sonst ab), und ein blankes
-   `delete from auth.users` scheitert an `chef_oder_aufgeloest`, sobald der Betreffende
-   je eine Gruppe gegründet hat.
+10d. ~~**Der Leser darf auch handeln (20.7-b)**~~ ✅ *2026-09-13 abends:
+   `npm run meldungen -- post-loeschen` und `-- konto-loeschen`, beide mit Vorschau
+   und `--wirklich`. **Damit ist die Apple-1.2-Pflicht vollständig.** Drei
+   Entscheidungen von Ian (**72** ausschließen heißt löschen · **73** erledigt ist
+   erledigt · **74** der Kasten-Knopf bleibt), eine neue Migration
+   (`0010_moderation.sql`), ein neuer Prüfstand (`npm run pruef-moderation`, **31**).
+   Lokal **171 statt 136**.*
+   🔴 **Dabei kam heraus, dass `PUBLIC` in Postgres JEDE neue Funktion ausführen darf**
+   — ohne `revoke` wäre `konto_entfernen` ein Knopf gewesen, mit dem jeder Angemeldete
+   jedes Konto löscht (harte Regel 104). **Und dass der Erbfolge-Pfad in
+   `konto_loeschen()` nie gelaufen war**: In den Prüfdaten gibt es keine Gruppe, in der
+   eine Erbfolge stattfinden könnte.
+   ⚠️ **Die zwei vorher gemessenen Fallen haben beide gehalten:** `konto_loeschen()`
+   nimmt weiter keinen Parameter (der Wächter aus 0009 ist erfüllt — das fremde Konto
+   hat eine EIGENE Tür), und ein blankes `delete from auth.users` gibt es nicht: Beide
+   Türen führen auf denselben Rumpf `konto_weg()`, in dem die Erbfolge mitläuft.
+   **Der Befehl heißt `konto-loeschen`, nicht `konto-sperren`** — Ian hat „löschen"
+   gewählt, und ein Befehl namens „sperren", der löscht, ist ein Name, der lügt.
 
 10e. **Der runde Zuschnitt (20.6-d)** — Ians Wunsch vom 13.09. ⚠️ **Kein rundes BILD:**
    JPEG hat keinen Alphakanal. Gemeint ist ein rundes FENSTER beim Aussuchen; gespeichert
@@ -3150,8 +3241,14 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    nicht als Nebenwirkung.
 
 57. **Was am Server gilt, wird ANGEGRIFFEN, nicht angeschaut.**
-   `bash supabase/pruefen/aufbauen.sh` — **erwartet sind 136 Häkchen und kein Kreuz**
-   (25 in 20.2, 78 nach 20.5-SQL, 121 seit 20.4-a, 124 seit 0006, 136 seit 0008).
+   `bash supabase/pruefen/aufbauen.sh` — **erwartet sind 171 Häkchen und kein Kreuz**
+   (25 in 20.2, 78 nach 20.5-SQL, 121 seit 20.4-a, 124 seit 0006, 136 seit 0008,
+   **171 seit 0010** — vier Angriffe auf `konto_entfernen` und die 31 aus
+   `98_moderation.sh`, das seit 20.7-b am Ende mitläuft). **Die Liste der
+   Migrationen kommt seit 20.7-b aus dem ORDNER** und steht nicht mehr von Hand
+   da: Genau diese Bauart hat in `einspielen.sh` `0008` verschluckt, und in einem
+   PRÜFSTAND wäre sie schlimmer — er misst dann grün an einer Datenbank, die es
+   nicht gibt.
    **Dazu VIER Prüfstände am ECHTEN Server, und die können etwas, das lokal
    prinzipiell nicht geht:** `npm run pruef-lesen` (29) · `npm run pruef-konto` (**32** seit 20.7 —
    die drei @-Häkchen; bis zum 13.09. abends stand hier 29, **weil der Prüfstand
@@ -3164,6 +3261,13 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    dort Beispiele auswählt, liest zuerst harte Regel 92** · `npm run pruef-sitzung`
    (**29**, seit dem 2026-09-13 ohne `TODO`) ·
    `npm run pruef-anbieter` (48, seit 20.3-b2) ·
+   `npm run pruef-moderation` (**31**, seit 20.7-b — er misst das Werkzeug, das
+   LÖSCHT. **Das `--wirklich`-Gate ist die einzige Zeile zwischen einem Tippfehler
+   und einem gelöschten Konto, und gegen den echten Server ist sie prinzipiell
+   nicht prüfbar:** Der Beleg wäre ein wirklich gelöschtes Konto. Deshalb nimmt
+   `meldungen.sh` `SS_DB_URL` entgegen. Er legt seinen Erbfolge-Fall **selbst an**
+   — in `05_daten.sql` gibt es keine Gruppe, in der eine stattfinden könnte, und
+   damit war der Pfad in `konto_loeschen()` nie gelaufen) ·
    `npm run pruef-programmfehler` (**25**, seit 20.9 — er misst Ians Entscheidung 71
    und **baut danach die verworfene Fassung**, in der sie fehlt: dort 8 Kreuze. Ohne
    diesen zweiten Teil wäre er grün und ohne Aussage). **`pruef-anbieter` kann etwas,
@@ -3894,6 +3998,35 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Zeichen; ein `/` kann darin nicht vorkommen. **Unmöglich, nicht unwahrscheinlich.**
    Wer einen zweiten solchen Code einführt, misst dasselbe nach
    (`npm run pruef-programmfehler`).
+
+104. **In Postgres darf `PUBLIC` jede neue Funktion AUSFÜHREN — ein fehlender
+   `grant` ist bei Funktionen KEINE Zusage.** *(Phase 20.7-b, 2026-09-13, gemessen
+   an der Wegwerf-Datenbank UND am echten Supabase.)* Alle neun bestehenden
+   `public.`-Funktionen stehen auf `anon: true | auth: true`, auch ohne jeden
+   `grant`; die `grant execute … to authenticated` in 0004 erteilen etwas, das
+   ohnehin da war. **Dieselbe Familie wie harte Regel 85** — dort die Rechteliste
+   auf Tabellen, hier die auf Funktionen —, und dieselbe Gegenmaßnahme: erst ein
+   ausdrückliches `revoke`, dann gilt die Absicht.
+   **Für die neun ist das folgenlos, und der Grund ist harte Regel 70:** Jede
+   prüft SELBST, wer sie ruft (`auth.uid()` ist null → Abbruch). Genau deshalb
+   steht Regel 70 dort, wo sie steht.
+   ⚠️ **Gefährlich wird es bei einer Funktion, die das nicht KANN.**
+   `konto_entfernen(wen)` löscht ein fremdes Konto — ihr Zweck ist das fremde
+   Konto, eine Selbstprüfung gibt es nicht. Ihre einzige Absicherung ist, wer sie
+   ausführen darf. Ohne `revoke all … from public, anon, authenticated` wäre sie
+   ein Knopf, mit dem jeder Angemeldete jedes Konto der App löscht — das Gegenteil
+   von Ians Entscheidung 58 (*„der stärkste Schlüssel des Projekts liegt auf einem
+   Mac, nicht auf einem Handy"*).
+   **Gefragt wird `has_function_privilege`, NIE das rohe `proacl`:** Ein leeres
+   ACL heißt „Standard", und der Standard ist hier ausgerechnet *offen*. Wer die
+   Spalte liest, sieht nichts und schließt daraus das Gegenteil. Gemessen wird an
+   drei Stellen — im Wächter von `0010`, als Angriff in `10_angriff.sql`
+   (`set local role authenticated`, harte Regel 57) und als Zahl in
+   `einspielen.sh` („Moderation dicht", weil ein `grant` von Hand am Server keine
+   Migration braucht).
+   **Wer eine neue `security definer`-Funktion baut, beantwortet also zuerst:
+   *Kann sie selbst prüfen, wer sie ruft?* Wenn nein, ist das `revoke` Pflicht
+   und kein Feinschliff.**
 
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
@@ -5039,8 +5172,13 @@ Feed, Anfragen und Chat, Melden wird gespeichert, Account löschen zeigt echte Z
 Nur der letzte Klick beim Löschen tut nichts, weil es ohne Login kein Konto gibt; der
 Screen sagt das selbst.
 
-Was für den Review trotzdem noch fehlt und erst mit dem Backend kommt: ein Mensch, der
-die Meldungen liest, und das Häkchen „Nutzungsbedingungen akzeptiert" beim Anmelden.
+✅ **Seit dem 2026-09-13 wirken sie nicht nur, sie werden auch gelesen UND
+beantwortet:** `npm run meldungen` zeigt die Meldungen (20.7), und
+`-- post-loeschen` / `-- konto-loeschen` entfernen Inhalte und schließen Leute aus
+(20.7-b). **Damit ist Guideline 1.2 vollständig.**
+
+Was für den Review noch fehlt: das Häkchen „Nutzungsbedingungen akzeptiert" beim
+Anmelden — und der Rechtstext, den es bestätigen soll.
 Der **Rechtstext selbst fehlt bewusst sichtbar** (roter Kasten in
 `nutzungsbedingungen.tsx`) — er ist kein Text, den Claude erfinden darf
 (`_FUER_IAN/OFFENE_SACHEN.md`, Punkt 1).

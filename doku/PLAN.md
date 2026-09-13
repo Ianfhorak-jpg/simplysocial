@@ -6182,7 +6182,85 @@ Loch, sondern eine Zusage. Wer den Torwächter aufweicht, macht daraus eines.
 
 ---
 
-### Phase 20.7-b — Der Leser darf auch HANDELN ⬜ *(Apple 1.2, ohne Gerät)*
+### Phase 20.7-b — Der Leser darf auch HANDELN ✅ *(2026-09-13 abends)*
+
+> ✅ **FERTIG. Die zweite Hälfte der Apple-1.2-Pflicht steht: Inhalte entfernen und
+> Nutzer ausschließen.** Drei Entscheidungen von Ian (**72**: ausschließen heißt
+> löschen · **73**: erledigt ist erledigt · **74**: der Knopf bleibt), eine neue
+> Migration (`0010_moderation.sql`), ein neuer Prüfstand (`npm run pruef-moderation`
+> — **31 Häkchen**).
+>
+> **Gemessen:** `tsc` sauber · **81 Lint-Probleme wie vorher** · lokal **171 statt 136**
+> · `pruef-konto` 32 · `pruef-bilder` 32 · `pruef-schreiben` 50 · `pruef-lesen` 29 ·
+> `pruef-sitzung` 29 · `pruef-bildwahl` 47 · `pruef-anbieter` 48 ·
+> `pruef-programmfehler` 25 · am echten Server eingespielt, **„Moderation dicht: 0"** ·
+> die Vorschau am echten Server gelaufen und **gegengemessen, dass das Konto noch
+> dasteht.**
+>
+> **Sieben Dinge:**
+>
+> 1. 🔴 **Der teuerste Fund: In Postgres bekommt `PUBLIC` standardmäßig `EXECUTE` auf
+>    JEDE neue Funktion — und ohne ein `revoke` wäre `konto_entfernen` ein Knopf
+>    gewesen, mit dem jeder Angemeldete jedes Konto der App löscht.** Gemessen an der
+>    Wegwerf-Datenbank UND am echten Supabase, an allen neun bestehenden Funktionen:
+>    `anon: true | auth: true`, ausnahmslos. Die `grant execute … to authenticated` in
+>    0004 erteilen also etwas, das ohnehin da war — **dieselbe Familie wie die
+>    Rechteliste aus 0002** (harte Regel 85), nur bei Funktionen statt Tabellen.
+>    **Für die neun ist es folgenlos, weil jede SELBST prüft, wer sie ruft**
+>    (harte Regel 70). Genau das kann `konto_entfernen` nicht: Ihr Zweck IST das
+>    fremde Konto. Harte Regel 104.
+> 2. **`konto_loeschen()` wurde UMGEBAUT, obwohl sie lief — und der naheliegende Weg
+>    wäre gewesen, sie zu kopieren.** Dann stünde die Erbfolge aus Entscheidung 13
+>    zweimal da, und wer sie eines Tages ändert, ändert eine von beiden. **Das fällt
+>    nie auf, weil man selten fremde Konten löscht.** Jetzt: ein gemeinsamer Rumpf
+>    (`konto_weg`), zwei Türen davor. **`konto_loeschen()` nimmt weiter KEINE
+>    Argumente** — der Wächter aus 0009 bleibt Zeichen für Zeichen erfüllt, und der
+>    Kommentar in 0003 stimmt unverändert. Das fremde Konto hat eine eigene Tür, und
+>    die ist zu.
+> 3. **Es gibt bewusst KEIN `post_entfernen()`.** Harte Regel 70 sagt: *Eine Funktion
+>    verlangt es, WENN etwas zu entscheiden ist.* Beim Post ist nichts zu entscheiden
+>    — gemessen: `join_requests` geht per CASCADE mit, `chat_threads.post_id` wird
+>    `SET NULL`, **der Chat BLEIBT** (Entscheidung 42). Ein `delete` reicht; eine
+>    Funktion wäre dieselbe Überflüssigkeit wie beim Trigger `nachricht_notiert`.
+> 4. 🔴 **Der zweitteuerste Fund war im PRÜFSTAND und ist älter als diese Phase: In
+>    `05_daten.sql` gibt es KEINE Gruppe, in der eine Erbfolge stattfinden könnte.**
+>    „Marswiese Tennis" ist schon aufgelöst, in „Nora allein" ist Nora allein. **Damit
+>    war der Erbfolge-Pfad in `konto_loeschen()` nie gelaufen** — ausgerechnet der
+>    Teil, der die Funktion überhaupt rechtfertigt. `20_transaktionen.sql` prüft die
+>    Erbfolge über `gruppe_verlassen`, und der Test an `konto_loeschen` deckt allein
+>    den AUFLÖSUNGS-Fall ab. Die 18d-Lehre: *Eine Regel, die nichts vorfindet, sieht
+>    aus wie eine Regel, die tut.* `98_moderation.sh` legt seinen Fall jetzt selbst an
+>    — drei Mitglieder mit gesetzten `joined_at` — und misst, dass **Lea** erbt und
+>    nicht Nora. Ein Test auf „irgendwer erbt" hätte eine verkehrte Reihenfolge
+>    durchgelassen.
+> 5. **`aufbauen.sh` zählte die Migrationen von HAND auf** — genau die Bauart, die in
+>    20.7 an `einspielen.sh` `0008_bilder.sql` verschluckt hat. Hier wäre es schlimmer
+>    gewesen: Ein Prüfstand, der eine Migration auslässt, misst **grün an einer
+>    Datenbank, die es nicht gibt.** Jetzt kommt die Liste aus dem Ordner, mit
+>    demselben Wächter auf vierstellige Nummern.
+> 6. **Das `--wirklich`-Gate ist die einzige Zeile zwischen einem Tippfehler und einem
+>    gelöschten Konto — und sie war nicht messbar.** Gegen den echten Server geht es
+>    prinzipiell nicht: Der Beleg wäre ein wirklich gelöschtes Konto. Deshalb nimmt
+>    `meldungen.sh` seit 20.7-b `SS_DB_URL` entgegen, und `98_moderation.sh` misst
+>    beide Richtungen — ohne `--wirklich` steht der Post nachweislich noch da, mit
+>    `--wirklich` ist er weg **und der Chat steht** (Entscheidung 42, am Ergebnis
+>    gemessen statt am Schema gelesen).
+> 7. **Zwei eigene Fehler, beide am MESSAUFBAU, beide schon aufgeschrieben.** Der
+>    Gruppen-Aufbau im neuen Prüfstand lief durch `>/dev/null` — und als das `insert`
+>    an einem falschen Spaltennamen scheiterte (**das Schema ist GEMISCHT**: `offen`
+>    und `aufgeloest_am` deutsch, `description`, `category`, `district` englisch), sah
+>    der Lauf aus, als wäre die ERBFOLGE kaputt. Vier Kreuze, keines am geprüften Code
+>    — die 20.4-b-Lehre wörtlich. Und ein `grep -c '@nora'` erwartete genau 1 und fand
+>    2, weil der Name zweimal in der Ausgabe steht; **ein Test, der an einer ZAHL
+>    hängt, wo die Aussage „kommt vor" ist, wird beim nächsten Satz rot, ohne dass
+>    etwas kaputt ist.**
+>
+> ⚠️ **Was 20.7-b NICHT ist: am Gerät oder in der App sichtbar.** Es ist ein Befehl am
+> Mac, und das IST Entscheidung 58. In der App hat sich kein Pixel geändert; auf
+> `reports` steht weiterhin nur `select, insert`.
+
+<details><summary>Wie die Phase geplant war (2026-09-13 mittags)</summary>
+
 
 > `npm run meldungen` zeigt seit dem 13.09., was gemeldet wurde. **Was fehlt, ist die
 > andere Hälfte der Apple-Pflicht: Inhalte entfernen und Nutzer ausschließen.** Gemessen:
@@ -6212,6 +6290,12 @@ Loch, sondern eine Zusage. Wer den Torwächter aufweicht, macht daraus eines.
 **Und eine Frage für Ian:** Ist „ausschließen" dasselbe wie „Konto löschen", oder braucht
 es eine Sperre, die den Menschen nicht auslöscht (damit er nicht sofort ein neues Konto
 macht)? Eine Sperrliste ist mehr Arbeit und die ehrlichere Antwort auf Wiederholungstäter.
+
+> ✅ **Beantwortet: A, Konto löschen** (Entscheidung 72, Abschnitt 6 Punkt 62).
+> **Beide Fallen oben haben sich beim Bauen bestätigt** — und eine dritte kam dazu,
+> die hier nicht stand: das fehlende `revoke` (Punkt 1 oben).
+
+</details>
 
 ---
 
@@ -7678,12 +7762,35 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 > getippter Satz wandert nicht mit** — und hier wiegt das schwerer, weil die Zusage in
 > Ians Namen gegeben wird.
 
-### 60. Was in der Liste steht, wenn zu SPÄT bearbeitet wurde ❓ *(wartet auf Ian)*
+### 60. Was in der Liste steht, wenn zu SPÄT bearbeitet wurde ✅ *(Entscheidung 73)*
 
-> **Offen seit 2026-09-13.** Steht als `TODO(Ian)` in `meldungLage()`
-> (`features/safety/meldung.ts`), blockiert nichts — drin ist A als **Platzhalter, nicht
-> als Entscheidung** (dieselbe Unterscheidung wie `SPERR_ANTWORT` und
+> ✅ **Entschieden am 2026-09-13 abends: A — erledigt ist erledigt.** Das `TODO(Ian)`
+> in `meldungLage()` ist weg, und mit ihm das fünfte Glied `'spaet-erledigt'` aus
+> `MeldungsLage`.
+>
+> **Am Code hat sich dabei fast nichts geändert, und das ist genau der Punkt:** Drin
+> stand A als PLATZHALTER, jetzt steht A als ENTSCHEIDUNG. Das sind zwei verschiedene
+> Zustände, auch wenn die `return`-Zeile dieselbe ist — der Unterschied liegt
+> vollständig in dem, was die nächste Sitzung liest (die 18d-Lehre, dieselbe wie bei
 > `zaehltAlsTermin()`).
+>
+> **Was daraus folgte und nicht angekündigt war:** `'spaet-erledigt'` musste aus dem
+> Union heraus. Ein Glied, das nie entsteht, ist genau der Zustand, den harte Regel 31
+> undarstellbar machen will — sonst prüft irgendwann jemand darauf und bekommt nie
+> einen Treffer, ohne zu verstehen warum. Mitgegangen sind drei Stellen in
+> `meldungen.mjs` (Zeichen, Rang, Fußzeile).
+>
+> ⚠️ **Der Preis ist gewählt und bleibt:** Das Werkzeug kann NICHT sagen, wie oft die
+> Zusage gebrochen wurde. Wer die Zahl eines Tages braucht, baut B — und das ist dann
+> eine NEUE Entscheidung von Ian, kein Nachtrag (harte Regel 58).
+>
+> ✅ **Was die Entscheidung NICHT wegnimmt, und das war der Befund beim Bauen:** Die
+> EINZELNE Meldung nennt ihre Verspätung weiter im Klartext („46 h nach der Zusage").
+> `meldungen.mjs` rechnet das direkt aus `erledigt_am` gegen `fristEndeAm()` und fragt
+> `meldungLage()` gar nicht. **Entschieden ist also die EINSTUFUNG, nicht die
+> Auskunft** — was wegfällt, ist allein das Aufaddieren.
+>
+> <details><summary>Die Frage, wie sie dastand</summary>
 >
 > Eine Meldung wegen `gefahr` kommt Freitagabend. Niemand sieht sie. Montag, nach 62
 > Stunden, wird sie bearbeitet. **Was steht danach in der Liste?**
@@ -7695,8 +7802,45 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 >
 > Die EINZELNE Meldung nennt die Verspätung schon („46 h nach der Zusage", gemessen).
 > Offen ist nur, ob sie in die **Lage** und damit in die Fußzeile eingeht.
-> **Ian schreibt die fünf Zeilen selbst** — `fristEndeAm()` und `erledigtAm` liegen
-> bereit, es sind zwei Zeitpunkte.
+>
+> </details>
+
+### 62. Was „ausschließen" heißt ✅ *(Entscheidung 72)*
+
+> ✅ **Entschieden am 2026-09-13 abends: A — Konto löschen.** Die Frage stand seit
+> demselben Tag im Plan bei Phase 20.7-b und musste VOR dem ersten Handgriff
+> beantwortet werden: Sie entscheidet, ob es eine SQL-Funktion wird oder eine neue
+> Tabelle plus eine Prüfung bei jeder Anmeldung.
+>
+> | | |
+> |---|---|
+> | **A: Konto löschen** ← *seine Wahl* | Alles weg, wie beim Selbst-Löschen. Eine Funktion, am selben Tag baubar. **Preis: Er macht sich in fünf Minuten ein neues Konto mit einer anderen Mailadresse, und niemand merkt es.** |
+> | B: Sperrliste | Die Mailadresse kommt auf eine Liste, das Konto bleibt stehen, er kommt nicht mehr hinein. Wiederholungstäter wären wirklich draußen. Preis: neue Tabelle, eine Prüfung bei JEDER Anmeldung, und die Daten von jemandem liegen weiter da, obwohl er weg ist. |
+> | C: Beides | Zwei Befehle, je Fall entscheiden. Preis: die meiste Arbeit — und zwei Befehle sind zwei Gelegenheiten, den falschen zu nehmen. |
+>
+> **Gebaut in `0010_moderation.sql` und `npm run meldungen -- konto-loeschen`.**
+>
+> ⚠️ **Der Befehl heißt `konto-loeschen` und nicht `konto-sperren`**, wie der Plan es
+> bis dahin vorgeschlagen hatte. Ein Befehl namens „sperren", der löscht, ist ein Name,
+> der lügt — dieselbe Familie wie ein Knopf „Alles klar", der neu lädt.
+>
+> ⚠️ **Wird die Sperrliste je nachgerüstet, ist das eine NEUE Entscheidung** (harte
+> Regel 58) — sie nähme A nicht zurück, sie käme daneben.
+
+### 63. Der Knopf unter dem Vollbild-KASTEN ✅ *(Entscheidung 74)*
+
+> ✅ **Bestätigt am 2026-09-13 abends: „Nochmal versuchen" bleibt.** Stand seit Phase
+> 20.9 als ausdrückliche **Auslegung** im Kopf von `PROGRAMM_KNOPF_LADEN`
+> (`lib/programmfehler.ts`) — kein `TODO`, aber ein Satz, der sagte „das ist meine
+> Abwägung, nicht seine".
+>
+> Bei der LEISTE steht „Alles klar", weil ein neuer Versuch in denselben Programmfehler
+> liefe. **Unter dem KASTEN gilt dieselbe Begründung und trotzdem das Gegenteil**, weil
+> die Lage eine andere ist: Unter der Leiste steht der richtige Inhalt, unter dem Kasten
+> steht NICHTS — ohne Knopf verlässt man ihn nur durch einen Neustart der App. **Ein
+> nutzloser Knopf ist besser als eine Sackgasse.**
+>
+> **Wieder kein Zeichen Code geändert, und wieder ist es nicht dasselbe wie vorher.**
 
 ### 61. Wohin ein UNERWARTETER Fehler auf den Bildschirm geht ✅
 
@@ -8120,37 +8264,45 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 
 ### Das Erste, was zu tun ist
 
-> 🔴 **STAND 2026-09-13, abends — Phase 20.9: „Kein Knopf schweigt mehr".**
-> Ausgeschrieben in Abschnitt 5b. Kurz, damit eine frische Sitzung nicht erst suchen
-> muss:
+> 🟢 **STAND 2026-09-13, spätabends — Phase 20.7-b ist FERTIG, und damit ist die
+> Apple-1.2-Pflicht vollständig.** Melden ✓ · Blockieren ✓ · Nutzungsbedingungen ✓ ·
+> Konto löschen ✓ · **Meldungen lesen ✓ (20.7) · und jetzt auch HANDELN ✓ (20.7-b)**.
+> Ausgeschrieben in Abschnitt 5b. Kurz, damit eine frische Sitzung nicht sucht:
 >
-> 1. `checksVoidReturn: true` in `eslint.config.js`, dann `npx expo lint`. Er nennt
->    **14 Stellen** mit Datei und Zeile (96 Probleme statt 81 — der Unterschied SIND
->    sie). Das ist die Arbeitsliste; sie muss niemand selbst zusammensuchen.
-> 2. Jede: `onPress={xAsync}` → `onPress={() => void xAsync()}`, und `xAsync` fängt
->    auch das Unerwartete. Die Vorlage steht fertig in
->    `src/app/einstellungen.tsx` (`bildAussuchen` / `bildAussuchenAsync`).
-> 3. **Vorher Ian fragen**, wohin ein unerwarteter Fehler auf den Bildschirm geht —
->    die drei Möglichkeiten samt Empfehlung stehen bei Phase 20.9.
-> 4. Am Ende bleibt der Schalter auf `true`. **Das ist der Ertrag**, nicht die 14
->    Zeilen: Ohne ihn kommt die Familie beim nächsten Screen still zurück.
-> 5. Danach ein Build aufs Gerät (`npm run geraet`) — es fällt dort auf und nirgends
->    sonst.
+> **Drei Entscheidungen von Ian an diesem Abend**, alle in Abschnitt 6:
+> **72** (Punkt 62) ausschließen heißt löschen · **73** (Punkt 60) erledigt ist
+> erledigt · **74** (Punkt 63) der Kasten-Knopf bleibt „Nochmal versuchen".
+> **Bei 73 und 74 hat sich fast kein Zeichen Code geändert — und es ist trotzdem
+> nicht derselbe Zustand wie vorher** (die 18d-Lehre: ein Platzhalter, der zufällig
+> richtig ist, und eine Entscheidung sind zwei Dinge).
 >
-> **Erwartet danach:** `tsc` sauber · Lint **81 Probleme AUCH mit `checksVoidReturn:
-> true`** · lokal 136 · `pruef-bildwahl` 47 · `pruef-sitzung` 29 · `pruef-anbieter` 48 ·
-> Prototyp Pixel für Pixel identisch.
+> **Gemessen:** `tsc` sauber · Lint **81 wie vorher** · lokal **171 statt 136** ·
+> `pruef-konto` 32 · `pruef-bilder` 32 · `pruef-schreiben` 50 · `pruef-lesen` 29 ·
+> `pruef-sitzung` 29 · `pruef-bildwahl` 47 · `pruef-anbieter` 48 ·
+> `pruef-programmfehler` 25 · **neu: `pruef-moderation` 31** · `0010` am echten Server
+> eingespielt, alle zwölf Zahlen grün.
 >
-> ⚠️ **Der Schalter `ANMELDE_QUELLE` steht auf `'supabase'` und bleibt es.** Der
-> Gerätedurchgang ist gemacht; `npm run deploy` ist dadurch gesperrt (harte Regel 96),
-> und das ist Absicht. **Ob die öffentliche Adresse nachzieht, ist Ians getrennte
-> Entscheidung** und steht noch aus.
+> 🔴 **Der Fund, den eine frische Sitzung zuerst kennen muss (harte Regel 104):**
+> In Postgres bekommt `PUBLIC` standardmäßig `EXECUTE` auf **jede** neue Funktion —
+> gemessen an beiden Datenbanken, an allen neun bestehenden. Eine `security
+> definer`-Funktion ohne Selbstprüfung ist damit **ohne ausdrückliches `revoke` für
+> jeden Angemeldeten offen.** Die neun alten prüfen selbst und sind sicher;
+> `konto_entfernen` kann das nicht und hat deshalb ein `revoke` plus zwei Wächter.
 >
-> ✅ **Erledigt am 13.09.:** Phase 20.7 (die Meldungen haben einen Leser) · der
-> Gerätedurchgang (7 von 7) · drei Fehler, die nur dort zu finden waren
-> (`globalThis.crypto` am Gerät, `reports.erledigt_von` machte ein Konto unlöschbar,
-> das `@` im @-Namen). Einzelheiten in Abschnitt 5b und in CLAUDE.md.
-
+> 🔜 **Was als Nächstes ansteht — drei Möglichkeiten, keine ist dringend:**
+>
+> 1. **20.6-d, der runde Zuschnitt** (Ians Wunsch vom 13.09.). Braucht
+>    `expo-image-manipulator`, also einen neuen Baustein und einen neuen Build —
+>    **gern im selben Build wie etwas anderes Natives**, ein Build für einen
+>    Schönheitsschritt allein ist der teuerste.
+> 2. **20.8, Aufräumen.** Steht in Abschnitt 5b unter „Was WEGFÄLLT".
+> 3. **Die öffentliche Adresse nachziehen.** `ANMELDE_QUELLE` steht auf
+>    `'supabase'`, und `npm run deploy` ist dadurch gesperrt (harte Regel 96) — das
+>    ist Absicht. **Ob die Webseite nachzieht, ist Ians getrennte Entscheidung** und
+>    steht weiter aus.
+>
+> ⚠️ **Und die Landing-Page-Farbe wartet unverändert** (siehe direkt darunter) — sie
+> kostet keine Arbeitszeit und blockiert sonst still.
 
 > ❓ **Davor eine Frage, die auf Ian wartet — sie kostet keine Arbeitszeit, blockiert
 > aber sonst still (2026-09-06):** Er hat die Landing-Page in drei Farben angefragt.

@@ -1,6 +1,8 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════════
-#  Die sieben Migrationen in ein ECHTES Supabase-Projekt einspielen.
+#  Alle Migrationen in ein ECHTES Supabase-Projekt einspielen.
+#  (Die Liste kommt aus dem ORDNER — seit 20.7, weil eine getippte Liste 0008
+#   verschluckt hatte.)
 #
 #  Aufruf:  npm run einspielen
 #
@@ -34,8 +36,8 @@
 #  Die Lehre vom 2026-09-11: Der Gerätebuild meldete `BUILD SUCCEEDED` und hatte
 #  das falsche Profil eingebettet. `psql` gibt hier genauso 0 zurück, wenn alles
 #  lief — die Frage ist aber nicht "lief es?", sondern "steht jetzt dasselbe da
-#  wie lokal?". Die neun Zahlen stammen aus der lokalen Datenbank, gegen die
-#  121 Prüfungen grün sind.
+#  wie lokal?". Die Zahlen stammen aus der lokalen Datenbank, gegen die
+#  `aufbauen.sh` grün ist (Stand 2026-09-13: 171 Häkchen).
 # ═══════════════════════════════════════════════════════════════════════════════
 set -e
 export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
@@ -68,7 +70,8 @@ ERWARTET_TABELLEN=13
 ERWARTET_POLICIES=34
 ERWARTET_RLS=13
 ERWARTET_REGEL_FN=6
-ERWARTET_PUBLIC_FN=9
+# 9 bis 0009, seit 0010 elf: `konto_weg` und `konto_entfernen` (Phase 20.7-b).
+ERWARTET_PUBLIC_FN=11
 ERWARTET_ENUMS=8
 ERWARTET_TRIGGER=1
 # Neu mit 0005 (Phase 20.4-b). Elf der dreizehn Tabellen — `blocks` und `reports`
@@ -88,6 +91,18 @@ ERWARTET_REALTIME_VERBOTEN=0
 # Zeilen in der Datei — sonst prüfte sich die Datei selbst.
 ERWARTET_ANON_RECHTE=0
 ERWARTET_AUTH_RECHTE=34
+# Neu mit 0010 (Phase 20.7-b). **Die Zahl, auf die es bei Entscheidung 58 und 72
+# ankommt:** Wie viele der Moderations-Funktionen sind aus der APP erreichbar?
+# Antwort: keine. Sie muss hier stehen und nicht nur im Wächter der Migration,
+# weil ein `grant` von Hand am Server sie später aufheben könnte, ohne dass eine
+# Migration läuft — und dann wäre `konto_entfernen` ein Knopf, mit dem jeder
+# Angemeldete jedes Konto löscht.
+#
+# ⚠️ Gefragt wird `has_function_privilege` und NICHT das rohe `proacl`: Ein
+# leeres ACL heißt „Standard", und der Standard ist in Postgres ausgerechnet
+# `EXECUTE für PUBLIC` (gemessen am 2026-09-13 an beiden Datenbanken). Wer die
+# Spalte liest, sieht nichts und schließt daraus das Gegenteil.
+ERWARTET_MODERATION_OFFEN=0
 
 if [ ! -f "$URL_DATEI" ]; then
   cat <<HINWEIS
@@ -230,6 +245,7 @@ mess "Realtime-Tabellen"  "select count(*) from pg_publication_tables where pubn
 mess "Rechte für anon"    "select count(*) from information_schema.role_table_grants where table_schema='public' and grantee='anon';" "$ERWARTET_ANON_RECHTE"
 mess "Rechte für auth."   "select count(*) from information_schema.role_table_grants where table_schema='public' and grantee='authenticated';" "$ERWARTET_AUTH_RECHTE"
 mess "Realtime verboten"  "select count(*) from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename in ('blocks','reports');" "$ERWARTET_REALTIME_VERBOTEN"
+mess "Moderation dicht"   "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in ('konto_weg','konto_entfernen') and (has_function_privilege('anon',p.oid,'EXECUTE') or has_function_privilege('authenticated',p.oid,'EXECUTE'));" "$ERWARTET_MODERATION_OFFEN"
 
 echo
 if [ "$FEHLER" = "1" ]; then
@@ -243,9 +259,9 @@ if [ "$FEHLER" = "1" ]; then
   exit 1
 fi
 if [ "$NUR_MESSEN" = "1" ]; then
-  echo "✓ Alle neun Zahlen stimmen. Die Datenbank war schon richtig eingerichtet."
+  echo "✓ Alle Zahlen stimmen. Die Datenbank war schon richtig eingerichtet."
 else
-  echo "✓ Alle neun Zahlen stimmen. Die Datenbank ist eingerichtet."
+  echo "✓ Alle Zahlen stimmen. Die Datenbank ist eingerichtet."
 fi
 echo "  Was jetzt fehlt, ist der Client (20.4-b) — und dafür brauche ich"
 echo "  Project URL und anon key aus Settings → API."

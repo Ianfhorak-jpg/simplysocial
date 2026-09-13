@@ -6,6 +6,17 @@
 #           npm run meldungen -- alle            auch die erledigten
 #           npm run meldungen -- erledigt <id> "was getan wurde"
 #
+#  Und seit Phase 20.7-b (2026-09-13) darf der Leser auch HANDELN — die zweite
+#  Hälfte der Apple-1.2-Pflicht. Beide zeigen ohne `--wirklich` nur eine
+#  Vorschau, wie `asc.py tester`:
+#
+#           npm run meldungen -- post-loeschen  <post-id>          [--wirklich]
+#           npm run meldungen -- konto-loeschen <@name oder uuid>  [--wirklich]
+#
+#  Die Vorschau ist hier kein Komfort: Ein gelöschtes Konto kommt nicht zurück,
+#  und eine UUID sagt einem Menschen nichts — wer sich in einer Ziffer vertippt,
+#  trifft jemand anderen und merkt es nie.
+#
 #  ── Warum ein Befehl am Mac und kein Bereich in der App ─────────────────────
 #  Ians Entscheidung 58 vom 2026-09-13. Die verworfenen Möglichkeiten:
 #
@@ -40,12 +51,29 @@ ICH_DATEI="$HOME/.simplysocial/ich"
 ARBEIT="$(mktemp -d)"
 trap 'rm -rf "$ARBEIT"' EXIT
 
-if [ ! -f "$URL_DATEI" ]; then
+# ── Wohin verbinden ─────────────────────────────────────────────────────────
+#
+# Normalerweise: der Verbindungs-String aus ~/.simplysocial/db-url, also der
+# ECHTE Server. `SS_DB_URL` überschreibt das und ist ausschließlich für den
+# Prüfstand da (`98_moderation.sh`, seit Phase 20.7-b).
+#
+# ⚠️ Warum es die Variable überhaupt gibt: Seit 20.7-b LÖSCHT dieses Werkzeug —
+# Posts und Konten. Das `--wirklich`-Gate ist die einzige Zeile zwischen einem
+# Tippfehler und einem gelöschten Konto, und eine Zeile, die man nicht messen
+# kann, ist eine Zeile, der man glaubt. Gegen den echten Server lässt sie sich
+# nicht prüfen: Der Beleg wäre ein wirklich gelöschtes Konto.
+#
+# Das ist KEIN Loch — wer die Variable setzen kann, sitzt ohnehin an diesem Mac
+# und könnte die Datei genauso lesen.
+if [ -n "${SS_DB_URL:-}" ]; then
+  DB_URL="$SS_DB_URL"
+elif [ ! -f "$URL_DATEI" ]; then
   echo "✗ Keine Verbindungsangabe in $URL_DATEI"
   echo "  Sie entsteht mit:  npm run db-url"
   exit 1
+else
+  DB_URL="$(cat "$URL_DATEI")"
 fi
-DB_URL="$(cat "$URL_DATEI")"
 
 # Derselbe Filter wie in `einspielen.sh`: Postgres spiegelt bei Verbindungsfehlern
 # den ganzen String zurück, und darin steht das Datenbankpasswort.
@@ -117,6 +145,168 @@ if [ "$BEFEHL" = "erledigt" ]; then
     exit 1
   fi
   echo "✓ Abgehakt: $ERG"
+  exit 0
+fi
+
+# ── HANDELN: einen Post entfernen ───────────────────────────────────────────
+#
+# Die zweite Hälfte der Apple-1.2-Pflicht (Phase 20.7-b). Bis hierher konnte das
+# NIEMAND, auch nicht von Hand: `posts_loeschen` lässt nur `author_id =
+# auth.uid()` durch.
+#
+# ── Warum hier ein blankes `delete` steht und keine Funktion ────────────────
+# Harte Regel 70: *Ein fehlender Grant verlangt eine Funktion, WENN etwas zu
+# entscheiden ist.* Beim Post ist nichts zu entscheiden — gemessen:
+# `join_requests` geht per CASCADE mit, `chat_threads.post_id` wird SET NULL,
+# der Chat BLEIBT (Ians Entscheidung 42). Eine Funktion wäre hier dieselbe
+# Überflüssigkeit wie beim Trigger `nachricht_notiert`.
+#
+# ── Warum es die Vorschau gibt, und sie ist nicht Höflichkeit ──────────────
+# Eine UUID sagt einem Menschen nichts. Wer sich in einer Ziffer vertippt,
+# löscht einen FREMDEN Post und merkt es nie — es gibt keine Rückfrage und kein
+# Zurück. Ohne `--wirklich` wird deshalb nur gezeigt.
+if [ "$BEFEHL" = "post-loeschen" ]; then
+  ID="${2:-}"
+  if [ -z "$ID" ]; then
+    echo "✗ Welcher Post? →  npm run meldungen -- post-loeschen <post-id> [--wirklich]"
+    exit 1
+  fi
+  SICHER_ID="$(printf '%s' "$ID" | sed "s/'/''/g")"
+
+  VORSCHAU="$(frage "
+    select p.title || E'\n  von @' || a.handle || '  ·  ' || p.category
+        || '  ·  ' || coalesce(p.district, 'ohne Bezirk')
+        || E'\n  Anfragen, die mitgehen: '
+        || (select count(*) from join_requests j where j.post_id = p.id)
+        || E'\n  Chats, die BLEIBEN (Entscheidung 42): '
+        || (select count(*) from chat_threads c where c.post_id = p.id)
+        || E'\n  Meldungen gegen diesen Post: '
+        || (select count(*) from reports r
+             where r.target_id = p.id and r.target_type = 'post')
+      from posts p join profiles a on a.id = p.author_id
+     where p.id::text = '$SICHER_ID';")"
+
+  if [ -z "$VORSCHAU" ]; then
+    echo "✗ Keinen Post mit dieser ID gefunden."
+    echo "  Die IDs stehen in:  npm run meldungen -- alle"
+    exit 1
+  fi
+
+  echo "Post:"
+  echo "  $VORSCHAU"
+  echo
+
+  if [ "${3:-}" != "--wirklich" ]; then
+    echo "Das war nur die Vorschau — es ist NICHTS passiert."
+    echo "  Wirklich entfernen:  npm run meldungen -- post-loeschen $ID --wirklich"
+    exit 0
+  fi
+
+  # ⚠️ `with … select` und nicht `delete … returning` direkt — dieselbe Falle wie
+  # beim Abhaken (20.7): psql hängt an ein DELETE immer seinen Befehlszähler an,
+  # auch mit `-tA`. Die Ausgabe „DELETE 0" ist nicht leer, und eine Leerprüfung
+  # darauf meldete Erfolg für einen Post, der noch dasteht.
+  ERG="$(frage "
+    with weg as (delete from posts where id::text = '$SICHER_ID' returning id)
+    select id from weg;")"
+  if [ -z "$ERG" ]; then
+    echo "✗ Nichts entfernt — der Post war zwischendurch schon weg."
+    exit 1
+  fi
+  echo "✓ Entfernt: $ERG"
+  echo "  Die Chats daraus stehen weiter — dort steht jetzt oben:"
+  echo "  „Aus einer Aktivität, die es nicht mehr gibt.\" (Entscheidung 42)"
+  exit 0
+fi
+
+# ── HANDELN: jemanden ausschließen ──────────────────────────────────────────
+#
+# Ians Entscheidung 72 vom 2026-09-13: **ausschließen heißt löschen.** Verworfen
+# ist die Sperrliste (B) — sie wäre die ehrlichere Antwort auf
+# Wiederholungstäter und hätte eine neue Tabelle plus eine Prüfung bei JEDER
+# Anmeldung gekostet. Den Haken kennt er und hat ihn gewählt: **Wer fliegt, macht
+# sich in fünf Minuten ein neues Konto mit einer anderen Mailadresse.**
+#
+# Der Befehl heißt deshalb `konto-loeschen` und nicht `konto-sperren`, wie der
+# Plan es vorgeschlagen hatte. Ein Befehl namens „sperren", der löscht, ist ein
+# Name, der lügt — dieselbe Familie wie ein Knopf „Alles klar", der neu lädt.
+if [ "$BEFEHL" = "konto-loeschen" ]; then
+  WER="${2:-}"
+  if [ -z "$WER" ]; then
+    echo "✗ Wen? →  npm run meldungen -- konto-loeschen <@name oder uuid> [--wirklich]"
+    exit 1
+  fi
+
+  # @-Name ODER UUID — beides, weil in der Meldungsliste der @-Name steht und in
+  # der Datenbank die UUID. Wer zwischen zwei Schreibweisen übersetzen muss,
+  # macht dabei Fehler, und dieser Fehler löscht ein Konto.
+  SICHER_WER="$(printf '%s' "$WER" | tr -d ' @' | sed "s/'/''/g")"
+  UUID="$(frage "
+    select id from profiles
+     where handle = '$SICHER_WER' or id::text = '$SICHER_WER';")"
+  if [ -z "$UUID" ]; then
+    echo "✗ Niemanden mit '$WER' gefunden."
+    frage "select '    @' || handle || '  ' || display_name from profiles order by handle;"
+    exit 1
+  fi
+
+  echo "Ausschließen:"
+  frage "
+    select '  @' || handle || '  ' || display_name
+        || E'\n  Posts: '     || (select count(*) from posts p where p.author_id = pr.id)
+        || E'\n  Chats: '     || (select count(*) from chat_participants c where c.user_id = pr.id)
+        || E'\n  Meldungen GEGEN ihn: '
+        || (select count(*) from reports r
+             where r.target_id = pr.id and r.target_type = 'user')
+      from profiles pr where pr.id = '$UUID';"
+
+  # Was Entscheidung 13 tun WIRD — die einzige Folge, die man nicht errät.
+  # Ohne diese Zeilen sähe man erst hinterher, dass eine Gruppe den Besitzer
+  # gewechselt hat (oder aufgehört hat zu existieren).
+  GRUPPEN="$(frage "
+    select '  · ' || g.name || '  →  ' ||
+           coalesce((select '@' || p2.handle || ' erbt sie (am längsten dabei)'
+                       from group_members m join profiles p2 on p2.id = m.user_id
+                      where m.group_id = g.id and m.user_id <> g.creator_id
+                      order by m.joined_at limit 1),
+                    'hört auf — niemand sonst ist drin (Entscheidung 41)')
+      from groups g
+     where g.creator_id = '$UUID' and g.aufgeloest_am is null;")"
+  if [ -n "$GRUPPEN" ]; then
+    echo
+    echo "  Seine Gruppen (Entscheidung 13 — sie gehören den Leuten darin):"
+    echo "$GRUPPEN"
+  fi
+  echo
+
+  if [ "${3:-}" != "--wirklich" ]; then
+    echo "Das war nur die Vorschau — es ist NICHTS passiert."
+    echo "  Wirklich ausschließen:  npm run meldungen -- konto-loeschen $WER --wirklich"
+    echo
+    echo "  ⚠️ Danach ist alles von ihm weg und kommt nicht zurück. Und er kann"
+    echo "     sich mit einer anderen Mailadresse neu anmelden — das ist der"
+    echo "     bekannte Haken an Entscheidung 72."
+    exit 0
+  fi
+
+  # Die Funktion aus 0010, nicht ein `delete` von Hand: Der Rumpf trägt die
+  # Erbfolge (Entscheidung 13), und ein blankes `delete from auth.users` würde
+  # an `chef_oder_aufgeloest` scheitern, sobald der Betreffende je eine Gruppe
+  # gegründet hat — gemessen, steht in PLAN.md bei 20.7-b.
+  ERG="$(frage "select public.konto_entfernen('$UUID');")"
+  if printf '%s' "$ERG" | grep -qi "fehler\|error\|exception"; then
+    echo "✗ Nicht ausgeschlossen:"
+    printf '%s\n' "$ERG" | sed 's/^/  /'
+    exit 1
+  fi
+  # Gegengemessen statt gemeldet — die Lehre vom 2026-09-11: „durchgelaufen"
+  # beantwortet nicht die Frage, wegen der man es getan hat.
+  UEBRIG="$(frage "select count(*) from auth.users where id = '$UUID';")"
+  if [ "$UEBRIG" != "0" ]; then
+    echo "✗ Das Konto steht noch da ($UEBRIG) — nichts ist passiert."
+    exit 1
+  fi
+  echo "✓ Ausgeschlossen. Nachgemessen: das Konto ist weg."
   exit 0
 fi
 

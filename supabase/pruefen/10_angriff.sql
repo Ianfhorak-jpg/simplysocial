@@ -295,6 +295,72 @@ begin;
   end $$;
 rollback;
 
+\echo ''
+\echo '── Ein FREMDES Konto löschen: nur über die db-url (20.7-b, Entscheidung 72) ─'
+
+-- Der Wächter in 0010 fragt den KATALOG (`has_function_privilege`). Das ist
+-- Anschauen, und harte Regel 57 verlangt einen Angriff: `set local role
+-- authenticated` ist wortgleich das, was PostgREST tut.
+--
+-- ⚠️ Warum das hier schärfer zählt als bei den neun Funktionen davor: Jede von
+-- ihnen prüft SELBST, wer sie ruft — `konto_entfernen` kann das nicht, ihr Zweck
+-- IST das fremde Konto. Ihre einzige Absicherung ist, wer sie ausführen darf.
+-- Und in Postgres darf das standardmäßig JEDER (gemessen, siehe 0010).
+
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222"}';
+  do $$ declare z text; begin
+    perform konto_entfernen('11111111-1111-1111-1111-111111111111');
+    raise notice '  ✗ DURCHGELASSEN — Lea hat Ians Konto aus der App gelöscht';
+  exception when others then get stacked diagnostics z = returned_sqlstate;
+    if z = '42501' then raise notice '  ✓ aus der App kommt niemand an `konto_entfernen` (Entscheidung 58)';
+    else raise notice '  ✗ FALSCHER GRUND (SQLSTATE=%)', z;
+    end if;
+  end $$;
+rollback;
+
+-- Und die Hintertür daneben: Wer den gemeinsamen Rumpf direkt ruft, umgeht
+-- beide Türen. Ohne diese Prüfung wäre die obige grün und die Regel trotzdem
+-- gebrochen — dieselbe Familie wie „ein Wächter hinter einem anderen ist ein
+-- ungeprüfter Wächter".
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222"}';
+  do $$ declare z text; begin
+    perform konto_weg('11111111-1111-1111-1111-111111111111');
+    raise notice '  ✗ DURCHGELASSEN — der Rumpf ist ohne Tür erreichbar';
+  exception when others then get stacked diagnostics z = returned_sqlstate;
+    if z = '42501' then raise notice '  ✓ … und auch nicht an den Rumpf dahinter';
+    else raise notice '  ✗ FALSCHER GRUND (SQLSTATE=%)', z;
+    end if;
+  end $$;
+rollback;
+
+-- Die Gegenprobe: Über die db-url (also als `postgres`) muss es GEHEN. Ohne sie
+-- wären die zwei Prüfungen oben auch dann grün, wenn die Funktion gar nichts
+-- kann — und das Werkzeug aus 20.7-b hätte nie funktioniert.
+begin;
+  select konto_entfernen('44444444-4444-4444-4444-444444444444');
+  select case when count(*) = 0 then '  ✓ ' else '  ✗ STEHT NOCH DA — ' end
+      || 'als `postgres` schließt konto_entfernen() wirklich jemanden aus'
+    from auth.users where id = '44444444-4444-4444-4444-444444444444';
+rollback;
+
+-- Eine ID, die es nicht gibt, ist ein TIPPFEHLER und keine erledigte Arbeit.
+-- Ohne diese Zeile meldete das Werkzeug „erledigt" für ein Konto, das
+-- weiterbesteht (dieselbe Familie wie `update … returning` in psql, 20.7).
+begin;
+  do $$ declare z text; begin
+    perform konto_entfernen('00000000-0000-0000-0000-000000000000');
+    raise notice '  ✗ DURCHGELASSEN — eine erfundene ID galt als erledigt';
+  exception when others then get stacked diagnostics z = returned_sqlstate;
+    if z = 'P0002' then raise notice '  ✓ eine ID, die es nicht gibt, meldet sich als Fehler';
+    else raise notice '  ✗ FALSCHER GRUND (SQLSTATE=%)', z;
+    end if;
+  end $$;
+rollback;
+
 
 \echo ''
 \echo '── Meldungen: die EIGENE lesen ja, eine fremde nie (2026-09-10, Phase 20.4) ─'

@@ -117,50 +117,51 @@ export function zusageText(): string {
 /**
  * Was mit einer Meldung los ist.
  *
- * Vier davon sind offensichtlich. Das fünfte — `'spaet-erledigt'` — ist die
- * eigentliche Frage dieser Datei, siehe `meldungLage()`.
+ * Bis zum 2026-09-13 stand hier ein fünftes Glied (`'spaet-erledigt'`) und
+ * darüber der Satz, es sei „die eigentliche Frage dieser Datei". Das war es
+ * auch — **beantwortet** hat sie Ian mit Entscheidung 73 (A), und damit
+ * entsteht das Glied nie mehr. Die Begründung samt verworfener Möglichkeit
+ * steht vollständig an `meldungLage()`.
  */
 export type MeldungsLage =
   | 'offen' // liegt da, Frist läuft noch
   | 'faellig' // weniger als ein Viertel der Frist übrig
   | 'ueberfaellig' // die Zusage ist gebrochen, und sie liegt immer noch da
-  | 'erledigt' // innerhalb der Zusage bearbeitet
-  | 'spaet-erledigt'; // bearbeitet, aber zu spät
+  | 'erledigt'; // bearbeitet — ob rechtzeitig oder nicht (Entscheidung 73)
 
 /** Ab wann `'faellig'` gilt — ein Viertel der Frist vor Schluss. */
 export const WARNUNG_ANTEIL = 0.25;
 
 /**
- * TODO(Ian) — hier fehlt deine Entscheidung, und sie ist keine Formsache.
+ * Was mit einer Meldung los ist — **Ians Entscheidung 73 vom 2026-09-13.**
  *
- * ── Die Frage ────────────────────────────────────────────────────────────────
+ * ── Die Frage, die hier stand ────────────────────────────────────────────────
  * Eine Meldung wegen `gefahr` kommt am Freitagabend. Niemand sieht sie. Am
- * Montag, nach 62 Stunden, wird sie bearbeitet. **Was steht danach in der Liste?**
+ * Montag, nach 62 Stunden, wird sie bearbeitet. Was steht danach in der Liste?
  *
- *   A. `'erledigt'` — erledigt ist erledigt.
- *      Die Liste bleibt ruhig, man sieht nur, was noch zu tun ist.
- *      Haken: Das Werkzeug kann dann NIE sagen „wir haben unsere Zusage diesen
- *      Monat viermal gebrochen". Und genau diese Zahl ist die, auf die es
- *      ankommt — gegenüber Apple, und gegenüber den Leuten, denen wir 24 Stunden
- *      versprochen haben. Eine Zusage, deren Bruch sich selbst aufräumt, ist
- *      keine.
- *
+ *   A. `'erledigt'` — erledigt ist erledigt.               ← **seine Wahl**
  *   B. `'spaet-erledigt'` — die Verspätung bleibt stehen.
- *      Man kann sie zählen, und beim nächsten Mal weiß man, ob 24 Stunden
- *      realistisch waren oder ob die Zahl zu ändern ist.
- *      Haken: Eine abgehakte Sache steht dauerhaft als Vorwurf in der Liste. Bei
- *      vier Gründern, die das nebenbei machen, kann das mutlos machen — und eine
- *      Liste, die nur noch aus Vorwürfen besteht, sieht irgendwann niemand mehr an.
  *
- * ── Wo du schreibst ──────────────────────────────────────────────────────────
- * Genau in dieser Funktion, in dem markierten Zweig — fünf bis zehn Zeilen. Alles
- * andere steht schon: `fristEndeAm()` sagt dir, wann Schluss war, und
- * `erledigtAm` sagt dir, wann es wirklich passiert ist. Zwei Zeitpunkte
- * vergleichen, mehr ist es nicht.
+ * **Verworfen ist B**, und zwar mit dem Haken, den er ausdrücklich gewählt hat:
+ * Eine abgehakte Sache stünde dauerhaft als Vorwurf in der Liste; bei vier
+ * Gründern, die das nebenbei machen, macht das mutlos — und eine Liste, die nur
+ * noch aus Vorwürfen besteht, sieht irgendwann niemand mehr an.
  *
- * ⚠️ Was DRIN steht, ist ein **Platzhalter, keine Entscheidung** — dieselbe
- * Unterscheidung wie bei `SPERR_ANTWORT` in `geraet-bauen.sh` und bei
- * `zaehltAlsTermin()`. Er tut heute A, damit `npm run meldungen` läuft.
+ * ⚠️ **Der Preis ist real und bleibt bestehen:** Das Werkzeug kann NICHT sagen
+ * „wir haben unsere Zusage diesen Monat viermal gebrochen". Diese Zahl ist die,
+ * auf die es gegenüber Apple ankäme. Wer sie eines Tages braucht, baut B — und
+ * das ist dann eine NEUE Entscheidung von Ian, kein Nachtrag (harte Regel 58).
+ *
+ * ── Was die Entscheidung NICHT wegnimmt ──────────────────────────────────────
+ * Die EINZELNE Meldung nennt ihre Verspätung weiterhin im Klartext („46 h nach
+ * der Zusage"). `meldungen.mjs` rechnet das direkt aus `erledigt_am` gegen
+ * `fristEndeAm()` und fragt diese Funktion gar nicht. **Entschieden ist also die
+ * EINSTUFUNG, nicht die Auskunft** — was wegfällt, ist das Aufaddieren.
+ *
+ * Deshalb gibt es `'spaet-erledigt'` seit dieser Entscheidung auch nicht mehr im
+ * Typ: Ein Glied, das nie entsteht, ist genau der Zustand, den harte Regel 31
+ * undarstellbar machen will. Stünde es weiter da, prüfte irgendwann jemand
+ * darauf und bekäme nie einen Treffer, ohne zu verstehen warum.
  */
 export function meldungLage(
   erstelltAm: string,
@@ -171,7 +172,8 @@ export function meldungLage(
   const schluss = fristEndeAm(erstelltAm, grund);
 
   if (erledigtAm !== null) {
-    // ▼▼▼ HIER SCHREIBT IAN ▼▼▼
+    // Ians Entscheidung 73, A: erledigt ist erledigt. `schluss` wird hier
+    // bewusst NICHT befragt — das wäre B.
     return 'erledigt';
     // ▲▲▲ Platzhalter: tut heute A. ▲▲▲
   }
