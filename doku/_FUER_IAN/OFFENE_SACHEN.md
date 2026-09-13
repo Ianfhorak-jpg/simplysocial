@@ -3,6 +3,26 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
+> 🎉 **13.09., Nachmittag: der Handy-Durchgang ist gemacht — sieben von sieben.**
+> Anmelden mit Apple, mit Google, angemeldet bleiben über den Neustart, Profilbild,
+> der Merker, kein Prototyp-Kasten, die @-Namen. **Damit läuft das Backend auf einem
+> echten iPhone**, und nicht mehr nur auf meinem Rechner. Auf dich wartet daraus
+> nichts mehr.
+>
+> **Beim Profilbild lag ein echter Fehler, und er war nur am Gerät zu sehen.** Die
+> App baute den Dateinamen mit etwas, das es nur im Browser gibt — am Handy ging das
+> schief, und der Fehler verschwand spurlos, statt dir etwas zu sagen. Behoben.
+> Danach gemessen: dein Bild ist **176 kB**, ein echtes JPEG, und liegt richtig.
+>
+> ❓ **Dein Wunsch nach RUNDEM Zuschneiden ist notiert und noch nicht gebaut.** Der
+> Baustein, den wir benutzen, kann auf iPhones nur quadratisch — das steht in seiner
+> eigenen Beschreibung, da hilft keine Einstellung. Für einen Kreis bräuchte es
+> einen **eigenen Zuschneide-Bildschirm** (Bild schieben und zoomen hinter einer
+> runden Maske, wie bei Instagram). Ist gut machbar, kostet einen Baustein und einen
+> neuen Build. **Sag Bescheid, wenn es soweit sein soll.**
+>
+> ---
+>
 > 🆕 **Nachmittag: die Meldungen haben jetzt einen Leser.** Wenn jemand einen Post
 > oder eine Person meldet, lag das bis heute in der Datenbank und **niemand konnte es
 > sehen** — auch du nicht. Apple verlangt das. Jetzt gibt es einen Befehl:

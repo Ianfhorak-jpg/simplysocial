@@ -1,6 +1,23 @@
 # Der Durchgang am Handy
 
-## 🔴 DURCHGANG 3 — das Backend am Handy *(vorbereitet 13.09.2026)*
+## ✅ DURCHGANG 3 — das Backend am Handy *(GEMACHT am 13.09.2026, 7 von 7)*
+
+> **Alles hält.** Apple ✅ · Google ✅ · angemeldet über den Neustart ✅ · Profilbild ✅
+> (nach einer Reparatur, siehe unten) · Merker ✅ · kein Prototyp-Hinweis ✅ ·
+> @-Namen ✅.
+>
+> **Der eine Fehler war ein großer, und er war nur am Gerät zu sehen:** Das
+> Profilbild scheiterte lautlos — Auswahl und Zuschnitt liefen, danach passierte
+> nichts. Ursache: Die App baute den Dateinamen mit einer Funktion, die es nur im
+> Browser gibt (`crypto`). Am Handy warf sie, und der Wurf ging im Nichts verloren.
+> Behoben; danach gemessen: **176 kB, JPEG, in 5 Minuten Zwischenspeicher.**
+>
+> Offen geblieben ist nur dein Wunsch nach **rundem Zuschneiden** — das kann
+> `expo-image-picker` auf iOS nicht (steht in dessen eigenen Typen). Es bräuchte
+> einen eigenen Zuschneide-Bildschirm.
+
+<details><summary>Was damals durchzuklicken war (Gedächtnis)</summary>
+
 
 > **Das ist der wichtigste Durchgang bisher**, weil hier zum ersten Mal ECHTE Anmeldung
 > und ECHTE Daten am Gerät laufen. Vier Sachen haben sich gestapelt, und **keine davon
@@ -44,6 +61,8 @@ ist — beim letzten Mal habe ich eine Stunde an einem Fehler gesucht, den es sc
 mehr gab, weil das Bild eine ältere Fassung zeigte.
 
 ---
+
+</details>
 
 ## 🔵 DURCHGANG 2 — die Fassung vom 08.09.2026 nachts ist drauf
 

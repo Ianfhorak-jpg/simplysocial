@@ -42,6 +42,79 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > die zwei Liquid-Glass-Vorbilder geblieben, weil sie als laufende Vorlage dienen
 > und nicht als Beleg. Einzelheiten in `_belege/LIESMICH.md`.
 
+🎉 **DER GERÄTEDURCHGANG IST GEMACHT (2026-09-13, nachmittags) — sieben von sieben,
+und der siebte hat drei Anläufe gekostet.** Ians iPhone 16, iOS 26.6.1, Release-Build
+über WLAN. **Damit ist das Backend am echten Gerät bewiesen**, nicht mehr nur am Mac:
+
+| | |
+|---|---|
+| Anmelden mit **Apple** | ✅ Dialog kam, Anmeldung durch |
+| Anmelden mit **Google** | ✅ Browserfenster auf, Rücksprung in die App |
+| **Neustart** | ✅ **angemeldet geblieben** — der iOS-Schlüsselbund nimmt die 14 Byte (Entscheidung 55) |
+| **Profilbild** | ✅ *nach der Reparatur unten* |
+| **Merker** | ✅ Anleitungskarte bleibt weg (Entscheidung 57) |
+| **Prototyp-Hinweis** | ✅ kommt am Gerät nicht (Entscheidung 56) |
+| **@-Namen** | ✅ `@…` steht da (der Fund aus 20.7, harte Regel 99) |
+
+🔴 **Der Fund des Tages: auf React Native gibt es KEIN `globalThis.crypto` — und das
+hat jedes Profilbild am Gerät LAUTLOS scheitern lassen.** Bildwähler und Zuschnitt
+liefen tadellos, danach passierte **gar nichts**: kein Bild, keine Meldung, keine
+Fehlerleiste. Nachgemessen war `photo_url` leer UND der Bucket leer.
+
+Gemessen, nicht vermutet — drei Quellen:
+- `react-native/Libraries/Core/InitializeCore.js` richtet **kein** `crypto` ein.
+- `expo-crypto` setzt ein globales **nur auf Web** (`ExpoCrypto.web.js`, Zeile 4).
+- Im gebauten `main.jsbundle` kamen `getRandomValues` und `randomUUID` **je genau
+  EINMAL** vor — das waren meine zwei Zeilen in `zufallsName()`. Niemand definiert sie.
+
+**Warum es so still war, ist der zweite Teil und der lehrreichere.** Der Wurf war ein
+gewöhnlicher `Error` und kein `SchreibFehler` — `schreibVorgangIntern` wirft so etwas
+**absichtlich weiter**, damit ein Programmfehler „laut" ist statt als „Keine
+Verbindung" verkleidet (Zeile 513–516 in `store.ts`). Die Absicht stimmt. **Nur gibt es
+in einem Release-Build nichts Lautes:** Er lief durch `onPress={async …}` hinaus und
+war weg. Harte Regeln 101 und 102.
+
+⚠️ **Und kein Prüfstand KONNTE das finden.** `pruef-bilder` läuft in Node, und Node hat
+`globalThis.crypto`; der Browser auch. Die 32 Häkchen von 20.6-a waren echt und für
+diese Frage wertlos — **die Attrappen-Falle in ihrer schärfsten Form: Die Prüfumgebung
+bringt etwas mit, das das Gerät nicht hat.** Der Wächter dagegen macht sie jetzt ÄRMER
+statt reicher: `90_bildwahl.mjs` nimmt `crypto` für die Dauer einer Messung weg,
+**47 statt 35 Häkchen**.
+
+Gebaut: `lib/zufall.ts` / `.native.ts` mit Plattform-Endung (`bild.ts` bleibt
+**importfrei** — das trägt zwei Prüfstände), `bildPfad()` nimmt den Zufall entgegen und
+**prüft ihn** (32 Hex, sonst Abbruch), `einstellungen.tsx` fängt beide Wege.
+**KEIN neuer Baustein** — `ExpoCrypto` liegt seit dem 12.09. im Binary, es kam über
+`expo-auth-session` mit (19 Treffer, nachgemessen).
+
+✅ **Danach am echten Server gemessen, und drei Zahlen sind dabei zum ERSTEN Mal vom
+Gerät statt aus fremdem Quelltext:**
+
+    Name    b97fc040-…/17eeb6bbe4e740eab1cd8451418392f5.jpg   ← 32 Hex aus expo-crypto
+    Größe   176.338 B = 0,17 MB                               ← 3,4 % der 5-MB-Grenze
+    Typ     image/jpeg, erste Bytes ffd8ffe0 … JFIF           ← harte Regel 90 belegt
+    CDN     HTTP 200, cache-control: public, max-age=300      ← Entscheidung 51 belegt
+
+**Damit ist `BILD_QUALITAET = 0.8` beantwortet** — die Zahl war seit dem 13.09. früh
+„begründet, aber nicht nachgemessen"; sie ist großzügig genug. Und Ians Entscheidung 51
+reist über den NATIVEN Zweig von `storage-js` mit, obwohl der ein ganz anderer ist als
+im Browser (harte Regel 91) — vorher nur in Node belegt, jetzt vom Gerät.
+
+⚠️ **Was der Durchgang NEBENBEI aufgedeckt hat und was offen bleibt: 15 Stellen** in der
+App geben eine `async`-Funktion an eine Prop, die `void` erwartet. An jeder kann ein
+Fehler genauso spurlos verschwinden wie hier. **Der Lint-Wächter dagegen kam am 12.09.
+ins Projekt — mit `checksVoidReturn: false`, also mit genau dem Auge zu, das diese
+Familie sieht.** Eine ist seit heute zu, **14 stehen offen**; das gehört als eigener
+Durchgang aufgeräumt, nicht nebenbei.
+
+❓ **Ians Wunsch, notiert und noch nicht gebaut: KREISFÖRMIGES Zuschneiden.** Geht mit
+`expo-image-picker` auf iOS **nicht** — steht in dessen Typen: `aspect` ist
+Android-only *„since on iOS the crop rectangle is always a square"*, und
+`shape: 'oval'` trägt `@platform android`. Seine Entscheidung am 13.09.: **erst das
+Bild zum Laufen bringen, dann der Kreis** — richtig, sonst hätte jeder Fehler zwei
+mögliche Ursachen. Der Weg wäre ein eigener Zuschneide-Bildschirm mit
+`expo-image-manipulator` (neuer Baustein, neuer Build).
+
 ✅ **Phase 20.7 ist FERTIG (2026-09-13): die Meldungen haben einen Leser — `npm run
 meldungen`.** Die letzte offene Apple-1.2-Zusage. Zwei Entscheidungen von Ian (**58**:
 ein Befehl am Mac · **59**: 24 h bei Gefahr und Belästigung, 48 h sonst), eine neue
@@ -2504,7 +2577,7 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    Apple 1.2, gehört in dasselbe Werkzeug.* · Aufräumen (20.8).
    Danach fällt 19d-2 nebenbei ab.
 
-10b. 🔴 **DER GERÄTEDURCHGANG** ← *hier geht es weiter (Stand 2026-09-13)*.
+10b. ✅ **DER GERÄTEDURCHGANG IST GEMACHT** *(2026-09-13 nachmittags, 7 von 7)*.
    **Vier ungeprüfte Sachen haben sich auf Ians iPhone gestapelt, alle vom 13.09.:**
    Apple-Login · Google-Login · der Bildwähler (Erlaubnis-Dialog, Zuschnitt, echte
    Dateigröße bei `BILD_QUALITAET = 0.8`) · und ob die Anmeldung einen Neustart
@@ -3669,6 +3742,48 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    Werkzeug jemanden ausschließen kann, macht aus ihr genau das, wovor ihr Kommentar in
    0003 warnt; der Wächter in 0009 bricht dann ab.
 
+101. **Auf React Native gibt es kein `globalThis.crypto` — und eine Prüfumgebung, die
+   REICHER ist als das Gerät, beweist nichts.** *(Gemessen am 2026-09-13 an Ians
+   iPhone.)* `zufallsName()` in `bild.ts` holte den Dateinamen eines Profilbilds
+   von dort und warf, wenn es keines gibt — richtig gedacht (harte Regel 88: lieber
+   ein Fehler als ein erratbarer Name), nur gibt es auf dem Gerät wirklich keines.
+   Drei Quellen, alle nachgesehen: `InitializeCore.js` richtet keines ein,
+   `expo-crypto` setzt ein globales **nur auf Web** (`ExpoCrypto.web.js`), und im
+   gebauten `main.jsbundle` kamen `getRandomValues` und `randomUUID` **je genau
+   einmal** vor — die zwei eigenen Zeilen.
+   **Wer Entropie braucht, nimmt `lib/zufall.ts` / `.native.ts`** (Plattform-Endung
+   wie `bild-waehlen` und `anmelde-anbieter`, harte Regel 94). `bild.ts` bleibt
+   importfrei — das trägt `80_bilder.mjs` und `90_bildwahl.mjs` in blankem Node —,
+   und `bildPfad()` **prüft** den Zufall, den es bekommt (32 Hex), statt ihn zu
+   glauben: Die Plattform liefert die Entropie, die Regel-Datei sagt, wie sie
+   auszusehen hat.
+   ⚠️ **Der allgemeine Teil ist wichtiger als der Fall.** `pruef-bilder` lief in
+   Node, Node HAT `crypto`, also waren 32 Häkchen grün und für diese Frage wertlos.
+   **Ein Prüfstand muss die Umgebung ÄRMER machen können, nicht nur reicher** —
+   `90_bildwahl.mjs` nimmt `crypto` seither für die Dauer einer Messung weg,
+   dieselbe Technik wie das Erzwingen beider Schalterstellungen in `96_anbieter.sh`.
+   Dieselbe Familie wie die Attrappen-Falle vom 2026-09-06 und wie „ein Beleg auf
+   der falschen Plattform ist kein Beleg" (19i).
+102. **Ein Fehler, der KEIN `SchreibFehler` ist, verschwindet spurlos — und
+   `onPress={async …}` ist das Loch, durch das er geht.** *(2026-09-13, der zweite
+   Teil desselben Fundes.)* `schreibVorgangIntern` legt einen `SchreibFehler` in die
+   Fehlerleiste (Entscheidung 48) und wirft alles andere **absichtlich weiter**,
+   damit ein Programmfehler „laut" ist statt als „Keine Verbindung" verkleidet
+   (`store.ts`, Zeile 513–516). Die Absicht stimmt. **Nur gibt es in einem
+   Release-Build nichts Lautes:** Der Wurf läuft aus dem `await` hinaus, React hat
+   das Promise längst weggeworfen, und auf dem Bildschirm passiert gar nichts.
+   **Gemessen: 15 Stellen** in der App geben eine `async`-Funktion an eine Prop, die
+   `void` erwartet (`checksVoidReturn: true` in `eslint.config.js`, gegengemessen
+   96 statt 81 Probleme). Der Wächter dagegen kam am 12.09. ins Projekt — **mit
+   `checksVoidReturn: false`**, also mit genau dem Auge zu, das diese Familie sieht.
+   **Wer einen Knopf baut, der etwas Asynchrones tut, schreibt `onPress={() => void
+   xAsync()}` und fängt in `xAsync` auch das Unerwartete** — mit einem Satz, den ein
+   Mensch versteht. Ein Fehler, den nur ein Entwickler-Build zeigt, ist auf einem
+   fremden Handy kein Fehler, sondern eine App, die nichts tut.
+   ⚠️ **14 dieser Stellen sind noch offen** (Stand 2026-09-13). Sie gehören als
+   eigener Durchgang aufgeräumt und nicht nebenbei — vier gleichzeitige Änderungen
+   heben ihren eigenen Nutzen wieder auf.
+
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
 - **Große Display-Fonts clippen auf iOS.** `lineHeight ≈ 1.2 × fontSize` setzen, sonst
@@ -4753,6 +4868,23 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   gefunden**, weil keine den Bucket zählt. Jetzt kommt die Liste aus dem ORDNER, mit
   einem Wächter auf vierstellige Nummern (ohne feste Stellenzahl liefe `0010` vor
   `0009`). Harte Regel 83 in einer zweiten Gestalt.
+- **Zweimal die STILLE repariert, bevor die URSACHE gesucht war.** (2026-09-13, und es
+  war mein teuerster Fehler des Tages) Ians Profilbild scheiterte lautlos. Erster
+  Anlauf: Fehlerbehandlung in den Bildwähler — der Fehler lag nicht dort. Zweiter
+  Anlauf: das Protokoll vom Gerät lesen — ein Release-Build schreibt nichts. Erst der
+  dritte, die KETTE lückenlos zu lesen (`einstellungen.tsx` → `bild-waehlen` →
+  `social/hooks` → `data/senden` → **`features/store.ts`**), fand sie. **Das eine
+  Glied, das ich nie gelesen hatte, war das mit dem Fehler.** Wenn ein Weg schweigt,
+  wird er GANZ gelesen, bevor an einem Ende repariert wird — und die Stille ist ein
+  zweiter Fehler, nicht der erste.
+- **Ein `main.jsbundle` lässt sich nach dem eigenen Code durchsuchen — in ZWEI
+  Kodierungen.** (2026-09-13) Nach dem Aufspielen war die erste Frage „ist mein Fix
+  überhaupt drin?", und sie ist in Sekunden zu beantworten: `main.jsbundle` nach den
+  neuen Sätzen greppen. **Hermes legt reine ASCII-Strings als Latin-1 ab und jeden
+  String mit einem Nicht-ASCII-Zeichen als UTF-16** (die Lehre vom 13.09. früh) — ein
+  deutscher Satz mit Umlaut steht also NUR in UTF-16 drin. Dieselbe Suche zählt auch,
+  wie oft ein Bezeichner vorkommt: `getRandomValues` und `randomUUID` **je einmal** war
+  der Beleg, dass niemand sie definiert.
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 
 ## Was Apple später verlangt (Guideline 1.2, User-Generated Content)
