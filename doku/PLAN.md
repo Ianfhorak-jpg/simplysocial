@@ -6481,12 +6481,24 @@ aus demselben Grund: Ein `PanResponder` wird EINMAL gebaut und muss seine Werte 
 einem Ref holen, sonst sieht er für immer den ersten Render. Die zwei anderen neuen
 Meldungen sind weg (Zustand vor Ref, Maße ins `masse`-Ref wie in `SsWienKarte`).
 
-#### Was NICHT geprüft ist
+#### ✅ Am Gerät nachgemessen — Durchgang 4, 6 von 6 (2026-09-13)
 
-**Ob sich Schieben und Kneifen am Handy richtig anfühlen** — das beantwortet kein Node
-und kein Browser. Und ob `ImageRef.width` die GEDREHTE Breite meldet: Der Prüfstein
-dafür ist ein **quer aufgenommenes Foto**. Sitzt der Kreis dort, wo er im Fenster stand,
-stimmt es. Beides steht in `HANDY_DURCHGANG.md`, Durchgang 4.
+Die zwei Fragen, die kein Mac beantworten konnte, sind beantwortet:
+
+1. **`ImageRef.width` meldet die GEDREHTE Breite.** Der Prüfstein war ein quer
+   aufgenommenes Foto; der Kreis saß dort, wo er im Fenster stand. Das war die einzige
+   begründete Annahme der Phase — **jetzt eine Messung.** Der Kommentar in
+   `bild-zuschneiden.native.ts` ist entsprechend berichtigt: Ein Kommentar, der eine
+   Zusage begründet, veraltet sonst lautlos (FALLEN.md), und hier hätte er behauptet,
+   es sei noch etwas offen.
+2. **Das Gefühl stimmt: „läuft flüssig" (Ians Wort).** Der `PanResponder` mit
+   `useState` je Bild reicht auf einem iPhone 16 — **`react-native-reanimated` wird
+   nicht gebraucht**, obwohl es in der App liegt. Das war die Rückfallposition und ist
+   damit erledigt, statt als ungeprüfte Möglichkeit stehenzubleiben.
+
+Dazu geprüft: kein Apple-Dialog mehr · Schieben bleibt im Kreis (keine leeren Ecken) ·
+Kneifen · Übernehmen zeigt genau den Ausschnitt aus dem Fenster · Abbrechen lässt das
+alte Bild stehen.
 
 ### Phase 21 — In den App Store ⬜
 

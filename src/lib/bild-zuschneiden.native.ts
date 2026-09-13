@@ -39,10 +39,14 @@ import type { Bilddatei, Bildquelle } from '@/lib/bild-waehlen-typen';
  * vertauschen. Ein `renderAsync()` ohne jede Aktion dekodiert das Bild einmal und
  * sagt, wie groß es WIRKLICH ist.
  *
- * ⚠️ **Am Gerät noch nicht nachgemessen** — dass `ImageRef.width` die gedrehte und
- * nicht die gespeicherte Breite meldet, ist die begründete Erwartung und gehört in
- * den Gerätedurchgang. Der Prüfstein dafür ist ein quer aufgenommenes Foto: Sitzt
- * der Kreis dort, wo er im Fenster stand, stimmt es.
+ * ✅ **Am Gerät nachgemessen (2026-09-13, Durchgang 4, iPhone 16 / iOS 26.6.1):**
+ * `ImageRef.width` meldet die GEDREHTE Breite, nicht die gespeicherte. Der Prüfstein
+ * war ein quer aufgenommenes Foto — der Kreis saß dort, wo er im Fenster stand. Aus
+ * der begründeten Erwartung ist damit eine Messung geworden.
+ *
+ * ⚠️ **Wer hier auf `asset.width`/`asset.height` von `expo-image-picker` zurückgeht,
+ * nimmt genau diese Messung zurück** — und es fiele erst bei Querformat-Fotos auf,
+ * also bei jedem zweiten. Die Begründung steht am Typ `Bildquelle`.
  */
 export async function bildQuelleLesen(uri: string): Promise<Bildquelle> {
   try {

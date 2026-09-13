@@ -1,10 +1,16 @@
 # Der Durchgang am Handy
 
-## 🟢 DURCHGANG 4 — der runde Zuschnitt *(bereit, 13.09.2026 nachts)*
+## ✅ DURCHGANG 4 — der runde Zuschnitt *(GEMACHT am 13.09.2026, 6 von 6)*
 
-> **Was neu ist:** Wenn du jetzt ein Profilbild aussuchst, kommt nicht mehr Apples
-> quadratischer Zuschneide-Dialog, sondern **ein eigener Bildschirm mit einem runden
-> Fenster.** Du schiebst und ziehst das Foto, bis im Kreis steht, was du willst.
+> **Alles hält.** Kein Apple-Dialog mehr ✅ · Schieben ✅ · Kneifen ✅ · Übernehmen ✅ ·
+> **Querformat-Foto ✅** · Abbrechen ✅. Ians Urteil zum Gefühl: **„läuft flüssig"** —
+> der `PanResponder` reicht, `react-native-reanimated` wird nicht gebraucht.
+>
+> 🎯 **Der Punkt, auf den es ankam, ist beantwortet.** Ein quer gehaltenes iPhone
+> speichert das Foto aufrecht und merkt sich den Winkel im EXIF. Ob
+> `ImageRef.width` die GEDREHTE oder die GESPEICHERTE Breite meldet, war die einzige
+> begründete Annahme der Phase — **es ist die gedrehte.** Der Kreis saß dort, wo er
+> im Fenster stand.
 >
 > **Was ich vorher gemacht habe:** Der Build ist fertig gebaut (die 20 Minuten sind
 > durch). Zum Aufspielen: iPhone anstecken, **entsperrt lassen**, dann

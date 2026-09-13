@@ -50,18 +50,20 @@
 >    er bleibt, wo du ihn hingeschoben hast, und rutscht nur so weit zurück, bis er
 >    passt. Das ist besser. Die Prüfung fragt jetzt das Richtige.
 
-### 🟢 Das Einzige, was noch offen ist: aufspielen
+### ✅ Aufgespielt und durchgeprüft — 6 von 6
 
-> Der Build ist **fertig gebaut** — die 20 Minuten sind durch, die brauchte ich nicht
-> von dir. Zum Aufspielen: **iPhone anstecken und entsperrt lassen**, dann
+> Die App ist auf deinem iPhone, und du hast Durchgang 4 gemacht: kein Apple-Dialog
+> mehr · Schieben · Kneifen · Übernehmen · **Querformat-Foto** · Abbrechen. Dein Wort
+> zum Gefühl: **„läuft flüssig"**.
 >
-> ```
-> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run geraet
-> ```
+> **Damit ist die letzte offene Frage der Phase beantwortet.** Ein quer gehaltenes
+> iPhone speichert das Foto aufrecht und merkt sich den Winkel daneben — ob die App
+> die gedrehte oder die gespeicherte Breite bekommt, war die einzige Stelle, an der ich
+> raten musste. Sie bekommt die gedrehte. Steht jetzt als **Messung** im Code, nicht
+> mehr als Vermutung.
 >
-> Danach steht in `HANDY_DURCHGANG.md` **Durchgang 4** — sechs Punkte. Der wichtigste
-> ist Nummer 5: **ein QUER aufgenommenes Foto.** Ob der Kreis dort richtig sitzt, kann
-> kein Mac beantworten, und es ist die einzige Stelle, an der ich raten musste.
+> **Und `react-native-reanimated` wird nicht gebraucht.** Das war der Plan B, falls die
+> Geste zäh ist. Braucht es nicht — ein Baustein weniger.
 
 ### ❓ Was unverändert auf dich wartet
 

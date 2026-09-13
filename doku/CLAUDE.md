@@ -77,9 +77,12 @@ Zuschnitt** (Ians Wunsch vom 13.09.): ein eigener Zuschneide-Bildschirm mit rund
 Fenster, dazu **Ians Entscheidung 77 — 512 px**. Volltext aller Phasen in
 `_gedaechtnis/HISTORIE.md`.
 
-⚠️ **Der Gerätebuild dazu ist gebaut, aber noch NICHT aufgespielt** — `npm run geraet`
-ist danach ein Aufruf von Sekunden (iPhone entsperrt lassen). Bis dahin trägt die App
-auf Ians iPhone den Stand vom 13.09. nachmittags **ohne** den runden Zuschnitt.
+🎉 **Aufgespielt und am Gerät durchgeprüft — Durchgang 4: 6 von 6** (iPhone 16,
+2026-09-13 abends). Kein Apple-Dialog mehr · Schieben · Kneifen · Übernehmen ·
+**Querformat-Foto** · Abbrechen. Ians Urteil zum Gefühl: **„läuft flüssig"** — der
+`PanResponder` reicht, `react-native-reanimated` wird nicht gebraucht.
+**Und damit ist die einzige begründete Annahme der Phase eine Messung:**
+`ImageRef.width` meldet die GEDREHTE Breite, nicht die gespeicherte.
 
 ### Gemessene Zahlen (grün, Stand 20.9/20.8)
 
@@ -108,10 +111,8 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 
 1. **Phase 21 — App Store.** 13+ (Apples neue Altersfrage ist seit Sept. 2026 Pflicht,
    die Antwort ist ja), Rechtstexte, TestFlight, einreichen.
-2. ~~**Phase 20.6-d — runder Zuschnitt.**~~ ✅ **fertig am 2026-09-13 nachts.** Offen ist
-   nur noch das Aufspielen und der Gerätedurchgang 4 (`HANDY_DURCHGANG.md`): Fühlt sich
-   Schieben und Kneifen richtig an, und sitzt der Kreis bei einem QUER aufgenommenen
-   Foto dort, wo er im Fenster stand?
+2. ~~**Phase 20.6-d — runder Zuschnitt.**~~ ✅ **fertig und am Gerät geprüft**
+   (2026-09-13, Durchgang 4: 6 von 6). Nichts mehr offen.
 3. **19d-2** (MapKit JS im Browser) — fällt nach Phase 20 nebenbei ab.
 
 ## Was auf Ian wartet
