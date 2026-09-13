@@ -1,5 +1,72 @@
 # Was du nach dem Clear schreiben sollst
 
+## 📋 STAND 13.09.2026, ABENDS — schreib einfach: „mit plan weitermachen"
+
+> Alles Nötige steht in Dateien. Der nächste Schritt ist entschieden und begründet;
+> du musst nichts erklären.
+
+### Was heute passiert ist
+
+> 🎉 **Der Handy-Durchgang ist gemacht — sieben von sieben.** Anmelden mit Apple, mit
+> Google, angemeldet bleiben über den Neustart, Profilbild, der Merker, kein
+> Prototyp-Kasten, die @-Namen. **Das Backend läuft damit auf einem echten iPhone**
+> und nicht mehr nur auf meinem Rechner. Das war der größte offene Punkt seit Wochen.
+>
+> ✅ **Und die Meldungen haben einen Leser bekommen** (`npm run meldungen`) — die
+> letzte offene Apple-Pflicht aus der Kategorie „lesen".
+
+### Die drei Fehler, die dabei herauskamen
+
+> 1. **Dein Profilbild scheiterte lautlos**, weil die App den Dateinamen mit etwas
+>    baute, das es nur im Browser gibt. Behoben und am Server nachgemessen: dein Bild
+>    ist 176 kB, ein echtes JPEG, liegt richtig.
+> 2. **Eine Datenbankzeile hätte dein Konto UNLÖSCHBAR gemacht**, sobald du je eine
+>    Meldung bearbeitest. Behoben, am echten Server eingespielt und nachgemessen.
+> 3. **Die @-Namen hätten ihr `@` verloren**, sobald echte Daten laufen. Behoben —
+>    du hast es am Handy geprüft.
+
+### 🔴 Was als NÄCHSTES gebaut wird (entschieden, du musst nichts tun)
+
+> **„Kein Knopf schweigt mehr."** Dein Profilbild war eine von **15 Stellen**, an denen
+> ein Fehler spurlos verschwinden kann — der Knopf tut dann einfach nichts, ohne ein
+> Wort. **14 sind noch offen**, und jede ist heute auf deinem Handy so eine Stelle.
+> Das ist mechanische Arbeit, braucht keinen neuen Baustein, und danach steht ein
+> Wächter, der die Familie nicht mehr zurückkommen lässt.
+>
+> ❓ **Eine Frage kommt dabei auf dich zu** (ich stelle sie dir, wenn es soweit ist):
+> Wohin soll ein *unerwarteter* Fehler auf dem Bildschirm? Heute gibt es die rote
+> Leiste oben für „der Server hat abgelehnt" und einen Satz neben dem Knopf für
+> „daran kannst du was ändern". Ein Programmfehler ist keins von beidem.
+>
+> Danach: **der Lösch-Knopf für Meldungen** (Apple verlangt, dass wir gemeldete Posts
+> auch entfernen können), und dann **dein runder Zuschnitt**.
+
+### ❓ Was auf DICH wartet — nichts davon blockiert mich
+
+> | | |
+> |---|---|
+> | **5 Zeilen Code, die du schreibst** | `TODO(Ian)` in `simplysocial/src/features/safety/meldung.ts` — soll eine zu spät bearbeitete Meldung als „erledigt" oder als „erledigt, zu spät" gelten? Die Begründung steht daneben. |
+> | **Management-Token widerrufen** | `supabase.com/dashboard/account/tokens` → Revoke. Er darf alles in deinem Supabase-Konto und wird nie wieder gebraucht. |
+> | **Landing-Page-Farbe** | Offen seit 06.09. Drei Vorschauen liegen in `landing-vorschau/`. Farbe *und* ob die Kategoriefarben mitgehen. |
+> | **Der Satz beim Kontolöschen** | Punkt 10 in `OFFENE_SACHEN.md`, eine Minute. |
+> | **Rechtstexte** | Für den App Store, und nur mit einem Erwachsenen. Der größte Brocken vor der Einreichung. |
+> | **Apple-Programm: auf wessen Namen?** | Steht seit 11.09. offen und wird später teuer — daran hängt der Sign-in-Schlüssel. |
+
+### ⚠️ Zwei Sachen, die du über den Stand wissen solltest
+
+> **Die Webseite ist NICHT auf dem neuesten Stand.** `npm run deploy` ist absichtlich
+> gesperrt, solange der Schalter auf `'supabase'` steht (sonst läge eine echte
+> Anmeldung mit echten Daten auf einer Adresse, die per WhatsApp weitergeht). Die
+> öffentliche Seite zeigt weiter den Prototyp mit Fake-Daten. **Ob und wann sie
+> nachzieht, ist deine getrennte Entscheidung** — sag Bescheid.
+>
+> **Die App auf deinem iPhone gilt bis 13.09.2027.** Neu aufspielen jederzeit mit
+> `cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run geraet`
+> (iPhone entsperrt lassen).
+
+---
+
+
 ## ✅ STAND 13.09.2026 — MAN KANN SICH MIT APPLE UND GOOGLE ANMELDEN
 
 > **Die zwei Knöpfe tun jetzt etwas.** Sie standen seit dem 09.09. auf dem

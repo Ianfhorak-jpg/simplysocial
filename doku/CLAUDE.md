@@ -2578,6 +2578,30 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    Danach fällt 19d-2 nebenbei ab.
 
 10b. ✅ **DER GERÄTEDURCHGANG IST GEMACHT** *(2026-09-13 nachmittags, 7 von 7)*.
+
+10c. 🔴 **Kein Knopf schweigt mehr (20.9)** ← *HIER GEHT ES WEITER*. **14 Stellen** in
+   der App geben eine `async`-Funktion an eine Prop, die `void` erwartet — dieselbe
+   Familie, an der Ians Profilbild lautlos gescheitert ist (harte Regel 102). Jede ist
+   heute auf seinem iPhone ein Ort, an dem die App stillschweigend nichts tut.
+   **JS-only, kein neuer Baustein.** Gefunden werden sie mit einem Handgriff:
+   `checksVoidReturn: true` in `eslint.config.js` nennt alle mit Datei und Zeile
+   (gegengemessen 96 statt 81 Probleme). **Am Ende bleibt der Schalter auf `true`** —
+   das ist der eigentliche Ertrag, sonst kommt die Familie beim nächsten Screen still
+   zurück. ⚠️ **Eine Entscheidung von Ian steckt darin** (wohin ein unerwarteter Fehler
+   auf den Bildschirm geht), ausgeschrieben in PLAN.md 5b, Phase 20.9.
+
+10d. **Der Leser darf auch handeln (20.7-b)** — `npm run meldungen -- post-loeschen` und
+   `-- konto-sperren`. Die letzte Hälfte der Apple-1.2-Pflicht; ohne Gerät zu bauen.
+   ⚠️ **Zwei Fallen sind schon gemessen** und stehen in PLAN.md: `konto_loeschen()` darf
+   keinen Parameter bekommen (der Wächter in 0009 bricht sonst ab), und ein blankes
+   `delete from auth.users` scheitert an `chef_oder_aufgeloest`, sobald der Betreffende
+   je eine Gruppe gegründet hat.
+
+10e. **Der runde Zuschnitt (20.6-d)** — Ians Wunsch vom 13.09. ⚠️ **Kein rundes BILD:**
+   JPEG hat keinen Alphakanal. Gemeint ist ein rundes FENSTER beim Aussuchen; gespeichert
+   bleibt ein Quadrat, `SsAvatar` zeichnet ohnehin rund. Braucht `expo-image-manipulator`
+   (liegt NICHT in `node_modules`) und damit einen neuen Build — **gern im selben Build
+   wie etwas anderes Natives.**
    **Vier ungeprüfte Sachen haben sich auf Ians iPhone gestapelt, alle vom 13.09.:**
    Apple-Login · Google-Login · der Bildwähler (Erlaubnis-Dialog, Zuschnitt, echte
    Dateigröße bei `BILD_QUALITAET = 0.8`) · und ob die Anmeldung einen Neustart

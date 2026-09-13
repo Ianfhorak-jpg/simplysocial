@@ -6084,6 +6084,98 @@ Abfrage verlangt alle Spalten. Wer es schließen will, nennt dort die Spalten ei
 
 ---
 
+### Phase 20.9 — Kein Knopf schweigt mehr ⬜ *(als NÄCHSTES, JS-only)*
+
+> **Warum das vor allem anderen steht:** Ians Profilbild ist am 13.09. lautlos
+> gescheitert, weil ein Wurf durch `onPress={async …}` hinausläuft und React das
+> Promise wegwirft. **Gemessen: 15 solche Stellen, 14 davon sind noch offen** — und
+> jede ist heute auf seinem iPhone ein Ort, an dem die App jemandem stillschweigend
+> nichts tut. Harte Regel 102.
+
+**Die Arbeit selbst ist mechanisch:** `onPress={xAsync}` → `onPress={() => void xAsync()}`,
+und `xAsync` fängt auch das Unerwartete. Gefunden werden die Stellen mit einem Handgriff —
+`checksVoidReturn: true` in `eslint.config.js`, dann nennt `npx expo lint` sie alle mit
+Datei und Zeile (gegengemessen: **96 Probleme statt 81**, der Unterschied sind genau die 15).
+
+**Am Ende steht der Schalter dauerhaft auf `true`.** Das ist der eigentliche Ertrag: Ohne
+ihn kommt die Familie beim nächsten Screen zurück, und sie kommt still zurück.
+
+⚠️ **Die eine Frage, die dabei zu entscheiden ist — und sie gehört Ian.** Wohin geht ein
+UNERWARTETER Fehler auf dem Bildschirm? Heute gibt es zwei Orte, und beide sind belegt:
+die Fehlerleiste oben (`schreiben.zustand === 'fehler'`, Entscheidung 48) für einen
+`SchreibFehler`, und ein Satz neben dem Knopf für eine Hürde, die der Mensch beheben kann.
+Ein Programmfehler ist keines von beidem.
+
+| | |
+|---|---|
+| A: dieselbe Leiste oben | Ein Ort für „etwas ging schief", egal warum. Preis: Die Leiste sagt heute Dinge wie „Du bist nicht mehr angemeldet" — ein Programmfehler würde darin wie ein Netzproblem aussehen, und genau diese Verwechslung sollte `schreibVorgangIntern` vermeiden. |
+| B: eine zweite, andersfarbige Leiste | Ehrlich getrennt. Preis: ein zweites Ding auf dem Schirm, gegen harte Regel 63. |
+| C: ein Satz je Screen, wie beim Bild | Am nächsten an der Stelle, an der es passiert ist. Preis: 14-mal eine Stelle finden, wo der Satz hinpasst — und auf manchen Screens gibt es keine. |
+
+**Empfehlung: A mit einem eigenen Wortlaut** — eine Leiste, aber ein Satz, der nicht
+nach Netzproblem klingt („Da ist etwas schiefgegangen, das nicht an dir liegt."). Der
+Grund: Ein Mensch kann bei einem Programmfehler ohnehin nichts tun; was er braucht, ist
+die Auskunft, dass es nicht an ihm lag und dass es nicht stillschweigend passiert ist.
+
+**Gemessen wird danach:** `tsc` sauber · Lint **81 Probleme AUCH mit `checksVoidReturn:
+true`** (das ist der Beleg, dass alle 15 zu sind) · lokal 136 · Prototyp Pixel für Pixel
+identisch · und ein neuer Build aufs Gerät, weil es dort auffällt und nirgends sonst.
+
+---
+
+### Phase 20.7-b — Der Leser darf auch HANDELN ⬜ *(Apple 1.2, ohne Gerät)*
+
+> `npm run meldungen` zeigt seit dem 13.09., was gemeldet wurde. **Was fehlt, ist die
+> andere Hälfte der Apple-Pflicht: Inhalte entfernen und Nutzer ausschließen.** Gemessen:
+> `posts_loeschen` lässt nur `author_id = auth.uid()` durch, auf `profiles` gibt es gar
+> kein delete — heute kann das niemand, auch nicht von Hand.
+
+**Gebaut wird es als zwei Unterbefehle**, beide mit `--wirklich` wie `asc.py tester`:
+
+    npm run meldungen -- post-loeschen <post-id> --wirklich
+    npm run meldungen -- konto-sperren <user-id> --wirklich
+
+⚠️ **Zwei Fallen sind schon gemessen und gehören VOR den ersten Handgriff gelesen:**
+
+1. **`konto_loeschen()` darf KEINEN Parameter bekommen.** Ihr eigener Kommentar in 0003
+   sagt, mit einem wäre sie *„ein Werkzeug, mit dem man fremde Konten löscht, und
+   `security definer` hieße, dass sie es darf"* — und der Wächter in 0009 bricht ab, wenn
+   es jemand doch tut. Es braucht eine **zweite** Funktion (`konto_entfernen(wen uuid)`),
+   und die bekommt **kein `grant` an `authenticated`**: Dann ist sie ausschließlich über
+   die db-url erreichbar, und das IST Ians Entscheidung 58 in SQL gegossen.
+2. **Ein blankes `delete from auth.users` reicht nicht.** `groups.creator_id` steht auf
+   `on delete set null`, und `constraint chef_oder_aufgeloest` verlangt, dass „ohne Chef"
+   nur bei einer aufgelösten Gruppe vorkommt — der Löschversuch würde also SCHEITERN,
+   sobald der Betreffende je eine Gruppe gegründet hat. Die Erbfolge aus Entscheidung 13
+   muss mitlaufen; der Rumpf von `konto_loeschen()` ist die Vorlage, nur mit `wen` statt
+   `auth.uid()`.
+
+**Und eine Frage für Ian:** Ist „ausschließen" dasselbe wie „Konto löschen", oder braucht
+es eine Sperre, die den Menschen nicht auslöscht (damit er nicht sofort ein neues Konto
+macht)? Eine Sperrliste ist mehr Arbeit und die ehrlichere Antwort auf Wiederholungstäter.
+
+---
+
+### Phase 20.6-d — Der runde Zuschnitt ⬜ *(Ians Wunsch vom 13.09.)*
+
+> Sein Satz: *„bitte kreisförmiges Zuschneiden."* Mit `expo-image-picker` geht das auf
+> iOS **nicht** — steht in dessen eigenen Typen: `aspect` ist Android-only *„since on iOS
+> the crop rectangle is always a square"*, `shape: 'oval'` trägt `@platform android`.
+
+⚠️ **Der Denkfehler, den ein frischer Kopf hier macht — und er kostet einen Tag:** Ein
+rundes BILD gibt es nicht. JPEG hat keinen Alphakanal, und ein PNG mit runder Maske wäre
+größer und stünde in `BILD_TYPEN` als dritter Fall herum. **Was Ian will, ist nicht ein
+rundes Bild, sondern ein rundes FENSTER beim Aussuchen** — damit er sieht, was vom Foto im
+Kreis landet. `SsAvatar` zeichnet ohnehin rund; gespeichert wird weiter ein Quadrat.
+
+**Also: ein eigener Zuschneide-Bildschirm.** Bild schieben und zoomen hinter einer runden
+Maske, darunter „Übernehmen". Gebraucht wird `expo-image-manipulator` (**liegt NICHT in
+`node_modules`** — nachgemessen, also ein neuer Baustein und ein neuer Build), dazu
+`allowsEditing: false` im Wähler, weil unser Fenster das ersetzt.
+
+**Reihenfolge:** Nach 20.9, und gern im selben Build wie etwas anderes Natives — ein Build
+für einen Schönheitsschritt allein ist der teuerste.
+
 ### Phase 21 — In den App Store ⬜
 
 #### 21.1 — Was seit diesem Monat neu ist ⬜
@@ -7932,6 +8024,38 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > Alles, was eine frische Sitzung wissen muss, steht in Dateien — nicht im Gespräch.
 
 ### Das Erste, was zu tun ist
+
+> 🔴 **STAND 2026-09-13, abends — Phase 20.9: „Kein Knopf schweigt mehr".**
+> Ausgeschrieben in Abschnitt 5b. Kurz, damit eine frische Sitzung nicht erst suchen
+> muss:
+>
+> 1. `checksVoidReturn: true` in `eslint.config.js`, dann `npx expo lint`. Er nennt
+>    **14 Stellen** mit Datei und Zeile (96 Probleme statt 81 — der Unterschied SIND
+>    sie). Das ist die Arbeitsliste; sie muss niemand selbst zusammensuchen.
+> 2. Jede: `onPress={xAsync}` → `onPress={() => void xAsync()}`, und `xAsync` fängt
+>    auch das Unerwartete. Die Vorlage steht fertig in
+>    `src/app/einstellungen.tsx` (`bildAussuchen` / `bildAussuchenAsync`).
+> 3. **Vorher Ian fragen**, wohin ein unerwarteter Fehler auf den Bildschirm geht —
+>    die drei Möglichkeiten samt Empfehlung stehen bei Phase 20.9.
+> 4. Am Ende bleibt der Schalter auf `true`. **Das ist der Ertrag**, nicht die 14
+>    Zeilen: Ohne ihn kommt die Familie beim nächsten Screen still zurück.
+> 5. Danach ein Build aufs Gerät (`npm run geraet`) — es fällt dort auf und nirgends
+>    sonst.
+>
+> **Erwartet danach:** `tsc` sauber · Lint **81 Probleme AUCH mit `checksVoidReturn:
+> true`** · lokal 136 · `pruef-bildwahl` 47 · `pruef-sitzung` 29 · `pruef-anbieter` 48 ·
+> Prototyp Pixel für Pixel identisch.
+>
+> ⚠️ **Der Schalter `ANMELDE_QUELLE` steht auf `'supabase'` und bleibt es.** Der
+> Gerätedurchgang ist gemacht; `npm run deploy` ist dadurch gesperrt (harte Regel 96),
+> und das ist Absicht. **Ob die öffentliche Adresse nachzieht, ist Ians getrennte
+> Entscheidung** und steht noch aus.
+>
+> ✅ **Erledigt am 13.09.:** Phase 20.7 (die Meldungen haben einen Leser) · der
+> Gerätedurchgang (7 von 7) · drei Fehler, die nur dort zu finden waren
+> (`globalThis.crypto` am Gerät, `reports.erledigt_von` machte ein Konto unlöschbar,
+> das `@` im @-Namen). Einzelheiten in Abschnitt 5b und in CLAUDE.md.
+
 
 > ❓ **Davor eine Frage, die auf Ian wartet — sie kostet keine Arbeitszeit, blockiert
 > aber sonst still (2026-09-06):** Er hat die Landing-Page in drei Farben angefragt.
