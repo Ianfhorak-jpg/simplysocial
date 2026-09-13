@@ -200,7 +200,23 @@ export default function FeedScreen() {
   // `PrototypHinweis`, Phase 8).
   const [anleitung, setAnleitung] = useState(false);
   useEffect(() => {
-    if (!anleitungGesehen()) setAnleitung(true);
+    // Seit Ians Entscheidung 57 wird am Gerät wirklich nachgesehen, und `AsyncStorage`
+    // antwortet erst später. **Der Anfangswert bleibt trotzdem `false` und braucht
+    // KEINEN dritten Zustand** — anders als bei der Sitzung (Entscheidung 43, wo
+    // `'unbekannt'` und `'aus'` zwei verschiedene Bildschirme zeigen): Hier zeichnen
+    // „wird noch nachgesehen" und „schon gesehen" dasselbe, nämlich keine Karte. Ein
+    // `true` als Anfangswert wäre der Fehler, den man sieht: Die Anleitung blitzte bei
+    // jedem Start kurz auf, auch bei dem, der sie längst weggewischt hat.
+    //
+    // ⚠️ Und der Grund für das `lebt`: Ohne den Riegel setzt eine Antwort, die nach dem
+    // Verlassen des Tabs eintrifft, den Zustand einer abgebauten Komponente.
+    let lebt = true;
+    anleitungGesehen().then((ja) => {
+      if (lebt && !ja) setAnleitung(true);
+    });
+    return () => {
+      lebt = false;
+    };
   }, []);
 
   // Die Karte, für die gerade die Antwort-Leiste offen ist. Sie ist so lange NICHT

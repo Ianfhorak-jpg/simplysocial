@@ -89,7 +89,28 @@ export const ANMELDE_WEGE: readonly AnmeldeWeg[] = ['apple', 'google', 'email-co
  * und *ist das Projekt eingerichtet?* sind zwei Fragen, und nur die zweite braucht
  * Ians Konten.
  */
-export const ANMELDE_QUELLE: 'attrappe' | 'supabase' = 'attrappe';
+export const ANMELDE_QUELLE: 'attrappe' | 'supabase' = 'supabase';
+
+/**
+ * ⚠️ **Eine Ableitung dieses Schalters darf NICHT in dieser Datei stehen** — und das
+ * ist gemessen, nicht überlegt (2026-09-13, beim ersten Umlegen für den
+ * Gerätebuild).
+ *
+ * TypeScript verengt ein `const` **innerhalb derselben Datei** per
+ * Control-Flow-Analyse auf den zugewiesenen Literal; die Union-Annotation oben gilt
+ * erst **über Modulgrenzen hinweg**. Ein `ANMELDE_QUELLE === 'attrappe'` hier ergäbe
+ * deshalb sofort `TS2367: This comparison appears to be unintentional because the
+ * types '"supabase"' and '"attrappe"' have no overlap` — und zwar **nur in einer der
+ * beiden Schalterstellungen.** Eine Zwischenvariable mit eigener Annotation hilft
+ * nicht; beide Fassungen sind gegen `tsc` gehalten worden.
+ *
+ * **Daraus folgt etwas über den Bestand:** `LIEST_AUS_SUPABASE` funktioniert nur,
+ * WEIL es in `lib/supabase.ts` steht. Wer es aufräumend hierher schiebt, bricht den
+ * Build — in genau der Stellung, in der es auffällt, also der umgelegten. Dasselbe
+ * gilt für `IST_PROTOTYP` in `components/PrototypHinweis.tsx` (Ians Entscheidung 56).
+ * Beide sind ABLEITUNGEN dieses einen Schalters (harte Regel 74) und stehen dort, wo
+ * ihre Frage gestellt wird — nicht dort, wo ihre Quelle liegt.
+ */
 
 /**
  * Wer gerade angemeldet ist — als diskriminiertes Union, nicht als `string | null`.

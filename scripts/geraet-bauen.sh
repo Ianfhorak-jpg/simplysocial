@@ -30,8 +30,21 @@
 # ── Was es NICHT tut ─────────────────────────────────────────────────────────
 # Es meldet sich nicht bei Apple an und legt keine Zertifikate an. Wenn Xcode das
 # Team nicht kennt, kann das Skript nur sagen, was zu tun ist.
+#
+# ── `--nur-bauen`: warum es den Schalter gibt (2026-09-13) ───────────────────
+# Der Build läuft ~20 Minuten und braucht KEIN Gerät (`generic/platform=iOS`,
+# siehe Fallen-Liste). Das Aufspielen braucht eines, und zwar ein entsperrtes.
+# Zusammengelegt hiess das bisher: Ohne Ian und sein iPhone passiert gar nichts,
+# auch nicht die 20 Minuten, die niemanden brauchen.
+#
+# Mit `--nur-bauen` läuft alles bis einschliesslich der Profil-Prüfung und hört
+# dann auf. Danach ist `npm run geraet` ein Aufruf von Sekunden: xcodebuild baut
+# inkrementell weiter, wenn sich nichts geändert hat.
 
 set -euo pipefail
+
+NUR_BAUEN=0
+[ "${1:-}" = "--nur-bauen" ] && NUR_BAUEN=1
 
 WURZEL="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$WURZEL"
@@ -142,6 +155,37 @@ if security cms -D -i "$APP/embedded.mobileprovision" > /tmp/ss-profil.plist 2>/
     echo "  mv ~/Library/Developer/Xcode/UserData/Provisioning\\ Profiles/*.mobileprovision /tmp/"
     exit 1
   fi
+fi
+
+# ── Schritt 1b: Steckt im Bundle der Schalter, der in der Quelle steht? ──────
+#
+# Dieselbe Bauart wie die Profil-Prüfung darüber und aus demselben Grund:
+# "BUILD SUCCEEDED" beantwortet „hat er gebaut?", und gebaut wird für den
+# Gerätedurchgang wegen „kann man sich damit anmelden?". Am 2026-09-11 waren die
+# zwei Antworten schon einmal verschieden (7-Tage-Profil in einem erfolgreichen
+# Build); hier kann dasselbe passieren, wenn jemand `anmeldung.ts` anfasst,
+# WÄHREND der Build läuft — das JS-Bundling passiert am App-Target, also viele
+# Minuten nach dem Start. Verglichen wird deshalb das Bundle gegen die QUELLE und
+# nicht gegen einen festen Wert: Die Frage ist nicht „steht supabase drin?",
+# sondern „steckt drin, was ich gebaut zu haben glaube?".
+SCHALTER="$(grep -m1 -oE "^export const ANMELDE_QUELLE.* = '(attrappe|supabase)';" \
+            src/features/auth/anmeldung.ts | grep -oE "(attrappe|supabase)';" | tr -d "';")"
+if [ -z "$SCHALTER" ]; then
+  echo "✗ ANMELDE_QUELLE ist in src/features/auth/anmeldung.ts nicht zu finden."
+  echo "  Dann lässt sich nicht sagen, was im Bundle steckt — siehe harte Regel 95."
+  exit 1
+fi
+if ! python3 scripts/bundle-schalter.py "$APP/main.jsbundle" "$SCHALTER"; then
+  exit 1
+fi
+
+if [ "$NUR_BAUEN" = "1" ]; then
+  echo
+  echo "✓ Fertig gebaut — das Aufspielen braucht dein iPhone."
+  echo "  Wenn es angesteckt (oder im selben WLAN) und ENTSPERRT ist:"
+  echo "      npm run geraet"
+  echo "  Der Build oben ist dann in Sekunden durch, es wird nur noch installiert."
+  exit 0
 fi
 
 # ── Schritt 2: Das richtige Gerät ────────────────────────────────────────────

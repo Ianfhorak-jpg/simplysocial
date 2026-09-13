@@ -3,6 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SsButton, SsIcon, SsText } from '@/components/ui';
+import { ANMELDE_QUELLE } from '@/features/auth/anmeldung';
 import { accent, colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
 
 /**
@@ -48,6 +49,13 @@ import { accent, colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
  *      Worte: *„der wird noch größer, dass die Leute wirklich draufklicken auf
  *      Okay."* Man muss „Verstanden" tippen, um weiterzukommen.
  *
+ * ── Und seit dem 2026-09-13 hat er eine BEDINGUNG (Ians Entscheidung 56) ────
+ * Er erscheint nur noch, solange `ANMELDE_QUELLE` auf `'attrappe'` steht
+ * (`IST_PROTOTYP`). **Das ist keine fünfte Fassung** — der Text oben ist um kein
+ * Zeichen angefasst, und die vier Fassungen gelten unverändert für den Ort, an dem
+ * er noch erscheint: die öffentliche Web-Adresse. Was dazukam, ist die Frage, OB er
+ * gilt, und die Antwort ist gemessen: Mit `'supabase'` sind alle drei Sätze falsch.
+ *
  * **Das ist keine Wiederholung von Fassung 1.** Die war eine Ebene, die einen Teil
  * der App verdeckte und den Rest zeigte — man konnte daran vorbeisehen und
  * weiterklicken. Ein Vollbild verdeckt ALLES und danach NICHTS: Der Preis von
@@ -89,10 +97,18 @@ const SCHLUESSEL = 'ss_hinweis_weg';
  * läuft — nach jedem echten Kaltstart käme der Hinweis wieder. Als Leiste war das
  * lästig, **als Vollbild ist es eine Wand vor jeder Sitzung**.
  *
- * Gelöst wird es in Phase 20.3 mit `expo-secure-store`, das ohnehin für die
- * Anmeldung dazukommt. **Dort wird dann nur der Speicher getauscht** — zwei
- * Funktionsrümpfe, kein Screen. Wer die Prüfung stattdessen in die Komponente
- * schreibt, macht aus dem Tausch eine Suche.
+ * **Und dieser Tausch findet NICHT mehr statt — er ist gegenstandslos geworden,
+ * nicht erledigt.** Hier stand bis zum 2026-09-13, er komme mit `expo-secure-store`
+ * in Phase 20.3. Die Bausteine liegen seit dem 12.09. im Binary, aber Entscheidung 56
+ * hat inzwischen die Frage darunter weggenommen: Am Gerät läuft `'supabase'`, dort
+ * erscheint das Vollbild überhaupt nicht mehr. Im Browser läuft `'attrappe'`, und
+ * dort gibt es `sessionStorage`.
+ *
+ * ⚠️ **Ein Fall bleibt, und er soll dastehen statt behauptet zu werden:** ein
+ * Simulator- oder Gerätebuild mit `'attrappe'`. Dort kommt die Wand weiter bei jedem
+ * Kaltstart. Das trifft niemanden außer dem, der so prüft — und wer daraus eines
+ * Tages ein Problem macht, tauscht die zwei Rümpfe unten gegen `AsyncStorage`,
+ * genau wie es `anleitungGesehen()` in `WischStapel.tsx` seit demselben Tag vormacht.
  */
 let weggeklickt = false;
 
@@ -116,11 +132,48 @@ function merken(): void {
   }
 }
 
+/**
+ * Ob dieser Hinweis überhaupt gilt. **Ians Entscheidung 56 (2026-09-13).**
+ *
+ * Der Text unten behauptet drei Dinge, und mit `ANMELDE_QUELLE = 'supabase'` ist
+ * **jedes einzelne falsch**: Die Namen sind nicht erfunden, es gibt einen Login
+ * (drei sogar), und Neuladen setzt nichts zurück — seit dem Sitzungsspeicher
+ * überlebt die Anmeldung sogar den Neustart. Ein Vollbild, das beim Start dreimal
+ * lügt und das man wegdrücken MUSS, ist dieselbe Familie wie „Noch nichts los in
+ * deinem Feed" bei einem Netzausfall.
+ *
+ * **Sein Text wird dabei um kein Zeichen angefasst** (harte Regel 22 — er ist
+ * Ians); er bekommt nur eine Bedingung. Die vier Fassungen oben bleiben gültig und
+ * lesbar, sie gelten dem Ort, an dem er noch erscheint: der öffentlichen Adresse.
+ *
+ * ── Warum die Zeile HIER steht und nicht in `anmeldung.ts` ──────────────────
+ * Weil sie dort nicht compiliert. TypeScript verengt ein `const` innerhalb
+ * derselben Datei auf seinen Wert, die Union-Annotation gilt erst über
+ * Modulgrenzen — `ANMELDE_QUELLE === 'attrappe'` neben der Deklaration ergibt
+ * `TS2367`, und zwar nur in einer der beiden Stellungen. Gemessen am 2026-09-13;
+ * die ganze Begründung steht in `anmeldung.ts` neben dem Schalter.
+ * **Es ist dieselbe Bauart wie `LIEST_AUS_SUPABASE` in `lib/supabase.ts`**
+ * (harte Regel 74): eine ABLEITUNG des einen Schalters, abgelegt dort, wo ihre
+ * Frage gestellt wird.
+ *
+ * ⚠️ **Der Preis ist benannt und noch nicht bezahlt:** Die App am Gerät sagt
+ * nirgends mehr, dass sie früh ist. Für TestFlight mit Christoph, Leopold und
+ * Daria braucht es einen eigenen, ehrlichen Satz — Phase 21, und wieder Ians.
+ */
+const IST_PROTOTYP = ANMELDE_QUELLE === 'attrappe';
+
 export function PrototypHinweis() {
   const [sichtbar, setSichtbar] = useState(false);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
+    // Ians Entscheidung 56 (2026-09-13): Der Hinweis gilt dem PROTOTYP, nicht der App.
+    // Steht `ANMELDE_QUELLE` auf `'supabase'`, ist jeder seiner drei Sätze falsch —
+    // die Namen sind echt, es gibt drei Logins, und Neuladen setzt nichts zurück.
+    // Die Frage steht hier und nicht in `schonGesehen()`: „gilt der Satz überhaupt?"
+    // und „habe ich ihn schon gesehen?" sind zwei Fragen, und nur die zweite hat
+    // etwas mit einem Speicher zu tun.
+    if (!IST_PROTOTYP) return;
     if (!schonGesehen()) setSichtbar(true);
   }, []);
 

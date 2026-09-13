@@ -6,12 +6,19 @@
 > und ECHTE Daten am Gerät laufen. Vier Sachen haben sich gestapelt, und **keine davon
 > kann ein Mac beantworten.**
 >
-> ⚠️ **Vorher muss Claude einen neuen Build machen** — sag einfach *„mach den Build"*.
-> Etwa 20 Minuten, kein neuer Baustein nötig. Erst danach hat das, was unten steht,
-> überhaupt eine Chance zu funktionieren.
+> ✅ **Der Build ist gemacht (13.09., Mittag) — du brauchst nur noch dein iPhone.**
+> Anstecken oder gleiches WLAN, **entsperrt lassen**, dann:
+>
+> ```bash
+> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run geraet
+> ```
+>
+> Etwa **20 Sekunden**, dann ist sie drauf — sie gilt bis **13.09.2027**. (Beim
+> allerersten Mal mit einem neuen Team fragt iOS einmal nach: Einstellungen →
+> Allgemein → VPN & Geräteverwaltung → Profil → Vertrauen.)
 >
 > 🔑 **Die Webseite ändert sich dabei NICHT.** Sie bekommt ihren Stand nur aus
-> `npm run deploy`, und das läuft hier nicht.
+> `npm run deploy`, und das läuft hier nicht — nachgemessen, sie ist unverändert.
 
 ### Was du durchklickst
 
@@ -21,6 +28,9 @@
 | 2 | **Abmelden → „Weiter mit Google"** | Geht ein Browserfenster auf und kommst du danach **in der App** wieder heraus? Wenn dort `redirect_uri_mismatch` steht, **mach einen Screenshot** — das ist eine Zeile in Googles Konsole. |
 | 3 | **App ganz schließen (hochwischen) → neu öffnen** | **Bist du noch angemeldet?** Das ist die Funktion von heute. Wenn du auf dem Anmelde-Bildschirm landest, hat der iOS-Schlüsselbund die Bytes nicht angenommen — sag es, das ist keine Kleinigkeit. |
 | 4 | **Profil → Bild ändern** | Fragt iOS nach Erlaubnis? Kommt das quadratische Zuschneide-Fenster? **Und wie lange dauert das Hochladen?** Wenn es zäh ist, drehen wir `BILD_QUALITAET` von 0,8 herunter — die Zahl ist begründet, aber nie an einem echten Foto gemessen. |
+
+| 5 | **Beim ZWEITEN Start auf den Wischstapel schauen** | Steht die Karte „So funktioniert der Stapel" noch da? Sie **soll weg sein** — einmal weggewischt, nie wieder. Bis heute kam sie am Handy bei jedem Start zurück, weil der Merker den Neustart nicht überlebte. |
+| 6 | **Ganz am Anfang: kommt ein Vollbild?** | Es **soll KEINES kommen.** Der Kasten „Das hier ist ein Prototyp" gilt nur noch der Webseite; am Handy meldest du dich ja wirklich an, und seine drei Sätze wären alle falsch. Kommt er trotzdem, stimmt der Schalter nicht. |
 
 ### Und nebenbei, wenn du schon drin bist
 

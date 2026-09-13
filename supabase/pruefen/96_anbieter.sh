@@ -41,23 +41,51 @@ echo '════ PHASE 20.3-b2 — Apple und Google ════════�
 
 QUELLE="$WURZEL/src/features/auth/anmeldung.ts"
 
-# ── Die zweite Fassung: derselbe Text, EIN Wort anders ──────────────────────
-mkdir -p "$ARBEIT/umgelegt/features/auth"
-sed "s/export const ANMELDE_QUELLE: 'attrappe' | 'supabase' = 'attrappe';/export const ANMELDE_QUELLE: 'attrappe' | 'supabase' = 'supabase';/" \
-  "$QUELLE" > "$ARBEIT/anmeldung-umgelegt.ts"
+# ── BEIDE Fassungen werden erzeugt, keine wird übernommen (2026-09-13) ───────
+#
+# Bis zum Gerätebuild vom 2026-09-13 nahm dieser Prüfstand die Repo-Datei als
+# „die Attrappen-Fassung" und erzeugte daneben die umgelegte. Das ging gut,
+# solange der Schalter im Repo IMMER auf `'attrappe'` stand — und genau diese
+# Annahme ist an dem Tag weggefallen, an dem er für den Gerätebuild umgelegt
+# wurde. Der Lauf meldete **12 Kreuze**, und keines davon war ein Fehler im Code.
+#
+# **Schlimmer war, was dabei NICHT anschlug:** Der alte Wächter fragte
+# `grep -q "= 'supabase';"` an der erzeugten Datei. Steht im Repo schon
+# `'supabase'`, ist das trivial wahr — die beiden Fassungen sind dann IDENTISCH,
+# und der zweite Block misst denselben Code noch einmal. Wörtlich derselbe
+# Zustand, vor dem der Wächter warnen sollte; sein eigener Kommentar beschrieb
+# ihn („grün, und ohne Aussage"). **Ein Wächter, der die falsche Frage stellt,
+# ist keiner** (harte Regel 83, hier innerhalb einer Datei).
+#
+# Also: Beide Fassungen entstehen aus derselben Quelle und bekommen ihren Wert
+# ERZWUNGEN. Der Prüfstand ist damit unabhängig davon, wie der Schalter gerade
+# steht — und misst in jeder Stellung dasselbe.
+erzwinge() {  # $1 = Wert, $2 = Zieldatei
+  sed -E "s/^(export const ANMELDE_QUELLE: 'attrappe' \| 'supabase' = )'[a-z]+';/\1'$1';/" \
+    "$QUELLE" > "$2"
+  if ! grep -q "^export const ANMELDE_QUELLE.* = '$1';" "$2"; then
+    echo "✗ ANMELDE_QUELLE liess sich nicht auf '$1' setzen."
+    echo '  Dann misst dieser Block etwas anderes als er behauptet.'
+    grep -n 'ANMELDE_QUELLE' "$QUELLE"
+    exit 1
+  fi
+}
+erzwinge attrappe "$ARBEIT/anmeldung-attrappe.ts"
+erzwinge supabase "$ARBEIT/anmeldung-supabase.ts"
 
-# Der Wächter. Ohne ihn wäre „gemessen mit umgelegtem Schalter" eine Behauptung:
-# Ändert sich die Zeile in `anmeldung.ts` je (anderer Name, andere Anführungs-
-# zeichen), liefe `sed` ins Leere, und der ganze zweite Block prüfte STILL
-# dieselbe Fassung noch einmal — grün, und ohne Aussage. Dieselbe Familie wie
-# „ein Wächter hinter einem anderen ist ein ungeprüfter Wächter" (20.4-b).
-if ! grep -q "= 'supabase';" "$ARBEIT/anmeldung-umgelegt.ts"; then
-  echo '✗ Die Ersetzung von ANMELDE_QUELLE hat nicht gegriffen.'
-  echo '  Dann misst der zweite Block dieselbe Fassung wie der erste — also nichts.'
-  grep -n 'ANMELDE_QUELLE' "$QUELLE"
+# Der Wächter, auf den es ankommt: Die zwei Fassungen müssen sich UNTERSCHEIDEN,
+# und zwar in genau einer Zeile. Das ist die Frage, die der alte nicht gestellt
+# hat — „steht der Wert drin?" beantwortet ein `grep` auch dann mit ja, wenn gar
+# nichts ersetzt wurde.
+UNTERSCHIED="$(diff "$ARBEIT/anmeldung-attrappe.ts" "$ARBEIT/anmeldung-supabase.ts" | grep -c '^[<>]' || true)"
+if [ "$UNTERSCHIED" != "2" ]; then
+  echo "✗ Die zwei Fassungen unterscheiden sich in $UNTERSCHIED Zeilen statt in 2 (eine je Seite)."
+  echo '  Bei 0 misst der zweite Block dieselbe Fassung wie der erste — also nichts.'
+  diff "$ARBEIT/anmeldung-attrappe.ts" "$ARBEIT/anmeldung-supabase.ts" | head -10
   exit 1
 fi
-echo '✓ zweite Fassung erzeugt (ANMELDE_QUELLE = supabase), Repo unberührt'
+IM_REPO="$(grep -m1 -oE "= '(attrappe|supabase)';" "$QUELLE" | tr -d "= ';")"
+echo "✓ zwei Fassungen erzeugt, Unterschied genau eine Zeile — Repo unberührt (steht dort: $IM_REPO)"
 
 echo '── nach JS bringen ──────────────────────────────────────────────────────'
 baue() {  # $1 = Quelldatei, $2 = Zielordner
@@ -81,13 +109,13 @@ JSON
   # tsc legt die Datei unter ihrem eigenen Namen ab; für Node muss sie .mjs heißen.
   mv "$ARBEIT/$2/anmeldung.js" "$ARBEIT/$2/anmeldung.mjs"
 }
-baue "$QUELLE" jetzt
-baue "$ARBEIT/anmeldung-umgelegt.ts" umgelegt
+baue "$ARBEIT/anmeldung-attrappe.ts" attrappe
+baue "$ARBEIT/anmeldung-supabase.ts" supabase
 
 # ── Derselbe Wächter wie in 95: läuft das wirklich ohne Baustein? ───────────
-if grep -qE "^(import|export .* from|require\()" "$ARBEIT/jetzt/anmeldung.mjs"; then
+if grep -qE "^(import|export .* from|require\()" "$ARBEIT/attrappe/anmeldung.mjs"; then
   echo '✗ anmeldung.ts hat einen Laufzeit-Import bekommen — dann prüft dieser Stand nichts mehr.'
-  grep -nE "^(import|export .* from|require\()" "$ARBEIT/jetzt/anmeldung.mjs"
+  grep -nE "^(import|export .* from|require\()" "$ARBEIT/attrappe/anmeldung.mjs"
   exit 1
 fi
 echo '✓ anmeldung.mjs hat keinen Laufzeit-Import — läuft in blankem Node'

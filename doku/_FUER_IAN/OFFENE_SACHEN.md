@@ -3,8 +3,40 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
-> 🔴 **Stand: 13.09.2026 — EINE Sache wartet auf dich, fünf Minuten, und sie hält
-> alles andere auf.**
+> 📱 **Stand: 13.09.2026, Mittag — es wartet EINE Sache auf dich, und sie braucht
+> nur dein iPhone.**
+>
+> **Die App ist gebaut und liegt fertig da.** Steck dein Handy an (oder sei im
+> gleichen WLAN), **lass es entsperrt** und tipp:
+>
+> ```bash
+> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run geraet
+> ```
+>
+> Das dauert **etwa 20 Sekunden**, dann ist sie drauf — sie gilt bis
+> **13.09.2027**. Was du dann probieren sollst, steht in `HANDY_DURCHGANG.md`
+> unter **Durchgang 3**. Kurz: Anmelden mit Apple, anmelden mit Google, ein
+> Profilbild aussuchen, und die App einmal ganz schließen und wieder aufmachen —
+> bleibst du angemeldet?
+>
+> **Vier Sachen sind daran zum ersten Mal echt**, und keine davon kann ein Mac
+> beantworten. Deshalb der Durchgang.
+>
+> ✅ **Die sieben Felder von gestern sind erledigt** — Apple und Google stehen in
+> Supabase, live nachgemessen (`apple: true, google: true`). Du musst dafür nichts
+> mehr klicken.
+>
+> 🔑 **Eine Kleinigkeit, wenn du gerade am Rechner bist:** Der Management-Token
+> gehört widerrufen. Er darf alles in deinem Supabase-Konto und wird nie wieder
+> gebraucht — `https://supabase.com/dashboard/account/tokens` → Revoke.
+>
+> ⚠️ **Und eine Frage von gestern liegt weiter da: Punkt 10** (eine Minute) — wer
+> nie ein Profilbild hatte, soll der trotzdem lesen, dass eines entfernt wurde?
+> Blockiert nichts.
+>
+> ---
+>
+> **Davor: 13.09.2026, früh — die eine Sache, die alles aufhielt.**
 >
 > **Apple und Google in Supabase eintragen.** Alle Zugänge sind da, ein Skript führt
 > dich Feld für Feld:

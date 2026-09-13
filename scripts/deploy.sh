@@ -27,6 +27,43 @@ if ! grep -q '"baseUrl": "/simplysocial"' app.json; then
   exit 1
 fi
 
+# ── Der Schalter: steht hier wirklich der PROTOTYP? (2026-09-13) ─────────────
+#
+# Anlass ist Ians Entscheidung 56, und sie hat diese Prüfung nötig GEMACHT statt
+# überflüssig. Vorher fiel ein versehentlich umgelegter Schalter von selbst auf:
+# Auf der öffentlichen Adresse standen dann zwei tote Knöpfe (Apple und Google
+# gehen im Browser gar nicht, harte Regel 94) und darüber ein Vollbild, das „Es
+# gibt keinen Login" behauptete. Das sieht kaputt aus, also sieht man es.
+#
+# Seit Entscheidung 56 erscheint genau dieses Vollbild bei `'supabase'` NICHT
+# mehr. Ein versehentlicher Deploy sähe damit sauber aus — und läge mit ECHTEN
+# Daten und einer echten Anmeldung auf einer Adresse, die Ian per WhatsApp
+# weitergibt. **Die Verbesserung hat das Warnsignal weggenommen; hier kommt es
+# als Messung zurück.**
+#
+# ⚠️ Warum ausnahmsweise die QUELLE geprüft wird und nicht das Ergebnis — anders
+# als bei der baseUrl dreissig Zeilen weiter unten: Dort war die Wahrheit in eine
+# ZWEITE Datei gewandert (`app.config.js`), und die Prüfung las die erste. Hier
+# gibt es nur eine Quelle, und die überlebt das Bündeln nicht: Der Minifier löst
+# `ANMELDE_QUELLE === 'attrappe'` zu einem Wahrheitswert auf, die Zeichenkette
+# kann verschwinden. Eine Prüfung, die MANCHMAL nichts findet, ist schlechter als
+# eine, die immer dieselbe Zeile liest.
+QUELLE="src/features/auth/anmeldung.ts"
+if ! grep -q "^export const ANMELDE_QUELLE.* = 'attrappe';" "$QUELLE"; then
+  echo "ABBRUCH: ANMELDE_QUELLE steht nicht auf 'attrappe'." >&2
+  echo "  Gefunden: $(grep -m1 'export const ANMELDE_QUELLE' "$QUELLE" | sed 's/^ *//')" >&2
+  echo >&2
+  echo "  Der Deploy geht auf die ÖFFENTLICHE Adresse. Mit 'supabase' läge dort" >&2
+  echo "  eine echte Anmeldung auf echten Daten — und seit Entscheidung 56 ohne" >&2
+  echo "  den Hinweis, der sagt, dass es ein Prototyp ist." >&2
+  echo >&2
+  echo "  Ist das Absicht, gehört der Satz in PrototypHinweis.tsx vorher neu" >&2
+  echo "  geschrieben (harte Regel 22 — er ist Ians) und diese Prüfung hier mit." >&2
+  echo "  Für einen GERÄTEbuild ist sie nicht im Weg: 'npm run geraet' ist ein" >&2
+  echo "  anderer Befehl und fasst gh-pages nicht an (harte Regel 35)." >&2
+  exit 1
+fi
+
 echo "→ Typecheck"
 npx tsc --noEmit
 

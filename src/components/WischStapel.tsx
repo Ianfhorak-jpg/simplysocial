@@ -13,6 +13,8 @@ import { PostCard } from './PostCard';
 import { WischKarte, type WischKarteHandle } from './WischKarte';
 import { SsButton, SsCard, SsIcon, SsText } from './ui';
 
+import { merkerGesehen, merkerSetzen } from '@/lib/merker';
+
 import type { FeedEintrag } from '@/features/posts/hooks';
 import { SICHTBARE_KARTEN, type WischRichtung } from '@/features/posts/wisch';
 import { accent, categoryColors, colors, spacing } from '@/theme';
@@ -287,32 +289,34 @@ function Zeile({ pfeil, text }: { pfeil: IconName; text: string }) {
 /**
  * Ob die Anleitungskarte schon gesehen wurde.
  *
- * Genau wie beim Prototyp-Hinweis aus Phase 8: `sessionStorage`, nicht
- * `localStorage`. Wer in drei Wochen wiederkommt, hat die Geste vergessen — dann
- * darf die Karte noch einmal kommen. Und alles in `try/catch`, weil im privaten
- * Modus schon der Zugriff wirft.
+ * ── Was sich am 2026-09-13 geändert hat (Ians Entscheidung 57) ──────────────
+ * Hier stand bis dahin `sessionStorage` mit einer Begründung, die im BROWSER
+ * weiter richtig ist und dort auch stehen geblieben ist (`lib/merker.ts`): *Wer
+ * in drei Wochen wiederkommt, hat die Geste vergessen — dann darf die Karte noch
+ * einmal kommen.*
+ *
+ * **Am Gerät stimmte sie nie**, und das ist beim Aufräumen vor dem
+ * Gerätedurchgang herausgekommen: Dort gibt es kein `sessionStorage`, der Zweig
+ * fiel auf einen Modul-`let` zurück, und der lebt genau so lange wie der Prozess.
+ * Jedes Öffnen der App war damit ein „erstes Mal" — die Karte stand bei JEDEM
+ * Start im Weg. Genau das nennt `PrototypHinweis.tsx` in seinem eigenen Kopf
+ * „eine Wand vor jeder Sitzung", und es war die Begründung dafür, das Ganze in
+ * Phase 20.3 auf einen echten Speicher zu legen.
+ *
+ * **Der Tausch steckt jetzt vollständig in `lib/merker.ts` / `.native.ts`** — zwei
+ * Rümpfe, kein Screen, genau wie seit Phase 13 angekündigt. Diese Datei weiß nicht
+ * mehr, WO gespeichert wird, und `Platform.OS` steht nicht mehr darin.
  */
 const SCHLUESSEL = 'ss_anleitung_weg';
-let gesehenImLauf = false;
 
-export function anleitungGesehen(): boolean {
-  if (gesehenImLauf) return true;
-  if (Platform.OS !== 'web') return false;
-  try {
-    return window.sessionStorage.getItem(SCHLUESSEL) === '1';
-  } catch {
-    return false;
-  }
+export function anleitungGesehen(): Promise<boolean> {
+  return merkerGesehen(SCHLUESSEL);
 }
 
 export function anleitungMerken(): void {
-  gesehenImLauf = true;
-  if (Platform.OS !== 'web') return;
-  try {
-    window.sessionStorage.setItem(SCHLUESSEL, '1');
-  } catch {
-    // Privater Modus. Der Merker oben reicht, solange die Seite nicht neu lädt.
-  }
+  // Bewusst ohne `await` und ohne `.catch`: `merkerSetzen` fängt selbst und wirft
+  // nie. Ein `void` davor wäre Lärm um eine Zusage, die die Datei daneben gibt.
+  merkerSetzen(SCHLUESSEL);
 }
 
 const styles = StyleSheet.create({

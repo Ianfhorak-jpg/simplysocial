@@ -42,6 +42,88 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 > die zwei Liquid-Glass-Vorbilder geblieben, weil sie als laufende Vorlage dienen
 > und nicht als Beleg. Einzelheiten in `_belege/LIESMICH.md`.
 
+🔴 **DIE APP FÜR DEN GERÄTEDURCHGANG IST GEBAUT (2026-09-13) — sie wartet auf Ians
+iPhone, und mehr fehlt nicht.** Der Schalter steht auf `'supabase'`, das Binary liegt
+fertig da, gültig bis **2027-09-13** (`TimeToLive: 365`). **Für Ian ist es ein
+Befehl:**
+
+    cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run geraet
+
+iPhone anstecken (oder gleiches WLAN) und **entsperrt lassen** — der Build ist
+inkrementell **in 20 Sekunden** durch, danach wird nur installiert. Was dann zu
+probieren ist, steht in `_FUER_IAN/HANDY_DURCHGANG.md`, Durchgang 3.
+
+**Und der Schalter war nie der Blocker — das ist bis heute zusammengeworfen worden.**
+`npm run deploy` und `npm run geraet` sind zwei Befehle; die öffentliche Adresse
+bekommt ihren Stand ausschließlich aus dem ersten (harte Regel 35). Umgelegt, gebaut,
+gemessen — **die Webseite ist unberührt, nachgemessen byte-identisch.**
+
+Gemessen: `tsc` sauber in **beiden** Schalterstellungen · **81 Lint-Probleme wie
+vorher** · `pruef-anbieter` **48** · `pruef-sitzung` **29** · `pruef-bildwahl` **35** ·
+Prototyp auf 390 × 844 **byte-identisch** mit `aq01` UND `ap01` (`ar01`, md5 gleich) ·
+Bundle-Schalter am gebauten Binary nachgemessen. Sechs Dinge:
+
+1. **Der teuerste Fund ist eine Zeile, zu der `tsc` GESCHWIEGEN hat — und sie hätte
+   die Anleitungskarte spurlos gelöscht.** `anleitungGesehen()` ging von `boolean` auf
+   `Promise<boolean>`, und in `(tabs)/index.tsx` stand weiter
+   `if (!anleitungGesehen()) setAnleitung(true);`. **Ein Promise ist immer truthy**,
+   `!promise` ist immer `false`, der Zweig lief nie — auf BEIDEN Plattformen, und
+   `npx tsc --noEmit` gab **0** zurück. Dieselbe Familie wie
+   `undefined > BILD_MAX_BYTES` (harte Regel 91) und `string | null` in JSX (20), und
+   die übelste Sorte davon: **Sie zeigt sich als ABWESENHEIT.** Der Wächter dagegen
+   steht seit heute in `eslint.config.js` (`no-misused-promises`, type-aware);
+   gegengemessen **83 statt 81**, mit der Stelle im Klartext.
+2. **Die zweite Messung wäre fast selbst ein Fehlschluss geworden, und zwar wegen
+   HERMES.** Um zu belegen, dass wirklich `'supabase'` im Binary steckt, wurde nach
+   Textmarken gesucht — „Es gibt keinen Login" kam **null** mal vor, und das sah nach
+   Wegoptimierung aus. **Es war die Kodierung:** Hermes legt reine ASCII-Strings als
+   Latin-1 ab und jeden String mit einem Nicht-ASCII-Zeichen als **UTF-16**. Ein
+   Gedankenstrich genügt. In UTF-16 gesucht ist der Satz **da**. Der richtige Marker
+   („im Prototyp noch ohne Funktion") ist in **beiden** Kodierungen weg — erst das ist
+   der Beleg. `scripts/bundle-schalter.py` sucht seither immer in beiden.
+3. **Und genau diese Messung fehlte in `geraet-bauen.sh`.** Es prüft seit dem 11.09.
+   das eingebettete Profil, weil *„BUILD SUCCEEDED"* die Frage *„gilt sie ein Jahr?"*
+   nicht beantwortet — und beantwortete die Frage *„kann man sich damit anmelden?"*
+   genauso wenig. **Der Anlass war ein eigener Fehler:** Während der 20 Minuten wurde
+   `anmeldung.ts` für Gegenproben mehrfach umgestellt. Es ist gutgegangen (das
+   JS-Bundling läuft am App-Target, lange nach den Pods), aber verlassen kann man sich
+   darauf nicht. Jetzt wird das Bundle gegen die QUELLE gehalten, nicht gegen einen
+   festen Wert.
+4. **Ians Entscheidung 56 hat ein WARNSIGNAL weggenommen — deshalb steht seit heute
+   ein Wächter in `deploy.sh`.** Der Prototyp-Hinweis erscheint nur noch bei
+   `'attrappe'`; sein Text behauptet mit `'supabase'` **dreimal** etwas Falsches
+   (erfundene Namen, kein Login, Neuladen setzt zurück). **Sein Wortlaut ist um kein
+   Zeichen angefasst** (harte Regel 22), er bekam eine Bedingung. Der Preis: Ein
+   versehentlicher Deploy mit umgelegtem Schalter sähe seither **sauber aus** statt
+   offensichtlich kaputt — und läge mit echten Daten auf einer Adresse, die per
+   WhatsApp weitergeht. Der Wächter bricht ab, bevor irgendetwas gebaut wird;
+   gegengemessen in beiden Stellungen.
+5. **Eine Schuld mit eigenem Fälligkeitsdatum ist eingelöst (Entscheidung 57).** Im
+   Kopf von `PrototypHinweis.tsx` stand seit Phase 13: *„auf Native gibt es kein
+   `sessionStorage` … als Vollbild ist es eine Wand vor jeder Sitzung. Gelöst wird es
+   in Phase 20.3."* Die Bausteine liegen seit dem 12.09. im Binary, **der Tausch war
+   nie gemacht** — die Anleitungskarte wäre am iPhone bei JEDEM Start gekommen. Jetzt
+   `lib/merker.ts` / `.native.ts`: im Browser `sessionStorage` (pro Tab, die alte
+   Begründung stimmt dort weiter), am Gerät `AsyncStorage` (für immer). **Und NICHT
+   der Schlüsselbund** — der überlebt auf iOS das Löschen der App; wer sie wegwirft und
+   neu installiert, bekäme die Anleitung nie wieder.
+6. **Der Prüfstand `96_anbieter.sh` setzte einen REPO-ZUSTAND voraus und meldete beim
+   Umlegen 12 Kreuze, von denen keines ein Fehler war.** Schlimmer war, was dabei
+   NICHT anschlug: Sein Wächter fragte `grep -q "= 'supabase';"` an der erzeugten
+   Datei — steht im Repo schon `'supabase'`, ist das trivial wahr, die zwei Fassungen
+   sind **identisch**, und der zweite Block misst denselben Code noch einmal. **Genau
+   der Zustand, vor dem der Wächter warnen sollte**, und sein eigener Kommentar
+   beschrieb ihn wörtlich. Jetzt werden beide Fassungen erzwungen und per `diff`
+   gegeneinander gehalten; in beiden Stellungen **48 Häkchen**.
+
+⚠️ **Was das NICHT ist: am Gerät geprüft.** Apple-Dialog, Google-Fenster, Bildwähler
+und ob der Schlüsselbund die 14 Byte über einen Neustart trägt — vier ungeprüfte
+Sachen, und **keine davon kann ein Mac beantworten.**
+
+✅ **Erledigt am 13.09.: das Testkonto ist weg.** `ian.fhorak+neuzugang@gmail.com`
+(nie eingelöst, kein Profil, keine Posts, nie eingeloggt — alles vor dem Löschen
+gemessen). In `auth.users` steht jetzt **nur noch Ians Konto**.
+
 ✅ **Phase 20.3-b2 ist FERTIG (2026-09-13): man kann sich mit APPLE und GOOGLE
 anmelden — und es hat weder einen neuen Baustein noch einen neuen Build noch einen
 weiteren Handgriff von Ian gekostet.**
@@ -2362,16 +2444,21 @@ Post-Detail, fremdes Profil und `/einstellungen`. **Einen Platzhalter gibt es ni
    überlebt (nimmt der Schlüsselbund die 14 Byte an?). **Keine davon kann ein Mac
    beantworten**, und vier ungeprüfte Sachen auf einem Haufen sind die Lage, aus der
    bei ACTA die teuren Tage wurden.
-   **Was davor zu tun ist:** `ANMELDE_QUELLE` auf `'supabase'`, dann `npm run geraet`
-   (~20 Min). **Kein neuer Baustein** — die fünf liegen seit dem 12.09. im Binary, nur
-   das JavaScript ist neuer. Danach das eingebettete Profil nachmessen
-   (`TimeToLive: 365`, die Falle vom 2026-09-11).
-   🔑 **Der Schalter blockiert das NICHT — das wurde bis zum 13.09. zusammengeworfen.**
-   `'attrappe'` steht im Weg, weil auf der ÖFFENTLICHEN Adresse zwei tote Knöpfe
-   stünden und Ians Prototyp-Hinweis „Es gibt keinen Login" behauptet (harte Regel 22).
-   Die öffentliche Adresse bekommt ihren Stand aber **nur aus `npm run deploy`** (harte
-   Regel 35) — ein Gerätebuild ist etwas anderes. Umlegen, bauen, prüfen; die Webseite
-   bleibt unberührt. Ob sie nachzieht, ist Ians getrennte Entscheidung.
+   ✅ **Alles Vorbereitende ist am 13.09. erledigt — es fehlt nur noch das iPhone.**
+   Der Schalter steht auf `'supabase'`, die App ist **gebaut** (gültig bis 2027-09-13,
+   `TimeToLive: 365` nachgemessen) und im Bundle steckt nachgemessen `'supabase'`.
+   **Für Ian ist es ein Befehl:** `npm run geraet` — iPhone anstecken oder gleiches
+   WLAN, entsperrt lassen; der Build ist inkrementell **in 20 Sekunden** durch, danach
+   wird nur installiert. **Kein neuer Baustein** — die fünf liegen seit dem 12.09. im
+   Binary.
+   🔑 **Der Schalter war NIE der Blocker, und das wurde bis zum 13.09.
+   zusammengeworfen.** `'attrappe'` stand im Weg wegen der ÖFFENTLICHEN Adresse (zwei
+   tote Knöpfe, und Ians Prototyp-Hinweis behauptet „Es gibt keinen Login", harte
+   Regel 22). Die bekommt ihren Stand aber **nur aus `npm run deploy`** (harte
+   Regel 35) — ein Gerätebuild ist etwas anderes. Umgelegt, gebaut, gemessen: **die
+   Webseite ist byte-identisch unberührt.** Beide Fragen sind seither getrennt
+   bewacht — Entscheidung 56 nimmt dem Hinweis die Lüge, harte Regel 96 dem Deploy das
+   Versehen. Ob die Webseite nachzieht, bleibt Ians getrennte Entscheidung.
    Die Schritte für Ian stehen in `_FUER_IAN/HANDY_DURCHGANG.md`, **Durchgang 3**.
 11. **App Store** (Phase 21) — 13+, Rechtstexte, TestFlight, einreichen
 
@@ -3419,6 +3506,53 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
    entschieden; eine rote Zeile behauptet, es sei etwas schiefgegangen — dieselbe
    Familie wie „Noch nichts los in deinem Feed" bei einem Netzausfall.
 
+95. **Eine ABLEITUNG von `ANMELDE_QUELLE` steht NIE in `anmeldung.ts` — sie steht
+   dort, wo ihre Frage gestellt wird.** *(2026-09-13, gemessen beim ersten Umlegen
+   des Schalters.)* TypeScript verengt ein `const` **innerhalb derselben Datei** per
+   Control-Flow-Analyse auf den zugewiesenen Literal; die Union-Annotation gilt erst
+   **über Modulgrenzen hinweg**. Ein `ANMELDE_QUELLE === 'attrappe'` neben der
+   Deklaration ergibt deshalb `TS2367: This comparison appears to be unintentional`
+   — **und zwar nur in EINER der beiden Schalterstellungen**, also in der, in der
+   gerade niemand baut. Eine Zwischenvariable mit eigener Annotation hilft nicht;
+   beide Fassungen sind gegen `tsc` gehalten worden.
+   **Daraus folgt etwas über den Bestand:** `LIEST_AUS_SUPABASE` (harte Regel 74)
+   funktioniert nur, WEIL es in `lib/supabase.ts` steht, und `IST_PROTOTYP` (Ians
+   Entscheidung 56) nur, weil es in `components/PrototypHinweis.tsx` steht. Wer eines
+   davon „aufräumend" zur Quelle schiebt, bricht den Build — und merkt es erst beim
+   nächsten Gerätebuild. **Der Ort ist hier kein Stil, sondern eine Bedingung.**
+96. **Was am Gerät gilt, entscheidet der Schalter — und `deploy.sh` bewacht ihn seit
+   dem Tag, an dem das WARNSIGNAL wegfiel.** *(Ians Entscheidung 56, 2026-09-13.)*
+   Bis dahin fiel ein versehentlich umgelegter Schalter auf der öffentlichen Adresse
+   von selbst auf: zwei tote Knöpfe (Apple und Google gehen im Browser gar nicht,
+   Regel 94) und darüber ein Vollbild, das „Es gibt keinen Login" behauptete. **Seit
+   der Hinweis bei `'supabase'` verschwindet, sähe derselbe Fehldeploy sauber aus** —
+   und läge mit echten Daten und echter Anmeldung auf einer Adresse, die per WhatsApp
+   weitergeht. Der Wächter steht deshalb GANZ OBEN in `scripts/deploy.sh`, vor
+   `tsc` und vor dem Export, und liest ausnahmsweise die QUELLE statt des Ergebnisses:
+   Der Minifier löst den Vergleich zu einem Wahrheitswert auf, die Zeichenkette kann
+   verschwinden, und **eine Prüfung, die MANCHMAL nichts findet, ist schlechter als
+   eine, die immer dieselbe Zeile liest.**
+   ⚠️ **Und er ist für einen GERÄTEbuild ausdrücklich nicht im Weg:** `npm run geraet`
+   ist ein anderer Befehl und fasst `gh-pages` nicht an (harte Regel 35). Genau das
+   wurde bis zum 2026-09-13 zusammengeworfen — der Schalter galt als Blocker für den
+   Gerätedurchgang, und er war nie einer.
+97. **Ein „schon gesehen" gehört in `lib/merker.ts` / `.native.ts` — und bedeutet auf
+   den zwei Plattformen absichtlich VERSCHIEDENES.** *(Ians Entscheidung 57,
+   2026-09-13.)* Im Browser `sessionStorage` (pro Tab — *wer in drei Wochen
+   wiederkommt, hat die Wischgeste vergessen, dann darf die Karte noch einmal
+   kommen*), am Gerät `AsyncStorage` (für immer — dort gibt es keine Tab-Sitzung, und
+   die Karte stünde bei JEDEM Start im Weg). Wer eine der beiden Dateien anfasst,
+   liest zuerst die andere.
+   **`AsyncStorage` und nicht `expo-secure-store`, und die Begründung ist schärfer als
+   „überflüssig":** Der iOS-Schlüsselbund **überlebt das Löschen der App.** Wer sie
+   wegwirft und neu installiert, bekäme die Anleitung nie wieder zu sehen. Dieselbe
+   Trennung wie Entscheidung 55, nur mit umgekehrtem Vorzeichen — dort war der
+   Schlüsselbund der richtige Ort, hier ist er der falsche.
+   ⚠️ **Der Merker wird nie gelöscht, auch nicht beim Abmelden.** Er gehört dem GERÄT
+   und nicht dem Konto: Wer sich abmeldet, hat die Wischgeste trotzdem gelernt. Das
+   ist der Unterschied zum Zwischenspeicher in `store.ts`, der beim Abmelden geleert
+   werden MUSS (Phase 20.4-b).
+
 ## Fallen aus ACTA (17_Tennis_Optimma) — schon einmal teuer bezahlt
 
 - **Große Display-Fonts clippen auf iOS.** `lineHeight ≈ 1.2 × fontSize` setzen, sonst
@@ -4428,6 +4562,48 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
   also die verworfene Möglichkeit in einem Wegwerf-Ordner gegen den Prüfstand halten** —
   bleibt sie grün, fehlt die Gegenprobe. Dasselbe Muster, das `95_sitzung.mjs` beim
   Tresor-Teil schon selbst anwendet (*„Die Gegenprobe, auf die es ankommt"*).
+
+- **Ein Promise ist immer truthy — `tsc` sagt dazu NICHTS.** (2026-09-13, beim Umbau
+  des Anleitungs-Merkers) `anleitungGesehen()` ging von `boolean` auf
+  `Promise<boolean>`, und in `(tabs)/index.tsx` stand weiter
+  `if (!anleitungGesehen()) setAnleitung(true);`. `!promise` ist **immer `false`**,
+  der Zweig lief nie, die Anleitungskarte wäre auf beiden Plattformen **lautlos
+  verschwunden** — und `npx tsc --noEmit` gab **0** zurück, weil `!x` auf jedem Typ
+  gültiger Code ist. Dieselbe Familie wie `undefined > BILD_MAX_BYTES` (harte
+  Regel 91), `string | null` in JSX (20) und `find(p => p.id === undefined)`
+  (Phase 16), und die gefährlichste Sorte davon: **Sie zeigt sich als ABWESENHEIT** —
+  es steht nichts Falsches da, es fehlt nur etwas. Der Wächter dagegen steht seit
+  demselben Tag in `eslint.config.js` (`@typescript-eslint/no-misused-promises`,
+  type-aware, `checksVoidReturn: false`); gemessen 81 Probleme vorher wie nachher,
+  1,9 s, und mit dem Fehler wieder eingebaut **83**.
+- **Eine Signatur von synchron auf asynchron zu ändern ist eine LOCKERUNG.** (gleicher
+  Tag) Damit gilt dafür die Phase-16-Lehre unverändert: Der Compiler meldet null
+  Stellen, und die Enge muss anderswo neu entstehen — hier als Lint-Regel, weil es
+  keine Typ-Ebene gibt, auf der man sie hinstellen könnte.
+- **Ein Prüfstand, der einen REPO-ZUSTAND voraussetzt, wird nach der ersten geplanten
+  Änderung abgeschaltet statt gelesen.** (2026-09-13) `96_anbieter.sh` nahm die
+  Repo-Fassung von `anmeldung.ts` als „die Attrappen-Fassung" und erzeugte die
+  umgelegte daneben. Beim Umlegen des Schalters für den Gerätebuild meldete er
+  **12 Kreuze**, und kein einziges war ein Fehler im Code.
+  **Schlimmer war, was dabei NICHT anschlug:** Sein Wächter fragte
+  `grep -q "= 'supabase';"` an der ERZEUGTEN Datei. Steht im Repo schon `'supabase'`,
+  ist das trivial wahr — die zwei Fassungen sind dann **identisch**, und der zweite
+  Block misst denselben Code noch einmal. Genau der Zustand, vor dem der Wächter
+  warnen sollte; sein eigener Kommentar beschrieb ihn wörtlich (*„grün, und ohne
+  Aussage"*). **Die richtige Frage ist nicht „steht der Wert drin?", sondern
+  „unterscheiden sich die beiden Fassungen?"** — jetzt ein `diff`, der genau zwei
+  abweichende Zeilen verlangt. Beide Fassungen werden seither ERZWUNGEN, keine
+  stammt aus dem Repo; gegengemessen in beiden Stellungen (48 Häkchen) und gegen eine
+  umbenannte Konstante (Abbruch statt grün).
+- **Die Quelle NICHT anfassen, während ein Gerätebuild läuft.** (2026-09-13, eigener
+  Fehler) Der Build lief ~20 Minuten, und in dieser Zeit wurde `anmeldung.ts` für
+  Gegenproben mehrfach umgestellt. Das JS-Bundling (`Bundle React Native code and
+  images`) passiert am APP-Target, also weit nach den Pods — es war noch nicht dran,
+  und es ist gutgegangen. **Verlassen darf man sich darauf nicht:** Was im Bundle
+  gelandet ist, sagt nur das Bundle. Deshalb misst `geraet-bauen.sh` seit demselben
+  Tag die Schalterstellung im GEBAUTEN `main.jsbundle` nach — dieselbe Bauart wie die
+  Profil-Prüfung vom 2026-09-11, und aus demselben Grund: `BUILD SUCCEEDED`
+  beantwortet *„hat er gebaut?"*, nicht *„kann man sich damit anmelden?"*.
 
 - **Expo-Docs versioniert lesen** vor dem Schreiben von Code — Expo ändert sich schnell.
 

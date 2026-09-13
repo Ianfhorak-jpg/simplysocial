@@ -7511,6 +7511,94 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
     aus dem Apple-Konto ist oft der amtliche — in dieser App steht er unter jedem Post
     und in jedem Chat. Die Korrektur wäre eine Zeile: `useState('')`.
 
+38. ✅ **Ob der Prototyp-Hinweis auch dann kommt, wenn die Anmeldung ECHT ist**
+    (`src/components/PrototypHinweis.tsx`) — **entschieden am 2026-09-13: nein.**
+    *(Ians sechsundfünfzigste Entscheidung, `IST_PROTOTYP`.)*
+
+    **Die Frage lag seit dem 12.09. als Bremse im Weg.** In CLAUDE.md stand an vier
+    Stellen sinngemäß: *„Umlegen hieße heute einen Prototyp-Hinweis, der ‚Es gibt
+    keinen Login' behauptet, während es drei gibt — der Satz ist Ians (harte
+    Regel 22)."* Vor dem Gerätedurchgang musste der Schalter umgelegt werden, also
+    musste die Frage beantwortet werden.
+
+    **Gemessen, was der Satz mit `'supabase'` behauptet — alle drei Teile sind falsch:**
+
+    | im Text | mit `'supabase'` |
+    |---|---|
+    | „Alle Namen, Posts und Chats sind erfunden" | sie kommen aus Ians Datenbank |
+    | „Es gibt keinen Login — du bist gerade Ian" | es gibt drei, und man muss einen nehmen |
+    | „Neuladen setzt alles zurück" | seit Entscheidung 55 überlebt die Anmeldung sogar den Neustart |
+
+    | | |
+    |---|---|
+    | **A: nur noch bei `'attrappe'`** *(gewählt)* | Der Text bleibt Zeichen für Zeichen stehen und bekommt eine Bedingung. Preis: Die App am Gerät sagt nirgends mehr, dass sie früh ist. |
+    | B: bleibt, mit neuem Text | Ehrlich, aber alle drei Sätze müssten neu — und der Text ist Ians, nicht meiner. |
+    | C: bleibt unverändert | Ein Vollbild, das beim Start dreimal lügt und das man wegdrücken MUSS. |
+
+    **Die Zeile steht in `PrototypHinweis.tsx` und nicht in `anmeldung.ts`, und das ist
+    keine Wahl, sondern eine Messung:** TypeScript verengt ein `const` innerhalb
+    derselben Datei auf seinen Wert — `ANMELDE_QUELLE === 'attrappe'` neben der
+    Deklaration ergibt `TS2367`, **und zwar nur in einer der beiden Schalterstellungen.**
+    Eine Zwischenvariable mit eigener Annotation hilft nicht (beide Fassungen gegen
+    `tsc` gehalten). Daraus folgt etwas über den Bestand: **`LIEST_AUS_SUPABASE`
+    funktioniert nur, WEIL es in `lib/supabase.ts` steht.** Wer es aufräumend nach
+    `anmeldung.ts` schiebt, bricht den Build — in genau der Stellung, in der es
+    auffällt.
+
+    ⚠️ **Der Preis ist benannt und noch nicht bezahlt.** Für TestFlight mit Christoph,
+    Leopold und Daria braucht es einen eigenen, ehrlichen Satz. Das gehört in Phase 21
+    und ist wieder Ians.
+
+    ⚠️ **Und die Entscheidung hat ein Warnsignal WEGGENOMMEN — deshalb steht seit
+    demselben Tag ein Wächter in `scripts/deploy.sh`.** Vorher fiel ein versehentlich
+    umgelegter Schalter von selbst auf: zwei tote Knöpfe auf der öffentlichen Adresse
+    (Apple und Google gehen im Browser gar nicht, harte Regel 94) und darüber ein
+    Vollbild, das offensichtlich log. Seit A sähe derselbe Fehldeploy **sauber aus** —
+    und läge mit echten Daten und echter Anmeldung auf einer Adresse, die Ian per
+    WhatsApp weitergibt. Der Wächter bricht ab, bevor irgendetwas gebaut oder
+    hochgeladen wird; gegengemessen in beiden Stellungen.
+
+39. ✅ **Wie lange die Anleitungskarte am GERÄT weg bleibt**
+    (`src/lib/merker.ts` / `.native.ts`) — **entschieden am 2026-09-13: für immer,
+    nach dem ersten Mal.** *(Ians siebenundfünfzigste Entscheidung.)*
+
+    **Der Anlass ist eine Schuld, die ihr eigenes Fälligkeitsdatum trug.** Im Kopf von
+    `PrototypHinweis.tsx` stand seit Phase 13: *„Auf Native gibt es kein
+    `sessionStorage` … als Vollbild ist es eine Wand vor jeder Sitzung. Gelöst wird es
+    in Phase 20.3 mit `expo-secure-store`, das ohnehin für die Anmeldung dazukommt."*
+    PLAN.md sagte dasselbe: *„gehört in denselben Build wie die drei Auth-Bausteine."*
+    Die Bausteine liegen seit dem 12.09. im Binary — **der Tausch war nie gemacht.**
+
+    | | |
+    |---|---|
+    | **A: für immer** *(gewählt)* | `AsyncStorage`. Preis: Wer die App einen Monat nicht aufmacht, hat die Geste genauso vergessen — bekommt die Karte aber nie wieder. |
+    | B: bei jedem Start | Der Bestand. Preis: Beim zehnten Start am selben Abend wischt man zehnmal dieselbe Karte weg. |
+
+    **Im Browser bleibt alles, wie es war** (`sessionStorage`, pro Tab) — und das ist
+    kein Kompromiss, sondern die alte Begründung aus Phase 8, die dort weiter stimmt:
+    *Wer in drei Wochen wiederkommt, hat die Geste vergessen, dann darf die Karte noch
+    einmal kommen.* Am Gerät gibt es keine Tab-Sitzung, an der sie hängen könnte.
+    **Derselbe Aufruf bedeutet auf den zwei Plattformen absichtlich Verschiedenes**, und
+    genau deshalb steht es als Kommentar in beiden Dateien.
+
+    **`AsyncStorage` und NICHT `expo-secure-store`** — dieselbe Trennung wie
+    Entscheidung 55, aber die Begründung ist schärfer als „überflüssig": Der
+    iOS-Schlüsselbund **überlebt das Löschen der App.** Wer sie wegwirft und neu
+    installiert, bekäme die Anleitung nie wieder zu sehen.
+
+    **Was beim Umbau herauskam, ist teurer als der Umbau:** `anleitungGesehen()` ging
+    von `boolean` auf `Promise<boolean>`, und in `(tabs)/index.tsx` stand
+    `if (!anleitungGesehen()) setAnleitung(true);`. **Ein Promise ist immer truthy** —
+    der Zweig wäre nie gelaufen, die Anleitungskarte auf BEIDEN Plattformen lautlos
+    verschwunden. `npx tsc --noEmit` gab dazu **0** zurück. Dieselbe Familie wie
+    `undefined > BILD_MAX_BYTES` (harte Regel 91) und `string | null` in JSX (20):
+    eine Lockerung meldet der Compiler nicht. **Seit demselben Tag steht ein Wächter
+    dagegen in `eslint.config.js`** (`@typescript-eslint/no-misused-promises`,
+    type-aware) — gemessen: 81 Lint-Probleme vorher wie nachher, 1,9 s Laufzeit, und
+    mit dem alten Einzeiler wieder eingebaut **83 statt 81**, mit der Stelle im
+    Klartext.
+
+
 
 ## 7. Bewusst NICHT im Prototyp
 
