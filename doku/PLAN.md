@@ -5986,7 +5986,9 @@ Werkzeug:
    Apple 1.2.** Dieselbe Familie wie `groups_creator_id_fkey` (Entscheidung 39), und der
    Kommentar in 0001 warnt sieben Zeilen darüber wörtlich davor: *„scheitert erst, wenn
    wirklich jemand sein Konto löscht — also genau an dem Tag, an dem es niemand mehr in
-   Ruhe nachsehen kann."* **Die eine Spalte hat die Lehre bekommen, die andere nicht.**
+   Ruhe nachsehen kann. ✅ **Am echten Server war er genauso** (`a` gegen
+   `n`, gemessen) und ist seit dem 13.09. eingespielt: beide `n`, CHECK da, Index
+   getauscht — null Meldungen in der Tabelle, also war nichts gefährdet."* **Die eine Spalte hat die Lehre bekommen, die andere nicht.**
 
 2. **Der zweite Fund gehört gar nicht zu 20.7 und hing an der App, die auf Ians iPhone
    wartet: das `@` im @-Namen.** Drei Quellen, zwei Schreibweisen —
