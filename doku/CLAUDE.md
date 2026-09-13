@@ -436,6 +436,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - React Native kennt keine Maske — ein Kreis entsteht aus einem RING der doppelten Kantenlänge
 - Eine Textsuche mit NULL Treffern beweist nichts — sie braucht die Gegenprobe im selben Ordner
 - Eine Prüf-Erwartung, die BEQUEMLICHKEIT verlangt, prüft nicht die Regel
+- Ein Prüfstand mit Gegenprobe legt eine Kopie von `src/` INS Projekt — und `.gitignore` zählte die Namen einzeln auf
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

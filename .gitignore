@@ -67,5 +67,18 @@ db-url
 .env
 .env.*
 !.env.example
-.pruef-konto/
-.pruef-programmfehler/
+
+# ── Die Arbeitskopien der Gegenproben ────────────────────────────────────────
+# Prüfstände, die eine Gegenprobe fahren (60, 91, 97), kopieren `src/` in einen
+# Ordner INNERHALB des Projekts — in /tmp gäbe es kein `node_modules`, und eine
+# Gegenprobe, die aus dem falschen Grund rot ist, belegt gar nichts (FALLEN.md).
+# Aufgeräumt wird per `trap`; stirbt das Skript vorher (Strg-C während der ~20 s
+# `tsc`), bleibt eine vollständige Kopie von `src/` liegen — und `git add -A`
+# nimmt sie mit.
+#
+# ⚠️ **Ein MUSTER und keine Aufzählung, und das ist der Punkt:** Hier standen zwei
+# Namen einzeln, und der dritte (91, Phase 20.6-d) fehlte prompt. Das ist die Falle
+# „Eine Liste von Dateinamen in einem Skript wird irgendwann nicht nachgezogen" —
+# nur steht die Liste diesmal hier. Der nächste Prüfstand ist jetzt von selbst
+# gedeckt, ohne dass jemand daran denken muss.
+.pruef-*/
