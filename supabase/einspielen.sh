@@ -103,6 +103,23 @@ ERWARTET_AUTH_RECHTE=34
 # `EXECUTE für PUBLIC` (gemessen am 2026-09-13 an beiden Datenbanken). Wer die
 # Spalte liest, sieht nichts und schließt daraus das Gegenteil.
 ERWARTET_MODERATION_OFFEN=0
+# ── 🔴 Neu am 2026-09-14, und der Anlass war ein FALSCHES GRÜN ───────────────
+# `0011_zustimmung.sql` ist die erste Migration, die nur SPALTEN hinzufügt
+# (`alter table profiles add column …`). Ian liess `npm run einspielen` laufen, der
+# dritte Wächter übersprang richtigerweise das Einspielen — und das Nachmessen
+# meldete danach **alle zwölf Zahlen grün** und den Satz „Die Datenbank war schon
+# richtig eingerichtet". Sie war es nicht: Die zwei Spalten fehlten, und **keine
+# der zwölf Zahlen konnte das sehen**, weil keine Spalten zählt.
+#
+# Das ist die gefährlichste Bauart einer Prüfung: Sie war nicht rot, wo sie hätte
+# rot sein müssen — sie war GRÜN und hat eine Auskunft gegeben, die sie nicht
+# geben konnte. Ein Mensch liest „richtig eingerichtet" und hört auf zu suchen.
+#
+# Verwandt mit der Lehre aus 20.7 („keine der neun Zahlen hätte 0008 gefunden,
+# weil keine den Bucket zählt"), nur eine Stufe feiner: Damals fehlte ein Objekt,
+# hier fehlt ein Teil eines Objekts, das es schon gibt.
+ERWARTET_SPALTEN=87
+ERWARTET_CHECKS=15
 
 if [ ! -f "$URL_DATEI" ]; then
   cat <<HINWEIS
@@ -214,6 +231,7 @@ fi
 echo
 echo "── 4. Nachmessen: steht jetzt dasselbe da wie lokal? ──"
 mess() { # name  sql  erwartet
+  GEMESSEN=$((GEMESSEN+1))
   IST="$(frage "$2")"
   if [ "$IST" = "$3" ]; then
     printf '  ✓ %-22s %s\n' "$1" "$IST"
@@ -223,6 +241,7 @@ mess() { # name  sql  erwartet
   fi
 }
 FEHLER=0
+GEMESSEN=0
 mess "Tabellen"          "select count(*) from pg_tables where schemaname='public';" "$ERWARTET_TABELLEN"
 mess "Policies"          "select count(*) from pg_policies where schemaname='public';" "$ERWARTET_POLICIES"
 mess "RLS eingeschaltet" "select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and c.relrowsecurity;" "$ERWARTET_RLS"
@@ -246,6 +265,9 @@ mess "Rechte für anon"    "select count(*) from information_schema.role_table_g
 mess "Rechte für auth."   "select count(*) from information_schema.role_table_grants where table_schema='public' and grantee='authenticated';" "$ERWARTET_AUTH_RECHTE"
 mess "Realtime verboten"  "select count(*) from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename in ('blocks','reports');" "$ERWARTET_REALTIME_VERBOTEN"
 mess "Moderation dicht"   "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in ('konto_weg','konto_entfernen') and (has_function_privilege('anon',p.oid,'EXECUTE') or has_function_privilege('authenticated',p.oid,'EXECUTE'));" "$ERWARTET_MODERATION_OFFEN"
+# Die zwei, die eine reine `add column`-Migration ueberhaupt sichtbar machen.
+mess "Spalten (public)"   "select count(*) from information_schema.columns where table_schema='public';" "$ERWARTET_SPALTEN"
+mess "CHECK-Constraints"  "select count(*) from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname='public' and c.contype='c';" "$ERWARTET_CHECKS"
 
 echo
 if [ "$FEHLER" = "1" ]; then
@@ -258,10 +280,18 @@ if [ "$FEHLER" = "1" ]; then
   fi
   exit 1
 fi
+# ⚠️ **Der Satz sagt, WAS gemessen wurde — nicht „alles in Ordnung".**
+# Bis zum 2026-09-14 stand hier „Die Datenbank war schon richtig eingerichtet", und
+# genau das hat der Wächter behauptet, während zwei Spalten fehlten. Eine Prüfung
+# darf nur die Frage beantworten, die sie wirklich gestellt hat.
 if [ "$NUR_MESSEN" = "1" ]; then
-  echo "✓ Alle Zahlen stimmen. Die Datenbank war schon richtig eingerichtet."
+  echo "✓ Alle $GEMESSEN Zahlen stimmen — es wurde NICHTS eingespielt, nur nachgemessen."
+  if [ -z "$NUR_DIESE" ]; then
+    echo
+    echo "  Ist eine NEUE Migration dazugekommen, ist sie damit NICHT drin."
+    echo "  Die Zahlen oben sehen nur, was sie zählen. Nachziehen mit:"
+    echo "      npm run einspielen -- $(ls -1 "$HIER/migrations/" | tail -1)"
+  fi
 else
-  echo "✓ Alle Zahlen stimmen. Die Datenbank ist eingerichtet."
+  echo "✓ Alle $GEMESSEN Zahlen stimmen. Die Datenbank ist eingerichtet."
 fi
-echo "  Was jetzt fehlt, ist der Client (20.4-b) — und dafür brauche ich"
-echo "  Project URL und anon key aus Settings → API."

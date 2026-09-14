@@ -1406,3 +1406,28 @@
   Der Ausweg ist eine Zeile: **`npm run doku` VOR `git add -A`.** Verwandt mit *„Eine
   Prüfung, die zu früh fragt, ist ein Fehlalarm"* — nur wird hier zu SPÄT gespiegelt,
   und das Ergebnis ist kein Fehlalarm, sondern eine ausgelassene Sicherung.
+- **Ein Wächter, der GRÜN ist, wo er blind ist, ist schlimmer als einer, der rot
+  ist.** (2026-09-14, Phase 21.2) `einspielen.sh` misst nach dem Einspielen zwölf
+  Zahlen — Tabellen, Policies, RLS, Funktionen, Enums, Trigger, Realtime, Rechte.
+  `0011_zustimmung.sql` ist die erste Migration des Projekts, die **nur Spalten**
+  hinzufügt. Ian liess `npm run einspielen` laufen; der dritte Wächter übersprang das
+  Einspielen (richtig — eine Produktionsdatenbank neu aufzubauen ist seine
+  Entscheidung), und das Nachmessen meldete danach **alle zwölf Zahlen grün** plus den
+  Satz „✓ Alle Zahlen stimmen. Die Datenbank war schon richtig eingerichtet."
+  **Sie war es nicht.** Die zwei Spalten fehlten, und keine der zwölf Zahlen konnte
+  das sehen. Gemessen statt behauptet: Mit und ohne `0011` stehen dort dieselben
+  `Tabellen 13 · Policies 34 · RLS 13 · Rechte auth. 34`; nur `Spalten 87 ↔ 85` und
+  `CHECKs 15 ↔ 14` unterscheiden sich, und beide wurden nicht gezählt.
+  ⚠️ **Der eigentliche Fehler steckte in meiner Schlussfolgerung, nicht im Skript.**
+  Ich hatte vorher gemessen, dass die neuen Spalten keine der Zahlen ändern, und
+  daraus geschlossen: „einspielen.sh braucht keine Anpassung." Die Kehrseite habe ich
+  übersehen — **ändert eine Migration keine einzige geprüfte Zahl, dann kann auch
+  keine geprüfte Zahl belegen, dass sie drin ist.** Dieselbe Messung trägt beide
+  Aussagen; die zweite ist die wichtige.
+  Behoben mit `ERWARTET_SPALTEN` und `ERWARTET_CHECKS` — und damit, dass die
+  Schlussmeldung nur noch sagt, WAS gemessen wurde („Alle 14 Zahlen stimmen — es
+  wurde NICHTS eingespielt, nur nachgemessen") statt „richtig eingerichtet". Eine
+  Prüfung darf nur die Frage beantworten, die sie wirklich gestellt hat.
+  Verwandt mit der Lehre aus 20.7 („keine der neun Zahlen hätte `0008` gefunden, weil
+  keine den Bucket zählt"), nur eine Stufe feiner: Damals fehlte ein Objekt, hier ein
+  Teil eines Objekts, das es schon gibt.

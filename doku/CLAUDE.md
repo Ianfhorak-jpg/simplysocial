@@ -483,6 +483,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Solange der Torwächter zeigt, gibt es den `Stack` NICHT — ein `router.push` wechselt die Adresse und zeigt nichts
 - Eine Warnung mit einer ZAHL darin veraltet genauso still wie das, wovor sie warnt
 - Wer NUR Dateien ausserhalb des Repos ändert, kann nicht committen — der pre-commit-Hook spiegelt erst DANACH
+- Ändert eine Migration KEINE geprüfte Zahl, kann auch keine geprüfte Zahl belegen, dass sie drin ist
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)
