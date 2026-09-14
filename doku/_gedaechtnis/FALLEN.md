@@ -1093,6 +1093,26 @@
   gefunden**, weil keine den Bucket zählt. Jetzt kommt die Liste aus dem ORDNER, mit
   einem Wächter auf vierstellige Nummern (ohne feste Stellenzahl liefe `0010` vor
   `0009`). Harte Regel 83 in einer zweiten Gestalt.
+  🔴 **Der teuerste Fall dieser Falle kam am 2026-09-14, und er betraf dieses
+  Gedächtnis selbst.** Phase 20 zog am 13.09. den Volltext von Historie, Regeln und
+  Fallen aus CLAUDE.md heraus nach `_gedaechtnis/` — **`scripts/doku.sh` wurde nicht
+  nachgezogen.** Es spiegelte weiter `PLAN.md`, `CLAUDE.md` und `_FUER_IAN/*.md` in
+  den einzigen Ordner, den git sieht, und ließ 440 kB aus. Einen Tag lang lagen
+  HISTORIE, HARTE_REGELN und FALLEN in **keinem Backup**. Gefunden nur, weil beim
+  Anhängen von Regel 111 auffiel, dass `git status` sauber blieb.
+  **Warum gerade hier besonders teuer:** Seit dem 13.09. trägt der Index in CLAUDE.md
+  nur noch die TITEL. Wäre der Ordner verloren gegangen, stünde von 111 Regeln und
+  179 Fallen je eine Zeile da — und die Begründung, in der in diesem Projekt fast
+  immer die Lehre steckt, wäre weg. **Ein Titel ist kein Ersatz für die Begründung,
+  und ein Auszug ist keine Sicherung.**
+  Behoben mit einer Schleife über den Ordner (eine vierte Datei käme von allein mit)
+  und einem Wächter auf die ZAHL der angekommenen Dateien: *Ein leerer Spiegel ist
+  gefährlicher als gar keiner, weil er aussieht wie eine Sicherung.* Gegenprobe
+  gebaut — mit ausgeschalteter Spiegelung bricht der Lauf mit EXIT 1 ab.
+  ⚠️ **Die allgemeine Lehre, und sie ist neu:** Wer Dateien UMZIEHT, hat damit noch
+  nicht alle Skripte umgezogen, die sie kennen. `grep -rn "<alter Pfad>" scripts/`
+  gehört zum Umzug, nicht zur Nachbereitung — in derselben Woche hat dieselbe Falle
+  auch `60_konto.sh` zweimal getroffen.
 - **Zweimal die STILLE repariert, bevor die URSACHE gesucht war.** (2026-09-13, und es
   war mein teuerster Fehler des Tages) Ians Profilbild scheiterte lautlos. Erster
   Anlauf: Fehlerbehandlung in den Bildwähler — der Fehler lag nicht dort. Zweiter
