@@ -150,7 +150,7 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 
 | | Wo | Blockiert? |
 |---|---|---|
-| 🔴 **`npm run einspielen -- 0011_zustimmung.sql`** (der `--`-Teil ist nötig — ohne ihn überspringt das Skript und meldet trotzdem grün) — die zwei neuen Spalten aus `0011` fehlen am ECHTEN Server. Bis dahin bricht jedes NEUE Konto ab (Ians eigenes merkt nichts). Lokal geprüft, alle neun Wächter-Zahlen unverändert | `_FUER_IAN/OFFENE_SACHEN.md`, ganz oben | **für Phase 21 ja** |
+| 🔵 **Gerätedurchgang 6 — das Zustimmungs-Häkchen.** Build ist seit 14.09. auf dem iPhone, der Durchgang steht aus. Schritt 1 beweist zugleich, ob der neue Build drauf ist | `_FUER_IAN/HANDY_DURCHGANG.md` | für Phase 21 ja |
 | 🔑 **Management-Token widerrufen** — darf alles im Supabase-Konto, wird nie wieder gebraucht. **Am 14.09. nachgesehen: `~/.simplysocial/mgmt-token` existiert nicht mehr** — entweder schon erledigt oder nie abgelegt. Im Dashboard nachsehen | `supabase.com/dashboard/account/tokens` → Revoke | nein |
 | **Der Knopf unter dem Vollbild-Kasten** — „Nochmal versuchen" oder nichts | PLAN.md 5b, 20.9 | nein |
 | **`meldungLage()` bei ZU SPÄT bearbeitet** | `TODO(Ian)`, PLAN.md 6 Punkt 60 | nein |

@@ -6675,6 +6675,32 @@ Gegenprobe, dass dabei nicht einfach alles weggeputzt wird.
 sauber · Lint **82 wie vorher** · lokal weiter **171** · alle übrigen Prüfstände
 unverändert.
 
+> ✅ **Am echten Server — 2026-09-14, von Ian.** `npm run einspielen -- 0011_zustimmung.sql`
+> ging durch, **alle 14 Zahlen grün**, darunter `Spalten 87` und `CHECK-Constraints 15`.
+> Das sind genau die zwei, die ohne `0011` bei 85 und 14 gelegen hätten.
+>
+> 🔴 **Der erste Versuch war ein falsches GRÜN, und der Fehler war meine
+> Schlussfolgerung.** Ich hatte gemessen, dass die neuen Spalten keine der damals
+> zwölf Wächter-Zahlen ändern, und daraus geschlossen: „`einspielen.sh` braucht keine
+> Anpassung." **Die Kehrseite habe ich übersehen** — ändert eine Migration keine
+> einzige geprüfte Zahl, dann kann auch keine geprüfte Zahl belegen, dass sie drin
+> ist. Ians Lauf ohne den `--`-Teil übersprang das Einspielen (richtig so) und
+> meldete danach „✓ Alle Zahlen stimmen. Die Datenbank war schon richtig
+> eingerichtet" — während zwei Spalten fehlten.
+>
+> Behoben in drei Schritten, jeder mit eigener Lehre in FALLEN.md:
+> `ERWARTET_SPALTEN`/`ERWARTET_CHECKS` · die Spalten zusätzlich beim **NAMEN**
+> (eine Zahl findet Verlust, keine Verwechslung; die Namensliste kommt aus den
+> Migrationen) · und eine Schlussmeldung, die **drei** Fälle kennt statt zwei —
+> der erste Ersatz war eine Stunde später genauso falsch, nur andersherum.
+
+🔵 **Was noch aussteht: Gerätedurchgang 6.** Der Build liegt seit dem 14.09. auf
+Ians iPhone. Die sechs Schritte stehen in `_FUER_IAN/HANDY_DURCHGANG.md`; **Schritt 1
+beweist zugleich, ob der neue Build drauf ist** (steht unter den Nutzungsbedingungen
+noch „Prototyp, noch nicht öffentlich", ist es der alte) und kostet kein Testkonto.
+Für die Schritte 2–6 braucht es ein zweites Konto — über `ian.fhorak+test1@gmail.com`,
+danach mit „Konto löschen" in der App aufräumen.
+
 ⚠️ **Was offen bleibt und nur Ian kann:** der Rechtstext selbst. Und die zweite
 Hälfte von `brauchtNeueZustimmung()` — was passiert, wenn sich der Text ÄNDERT
 (Abschnitt 6, Punkt 67, `TODO(Ian)` in `zustimmung.ts`).

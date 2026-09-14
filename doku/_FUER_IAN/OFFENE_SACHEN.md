@@ -5,7 +5,10 @@
 >
 > ---
 >
-> 🔴 **14.09., ZUERST: ein Befehl, sonst kann sich niemand Neues anmelden.**
+> ✅ **14.09., ERLEDIGT: die Datenbank ist nachgezogen.** *(Der Abschnitt bleibt
+> stehen, weil die Lehre daraus wichtig ist — der Befehl selbst ist durch.)*
+>
+> 🔴 ~~Ein Befehl, sonst kann sich niemand Neues anmelden.~~
 > Zum Häkchen unten gehören zwei neue Felder in der Datenbank. Auf meinem Rechner
 > sind sie drin und geprüft — **auf dem echten Server noch nicht**, und dorthin
 > komme ich nicht ohne dich. Solange sie fehlen, bricht das Anlegen eines neuen
@@ -28,9 +31,10 @@
 > sagt nicht mehr „richtig eingerichtet", wenn es nur nachgemessen hat). Mein
 > Fehler, nicht deiner: Ich hatte dir den Befehl ohne den `--`-Teil gegeben.
 >
-> Der Lauf misst danach **14 Zahlen**. Stimmen alle, ist es drin. Meldet er eine
-> andere, ist das ein Befund und kein Rauschen — dann bitte abbrechen und mir sagen,
-> welche.
+> ✅ **Gelaufen am 14.09.: alle 14 Zahlen grün, `Spalten 87 · CHECK-Constraints 15`.**
+> Das sind genau die zwei, die ohne die Migration bei 85 und 14 gelegen hätten — der
+> Beleg, dass sie drin ist. Seither prüft das Skript die Felder zusätzlich beim
+> **Namen**, weil eine Zahl einen Verlust findet, aber keine Verwechslung.
 >
 > ⚠️ **Danach ist der nächste Build fällig.** Der Build vom 13.09. kennt weder das
 > Passwortfeld für Apple noch das Häkchen. Was zu Apple geht, muss den Code von
