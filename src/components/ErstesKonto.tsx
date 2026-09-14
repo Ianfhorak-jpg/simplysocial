@@ -2,11 +2,13 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { SsBezirkFeld, SsButton, SsInput, SsText } from '@/components/ui';
+import { Nutzungsbedingungen } from '@/components/Nutzungsbedingungen';
+import { SsBezirkFeld, SsButton, SsHaken, SsInput, SsText } from '@/components/ui';
 import { jahrgangMax, jahrgangMin } from '@/config/alter';
 import { kontoAnlegen } from '@/features/auth/hooks';
 import { BEZIRK_GRUND, fehltNoch, handleVorschlag, kontoFolgen } from '@/features/auth/konto';
 import { KontoFehler } from '@/features/auth/konten';
+import { HAKEN_TEXT, zustimmungFehltText } from '@/features/auth/zustimmung';
 import { colors, MAX_CONTENT_WIDTH, radius, spacing, status } from '@/theme';
 
 /**
@@ -62,6 +64,16 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
   const [name, setName] = useState(vorschlag ?? '');
   const [bezirk, setBezirk] = useState('');
   const [jahrgang, setJahrgang] = useState('');
+  /**
+   * Das Häkchen — Ians Entscheidung 80, Phase 21.2.
+   *
+   * **Beginnt bei `false`, und das ist keine Nachlässigkeit.** Ein vorab gesetztes
+   * Häkchen ist nach DSGVO keine Einwilligung, und Apple sieht es genauso: Eine
+   * Zustimmung, die man WEGnehmen muss, hat niemand gegeben.
+   */
+  const [zugestimmt, setZugestimmt] = useState(false);
+  /** Liegen die Nutzungsbedingungen gerade über dem Formular? */
+  const [liestBedingungen, setLiestBedingungen] = useState(false);
   const [gezeigt, setGezeigt] = useState(false);
   const [laeuft, setLaeuft] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);
@@ -75,8 +87,13 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
     name: fehltNoch('name', name),
     bezirk: fehltNoch('bezirk', bezirk),
     jahrgang: fehltNoch('jahrgang', jahrgang),
+    // Nicht aus `fehltNoch()`: Die Zustimmung ist kein FELD, sondern eine Handlung,
+    // und ihre Regel steht in `zustimmung.ts`. Der Grund im Volltext steht bei
+    // `ERSTE_FRAGEN` in `konto.ts`.
+    zustimmung: zustimmungFehltText(zugestimmt),
   };
-  const vollstaendig = !maengel.name && !maengel.bezirk && !maengel.jahrgang;
+  const vollstaendig =
+    !maengel.name && !maengel.bezirk && !maengel.jahrgang && !maengel.zustimmung;
 
   async function absenden() {
     // Die Mängel werden erst NACH dem ersten Tippen auf den Knopf rot. Ein Formular,
@@ -92,6 +109,10 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
         name: name.trim(),
         bezirk,
         jahrgang: Number(jahrgang.trim()),
+        // Der Wert des Häkchens, nicht der fertige Zeitstempel: Woraus in der
+        // Datenbank `terms_accepted_at` und `terms_version` werden, entscheidet
+        // `zustimmung.ts`. Dieser Bildschirm sagt nur, was der Mensch getan hat.
+        zugestimmt,
       });
       // Kein `setLaeuft(false)` im Erfolgsfall: Der Torwächter tauscht diesen Screen
       // im selben Augenblick aus, und ein `setState` auf einer abgebauten Komponente
@@ -104,6 +125,42 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
       setFehler('Das hat gerade nicht geklappt. Probier es noch einmal.');
       setLaeuft(false);
     }
+  }
+
+  // ── Die Nutzungsbedingungen über dem Formular ────────────────────────────
+  // **Sie können KEINE Route sein.** Solange der Torwächter `'erstes-konto'`
+  // zeigt, zeichnet `_layout.tsx` den `Stack` gar nicht — ein
+  // `router.push('/nutzungsbedingungen')` wechselte die Adresse und zeigte
+  // nichts. Der Text kommt deshalb aus `components/Nutzungsbedingungen.tsx`,
+  // derselben Komponente, die auch die Route füllt (harte Regel 7).
+  //
+  // Und kein `Modal`: dieselbe Überlegung wie in `PrototypHinweis` — auf Web eine
+  // eigene Ebene mit eigener Größenlogik, auf iOS eine eigene Präsentation. Eine
+  // Fläche, die alles verdeckt und nichts durchlässt, tut dasselbe auf beiden.
+  if (liestBedingungen) {
+    return (
+      <ScrollView
+        style={styles.huelle}
+        contentContainerStyle={[
+          styles.inhalt,
+          { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xl },
+        ]}>
+        <View style={styles.kasten}>
+          <Nutzungsbedingungen />
+          {/* „Zurück" und nicht „Akzeptieren": Zugestimmt wird am Häkchen, und
+              zwar bewusst. Ein zweiter Knopf, der dasselbe tut, machte aus dem
+              Lesen eine Zustimmung — wer hierher kam, wollte erst einmal nur
+              nachsehen. */}
+          <SsButton
+            label="Zurück"
+            block
+            size="lg"
+            variant="ghost"
+            onPress={() => setLiestBedingungen(false)}
+          />
+        </View>
+      </ScrollView>
+    );
   }
 
   return (
@@ -164,6 +221,24 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
           keyboardType="number-pad"
           maxLength={4}
           error={gezeigt ? maengel.jahrgang ?? undefined : undefined}
+        />
+
+        {/* Die vierte Sache auf diesem Bildschirm, und die einzige, die kein Feld
+            ist — Ians Entscheidung 80 vom 2026-09-14. Sie steht UNTER den drei
+            Feldern und ÜBER dem Knopf, weil genau das die Reihenfolge ist, in der
+            man sie braucht: erst ausfüllen, dann zustimmen, dann los.
+
+            Die verworfene Stelle war der Anmelde-Bildschirm. Er hätte alle drei
+            Wege an einer Stelle abgedeckt und dafür jedem Menschen bei JEDER
+            Anmeldung ein Häkchen vorgelegt — eine Zustimmung ist einmalig, und ein
+            Bildschirm, der sie jedes Mal einholt, behauptet das Gegenteil. */}
+        <SsHaken
+          an={zugestimmt}
+          setzen={setZugestimmt}
+          vor={HAKEN_TEXT.vor}
+          link={HAKEN_TEXT.link}
+          onLink={() => setLiestBedingungen(true)}
+          fehler={gezeigt ? maengel.zustimmung ?? undefined : undefined}
         />
 
         {fehler ? (

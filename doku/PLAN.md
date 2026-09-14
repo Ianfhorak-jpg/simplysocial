@@ -6580,12 +6580,104 @@ Erwachsener.
 verpflichtend, wo Gesetze es verlangen — Texas, Utah, Louisiana, Australien, Brasilien,
 Singapur. Österreich ist nicht darunter.
 
-#### 21.2 — Rechtstexte ⬜ *(nur Ian, mit erwachsener Hilfe)*
+#### 21.2 — Rechtstexte · **Die Mechanik ✅ (2026-09-14)** · der TEXT ⬜ *(nur Ian)*
 
 Der rote Kasten in `nutzungsbedingungen.tsx` steht seit Phase 7 bewusst da. Hier wird er
 ersetzt — **oder die App wird nicht eingereicht.** Es braucht Datenschutzerklärung,
-Nutzungsbedingungen, ein Mindestalter und eine Antwort auf die Haftungsfrage. Dazu das
-Häkchen „akzeptiert" beim Anmelden, das ohne Login nie gebaut werden konnte.
+Nutzungsbedingungen, ein Mindestalter und eine Antwort auf die Haftungsfrage.
+
+> 🟢 **Das Häkchen „akzeptiert" ist seit dem 2026-09-14 gebaut** — Ians
+> **Entscheidung 80**, Abschnitt 6 Punkt 67. Es war der einzige Teil von 21.2, der
+> **nicht** auf Ians Rechtstext wartet, und er war baubar, seit es in Phase 20 eine
+> Anmeldung gibt. **Der Text bleibt offen** (`OFFENE_SACHEN.md` Punkt 1); das Gefäß
+> und der Inhalt lassen sich trennen, weil die Fassung eine Zeichenkette ist: Sobald
+> Ian den Text hat, ändert sich genau eine Konstante (`FASSUNG` in `zustimmung.ts`).
+
+**Ians Entscheidung 80, zwei Hälften:**
+
+| gefragt | seine Wahl | verworfen |
+|---|---|---|
+| **WO** steht das Häkchen? | **beim ERSTEN Konto**, vierte Zeile unter Name · Bezirk · Jahrgang | der **Anmelde-Bildschirm** (deckt alle drei Wege an einer Stelle ab und legt es dafür jedem bei JEDER Anmeldung vor — eine Zustimmung ist einmalig) · ein **eigener Bildschirm** davor (sauberer getrennt, einen Bildschirm teurer, gegen harte Regel 63) |
+| **OB** es festgehalten wird? | **Zeitpunkt UND Fassung**, zwei Spalten in `profiles` | **nur der Zeitpunkt** (beantwortet „wann", nicht „WEM" — und der Rechtstext existiert noch gar nicht, also ließe sich später nie unterscheiden, ob jemand dem Platzhalter oder dem echten Text zugestimmt hat) · **gar nicht speichern** |
+
+**Neu gebaut:**
+
+| | |
+|---|---|
+| `src/features/auth/zustimmung.ts` | die Regel-Datei — `FASSUNG`, `fassungText()`, `darfAnlegen()`, `zustimmungJetzt()`, `zustimmungFehltText()`, `brauchtNeueZustimmung()`. Importfrei, also in blankem Node prüfbar |
+| `0011_zustimmung.sql` | `terms_accepted_at` + `terms_version`, **null-fähig**, mit CHECK gegeneinander |
+| `konten.ts` → `profilAnlegen()` | **der Riegel** — wirft ohne Zustimmung, und zwar VOR dem Netz. Dieselbe Bauart wie `demoAnmelden()` (harte Regel 108) |
+| `components/Nutzungsbedingungen.tsx` | der INHALT, aus dem Screen herausgelöst — er steht jetzt an zwei Stellen im Bild und darf nur einmal im Code stehen (harte Regel 7) |
+| `ui/SsHaken.tsx` | das Kästchen. Kein `Switch` (der gehört zu einer Einstellung, die man zurücknehmen kann), kein ☑ aus der Schriftart (harte Regel 23) |
+| `95_zustimmung.sh/.mjs` | `npm run pruef-zustimmung` — **28 Häkchen**, braucht nichts |
+
+##### Warum das Häkchen auf keine ROUTE zeigen kann
+
+Der naheliegende Weg wäre `router.push('/nutzungsbedingungen')`. **Er zeigt nichts.**
+Solange der Torwächter `'erstes-konto'` meldet, zeichnet `_layout.tsx` den `Stack`
+gar nicht — bewusst, damit kein Feed dahinter „Noch nichts los" sagt (Entscheidung
+43). Die Adresse wechselte, das Bild nicht. Verwandt mit der Falle *„Beim ABBAU eines
+Navigators schreibt `expo-router` die Adresse neu"*: **Die Route ist da, der Baum
+nicht.**
+
+Deshalb der Umweg über eine geteilte Komponente und eine Fläche über dem Formular —
+und **kein `Modal`**, aus demselben Grund, aus dem `PrototypHinweis` keines benutzt.
+
+##### 🔴 Der Fund, der fast eine Ablehnung gewesen wäre
+
+In `nutzungsbedingungen.tsx` stand fest im JSX:
+
+> SimplySocial · **Prototyp, noch nicht öffentlich**
+
+Auf der öffentlichen Adresse stimmt das (Entscheidung 75). **Im Build, der zu Apple
+geht, ist es ein Ablehnungsgrund** — Apple weist Apps zurück, die sich selbst als
+Beta-, Demo- oder Testfassung ausgeben, und die Nutzungsbedingungen sind ausgerechnet
+der Screen, den ein Reviewer bei einer 1.2-App mit Sicherheit aufmacht.
+
+**Der Gerätedurchgang vom 13.09. hat „kein Prototyp-Hinweis ✓" gemeldet** — und damit
+das VOLLBILD `PrototypHinweis` gemeint, nicht diese Zeile. *Zwei Größen mit fast
+gleichem Namen sind der Fehler, den man nur beim Lesen findet* (FALLEN.md).
+
+Die Fußzeile hängt jetzt am Schalter (harte Regel 95: die Ableitung steht dort, wo
+ihre Frage gestellt wird) und zeigt im echten Build die **Fassung**, der man
+zugestimmt hat — nicht nur nichts. Bewacht in `95_zustimmung.mjs`, Abschnitt 5.
+
+##### 🟡 Ein Loch im Etikett-Wächter, gefunden bei der ersten Migration, die es traf
+
+`99_etikett.py` las die Spaltennamen mit einem Regex über `create table (…)`.
+**`0011` ist die erste Migration des Projekts mit `alter table … add column`** — und
+genau die sah der Regex nicht. Harte Regel 107 wäre ab hier **still gebrochen**
+gewesen: Der Wächter bliebe grün und hätte zwei Spalten schlicht nicht bemerkt.
+
+**Gemessen, nicht vermutet:** Die alte Fassung meldete `52 Spaltennamen · keine
+Spalte fehlt · 12 Häkchen, 0 Kreuze` — grün, obwohl zwei dazugekommen waren. Die
+reparierte findet **54** und nennt beide beim Namen. Danach zurückgesetzt und
+`diff`-gleich.
+
+Das ist dieselbe Familie wie die Falle, gegen die dieser Prüfstand gebaut ist: *Eine
+Prüfung, die NAMEN aufzählt, merkt nicht, wenn etwas dazukommt* — nur zählte er
+keine Namen auf, sondern eine SCHREIBWEISE, und das ist derselbe Fehler eine Ebene
+höher.
+
+##### 🟡 Und der neue Prüfstand war beim ersten Lauf aus dem FALSCHEN Grund rot
+
+Zwei Kreuze, beide zu Unrecht: „Prototyp" stand fünfmal in
+`Nutzungsbedingungen.tsx` — weil der **Kommentar** ausführlich begründet, warum es
+dort nicht mehr stehen darf. `not null` stand in `0011` — weil dort erklärt wird,
+warum die Spalten **kein** `not null` haben.
+
+*Ein `sed` auf einen Wert trifft auch den KOMMENTAR daneben* (FALLEN.md), eine Ebene
+höher. **Ein Wächter, der die eigene Begründung für den Verstoß hält, wird
+abgeschaltet statt gelesen.** `ohneKommentare()` misst jetzt, was LÄUFT — mit
+Gegenprobe, dass dabei nicht einfach alles weggeputzt wird.
+
+**Gemessen:** `npm run pruef-zustimmung` **28** · `pruef-etikett` **12** · `tsc`
+sauber · Lint **82 wie vorher** · lokal weiter **171** · alle übrigen Prüfstände
+unverändert.
+
+⚠️ **Was offen bleibt und nur Ian kann:** der Rechtstext selbst. Und die zweite
+Hälfte von `brauchtNeueZustimmung()` — was passiert, wenn sich der Text ÄNDERT
+(Abschnitt 6, Punkt 67, `TODO(Ian)` in `zustimmung.ts`).
 
 #### 21.3 — Das Datenschutz-Etikett ✅ *(gebaut am 2026-09-14)*
 
@@ -6783,11 +6875,18 @@ Datei anlegen, Signatur + Kommentar vorbereiten, `TODO` setzen, dann fragen.
 > Punkt 35 ist Entscheidung 27.
 >
 > **Folgen, die man kennen muss:**
-> - Ein Verweis „Abschnitt 6, Punkt 42" (oder 44, 55) zeigt ins LEERE — dieser
->   Abschnitt endet bei **40**. Gemeint ist dort die ENTSCHEIDUNG dieser Nummer;
->   gefunden wird sie mit `grep -n "Entscheidung 42" PLAN.md`.
->   *(Diese Zeile sagte bis zum 2026-09-13 „endet bei 37" — sie war selbst der Fall,
->   vor dem sie warnt. Beim Anhängen eines Punktes gehört sie nachgezogen.)*
+> - Ein Verweis „Abschnitt 6, Punkt N" kann ins LEERE zeigen, weil die Punkte hier
+>   **Lücken haben** — gemeint ist dann die ENTSCHEIDUNG dieser Nummer. Beides
+>   findet man, ohne eine Zahl im Kopf zu haben:
+>   `grep -n "^### N\." PLAN.md` für den Punkt, `grep -n "Entscheidung N" PLAN.md`
+>   für die Entscheidung. Steht nur eines von beidem da, ist es das Gemeinte.
+>   *(⚠️ **Hier stand bis zum 2026-09-14 eine ZAHL** — erst „endet bei 37", dann
+>   „endet bei 40" —, und beide Male ist sie beim nächsten angehängten Punkt still
+>   falsch geworden. Am 14.09. behauptete sie, es gebe keinen Punkt 42, 44 oder 55;
+>   alle drei gibt es seit langem, der Abschnitt reichte längst bis 67. **Eine
+>   Warnung, die selbst dreimal der Fall war, vor dem sie warnt, wird nicht ein
+>   viertes Mal nachgezogen — sie wird die Zahl los.** Der `grep` oben veraltet
+>   nicht.)*
 > - Und die **55 ist doppelt vergeben**: einmal in Phase 19f („beim Antippen des
 >   Eingabefelds bleibt der Chat unten") und einmal am 2026-09-13 für den geteilten
 >   Sitzungsspeicher. Wer einem solchen Verweis folgt, **prüft am DATUM**, welche
@@ -8650,6 +8749,45 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 >
 > Ausgeschrieben in `_FUER_IAN/DATENSCHUTZ_ETIKETT.md`, Punkt 7. Bewacht von
 > `npm run pruef-etikett`.
+
+
+### 67. Was passiert, wenn sich der TEXT ändert ⬜ *(offen — Entscheidung 80, zweite Hälfte)*
+
+> **Die erste Hälfte ist am 2026-09-14 entschieden und gebaut** (Phase 21.2): Das
+> Häkchen steht beim ersten Konto, und die Zustimmung wird mit **Zeitpunkt und
+> Fassung** festgehalten. Diese Frage hier hat nur deshalb eine Antwort verdient,
+> WEIL die Fassung mitgeschrieben wird — ohne sie gäbe es gar nichts zu entscheiden.
+
+**Vorbereitet:** `brauchtNeueZustimmung()` in `src/features/auth/zustimmung.ts`, mit
+`TODO(Ian)`. Heute fragt sie nur, OB jemand je zugestimmt hat:
+
+```ts
+export function brauchtNeueZustimmung(hat: Zustimmung | null): boolean {
+  return hat === null;
+}
+```
+
+Das ist solange richtig, wie es **eine** Fassung gibt. Interessant wird es an dem Tag,
+an dem Ian den echten Rechtstext einsetzt und `FASSUNG` von `'2026-09-14-hausregeln'`
+auf etwas Neues geht. **Dann stehen in der Datenbank zwei verschiedene Werte, und die
+Funktion muss sagen, was das bedeutet.**
+
+| | was die Funktion täte | der Preis |
+|---|---|---|
+| **A. Jede andere Fassung zählt nicht mehr** | `return hat === null \|\| hat.fassung !== FASSUNG` | Ehrlich und einfach. Aber ein berichtigter Tippfehler legt allen Menschen wieder ein Häkchen vor — und wer zu oft gefragt wird, klickt irgendwann weg, ohne zu lesen. Dann ist die Zustimmung eine Geste. |
+| **B. Nur bei WESENTLICHEN Änderungen** | eine zweite Konstante, etwa `ZUSTIMMUNG_NOETIG_AB`, gegen die verglichen wird | Trifft, was gemeint ist. Kostet, dass jemand jedes Mal entscheiden muss, ob eine Änderung wesentlich ist — und diese Entscheidung ist dieselbe, die ein Anwalt trifft, nicht ein Programm. |
+| **C. Gar nicht erneut fragen** | so lassen wie jetzt | Kostet nichts und lässt die Fassung ein reines Protokoll sein: Man kann NACHSEHEN, wer wem zugestimmt hat, aber es folgt nichts daraus. |
+
+⚠️ **Diese Frage lässt sich vertagen, ohne etwas zu verlieren** — die Fassung wird ja
+bereits geschrieben, also geht keine Information verloren, solange nicht entschieden
+ist. *Sind zwei Dinge in einem Moment ununterscheidbar, wird die Entscheidung
+VERTAGT, nicht geraten* (harte Regel 45). **Was nicht geht, ist sie zu vergessen:**
+Am Tag, an dem der Rechtstext kommt, ist sie fällig, und dann ist B ohne
+Vorbereitung teuer.
+
+> 💬 **Für Ian:** Die Frage hängt an einer Sache, die er allein weiß — ob die App zu
+> dem Zeitpunkt schon Leute hat, die man erneut fragen KANN. Bei vier Gründern ist A
+> gratis; bei zweihundert Leuten ist sie eine Störung für alle.
 
 
 ## 7. Bewusst NICHT im Prototyp

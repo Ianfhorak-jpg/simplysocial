@@ -5,9 +5,38 @@
 >
 > ---
 >
+> 🆕 **14.09., abends: Das Häkchen „Ich akzeptiere die Nutzungsbedingungen" ist
+> gebaut.** Apple verlangt bei einer App wie unserer, dass Leute den Regeln
+> **zustimmen**, bevor sie mitmachen — nicht nur, dass die Regeln irgendwo stehen.
+> Das war der einzige Teil, der nicht auf deinen Rechtstext wartet, also ist er jetzt
+> da (deine **80. Entscheidung**, du hast beide Fragen dazu beantwortet).
+>
+> Wer sich zum ersten Mal anmeldet, sieht unter Name · Bezirk · Jahrgang eine vierte
+> Zeile mit einem Kästchen. Wer auf „Nutzungsbedingungen" tippt, kann sie lesen, ohne
+> zuzustimmen. Ohne Häkchen geht der Knopf nicht. Festgehalten wird **wann** jemand
+> zugestimmt hat und **welcher Fassung** — das Zweite ist der Grund, warum das jetzt
+> schon Sinn hat: Sobald dein echter Text da ist, kann man unterscheiden, wer dem
+> Platzhalter zugestimmt hat und wer dem richtigen Text. Nachträglich ginge das nie.
+>
+> **Dabei ist etwas aufgefallen, das eine Ablehnung hätte werden können.** Ganz unten
+> auf dem Nutzungsbedingungen-Bildschirm stand fest eingebaut: *„SimplySocial ·
+> Prototyp, noch nicht öffentlich"*. Auf der Webseite stimmt das — aber das wäre auch
+> in der App gestanden, die zu Apple geht, und Apple lehnt Apps ab, die sich selbst
+> als unfertig bezeichnen. Ausgerechnet auf dem Bildschirm, den ein Prüfer bei einer
+> App wie unserer garantiert aufmacht. Behoben: In der echten App steht dort jetzt,
+> von wann die Fassung ist.
+>
+> **Auf dich wartet daraus eine Sache, und sie hat Zeit:** Was soll passieren, wenn
+> sich der Text später mal ändert — sollen dann alle noch mal zustimmen, nur bei
+> wichtigen Änderungen, oder gar nicht? Das lässt sich in Ruhe entscheiden (es geht
+> nichts verloren), aber spätestens wenn dein Rechtstext kommt, ist es dran. Die drei
+> Möglichkeiten stehen ausgeschrieben in PLAN.md, Abschnitt 6, Punkt 67.
+>
+> ---
+>
 > 🆕 **14.09.: Das Datenschutz-Etikett ist fertig — du musst es nur noch abtippen.**
 > Apple will vor dem Einreichen wissen, welche Daten die App sammelt. Das steht jetzt
-> vollständig in **`_FUER_IAN/DATENSCHUTZ_ETIKETT.md`**: sieben Einträge, und hinter
+> vollständig in **`_FUER_IAN/DATENSCHUTZ_ETIKETT.md`**: acht Einträge, und hinter
 > jedem steht, aus welcher Stelle im Code er kommt. Es ist nichts geraten.
 >
 > **Wichtig daran: Es muss stimmen.** Ein Prüfer bei Apple kann mitlesen, was die App

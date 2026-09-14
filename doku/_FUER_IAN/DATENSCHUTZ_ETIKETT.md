@@ -14,8 +14,8 @@
 
 ## Die kurze Fassung
 
-SimplySocial sammelt **sieben** Sorten Daten. Alle sieben sind **mit dir verknüpft**
-(„Linked to You" — sie hängen an deinem Konto), alle sieben dienen **nur der Funktion
+SimplySocial sammelt **acht** Sorten Daten. Alle acht sind **mit dir verknüpft**
+(„Linked to You" — sie hängen an deinem Konto), alle acht dienen **nur der Funktion
 der App** („App Functionality").
 
 **Nichts davon wird zum Tracking benutzt**, es gibt keine Werbung, keine Analyse und
@@ -100,6 +100,29 @@ der Apps aus dem Review wirft; übertreiben nicht.
 
 *Steht in:* `profiles.district` — `not null`, also bei **jedem** Konto vorhanden.
 Geschrieben von `bezirkSetzen()` in `src/data/senden.ts`.
+
+### 8. Sonstige Daten → Zustimmung zu den Nutzungsbedingungen
+**Gesammelt: ja · Verknüpft: ja · Tracking: nein · Zweck: App-Funktion**
+
+Wann jemand den Nutzungsbedingungen zugestimmt hat, und **welcher Fassung**.
+✅ **Ians Entscheidung 80 vom 2026-09-14**, PLAN.md Abschnitt 5b.
+
+Apple hat für „Einwilligung" keine eigene Kategorie; unter seinen Sorten ist
+**Sonstige Daten („Other Data")** die einzige, die passt. Der naheliegende Gedanke,
+es gar nicht anzugeben — „das ist doch nur ein Häkchen" —, ist der Fehler, vor dem
+oben der Kasten warnt: Es steht in `profiles`, es hängt an einem Konto, also ist es
+gesammelt. Untertreiben wirft Apps aus dem Review.
+
+*Steht in:* `profiles.terms_accepted_at`, `profiles.terms_version` — angelegt in
+`supabase/migrations/0011_zustimmung.sql`, geschrieben beim Anlegen des Kontos durch
+`profilAnlegen()` in `src/features/auth/konten.ts`.
+
+⚠️ **Beide Spalten sind `null`-fähig, und das ist Absicht.** Wer vor dem 2026-09-14
+ein Konto hatte, hat nie zugestimmt — es gab nichts zum Zustimmen. Ein Default-Datum
+hätte behauptet, er hätte; `null` sagt die Wahrheit. Die Begründung steht vollständig
+im Kopf der Migration.
+
+---
 
 ---
 

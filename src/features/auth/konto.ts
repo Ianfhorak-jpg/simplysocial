@@ -79,6 +79,24 @@ import { istWienerBezirk } from '@/lib/bezirk';
 export const ERSTE_FRAGEN = ['name', 'bezirk', 'jahrgang'] as const;
 export type ErsteFrage = (typeof ERSTE_FRAGEN)[number];
 
+/**
+ * ⚠️ **Seit Phase 21.2 steht auf diesem Bildschirm eine VIERTE Sache, und sie
+ * steht bewusst nicht in `ERSTE_FRAGEN`:** das Häkchen „Ich akzeptiere die
+ * Nutzungsbedingungen" (Ians Entscheidung 80). Die Regel dazu steht in
+ * `features/auth/zustimmung.ts`.
+ *
+ * **Warum nicht hier mit hinein?** `ERSTE_FRAGEN` sind FELDER — Dinge, die man
+ * ausfüllt, und `fehltNoch()` bekommt von jedem einen `string`. Eine Zustimmung
+ * ist ein `boolean` und keine Angabe, sondern eine HANDLUNG. Sie mit
+ * aufzunehmen hieße, `fehltNoch()` auf `string | boolean` zu öffnen — *einen Typ
+ * WEITER zu machen zeigt der Compiler nicht an* (FALLEN.md), und ab da könnte
+ * jedes Feld versehentlich ein Wahrheitswert sein.
+ *
+ * Dieser Absatz steht hier, damit harte Regel 78 nicht still falsch wird: Wer
+ * `ERSTE_FRAGEN` liest, um zu wissen, was beim ersten Konto verlangt wird,
+ * bekäme sonst drei Dinge zu sehen und müsste vier finden.
+ */
+
 /** Wie lang ein Anzeigename sein darf. Die Datenbank hat dazu keine Meinung. */
 export const NAME_MIN = 2;
 export const NAME_MAX = 30;

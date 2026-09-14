@@ -57,6 +57,7 @@ import { client } from '@/lib/supabase';
 import type { Anbieter, Sitzung } from './anmeldung';
 import { DEMO_EMAIL, istDemoZugang } from './demo';
 import { HANDLE_VERSUCHE, handleVorschlag, naechsterHandle } from './konto';
+import { darfAnlegen, zustimmungJetzt } from './zustimmung';
 
 /**
  * Ein Fehler beim Anmelden — mit `code`, nicht nur mit Text.
@@ -254,6 +255,16 @@ export interface NeuesProfil {
   name: string;
   bezirk: string;
   jahrgang: number;
+  /**
+   * Hat die Person den Nutzungsbedingungen zugestimmt? — Ians Entscheidung 80.
+   *
+   * **Ein `boolean` und nicht die fertigen zwei Spalten.** Der Aufrufer sagt, was
+   * ein MENSCH getan hat; woraus in der Datenbank dann `terms_accepted_at` und
+   * `terms_version` werden, ist Sache von `zustimmung.ts`. Wer hier einen
+   * Zeitstempel hereinreichen ließe, könnte von einem Bildschirm aus ein
+   * beliebiges Datum setzen — und die Fassung vergessen.
+   */
+  zugestimmt: boolean;
 }
 
 /**
@@ -275,6 +286,27 @@ export async function profilAnlegen(
   neu: NeuesProfil,
   sb: SupabaseClient = client(),
 ): Promise<Sitzung> {
+  // ── Der Riegel, und er steht VOR dem Netz ──────────────────────────────────
+  // Dieselbe Bauart und derselbe Grund wie `demoAnmelden()` (harte Regel 108):
+  // Der Bildschirm prüft auch, aber ein Bildschirm ist nicht die Stelle, an der
+  // eine Zusage GILT. Wer je einen zweiten Weg zum Konto baut — ein Skript, einen
+  // Prüfstand, einen Einladungslink —, kommt hier vorbei und nicht dort.
+  //
+  // `KontoFehler` und nicht `Error`: Der Weg nach oben ist derselbe wie bei jedem
+  // anderen Fehlschlag dieser Datei, und `onPress={async …}` verschluckt sonst,
+  // was kein bekannter Fehler ist (harte Regel 102).
+  if (!darfAnlegen(neu.zugestimmt)) {
+    throw new KontoFehler(
+      'profil-anlegen',
+      'keine-zustimmung',
+      'Ohne Zustimmung zu den Nutzungsbedingungen wird kein Profil angelegt.',
+    );
+  }
+
+  // EINMAL vor der Schleife, nicht darin: Bei einem vergebenen @-Namen läuft sie
+  // mehrfach, und der Zeitpunkt der Zustimmung soll nicht davon abhängen, wie
+  // viele Menschen zufällig schon „Ian" heißen.
+  const zustimmung = zustimmungJetzt();
   const basis = handleVorschlag(neu.name);
 
   for (let versuch = 0; versuch < HANDLE_VERSUCHE; versuch += 1) {
@@ -285,6 +317,8 @@ export async function profilAnlegen(
       display_name: neu.name.trim(),
       district: neu.bezirk,
       jahrgang: neu.jahrgang,
+      terms_accepted_at: zustimmung.wann,
+      terms_version: zustimmung.fassung,
     });
 
     if (!error) return { zustand: 'an', ichId: neu.authId };

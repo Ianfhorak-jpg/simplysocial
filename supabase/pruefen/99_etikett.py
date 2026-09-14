@@ -57,7 +57,22 @@ TECHNIK = {
 }
 
 def spalten_aus_migrationen():
-    """Jede Spalte jeder `create table` aus allen Migrationen."""
+    """
+    Jede Spalte aus allen Migrationen — aus `create table` UND aus
+    `alter table … add column`.
+
+    ⚠️ **Der zweite Weg fehlte bis zum 2026-09-14, und das war ein Loch im
+    Wächter**, gefunden bei der ersten Migration, die ihn überhaupt benutzt
+    (0011, die Zustimmung). Bis dahin legte jede Migration ihre Spalten in einem
+    `create table` an, also fiel es niemandem auf — der Wächter war grün und
+    hätte zwei neue Spalten schlicht nicht gesehen. Harte Regel 107 („der Code
+    sagt, was im Etikett stehen MUSS") wäre ab 0011 still gebrochen gewesen.
+
+    Das ist dieselbe Familie wie die Falle, gegen die dieser Prüfstand gebaut
+    ist: *Eine Prüfung, die NAMEN aufzählt, merkt nicht, wenn etwas dazukommt* —
+    hier zählte er keine Namen, sondern eine SCHREIBWEISE auf, und das ist
+    derselbe Fehler eine Ebene höher.
+    """
     gefunden = {}
     for datei in sorted(MIGRATIONEN.glob('*.sql')):
         text = datei.read_text()
@@ -72,6 +87,15 @@ def spalten_aus_migrationen():
                 sp = re.match(r'(\w+)\s+[\w\[\]. ]', z)
                 if sp:
                     gefunden.setdefault(sp.group(1), []).append(f'{tabelle}.{sp.group(1)}')
+
+        # `alter table X add column a …, add column b …;` — eine Anweisung, die
+        # bis zum `;` läuft und mehrere Spalten tragen kann. Gesucht wird jedes
+        # `add column`, nicht nur das erste: Genau daran wäre 0011 durchgerutscht,
+        # die zwei davon hat.
+        for m in re.finditer(r'alter table (?:if exists )?(\w+)\s+(.*?);', text, re.S):
+            tabelle, rumpf = m.group(1), m.group(2)
+            for sp in re.finditer(r'add column (?:if not exists )?(\w+)\s+[\w\[\]. ]', rumpf):
+                gefunden.setdefault(sp.group(1), []).append(f'{tabelle}.{sp.group(1)}')
     return gefunden
 
 print()

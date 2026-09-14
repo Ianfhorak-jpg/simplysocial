@@ -7,6 +7,7 @@ export * from './SsCard';
 export * from './SsChip';
 export * from './SsGlas';
 export * from './SsIcon';
+export * from './SsHaken';
 export * from './SsIconText';
 export * from './SsBezirkFeld';
 export * from './SsInput';

@@ -103,6 +103,7 @@ Fenster, dazu **Ians Entscheidung 77 — 512 px**. Volltext aller Phasen in
 | `npm run pruef-demo` | **25** | nichts (Wegwerf-DB) |
 | `npm run pruef-demoregel` | **29** | nichts |
 | `npm run pruef-alter` | **16** | nichts |
+| `npm run pruef-zustimmung` | **28** | nichts |
 
 Dazu: `npx tsc --noEmit` sauber · `expo lint` **82 Probleme** (81 vorbestehend plus
 **einer mit Namen**: `react-hooks/refs` in `BildZuschneiden.tsx` — derselbe, den
@@ -130,7 +131,17 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
    Wahl sondern Feststellung. 28 Antworten zum Abtippen in
    `_FUER_IAN/ALTERSFREIGABE.md`, bewacht von `npm run pruef-alter` (harte Regel 110).
    ⚠️ **Apples Fragebogen stand beim Nachsehen auf 28 × `null`** — noch trägt Ian ihn
-   ein. **Offen: 21.2 (Rechtstext, wartet auf Ian) und 21.4 (TestFlight).**
+   ein.
+   **21.2, die MECHANIK der Zustimmung, ist seit 2026-09-14 fertig** — Ians
+   Entscheidung 80, harte Regel 111. Häkchen beim ersten Konto, festgehalten mit
+   Zeitpunkt **und Fassung**; der Riegel sitzt in `profilAnlegen()`, nicht im
+   Bildschirm. **Der Rechtstext bleibt offen** — Gefäß und Inhalt sind trennbar,
+   sobald Ian ihn hat, ändert sich genau eine Konstante.
+   🔴 **Dabei gefunden und behoben: „Prototyp, noch nicht öffentlich" stand fest im
+   JSX der Nutzungsbedingungen** — auf genau dem Screen, den ein Reviewer bei einer
+   1.2-App aufmacht, und Apple weist Apps zurück, die sich als Beta ausgeben. Der
+   Gerätedurchgang „kein Prototyp-Hinweis ✓" meinte das VOLLBILD, nicht diese Zeile.
+   **Offen: 21.2 (der Rechtstext selbst, wartet auf Ian) und 21.4 (TestFlight).**
 2. ~~**Phase 20.6-d — runder Zuschnitt.**~~ ✅ **fertig und am Gerät geprüft**
    (2026-09-13, Durchgang 4: 6 von 6). Nichts mehr offen.
 3. **19d-2** (MapKit JS im Browser) — fällt nach Phase 20 nebenbei ab.
@@ -144,7 +155,8 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 | **`meldungLage()` bei ZU SPÄT bearbeitet** | `TODO(Ian)`, PLAN.md 6 Punkt 60 | nein |
 | **Apple-Programm auf wessen Namen?** — mit 16 üblicherweise über einen Elternteil; daran hängen Anbietername, Verträge und der Sign-in-Schlüssel | `_FUER_IAN/OFFENE_SACHEN.md` | später teuer |
 | 🟢 **Die 28 Altersfragen eintragen** — App Store Connect → Allgemeine Informationen → Altersfreigabe. Alles vorbereitet, zwei Urteilsfragen liegen bei Ian | `_FUER_IAN/ALTERSFREIGABE.md` | für Phase 21 ja |
-| **Rechtstext für die Nutzungsbedingungen** — kein Text, den Claude erfinden darf | `_FUER_IAN/OFFENE_SACHEN.md` Punkt 1 | für Phase 21 ja |
+| **Rechtstext für die Nutzungsbedingungen** — kein Text, den Claude erfinden darf. **Das Häkchen dafür steht seit 14.09.**, es wartet nur noch auf den Text | `_FUER_IAN/OFFENE_SACHEN.md` Punkt 1 | für Phase 21 ja |
+| **Was passiert, wenn sich der Rechtstext ÄNDERT** — alle neu fragen, nur bei Wesentlichem, oder gar nicht. Vertagbar, ohne etwas zu verlieren (die Fassung wird schon geschrieben), aber am Tag des Rechtstexts fällig | PLAN.md 6, Punkt 67 · `TODO(Ian)` in `zustimmung.ts` | nein |
 | **Landing-Page-Farbe** — Olivgrün, Weinrot oder Türkis, dazu bunt vs. Leitfarbe | `landing-vorschau/LIESMICH.md`, OFFENE_SACHEN 4b | nein |
 
 ## Stack
@@ -285,6 +297,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 108. Der Passwort-Weg gehört EINEM Konto — und der Riegel steht in `demoAnmelden()`, nie im Bildschirm
 109. Eine Demo-Welt in der ECHTEN Datenbank ist `followers`, nie `public` — und die Adresse des Demo-Kontos endet auf `.invalid`
 110. Was Apple über das ALTER fragt, steht in `_FUER_IAN/ALTERSFREIGABE.md` — und die NEIN-Antworten sind die gefährlichen
+111. Was eine Zustimmung ist und welcher FASSUNG jemand zugestimmt hat, steht in `features/auth/zustimmung.ts` — und der Riegel sitzt in `profilAnlegen()`, nie im Bildschirm
 ## Fallen — Index
 
 > **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 179 Stück, jede schon
@@ -464,6 +477,10 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Eine Prüf-Erwartung, die BEQUEMLICHKEIT verlangt, prüft nicht die Regel
 - Ein Prüfstand mit Gegenprobe legt eine Kopie von `src/` INS Projekt — und `.gitignore` zählte die Namen einzeln auf
 - Ein unquotiertes Heredoc gibt der SHELL den ganzen SQL-Text — und die Behebung, die man zuerst hinschreibt, zerlegt das Skript
+- Ein Wächter, der eine SCHREIBWEISE aufzählt, merkt nicht, wenn dieselbe Sache anders geschrieben dazukommt
+- Ein Wächter, der die eigene BEGRÜNDUNG für den Verstoß hält, wird abgeschaltet statt gelesen
+- Solange der Torwächter zeigt, gibt es den `Stack` NICHT — ein `router.push` wechselt die Adresse und zeigt nichts
+- Eine Warnung mit einer ZAHL darin veraltet genauso still wie das, wovor sie warnt
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)
