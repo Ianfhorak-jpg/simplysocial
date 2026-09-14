@@ -18,11 +18,54 @@
     "stand": "hell, vor dem Dunkelmodus, Release-Build am Simulator iPhone 17 Pro",
     "mittlere_helligkeit": 219.5,
     "felder": {
-      "karte": { "x": 60, "y": 830, "b": 1080, "h": 220,
-                 "zeigt_auf": "die weisse Karte mit dem Schriftzug, obere Haelfte" },
-      "grund": { "x": 60, "y": 300, "b": 1080, "h": 220,
-                 "zeigt_auf": "Papierweiss darueber, leere Flaeche ohne Inhalt" }
+      "karte": {
+        "x": 60,
+        "y": 830,
+        "b": 1080,
+        "h": 220,
+        "zeigt_auf": "die weisse Karte mit dem Schriftzug, obere Haelfte"
+      },
+      "grund": {
+        "x": 60,
+        "y": 300,
+        "b": 1080,
+        "h": 220,
+        "zeigt_auf": "Papierweiss darueber, leere Flaeche ohne Inhalt"
+      }
     },
     "abhebung": 13.8
+  },
+  "af01-dunkel-anmelden": {
+    "bild": "1206x2622",
+    "stand": "DUNKEL, nach Teil 1. Release-Build am Simulator iPhone 17 Pro",
+    "mittlere_helligkeit": 55.7,
+    "felder": {
+      "karte": {
+        "x": 60,
+        "y": 830,
+        "b": 1080,
+        "h": 220,
+        "zeigt_auf": "die weisse Karte mit dem Schriftzug, obere Haelfte"
+      },
+      "grund": {
+        "x": 60,
+        "y": 300,
+        "b": 1080,
+        "h": 220,
+        "zeigt_auf": "Papierweiss darueber, leere Flaeche ohne Inhalt"
+      }
+    },
+    "abhebung": 31.6,
+    "_hinweis": [
+      "Dieselben Rechtecke wie af00 — nur so sind die zwei Zahlen vergleichbar.",
+      "",
+      "WICHTIG, damit die 31,6 nicht mehr verspricht als sie zeigt: Gemessen ist",
+      "hier die ANMELDE-KARTE gegen den Grund, nicht eine GLASflaeche. Die",
+      "Glasflaechen der App (Tab-Kapsel, Umschalter-Pille) gibt es auf diesem",
+      "Bildschirm gar nicht — sie liegen hinter dem Torwaechter. Die Zahl belegt,",
+      "dass der dunkle Untergrund da ist und Flaechen sich abheben; sie belegt",
+      "NICHT, dass das Glas jetzt sichtbar ist. Dafuer fehlt ein Bild aus der",
+      "angemeldeten App (siehe _FUER_IAN/HANDY_DURCHGANG.md)."
+    ]
   }
 }
