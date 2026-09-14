@@ -1,5 +1,10 @@
 {
   "_liesmich": [
+    "⚠️ Die Belege heissen at00/at01, nicht af00/af01 wie in den Commit-Texten vom",
+    "14.09. Der Plan nannte die Reihe af frei — sie ist es nicht, af01 bis af04",
+    "liegen seit der Standort-Phase da (und ag01/ag02 sind sogar doppelt vergeben).",
+    "Erste freie Reihe war at.",
+    "",
     "Ians Entscheidung 88 (2026-09-14). Die Abhebung einer Glasflaeche haengt voellig",
     "davon ab, WO man misst — am selben Bild ergaben zwei Rechtecke 250 px auseinander",
     "89,3 und 5,4. Die Zahl 33,2 aus PLAN.md ist deshalb nicht wiederauffindbar: Dort",
@@ -13,7 +18,7 @@
     "kommt bei jedem Aufruf von glasmessung.py heraus. Ziel: unter 60 (Ians Vorbild",
     "liegt bei 90,8, der helle Stand bei 219,5-240,5)."
   ],
-  "af00-hell-vorher-anmelden": {
+  "at00-hell-vorher-anmelden": {
     "bild": "1206x2622",
     "stand": "hell, vor dem Dunkelmodus, Release-Build am Simulator iPhone 17 Pro",
     "mittlere_helligkeit": 219.5,
@@ -35,7 +40,7 @@
     },
     "abhebung": 13.8
   },
-  "af01-dunkel-anmelden": {
+  "at01-dunkel-anmelden": {
     "bild": "1206x2622",
     "stand": "DUNKEL, nach Teil 1. Release-Build am Simulator iPhone 17 Pro",
     "mittlere_helligkeit": 55.7,

@@ -115,8 +115,8 @@ bekannten Zahlen treffen muss, bevor eine neue eine Aussage ist.
 | | Stand |
 |---|---|
 | **Teil 0 — sichern** | ✅ Commit `723120b` auf `main`, Zweig `dunkel` steht |
-| **Teil 3 — Selbstprüfung** | 🔨 `glasmessung.py` **gegengeprüft** (`ea2c8f3`): `npm run pruef-glas`, **29 Häkchen**. Drei Löcher gefunden und behoben. Es fehlen `scripts/schirm.sh`, `scripts/tippen.sh` und die Messstellen-Datei (Entscheidung 88) |
-| **Teil 1 — dunkel** | ⬜ noch nicht angefangen |
+| **Teil 3 — Selbstprüfung** | ✅ `npm run pruef-glas` **33 Häkchen** · `npm run schirm` läuft und knipst am Simulator · `scripts/messstellen.json` steht. **Offen: `scripts/tippen.sh`** — braucht Ians Bedienungshilfen-Berechtigung |
+| **Teil 1 — dunkel** | ✅ **fertig und gemessen.** `npm run pruef-farben` 58 Häkchen · Hauptzahl **219,5 → 55,7** (Ziel < 60) · Nebenzahl **13,8 → 31,6**. ⚠️ Nur am ANMELDE-Bildschirm belegt — der Rest liegt hinter dem Torwächter |
 | **Teil 2 — NativeTabs** | ⬜ noch nicht angefangen |
 
 ✅ **Die Gegenprobe ist gelaufen und hat geliefert, wofür sie da ist.** Sie konnte die
@@ -218,7 +218,8 @@ Befehl, Anleitung in `_FUER_IAN/TREFFEN_ZAEHLER.md`.
 | `npm run pruef-demoregel` | **29** | nichts |
 | `npm run pruef-alter` | **16** | nichts |
 | `npm run pruef-zustimmung` | **28** | nichts |
-| `npm run pruef-glas` | **29** | nichts |
+| `npm run pruef-glas` | **33** | nichts |
+| `npm run pruef-farben` | **58** | nichts |
 
 Dazu: `npx tsc --noEmit` sauber · `expo lint` **89 Probleme** (Stand 20.12: 82 vorbestehend, plus vier aus den zwei neuen `pan.x.interpolate()`-Zeilen der WischKarte — jede meldet doppelt; dazu
 **einer mit Namen**: `react-hooks/refs` in `BildZuschneiden.tsx` — derselbe, den
@@ -273,6 +274,9 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 
 | | Wo | Blockiert? |
 |---|---|---|
+| 🔑 **Simulator einmal als Demo anmelden** — ohne das zeigt der Torwächter, und jeder Deep Link landet auf `<Anmelden />`. Damit ist alles hinter der Anmeldung **ungemessen**: der Wischstapel, die Wien-Karte, die Tab-Kapsel (also das Glas selbst) und `/bausteine`. Das Demo-Passwort wurde **einmal** angezeigt und steht nirgends — `npm run demo -- --neues-passwort` macht ein neues, greift aber auf die echte Supabase | Simulator „iPhone 17 Pro" läuft schon | **für Teil 2 ja** |
+| 🔑 **Bedienungshilfen-Berechtigung** — Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen. Erst damit kann `tippen.sh` entstehen (Umschalter, Wischstapel, Kartenauswahl haben keine Route) | | für Teil 3 ja |
+| 🎨 **Welche Farbe heißt „Standort an"?** — `einstellungen.tsx:375` unterscheidet den Zustand allein an der Farbe des Symbols. Vorher 1,69, nach der Umkehr **1,09** — praktisch nicht mehr zu sehen. Eine Kategoriefarbe scheidet aus (sie behauptet eine Kategorie). `TODO(Ian)` steht an der Zeile | PLAN.md · `einstellungen.tsx:375` | nein |
 | 🎨 **Die drei Post-Fassungen aussuchen** — A (Farbband) · B (bunt) · C (groß und ruhig, steht gerade drin). Am Handy unter Einstellungen → „Für die Entwicklung" → „Post-Fassungen vergleichen". ⚠️ **Der Screen `app/post-fassungen.tsx` und sein Eintrag in `einstellungen.tsx` sind WEGWERF-CODE** und fliegen raus, sobald Ian gewählt hat | am iPhone | nein, aber es blockiert das Aufräumen |
 | 🚀 **TestFlight — `npm run testflight`** (ein Befehl, 15–25 Min). Zwei Schritte darin fassen Ians Schlüsselbund an und legen in seinem Apple-Konto ein **Distribution-Zertifikat** an (0 von 2 belegt) — der Auto-Mode blockt das bei mir, zu Recht. Alles andere ist vorbereitet und die Vorprüfungen sind getestet | `_FUER_IAN/TESTFLIGHT.md` | für Phase 21 ja |
 | 🔴 **Migration 0012 einspielen** — `npm run einspielen 0012_treffen_zaehler.sql`. Ohne sie steht überall „0 Treffen". An Ians echte Supabase komme ich nicht heran | `_FUER_IAN/TREFFEN_ZAEHLER.md` | für den Zähler ja |
