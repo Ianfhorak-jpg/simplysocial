@@ -47,34 +47,59 @@ import sys, zlib, struct
 def png_lesen(pfad):
     """Gibt (breite, hoehe, pixel) zurück; pixel[y][x] = (r, g, b).
 
-    Unterstützt Farbtyp 2 (RGB) und 6 (RGBA), 8 Bit — mehr liefert weder
-    `simctl io screenshot` noch `screencapture`. Ein anderer Typ bricht mit einer
-    Meldung ab, die sagt WAS es ist, statt still etwas Falsches zu rechnen.
+    Unterstützt Farbtyp 2 (RGB) und 6 (RGBA), 8 **und 16** Bit. Ein anderer Typ
+    bricht mit einer Meldung ab, die sagt WAS es ist, statt still etwas Falsches zu
+    rechnen.
+
+    ⚠️ **16 Bit ist kein Sonderfall, sondern Ians Vorbild.** Die erste Gegenprobe
+    dieses Werkzeugs (2026-09-14) scheiterte nicht an einer Zahl, sondern am Format:
+    `vorbild-liquid-glass-bierbuddy.png` ist **1179×2556, Farbtyp 2, 16 Bit** — so
+    speichert ein iPhone einen Screenshot in P3. Das Werkzeug konnte die eine Datei
+    nicht lesen, an der es sich beweisen sollte.
+
+    Der gefährliche Teil steckt in der FILTER-Schleife, nicht im Auslesen: Die fünf
+    PNG-Filter rechnen auf **Bytes**, nicht auf Farbwerten. Bei 16 Bit sind das sechs
+    Bytes je Pixel, nicht drei. Wer `kanaele` weiter als Schrittweite nimmt, bekommt
+    für Filter 1, 3 und 4 den Vorgänger-Nachbarn aus der Mitte eines Samples — das
+    Bild sieht dann verrauscht aus, aber die Werte liegen im gültigen Bereich. Deshalb
+    heißt die Schrittweite hier `bpp` und wird getrennt gerechnet.
     """
     with open(pfad, 'rb') as f:
         roh = f.read()
     if roh[:8] != b'\x89PNG\r\n\x1a\n':
         sys.exit(f'✗ Keine PNG-Datei: {pfad}')
 
-    pos, daten, breite, hoehe, farbtyp, tiefe = 8, b'', 0, 0, None, 0
+    pos, daten, breite, hoehe, farbtyp, tiefe, verschraenkt = 8, b'', 0, 0, None, 0, 0
     while pos < len(roh):
         (laenge,) = struct.unpack('>I', roh[pos:pos + 4])
         art = roh[pos + 4:pos + 8]
         inhalt = roh[pos + 8:pos + 8 + laenge]
         if art == b'IHDR':
             breite, hoehe, tiefe, farbtyp = struct.unpack('>IIBB', inhalt[:10])
+            verschraenkt = inhalt[12]
         elif art == b'IDAT':
             daten += inhalt
         elif art == b'IEND':
             break
         pos += 12 + laenge
 
-    if tiefe != 8 or farbtyp not in (2, 6):
-        sys.exit(f'✗ Nur 8-Bit RGB/RGBA — dieses Bild ist Typ {farbtyp}, {tiefe} Bit.')
+    if farbtyp not in (2, 6) or tiefe not in (8, 16):
+        sys.exit(f'✗ Nur RGB/RGBA mit 8 oder 16 Bit — dieses Bild ist Typ {farbtyp}, {tiefe} Bit.')
+
+    # Adam7. Ein verschränktes PNG liegt in SIEBEN Durchgängen mit je eigener
+    # Zeilenbreite da; wer es wie ein normales liest, bekommt ein Bild, das aus
+    # verschobenen Streifen besteht — und dessen Mittelwerte trotzdem plausibel
+    # aussehen. Weder `simctl io screenshot` noch `screencapture` erzeugen so etwas,
+    # deshalb wird es NICHT unterstützt, sondern ABGEWIESEN. Ungeprüft wäre es ein
+    # stiller Fehlerpfad, und stille Fehlerpfade sind in diesem Projekt die teuren.
+    if verschraenkt:
+        sys.exit('✗ Adam7-verschränktes PNG — wird nicht gelesen (siehe Kommentar im Code).')
 
     kanaele = 3 if farbtyp == 2 else 4
+    breite_byte = tiefe // 8          # 1 oder 2 Bytes je Farbwert
+    bpp = kanaele * breite_byte       # Schrittweite der FILTER — nicht `kanaele`!
     strom = zlib.decompress(daten)
-    zeilenbreite = breite * kanaele
+    zeilenbreite = breite * bpp
 
     # Die fünf PNG-Filter. Ohne sie ist jede Zeile Müll — und zwar Müll, der
     # plausibel aussieht, weil die Bytes im richtigen Wertebereich liegen.
@@ -83,9 +108,9 @@ def png_lesen(pfad):
         filt = strom[p]; p += 1
         zeile = bytearray(strom[p:p + zeilenbreite]); p += zeilenbreite
         for i in range(zeilenbreite):
-            a = zeile[i - kanaele] if i >= kanaele else 0
+            a = zeile[i - bpp] if i >= bpp else 0
             b = vorher[i]
-            c = vorher[i - kanaele] if i >= kanaele else 0
+            c = vorher[i - bpp] if i >= bpp else 0
             if filt == 1:   zeile[i] = (zeile[i] + a) & 0xFF
             elif filt == 2: zeile[i] = (zeile[i] + b) & 0xFF
             elif filt == 3: zeile[i] = (zeile[i] + (a + b) // 2) & 0xFF
@@ -93,7 +118,12 @@ def png_lesen(pfad):
                 pp = a + b - c
                 pa, pb, pc = abs(pp - a), abs(pp - b), abs(pp - c)
                 zeile[i] = (zeile[i] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 0xFF
-        pixel.append([tuple(zeile[x * kanaele:x * kanaele + 3]) for x in range(breite)])
+        # Bei 16 Bit zählt das OBERE Byte jedes Samples. Das ist keine Rundung im
+        # eigentlichen Sinn, sondern genau die Zahl, die ein 8-Bit-Screenshot an
+        # derselben Stelle trüge — nur so sind die Werte mit den bisherigen
+        # Messungen aus PLAN.md vergleichbar.
+        pixel.append([tuple(zeile[x * bpp + k * breite_byte] for k in range(3))
+                      for x in range(breite)])
         vorher = zeile
     return breite, hoehe, pixel
 
@@ -139,17 +169,26 @@ def bild_kennzahlen(pixel, breite, hoehe):
     """
     farben = set()
     summe = 0
-    # Jeder vierte Pixel genügt und ist zehnmal schneller — für „tausende oder
-    # eine?" braucht es keine Vollzählung.
+    # Jeder vierte Pixel genügt — für „tausende oder eine?" braucht es keine
+    # Vollzählung. Bei 5000 ist Schluss: Die Frage ist beantwortet, sobald die
+    # Antwort „viele" lautet, und ein Set über 1,5 Mio. Bildpunkte kostet ohne
+    # jeden Erkenntnisgewinn Zeit und Speicher.
+    #
+    # ⚠️ Die Helligkeit muss trotzdem über ALLE Punkte laufen, sonst wäre sie der
+    # Mittelwert des oberen Bildrands. Deshalb zwei getrennte Schleifen-Anteile
+    # und KEIN gemeinsames `break`.
+    genug = False
     for y in range(0, hoehe, 2):
         for x in range(0, breite, 2):
             p = pixel[y][x]
-            farben.add(p)
             summe += helligkeit(p)
-            if len(farben) > 5000:
-                farben.add(('viele',))
+            if not genug:
+                farben.add(p)
+                if len(farben) >= 5000:
+                    genug = True
     n = len(range(0, hoehe, 2)) * len(range(0, breite, 2))
-    return {'farben': len(farben), 'hell': summe / n, 'breite': breite, 'hoehe': hoehe}
+    return {'farben': len(farben), 'viele': genug, 'hell': summe / n,
+            'breite': breite, 'hoehe': hoehe}
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -179,7 +218,7 @@ def main():
     k = bild_kennzahlen(pixel, breite, hoehe)
 
     print(f'  Bild:    {breite}×{hoehe}')
-    print(f'  Farben:  {k["farben"]}{"+" if k["farben"] > 5000 else ""}')
+    print(f'  Farben:  {k["farben"]}{"+ (Zählung abgebrochen)" if k["viele"] else ""}')
     print(f'  mittlere Helligkeit: {k["hell"]:.1f}')
 
     # Die Schwarzbild-Erkennung meldet sich laut und sagt, was zu tun ist —

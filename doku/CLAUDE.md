@@ -62,6 +62,47 @@ Obendrauf ein Social-Layer wie bei Instagram: Follower, und pro Post ein Schalte
 **`deploy.sh` deployt NUR aus `'attrappe'` heraus** (harte Regel 96) — ein versehentlicher
 Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
+---
+
+## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-14 nachts)
+
+> **Der genehmigte Plan liegt in
+> [`~/.claude/plans/ich-will-liquid-glass-calm-pinwheel.md`](~/.claude/plans/ich-will-liquid-glass-calm-pinwheel.md)**
+> und ist **selbsttragend geschrieben** — er ist ohne Chatverlauf ausführbar. **Zuerst
+> lesen.** Er wird nicht automatisch geladen; ohne diesen Verweis findet ihn niemand.
+
+**Ians Auftrag:** *„ICH WILL LIQUID GLASS VON APPLE DIREKT NICHT VON DIR NACHGEBAUT."*
+
+**Der gemessene Befund, und er ist die ganze Phase:** Es IST Apples echtes Glas
+(`expo-glass-effect` → `UIGlassEffect`, kein Nachbau im Projekt). **Es ist nur unsichtbar,
+weil hinter jeder Glasfläche Papierweiß liegt.** Glas zeigt sich als UNTERSCHIED zum
+Untergrund — Ians Vorbild hebt sich um **33,2** Helligkeitsstufen ab, SimplySocial um
+**3,3**. *Mehr Glas einbauen ändert daran nichts.*
+
+**Ians vier Entscheidungen (84–87):** ganze App dunkel (fast schwarz, `#14161A`) ·
+**NativeTabs** statt JS-Tabs · **SF Symbols** in der Leiste · Claude prüft sich **selbst**
+per Simulator (Ian gibt die Bedienungshilfen-Berechtigung).
+
+**Reihenfolge 0 → 3 → 1 → 2**, und die Begründung steht im Plan: Das Messgerät zuerst,
+weil der Erfolg eine ZAHL ist (**Ziel: Abhebung ≥ 25**) und ein Messgerät erst die
+bekannten Zahlen treffen muss, bevor eine neue eine Aussage ist.
+
+| | Stand |
+|---|---|
+| **Teil 0 — sichern** | ✅ Commit `723120b` auf `main`, Zweig `dunkel` steht |
+| **Teil 3 — Selbstprüfung** | 🔨 `scripts/glasmessung.py` geschrieben (`8dcad53`), **noch nicht gegengeprüft**. Es fehlen `scripts/schirm.sh` und `scripts/tippen.sh` |
+| **Teil 1 — dunkel** | ⬜ noch nicht angefangen |
+| **Teil 2 — NativeTabs** | ⬜ noch nicht angefangen |
+
+⚠️ **Der nächste Schritt ist die Gegenprobe**, nicht der nächste Baustein:
+`glasmessung.py` muss an `vorbild-liquid-glass-bierbuddy.png` die **33,2** und an
+`_belege/z02-ios-kapsel-glas.png` die **3,3** reproduzieren. Trifft es sie nicht, ist es
+kaputt — und jede spätere Zahl wertlos.
+
+**Was auf Ian wartet, bevor Teil 3 fertig werden kann:** die Bedienungshilfen-Berechtigung
+(Systemeinstellungen → Datenschutz → Bedienungshilfen) und eine einmalige Anmeldung als
+Demo-Konto im Simulator (sonst landet jeder Deep Link auf dem Anmelde-Bildschirm).
+
 🎉 **Die App läuft auf Ians iPhone** (iPhone 16, iOS 26.6.1, `at.simplysocial.app`,
 gültig bis **2027-09-13**). Der Gerätedurchgang ist gemacht: **7 von 7** — Apple-Login ·
 Google-Login · angemeldet über Neustart · Profilbild · Merker · kein Prototyp-Hinweis ·

@@ -79,7 +79,8 @@
     "pruef-zustimmung": "bash supabase/pruefen/95_zustimmung.sh",
     "pruef-alter": "python3 supabase/pruefen/94_altersfreigabe.py",
     "pruef-treffen": "bash supabase/pruefen/26_treffen.sh",
-    "testflight": "bash scripts/testflight.sh"
+    "testflight": "bash scripts/testflight.sh",
+    "pruef-glas": "python3 supabase/pruefen/31_glasmessung.py"
   },
   "private": true
 }
