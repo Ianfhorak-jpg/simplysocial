@@ -5,6 +5,28 @@
 >
 > ---
 >
+> 🔴 **14.09., ZUERST: ein Befehl, sonst kann sich niemand Neues anmelden.**
+> Zum Häkchen unten gehören zwei neue Felder in der Datenbank. Auf meinem Rechner
+> sind sie drin und geprüft — **auf dem echten Server noch nicht**, und dorthin
+> komme ich nicht ohne dich. Solange sie fehlen, bricht das Anlegen eines neuen
+> Kontos ab. Dein eigenes Konto merkt nichts davon, ein neuer Mensch schon.
+>
+> ```bash
+> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
+> npm run einspielen
+> ```
+>
+> Das spielt alle Migrationen ein und misst danach neun Zahlen nach. **Alle neun
+> müssen gleich bleiben** — ich habe das gegen meine Wegwerf-Datenbank schon
+> gemessen, dort stimmen sie. Meldet der Lauf eine andere Zahl, ist das ein Befund
+> und kein Rauschen: dann bitte abbrechen und mir sagen, welche.
+>
+> ⚠️ **Danach ist der nächste Build fällig.** Der Build vom 13.09. kennt weder das
+> Passwortfeld für Apple noch das Häkchen. Was zu Apple geht, muss den Code von
+> heute tragen.
+>
+> ---
+>
 > 🆕 **14.09., abends: Das Häkchen „Ich akzeptiere die Nutzungsbedingungen" ist
 > gebaut.** Apple verlangt bei einer App wie unserer, dass Leute den Regeln
 > **zustimmen**, bevor sie mitmachen — nicht nur, dass die Regeln irgendwo stehen.
