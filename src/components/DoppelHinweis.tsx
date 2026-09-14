@@ -39,7 +39,7 @@ export function DoppelHinweis({ kollisionen }: { kollisionen: Termin[] }) {
     <View style={styles.kasten}>
       {/* `uhr` und nicht `warnung`: Der Satz sagt eine Uhrzeit, keine Gefahr. Das
           Dreieck gehört zu Dingen, die man nicht tun sollte — hier darf man. */}
-      <SsIconText icon="uhr" variant="caption" color={colors.ink} iconColor={accent.base}>
+      <SsIconText icon="uhr" variant="caption" color={colors.ink} iconColor={accent.aufGrund}>
         {text}
       </SsIconText>
     </View>

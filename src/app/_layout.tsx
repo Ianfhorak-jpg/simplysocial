@@ -100,7 +100,8 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
+      {/* Uhr und Symbole HELL — die App ist dunkel (Ians Entscheidung 84). */}
+      <StatusBar style="light" />
       <View style={styles.app}>
         {/* ── Die zwei Leisten, und sie liegen ÜBER der Bühne im FLUSS ──────────
             Ians Entscheidung 48: Sie schieben den Inhalt nach unten, statt sich

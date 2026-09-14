@@ -61,7 +61,7 @@ type Props = {
 };
 
 /** Wie stark der Ring abdunkelt. Dunkel genug zum Unterscheiden, hell genug zum Erkennen. */
-const RING = 'rgba(23, 25, 28, 0.55)';
+const RING = 'rgba(0, 0, 0, 0.66)'; // auf dunklem Grund muss eine Abdunkelung SCHWARZ sein, sonst hellt sie auf
 
 export function BildZuschneiden({ quelle, wartet, onAbbrechen, onUebernehmen }: Props) {
   const schirm = useWindowDimensions();

@@ -125,7 +125,7 @@ const startFlaeche = `
     font-size: 28px; font-weight: 700; letter-spacing: -0.4px;
     color: ${colors.ink};
   }
-  #ss-start-marke span { color: ${categoryColors.creative.base}; }
+  #ss-start-marke span { color: ${categoryColors.creative.aufGrund}; }
 
   /* Wer „Bewegung reduzieren" eingestellt hat, bekommt keinen Übergang — die Fläche
      ist dann sofort weg statt weich. Das Sicherheitsnetz bleibt. */

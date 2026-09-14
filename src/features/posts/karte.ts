@@ -71,28 +71,45 @@ export const EINFAERBUNG: 'relativ' | 'fest' | 'zahlen' = 'relativ';
  * Direktchat noch einmal beschreibt. Die Skala läuft deshalb auf `accent.base` zu,
  * die Grundfarbe der App.
  *
+ * ── Seit dem Dunkelmodus läuft sie in die andere Richtung (2026-09-14) ───────
+ * Die Regel ist unverändert — *die Skala läuft auf `accent.base` zu* —, und genau
+ * deshalb dreht sie sich mit: `accent.base` war `#3E4043` (dunkler Knopf auf
+ * heller Seite) und ist jetzt `#E8E7E3`. **Ein Bezirk mit vielen Posts ist also
+ * nicht mehr der dunkelste, sondern der hellste.** Das ist keine neue
+ * Entscheidung, sondern dieselbe: „voll" heißt *am weitesten von der
+ * Grundfläche entfernt*.
+ *
  * ── Alle Werte sind gemessen, nicht geschätzt (WCAG) ──────────────────────────
- * Die Zahl in der Fläche erreicht auf jeder Stufe mindestens **4,89:1**:
- *   Stufe 1 #CFCDC3 · dunkler Text · 11,05:1
- *   Stufe 2 #A6A49C · dunkler Text ·  7,06:1
- *   Stufe 3 #6F7174 · weißer Text  ·  4,89:1
- *   Stufe 4 #3E4043 · weißer Text  · 10,40:1
+ * Die Zahl in der Fläche erreicht auf jeder Stufe mindestens **4,53:1**:
+ *   Stufe 1 #434446 · heller Text · 8,63:1
+ *   Stufe 2 #6D6E6E · heller Text · 4,53:1
+ *   Stufe 3 #A0A09F · dunkler Text · 6,73:1
+ *   Stufe 4 #E8E7E3 · dunkler Text · 14,23:1
  *
  * ── Warum ausgerechnet der wichtigste Sprung der schwächste ist ───────────────
- * Zwischen „leer" und „ein Post" liegen nur **1,41:1** — und das ist genau die
+ * Zwischen „leer" und „ein Post" liegen nur **1,62:1** (auf Dunkel etwas mehr als
+ * die früheren 1,41) — und das ist genau die
  * Grenze, auf die es ankommt. Sie über die Farbe zu tragen ginge nur mit einem
  * harten Bruch, und der ließe die Karte fleckig aussehen. **Getragen wird sie
  * deshalb von der ZAHL: Eine leere Fläche bekommt gar keine.** Das ist zugleich die
  * Antwort auf Punkt 2 aus PLAN.md, Phase 19b — wer Farben schlecht unterscheidet,
  * bekommt sonst gar nichts.
  */
-export const KARTE_LEER = '#F3F1EC';
+/**
+ * Die Zahl auf den beiden HELLEN Stufen. Sie ist nicht `colors.bg`: Der Grund ist
+ * `#14161A` und käme auf der hellsten Fläche zwar auf 15,9, aber eine Zahl soll
+ * lesbar sein und nicht ein Loch in die Fläche stanzen. `#17191C` ist der Textton
+ * der hellen App — er hat genau diese Aufgabe schon einmal gehabt.
+ */
+const DUNKLE_ZAHL = '#17191C';
+
+export const KARTE_LEER = '#212326'; // knapp über bg — 1,15:1, die leere Fläche soll nicht auffallen
 
 export const STUFEN: readonly { flaeche: string; zahl: string }[] = [
-  { flaeche: '#CFCDC3', zahl: colors.ink },
-  { flaeche: '#A6A49C', zahl: colors.ink },
-  { flaeche: '#6F7174', zahl: colors.surface },
-  { flaeche: '#3E4043', zahl: colors.surface },
+  { flaeche: '#434446', zahl: colors.ink },
+  { flaeche: '#6D6E6E', zahl: colors.ink },
+  { flaeche: '#A0A09F', zahl: DUNKLE_ZAHL },
+  { flaeche: '#E8E7E3', zahl: DUNKLE_ZAHL },
 ];
 
 /**

@@ -66,24 +66,40 @@ export const glasSchwebt = StyleSheet.create({
   ersatz: {
     borderWidth: 1,
     borderColor: colors.line,
-    boxShadow: '0 4px 16px rgba(23, 25, 28, 0.16)',
+    boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.10)', // dito
   },
 }).ersatz;
 
 /**
- * Welches Farbschema das Glas annimmt — **`light`, nicht `auto`.**
+ * Welches Farbschema das Glas annimmt — **`dark`, nicht `auto`.**
  *
- * `auto` folgt dem GERÄT. Die App steht aber fest auf hell (`userInterfaceStyle:
- * "light"` in `app.json`): Auf einem iPhone im Dunkelmodus läge dann dunkles Glas
- * über einer hellen App. Das ist keine Kleinigkeit — der Umschalter darin schreibt
- * mit `colors.inkSoft`, und der ist für hellen Grund gemessen.
+ * `auto` folgt dem GERÄT. Die App steht aber fest auf DUNKEL
+ * (`userInterfaceStyle: "dark"` in `app.json`, Ians Entscheidung 84): Auf einem
+ * iPhone im Hellmodus läge sonst helles Glas über einer dunklen App. Das ist
+ * keine Kleinigkeit — der Umschalter darin schreibt mit `colors.inkSoft`, und
+ * der ist jetzt für dunklen Grund gemessen (5,78 gegen `bg`).
+ *
+ * Das Argument ist dasselbe wie am 2026-09-07, als hier `light` stand; nur die
+ * App darunter hat die Seite gewechselt. **Die Regel lautet nicht „hell" oder
+ * „dunkel", sondern: das Glas folgt der APP, nie dem Gerät.**
  */
-export const GLAS_FARBSCHEMA = 'light' as const;
+export const GLAS_FARBSCHEMA = 'dark' as const;
 
 /**
  * Wie dick das Glas ist. `regular` ist Apples Voreinstellung und die einzige, die
  * über einer Karte noch etwas durchlässt, ohne dass Text darauf unlesbar wird;
  * `clear` ist fast durchsichtig und gehört über Fotos, nicht über eine Liste.
+ *
+ * ⚠️ **Offen, und absichtlich noch nicht geändert (2026-09-14).** Der Plan nennt
+ * `regular` einen Formfehler und schlägt `clear` vor. Das kann stimmen — die
+ * Begründung oben („Text darauf unlesbar") ist am HELLEN Stand gemessen, und auf
+ * dunklem Grund sind die Verhältnisse andere.
+ *
+ * **Es bleibt trotzdem stehen, bis es gemessen ist.** Der Dunkelmodus und die
+ * Glasdicke gleichzeitig zu ändern macht jede Verbesserung unzuordenbar — das
+ * ist dieselbe Begründung, mit der der Plan „dunkel vor NativeTabs" anordnet.
+ * Erst die Abhebung am dunklen Stand messen, dann diesen einen Wert drehen und
+ * dieselbe Stelle noch einmal messen.
  */
 export const GLAS_STIL = 'regular' as const;
 

@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     // Einzelprops sind seit React Native 0.76 veraltet und melden das bei jedem
     // Aufruf in der Konsole — dieselbe Sorte Rückstand wie `pointerEvents` als Prop.
     // `PrototypHinweis` schreibt es seit Phase 13 schon so.
-    boxShadow: '0 3px 10px rgba(23, 25, 28, 0.18)',
+    boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.10)', // auf Dunkel trägt die KANTE die Tiefe, nicht der Schatten
   },
   zeile: {
     height: ZEILE,

@@ -1158,7 +1158,7 @@ function FilterBereich({
 
       {aktiv ? (
         <Pressable onPress={zuruecksetzen} accessibilityRole="button" style={styles.filterZuruecksetzen}>
-          <SsText variant="label" color={categoryColors.creative.base}>
+          <SsText variant="label" color={categoryColors.creative.aufGrund}>
             Alle Filter zurücksetzen
           </SsText>
         </Pressable>
@@ -1242,7 +1242,7 @@ function LeererFeed({
           Mit einem anderen Filter findest du vielleicht mehr.
         </SsText>
         <Pressable onPress={zuruecksetzen} accessibilityRole="button" style={styles.leerLink}>
-          <SsText variant="label" color={categoryColors.creative.base}>
+          <SsText variant="label" color={categoryColors.creative.aufGrund}>
             Filter zurücksetzen
           </SsText>
         </Pressable>

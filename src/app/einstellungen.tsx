@@ -284,7 +284,7 @@ export default function EinstellungenScreen() {
         ) : null}
 
         {bildHuerde ? (
-          <SsText variant="caption" color={danger.base}>
+          <SsText variant="caption" color={danger.aufGrund}>
             {bildHuerde}
           </SsText>
         ) : null}
@@ -372,7 +372,17 @@ export default function EinstellungenScreen() {
             <SsIcon
               name="ziel"
               size={20}
-              color={standort.zustand === 'an' ? accent.base : colors.ink}
+              // TODO(Ian): Der Zustand „an" wird hier allein an der FARBE des Symbols
+              // unterschieden, und das trägt auf Dunkel nicht mehr. Gemessen:
+              //   vorher  accent.base #3E4043 gegen colors.ink #17191C : 1,69
+              //   jetzt   accent.aufGrund #E8E7E3 gegen #F2F1ED        : 1,09
+              // Das ist eine echte Verschlechterung durch die Umkehr, keine
+              // bestehende Schwäche. Die Zeile darunter (387) ist NICHT betroffen —
+              // dort steht „aus" auf `inkSoft` und bleibt klar unterscheidbar.
+              // Welche Farbe „an" bedeuten soll, ist eine Entscheidung: eine
+              // Kategoriefarbe scheidet aus (sie behauptet eine Kategorie, die der
+              // Schalter nicht meint — dieselbe Begründung wie bei `accent` selbst).
+              color={standort.zustand === 'an' ? accent.aufGrund : colors.ink}
             />
           </View>
           <View style={styles.zeileText}>
@@ -384,7 +394,7 @@ export default function EinstellungenScreen() {
           {/* Kein React-Native-`Switch`: Die App hat keinen, und einer allein für
               diese Zeile wäre ein Baustein, den niemand sonst benutzt. Das Wort
               sagt dasselbe und passt zur Zeile darüber. */}
-          <SsText variant="label" color={standort.zustand === 'an' ? accent.base : colors.inkSoft}>
+          <SsText variant="label" color={standort.zustand === 'an' ? accent.aufGrund : colors.inkSoft}>
             {standort.zustand === 'an' ? 'An' : 'Aus'}
           </SsText>
         </Pressable>

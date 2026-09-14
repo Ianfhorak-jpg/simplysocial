@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     // Der Schatten trägt Bedeutung und ist keine Zier: Das Blatt liegt ÜBER einer
     // Karte, und ohne Abhebung liest man es als Teil von ihr. Dieselbe Begründung
     // wie beim Prototyp-Hinweis — es sind die einzigen zwei Stellen mit Schatten.
-    boxShadow: '0 -6px 24px rgba(23, 25, 28, 0.14)',
+    boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.08)', // dito — ein schwarzer Schatten auf #14161A ist 1,08:1, also nichts
   },
   // Der Radius steht hier NOCH EINMAL, obwohl das Blatt `overflow: 'hidden'` hat:
   // Auf iOS ist das Glas eine native Ansicht, und die schneidet der Elternteil

@@ -81,7 +81,7 @@ export default function MatchScreen() {
           {/* Zwischen den beiden Avataren, in der Kategoriefarbe des Posts: Auf dem
               einen Screen, der ein Ergebnis feiert, soll das Zeichen dazwischen nicht
               grau sein. */}
-          <SsIcon name="treffen" size={30} color={categoryColors[post.category].base} />
+          <SsIcon name="treffen" size={30} color={categoryColors[post.category].aufGrund} />
           <SsAvatar name={gast.displayName} seed={gast.id} photoUrl={gast.photoUrl} size="lg" />
         </View>
 

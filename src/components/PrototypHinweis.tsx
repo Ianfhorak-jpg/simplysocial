@@ -192,7 +192,7 @@ export function PrototypHinweis() {
         {/* Das Symbol steht groß und allein über dem Titel, nicht klein daneben:
             Auf einem Vollbild ist eine Zeile mit einem 16-px-Icon eine Kopfzeile,
             und genau danach soll es nicht aussehen (Fassung 2 in der Liste oben). */}
-        <SsIcon name="kolben" size={44} color={accent.base} />
+        <SsIcon name="kolben" size={44} color={accent.aufGrund} />
         <SsText variant="heading" center>
           Das hier ist ein Prototyp
         </SsText>
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     // Der Grund liegt unter einem Schleier statt hinter einer weißen Wand: Man sieht,
     // dass die App dahinter schon da ist — sonst liest sich das Vollbild wie ein
     // Ladebildschirm, und darauf wartet man, statt zu tippen.
-    backgroundColor: 'rgba(23, 25, 28, 0.55)',
+    backgroundColor: 'rgba(0, 0, 0, 0.66)', // dito
   },
   kasten: {
     width: '100%',
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     // und muss sich von ihr abheben. Seit Entscheidung 48 fällt er nach ALLEN Seiten
     // — der alte Wert warf ihn nur nach oben, weil der Kasten damals am unteren Rand
     // klebte und unten gar nichts zu beschatten war.
-    boxShadow: '0 8px 32px rgba(23, 25, 28, 0.24)',
+    boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.12)', // dito
   },
   knopf: { marginTop: spacing.sm, alignSelf: 'stretch' },
 });

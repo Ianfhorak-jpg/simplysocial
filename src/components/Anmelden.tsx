@@ -144,7 +144,7 @@ export function Anmelden() {
           {/* Dieselbe Farbe wie im Startbild (`app/+html.tsx`) und auf der
               Landing-Page: die Wortmarke ist an allen drei Orten dieselbe, sonst
               wechselt sie beim ausgeloggten Kaltstart mitten im Bildaufbau. */}
-          <SsText variant="display" color={categoryColors.creative.base}>
+          <SsText variant="display" color={categoryColors.creative.aufGrund}>
             {BRAND.wordmark.second}
           </SsText>
         </SsText>
