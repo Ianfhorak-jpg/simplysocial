@@ -81,7 +81,8 @@
     "pruef-treffen": "bash supabase/pruefen/26_treffen.sh",
     "testflight": "bash scripts/testflight.sh",
     "pruef-glas": "python3 supabase/pruefen/31_glasmessung.py",
-    "schirm": "bash scripts/schirm.sh"
+    "schirm": "bash scripts/schirm.sh",
+    "pruef-farben": "python3 supabase/pruefen/32_farben.py"
   },
   "private": true
 }
