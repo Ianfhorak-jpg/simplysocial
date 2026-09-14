@@ -6502,7 +6502,66 @@ alte Bild stehen.
 
 ### Phase 21 — In den App Store ⬜
 
-#### 21.1 — Was seit diesem Monat neu ist ⬜
+#### 21.1 — Die Altersfreigabe ✅ *(gebaut am 2026-09-14)*
+
+**Ergebnis: 13+, und es ist keine Wahl, sondern eine Feststellung.** Die Antworten
+stehen fertig zum Abtippen in **`_FUER_IAN/ALTERSFREIGABE.md`**, jede mit der Stelle
+daneben, aus der sie hergeleitet ist. Bewacht von `npm run pruef-alter`
+(**16 Häkchen**, braucht nichts) — **harte Regel 110.**
+
+> 🔴 **Der Fund, mit dem die Phase anfing:** Apples Fragebogen hat **28 Felder**, und
+> **jedes einzelne stand auf `null`.** Nachgesehen an der echten Schnittstelle
+> (`GET /v1/appInfos/24c6b436-…/ageRatingDeclaration` über `scripts/asc.py`), nicht
+> an einem Blogeintrag. Ohne diesen Bogen lässt sich die App nicht einreichen — das
+> ist keine Formalie, sondern eine Sperre.
+
+**Die drei Antworten, aus denen 13+ folgt**, und alle drei sind am Code gemessen:
+
+| Apple-Frage | Antwort | woraus |
+|---|---|---|
+| Nutzergenerierte Inhalte | **JA** | `posts.title/note/meeting_point`, `messages.text`, `profiles.bio`, `groups.name/description`, `*_requests.message`, Profilbilder |
+| Nachrichten und Chat | **JA** | `messages` + `chat_threads`, Direktchats seit Phase 16 |
+| Social-Media-Funktionen | **JA** | Apples Wortlaut ist der Feed plus `follows` |
+
+**Die Ausnahme, die eine niedrigere Einstufung erlaubt hätte, scheidet aus.**
+„Altersbeschränkte Social-Media-Funktionen" verlangt **drei** Dinge: Apples
+*Declared Age Range API* (iOS 26+), eine Unter-13-Sperre und „nur altersgerechte
+Inhalte". Keines ist gebaut, und die API ist in Österreich nicht verpflichtend —
+das stand schon im ursprünglichen 21.1 und gilt unverändert.
+
+**Was das JA bei „Social Media" kostet, und es ist benannt:** ein sichtbarer
+**Social-Media-Hinweis** auf der Store-Seite und die Einordnung in Apples neue
+**Bildschirmzeit-Kategorie für Social Media** — unabhängig von der App-Kategorie.
+Der Preis dafür, die Wahrheit zu sagen, und er ist niedriger als eine Ablehnung.
+
+##### Warum der Wächter die NEIN-Antworten bewacht und nicht die JA-Antworten
+
+„Es gibt einen Chat" bleibt wahr, solange es die App gibt. **Eine NEIN-Antwort ist
+eine Zusage über etwas, das NICHT da ist** — und die wird still falsch, sobald jemand
+ein Paket nachinstalliert oder eine Zeile schreibt. Drei hängen an nachprüfbaren
+Tatsachen: *Webzugriff* (kein `openURL`/`Linking`/`WebBrowser` im Quellcode — null
+Treffer, **mit Gegenprobe**, weil eine Textsuche ohne Treffer sonst nichts beweist),
+*Werbung* (kein Werbe-/Analysepaket unter 30 Abhängigkeiten) und *Altersprüfung*
+(keine Declared-Age-Range-API; der Jahrgang wird eingetippt).
+
+> 🟡 **Die Gegenprobe hat den Wächter selbst korrigiert.** Eingeschmuggelt wurde
+> `react-native-google-mobile-ads` — ein waschechtes Werbepaket —, und die Namensliste
+> **ließ es durch**: Dort stand `admob`, nicht `mobile-ads`. Rot wurde der Lauf nur
+> über die ZAHL der Abhängigkeiten. Das ist die Falle *„Eine Prüfung, die NAMEN
+> aufzählt, merkt nicht, wenn etwas dazukommt"* — **im Wächter, der gegen genau diese
+> Falle gebaut war.** Jetzt steht die Rangfolge im Kommentar: die Zahl ist der
+> Wächter, die Namen sind die Bequemlichkeit. Danach nennt die Gegenprobe das Paket
+> beim Namen; beide Dateien sind `diff`-gleich zurückgesetzt.
+
+**Zwei Urteilsfragen liegen bei Ian** (im Dokument ausgeschrieben): ob „Bier trinken
+gehen" als Alkoholbezug zählt, und ob Sport-Aktivitäten „Gesundheits- und
+Wellness-Themen" sind. Beides ist Auslegung von Apples Wortlaut und keine Messung —
+und bei 13+ ändert keine der beiden Antworten das Ergebnis.
+
+⚠️ **Was der Wächter nicht kann:** Er bewacht das DOKUMENT, nicht das Formular. Ob
+Ian die 28 Felder wirklich einträgt, sieht er nicht.
+
+#### 21.1-alt — Was seit diesem Monat neu ist *(die Ausgangslage, bleibt stehen)*
 
 > ⚠️ **Apple hat im Juli 2026 neue Pflichtfragen zur Altersfreigabe eingeführt, und sie
 > sind ab September 2026 verpflichtend** — also ab jetzt, für jede neue App und jedes
@@ -6528,13 +6587,61 @@ ersetzt — **oder die App wird nicht eingereicht.** Es braucht Datenschutzerkl�
 Nutzungsbedingungen, ein Mindestalter und eine Antwort auf die Haftungsfrage. Dazu das
 Häkchen „akzeptiert" beim Anmelden, das ohne Login nie gebaut werden konnte.
 
-#### 21.3 — Das Datenschutz-Etikett ⬜
+#### 21.3 — Das Datenschutz-Etikett ✅ *(gebaut am 2026-09-14)*
 
 Apple verlangt eine Aufstellung, welche Daten die App sammelt. **Sie muss stimmen** —
-und sie ist überprüfbar, weil ein Reviewer den Netzwerkverkehr sehen kann. Für
-SimplySocial: E-Mail (Konto), Name, Jahrgang, Bezirk, Chats, Fotos. **Keine
-Koordinaten** — und das ist ein Satz, den man mit Stolz hinschreiben kann, weil er
-seit August wahr ist.
+und sie ist überprüfbar, weil ein Reviewer den Netzwerkverkehr sehen kann.
+
+**Sie steht fertig zum Abtippen in `_FUER_IAN/DATENSCHUTZ_ETIKETT.md`** — sieben
+Einträge, jeder mit der Stelle im Code, aus der er hergeleitet ist. Nichts geschätzt.
+
+| Apple-Eintrag | kommt aus |
+|---|---|
+| Kontaktdaten → E-Mail | `auth.users`, aus `anmeldung.ts` |
+| Kontaktdaten → Name | `profiles.display_name` |
+| Benutzerinhalte → Fotos | `profiles.photo_url` |
+| Benutzerinhalte → Andere | `posts.title/note/meeting_point`, `messages.text`, `profiles.bio`, `groups.name/description`, `*_requests.message`, `reports.reason/note` |
+| Kennungen → Benutzer-ID | `profiles.id`, `profiles.handle` |
+| Sonstige Daten | `profiles.jahrgang`, `profiles.interests` |
+| **Standort → Grober Standort** | `profiles.district` — **Ians Entscheidung 78**, Abschnitt 6 Punkt 65 |
+
+Bei Apples Frage *„Verwendet ihr Daten zum Tracking?"* ist die Antwort **Nein** — und
+das ist nachgezählt, nicht behauptet: **kein** Analyse-, Werbe- oder
+Absturzbericht-Paket unter den 30 Abhängigkeiten.
+
+##### Die Zusage, die den Satz „Keine Koordinaten" trägt
+
+| gemessen | |
+|---|---|
+| Koordinatenfeld in den 13 Tabellen | **keines** |
+| Aufruf in `src/data/senden.ts`, der Koordinaten schickt | **keiner** |
+| Dateien, die Koordinaten überhaupt kennen | **4** — und `senden.ts` ist keine davon |
+
+⚠️ **Warum hier ein PRÜFSTAND steht und nicht nur ein Dokument.** Ein Etikett ist eine
+**Liste von Feldnamen**, und damit trägt es wörtlich die Falle *„Eine Prüfung, die
+NAMEN aufzählt, merkt nicht, wenn etwas dazukommt."* Käme in einer Migration eine
+Spalte `phone` dazu, wäre das Etikett **still falsch** — der teure Fall, weil er nach
+Absicht aussieht.
+
+`npm run pruef-etikett` (`supabase/pruefen/99_etikett.py`, **12 Häkchen**, braucht
+weder Datenbank noch Gerät) dreht die Richtung um: Er liest die **52 Spaltennamen aus
+dem Schema** und fragt, ob jede im Etikett vorkommt oder in einer ausdrücklichen
+Technik-Liste steht. Nicht das Etikett sagt, was es gibt — der Code sagt, was drinstehen
+muss. **Gegenprobe gebaut:** eine eingeschmuggelte Spalte `profiles.telefon` macht ihn
+rot und nennt sie beim Namen; danach zurückgesetzt und `diff`-gleich.
+
+**Zwei Befunde beim ersten Lauf, beide behoben:**
+1. `chat_threads.aus_aktivitaet` war nirgends eingeordnet — sie gehört zur Technik
+   (die HERKUNFT eines Chats, harte Regel 56, ist eine Tatsache über den Chat und keine
+   Angabe über einen Menschen). Jetzt steht sie mit dieser Begründung in der Liste.
+2. **Der Wächter hatte selbst einen Fehler:** `'kein Geburtsdatum' in text.lower()` —
+   großes G gegen einen kleingeschriebenen Text, das kann nie zutreffen. Er war rot,
+   obwohl der Satz im Etikett steht. *Eine Gegenprobe, die aus dem FALSCHEN Grund rot
+   ist, belegt gar nichts* (FALLEN.md) — hier hat er immerhin in die sichere Richtung
+   versagt.
+
+**Was er NICHT leistet:** Er prüft, ob eine Spalte **erwähnt** ist — nicht, ob sie der
+richtigen Apple-Kategorie zugeordnet wurde. Das ist ein Urteil, keine Messung.
 
 #### 21.4 — TestFlight ⬜
 
@@ -6548,14 +6655,13 @@ npx eas-cli build --profile production --platform ios
 npx eas-cli submit --platform ios --latest
 ```
 
-#### 21.5 — Einreichen ⬜
+#### 21.5 — Einreichen · **Punkt 1 ✅ (2026-09-14)** · Rest ⬜
 
 Was bei einer App dieser Art erfahrungsgemäß zu Ablehnungen führt — alles vermeidbar:
 
-1. **Kein Demo-Zugang.** Die App liegt hinter einem Login; ein Reviewer kommt ohne
-   Testkonto nicht hinein und lehnt ab. **Das wird am häufigsten vergessen.** Es gehört
-   in das Feld „App Review Information", samt einer Anmeldung, die ohne fremde E-Mail
-   funktioniert.
+1. ~~**Kein Demo-Zugang.**~~ ✅ **gebaut am 2026-09-14** — Ians Entscheidung 79,
+   Abschnitt 6 Punkt 66. Ausgeschrieben direkt unter dieser Liste.
+   **Für Ian zum Abtippen: `_FUER_IAN/DEMO_ZUGANG.md`.**
 2. **1.2 (UGC)** — melden, blockieren, Nutzungsbedingungen, Account löschen. Alle vier
    stehen seit Phase 7; nach Phase 20 wirken sie auch wirklich.
 3. **4.8 (Login)** — siehe 20.3. Apple muss neben Google stehen.
@@ -6564,6 +6670,89 @@ Was bei einer App dieser Art erfahrungsgemäß zu Ablehnungen führt — alles v
 5. **Leerer Zustand.** Ein Reviewer öffnet die App in einem leeren Wien. Der Kaltstart
    (`OFFENE_SACHEN.md`, Punkt 6) ist damit nicht nur ein Marketing-Thema, sondern eine
    Review-Frage — und `LeererFeed` mit „Etwas posten" (2026-09-03) ist die Antwort.
+
+##### Punkt 1 ausgeschrieben — der Demo-Zugang ✅ *(2026-09-14)*
+
+**Der Reviewer tippt zwei Felder und ist drin.** Er wählt „Mit E-Mail-Code", gibt
+`demo@simplysocial.invalid` ein — und statt „Code schicken" erscheint ein
+Passwortfeld. Für jeden anderen Menschen ändert sich **kein Bildpunkt**: Der Schritt
+entsteht nur, wenn `istDemoZugang()` zutrifft.
+
+> **Kein verstecktes Feature im Sinn von Apple 2.3.1.** Apple verbietet Funktionen,
+> die dem Reviewer verborgen bleiben. Dieses Feld ist das Gegenteil — es existiert
+> **für** ihn und steht mitsamt Adresse, Passwort und Anleitung im Feld „App Review
+> Information". Was es vor den übrigen Menschen verbirgt, ist kein Feature, sondern
+> ein Konto; ein viertes Anmeldefeld für alle wäre nach harter Regel 63 falsch.
+
+**Neu gebaut:**
+
+| | |
+|---|---|
+| `src/features/auth/demo.ts` | die Regel-Datei — `DEMO_EMAIL`, `istDemoZugang()`, `passwortFehlerText()`. Importfrei, also in blankem Node prüfbar |
+| `konten.ts` → `demoAnmelden()` | **der Riegel, harte Regel 108.** Wirft, wenn die Adresse nicht die Demo-Adresse ist — und zwar VOR dem Netz |
+| `hooks.ts` → `anmeldenAlsDemo()` | danach Wort für Wort derselbe Weg wie die drei anderen (`sitzungUebernehmen()`) |
+| `Anmelden.tsx` | vierter Schritt `'passwort'`, eine einzige Verzweigung in `schicken()` |
+| `SsInput` → `secureTextEntry` | harte Regel 6 — neue Felder sind `SsInput`, auch der Sonderfall |
+| `supabase/demo/` | `10_konto.sql`, `20_welt.sql`, `30_abraeumen.sql`, `anlegen.sh` |
+| `_FUER_IAN/DEMO_ZUGANG.md` | die drei Schritte für Ian, samt fertigem Text fürs Review-Feld |
+
+**Die Demo-Welt:** vier Menschen, fünf Aktivitäten, ein bestehendes Match, **eine
+offene Anfrage** und ein Chat mit drei Nachrichten. Jede hat eine Aufgabe — an den
+drei offenen Aktivitäten führt er „Bin dabei" vor, an der offenen Anfrage auf seinem
+eigenen Post das **Bestätigen**, und der Chat zeigt, dass ein Match zu einem Gespräch
+führt und nicht in eine Sackgasse. Die letzte Nachricht kommt vom Gegenüber; ein
+Verlauf, der mit der eigenen endet, sieht aus wie einer, auf den niemand geantwortet
+hat.
+
+⚠️ **Kein einziger Post ist `public`** — harte Regel 109. Ein öffentlicher Post ist
+für jeden Angemeldeten sichtbar, die erfundenen Leute stünden also im Feed von Ian,
+Christoph, Leopold und Daria. Alle sind `followers`, die fünf Demo-Menschen folgen
+einander, und **das wird angegriffen statt geglaubt** (Regel 57): Ein fremdes Konto
+setzt sich in `authenticated` und versucht zu lesen.
+
+**Zwei Zusagen, die still brechen könnten — beide bewacht:**
+
+1. **Ein zweiter Lauf rührt das Passwort nicht an.** Sobald es in App Store Connect
+   steht, macht ein stillschweigend neues den Zugang ungültig — ohne Fehler, ohne
+   Log, die Ablehnung kommt Tage später. Gemessen: Hash vorher = Hash nachher,
+   Gegenprobe mit `--neues-passwort` ändert ihn wirklich.
+2. **Ein zweiter Lauf frischt die ZEITEN auf.** Die Aktivitäten hängen an `now()` —
+   *relativ heißt relativ zum LAUF, nicht zum Betrachter* (FALLEN.md). Liegt der Lauf
+   vier Wochen vor dem Review, steht alles auf `past`.
+
+**Gemessen:** `npm run pruef-demo` **25 Häkchen** (Wegwerf-Datenbank, zwei
+Gegenproben) · `npm run pruef-demoregel` **29 Häkchen** (blankes Node) · `tsc` sauber
+· Lint **82 wie vorher** · lokal weiter **171** · `pruef-anbieter` 48 unverändert.
+
+> ✅ **Am echten Server gelaufen — 2026-09-14, von Ian.** `npm run demo` ging gegen
+> die Produktionsdatenbank durch und meldete **5 Profile, 5 Aktivitäten, 1 offene
+> Anfrage, 3 Nachrichten**. Die Zugangsdaten stehen seither in App Store Connect
+> unter „App-Prüfungsinformationen", gesichert. Damit ist das `auth.users`-SQL an
+> echtem GoTrue belegt und nicht nur an der Attrappe — **die acht leeren Strings
+> haben gehalten.**
+>
+🎉 **Gerätedurchgang 5 — 2 von 2, am 2026-09-14 abends.** Neuer Build über
+`npm run geraet` (UDID `09CDB3CF-…`, iPhone 16), danach beide Anmeldungen. **Ians
+Meldung: „beides hat geklappt".** Damit sind die zwei Fragen beantwortet, die kein
+Mac beantworten konnte:
+
+| | war offen, weil | Ergebnis |
+|---|---|---|
+| **1. Anmelden als Demo** | Eine Zeile in `auth.users` ist nicht dasselbe wie eine akzeptierte Anmeldung — genau die Falle vom 2026-09-12 („Database error querying schema"). Der Prüfstand misst `10_konto.sql`, nicht GoTrue | ✅ **die acht leeren Strings halten an echtem GoTrue** |
+| **2. Anmelden als Ian selbst** | Die Zusage aus harter Regel 109 war nur an einer WEGWERF-Datenbank angegriffen. Die Demo-Welt liegt jetzt neben den echten Daten | ✅ **keine Demo-Leute in Ians Feed — Regel 109 hält am echten Server** |
+
+> ⚠️ **Was Punkt 2 belegt und was nicht.** Er ist ein BLICK, kein Angriff: Ian hat
+> gesehen, dass sein Feed sie nicht zeigt. Dass die Policy sie auch gegen einen
+> Zugriff an der App vorbei zurückhält, ist weiterhin nur lokal belegt
+> (`pruef-demo`, zwei Gegenproben) — dort allerdings richtig, mit
+> `set local role authenticated`. Die beiden Belege ergänzen sich: der eine misst
+> die echte Datenbank, der andere die echte Maschinerie. **Keiner ersetzt den
+> anderen**, und wer später eine Sichtbarkeit anfasst, braucht wieder beide.
+
+🔴 **Was für das EINREICHEN daraus folgt und leicht untergeht:** Der Build, der zu
+Apple geht, muss den Code vom 14.09. enthalten. Der Durchgang oben lief auf einem
+frisch gebauten — der Build vom 13.09. kennt das Passwortfeld nicht, und
+**Zugangsdaten ohne passendes Feld sind dieselbe Ablehnung wie gar keine.**
 
 #### 21.6 — Was das alles kostet ⬜
 
@@ -8061,6 +8250,45 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
 > besser als eine Sackgasse, aber das ist meine Abwägung.** Die Korrektur ist ein Wort
 > (`PROGRAMM_KNOPF_LADEN`).
 
+### 66. Wie der Apple-Reviewer in die App kommt ✅ *(Entscheidung 79)*
+
+> **Entschieden am 2026-09-14.** Die App liegt hinter einer Anmeldung, und alle drei
+> Wege hinein scheitern beim Reviewer an etwas, das nicht in unserer Hand liegt: Der
+> E-Mail-Code braucht ein fremdes Postfach, Apple und Google machen ihn zu einem NEUEN
+> Menschen in einem leeren Wien. **Das ist der am häufigsten vergessene
+> Ablehnungsgrund** (PLAN.md 21.5 Punkt 1), und er kostet jedes Mal einen ganzen
+> Prüfdurchgang.
+>
+> **Vier Möglichkeiten lagen vor, mit ihren Preisen:**
+>
+> | | | |
+> |---|---|---|
+> | **A. Konto mit PASSWORT**, Feld nur für diese eine Adresse | **Ians Wahl** | zwei Felder, kein Postfach, hängt an nichts als bcrypt |
+> | B. Trigger auf `auth.*`, Code auf `123456` festgenagelt | verworfen | kein App-Code — aber ein Eingriff in Supabases eigenes Schema |
+> | C. echtes Postfach, Zugangsdaten bei Apple | verworfen | kostet keinen Code, bringt die drei Abbruchstellen zurück |
+> | D. gar keiner, „der Reviewer nimmt halt Apple" | verworfen | kostet nichts, riskiert einen Review-Zyklus |
+>
+> **Warum B verloren hat, ist eine Messung und keine Meinung.** Der im Netz kursierende
+> Weg zielt auf `auth.users.recovery_token`. Unsere GoTrue-Fassung ist **`v2.196.0`**
+> (gemessen an `/auth/v1/health`, 2026-09-14) und legt Codes in `auth.one_time_tokens`
+> ab. Der Mechanismus wäre also erst zu erraten — *„ein Mechanismus, den man im fremden
+> Quelltext FINDET, ist eine Hypothese"* — und er kann bei jedem Supabase-Update still
+> brechen. Ausgerechnet während des Reviews.
+>
+> **Und Ian hat eine zweite Frage im selben Zug beantwortet: Was der Reviewer SIEHT.**
+> Möglich waren der ehrliche leere Feed (`LeererFeed` mit „Etwas posten", seit
+> 2026-09-03) und eine bespielte Demo-Welt. **Seine Wahl: die bespielte Welt.** Der
+> leere Zustand ist richtig gebaut, beantwortet aber die Frage des Reviewers nicht: Er
+> prüft nicht, ob die App hübsch ist, sondern ob sie tut, was der Store-Eintrag
+> behauptet. Das Herzstück sind drei Schritte — **„Bin dabei" → bestätigen → Chat** —
+> und keiner davon lässt sich an einem leeren Feed vorführen. Damit deckt Entscheidung
+> 79 den Punkt 5 aus 21.5 gleich mit ab.
+>
+> ⚠️ **Was NICHT Ians Entscheidung ist**, damit die Zuschreibung nicht ausfranst: dass
+> alle Demo-Posts `followers` sind und dass die Adresse auf `.invalid` endet. Beides
+> sind Herleitungen (harte Regel 109) — die erste, damit kein echter Mensch die
+> erfundenen Leute sieht, die zweite, weil `simplysocial.at` uns nicht gehört.
+
 ### 64. Wie groß ein Profilbild hochgeladen wird ✅ *(Entscheidung 77)*
 
 > **Entschieden am 2026-09-13 nachts**, beim Bau von Phase 20.6-d. Seit dem runden
@@ -8386,6 +8614,44 @@ zwei erschöpfende Listen über dasselbe Union wären zwei Wahrheiten (harte Reg
     mehr kann er nicht sagen, ohne die Zahlen ein zweites Mal zu kennen.
 
 
+### 65. Ob der BEZIRK bei Apple als „Standort" zählt ✅ *(Entscheidung 78)*
+
+> **Entschieden am 2026-09-14**, beim Bau von Phase 21.3 (das Datenschutz-Etikett).
+> Ians Wahl: **ja — als „Grober Standort" angeben.**
+>
+> **Warum es überhaupt eine Frage war.** Der GPS-Standort verlässt das Gerät nie
+> (harte Regel 47, `features/posts/standort.ts`) — das ist nachgemessen und steht als
+> Zusage im Etikett. Der **Bezirk** ist der Gegenfall: `profiles.district` ist
+> `not null`, wird also bei **jedem** Konto übertragen und gespeichert. Nur wird er
+> eingetippt, nicht geortet. Zwei vertretbare Lesarten, ein Klick Unterschied.
+>
+> **Verworfen: „ist eine Angabe, keine Ortung."** Ein Wohnort im Profil, mehr nicht —
+> das Etikett zeigte dann gar keinen Standort, was zu einer App passt, die bewusst
+> keine Koordinaten speichert.
+>
+> **Warum die andere gewonnen hat, mit zwei Gründen statt einem:**
+> 1. Apple nennt alles gröber als drei Nachkommastellen (~111 m) „Coarse Location".
+>    Ein Wiener Bezirk ist gröber — der kleinste (1010) misst 1,6 km².
+> 2. **Der stärkere Grund: Der Feed misst ENTFERNUNGEN davon** (`posts/sort.ts`,
+>    Entscheidung 63). Funktional *ist* es ein Standort, unabhängig davon, wie er
+>    hereinkommt. Das Etikett beschreibt, was die App tut, nicht wie die Daten
+>    entstanden sind.
+>
+> **Die Asymmetrie ist der eigentliche Punkt.** Ein Etikett, das zu wenig behauptet,
+> ist ein Ablehnungsgrund und sieht nach Absicht aus — ein Reviewer kann den
+> Netzwerkverkehr mitlesen und sieht `1070` darin. Ein Etikett, das zu viel behauptet,
+> kostet einen Klick. Bei ungleichen Kosten wird nicht die wahrscheinlichere Lesart
+> gewählt, sondern die billigere Fehlrichtung.
+>
+> **Ein Satz gehört dazu, sonst ist die Angabe irreführend in die andere Richtung.**
+> In die Datenschutzerklärung (21.2): *„Du gibst deinen Bezirk selbst an. Wir ermitteln
+> ihn nicht und speichern keine Koordinaten."* Ohne ihn liest „Standort: ja" wie eine
+> Ortung — und dann hätte das ehrlichere Etikett den falscheren Eindruck erzeugt.
+>
+> Ausgeschrieben in `_FUER_IAN/DATENSCHUTZ_ETIKETT.md`, Punkt 7. Bewacht von
+> `npm run pruef-etikett`.
+
+
 ## 7. Bewusst NICHT im Prototyp
 
 Login · Karte · Push-Nachrichten · Bezahlung · **echte Bilder-Uploads** ·
@@ -8543,6 +8809,159 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 
 ### Das Erste, was zu tun ist
 
+> 🟢 **STAND 2026-09-14, abends — Phase 21.1 ist FERTIG: die Altersfreigabe.**
+> Kurz, damit eine frische Sitzung nicht sucht:
+>
+> **Das Ergebnis ist 13+, und es ist keine Wahl.** Die 28 Antworten stehen zum
+> Abtippen in `_FUER_IAN/ALTERSFREIGABE.md`, jede am Code hergeleitet. **Neue harte
+> Regel 110**, neuer Prüfstand `npm run pruef-alter` (**16 Häkchen**, braucht nichts).
+>
+> 🔴 **Der Fund, mit dem die Phase anfing:** Apples Fragebogen hat **28 Felder, und
+> jedes stand auf `null`** — nachgesehen an der echten Schnittstelle über
+> `scripts/asc.py`, nicht an einem Blogeintrag. Ohne den Bogen lässt sich nicht
+> einreichen. **Ian trägt ihn noch ein**, alles andere ist vorbereitet.
+>
+> 🟡 **Und die Gegenprobe hat den neuen Wächter selbst korrigiert:** Eingeschmuggelt
+> wurde `react-native-google-mobile-ads`, und die Namensliste ließ es DURCH (dort
+> stand `admob`, nicht `mobile-ads`). Rot wurde der Lauf nur über die ZAHL der
+> Abhängigkeiten. Das ist *„eine Prüfung, die NAMEN aufzählt"* — **im Wächter, der
+> gegen genau diese Falle gebaut war.** Rangfolge steht jetzt im Kommentar: die Zahl
+> ist der Wächter, die Namen sind die Bequemlichkeit.
+>
+> **Zwei Urteilsfragen liegen bei Ian** und stehen im Dokument: Alkoholbezug bei einem
+> geposteten „Bier trinken gehen"? Sport als „Wellness-Thema"? Bei 13+ ändert keine
+> der beiden das Ergebnis.
+>
+> **Gemessen:** `tsc` sauber · Lint **82 wie vorher** · lokal **171** · **neu
+> `pruef-alter` 16** · `pruef-demo` 25 · `pruef-demoregel` 29 · `pruef-etikett` 12.
+>
+> 🔜 **Was als Nächstes ansteht:** **21.2, der Rechtstext** — wartet auf Ian, und
+> **ohne ihn wird nicht eingereicht.** Dann **21.4 TestFlight**. Danach ist Phase 21
+> durch.
+
+<details><summary>Der Stand davor (2026-09-14, Phase 21.5 Punkt 1 — der Demo-Zugang)</summary>
+
+> 🟢 **STAND 2026-09-14, später — Phase 21.5 Punkt 1 ist FERTIG: der Demo-Zugang.**
+> Der am häufigsten vergessene Ablehnungsgrund hat jetzt eine Antwort. Kurz, damit eine
+> frische Sitzung nicht sucht:
+>
+> **Eine neue Entscheidung von Ian: 79** (Abschnitt 6, Punkt 66) — und sie beantwortet
+> zwei Fragen auf einmal. Erstens: **ein Konto mit PASSWORT** statt eines Triggers auf
+> Supabases `auth`-Schema, eines fremden Postfachs oder gar keines Zugangs. Zweitens:
+> Der Reviewer sieht eine **bespielte Demo-Welt**, nicht den leeren Feed — sonst kann er
+> „Bin dabei → bestätigen → Chat" gar nicht ausprobieren, und eine App, deren
+> Kernfunktion der Reviewer nicht erreicht, wird nach 2.1 als unvollständig abgelehnt.
+> Damit ist **Punkt 5 aus 21.5 (der leere Zustand) mit erledigt.**
+>
+> **Zwei neue harte Regeln:**
+> **108** — der Riegel für den Passwort-Weg steht in `demoAnmelden()`, NICHT im
+> Bildschirm. Ein Feld, das nur unter einer Bedingung erscheint, ist eine Anzeige und
+> keine Absicherung; wer den Screen umbaut, hätte sonst still einen Passwort-Weg für
+> alle Konten aufgemacht.
+> **109** — kein Demo-Post ist `public` (sonst stünden die erfundenen Leute in Ians
+> echtem Feed), und die Adresse endet auf `.invalid` (sonst könnte, wem
+> `simplysocial.at` eines Tages gehört, sich einen Code schicken lassen und wäre drin —
+> **das Passwort ist ein zweiter Weg zum selben Konto, kein Riegel vor dem ersten**).
+>
+> **Gemessen:** `tsc` sauber · Lint **82 wie vorher** · lokal **171** ·
+> **neu `pruef-demo` 25** (Wegwerf-DB, zwei Gegenproben) · **neu `pruef-demoregel` 29**
+> (blankes Node) · `pruef-anbieter` 48 unverändert · `pruef-moderation` 31 auf frischer
+> DB. Der Riegel ist mit **ausgebautem Riegel gegengeprüft** (vier Kreuze), danach
+> zurückgesetzt und `diff`-gleich.
+>
+> ✅ **Am echten Server gelaufen, noch am selben Abend:** Ian hat `npm run demo`
+> ausgeführt (5 Profile, 5 Aktivitäten, 1 offene Anfrage, 3 Nachrichten) und die
+> Zugangsdaten in App Store Connect gesichert. Das `auth.users`-SQL ist damit an
+> echtem GoTrue belegt, nicht nur an der lokalen Attrappe.
+>
+> 🎉 **Und am Gerät durchgeprüft — Durchgang 5: 2 von 2** (iPhone 16, 14.09. abends,
+> nach `npm run geraet`). Ians Urteil: **„beides hat geklappt"**. Anmelden als Demo ✓
+> (also halten die acht leeren Strings an echtem GoTrue, nicht nur an der Attrappe)
+> und Anmelden als Ian selbst ✓ — **keine Demo-Leute in seinem Feed, harte Regel 109
+> hält am echten Server.** Ausgeschrieben in 21.5, samt der Abgrenzung, was ein
+> Blick belegt und was nur der Angriff belegt.
+>
+> 🔴 **Was daraus fürs Einreichen folgt:** Der Build, der zu Apple geht, muss den
+> Code vom 14.09. enthalten — **Zugangsdaten ohne passendes Feld sind dieselbe
+> Ablehnung wie gar keine.**
+>
+> 🟡 **Zwei Nebenbefunde, die jemandem gehören:**
+> 1. **`60_konto.sh` hatte eine Namensliste, die ich nachziehen musste** —
+>    `konten.ts` importiert jetzt `demo.ts`, und der Alias-Wächter dort zählt seine
+>    Dateien einzeln auf. Genau die Falle *„Eine Liste von Dateinamen in einem Skript
+>    wird irgendwann nicht nachgezogen"*, und diesmal war ich der Fall.
+> 2. **`npm run pruef-moderation` ist rot, wenn man es NACH `aufbauen.sh` laufen
+>    lässt** — jener Lauf schließt am Ende ein Konto aus und hinterlässt eine
+>    Datenbank, in der der Moderations-Aufbau nicht mehr greift. Auf frischer DB:
+>    31 Häkchen, 0 Kreuze. Kein Befund am Code, aber die schon bekannte Falle *„Ein
+>    Prüfstand kann eine Ordnung verlangen, die seine eigene Schwesterprüfung
+>    ZERSTÖRT"*, und niemand hat sie bisher aufgeschrieben bekommen.
+>
+> 🔜 **Was als Nächstes ansteht:**
+>
+> 1. ~~**Demo-Zugang: echter Lauf, Zugangsdaten, Gerätedurchgang**~~ ✅ *alles am
+>    14.09. erledigt, 2 von 2.* **Phase 21.5 Punkt 1 ist abgeschlossen.**
+> 2. **21.2 — der Rechtstext.** Wartet weiter auf Ian. **Ohne ihn wird nicht
+>    eingereicht**, und der Demo-Zugang ändert daran nichts.
+> 3. **21.1 — die Altersfreigabe** (13+, die Antwort ist ja) und **21.4 TestFlight**.
+> 4. **Die öffentliche Adresse nachziehen** — unverändert offen, siehe unten.
+
+</details>
+
+<details><summary>Der Stand davor (2026-09-14, Phase 21.3 — das Datenschutz-Etikett)</summary>
+
+> 🟢 **STAND 2026-09-14 — Phase 21.3 (das Datenschutz-Etikett) ist FERTIG, und der
+> Heredoc-Befund aus der Vorsitzung ist behoben.** Kurz, damit eine frische Sitzung
+> nicht sucht:
+>
+> **Eine neue Entscheidung von Ian: 78** (Abschnitt 6, Punkt 65) — der **Bezirk zählt
+> als „Grober Standort"** in Apples Etikett. Nicht weil er geortet würde (er wird
+> eingetippt), sondern weil der Feed **Entfernungen davon misst**. Die Asymmetrie war
+> der Grund: Ein Etikett, das zu wenig behauptet, ist ein Ablehnungsgrund und sieht nach
+> Absicht aus; eines, das zu viel behauptet, kostet einen Klick.
+>
+> **Neu gebaut:**
+> 1. **`_FUER_IAN/DATENSCHUTZ_ETIKETT.md`** — sieben Einträge zum Abtippen in App Store
+>    Connect, jeder mit der Codestelle daneben. Nichts geschätzt.
+> 2. **`npm run pruef-etikett`** (`supabase/pruefen/99_etikett.py`, **12 Häkchen**,
+>    braucht nichts) — **harte Regel 107.** Er liest die 52 Spaltennamen aus dem Schema
+>    und fragt, ob jede im Etikett steht. Der Code sagt, was drinstehen muss, nicht das
+>    Dokument. Gegenprobe gebaut: eine eingeschmuggelte `profiles.telefon` macht ihn rot.
+>
+> **Gemessen:** `tsc` sauber · Lint **82 wie vorher** · lokal **171** · `pruef-anbieter`
+> 48 · `pruef-bildwahl` 47 · `pruef-sitzung` 29 · `pruef-programmfehler` 25 ·
+> `pruef-zuschnitt` 47 · **neu `pruef-etikett` 12**. Die Server-Prüfstände
+> (`pruef-schreiben`, `-konto`, `-bilder`, `-lesen`) sind **nicht gelaufen** — sie
+> brauchen den echten Server, und nichts an ihnen wurde angefasst.
+>
+> 🔴 **Der Fund, den eine frische Sitzung zuerst kennen muss:** Der hier notierte
+> Behebungsvorschlag zum Heredoc (*„`<<'SQL'` statt `<<SQL`"*) war **falsch** und hätte
+> `98_moderation.sh` zerlegt — das Heredoc braucht `$POST`, `$LEA`, `$FADEN` als echte
+> UUIDs. Gebaut wurde `<<'SQL'` **plus psql-Variablen** (`-v post="$POST"`, `:'post'`).
+> **Die Lehre ist nicht der Bug, sondern dass die falsche Behebung schon aufgeschrieben
+> dastand, als hätte jemand sie geprüft.** Steht als Falle in `_gedaechtnis/FALLEN.md`.
+>
+> 🟡 **Ein Nebenbefund, der jemandem gehört:** CLAUDE.md behauptete **166** Fallen,
+> gezählt waren **172**. Berichtigt auf 173 (mit der neuen), Index und Volltext stimmen
+> jetzt überein. Wer Zahlen in CLAUDE.md liest, zählt sie besser nach.
+>
+> 🔜 **Was als Nächstes ansteht:**
+>
+> 1. **21.5 Punkt 1 — der Demo-Zugang.** Ein Testkonto für den Apple-Reviewer, das ohne
+>    fremde E-Mail funktioniert. **Der am häufigsten vergessene Ablehnungsgrund**, und
+>    er hängt an niemandem. Das ist der nächste vorziehbare Schritt.
+> 2. **21.2 — der Rechtstext.** Wartet auf Ian, siehe `_FUER_IAN/OFFENE_SACHEN.md`
+>    Punkt 1. Ohne ihn wird nicht eingereicht.
+> 3. **21.1 — die Altersfreigabe** (13+, die Antwort ist ja) und **21.4 TestFlight**.
+> 4. **Die öffentliche Adresse nachziehen.** `ANMELDE_QUELLE` steht auf `'supabase'`,
+>    `npm run deploy` ist dadurch gesperrt (harte Regel 96) — das ist Absicht. **Ob die
+>    Webseite nachzieht, ist Ians getrennte Entscheidung** und steht weiter aus.
+
+
+</details>
+
+<details><summary>Der Stand davor (2026-09-13, Phase 20.7-b und 20.6-d)</summary>
+
 > 🟢 **STAND 2026-09-13, spätabends — Phase 20.7-b ist FERTIG, und damit ist die
 > Apple-1.2-Pflicht vollständig.** Melden ✓ · Blockieren ✓ · Nutzungsbedingungen ✓ ·
 > Konto löschen ✓ · **Meldungen lesen ✓ (20.7) · und jetzt auch HANDELN ✓ (20.7-b)**.
@@ -8598,8 +9017,27 @@ jede mit einer Prüffrage, an der man hängen bleibt oder weitergeht:
 > file`. Das ist wörtlich die Falle *„Eine Prüfung mit Backticks in doppelten
 > Anführungszeichen misst NICHTS"*, nur eine Etage tiefer. **Der Prüfstand läuft
 > trotzdem grün** (31 Häkchen), weil die zerschossenen Zeilen nur Kommentare sind — aber
-> er ist einen Tippfehler davon entfernt, etwas anderes zu zerschießen. Behebung:
-> `<<'SQL'` statt `<<SQL`.
+> er ist einen Tippfehler davon entfernt, etwas anderes zu zerschießen.
+>
+> ✅ **Behoben am 2026-09-14 — und die hier vorgeschlagene Behebung war FALSCH.**
+> Der Satz lautete „`<<'SQL'` statt `<<SQL`". Nachgemessen: Das Heredoc braucht
+> `$POST`, `$LEA`, `$FADEN`, `$ERBGRUPPE` als echte UUIDs. Quotiert man nur, steht
+> wörtlich `values ('$POST', …)` im SQL, und der Aufbau scheitert am Datentyp.
+> **Eine Behebung, die die eine Hälfte des Heredocs sieht und die andere nicht.**
+>
+> Gebaut wurde stattdessen `<<'SQL'` **plus psql-Variablen**: `-v post="$POST"` am
+> Aufruf, `:'post'` im SQL. Damit setzt psql ein, nicht die Shell — und die Shell ist
+> aus dem SQL-Rumpf **dauerhaft** heraus, statt dass der nächste Backtick sie
+> zurückholt. Gemessen: **6 Shell-Fehler je Lauf → 0**, lokal weiter **171 Häkchen,
+> 0 Kreuze**, `98_moderation.sh` weiter **31**.
+>
+> **Und der Rest des Projekts ist mitgemessen:** Ein Scanner über alle 26 Heredocs in
+> `supabase/pruefen/` und `scripts/` findet **keinen zweiten Fall**. Die zwei Treffer
+> in `50_lesen.sh` und `70_schreiben.sh` sind falsch-positiv — dort steht `\$(`,
+> bewusst escaped.
+
+
+</details>
 
 > ⚠️ **Und die Landing-Page-Farbe wartet unverändert** (siehe direkt darunter) — sie
 > kostet keine Arbeitszeit und blockiert sonst still.

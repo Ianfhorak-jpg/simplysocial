@@ -25,12 +25,29 @@
  * „nichts passiert" — der Knopf federt zurück, und niemand weiß, warum. Deshalb
  * trägt jede Funktion hier ihren Fehler als `KontoFehler` heraus, mit `code`.
  *
- * ── Warum kein `signUp` und kein Passwort ────────────────────────────────────
+ * ── Warum kein `signUp` und — für MENSCHEN — kein Passwort ───────────────────
  * `signInWithOtp` legt das Konto beim ersten richtigen Code selbst an
  * (`shouldCreateUser`). Anmelden und Registrieren sind damit EIN Weg und nicht
  * zwei — es gibt keinen Zustand „Konto da, aber falsch angemeldet", und niemand
  * muss sich ein Passwort merken, das er in einer Treff-App ohnehin nie wieder
  * eintippt. Das ist Ians Entscheidung 27 in ihrer technischen Form.
+ *
+ * ⚠️ **Seit Phase 21.5 gibt es dazu GENAU EINE Ausnahme**, und sie steht
+ * ausdrücklich hier, weil der Absatz darüber sonst eine Sicherheitszusage
+ * machen würde, die nicht mehr gilt (*„Ein Kommentar, der eine Sicherheitszusage
+ * begründet, veraltet lautlos"*, FALLEN.md): `demoAnmelden()` benutzt ein
+ * Passwort — für das eine Konto des Apple-Reviewers und für kein anderes. Der
+ * Riegel dafür steht in der Funktion selbst, nicht im Bildschirm darüber.
+ *
+ * **Der Passwort-Weg ist am SERVER ohnehin offen**, und das ist gemessen, nicht
+ * angenommen: `POST /auth/v1/token?grant_type=password` antwortet mit
+ * `invalid_credentials` und nicht mit `email_provider_disabled` (2026-09-14, mit
+ * dem anon key, der im App-Bündel steht). Was ihn für alle ÜBRIGEN Konten
+ * nutzlos macht, ist nicht diese Datei, sondern ihr leeres
+ * `auth.users.encrypted_password`: Wer per Code oder über Apple/Google
+ * hereinkam, hat nie eines gesetzt, und bcrypt vergleicht gegen nichts. Diese
+ * Funktion macht den Weg also nicht auf — sie benutzt einen, der offen ist, für
+ * das einzige Konto, das ein Passwort besitzt.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -38,6 +55,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { client } from '@/lib/supabase';
 
 import type { Anbieter, Sitzung } from './anmeldung';
+import { DEMO_EMAIL, istDemoZugang } from './demo';
 import { HANDLE_VERSUCHE, handleVorschlag, naechsterHandle } from './konto';
 
 /**
@@ -144,6 +162,59 @@ export async function mitAusweisAnmelden(
       error.code ?? String(error.status ?? '?'),
       error.message,
     );
+  }
+}
+
+/**
+ * Der Demo-Zugang für den Apple-Reviewer — Phase 21.5 Punkt 1.
+ *
+ * ── Der Riegel steht HIER und nicht im Bildschirm ────────────────────────────
+ * Der Bildschirm zeigt das Passwortfeld nur bei `istDemoZugang()` — aber ein
+ * Bildschirm ist eine ANZEIGE und kein Recht. Wer ihn umbaut, das Feld
+ * versehentlich immer zeigt oder eine zweite Stelle ergänzt, hätte damit still
+ * einen Passwort-Weg für ALLE Konten aufgemacht. Genau davor steht harte Regel
+ * 70: *Was die Rechteliste verbietet, macht GENAU EINE Funktion.*
+ *
+ * Deshalb fragt diese Funktion selbst nach und wirft, statt zu senden. Es ist
+ * bewusst KEIN `KontoFehler` mit hübschem Satz — niemand soll diesen Zustand je
+ * auf einem Bildschirm lesen, er ist ein PROGRAMMfehler im Sinn von harter
+ * Regel 103: Die App hat gerade etwas versucht, das sie nicht darf.
+ *
+ * ── Und er kostet nichts, weil er vor dem Netz sitzt ─────────────────────────
+ * Die Prüfung passiert, bevor irgendetwas nach Irland geht. Ein versehentlicher
+ * Passwort-Versuch auf ein fremdes Konto erreicht GoTrue damit gar nicht erst —
+ * es gibt also auch keinen Rate-Limit-Zähler, den er hochtreiben könnte.
+ *
+ * ── Warum `signInWithPassword` und nicht `signInWithOtp` mit festem Code ─────
+ * Steht ausgeschrieben in `demo.ts`, Möglichkeit B: Ein fester Code verlangt
+ * einen Trigger in Supabases eigenem `auth`-Schema, und dessen Bauart hängt an
+ * der GoTrue-Fassung. Ein Passwort hängt an nichts als an bcrypt.
+ */
+export async function demoAnmelden(
+  email: string,
+  passwort: string,
+  sb: SupabaseClient = client(),
+): Promise<void> {
+  if (!istDemoZugang(email)) {
+    throw new Error(
+      `demoAnmelden() ist nur für ${DEMO_EMAIL} — aufgerufen mit einer anderen Adresse. ` +
+        'Der Passwort-Weg gehört dem Demo-Konto und keinem zweiten (siehe features/auth/demo.ts).',
+    );
+  }
+
+  const { error } = await sb.auth.signInWithPassword({
+    // Dieselbe Normalisierung wie in `istDemoZugang()` — und nicht nur `trim()`
+    // wie bei den anderen Wegen. GoTrue vergleicht die Adresse kleingeschrieben,
+    // aber der Riegel eine Zeile darüber tut es auch: Würde hier die ROHE
+    // Eingabe gesendet, prüfte der Riegel etwas anderes als das, was geht.
+    email: email.trim().toLowerCase(),
+    // Das Passwort wird NICHT getrimmt. Ein Leerzeichen am Ende ist bei einer
+    // Adresse ein Tippfehler und bei einem Passwort ein Zeichen — wer es
+    // wegschneidet, macht aus einem gültigen Passwort still ein anderes.
+    password: passwort,
+  });
+  if (error) {
+    throw new KontoFehler('demo-anmelden', error.code ?? String(error.status ?? '?'), error.message);
   }
 }
 

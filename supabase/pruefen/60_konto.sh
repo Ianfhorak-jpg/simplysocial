@@ -162,14 +162,17 @@ find "$ARBEIT/js" -name '*.js' -exec sed -i '' -E \
 # diesen Wächter seit jeher; hier war er nie, und deshalb hat es niemand gemerkt.
 # Gefragt wird, was wirklich GELADEN wird — nicht alles im Ausgabeordner (die
 # Verengung aus 70_schreiben.sh).
-for DATEI in features/auth/anmeldung features/auth/konto features/auth/konten lib/supabase lib/sitzungsspeicher; do
+# `features/auth/demo` seit Phase 21.5: `konten.ts` importiert es, also wird es
+# mitgeladen — und eine Liste von Dateinamen in einem Skript wird irgendwann nicht
+# nachgezogen (FALLEN.md). Sie wird hier nachgezogen.
+for DATEI in features/auth/anmeldung features/auth/demo features/auth/konto features/auth/konten lib/supabase lib/sitzungsspeicher; do
   if grep -qE "from '@/" "$ARBEIT/js/$DATEI.js"; then
     echo "✗ In $DATEI.js steht noch ein @/-Alias, den Node nicht kennt:"
     grep -nE "from '@/" "$ARBEIT/js/$DATEI.js"
     exit 1
   fi
 done
-echo "✓ anmeldung.js, konto.js, konten.js, supabase.js und sitzungsspeicher.js laufen in blankem Node."
+echo "✓ anmeldung.js, demo.js, konto.js, konten.js, supabase.js und sitzungsspeicher.js laufen in blankem Node."
 
 echo
 echo "── 4. Messen ──"

@@ -70,7 +70,12 @@
     "meldungen": "bash scripts/meldungen.sh",
     "pruef-programmfehler": "bash supabase/pruefen/97_programmfehler.sh",
     "pruef-moderation": "bash supabase/pruefen/98_moderation.sh",
-    "pruef-zuschnitt": "bash supabase/pruefen/91_zuschnitt.sh"
+    "pruef-etikett": "python3 supabase/pruefen/99_etikett.py",
+    "pruef-zuschnitt": "bash supabase/pruefen/91_zuschnitt.sh",
+    "demo": "bash supabase/demo/anlegen.sh",
+    "pruef-demo": "bash supabase/pruefen/92_demo.sh",
+    "pruef-demoregel": "bash supabase/pruefen/93_demoregel.sh",
+    "pruef-alter": "python3 supabase/pruefen/94_altersfreigabe.py"
   },
   "private": true
 }

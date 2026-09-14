@@ -99,6 +99,10 @@ Fenster, dazu **Ians Entscheidung 77 — 512 px**. Volltext aller Phasen in
 | `npm run pruef-sitzung` | 29 | nichts |
 | `npm run pruef-programmfehler` | 25 | nichts |
 | `npm run pruef-zuschnitt` | **47** | nichts |
+| `npm run pruef-etikett` | 12 | nichts |
+| `npm run pruef-demo` | **25** | nichts (Wegwerf-DB) |
+| `npm run pruef-demoregel` | **29** | nichts |
+| `npm run pruef-alter` | **16** | nichts |
 
 Dazu: `npx tsc --noEmit` sauber · `expo lint` **82 Probleme** (81 vorbestehend plus
 **einer mit Namen**: `react-hooks/refs` in `BildZuschneiden.tsx` — derselbe, den
@@ -111,6 +115,22 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 
 1. **Phase 21 — App Store.** 13+ (Apples neue Altersfrage ist seit Sept. 2026 Pflicht,
    die Antwort ist ja), Rechtstexte, TestFlight, einreichen.
+   **21.3, das Datenschutz-Etikett, ist seit 2026-09-14 fertig** — sieben Einträge,
+   jeder aus dem Code hergeleitet, in `_FUER_IAN/DATENSCHUTZ_ETIKETT.md` zum Abtippen.
+   Dazu **Ians Entscheidung 78**: der Bezirk zählt als „Grober Standort".
+   **21.5 Punkt 1, der Demo-Zugang, ist seit 2026-09-14 fertig** — Ians Entscheidung
+   79, harte Regeln 108 und 109. Ein Konto mit Passwort plus eine bespielte Demo-Welt;
+   damit ist **Punkt 5 (der leere Zustand) mit erledigt**. Anleitung für Ian in
+   `_FUER_IAN/DEMO_ZUGANG.md`. **Vollständig erledigt am 14.09.**: echter Lauf ✓,
+   Zugangsdaten in App Store Connect ✓, **Gerätedurchgang 5 — 2 von 2** ✓ (anmelden
+   als Demo · und als Ian selbst, ohne Demo-Leute im Feed).
+   ⚠️ **Der Build, der eingereicht wird, muss den Code vom 14.09. enthalten** —
+   Zugangsdaten ohne passendes Feld sind dieselbe Ablehnung wie gar keine.
+   **21.1, die Altersfreigabe, ist seit 2026-09-14 fertig** — Ergebnis **13+**, keine
+   Wahl sondern Feststellung. 28 Antworten zum Abtippen in
+   `_FUER_IAN/ALTERSFREIGABE.md`, bewacht von `npm run pruef-alter` (harte Regel 110).
+   ⚠️ **Apples Fragebogen stand beim Nachsehen auf 28 × `null`** — noch trägt Ian ihn
+   ein. **Offen: 21.2 (Rechtstext, wartet auf Ian) und 21.4 (TestFlight).**
 2. ~~**Phase 20.6-d — runder Zuschnitt.**~~ ✅ **fertig und am Gerät geprüft**
    (2026-09-13, Durchgang 4: 6 von 6). Nichts mehr offen.
 3. **19d-2** (MapKit JS im Browser) — fällt nach Phase 20 nebenbei ab.
@@ -119,10 +139,11 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 
 | | Wo | Blockiert? |
 |---|---|---|
-| 🔑 **Management-Token widerrufen** — darf alles im Supabase-Konto, wird nie wieder gebraucht | `supabase.com/dashboard/account/tokens` → Revoke | nein, aber offen seit 13.09. |
+| 🔑 **Management-Token widerrufen** — darf alles im Supabase-Konto, wird nie wieder gebraucht. **Am 14.09. nachgesehen: `~/.simplysocial/mgmt-token` existiert nicht mehr** — entweder schon erledigt oder nie abgelegt. Im Dashboard nachsehen | `supabase.com/dashboard/account/tokens` → Revoke | nein |
 | **Der Knopf unter dem Vollbild-Kasten** — „Nochmal versuchen" oder nichts | PLAN.md 5b, 20.9 | nein |
 | **`meldungLage()` bei ZU SPÄT bearbeitet** | `TODO(Ian)`, PLAN.md 6 Punkt 60 | nein |
 | **Apple-Programm auf wessen Namen?** — mit 16 üblicherweise über einen Elternteil; daran hängen Anbietername, Verträge und der Sign-in-Schlüssel | `_FUER_IAN/OFFENE_SACHEN.md` | später teuer |
+| 🟢 **Die 28 Altersfragen eintragen** — App Store Connect → Allgemeine Informationen → Altersfreigabe. Alles vorbereitet, zwei Urteilsfragen liegen bei Ian | `_FUER_IAN/ALTERSFREIGABE.md` | für Phase 21 ja |
 | **Rechtstext für die Nutzungsbedingungen** — kein Text, den Claude erfinden darf | `_FUER_IAN/OFFENE_SACHEN.md` Punkt 1 | für Phase 21 ja |
 | **Landing-Page-Farbe** — Olivgrün, Weinrot oder Türkis, dazu bunt vs. Leitfarbe | `landing-vorschau/LIESMICH.md`, OFFENE_SACHEN 4b | nein |
 
@@ -260,9 +281,13 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 104. In Postgres darf `PUBLIC` jede neue Funktion AUSFÜHREN — ein fehlender `grant` ist bei Funktionen KEINE Zusage
 105. `deploy.sh` hat VIER Wächter, und jeder deckt genau eine Frage — wer einen anfasst, liest zuerst, was er allein trägt
 106. Ein rundes BILD gibt es nicht — rund ist das FENSTER, und wo das Quadrat liegt, steht in `features/social/zuschnitt.ts`
+107. Was die App an Daten sammelt, steht in `_FUER_IAN/DATENSCHUTZ_ETIKETT.md` — und der Code sagt, was drinstehen MUSS, nicht umgekehrt
+108. Der Passwort-Weg gehört EINEM Konto — und der Riegel steht in `demoAnmelden()`, nie im Bildschirm
+109. Eine Demo-Welt in der ECHTEN Datenbank ist `followers`, nie `public` — und die Adresse des Demo-Kontos endet auf `.invalid`
+110. Was Apple über das ALTER fragt, steht in `_FUER_IAN/ALTERSFREIGABE.md` — und die NEIN-Antworten sind die gefährlichen
 ## Fallen — Index
 
-> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 166 Stück, jede schon
+> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 179 Stück, jede schon
 > einmal einen Abend gekostet — die meisten stammen aus ACTA (`17_Tennis_Optimma`), der
 > Rest aus diesem Projekt. Hier steht nur der Titel; **die Diagnose steht im Volltext.**
 
@@ -438,6 +463,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Eine Textsuche mit NULL Treffern beweist nichts — sie braucht die Gegenprobe im selben Ordner
 - Eine Prüf-Erwartung, die BEQUEMLICHKEIT verlangt, prüft nicht die Regel
 - Ein Prüfstand mit Gegenprobe legt eine Kopie von `src/` INS Projekt — und `.gitignore` zählte die Namen einzeln auf
+- Ein unquotiertes Heredoc gibt der SHELL den ganzen SQL-Text — und die Behebung, die man zuerst hinschreibt, zerlegt das Skript
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)
@@ -463,6 +489,8 @@ Kasten in `nutzungsbedingungen.tsx`): Er ist kein Text, den Claude erfinden darf
 | die Diagnose zu einer Falle | `_gedaechtnis/FALLEN.md` |
 | was nur Ian entscheiden kann | `_FUER_IAN/OFFENE_SACHEN.md` |
 | die Schritte für den Gerätedurchgang | `_FUER_IAN/HANDY_DURCHGANG.md` |
+| den Demo-Zugang für Apple einrichten | `_FUER_IAN/DEMO_ZUGANG.md` |
+| die Altersfreigabe bei Apple eintragen | `_FUER_IAN/ALTERSFREIGABE.md` |
 | Klick-für-Klick-Anleitungen für Konten | `_FUER_IAN/KONTEN_EINRICHTEN.md` |
 | einen Beleg (`am01`, `ao01`, …) | `_belege/`, Register in `_belege/LIESMICH.md` |
 

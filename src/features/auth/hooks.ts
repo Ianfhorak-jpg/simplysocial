@@ -6,6 +6,7 @@ import type { AbmeldeGrund, Anbieter, Sitzung } from './anmeldung';
 import {
   codeAnfordern,
   codePruefen,
+  demoAnmelden,
   mitAusweisAnmelden,
   profilAnlegen,
   sitzungLesen,
@@ -201,6 +202,29 @@ export async function codeSchicken(email: string): Promise<void> {
  */
 export async function anmeldenMitCode(email: string, code: string): Promise<void> {
   await codePruefen(email, code);
+  await sitzungUebernehmen();
+}
+
+/**
+ * Der Demo-Zugang — Phase 21.5 Punkt 1.
+ *
+ * ── Warum das eine eigene Funktion ist und kein Argument an `anmeldenMitCode` ─
+ * Weil es ein anderer WEG ist und nicht ein anderer Wert. Ein
+ * `anmeldenMitCode(email, code, alsPasswort?)` hätte einen Schalter in eine
+ * Funktion gelegt, die zwei verschiedene Dinge tut — und der Riegel in
+ * `demoAnmelden()` säße dann hinter einem `if`, das jemand beim nächsten Umbau
+ * anders verzweigt. Dieselbe Überlegung wie bei `anbieterFehlerText()` neben
+ * `codeFehlerText()`: zwei Wege, zwei Funktionen.
+ *
+ * Was DANACH passiert, ist Wort für Wort dasselbe wie bei den drei anderen Wegen
+ * — deshalb `sitzungUebernehmen()` und keine eigene Zeile. Das Demo-Konto hat
+ * ein Profil (`supabase/demo/anlegen.sh` legt es mit an), landet also auf `'an'`
+ * und nicht im Erstes-Konto-Bildschirm. **Hätte es keines, wäre das kein Fehler,
+ * sondern der Reviewer stünde vor drei Fragen** — und genau deshalb legt das
+ * Skript das Profil an, statt sich darauf zu verlassen.
+ */
+export async function anmeldenAlsDemo(email: string, passwort: string): Promise<void> {
+  await demoAnmelden(email, passwort);
   await sitzungUebernehmen();
 }
 

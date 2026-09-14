@@ -3,6 +3,28 @@
 > Hier sammelt Claude alles, wo es ohne dich nicht weitergeht: Geld, Rechte, Inhalte,
 > Entscheidungen. Erledigtes wird abgehakt und stehen gelassen, nicht gelöscht.
 >
+> ---
+>
+> 🆕 **14.09.: Das Datenschutz-Etikett ist fertig — du musst es nur noch abtippen.**
+> Apple will vor dem Einreichen wissen, welche Daten die App sammelt. Das steht jetzt
+> vollständig in **`_FUER_IAN/DATENSCHUTZ_ETIKETT.md`**: sieben Einträge, und hinter
+> jedem steht, aus welcher Stelle im Code er kommt. Es ist nichts geraten.
+>
+> **Wichtig daran: Es muss stimmen.** Ein Prüfer bei Apple kann mitlesen, was die App
+> verschickt. Deshalb gibt es auch einen Wächter (`npm run pruef-etikett`), der rot
+> wird, wenn wir später ein Datenfeld dazubauen und das Etikett nicht nachziehen.
+>
+> **Du hast dabei schon eine Frage beantwortet** (deine 78. Entscheidung): Der Bezirk
+> zählt als „grober Standort". Der echte GPS-Standort dagegen **verlässt dein Handy
+> nie** — das ist nachgemessen und steht so im Etikett.
+>
+> ✅ **Dein Wunsch nach RUNDEM Zuschneiden ist gebaut und am Handy geprüft**
+> (13.09. nachts, Durchgang 4: sechs von sechs). Es gibt jetzt einen eigenen
+> Zuschneide-Bildschirm mit rundem Fenster — schieben, zoomen, übernehmen. Dein Urteil
+> dazu war „läuft flüssig". Auf dich wartet daraus nichts mehr.
+>
+> ---
+>
 > 🎉 **13.09., Nachmittag: der Handy-Durchgang ist gemacht — sieben von sieben.**
 > Anmelden mit Apple, mit Google, angemeldet bleiben über den Neustart, Profilbild,
 > der Merker, kein Prototyp-Kasten, die @-Namen. **Damit läuft das Backend auf einem
@@ -13,13 +35,6 @@
 > App baute den Dateinamen mit etwas, das es nur im Browser gibt — am Handy ging das
 > schief, und der Fehler verschwand spurlos, statt dir etwas zu sagen. Behoben.
 > Danach gemessen: dein Bild ist **176 kB**, ein echtes JPEG, und liegt richtig.
->
-> ❓ **Dein Wunsch nach RUNDEM Zuschneiden ist notiert und noch nicht gebaut.** Der
-> Baustein, den wir benutzen, kann auf iPhones nur quadratisch — das steht in seiner
-> eigenen Beschreibung, da hilft keine Einstellung. Für einen Kreis bräuchte es
-> einen **eigenen Zuschneide-Bildschirm** (Bild schieben und zoomen hinter einer
-> runden Maske, wie bei Instagram). Ist gut machbar, kostet einen Baustein und einen
-> neuen Build. **Sag Bescheid, wenn es soweit sein soll.**
 >
 > ---
 >
@@ -226,6 +241,38 @@
 > abends: eine Frage zum Kontolöschen, gleich hier drüber — sie ist wie deine Nummer 12.**
 
 ---
+
+---
+
+## 🟢 NEU (14.09.2026) — der Demo-Zugang für Apple · **ein Befehl, dann abtippen**
+
+Der Apple-Reviewer kommt ohne Testkonto nicht in die App und lehnt dann ab. **Das ist
+der Grund, aus dem Apps wie unsere am häufigsten abgelehnt werden.** Gebaut ist alles,
+offen sind zwei Handgriffe — und beide gehören dir, weil sie in die **echte** Datenbank
+schreiben bzw. bei Apple stehen.
+
+```bash
+cd simplysocial
+npm run demo          # legt den Zugang an, zeigt EINMAL ein Passwort
+```
+
+Danach das Passwort nach App Store Connect → **App-Prüfungsinformationen**.
+**Klick für Klick steht das in [`DEMO_ZUGANG.md`](DEMO_ZUGANG.md)** — dort ist auch
+der fertige Text, den du ins Anmerkungsfeld kopierst.
+
+> ⚠️ **Das Passwort steht danach nirgends mehr** — nicht im Projekt, nicht bei mir.
+> Kopier es direkt aus dem Terminal ins Formular, **nicht** per Screenshot auf den
+> Schreibtisch. Verloren ist es kein Drama: `npm run demo -- --neues-passwort` macht
+> ein neues, dann musst du es nur noch einmal eintragen.
+
+**Was du dabei wissen solltest, ohne nachlesen zu müssen:**
+
+| | |
+|---|---|
+| **Sehen wir die erfundenen Leute im Feed?** | **Nein.** Jeder Demo-Post steht auf „nur meine Follower", und die fünf Demo-Leute folgen nur einander. Das ist nicht geglaubt, sondern angegriffen: `npm run pruef-demo` versucht als echtes Konto, sie zu lesen — kommt eine Zeile, ist der Lauf rot. |
+| **Warum `.invalid` in der Adresse?** | Diese Endung kann laut Internet-Norm **nie** jemandem gehören. Damit gibt es für das Testkonto kein Postfach — und niemand kann sich per E-Mail-Code hineinschummeln. Bei `demo@simplysocial.at` wäre genau das möglich, sobald jemand anderes die Domain kauft. |
+| **Wie oft muss ich das machen?** | **Vor jedem Einreichen einmal.** Die Demo-Termine liegen ein paar Tage in der Zukunft, gerechnet ab dem Lauf — sonst sieht der Reviewer lauter abgelaufene Aktivitäten. Der zweite Lauf rührt das Passwort nicht an. |
+| **Und danach wieder weg?** | `npm run demo -- --abraeumen`, aber **erst wenn die App freigegeben ist** — danach funktioniert der Zugang bei Apple nicht mehr. |
 
 ---
 

@@ -71,6 +71,24 @@ export interface SsInputProps {
    * Fokus-Zustand des Bausteins bleibt davon unberührt.
    */
   onFocus?: () => void;
+  /**
+   * Punkte statt Zeichen — Phase 21.5, und bisher gibt es genau EIN Feld dafür:
+   * das Passwort des Demo-Zugangs in `components/Anmelden.tsx`.
+   *
+   * ── Warum als Prop am Baustein und nicht als eigener `TextInput` im Screen ──
+   * Harte Regel 6 (*„neue Felder sind SsInput"*) bricht sonst genau hier, am
+   * ersten Sonderfall. Ein eigener `TextInput` hätte den Rahmen, den Fokuswechsel
+   * und den Fehlertext neu bauen müssen — dreimal dieselbe Entscheidung, einmal
+   * davon anders.
+   *
+   * Ein `autoCapitalize`-Prop kommt dabei ausdrücklich NICHT mit: Auf iOS schaltet
+   * ein Feld mit `secureTextEntry` die Großschreibung von sich aus ab, und für die
+   * ADRESSE daneben trägt die Normalisierung in `istDemoZugang()` — sie vergleicht
+   * `trim().toLowerCase()`, also ist ein groß getipptes `Demo@…` schon beantwortet.
+   * Ein Prop für einen Fall, den zwei Stellen bereits abdecken, wäre eine dritte
+   * Meinung zur selben Frage.
+   */
+  secureTextEntry?: boolean;
   autoFocus?: boolean;
   style?: StyleProp<ViewStyle>;
   inputStyle?: StyleProp<TextStyle>;
@@ -108,6 +126,7 @@ export function SsInput({
   error,
   onSubmitEditing,
   onFocus,
+  secureTextEntry,
   autoFocus,
   style,
   inputStyle,
@@ -148,6 +167,7 @@ export function SsInput({
           // Nach dem Abschicken im Feld bleiben, statt die Tastatur zuzuklappen —
           // sonst muss man vor jeder zweiten Nachricht wieder hineintippen.
           submitBehavior={onSubmitEditing ? 'submit' : undefined}
+          secureTextEntry={secureTextEntry}
           autoFocus={autoFocus}
           style={[styles.eingabe, multiline && styles.eingabeHoch, inputStyle]}
         />

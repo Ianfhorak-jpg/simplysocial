@@ -16,12 +16,14 @@ import {
   codeFehlerText,
 } from '@/features/auth/anmeldung';
 import {
+  anmeldenAlsDemo,
   anmeldenMitAnbieter,
   anmeldenMitCode,
   attrappeAnmelden,
   codeSchicken,
   useSitzung,
 } from '@/features/auth/hooks';
+import { istDemoZugang, passwortFehlerText } from '@/features/auth/demo';
 import { anbieterLage } from '@/lib/anmelde-anbieter';
 import { LOESCH_QUITTUNG } from '@/features/safety/konto';
 import { KontoFehler } from '@/features/auth/konten';
@@ -61,7 +63,13 @@ export function Anmelden() {
   // `'wahl'` → `'email'` → `'code'`. Ein Schritt je Bildschirm, und der Rückweg ist
   // immer da: Wer sich in der Adresse vertippt hat, merkt es erst, wenn keine Mail
   // kommt — ohne „Andere Adresse" säße er dann fest und müsste die App neu laden.
-  const [schritt, setSchritt] = useState<'wahl' | 'email' | 'code'>('wahl');
+  //
+  // `'passwort'` ist seit Phase 21.5 die vierte Stellung und **kein vierter Weg**:
+  // Man kommt nur dorthin, wenn im Adressfeld die eine Demo-Adresse steht
+  // (`istDemoZugang()`), und für alle anderen ändert sich kein Bildpunkt. Warum es
+  // diesen Zugang überhaupt gibt und warum er nicht unter Apples 2.3.1 fällt,
+  // steht ausgeschrieben in `features/auth/demo.ts`.
+  const [schritt, setSchritt] = useState<'wahl' | 'email' | 'code' | 'passwort'>('wahl');
   const sitzung = useSitzung();
   // Ians Entscheidung 52: Wer sein Konto gelöscht hat, liest hier die Quittung.
   //
@@ -235,11 +243,12 @@ function EmailWeg({
   schritt,
   setSchritt,
 }: {
-  schritt: 'email' | 'code';
-  setSchritt: (s: 'wahl' | 'email' | 'code') => void;
+  schritt: 'email' | 'code' | 'passwort';
+  setSchritt: (s: 'wahl' | 'email' | 'code' | 'passwort') => void;
 }) {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
+  const [passwort, setPasswort] = useState('');
   const [laeuft, setLaeuft] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);
 
@@ -256,8 +265,27 @@ function EmailWeg({
     setFehler(codeFehlerText('unbekannt'));
   }
 
+  /**
+   * Was der Knopf unter dem Adressfeld tut — **die einzige Verzweigung im ganzen
+   * Demo-Zugang.**
+   *
+   * Für jeden Menschen ist das „Code schicken". Für die eine Demo-Adresse ist es
+   * ein Schritt weiter, und zwar OHNE Netz: Es wird nichts angefordert, weil es
+   * nichts anzufordern gibt — `demo@simplysocial.invalid` hat kein Postfach und
+   * kann per RFC 2606 nie eines haben (siehe `demo.ts`). Ein `codeSchicken()`
+   * hier wäre eine Mail an ein Nichts, ein Bounce bei Brevo und ein Bildschirm,
+   * der dem Reviewer sagt, er solle in seinem Postfach nachsehen.
+   */
   async function schicken() {
     if (laeuft) return;
+    // Der Sprung passiert VOR `setLaeuft(true)`: Er ist ein Bildschirmwechsel und
+    // kein Vorgang, und ein „Wird geschickt …" für eine Zehntelsekunde wäre eine
+    // Rückmeldung über etwas, das gar nicht stattfindet.
+    if (istDemoZugang(email)) {
+      setFehler(null);
+      setSchritt('passwort');
+      return;
+    }
     setLaeuft(true);
     setFehler(null);
     try {
@@ -266,6 +294,38 @@ function EmailWeg({
     } catch (f) {
       melden(f);
     } finally {
+      setLaeuft(false);
+    }
+  }
+
+  /**
+   * Der Demo-Zugang einlösen — Phase 21.5.
+   *
+   * Wort für Wort gebaut wie `pruefen()` daneben, mit zwei Unterschieden, und
+   * beide sind begründet:
+   *   · `passwortFehlerText()` statt `codeFehlerText()` — andere Codes, andere
+   *     nächste Handlung (siehe `demo.ts`).
+   *   · Kein `setLaeuft(false)` im Erfolgsfall, weil der Torwächter diesen
+   *     Bildschirm im selben Augenblick austauscht. Dieselbe Stelle und derselbe
+   *     Grund wie oben.
+   */
+  async function demoPruefen() {
+    if (laeuft) return;
+    setLaeuft(true);
+    setFehler(null);
+    try {
+      await anmeldenAlsDemo(email, passwort);
+    } catch (f) {
+      // Ein `KontoFehler` ist beantwortbar; alles andere ist der Riegel aus
+      // `demoAnmelden()` und damit ein PROGRAMMfehler (harte Regel 103) — er
+      // soll laut in der Konsole stehen und nicht als „kein Netz" verkleidet.
+      if (f instanceof KontoFehler) {
+        console.warn(f.message);
+        setFehler(passwortFehlerText(f.code));
+      } else {
+        console.warn(String(f));
+        setFehler(passwortFehlerText('unbekannt'));
+      }
       setLaeuft(false);
     }
   }
@@ -305,6 +365,38 @@ function EmailWeg({
             onPress={() => void schicken()}
           />
         </>
+      ) : schritt === 'passwort' ? (
+        /* Der Demo-Zugang. Diesen Zweig sieht genau ein Mensch — der Apple-Reviewer
+           —, und er sieht ihn nur, weil er die Adresse aus dem Feld „App Review
+           Information" abgetippt hat. Alles hier ist auf diesen einen Durchgang
+           gebaut: keine Erklärung, warum es das Feld gibt (er weiß es), kein
+           „Passwort vergessen" (es gibt nichts zurückzusetzen, das Konto legt
+           `supabase/demo/anlegen.sh` an) und kein Hinweis auf den Code-Weg (für
+           diese Adresse gibt es keinen). Harte Regel 63. */
+        <>
+          <SsText variant="caption" center color={colors.inkSoft}>
+            Demo-Zugang für {email.trim()}
+          </SsText>
+          <SsInput
+            label="Passwort"
+            value={passwort}
+            onChangeText={setPasswort}
+            // Nicht getrimmt und nicht gefiltert — anders als beim Code eine Zeile
+            // tiefer. Ein Leerzeichen ist dort ein Kopierfehler und hier ein
+            // Zeichen des Passworts; wer es wegschneidet, macht aus einem gültigen
+            // still ein anderes. Dieselbe Entscheidung steht in `demoAnmelden()`.
+            secureTextEntry
+            autoFocus
+            onSubmitEditing={() => void demoPruefen()}
+          />
+          <SsButton
+            label={laeuft ? 'Einen Moment …' : 'Anmelden'}
+            block
+            size="lg"
+            disabled={laeuft || passwort.length === 0}
+            onPress={() => void demoPruefen()}
+          />
+        </>
       ) : (
         <>
           <SsText variant="caption" center color={colors.inkSoft}>
@@ -341,6 +433,11 @@ function EmailWeg({
         </SsText>
       ) : null}
 
+      {/* Der Rückweg ist an ALLEN drei Stellen da, und aus demselben Grund wie seit
+          20.3-b1: Ein Tippfehler in der Adresse fällt erst dadurch auf, dass nichts
+          kommt. Beim Demo-Zugang wiegt das schwerer als sonst — wer sich dort
+          vertippt, landet im Passwort-Schritt eines Kontos, das er nicht meint,
+          und ohne diesen Knopf säße ausgerechnet der Reviewer fest. */}
       <SsButton
         label={schritt === 'email' ? 'Doch anders anmelden' : 'Andere Adresse'}
         variant="ghost"

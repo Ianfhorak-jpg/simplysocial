@@ -67,16 +67,34 @@ echo '════ Das Werkzeug, das löscht (20.7-b) ════════�
 # Das ist die 20.4-b-Lehre wörtlich: *eine unterdrückte Fehlermeldung
 # verschluckte genau die Ursache.* Ein Messaufbau versagt in die Richtung, die
 # aussieht, als wäre das Geprüfte kaputt.
-if ! $PSQL <<SQL
-delete from chat_threads where id = '$FADEN';
-delete from posts where id = '$POST';
+#
+# ⚠️ Und das Heredoc ist QUOTIERT (`<<'SQL'`), die Werte kommen über psql-`-v`
+# herein — das ist der dritte Anlauf, gemessen am 2026-09-14.
+#
+# Vorher stand hier `<<SQL` mit `'$POST'` im SQL. Damit las die SHELL den ganzen
+# Rumpf, und in den Kommentaren darunter stehen Backticks: `05_daten.sql`,
+# `konto_loeschen()`, `delete`. Die hat sie als BEFEHLE ausgeführt — 6 Zeilen
+# `command not found` je Lauf. Der Prüfstand blieb grün, weil nur Kommentare
+# zerschossen wurden; er war einen Tippfehler davon entfernt, eine `insert`-Zeile
+# zu treffen. Wörtlich die Falle *„Eine Prüfung mit Backticks in doppelten
+# Anführungszeichen misst NICHTS und meldet grün"*, nur eine Etage tiefer.
+#
+# ⚠️ NUR zu quotieren wäre falsch gewesen und ist NACHGEMESSEN falsch: Dann steht
+# wörtlich `values ('$POST', …)` im SQL — keine UUID, der Aufbau scheitert. Die
+# Werte müssen also von jemand anderem eingesetzt werden, und das ist psql selbst.
+# Damit ist die Shell aus dem SQL heraus, dauerhaft: Backticks, `$`, `"` im Rumpf
+# sind ab jetzt harmlos, statt es nur zufällig zu sein.
+if ! $PSQL -v post="$POST" -v faden="$FADEN" -v erbgruppe="$ERBGRUPPE" \
+          -v ian="$IAN"  -v lea="$LEA"     -v nora="$NORA" <<'SQL'
+delete from chat_threads where id = :'faden';
+delete from posts where id = :'post';
 insert into posts (id, author_id, category, title, district, starts_at, spots_total)
-  values ('$POST','$LEA','sport','Gemeldeter Post','1070', now() + interval '3 hours', 3);
+  values (:'post',:'lea','sport','Gemeldeter Post','1070', now() + interval '3 hours', 3);
 insert into join_requests (post_id, from_user_id, message)
-  values ('$POST','$IAN','bin dabei');
+  values (:'post',:'ian','bin dabei');
 insert into chat_threads (id, post_id, aus_aktivitaet)
-  values ('$FADEN','$POST', true);
-insert into chat_participants (thread_id, user_id) values ('$FADEN','$IAN'), ('$FADEN','$LEA');
+  values (:'faden',:'post', true);
+insert into chat_participants (thread_id, user_id) values (:'faden',:'ian'), (:'faden',:'lea');
 
 -- ⚠️ Eine Gruppe, in der eine ERBFOLGE stattfinden kann — und die muss dieser
 -- Prüfstand selbst anlegen. Gemessen am 2026-09-13: In `05_daten.sql` gibt es
@@ -92,13 +110,13 @@ insert into chat_participants (thread_id, user_id) values ('$FADEN','$IAN'), ('$
 -- `joined_at` ausdrücklich gesetzt und nicht dem Standardwert überlassen: „Wer
 -- am längsten dabei ist" hängt an dieser Spalte (harte Regel 33), und zwei
 -- Zeilen in derselben Transaktion bekommen dieselbe `now()`.
-delete from groups where id = '$ERBGRUPPE';
+delete from groups where id = :'erbgruppe';
 insert into groups (id, creator_id, name, description, category, offen, district)
-  values ('$ERBGRUPPE','$IAN','Erbgruppe','','sport', true, '1070');
+  values (:'erbgruppe',:'ian','Erbgruppe','','sport', true, '1070');
 insert into group_members (group_id, user_id, joined_at) values
-  ('$ERBGRUPPE','$IAN',  now() - interval '10 days'),
-  ('$ERBGRUPPE','$LEA',  now() - interval '5 days'),
-  ('$ERBGRUPPE','$NORA', now() - interval '1 day');
+  (:'erbgruppe',:'ian',  now() - interval '10 days'),
+  (:'erbgruppe',:'lea',  now() - interval '5 days'),
+  (:'erbgruppe',:'nora', now() - interval '1 day');
 SQL
 then
   echo "  ✗ Der AUFBAU ist gescheitert — was danach käme, sagt nichts über den Code."
