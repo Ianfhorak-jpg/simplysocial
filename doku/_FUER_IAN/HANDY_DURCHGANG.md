@@ -1,5 +1,49 @@
 # Der Durchgang am Handy
 
+## 🔵 DURCHGANG 6 — das Zustimmungs-Häkchen *(dran, 14.09.2026)*
+
+> **Was neu ist:** Beim allerersten Anmelden steht unter Name · Bezirk · Jahrgang
+> jetzt ein Kästchen „Ich akzeptiere die Nutzungsbedingungen" (deine 80. Entscheidung).
+> Ohne Häkchen wird kein Konto angelegt.
+
+### Zuerst: Schritt 1 beweist, dass der neue Build drauf ist
+
+Das ist der Trick an dieser Reihenfolge — **du brauchst dafür kein neues Konto**, und
+wenn Schritt 1 schiefgeht, sparst du dir den Rest.
+
+| | Was du tust | Worauf es ankommt |
+|---|---|---|
+| 1 | Einstellungen → **Nutzungsbedingungen**, ganz nach unten scrollen | Da muss **„SimplySocial · Fassung vom 14.09.2026"** stehen. Steht dort noch **„Prototyp, noch nicht öffentlich"**, ist der alte Build drauf — dann `npm run geraet` und von vorn. ⚠️ Genau dieser Satz wäre bei Apple ein Ablehnungsgrund gewesen. |
+
+### Dann das Häkchen — dafür brauchst du ein zweites Konto
+
+Dein eigenes Konto gibt es schon, also siehst du den Bildschirm nicht mehr. **Der
+einfachste Weg zu einem neuen, ohne eine zweite E-Mail-Adresse anzulegen:**
+
+> Abmelden → **Mit E-Mail-Code** → `ian.fhorak+test1@gmail.com`
+
+Gmail liefert alles mit `+irgendwas` an dein normales Postfach. Für SimplySocial ist
+das eine fremde Adresse, also bist du ein neuer Mensch und landest im
+Erstes-Konto-Bildschirm.
+
+| | Was du tust | Worauf es ankommt |
+|---|---|---|
+| 2 | Name, Bezirk, Jahrgang ausfüllen — **Häkchen leer lassen** — und auf **„Los geht's"** tippen | Es passiert **nichts**, und unter dem Kästchen steht: *„Setz noch das Häkchen, dann geht es los."* |
+| 3 | Auf das Wort **„Nutzungsbedingungen"** tippen (nicht auf das Kästchen) | Der Text geht auf — **und das Häkchen bleibt leer**. Wer nachlesen will, soll nicht aus Versehen zustimmen. |
+| 4 | Unten **„Zurück"** | Du bist wieder im Formular, Name/Bezirk/Jahrgang stehen noch da, Häkchen immer noch leer. |
+| 5 | Jetzt das **Kästchen** antippen | Es füllt sich dunkel mit einem Haken. Der rote Hinweis von Schritt 2 verschwindet. |
+| 6 | **„Los geht's"** | Das Konto wird angelegt, du landest im Feed. |
+
+### Danach: aufräumen
+
+Das Testkonto liegt in der echten Datenbank. Wegmachen kannst du es selbst in der App:
+**Einstellungen → Konto löschen**. Danach wieder mit deinem normalen Konto anmelden.
+
+> 💬 **Sag mir einfach, welche Nummern geklappt haben** — „1 bis 6" reicht. Wenn etwas
+> anders aussieht als beschrieben, sag mir was; das ist dann ein Befund, kein Versehen.
+
+---
+
 ## ✅ DURCHGANG 4 — der runde Zuschnitt *(GEMACHT am 13.09.2026, 6 von 6)*
 
 > **Alles hält.** Kein Apple-Dialog mehr ✅ · Schieben ✅ · Kneifen ✅ · Übernehmen ✅ ·
