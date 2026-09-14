@@ -484,6 +484,8 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Eine Warnung mit einer ZAHL darin veraltet genauso still wie das, wovor sie warnt
 - Wer NUR Dateien ausserhalb des Repos ändert, kann nicht committen — der pre-commit-Hook spiegelt erst DANACH
 - Ändert eine Migration KEINE geprüfte Zahl, kann auch keine geprüfte Zahl belegen, dass sie drin ist
+- Eine Prüfung, die nur ZÄHLT, weiß nicht, was sie gezählt hat — die Zahl findet Verlust, die Namen finden Verwechslung
+- Eine Meldung, die den eigenen Ablauf nicht kennt, ist keine Auskunft — auch nicht nach der Reparatur
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

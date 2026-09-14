@@ -265,6 +265,30 @@ mess "Rechte für anon"    "select count(*) from information_schema.role_table_g
 mess "Rechte für auth."   "select count(*) from information_schema.role_table_grants where table_schema='public' and grantee='authenticated';" "$ERWARTET_AUTH_RECHTE"
 mess "Realtime verboten"  "select count(*) from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename in ('blocks','reports');" "$ERWARTET_REALTIME_VERBOTEN"
 mess "Moderation dicht"   "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in ('konto_weg','konto_entfernen') and (has_function_privilege('anon',p.oid,'EXECUTE') or has_function_privilege('authenticated',p.oid,'EXECUTE'));" "$ERWARTET_MODERATION_OFFEN"
+# ── Die Spalten beim NAMEN, nicht nur ihre Zahl ─────────────────────────────
+# `Spalten 87` ist eine ZAHL. Zwei ganz andere Spalten ergaeben dieselbe 87 — die
+# Zahl faende einen VERLUST, aber nicht eine Verwechslung. Das ist die Umkehrung
+# der Falle „Eine Pruefung, die NAMEN aufzaehlt, merkt nicht, wenn etwas
+# dazukommt": Eine Pruefung, die nur ZAEHLT, weiss nicht, was sie gezaehlt hat.
+#
+# Die Liste kommt aus den MIGRATIONEN, nicht von Hand — sonst waere sie beim
+# naechsten `add column` still unvollstaendig (dieselbe Lehre wie die Liste der
+# Migrationen selbst, Phase 20.7).
+SPALTEN_SOLL="$(grep -ho 'add column \(if not exists \)\?[a-z_]*' "$HIER"/migrations/*.sql \
+                | awk '{print $NF}' | sort -u)"
+if [ -n "$SPALTEN_SOLL" ]; then
+  for SP in $SPALTEN_SOLL; do
+    DA="$(frage "select count(*) from information_schema.columns where table_schema='public' and column_name='$SP';")"
+    GEMESSEN=$((GEMESSEN+1))
+    if [ "$DA" != "0" ]; then
+      printf '  ✓ %-22s %s\n' "Spalte $SP" "da"
+    else
+      printf '  ✗ %-22s %s\n' "Spalte $SP" "FEHLT — eine add-column-Migration ist nicht drin"
+      FEHLER=1
+    fi
+  done
+fi
+
 # Die zwei, die eine reine `add column`-Migration ueberhaupt sichtbar machen.
 mess "Spalten (public)"   "select count(*) from information_schema.columns where table_schema='public';" "$ERWARTET_SPALTEN"
 mess "CHECK-Constraints"  "select count(*) from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname='public' and c.contype='c';" "$ERWARTET_CHECKS"
@@ -284,14 +308,19 @@ fi
 # Bis zum 2026-09-14 stand hier „Die Datenbank war schon richtig eingerichtet", und
 # genau das hat der Wächter behauptet, während zwei Spalten fehlten. Eine Prüfung
 # darf nur die Frage beantworten, die sie wirklich gestellt hat.
-if [ "$NUR_MESSEN" = "1" ]; then
+# ⚠️ **DREI Faelle, nicht zwei.** Hier stand am 2026-09-14 kurzzeitig „es wurde
+# NICHTS eingespielt" auch dann, wenn mit `-- 0011_…sql` sehr wohl eingespielt
+# worden war — derselbe Fehler, den diese Meldung eine Stunde vorher beheben
+# sollte, nur andersherum. Eine Meldung, die den eigenen Ablauf nicht kennt, ist
+# keine Auskunft.
+if [ "$NUR_MESSEN" = "1" ] && [ -n "$NUR_DIESE" ]; then
+  echo "✓ Alle $GEMESSEN Zahlen stimmen — '$NUR_DIESE' ist eingespielt und nachgemessen."
+elif [ "$NUR_MESSEN" = "1" ]; then
   echo "✓ Alle $GEMESSEN Zahlen stimmen — es wurde NICHTS eingespielt, nur nachgemessen."
-  if [ -z "$NUR_DIESE" ]; then
-    echo
-    echo "  Ist eine NEUE Migration dazugekommen, ist sie damit NICHT drin."
-    echo "  Die Zahlen oben sehen nur, was sie zählen. Nachziehen mit:"
-    echo "      npm run einspielen -- $(ls -1 "$HIER/migrations/" | tail -1)"
-  fi
+  echo
+  echo "  Ist eine NEUE Migration dazugekommen, ist sie damit NICHT drin."
+  echo "  Die Zahlen oben sehen nur, was sie zaehlen. Nachziehen mit:"
+  echo "      npm run einspielen -- $(ls -1 "$HIER/migrations/" | tail -1)"
 else
   echo "✓ Alle $GEMESSEN Zahlen stimmen. Die Datenbank ist eingerichtet."
 fi

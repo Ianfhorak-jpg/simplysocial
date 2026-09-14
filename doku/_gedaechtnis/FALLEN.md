@@ -1431,3 +1431,24 @@
   Verwandt mit der Lehre aus 20.7 („keine der neun Zahlen hätte `0008` gefunden, weil
   keine den Bucket zählt"), nur eine Stufe feiner: Damals fehlte ein Objekt, hier ein
   Teil eines Objekts, das es schon gibt.
+- **Eine Prüfung, die nur ZÄHLT, weiss nicht, was sie gezählt hat.** (2026-09-14,
+  Phase 21.2) Die Behebung des Eintrags darüber war `ERWARTET_SPALTEN=87`. Das findet
+  einen VERLUST — aber keine Verwechslung: Zwei ganz andere Spalten ergäben dieselbe
+  87. Das ist die Umkehrung der bekannten Falle *„Eine Prüfung, die NAMEN aufzählt,
+  merkt nicht, wenn etwas dazukommt"*, und beide gelten gleichzeitig: **Die Zahl ist
+  der Wächter gegen Dazukommendes, die Namen sind der Wächter gegen Verwechslung.**
+  Genau diese Rangfolge steht seit Phase 21.1 im Kommentar des Altersfreigabe-
+  Wächters — dort war sie aus demselben Anlass entstanden und wurde hier wieder
+  gebraucht. `einspielen.sh` prüft die `add column`-Spalten jetzt zusätzlich beim
+  Namen, und die Namensliste kommt aus den MIGRATIONEN statt von Hand — sonst wäre
+  sie beim nächsten `add column` still unvollständig (dieselbe Lehre wie die Liste
+  der Migrationen selbst, 20.7).
+- **Eine Meldung, die den eigenen Ablauf nicht kennt, ist keine Auskunft — auch nicht
+  nach der Reparatur.** (2026-09-14) Die Schlussmeldung von `einspielen.sh` behauptete
+  „Die Datenbank war schon richtig eingerichtet", wo sie es nicht wissen konnte. Der
+  Ersatz lautete „es wurde NICHTS eingespielt, nur nachgemessen" — und war **eine
+  Stunde später genauso falsch**, nur andersherum: Er erschien auch dann, wenn mit
+  `-- 0011_zustimmung.sql` sehr wohl eingespielt worden war. Der Ablauf kennt DREI
+  Fälle (frisch eingespielt · eine Migration nachgezogen · nur nachgemessen), die
+  Meldung kannte zwei. **Wer eine Meldung repariert, zählt zuerst die Fälle, die sie
+  abdecken muss** — sonst tauscht man eine falsche Auskunft gegen eine andere.
