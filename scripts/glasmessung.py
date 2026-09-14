@@ -166,9 +166,28 @@ def bild_kennzahlen(pixel, breite, hoehe):
     App-Zustand.** Die alte Unterscheidung fällt ersatzlos weg, und an ihre Stelle
     tritt die Zahl der VERSCHIEDENEN Farben: Ein echter Screenshot hat tausende,
     ein schwarzes Bild hat eine.
+
+    ── Der zweite Fehlbild-Fall, und er ist am 2026-09-14 durchgerutscht ──────
+    Ein Debug-Build ohne laufenden Metro zeigt den roten React-Native-Kasten
+    *„No script URL provided"*. Das Bild hatte **822 Farben** und mittlere
+    Helligkeit 29,8 — für die Farbzählung ein völlig gültiges Bild. Es sah aus
+    wie ein Ergebnis und war keines: **Risiko 3 aus dem Plan, beim ersten Lauf
+    eingetreten.**
+
+    Dagegen `rot`: der Anteil „React-Native-Fehlerrot" im oberen Drittel
+    (R > 140 und mehr als das 2,2-fache von Grün UND Blau). Gemessen:
+
+        Fehlerkasten            41,86 %
+        echter Screen, hell      0,00 %
+        echter Screen, Karte     0,00 %
+        Ians Vorbild             0,00 %
+
+    Der Abstand ist so groß, dass die Schwelle nicht feinjustiert werden muss.
+    In SimplySocial ist Rot die Farbe `danger` — als FLÄCHE über ein Drittel des
+    oberen Bildschirms kommt sie nirgends vor.
     """
     farben = set()
-    summe = 0
+    summe = rot = rot_n = 0
     # Jeder vierte Pixel genügt — für „tausende oder eine?" braucht es keine
     # Vollzählung. Bei 5000 ist Schluss: Die Frage ist beantwortet, sobald die
     # Antwort „viele" lautet, und ein Set über 1,5 Mio. Bildpunkte kostet ohne
@@ -178,17 +197,22 @@ def bild_kennzahlen(pixel, breite, hoehe):
     # Mittelwert des oberen Bildrands. Deshalb zwei getrennte Schleifen-Anteile
     # und KEIN gemeinsames `break`.
     genug = False
+    drittel = hoehe // 3
     for y in range(0, hoehe, 2):
         for x in range(0, breite, 2):
             p = pixel[y][x]
             summe += helligkeit(p)
+            if y < drittel:
+                rot_n += 1
+                if p[0] > 140 and p[0] > 2.2 * p[1] and p[0] > 2.2 * p[2]:
+                    rot += 1
             if not genug:
                 farben.add(p)
                 if len(farben) >= 5000:
                     genug = True
     n = len(range(0, hoehe, 2)) * len(range(0, breite, 2))
     return {'farben': len(farben), 'viele': genug, 'hell': summe / n,
-            'breite': breite, 'hoehe': hoehe}
+            'rot': 100 * rot / max(rot_n, 1), 'breite': breite, 'hoehe': hoehe}
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -220,9 +244,22 @@ def main():
     print(f'  Bild:    {breite}×{hoehe}')
     print(f'  Farben:  {k["farben"]}{"+ (Zählung abgebrochen)" if k["viele"] else ""}')
     print(f'  mittlere Helligkeit: {k["hell"]:.1f}')
+    if k['rot'] >= 1:
+        print(f'  rote Fläche oben: {k["rot"]:.1f} %')
 
     # Die Schwarzbild-Erkennung meldet sich laut und sagt, was zu tun ist —
     # eine Zahl allein würde hier übersehen.
+    # Der rote Kasten zuerst: Er ist die AUSSAGEKRÄFTIGERE Meldung. Ein Bild mit
+    # 822 Farben besteht die Farbprüfung und ist trotzdem kein App-Bild.
+    if k['rot'] >= 15:
+        print()
+        print(f'  ⚠️  ROTER FEHLERKASTEN — {k["rot"]:.1f} % der oberen Bildhälfte sind')
+        print('     React-Native-Fehlerrot. Das ist kein Bildschirm der App.')
+        print('     Häufigste Ursache: ein DEBUG-Build ohne laufenden Metro')
+        print('     („No script URL provided"). Für Belege ist ohnehin ein')
+        print('     RELEASE-Build der richtige — dort ist das JS eingebettet.')
+        return 2
+
     if k['farben'] < 3:
         print()
         print('  ⚠️  FAST EINFARBIG — das ist wahrscheinlich kein App-Bild.')

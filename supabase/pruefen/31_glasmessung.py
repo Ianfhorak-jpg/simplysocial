@@ -252,6 +252,28 @@ with tempfile.TemporaryDirectory() as tmp:
     k2 = glasmessung.bild_kennzahlen(px, b, h)
     pruef(f'Das Testbild mit zwei Flächen zählt {k2["farben"]}', k2['farben'] == 2)
 
+    # ── Der zweite Fehlbild-Fall, und er ist beim ERSTEN Lauf durchgerutscht ──
+    # Ein Debug-Build ohne Metro zeigt den roten React-Native-Kasten. Das Bild
+    # hatte **822 Farben** und kam glatt durch die Farbzählung — es sah aus wie
+    # ein Ergebnis und war keines. Risiko 3 aus dem Plan, eingetreten.
+    rot = testbild(t / 'rot.png', filter_plan=(0, 1, 2, 3, 4),
+                   links=(216, 58, 69), rechts=(216, 58, 69))
+    b, h, px = glasmessung.png_lesen(str(rot))
+    kr = glasmessung.bild_kennzahlen(px, b, h)
+    pruef(f'Eine Fläche in React-Native-Fehlerrot meldet {kr["rot"]:.0f} % rot',
+          kr['rot'] >= 15)
+    pruef(f'Das Testbild aus Abschnitt 1 meldet {k2["rot"]:.0f} % rot',
+          k2['rot'] < 1, 'Fehlalarm — die Schwelle trifft normale Flächen')
+
+    # Die Gegenprobe an ECHTEN App-Bildern: Rot ist in SimplySocial die Farbe
+    # `danger`, aber nie als Fläche über ein Drittel des oberen Bildschirms.
+    for beleg in ('z02-ios-kapsel-glas.png', 'ae08-bezirk-vollbild-ios.png'):
+        bp = WURZEL.parent / '_belege' / beleg
+        if bp.exists():
+            b, h, px = glasmessung.png_lesen(str(bp))
+            ke = glasmessung.bild_kennzahlen(px, b, h)
+            pruef(f'{beleg:32} meldet {ke["rot"]:.2f} % rot', ke['rot'] < 1)
+
     # Und die Zählung muss wirklich ABBRECHEN, nicht nur so heißen: Ein Set über
     # 1,5 Mio. Bildpunkte kostet Zeit und Speicher ohne Erkenntnisgewinn — die
     # Frage ist beantwortet, sobald die Antwort „viele" lautet.

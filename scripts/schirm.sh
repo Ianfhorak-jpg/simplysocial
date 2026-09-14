@@ -66,17 +66,39 @@ sag "1. Schläft der Mac-Bildschirm?"
 # ZWEI Prüfungen, weil die zwei Ursachen gleich aussehen: ein schlafender Schirm
 # und ein Simulator ohne Fenster liefern beide ein schwarzes Bild.
 #
-# ⚠️ Zu messen (Plan 3.4): `simctl io screenshot` zeichnet aus dem
+# ⚠️ **Der Weg aus dem Plan funktioniert auf diesem Mac nicht** (gemessen am
+# 2026-09-14). Dort stand `ioreg -n IODisplayWrangler` + `CurrentPowerState=4`.
+# Der Knoten EXISTIERT auf Apple Silicon — er hat nur **keinen**
+# `IOPowerManagement`-Eintrag; `pmset -g powerstate IODisplayWrangler` antwortet
+# mit „Internal failure". Der Wächter hätte also **immer** gewarnt, und ein
+# Wächter, der immer warnt, wird abgeschaltet statt gelesen (FALLEN.md).
+#
+# An seiner Stelle zwei Fragen, die hier messbar antworten:
+#   a) Hat der Simulator ein FENSTER? Das ist die Ursache aus der Falle, direkt
+#      gefragt statt über den Umweg Bildschirm-Stromzustand.
+#   b) Ist überhaupt jemand am Mac (`UserIsActive`)?
+#
+# ⚠️ Zu messen bleibt (Plan 3.4): `simctl io screenshot` zeichnet aus dem
 # Simulator-PROZESS, nicht vom Fenster — es SOLLTE also auch bei schlafendem
-# Schirm gehen; schwarz wird nur `screencapture`. Das steht so in keiner Falle.
-# Bis es gemessen ist, warnt dieses Skript, statt abzubrechen.
-if ! ioreg -n IODisplayWrangler -r 2>/dev/null | grep -q '"IOPowerManagement".*"CurrentPowerState"=4'; then
-  echo "  ⚠️  Der Bildschirm scheint nicht wach zu sein."
-  echo "     Ein schlafender Mac-Bildschirm nimmt dem Simulator sein FENSTER."
-  echo "     (Noch ungemessen, ob simctl io screenshot das überhaupt stört —"
-  echo "      steht als offene Messung im Plan, Abschnitt 3.4.)"
+# Schirm gehen; schwarz wird nur `screencapture`. Deshalb WARNT dieser Schritt
+# und bricht nicht ab. **Der harte Wächter ist Schritt 7**, und der wirkt
+# unabhängig davon, warum ein Bild schwarz ist.
+#
+# ⚠️ Kein `exit` im awk und ein `|| true` an jeder Pipeline. Beim ersten Lauf
+# stand hier `awk '/UserIsActive/ {print $2; exit}'` — das `exit` beendet awk
+# früh, schliesst die Pipe, `pmset` bekommt SIGPIPE, und unter `set -o pipefail`
+# ist die ganze Pipeline ein Fehler. `set -e` hat das Skript daraufhin STUMM
+# getötet, mitten in einer Zeile, die richtig aussieht. Dieselbe Mechanik wie
+# `find … | grep -v …` in FALLEN.md: ein Erfolg am linken Ende, der wie ein
+# Fehler aussieht.
+FENSTER="$(osascript -e 'tell application "System Events" to count (every window of process "Simulator")' 2>/dev/null || echo 0)"
+AKTIV="$(pmset -g assertions 2>/dev/null | grep -m1 UserIsActive | awk '{print $2}' || true)"
+if [[ "${FENSTER:-0}" -lt 1 ]]; then
+  echo "  ⚠️  Der Simulator hat kein Fenster (noch nicht gestartet, oder der Schirm schläft)."
+elif [[ "${AKTIV:-1}" == "0" ]]; then
+  echo "  ⚠️  Niemand ist am Mac aktiv — der Bildschirm könnte schlafen."
 else
-  echo "  ✓ Bildschirm wach"
+  echo "  ✓ Simulator hat $FENSTER Fenster, jemand ist am Mac"
 fi
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -111,19 +133,41 @@ sag "3. Ist die installierte App die aktuelle?"
 # ⚠️ Der Beleg ist die MTIME des installierten Bündels, nicht der Rückgabewert
 # des Builds: `npx expo run:ios` gibt EXIT 0 zurück, auch wenn `xcodebuild`
 # darunter gescheitert ist. Wer auf den Exit-Code hört, knipst die alte App.
-NEUSTE_QUELLE="$(find "$WURZEL/src" -name '*.ts*' -newer "$WURZEL/package.json" 2>/dev/null | head -1 || true)"
+#
+# ⚠️⚠️ **Und der Vergleichsanker muss das BÜNDEL sein, nichts anderes.** Der
+# erste Versuch fragte `find src -newer package.json` — beim ersten Lauf am
+# 2026-09-14 hatte ich `package.json` selbst gerade geändert (der npm-Eintrag für
+# dieses Skript), also war keine Quelldatei neuer, und der Wächter winkte eine
+# **fünf Tage alte** App durch. Genau der Fall, gegen den er gebaut war.
+# Ein Anker, der mit der Arbeit mitwandert, ist kein Anker.
 APP_PFAD="$(xcrun simctl get_app_container "$UDID" "$BUNDLE" 2>/dev/null || true)"
+NEUSTE_QUELLE=""
+if [[ -n "$APP_PFAD" ]]; then
+  # Direkt gegen das installierte Bündel — und `src` allein genügt nicht:
+  # `app.json`, die Migrationen und `package.json` gehören genauso ins Bündel.
+  NEUSTE_QUELLE="$(find "$WURZEL/src" "$WURZEL/app.json" "$WURZEL/package.json" \
+                      -newer "$APP_PFAD" 2>/dev/null | head -1 || true)"
+fi
 
 bauen() {
   echo "  … baue für den Simulator (das dauert beim ersten Mal ~10 Minuten)"
   # Ein SIMULATOR-Build braucht keine Apple-Signatur — ein Gerätebuild schon.
   # Deshalb geht das hier ohne Schlüsselbund, ohne Zertifikat, ohne Ian.
+  #
+  # ⚠️ **RELEASE, nicht Debug** — und das ist beim ersten Lauf am 2026-09-14
+  # teuer gelernt worden. Ein Debug-Build holt sein JS-Bündel vom Metro-Server;
+  # ohne laufenden Metro zeigt er den roten Kasten *„No script URL provided"*.
+  # Das Bild hatte 822 Farben und kam glatt durch die Schwarzbild-Erkennung.
+  #
+  # Im Release ist das Bündel eingebettet: kein Dev-Server, kein Dev-Menü, kein
+  # Fast Refresh — und kein veraltetes Metro-Bündel, das einen Fehler meldet, den
+  # es nicht gibt (FALLEN.md). Für Belege ist Release ohnehin der richtige Stand.
   mkdir -p "$DERIVED"
   local log="$DERIVED/build-$(date +%Y%m%d-%H%M%S).log"
   # Das Protokoll läuft NIE durch `tail` — Fehler stehen in der MITTE.
   set +e
   xcodebuild -workspace "$WURZEL/ios/SimplySocial.xcworkspace" \
-    -scheme SimplySocial -configuration Debug \
+    -scheme SimplySocial -configuration Release \
     -destination "id=$UDID" -derivedDataPath "$DERIVED" \
     CODE_SIGNING_ALLOWED=NO > "$log" 2>&1
   set -e
@@ -134,7 +178,7 @@ bauen() {
     grep -nE "error:|BUILD FAILED|The following build commands failed" "$log" | head -20
     exit 1
   fi
-  local gebaut="$DERIVED/Build/Products/Debug-iphonesimulator/SimplySocial.app"
+  local gebaut="$DERIVED/Build/Products/Release-iphonesimulator/SimplySocial.app"
   [[ -d "$gebaut" ]] || { echo "✗ BUILD SUCCEEDED, aber $gebaut fehlt."; exit 1; }
   xcrun simctl install "$UDID" "$gebaut"
   echo "  ✓ gebaut und installiert"
@@ -143,11 +187,13 @@ bauen() {
 if [[ -z "$APP_PFAD" ]]; then
   echo "  App ist nicht installiert."
   bauen
-elif [[ -n "$NEUSTE_QUELLE" && "$NEUSTE_QUELLE" -nt "$APP_PFAD" ]]; then
-  echo "  Quelle ist neuer als das installierte Bündel ($NEUSTE_QUELLE)."
+elif [[ -n "$NEUSTE_QUELLE" ]]; then
+  echo "  Quelle ist neuer als das installierte Bündel:"
+  echo "    $(basename "$NEUSTE_QUELLE")  ($(stat -f '%Sm' "$NEUSTE_QUELLE"))"
+  echo "    Bündel von $(stat -f '%Sm' "$APP_PFAD")"
   bauen
 else
-  echo "  ✓ installiert: $(basename "$APP_PFAD")"
+  echo "  ✓ installiert und aktuell ($(stat -f '%Sm' "$APP_PFAD"))"
 fi
 [[ $NUR_BAUEN -eq 1 ]] && { echo ""; echo "── fertig (--nur-bauen) ──"; exit 0; }
 
