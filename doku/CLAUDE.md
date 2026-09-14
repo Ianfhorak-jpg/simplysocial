@@ -83,6 +83,31 @@ Untergrund — Ians Vorbild hebt sich um **33,2** Helligkeitsstufen ab, SimplySo
 **NativeTabs** statt JS-Tabs · **SF Symbols** in der Leiste · Claude prüft sich **selbst**
 per Simulator (Ian gibt die Bedienungshilfen-Berechtigung).
 
+🔴 **Ians Entscheidung 88 (2026-09-14 nachts): die Zielzahl ≥ 25 trägt nicht, und das ist
+gemessen.** Die Gegenprobe des Messgeräts hat gezeigt, dass „Abhebung" am **selben Bild**
+je nach Messstelle **89,3 oder 5,4** ergibt (`ae07`, Kapselinneres gegen Untergrund
+darüber, zwei Stellen 250 px auseinander). Die dokumentierte **33,2 liegt dazwischen —
+aber in PLAN.md steht nur das Ergebnis, nicht über welchen Rechtecken es gemessen wurde.**
+Wer die Rechtecke sucht, bis 33,2 herauskommt, hat eine Kurve angepasst und nichts
+geprüft. Damit war das Erfolgskriterium der ganzen Phase frei wählbar.
+
+**Ians Antwort: beides.**
+
+| | Zahl | heute | Ians Vorbild | Ziel |
+|---|---|---|---|---|
+| **Hauptzahl** | mittlere Bildhelligkeit | `z02` **240,5** | **90,8** | **< 60** |
+| **Nebenzahl** | Abhebung an FESTEN Rechtecken | — | — | wird beim ersten Lauf gesetzt |
+
+Die Hauptzahl braucht keine Koordinaten und ist unbestreitbar; sie misst aber die
+**Ursache** (der Untergrund ist dunkel), nicht die **Wirkung** (man sieht das Glas).
+Dafür die Nebenzahl aus einer Datei mit festen Messrechtecken je Bildschirm — nur so ist
+sie über die Zeit vergleichbar. ⚠️ **Verschiebt sich ein Knopf, misst sie still daneben**;
+deshalb steht neben jedem Rechteck, worauf es zeigt.
+
+*Verworfen, weil gemessen:* der „Kantensprung" (größter Helligkeitssprung über vier
+Zeilen) klang robuster, fand aber bei `ae06` **y = 3** — die Zuschnittkante des Bildes,
+nicht die Kapsel. Er verschiebt das Koordinatenproblem, er löst es nicht.
+
 **Reihenfolge 0 → 3 → 1 → 2**, und die Begründung steht im Plan: Das Messgerät zuerst,
 weil der Erfolg eine ZAHL ist (**Ziel: Abhebung ≥ 25**) und ein Messgerät erst die
 bekannten Zahlen treffen muss, bevor eine neue eine Aussage ist.
@@ -90,14 +115,32 @@ bekannten Zahlen treffen muss, bevor eine neue eine Aussage ist.
 | | Stand |
 |---|---|
 | **Teil 0 — sichern** | ✅ Commit `723120b` auf `main`, Zweig `dunkel` steht |
-| **Teil 3 — Selbstprüfung** | 🔨 `scripts/glasmessung.py` geschrieben (`8dcad53`), **noch nicht gegengeprüft**. Es fehlen `scripts/schirm.sh` und `scripts/tippen.sh` |
+| **Teil 3 — Selbstprüfung** | 🔨 `glasmessung.py` **gegengeprüft** (`ea2c8f3`): `npm run pruef-glas`, **29 Häkchen**. Drei Löcher gefunden und behoben. Es fehlen `scripts/schirm.sh`, `scripts/tippen.sh` und die Messstellen-Datei (Entscheidung 88) |
 | **Teil 1 — dunkel** | ⬜ noch nicht angefangen |
 | **Teil 2 — NativeTabs** | ⬜ noch nicht angefangen |
 
-⚠️ **Der nächste Schritt ist die Gegenprobe**, nicht der nächste Baustein:
-`glasmessung.py` muss an `vorbild-liquid-glass-bierbuddy.png` die **33,2** und an
-`_belege/z02-ios-kapsel-glas.png` die **3,3** reproduzieren. Trifft es sie nicht, ist es
-kaputt — und jede spätere Zahl wertlos.
+✅ **Die Gegenprobe ist gelaufen und hat geliefert, wofür sie da ist.** Sie konnte die
+33,2 und die 3,3 **nicht** reproduzieren — aber nicht, weil das Werkzeug falsch rechnet,
+sondern weil die Rechtecke nirgends aufgeschrieben sind (→ Entscheidung 88 oben). Gefunden
+und behoben wurden dabei **drei** Fehler:
+
+1. **16 Bit ging nicht.** `vorbild-liquid-glass-bierbuddy.png` ist **1179×2556, Typ 2,
+   16 Bit** — so speichert ein iPhone einen P3-Screenshot. Das Werkzeug konnte genau die
+   eine Datei nicht lesen, an der es sich beweisen sollte. Der gefährliche Teil sitzt in
+   der Filter-Schleife: Die fünf PNG-Filter rechnen auf **Bytes**, bei 16 Bit sechs je
+   Pixel statt drei.
+2. **Adam7 war ein stiller Fehlerpfad** — verschränkte PNGs hätten verschobene Streifen
+   mit plausiblen Mittelwerten ergeben. Wird jetzt abgewiesen.
+3. **Die Farbzählung brach nie ab.** `farben.add(('viele',))` fügte immer dasselbe Tupel
+   ein; das Set wuchs weiter über alle 1,5 Mio. Bildpunkte. Der Kommentar versprach einen
+   Abbruch, den es nicht gab.
+
+**Die Gegenprobe misst an SELBSTGEBAUTEN Bildern, deren Antwort vorher ausgerechnet ist**
+(zwei Flächen, 21,858 und 73,716) — nicht an geratenen Rechtecken in Screenshots. Dazu die
+Gegenprobe gegen sich selbst: mit absichtlich falscher Schrittweite **muss** 129,188 statt
+21,858 herauskommen, sonst prüft das Testbild nichts. Genau daran war mein **erstes**
+Testbild wertlos — 16-Bit-Werte als `wert × 257` kodiert, dabei sind oberes und unteres
+Byte gleich (20 × 257 = 0x1414) und ein Schrittweiten-Fehler fällt nicht auf.
 
 **Was auf Ian wartet, bevor Teil 3 fertig werden kann:** die Bedienungshilfen-Berechtigung
 (Systemeinstellungen → Datenschutz → Bedienungshilfen) und eine einmalige Anmeldung als
@@ -175,6 +218,7 @@ Befehl, Anleitung in `_FUER_IAN/TREFFEN_ZAEHLER.md`.
 | `npm run pruef-demoregel` | **29** | nichts |
 | `npm run pruef-alter` | **16** | nichts |
 | `npm run pruef-zustimmung` | **28** | nichts |
+| `npm run pruef-glas` | **29** | nichts |
 
 Dazu: `npx tsc --noEmit` sauber · `expo lint` **89 Probleme** (Stand 20.12: 82 vorbestehend, plus vier aus den zwei neuen `pan.x.interpolate()`-Zeilen der WischKarte — jede meldet doppelt; dazu
 **einer mit Namen**: `react-hooks/refs` in `BildZuschneiden.tsx` — derselbe, den
