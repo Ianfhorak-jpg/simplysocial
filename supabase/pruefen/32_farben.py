@@ -82,10 +82,18 @@ for noetig in ('bg', 'surface', 'ink', 'inkSoft', 'line'):
 
 # Die sechs Kategorien plus accent und danger.
 PALETTEN = {}
-for m in re.finditer(r"(\w+): \{ base: '(#\w{6})', soft: '(#\w{6})', deep: '(#\w{6})',"
-                     r" onBase: '(#\w{6})', onSoft: '(#\w{6})' \}", text):
-    n, *w = m.groups()
-    PALETTEN[n] = dict(zip(('base', 'soft', 'deep', 'onBase', 'onSoft'), w))
+#
+# ⚠️ **Nicht die Reihenfolge der Schlüssel abfragen.** Der erste Versuch verlangte
+# `base, soft, deep, onBase, onSoft` in genau dieser Folge — als `aufGrund`
+# dazukam, fand er die sechs Kategorien NICHT MEHR und meldete für die zwei
+# übrigen Paletten brav „alles grün". Nur die Gegenprobe in Abschnitt 1
+# („alle acht gelesen?") hat das gezeigt. *Eine Textsuche mit null Treffern
+# beweist nichts* — auch auf Prüfstandsebene.
+for m in re.finditer(r"(\w+): \{ ((?:\w+: '#\w{6}',?\s*)+)\}", text):
+    n, inhalt = m.groups()
+    werte = dict(re.findall(r"(\w+): '(#\w{6})'", inhalt))
+    if {'base', 'soft', 'deep', 'onBase', 'onSoft'} <= set(werte):
+        PALETTEN[n] = werte
 for name in ('accent', 'danger'):
     teil = text.split(f'export const {name}')
     if len(teil) > 1:
@@ -148,6 +156,28 @@ for n, p in sorted(PALETTEN.items()):
     pruef(f'{n:9} Text auf der Grundfarbe: {k:5.2f} ≥ {max(3.8, 4.5) if k >= 4.5 else 3.85:.2f}',
           k >= (4.5 if n not in EINGEFROREN else 3.85),
           'schlechter als der eingefrorene Ist-Wert')
+
+print('')
+print('── 4b. `aufGrund` — der Wert, den es auf hellem Grund nicht brauchte ────')
+# Acht Stellen der App benutzen eine Kategoriefarbe als VORDERGRUND (ein Icon,
+# eine Beschriftung, die Wortmarke). Auf Papierweiss war das `base`; auf Dunkel
+# kommt `culture.base` auf 3,23 und `accent.base` auf 1,74.
+for n, p in sorted(PALETTEN.items()):
+    if 'aufGrund' not in p:
+        pruef(f'{n:9} hat einen `aufGrund`-Wert', False, 'Pflichtfeld im Interface')
+        continue
+    k = kontrast(p['aufGrund'], GRUND['bg'])
+    pruef(f'{n:9} aufGrund auf der Grundfläche: {k:5.2f} ≥ 4,5', k >= 4.5)
+# Und die Kategorie-Identität: `base` darf sich NICHT geändert haben. Sport bleibt
+# Sport. Ein aufgehelltes `base` wäre die bequeme Antwort gewesen und eine
+# Identitätsänderung — *eine Prüf-Erwartung, die BEQUEMLICHKEIT verlangt, prüft
+# nicht die Regel* (FALLEN.md).
+IDENTITAET = {'sport': '#EDA803', 'food': '#2E7D5B', 'study': '#3D6BC2',
+              'culture': '#7B4FC2', 'outdoor': '#6B8C28', 'creative': '#C23D7B',
+              'danger': '#C2352F'}
+for n, soll in sorted(IDENTITAET.items()):
+    pruef(f'{n:9} base ist unverändert {soll}', PALETTEN.get(n, {}).get('base') == soll,
+          f"steht auf {PALETTEN.get(n, {}).get('base')} — das ist eine Identitätsänderung")
 
 print('')
 print('── 5. Kein Farbliteral ausserhalb von colors.ts ────────────────────────')
