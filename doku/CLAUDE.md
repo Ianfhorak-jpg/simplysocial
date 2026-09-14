@@ -433,7 +433,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 116. Was der Treffen-Zähler zählt, steht im TRIGGER `treffen_buchen` (0012) — nie in einer Funktion und nie in der App
 ## Fallen — Index
 
-> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 196 Stück, jede schon
+> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 205 Stück, jede schon
 > einmal einen Abend gekostet — die meisten stammen aus ACTA (`17_Tennis_Optimma`), der
 > Rest aus diesem Projekt. Hier steht nur der Titel; **die Diagnose steht im Volltext.**
 
@@ -627,6 +627,15 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - `security import` meldet „wrong password?", wenn OpenSSL 3 die .p12 geschrieben hat — die Ursache ist der MAC-Algorithmus, nicht das Passwort
 - Ein Skript, das an einer Stelle abbricht, hat die Schritte DAVOR schon getan
 - Ein laufendes Shell-Skript zu ÄNDERN zerlegt es mitten im Lauf — und der Fehler steht in keiner Fassung der Datei
+- Eine dokumentierte ZAHL ohne ihre Messstelle ist nicht reproduzierbar — und das merkt man erst, wenn man sie braucht
+- Ein iPhone-Screenshot ist oft 16 Bit — und die PNG-Filter rechnen auf BYTES
+- Ein Testbild, das den Fehler nicht ERZWINGT, prüft nichts — und `wert × 257` ist genau so eines
+- Ein Abbruch, der nur so HEISST
+- Ein Anker, der mit der Arbeit mitwandert, ist kein Anker
+- Debug-App und Release-App heissen beide `SimplySocial.app` — nach `simctl install` ist dem Bündel die Herkunft nicht mehr anzusehen
+- Ein Debug-Build ohne laufenden Metro zeigt den roten Kasten „No script URL provided" — mit 822 Farben und damit ein „gültiges" Bild
+- `ioreg -n IODisplayWrangler` hat auf Apple Silicon keinen `IOPowerManagement`-Eintrag
+- `awk '… {print; exit}'` in einer Pipe tötet ein Skript unter `set -euo pipefail`
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

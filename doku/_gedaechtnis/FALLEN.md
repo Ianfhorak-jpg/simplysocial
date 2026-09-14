@@ -1,4 +1,4 @@
-# SimplySocial — 196 Fallen
+# SimplySocial — 205 Fallen
 
 > Herausgelöst aus `CLAUDE.md` am 2026-09-13. **Kein Zeichen geändert** — nur
 > verschoben, damit die auto-geladene `CLAUDE.md` nicht mehr ~101.500 Tokens je
@@ -1548,3 +1548,75 @@
   **Wer einem Menschen ein Skript zum Ausführen gibt, ändert es erst wieder, wenn er
   gesagt hat, dass es durch ist.**
 
+- **Eine dokumentierte ZAHL ohne ihre Messstelle ist nicht reproduzierbar — und das
+  merkt man erst, wenn man sie braucht.** In PLAN.md stand seit dem 2026-09-09 die
+  Zahl **33,2** („so stark hebt sich Ians Vorbild vom Untergrund ab"), und der Plan
+  für Phase 22 machte daraus das Erfolgskriterium: *Ziel ≥ 25*. Beim Gegenprüfen des
+  Messgeräts am 2026-09-14 kam heraus, dass am **selben Bild** (`ae07`) je nach
+  Messstelle **89,3** oder **5,4** herauskommt — zwei Rechtecke, 250 px auseinander,
+  beide offensichtlich „Kapsel gegen Untergrund". Die 33,2 liegt dazwischen, aber
+  **worüber sie gemessen wurde, steht nirgends.** Damit war das Erfolgskriterium der
+  ganzen Phase frei wählbar: Man findet immer ein Rechteck, das die gewünschte Zahl
+  liefert. *Eine Zahl aus einem ungeprüften Messgerät ist eine Behauptung mit
+  Nachkommastelle.* Behoben mit Ians Entscheidung 88 — eine Hauptzahl, die keine
+  Koordinaten braucht (mittlere Bildhelligkeit), plus feste Messrechtecke in einer
+  Datei. **Wer eine Zahl aufschreibt, schreibt daneben, woran sie gemessen wurde.**
+- **Ein iPhone-Screenshot ist oft 16 Bit — und die PNG-Filter rechnen auf BYTES.**
+  `vorbild-liquid-glass-bierbuddy.png` ist Farbtyp 2, **16 Bit** (so speichert iOS
+  einen P3-Screenshot); `glasmessung.py` nahm nur 8 Bit an und konnte genau die eine
+  Datei nicht lesen, an der es sich beweisen sollte. Das Tückische steckt nicht im
+  Auslesen, sondern in der Filter-Rückrechnung: Die fünf PNG-Filter beziehen sich auf
+  das Byte `bpp` Stellen weiter links, und bei 16 Bit sind das **sechs** Bytes je
+  Pixel, nicht drei. Wer die Kanalzahl als Schrittweite nimmt, holt den „linken
+  Nachbarn" aus der MITTE eines Samples — gemessen ergab das **129,188** statt
+  21,858, also Werte im gültigen Bereich, die plausibel aussehen.
+- **Ein Testbild, das den Fehler nicht ERZWINGT, prüft nichts — und `wert × 257` ist
+  genau so eines.** Der naheliegende Weg, einen 8-Bit-Wert auf 16 Bit zu bringen, ist
+  `wert * 257`. Dabei sind oberes und unteres Byte **identisch** (20 × 257 = 0x1414),
+  und eine falsche Filter-Schrittweite fällt nicht auf: Das Testbild leuchtet grün,
+  egal ob der Decoder stimmt. Erst mit einem ANDEREN unteren Byte trennt die
+  Gegenprobe. Schwesterfall zu harter Regel 92 und zu *„Ein Pixelvergleich braucht
+  eine Gegenprobe GEGEN SICH SELBST"*.
+- **Ein Abbruch, der nur so HEISST.** In `bild_kennzahlen` stand
+  `if len(farben) > 5000: farben.add(('viele',))` — gedacht als „ab hier hören wir
+  auf zu zählen". Tatsächlich fügt es immer dasselbe Tupel in dieselbe Menge ein und
+  ändert nichts; die Schleife lief weiter über alle 1,5 Mio. Bildpunkte und das Set
+  wuchs mit. **Der Kommentar daneben versprach den Abbruch, den es nie gab** — und
+  weil das Ergebnis richtig blieb, fiel es nur beim Lesen auf.
+- **Ein Anker, der mit der Arbeit mitwandert, ist kein Anker.** `schirm.sh` prüfte
+  „ist die installierte App noch aktuell?" mit `find src -newer package.json`. Beim
+  ersten Lauf hatte ich `package.json` gerade selbst geändert (der npm-Eintrag für
+  eben dieses Skript) — also war keine Quelldatei neuer, und der Wächter winkte eine
+  **fünf Tage alte** App durch. Genau der Fall, gegen den er gebaut war. Verglichen
+  wird gegen das, was man prüfen will: die mtime des installierten Bündels.
+- **Debug-App und Release-App heissen beide `SimplySocial.app` — nach `simctl
+  install` ist dem Bündel die Herkunft nicht mehr anzusehen.** Nachdem `schirm.sh`
+  auf Release umgestellt war, lag noch die Debug-App von zwanzig Minuten vorher
+  installiert, und die ist NEUER als jede Quelldatei. Der Aktualitäts-Wächter sagte
+  „installiert und aktuell", und der rote Metro-Kasten kam ein zweites Mal. **Eine
+  Konfiguration ist Teil der Frage „ist das die richtige App?"** — festgehalten in
+  einer Marke neben dem Build, und bei Abweichung wird deinstalliert statt
+  überschrieben.
+- **Ein Debug-Build ohne laufenden Metro zeigt den roten Kasten *„No script URL
+  provided"* — mit 822 Farben und damit ein „gültiges" Bild.** Die
+  Schwarzbild-Erkennung fragt „hat das Bild tausende Farben oder eine?", und der
+  Fehlerkasten samt Text hat hunderte. Er kam glatt durch. **Risiko 3 aus dem Plan
+  („die Selbstprüfung liefert ein überzeugendes falsches Bild") ist beim allerersten
+  Lauf eingetreten.** Zwei Antworten: Belege werden aus einem **Release**-Build
+  geknipst (JS eingebettet, kein Dev-Server, kein Dev-Menü), und `glasmessung.py`
+  zählt den Anteil React-Native-Fehlerrot im oberen Drittel — gemessen **41,9 %**
+  gegen **0,00 %** bei jedem echten Screen.
+- **`ioreg -n IODisplayWrangler` hat auf Apple Silicon keinen
+  `IOPowerManagement`-Eintrag.** Der Knoten existiert, aber die Abfrage
+  `CurrentPowerState=4` trifft nie zu, und `pmset -g powerstate IODisplayWrangler`
+  antwortet mit *„Internal failure"*. Ein Wächter darauf warnt **immer** — und ein
+  Wächter, der immer warnt, wird abgeschaltet statt gelesen. Was hier antwortet: ob
+  der Simulator ein FENSTER hat (`System Events`, die Ursache direkt gefragt) und ob
+  `pmset -g assertions` `UserIsActive 1` meldet.
+- **`awk '… {print; exit}'` in einer Pipe tötet ein Skript unter `set -euo
+  pipefail`.** Das `exit` beendet awk früh, das linke Ende der Pipe bekommt SIGPIPE,
+  pipefail macht daraus einen Pipeline-Fehler und `set -e` beendet das Skript —
+  **stumm, mitten in einer Zeile, die richtig aussieht.** Dieselbe Mechanik wie
+  *„`find … | grep -v …` unter `set -euo pipefail` tötet das Skript STUMM"*, nur mit
+  einem Erfolg statt einer leeren Menge am linken Ende. `grep -m1` davor statt `exit`
+  darin, und ein `|| true` an die Pipeline.

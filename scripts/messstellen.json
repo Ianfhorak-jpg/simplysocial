@@ -1,0 +1,28 @@
+{
+  "_liesmich": [
+    "Ians Entscheidung 88 (2026-09-14). Die Abhebung einer Glasflaeche haengt voellig",
+    "davon ab, WO man misst — am selben Bild ergaben zwei Rechtecke 250 px auseinander",
+    "89,3 und 5,4. Die Zahl 33,2 aus PLAN.md ist deshalb nicht wiederauffindbar: Dort",
+    "steht das Ergebnis, nicht die Messstelle. Hier stehen die Messstellen.",
+    "",
+    "WARNUNG: Verschiebt sich ein Knopf, misst ein Rechteck STILL daneben. Deshalb",
+    "traegt jeder Eintrag ein Feld 'zeigt_auf' — wer ein Rechteck aendert, sagt wozu.",
+    "Die Bildgroesse steht dabei: andere Groesse = andere Koordinaten, kein Vergleich.",
+    "",
+    "Die HAUPTZAHL braucht diese Datei nicht. Sie ist die mittlere Bildhelligkeit und",
+    "kommt bei jedem Aufruf von glasmessung.py heraus. Ziel: unter 60 (Ians Vorbild",
+    "liegt bei 90,8, der helle Stand bei 219,5-240,5)."
+  ],
+  "af00-hell-vorher-anmelden": {
+    "bild": "1206x2622",
+    "stand": "hell, vor dem Dunkelmodus, Release-Build am Simulator iPhone 17 Pro",
+    "mittlere_helligkeit": 219.5,
+    "felder": {
+      "karte": { "x": 60, "y": 830, "b": 1080, "h": 220,
+                 "zeigt_auf": "die weisse Karte mit dem Schriftzug, obere Haelfte" },
+      "grund": { "x": 60, "y": 300, "b": 1080, "h": 220,
+                 "zeigt_auf": "Papierweiss darueber, leere Flaeche ohne Inhalt" }
+    },
+    "abhebung": 13.8
+  }
+}

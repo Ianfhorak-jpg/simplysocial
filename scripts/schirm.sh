@@ -140,6 +140,19 @@ sag "3. Ist die installierte App die aktuelle?"
 # dieses Skript), also war keine Quelldatei neuer, und der Wächter winkte eine
 # **fünf Tage alte** App durch. Genau der Fall, gegen den er gebaut war.
 # Ein Anker, der mit der Arbeit mitwandert, ist kein Anker.
+#
+# ⚠️⚠️⚠️ **Und die KONFIGURATION gehört dazu.** Beim zweiten Lauf am 2026-09-14
+# war das Skript schon auf Release umgestellt — aber installiert lag noch die
+# Debug-App von zwanzig Minuten vorher, und die ist NEUER als jede Quelldatei.
+# Schritt 3 sagte „installiert und aktuell", und der rote Metro-Kasten kam ein
+# zweites Mal. **Eine Debug-App und eine Release-App sind verschiedene Dinge,
+# heissen aber beide `SimplySocial.app`** — nach `simctl install` ist dem Bündel
+# nicht mehr anzusehen, woher es kam.
+#
+# Deshalb eine Marke neben dem Build: Sie hält fest, WAS auf WELCHES Gerät
+# installiert wurde. Fehlt sie oder passt sie nicht, wird gebaut.
+MARKE="$DERIVED/installiert-$UDID.txt"
+SOLL="Release $UDID"
 APP_PFAD="$(xcrun simctl get_app_container "$UDID" "$BUNDLE" 2>/dev/null || true)"
 NEUSTE_QUELLE=""
 if [[ -n "$APP_PFAD" ]]; then
@@ -181,11 +194,20 @@ bauen() {
   local gebaut="$DERIVED/Build/Products/Release-iphonesimulator/SimplySocial.app"
   [[ -d "$gebaut" ]] || { echo "✗ BUILD SUCCEEDED, aber $gebaut fehlt."; exit 1; }
   xcrun simctl install "$UDID" "$gebaut"
-  echo "  ✓ gebaut und installiert"
+  echo "$SOLL" > "$MARKE"
+  echo "  ✓ gebaut und installiert (Release)"
 }
 
 if [[ -z "$APP_PFAD" ]]; then
   echo "  App ist nicht installiert."
+  bauen
+elif [[ "$(cat "$MARKE" 2>/dev/null || echo '—')" != "$SOLL" ]]; then
+  echo "  Die installierte App stammt nicht aus einem Release-Build dieses Skripts."
+  echo "    erwartet: $SOLL"
+  echo "    gefunden: $(cat "$MARKE" 2>/dev/null || echo 'keine Marke')"
+  # Deinstallieren, nicht überschreiben: Ein `install` über eine App mit anderer
+  # Konfiguration lässt Reste stehen, und die sind später nicht zuzuordnen.
+  xcrun simctl uninstall "$UDID" "$BUNDLE" 2>/dev/null || true
   bauen
 elif [[ -n "$NEUSTE_QUELLE" ]]; then
   echo "  Quelle ist neuer als das installierte Bündel:"
