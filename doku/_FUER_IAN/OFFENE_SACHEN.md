@@ -13,13 +13,24 @@
 >
 > ```bash
 > cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
-> npm run einspielen
+> npm run einspielen -- 0011_zustimmung.sql
 > ```
 >
-> Das spielt alle Migrationen ein und misst danach neun Zahlen nach. **Alle neun
-> müssen gleich bleiben** — ich habe das gegen meine Wegwerf-Datenbank schon
-> gemessen, dort stimmen sie. Meldet der Lauf eine andere Zahl, ist das ein Befund
-> und kein Rauschen: dann bitte abbrechen und mir sagen, welche.
+> ⚠️ **Der Teil hinter `--` ist wichtig.** Dein erster Lauf ohne ihn (14.09., 08:29)
+> hat **nichts eingespielt** — das Skript sieht, dass die Datenbank nicht leer ist,
+> und rührt sie dann nicht an. Das ist richtig so, sonst könnte ein
+> Versehen deine echten Daten überschreiben. Es hat danach aber „alle Zahlen
+> stimmen, war schon richtig eingerichtet" gemeldet, und **das war falsch**: Die
+> Zahlen zählen Tabellen und Regeln, keine einzelnen Felder — die zwei fehlenden
+> konnte keine davon sehen.
+>
+> **Ich habe das Skript inzwischen repariert** (es zählt jetzt auch Felder, und es
+> sagt nicht mehr „richtig eingerichtet", wenn es nur nachgemessen hat). Mein
+> Fehler, nicht deiner: Ich hatte dir den Befehl ohne den `--`-Teil gegeben.
+>
+> Der Lauf misst danach **14 Zahlen**. Stimmen alle, ist es drin. Meldet er eine
+> andere, ist das ein Befund und kein Rauschen — dann bitte abbrechen und mir sagen,
+> welche.
 >
 > ⚠️ **Danach ist der nächste Build fällig.** Der Build vom 13.09. kennt weder das
 > Passwortfeld für Apple noch das Häkchen. Was zu Apple geht, muss den Code von
