@@ -1391,3 +1391,18 @@
   nachgezogen — sie wird die Zahl los.** Jetzt steht dort ein `grep`, der nicht
   veraltet. Verwandt mit „Ein Kommentar, der eine Sicherheitszusage begründet,
   veraltet lautlos", nur trifft es hier die Anleitung zum Nachschlagen selbst.
+- **Wer NUR Dateien ausserhalb des Repos ändert, kann nicht committen — und der
+  pre-commit-Hook rettet das nicht.** (2026-09-14) `PLAN.md`, `CLAUDE.md`,
+  `_FUER_IAN/` und `_gedaechtnis/` liegen eine Ebene über dem Repo; `doku.sh`
+  spiegelt sie hinein, und `.git/hooks/pre-commit` ruft es bei jedem Commit auf. Das
+  trägt, solange im selben Zug auch Code geändert wurde — der Normalfall, deshalb ist
+  es nie aufgefallen. Ändert man **nur** Doku, läuft `git add -A` ins Leere, git
+  lehnt den leeren Commit ab, und der Hook spiegelt erst DANACH. Auf dem Schirm steht
+  „→ Doku aufgefrischt", direkt gefolgt von „nothing to commit, working tree clean" —
+  und die frisch gespiegelten Dateien bleiben als gestagte Änderung liegen, die
+  niemand mehr ansieht. **Beim ersten Mal sieht das wie ein Erfolg aus:** Der Spiegel
+  ist ja aufgefrischt. Mir am 14.09. zweimal passiert, beim zweiten Mal mit einer
+  Commit-Nachricht, die zwei Nachträge versprach und einen lieferte.
+  Der Ausweg ist eine Zeile: **`npm run doku` VOR `git add -A`.** Verwandt mit *„Eine
+  Prüfung, die zu früh fragt, ist ein Fehlalarm"* — nur wird hier zu SPÄT gespiegelt,
+  und das Ergebnis ist kein Fehlalarm, sondern eine ausgelassene Sicherung.
