@@ -5,7 +5,7 @@ import { SsButton, SsIcon, SsText } from '@/components/ui';
 import type { LadeFehler } from '@/data/laden';
 import { ladeFehlerFolgen, ladeZeileFolgen } from '@/data/quelle';
 import { abmelden } from '@/features/auth/hooks';
-import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
+import { colors, ecke, MAX_CONTENT_WIDTH, spacing } from '@/theme';
 
 /**
  * Was dasteht, wenn die Daten nicht kommen — **Ians Entscheidung 43** vom
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MAX_CONTENT_WIDTH,
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    ...ecke.lg,
     borderWidth: 1,
     borderColor: colors.line,
     padding: spacing.xl,
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    ...ecke.md,
     borderWidth: 1,
     borderColor: colors.line,
     paddingVertical: spacing.xs,

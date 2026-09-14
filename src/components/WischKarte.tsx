@@ -29,7 +29,8 @@ import {
   SCHWUNG,
   type WischRichtung,
 } from '@/features/posts/wisch';
-import { colors, radius, spacing, type CategoryPalette } from '@/theme';
+import { haptik } from '@/lib/haptik';
+import { colors, ecke, spacing, type CategoryPalette } from '@/theme';
 
 /**
  * Eine Karte, die man wegziehen kann.
@@ -105,6 +106,19 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
   // „hinziehen und wieder zurück" ein Tipp — beim Loslassen ist `dx` dann nämlich
   // wieder null. Im Browser sofort passiert: Karte zurückgeschoben, Post-Detail auf.
   const bewegt = useRef(false);
+  /**
+   * Liegt die Karte GERADE jenseits der Schwelle? — Phase 20.12.
+   *
+   * Nicht „war sie schon mal", sondern der aktuelle Zustand: Die Vibration kommt bei
+   * jedem WECHSEL, also auch beim Zurückziehen unter die Schwelle. Sonst spürte man
+   * nur, dass es reicht, aber nie, dass es wieder nicht mehr reicht — und genau
+   * dazwischen entscheidet man sich um.
+   *
+   * Ein `useRef` und kein `useState`: Der Wert wird sechzigmal in der Sekunde im
+   * `PanResponder` gelesen, und ein `setState` daraus würde bei jedem Bild neu
+   * zeichnen, ohne dass sich am Bild etwas ändert.
+   */
+  const ueberSchwelle = useRef(false);
   // Die Tiefe ist ein eigener Wert und keine Zahl im Style: Wenn die oberste Karte
   // wegfliegt, soll die nächste sichtbar AUFRÜCKEN. Ein Sprung von 0,95 auf 1,0
   // wäre genau der Moment, in dem der Stapel wie eine Liste aussieht.
@@ -213,6 +227,7 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
 
       onPanResponderGrant: () => {
         bewegt.current = false;
+        ueberSchwelle.current = false;
         // Eine Karte, die gerade zurückfedert, kann man erneut anfassen. Ohne das
         // Anhalten läuft die alte Animation weiter und zerrt gegen den Finger.
         pan.stopAnimation();
@@ -223,6 +238,22 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
         // Senkrecht stark gedämpft: Die Karte darf dem Finger folgen, aber sie soll
         // sichtbar an einer waagrechten Schiene hängen.
         pan.setValue({ x: g.dx, y: g.dy * 0.25 });
+
+        // ── Phase 20.12: der Moment, in dem der Wisch ZÄHLT ──────────────────
+        // Genau hier, mitten in der Bewegung, und nicht beim Loslassen: Man spürt,
+        // dass es reicht, WÄHREND der Finger noch unten ist — und kann noch zurück.
+        // Dieselbe Schwelle, die der Stempel oben sichtbar macht (`stempelLinks` /
+        // `stempelRechts` sind bei genau diesem Wert voll da) und die `Release`
+        // unten zum Wegwerfen benutzt. **Drei Stellen, eine Zahl** — `SCHWELLE` aus
+        // `wisch.ts`, sonst würde man etwas anderes spüren als man sieht.
+        const drueber = Math.abs(g.dx) > breiteRef.current * SCHWELLE;
+        if (drueber !== ueberSchwelle.current) {
+          ueberSchwelle.current = drueber;
+          // Nur beim Überschreiten, nicht beim Zurückgehen: Das Zurück ist kein
+          // eigenes Ereignis, es ist das Ausbleiben eines. Ein zweites Zucken dafür
+          // machte aus der Auskunft ein Geräusch.
+          if (drueber) haptik.schwelle();
+        }
       },
 
       onPanResponderRelease: (_, g) => {
@@ -239,9 +270,18 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
         const weitGenug = Math.abs(g.dx) > breiteRef.current * SCHWELLE;
         const schnellGenug = Math.abs(g.vx) > SCHWUNG;
         if (weitGenug || schnellGenug) {
+          // ⚠️ Der schnelle Wisch ist der Grund für diese Zeile: `schnellGenug` kann
+          // wahr sein, OHNE dass die Schwelle je überschritten wurde — ein kurzer
+          // Schnipser reicht. Dann hat `Move` oben nie vibriert, und der Wisch
+          // fühlte sich als einziger stumm an. Hier nachgeholt, und nur hier.
+          if (!ueberSchwelle.current) haptik.schwelle();
           fliegen(g.dx > 0 ? 'rechts' : 'links', g.vy);
           return;
         }
+        // Zurückgeschnappt: Ein Anstoßen an eine Grenze, spürbar anders als ein
+        // Auslösen (`Rigid` statt `Light`, siehe `lib/haptik.native.ts`). Nur wenn
+        // wirklich gezogen wurde — ein Tipp ist oben schon abgefangen.
+        if (bewegt.current) haptik.zurueck();
         Animated.spring(pan, {
           toValue: { x: 0, y: 0 },
           friction: 6,
@@ -263,7 +303,8 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
 
   // Alles, was aus der Zugstrecke folgt. `useMemo`, weil `interpolate` bei jedem
   // Rendern sonst neue Objekte baut — bei 60 Bildern je Sekunde ist das messbar.
-  const { kippung, stempelLinks, stempelRechts, abriss, anheben } = useMemo(() => {
+  const { kippung, stempelLinks, stempelRechts, abriss, anheben, tonLinks, tonRechts } =
+    useMemo(() => {
     const s = b * SCHWELLE;
     return {
       kippung: pan.x.interpolate({
@@ -293,6 +334,29 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
       anheben: pan.x.interpolate({
         inputRange: [-s, 0, s],
         outputRange: [1.02, 1, 1.02],
+        extrapolate: 'clamp',
+      }),
+      /**
+       * Wie stark sich die Karte beim Ziehen einfärbt — Phase 20.12.
+       *
+       * Läuft von 0 bis 1 über DIESELBE Strecke wie die Stempel, und zwar mit
+       * demselben Knick bei 35 %: Bis dahin passiert gar nichts, danach wächst es
+       * bis zur Schwelle auf voll. **Farbe und Stempel sagen damit dasselbe zur
+       * selben Zeit** — sonst wären es zwei Antworten auf die Frage „reicht das
+       * schon?", und zwei Antworten sind schlechter als eine.
+       *
+       * Deckel bei 0,14: Es ist ein Hauch, kein Anstrich. Die Karte soll sich
+       * TÖNEN, nicht verschwinden — unter dem Schleier steht der Titel, an dem man
+       * gerade entscheidet.
+       */
+      tonLinks: pan.x.interpolate({
+        inputRange: [-s, -s * 0.35, 0],
+        outputRange: [0.14, 0, 0],
+        extrapolate: 'clamp',
+      }),
+      tonRechts: pan.x.interpolate({
+        inputRange: [0, s * 0.35, s],
+        outputRange: [0, 0, 0.14],
         extrapolate: 'clamp',
       }),
     };
@@ -329,6 +393,25 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
       // abfangen — sonst öffnet man ein Post-Detail, das man gar nicht sieht.
       {...(tiefe === 0 ? responder.panHandlers : {})}>
       {children}
+
+      {/* Der Farbschleier liegt ÜBER dem Inhalt und UNTER den Stempeln: Er tönt die
+          Karte, er verdeckt sie nicht — und die Stempel sollen auf dem Ton stehen,
+          nicht darunter liegen.
+
+          ⚠️ **Kein Tinder-Grün und kein Tinder-Rot.** In dieser App hat jede Farbe
+          eine Bedeutung (`theme/colors.ts`): Rot ist `danger` — Melden, Blockieren,
+          Absagen —, und Grün ist die Kategorie *Essen*. Ein grüner Schleier hieße
+          hier „Kaffee", nicht „ja". Deshalb nimmt der Ton genau die Farben, die die
+          Stempel schon tragen: rechts die Kategoriefarbe, links dasselbe Grau wie
+          das Wort „Weg". Tinders Mechanik, die Sprache dieser App. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.ton, { backgroundColor: palette.base, opacity: tonRechts }]}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.ton, { backgroundColor: colors.inkSoft, opacity: tonLinks }]}
+      />
 
       <Abrisskante deckkraft={abriss} />
 
@@ -414,6 +497,23 @@ const styles = StyleSheet.create({
     userSelect: 'none',
   },
 
+  /**
+   * Der Farbschleier beim Ziehen. Ausgeschrieben statt `StyleSheet.absoluteFill` —
+   * das ist in dieser React-Native-Fassung eine registrierte Kennung und mischt sich
+   * nicht mit weiteren Angaben (in Phase 4 am Konfetti gelernt).
+   *
+   * `ecke.lg`, damit der Ton dieselbe Rundung hat wie die Karte darunter: Ohne das
+   * stünden an den vier Ecken farbige Zipfel über den runden Rand hinaus.
+   */
+  ton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    ...ecke.lg,
+  },
+
   abriss: {
     position: 'absolute',
     top: 0,
@@ -436,7 +536,7 @@ const styles = StyleSheet.create({
     // die Fußzeile mit Name und Plätzen; die hat man gelesen, bevor man zieht.
     bottom: spacing.lg,
     borderWidth: 3,
-    borderRadius: radius.md,
+    ...ecke.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     backgroundColor: colors.surface,

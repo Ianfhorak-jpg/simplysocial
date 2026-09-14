@@ -55,6 +55,7 @@ echo
 $PSQL -tA -d ss -f "$HIER/10_angriff.sql"
 $PSQL -tA -d ss -f "$HIER/20_transaktionen.sql"
 $PSQL -tA -d ss -f "$HIER/25_bilder.sql"
+$PSQL -tA -d ss -f "$HIER/26_treffen.sql"
 
 # Das Wettrennen braucht ZWEI Verbindungen und geht deshalb nicht als .sql-Datei.
 bash "$HIER/30_wettlauf.sh"

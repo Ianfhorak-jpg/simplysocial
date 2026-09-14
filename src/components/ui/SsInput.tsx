@@ -13,7 +13,7 @@ import {
 import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
 
-import { colors, radius, spacing, status, type } from '@/theme';
+import { colors, ecke, spacing, status, type } from '@/theme';
 import type { IconName } from '@/theme/icons';
 
 export interface SsInputProps {
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderRadius: radius.md,
+    ...ecke.md,
     paddingHorizontal: spacing.md,
   },
   feldHoch: { alignItems: 'flex-start' },

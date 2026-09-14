@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SsButton, SsIcon, SsText } from '@/components/ui';
 import { ANMELDE_QUELLE } from '@/features/auth/anmeldung';
-import { accent, colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
+import { accent, colors, ecke, MAX_CONTENT_WIDTH, spacing } from '@/theme';
 
 /**
  * Der Satz, den jeder braucht, der den Link bekommt — einmal, dann nie wieder.
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MAX_CONTENT_WIDTH,
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    ...ecke.lg,
     borderWidth: 1,
     borderColor: colors.line,
     padding: spacing.xl,

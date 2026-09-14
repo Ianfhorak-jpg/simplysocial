@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { categoryColors, colors, radius, spacing } from '@/theme';
+import { categoryColors, colors, ecke, spacing } from '@/theme';
 import type { ActivityCategory } from '@/types/models';
 
 export interface SsCardProps {
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    ...ecke.lg,
     borderWidth: 1,
     borderColor: colors.line,
     overflow: 'hidden',

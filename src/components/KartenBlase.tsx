@@ -8,7 +8,7 @@ import { BLASE_MAX, blaseAlleText } from '@/features/posts/karte';
 import { nachStartzeit } from '@/features/posts/sort';
 import type { KartenAnker } from '@/components/ui/karte-typen';
 import { kurzStart } from '@/lib/zeit';
-import { categoryColors, colors, radius } from '@/theme';
+import { categoryColors, colors, ecke } from '@/theme';
 
 /**
  * Die Sprechblase über einem angetippten Bezirk — Phase 19c.
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   },
   koerper: {
     backgroundColor: colors.surface,
-    borderRadius: radius.sm,
+    ...ecke.sm,
     paddingVertical: PAD,
     /**
      * Der Körper fängt Berührungen, der Halter um ihn herum nicht.

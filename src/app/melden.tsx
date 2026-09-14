@@ -9,7 +9,7 @@ import { melden, useHabeIchBlockiert, useMeineMeldung } from '@/features/safety/
 import { useUser } from '@/features/social/hooks';
 import { useCurrentUserId } from '@/features/auth/hooks';
 import { ortText } from '@/lib/bezirk';
-import { colors, danger, radius, spacing } from '@/theme';
+import { colors, danger, ecke, spacing } from '@/theme';
 import type { ReportReason, ReportTarget } from '@/types/models';
 import { handleText } from '@/lib/handle';
 
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 2,
     borderColor: colors.line,
-    borderRadius: radius.lg,
+    ...ecke.lg,
     cursor: 'pointer',
   },
   grundGewaehlt: { borderColor: danger.base, backgroundColor: danger.soft },
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.line,
-    borderRadius: radius.lg,
+    ...ecke.lg,
   },
   // Mitte der ERSTEN Zeile, nicht des Blocks — ACTA-Falle aus Phase 12.
   dankeIcon: { marginTop: 1 },

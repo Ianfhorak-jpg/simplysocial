@@ -1,6 +1,112 @@
 # Der Durchgang am Handy
 
-## 🔵 DURCHGANG 6 — das Zustimmungs-Häkchen *(dran, 14.09.2026)*
+## 🔵 DURCHGANG 7 — sieht es jetzt nach iOS aus? *(dran, 14.09.2026 abends)*
+
+> **Was neu ist — drei Sachen auf einmal:**
+> 1. Es sah nach Android aus, weil **der dicke Rand unter jedem Knopf** das Lauteste auf
+>    jedem Bildschirm war. Der ist weg, die Knöpfe sind jetzt iOS-Kapseln.
+> 2. **Die Liste ist aus dem Umschalter raus** (dein Satz vom Abend).
+> 3. **Die Posts sehen anders aus** — „groß und ruhig", deine Wahl aus drei Fassungen.
+>
+> Dazu ein Bildschirm, auf dem die **drei Fassungen nebeneinander** stehen — du wolltest
+> sie sehen, bevor du wählst. Wo er liegt, steht weiter unten.
+
+**Das ist kein Prüf-Durchgang wie die anderen.** Bei den sechs davor ging es darum, ob
+etwas *funktioniert*. Hier geht es nur darum, ob es *gut aussieht* — und das kann
+niemand außer dir beantworten.
+
+### Mach SimplySocial auf und schau dir sechs Dinge an
+
+**Der Build von 19:45 ist drauf** — er enthält beides, das Glas *und* die neuen Posts.
+
+| | Wo | Was anders sein muss | Passt? |
+|---|---|---|---|
+| 1 | **Der Umschalter oben** | Nur noch **zwei Felder: Stapel · Karte**. Stehen da drei, ist der alte Build drauf — dann sag Bescheid | ⬜ |
+| 2 | **Irgendein Knopf** („Bin dabei", „Posten", „Schicken") | Er ist jetzt **voll rund wie eine Kapsel** und hat **keinen dicken farbigen Streifen mehr unten** | ⬜ |
+| 3 | **Denselben Knopf gedrückt halten** | Er wird ein kleines bisschen **kleiner und blasser**, statt sich nach unten zu schieben. **Fühlt sich das richtig an?** Zu wenig? Zu viel? Sag es mir — es sind zwei Zahlen an einer Stelle | ⬜ |
+| 4 | **Ein Screen mit Zurück-Pfeil** (Post öffnen, Einstellungen, Melden) | Oben links sitzt der Pfeil jetzt **in einem runden Glaskreis**, nicht mehr nackt auf Weiß. Genau der Knopf, der auf deinem Bierbuddy-Bild oben links ist | ⬜ |
+| 5 | **Der Wischstapel** | Die Karte ist **ruhiger und größer**: Oben klein die Kategorie in ihrer Farbe („SPORT"), darunter der Titel **deutlich größer**, viel mehr Luft. Der bunte Streifen links ist weg | ⬜ |
+| 6 | **Durchwischen, bis der Stapel leer ist** | Darunter steht die Liste wie bisher — aber die Posts haben dort **keinen Kasten mehr**, nur eine feine Linie dazwischen | ⬜ |
+
+### 🎨 Und dann das Wichtigste: die drei Fassungen vergleichen
+
+Du wolltest sie sehen statt beschrieben bekommen — **sie sind jetzt in der App**:
+
+> **Profil → Einstellungen → ganz unten „Für die Entwicklung" → „Post-Fassungen vergleichen"**
+
+Dort stehen dieselben drei Posts dreimal untereinander:
+
+| | Fassung | Was sie ist |
+|---|---|---|
+| **A** | Farbband oben | Die Kategorie als kräftiges Band über der weißen Karte |
+| **B** | Ganz in der Kategoriefarbe | Die ganze Karte farbig, Schrift hell darauf |
+| **C** | Groß und ruhig | Was gerade in der App steht — deine erste Wahl |
+
+**Warum drei verschiedene Kategorien und nicht dreimal derselbe Post:** Eine einzelne
+Karte sagt nichts darüber, wie sich zehn davon untereinander anfühlen. Genau das war
+das Argument gegen die bunte Fassung — schau dir bei **B** an, ob Gelb, Grün und Lila
+untereinander unruhig wirken oder gut.
+
+**Sag mir einfach „A", „B" oder „C".** Wenn dir an einer etwas fehlt oder zu viel ist,
+sag das dazu — das lässt sich einzeln ändern, du musst nicht eine ganz nehmen.
+
+> ℹ️ **Fassung C ist die echte Karte**, A und B sind nur zum Anschauen nachgebaut. Wenn
+> du A oder B nimmst, baue ich sie richtig ein — und werfe den Vergleichs-Bildschirm
+> danach wieder weg.
+
+### 📳 Neu seit 20:12 — das Wischgefühl. Das musst du SPÜREN, nicht anschauen
+
+| | Was du tust | Was passieren muss | Passt? |
+|---|---|---|---|
+| 7 | **Eine Karte im Stapel LANGSAM nach rechts ziehen** | Genau in dem Moment, in dem der Wisch „zählt", spürst du ein kurzes Klicken — **während der Finger noch unten ist**. Genau das macht Tinder | ⬜ |
+| 8 | **Weiter ziehen, dabei hinschauen** | Die Karte tönt sich leicht in der Kategoriefarbe. **Kein Grün und kein Rot** wie bei Tinder — Rot heißt in deiner App „Melden/Absagen" und Grün ist die Kategorie *Essen* | ⬜ |
+| 9 | **Eine Karte anziehen und wieder loslassen, ohne weit genug zu ziehen** | Sie schnappt zurück, und das fühlt sich **anders** an als das Auslösen — härter, wie ein Anstoßen an eine Grenze | ⬜ |
+| 10 | **Einen Match auslösen** (Anfrage bestätigen) | Beim Konfetti vibriert es — Apples dreiteiliges Erfolgs-Muster. **Bisher wurde dein Match-Moment stumm gefeiert** | ⬜ |
+| 11 | **Ein Profil aufmachen** (deines oder ein fremdes) | Neben „Follower" und „Folgt" steht jetzt **„Treffen"**. ⚠️ Da steht **0**, bis du die Datenbank nachziehst — siehe unten. Das ist kein Fehler | ⬜ |
+
+> 📳 **Wenn nichts vibriert:** Schau in Einstellungen → Töne & Haptik, ob „Systemhaptik"
+> an ist. Im Stromsparmodus schaltet iOS sie auch ab.
+
+### 🔴 Eine Sache, die nur du machen kannst
+
+Die Zahl bei „Treffen" bleibt auf 0, bis die Datenbank die neue Spalte hat. **Ein
+Befehl**, und die Anleitung steht in **`_FUER_IAN/TREFFEN_ZAEHLER.md`**:
+
+```bash
+cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
+npm run einspielen 0012_treffen_zaehler.sql
+```
+
+Das zählt auch nach, was bisher schon passiert ist — du startest nicht bei null. Eilt
+nicht: Schau dir erst an, ob dir die Zahl im Profil überhaupt gefällt.
+
+### Zwei Sachen, auf die ich besonders neugierig bin
+
+- **Schritt 5 ist die eigentliche Frage.** „Groß und ruhig" war eine von drei Fassungen.
+  Wenn es dir zu leer vorkommt, ist das kein Fehler, sondern eine andere Wahl — dann
+  bauen wir die bunte oder die mit dem Farbband oben.
+- **Der Stapel hat jetzt keine Ausweichmöglichkeit mehr.** Vorher konntest du auf „Liste"
+  drücken und alles auf einmal sehen. Das ist weg (so wolltest du es) — schau, ob dir das
+  im Benutzen fehlt oder nicht.
+
+### Und dann die eigentliche Frage
+
+**Sieht es jetzt nach iPhone aus — oder immer noch nicht?**
+
+Wenn immer noch nicht: Sag mir **welcher Bildschirm** und **was daran**. Was ich bewusst
+*nicht* angefasst habe und was als Nächstes drankäme:
+
+- **Die Posts sind nicht aus Glas.** Apples eigene Regel ist, dass Glas der Navigation
+  gehört und nicht dem Inhalt — eine Liste aus Glaskarten auf einfarbigem Grund sieht
+  matschig aus. Wenn du es trotzdem sehen willst, baue ich es zum Vergleichen.
+- **Die Eingabefelder** haben noch einen 1-px-Rand. Bei den Posts ist die Linie schon
+  dünner (Apples Maß). Ob die Felder nachziehen sollen, schaut man besser an, als es zu
+  raten.
+- **Die Schrift** ist die Systemschrift (SF Pro), also schon die richtige.
+
+---
+
+## 🔵 DURCHGANG 6 — das Zustimmungs-Häkchen *(steht weiterhin aus)*
 
 > **Was neu ist:** Beim allerersten Anmelden steht unter Name · Bezirk · Jahrgang
 > jetzt ein Kästchen „Ich akzeptiere die Nutzungsbedingungen" (deine 80. Entscheidung).

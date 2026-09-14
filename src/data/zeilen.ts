@@ -121,6 +121,15 @@ export interface ProfilZeile {
   jahrgang: number;
   interests: ActivityCategory[];
   created_at: string;
+  /**
+   * Bestätigte Verabredungen — Phase 20.12, Migration 0012.
+   *
+   * Vom Server GERECHNET (Trigger `treffen_buchen`), nie von der App geschrieben:
+   * `authenticated` hat auf dieser Spalte kein Update-Recht. Sie steht hier, damit
+   * sie auf JEDEM Profil steht — ausrechnen könnte der Client sie nicht, weil
+   * Policy `anfragen_lesen` fremde Anfragen verbirgt.
+   */
+  treffen_anzahl: number;
 }
 
 /** Eine Kante aus `follows`. */
@@ -264,6 +273,12 @@ export function zuUser(
     district: zeile.district,
     jahrgang: zeile.jahrgang,
     interests: zeile.interests,
+    // `?? 0` ist kein Vorsichts-Standardwert, sondern die Antwort auf eine echte
+    // Lage: Ein Profil, das VOR Migration 0012 geladen wurde (alter Client, alte
+    // Zeile aus einem Cache), hat die Spalte nicht. Null Treffen und „noch nie ein
+    // Treffen" sind dieselbe Aussage — anders als bei `photo_url` daneben, wo der
+    // Unterschied zählt.
+    treffenAnzahl: zeile.treffen_anzahl ?? 0,
     followerIds: kanten.folgt.filter((f) => f.followee_id === zeile.id).map((f) => f.follower_id),
     followingIds: kanten.folgt.filter((f) => f.follower_id === zeile.id).map((f) => f.followee_id),
     // Nur die eigene Richtung. Ein `blockedByIds` gäbe es hier zu bauen — und genau

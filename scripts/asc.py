@@ -18,7 +18,7 @@ Der Prototyp ist öffentlich abrufbar).
 Das Token ist absichtlich nur 15 Minuten gültig — Apple erlaubt bis 20, und ein
 Token, das länger lebt als der Aufruf, ist ein Schlüssel ohne Schloss.
 """
-import sys, json, time, glob, os, urllib.request
+import sys, json, time, glob, os, base64, urllib.request
 import jwt
 
 BASIS = os.path.expanduser('~/.appstoreconnect')
@@ -154,8 +154,120 @@ def tester_einladen(t, app_id, leute, wirklich):
     print(f"  Sobald jemand annimmt: `npm run asc tester` nochmal — dann trage ich"
           f" ihn in die Gruppe {TESTER_GRUPPE} ein.")
 
+def zertifikat_anlegen(t):
+    """Ein Distribution-Zertifikat anlegen — Phase 21.4.
+
+    ⚠️ **Das wirkt nach aussen und verbraucht ein Kontingent.** Apple erlaubt zwei
+    Distribution-Zertifikate je Konto; ist keins mehr frei, muss eins widerrufen
+    werden (developer.apple.com → Certificates). Deshalb geht der Aufruf durch
+    `schicke()` und nicht durch `hole()` — dieselbe Trennung wie bei den Einladungen.
+
+    ── Warum es das überhaupt braucht ────────────────────────────────────────
+    Ein Gerätebuild wird mit `Apple Development` signiert, ein TestFlight-Build
+    mit `Apple Distribution`. Am 2026-09-14 lag im Konto NUR das Development-
+    Zertifikat und kein einziges Profil — Build 1 vom 11.09. ist bei Apple, aber
+    wie er signiert wurde, steht nirgends und ist im Konto nicht mehr zu sehen.
+
+    Der private Schlüssel wird NICHT hier erzeugt: Er liegt schon in
+    ~/.appstoreconnect/dist/dist.key, weil er niemals durch ein Python-Skript
+    gehen soll, das auch Netzwerkaufrufe macht. Hier geht nur die CSR hinaus —
+    die ist öffentlich, sie enthält den öffentlichen Schlüssel.
+    """
+    csr_pfad = f'{BASIS}/dist/dist.csr'
+    if not os.path.exists(csr_pfad):
+        sys.exit(f'✗ Keine CSR in {csr_pfad} — erst `npm run testflight` aufrufen.')
+    with open(csr_pfad) as f:
+        csr = f.read()
+
+    vorhanden = hole('certificates?filter[certificateType]=DISTRIBUTION&limit=10', t)['data']
+    if len(vorhanden) >= 2:
+        print('✗ Es gibt schon zwei Distribution-Zertifikate — Apple erlaubt nicht mehr.')
+        for c in vorhanden:
+            a = c['attributes']
+            print(f"    · {a['displayName']}  läuft ab {a['expirationDate'][:10]}  id={c['id']}")
+        sys.exit('  Widerrufe eins unter developer.apple.com → Certificates.')
+
+    antwort = schicke('certificates', t, {'data': {
+        'type': 'certificates',
+        'attributes': {'certificateType': 'DISTRIBUTION', 'csrContent': csr}}})
+    a = antwort['data']['attributes']
+    ziel = f'{BASIS}/dist/dist.cer'
+    with open(ziel, 'wb') as f:
+        f.write(base64.b64decode(a['certificateContent']))
+    os.chmod(ziel, 0o600)
+    print(f"✓ Zertifikat angelegt: {a['displayName']}  ·  läuft ab {a['expirationDate'][:10]}")
+    print(f"  abgelegt in {ziel} (Rechte 600, ausserhalb des Repos)")
+
+
+def profil_anlegen(t):
+    """Ein App-Store-Provisioning-Profil anlegen — Phase 21.4.
+
+    Ein Profil bindet drei Dinge zusammen: die Bundle-ID, das Zertifikat und das
+    Team. Fehlt es, scheitert `xcodebuild archive` mit einer Meldung über fehlende
+    Signatur — nach den zwanzig Minuten, die der Build gebraucht hat.
+
+    ⚠️ `IOS_APP_STORE` und nicht `IOS_APP_DEVELOPMENT`: Ein Development-Profil
+    baut durch und wird von App Store Connect danach ABGELEHNT. Der Unterschied
+    kostet also nicht eine Fehlermeldung, sondern einen ganzen Durchgang.
+    """
+    bundles = hole(f'bundleIds?filter[identifier]={BUNDLE}&limit=1', t)['data']
+    if not bundles:
+        sys.exit(f'✗ Die Bundle-ID {BUNDLE} gibt es im Entwicklerkonto nicht.')
+    bundle_id = bundles[0]['id']
+
+    zerts = hole('certificates?filter[certificateType]=DISTRIBUTION&limit=10', t)['data']
+    if not zerts:
+        sys.exit('✗ Kein Distribution-Zertifikat — erst `zertifikat-anlegen`.')
+    zert_id = zerts[0]['id']
+
+    name = 'SimplySocial App Store'
+    # Ein gleichnamiges Profil wird zuerst weggeräumt: Apple lässt zwei mit
+    # demselben Namen zu, und `xcodebuild` nimmt dann irgendeins davon.
+    for p in hole('profiles?limit=50', t)['data']:
+        if p['attributes']['name'] == name:
+            loesche(f"profiles/{p['id']}", t)
+            print(f'  (altes Profil {name} entfernt)')
+
+    antwort = schicke('profiles', t, {'data': {
+        'type': 'profiles',
+        'attributes': {'name': name, 'profileType': 'IOS_APP_STORE'},
+        'relationships': {
+            'bundleId': {'data': {'type': 'bundleIds', 'id': bundle_id}},
+            'certificates': {'data': [{'type': 'certificates', 'id': zert_id}]}}}})
+    a = antwort['data']['attributes']
+    ziel = f'{BASIS}/dist/simplysocial_appstore.mobileprovision'
+    with open(ziel, 'wb') as f:
+        f.write(base64.b64decode(a['profileContent']))
+    os.chmod(ziel, 0o600)
+    print(f"✓ Profil angelegt: {a['name']}  ·  {a['profileState']}")
+
+
+def loesche(pfad, token):
+    """Ein DELETE an die API. Wie `schicke()` nach aussen wirksam — deshalb eigen."""
+    req = urllib.request.Request('https://api.appstoreconnect.apple.com/v1/' + pfad,
+                                 headers={'Authorization': f'Bearer {token}'},
+                                 method='DELETE')
+    try:
+        urllib.request.urlopen(req)
+    except urllib.error.HTTPError as e:
+        sys.exit(f'✗ Apple sagt nein ({e.code}):\n{e.read().decode()}')
+
+
 def main():
     t = zugang()
+
+    # Diese zwei laufen aus `scripts/testflight.sh` und brauchen weder App noch
+    # Buildliste — sie stehen deshalb VOR dem Rest und geben danach zurück.
+    if len(sys.argv) > 1 and sys.argv[1] == 'zertifikat-anlegen':
+        zertifikat_anlegen(t)
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == 'profil-anlegen':
+        profil_anlegen(t)
+        return
+    # `builds` ist dasselbe wie der Aufruf ohne Argument — es gibt ihn als eigenen
+    # Namen, damit `testflight.sh` lesbar bleibt (`asc.py builds`) und damit klar
+    # ist, dass dort nur GELESEN wird.
+
     apps = hole(f'apps?filter[bundleId]={BUNDLE}', t)['data']
     if not apps:
         sys.exit(f'✗ Keine App mit {BUNDLE} in App Store Connect.')

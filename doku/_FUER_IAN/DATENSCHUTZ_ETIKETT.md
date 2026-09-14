@@ -124,6 +124,35 @@ im Kopf der Migration.
 
 ---
 
+## 8. Sonstige Daten — die Zahl der Treffen
+
+**Gesammelt: ja · Verknüpft: ja · Tracking: nein · Zweck: App-Funktion**
+
+Wie viele bestätigte Verabredungen jemand hatte — eine Zahl, sonst nichts.
+✅ **Ians Entscheidung 83 vom 2026-09-14**, Phase 20.12 („Gamification").
+
+Wie die Zustimmung oben fällt sie unter **Sonstige Daten („Other Data")**: Apple hat
+keine Kategorie dafür, und sie hängt eindeutig an einem Konto. Der naheliegende
+Gedanke — „das ist doch nur ein Zähler" — ist derselbe Fehler wie beim Häkchen:
+Es steht in `profiles`, es hängt am Konto, also ist es gesammelt.
+
+*Steht in:* `profiles.treffen_anzahl` — angelegt in
+`supabase/migrations/0012_treffen_zaehler.sql`, gepflegt **ausschließlich** vom
+Trigger `treffen_buchen`. Die App schreibt die Spalte nie; `authenticated` hat darauf
+kein Update-Recht.
+
+⚠️ **Die Zahl ist auf JEDEM Profil sichtbar — auch auf fremden, und das ist der
+Zweck.** Sie verrät nichts darüber, mit wem, wann oder wo jemand verabredet war: Die
+Liste dahinter bleibt unsichtbar, weil Policy `anfragen_lesen` (Migration 0002)
+fremde Anfragen gar nicht erst herausgibt. **Genau deshalb gibt es die gezählte
+Spalte** — ohne sie hätte der Client fremde Anfragen lesen müssen, um dieselbe Zahl
+zu bilden, und daraus ließe sich ableiten, wo eine Person sonst noch hingeht.
+
+⚠️ **Was hier NICHT drinsteht: ob ein Treffen stattgefunden hat.** Die App weiß das
+nicht — es gibt kein „war da"-Häkchen. Gezählt wird die Zusage.
+
+---
+
 ---
 
 ## 🟢 Was die App NICHT sammelt — und warum das hier steht

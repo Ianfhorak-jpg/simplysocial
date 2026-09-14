@@ -27,7 +27,7 @@ import { istDemoZugang, passwortFehlerText } from '@/features/auth/demo';
 import { anbieterLage } from '@/lib/anmelde-anbieter';
 import { LOESCH_QUITTUNG } from '@/features/safety/konto';
 import { KontoFehler } from '@/features/auth/konten';
-import { categoryColors, colors, MAX_CONTENT_WIDTH, radius, spacing, status } from '@/theme';
+import { categoryColors, colors, ecke, MAX_CONTENT_WIDTH, spacing, status } from '@/theme';
 
 /**
  * Der Weg hinein — Phase 20.3.
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MAX_CONTENT_WIDTH,
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    ...ecke.lg,
     borderWidth: 1,
     borderColor: colors.line,
     padding: spacing.xl,

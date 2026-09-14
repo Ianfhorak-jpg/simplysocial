@@ -4,7 +4,7 @@ import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
 
 import { WARTE_TEXT } from '@/data/schreiben';
-import { accent, categoryColors, colors, danger, DEPTH, radius, spacing } from '@/theme';
+import { accent, categoryColors, colors, danger, DRUCK, KURVE, radius, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
 import type { ActivityCategory } from '@/types/models';
 
@@ -49,16 +49,35 @@ type SsButtonVariantProps =
 export type SsButtonProps = SsButtonBase & SsButtonVariantProps;
 
 /**
- * Der wichtigste Baustein der App (PLAN.md, Abschnitt 3): ein Button mit hartem
- * Rand unten, der beim Drücken verschwindet — er fühlt sich an, als würde man ihn
- * wirklich hinunterdrücken.
+ * Der wichtigste Baustein der App: seit Phase 20.10 eine **iOS-Kapsel**.
  *
- * ── Warum `marginTop` statt `translateY` ──────────────────────────────────────
- * Der untere Rand zählt zur Höhe des Elements. Fällt er beim Drücken einfach weg,
- * schrumpft der Button um DEPTH und alles darunter im Screen ruckt nach oben.
- * Mit `marginTop: DEPTH` gleicht sich das exakt aus: Rand weg (−4), Margin dazu (+4).
- * Höhe konstant, Kasten trotzdem sichtbar tiefer. Reines Layout, kein Transform —
- * dadurch auf Web und iOS Pixel für Pixel dasselbe.
+ * ── Die Entscheidung vom 2026-09-14 (Ians Entscheidung 81) ───────────────────
+ * Bis hierher trug jeder Knopf einen 4 pt dicken farbigen Rand unten (`DEPTH`), und
+ * beim Drücken sank er genau um diesen Betrag ein. PLAN.md, Abschnitt 3 nannte das
+ * **„die Signatur der App"** — sie ist mit dieser Phase aufgegeben, und das ist
+ * keine Nachlässigkeit, sondern eine ausgesprochene Entscheidung.
+ *
+ * **Der Grund:** Ians Urteil war *„sieht immer noch wie Android aus"* — gefällt auf
+ * dem iPhone, wo Liquid Glass längst läuft. Beim Nachmessen war nicht das Glas das
+ * Problem, sondern dieser Rand. Ein Knopf mit dicker farbiger Unterkante, der sich
+ * körperlich hinunterdrücken lässt, ist das Erkennungszeichen von Duolingo und von
+ * Material Design. **iOS 26 macht das genaue Gegenteil:** randlose Kapseln, und
+ * Tiefe entsteht durch Unschärfe und Bewegung, nie durch eine gezeichnete Kante.
+ * Solange dieser Rand stand, konnte kein Glas der Welt das Bild drehen — er stand
+ * auf jedem Bildschirm, mehrfach, und er war das Lauteste darauf.
+ *
+ * **Was dafür verloren geht, steht auch da:** Der alte Knopf war unverwechselbar.
+ * Der neue ist es nicht — er sieht aus wie ein iOS-Knopf, weil er einer ist. Die
+ * Wiedererkennung muss ab jetzt aus den Farben kommen (die sechs Aktivitätstöne
+ * bleiben unangetastet), nicht mehr aus der Form.
+ *
+ * ── Warum `scale` und nicht mehr `marginTop` ─────────────────────────────────
+ * Der alte Weg musste die Höhe konstant halten, weil ein wegfallender Rand das
+ * Layout darunter hätte rucken lassen. Ein `transform` hat dieses Problem gar
+ * nicht: Es wirkt NACH dem Layout, der Kasten belegt unverändert seinen Platz.
+ * Deshalb ist die Rückmeldung jetzt reine Darstellung — und genau das ist auch der
+ * Grund, warum sie auf beiden Plattformen gleich aussieht, ohne dass etwas
+ * ausgeglichen werden muss.
  *
  * ── Warum `danger` ein Umriss ist und keine rote Fläche ───────────────────────
  * Die Variante kam in Phase 4 für „Ablehnen" dazu. Ein rot GEFÜLLTER Knopf neben
@@ -86,21 +105,23 @@ export function SsButton({
   const gefuellt = variant === 'primary' || variant === 'category';
   const palette = variant === 'category' && category ? categoryColors[category] : accent;
 
-  // Deaktiviert: flache graue Fläche. Der Rand unten bleibt in DERSELBEN Farbe wie
-  // die Fläche — dadurch sieht der Button flach aus, behält aber exakt seine Höhe,
-  // sodass beim Umschalten nichts im Layout springt.
+  // Seit Phase 20.10 gibt es KEINEN `borderBottomColor` mehr und keinen Umriss an
+  // den gefüllten Knöpfen: Eine iOS-Kapsel ist eine reine Fläche. Der `deep`-Ton
+  // jeder Palette bleibt in `colors.ts` stehen — er trägt woanders noch (Umrisse
+  // auf der Karte), nur hier zeichnet er nicht mehr.
+  //
+  // Deaktiviert: flache graue Fläche, unverändert. Sie war nie das Problem.
   const face: ViewStyle = disabled
-    ? { backgroundColor: colors.line, borderColor: colors.line, borderBottomColor: colors.line, borderWidth: 1 }
+    ? { backgroundColor: colors.line }
     : gefuellt
-      ? // Der Umriss in derselben Farbe wie der Rand unten fasst den Knopf ein — dadurch
-        // liest die dicke Unterkante als Fortsetzung der Kante und nicht als Streifen.
-        { backgroundColor: palette.base, borderColor: palette.deep, borderBottomColor: palette.deep, borderWidth: 1 }
+      ? { backgroundColor: palette.base }
       : variant === 'danger'
         ? // Rot außen, Weiß innen: die Absage ist als solche erkennbar, ohne lauter zu
-          // sein als die Zusage daneben. Unten der dunklere Ton, sonst wäre die
-          // Unterkante nur ein Strich und keine Tiefe.
-          { backgroundColor: colors.surface, borderColor: danger.base, borderBottomColor: danger.deep, borderWidth: 2 }
-        : { backgroundColor: colors.surface, borderBottomColor: colors.line, borderWidth: 2, borderColor: colors.line };
+          // sein als die Zusage daneben. Der Umriss ist von 2 auf 1 pt herunter — 2 pt
+          // war die Stärke, die neben einer 4 pt dicken Unterkante nicht verschwand.
+          // Ohne die Kante ist 1 pt das iOS-Maß, und 2 pt wirkt daneben grob.
+          { backgroundColor: colors.surface, borderColor: danger.base, borderWidth: 1 }
+        : { backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1 };
 
   const textColor = disabled
     ? colors.inkSoft
@@ -109,14 +130,6 @@ export function SsButton({
       : variant === 'danger'
         ? danger.onSoft
         : colors.ink;
-
-  // Wie tief der Rand im Ruhezustand ist und was beim Drücken davon übrig bleibt.
-  // Übrig bleibt immer der Umriss — sonst hätte der Knopf gedrückt unten ein Loch im
-  // Rahmen. Der Versatz nach unten ist genau die Differenz, dadurch bleibt die
-  // Gesamthöhe bei jeder Variante gleich und im Layout ruckt nichts.
-  const umriss = gefuellt ? 1 : 2;
-  const randRuhe = DEPTH;
-  const randGedrueckt = umriss;
 
   return (
     <Pressable
@@ -131,9 +144,7 @@ export function SsButton({
             styles.face,
             size === 'lg' ? styles.faceLg : styles.faceMd,
             face,
-            pressed && !disabled
-              ? { borderBottomWidth: randGedrueckt, marginTop: randRuhe - randGedrueckt }
-              : { borderBottomWidth: randRuhe, marginTop: 0 },
+            pressed && !disabled && DRUCK,
           ]}>
           {/* Das Icon wächst mit der Größe mit und nimmt die Textfarbe an — das ist
               der Unterschied zum Emoji davor, das immer bunt blieb und deshalb auf
@@ -156,10 +167,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    borderRadius: radius.md,
+    // Voll gerundet statt 14 pt — das ist die iOS-26-Form. `radius.pill` ist 999,
+    // also „so rund, wie die Höhe es zulässt": Ein hoher Knopf wird zur Kapsel, ein
+    // flacher zum Stäbchen, und keiner der beiden braucht eine eigene Zahl.
+    borderRadius: radius.pill,
+    // Bei `pill` hat die Kurve nichts mehr zu tun (ein Halbkreis ist ein Halbkreis).
+    // Sie steht hier trotzdem, weil sie sofort greift, falls jemand den Radius
+    // später herunternimmt — dann wäre sie sonst genau das, was man vergisst.
+    borderCurve: KURVE,
   },
   faceMd: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-  faceLg: { paddingHorizontal: spacing.xl, paddingVertical: spacing.lg, borderRadius: radius.lg },
+  faceLg: { paddingHorizontal: spacing.xl, paddingVertical: spacing.lg },
+
+
   // React Native kennt nur 'auto' und 'pointer' — 'not-allowed' waere reines Web-CSS.
   notAllowed: { cursor: 'auto' as const },
   labelLg: { fontSize: 17, lineHeight: 22 },

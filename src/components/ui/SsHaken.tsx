@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
-import { colors, radius, spacing, status } from '@/theme';
+import { colors, ecke, spacing, status } from '@/theme';
 
 /**
  * Ein Häkchen zum Ankreuzen — gebaut für Phase 21.2 (Ians Entscheidung 80), aber
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   kasten: {
     width: KASTEN,
     height: KASTEN,
-    borderRadius: radius.sm,
+    ...ecke.sm,
     borderWidth: 2,
     borderColor: colors.line,
     backgroundColor: colors.surface,

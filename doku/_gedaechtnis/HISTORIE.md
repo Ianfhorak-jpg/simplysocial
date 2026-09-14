@@ -9,6 +9,291 @@
 
 ---
 
+## Phase 20.12 — Gamification: Tastsinn und Treffen-Zähler ✅ *(2026-09-14 nachts)*
+
+> Ians Satz: *„Inspiriere dich von Tinder und anderen Plattformen, GAMIFICATION ist
+> ein Keyword."* Vier Möglichkeiten vorgelegt, seine Wahl: **Wischgefühl** und
+> **Zähler im Profil**.
+
+**Ein Einwand stand vor der Arbeit und wurde ausgesprochen:** Bei einer Treff-App kann
+Gamification nach hinten losgehen — wird das Wischen selbst belohnt, wischen Leute,
+statt sich zu treffen. Bei Tinder IST das Wischen das Produkt, hier ist es der Weg zum
+Treffen. Belohnt wird deshalb, was zu einem Treffen FÜHRT.
+
+### Teil 1 — der Tastsinn
+
+**Beim Nachmessen fehlte der App jeder Tastsinn:** kein `expo-haptics`, keine
+Vibration, nirgends. Der Match-Moment — eigener Screen, Konfetti, emotionaler
+Höhepunkt laut PLAN.md — wurde **stumm** gefeiert. Das ist der billigste Unterschied
+im ganzen Projekt.
+
+**Das native Modul kam ohne `prebuild` ins Xcode-Projekt, und das rettet die
+Signatur.** Die Fallen-Liste sagt, `expo prebuild` wirft `DEVELOPMENT_TEAM` weg (auch
+ohne `--clean`) und `geraet-bauen.sh` macht weder prebuild noch `pod install`. Aber
+die Podfile ruft `use_expo_modules!` auf — **das Autolinking passiert beim `pod
+install`**. Danach nachgemessen: `ExpoHaptics` in der `Podfile.lock`, `project.pbxproj`
+**byteweise unverändert**, `DEVELOPMENT_TEAM = 5TQTMP2L2H` steht. Nachgemessen wurde,
+weil dieselbe Liste sagt, `pod install` melde Fehlschläge mit EXIT 0.
+
+**Die Bauart: benannte ANLÄSSE, keine Stärken.** `lib/haptik.ts` (Web, leer) und
+`lib/haptik.native.ts` — dieselbe Plattform-Endung wie `merker.ts` und `SsGlas`, und
+im Browser ist `navigator.vibrate` in Safari ohnehin nicht da. Ein Screen ruft
+`haptik.schwelle()`, nie `Haptics.impactAsync(Light)`: Sonst fiele die Frage „wie
+stark fühlt sich ein Wisch an" im Screen — und beim nächsten Ort noch einmal,
+vielleicht anders. **Derselbe Gedanke wie `theme/druck.ts`: Ein Gefühl gehört dem
+Anlass, nicht dem Bildschirm.** Jetzt harte Regel 115.
+
+**Der wichtigste Anlass liegt MITTEN in der Bewegung, nicht am Ende.** `schwelle()`
+feuert, sobald der Zug weit genug ist — während der Finger noch unten liegt und man
+noch zurückkann. Eine Vibration erst beim Wegfliegen wäre eine Meldung statt einer
+Auskunft. ⚠️ Der schnelle Schnipser (`schnellGenug` über `vx`) überschreitet die
+Schwelle nie — dort wird sie in `Release` nachgeholt, sonst wäre genau dieser Wisch
+als einziger stumm.
+
+**Und das Farb-Overlay ist NICHT Tinder-Grün/Rot.** Falle: *„Eine Farbe hat in diesem
+Projekt eine Bedeutung, nicht nur einen Kontrastwert."* Rot ist `danger` (Melden,
+Blockieren, Absagen), Grün ist die Kategorie *Essen* — ein grüner Schleier hieße hier
+„Kaffee". Der Ton nimmt die Farben, die die Stempel schon tragen: rechts die
+Kategoriefarbe, links dasselbe Grau wie das Wort „Weg", Deckel bei 0,14 und mit
+demselben Knick bei 35 %. **Farbe und Stempel sagen dasselbe zur selben Zeit** —
+sonst wären es zwei Antworten auf „reicht das schon?".
+
+⚠️ **Beim Einbau der Match-Vibration selbst gefunden:** Ein `useEffect` mit leerer
+Liste hätte auch auf `NichtsZuFeiern` vibriert — `/match` ist auf Web eine ganz normale
+Adresse, die jeder direkt aufrufen kann. Eine Erfolgsmeldung für einen Bildschirm, auf
+dem steht, dass es nichts zu feiern gibt. Die Bedingung steht jetzt IM Effekt (davor
+ginge nicht: ein Hook nach bedingtem `return`).
+
+### Teil 2 — der Treffen-Zähler
+
+**Bei der Auswahl war Ian etwas versprochen worden, das die App nicht kann:** „sichtbar
+auf dem eigenen und auf fremden Profilen". Policy `anfragen_lesen` (0002) zeigt jedem
+nur die eigenen Anfragen und die an die eigenen Posts — der Kommentar dort sagt
+ausdrücklich *„sie ist nicht 'nicht eingebaut', sie ist UNMÖGLICH"*. **Der Client kann
+die Zahl eines fremden Profils nicht rechnen.** Das wurde Ian als Befund vorgelegt, mit
+drei Wegen; seine Wahl: die Migration. **Entscheidung 83.**
+
+**Migration 0012 — und ein TRIGGER, keine Funktion.** Der bestehende Trigger
+`nachricht_notiert` (0004) beantwortet die Frage schon: *„Ein fehlender Grant verlangt
+eine Funktion, WENN etwas zu entscheiden ist. Hier ist nichts zu entscheiden — es ist
+eine Buchhaltung."* Dazu kommt der wichtigere Grund: **Zähler-Code in
+`anfrage_bestaetigen` wäre farmbar.** Zurücknehmen ist ein DELETE (Policy aus 0006)
+**ohne Status-Prüfung** — auch eine bestätigte Anfrage lässt sich löschen. Ein Trigger
+sieht Statuswechsel UND Löschen, und auch jeden Schreibweg, den es heute noch nicht
+gibt.
+
+**Was zählt:** Gast +1 bei jeder Zusage, Poster +1 **nur beim ERSTEN** bestätigten
+Gast. Ein Post mit drei Plätzen ist ein Termin, nicht drei — sonst belohnte der Zähler
+das Anlegen großer Runden statt das Treffen. Rücknahme spiegelbildlich. Der Bestand
+wird einmalig nachgerechnet (`=`, nicht `+=`, damit ein versehentlich wiederholter Lauf
+dasselbe Ergebnis gibt statt das doppelte).
+
+⚠️ **Zwei Rechte-Fallen, beide aus dem Regelwerk abgeleitet:** Regel 85 — eine neue
+Spalte erbt die Tabellenrechte, also `revoke update on profiles` und ein `grant update
+(…)` mit einer Spaltenliste, in der `treffen_anzahl` **fehlt**. Regel 104 — `PUBLIC`
+darf jede neue Funktion ausführen, also `revoke execute` auf beide.
+
+**Der Prüfstand greift an statt anzuschauen** (Regel 57): `npm run pruef-treffen`,
+**22 Häkchen**, mit Gegenprobe. Beim absichtlich kaputten Trigger (Poster zählt bei
+jedem Gast) fallen **11 Kreuze** — der erste benennt genau die Regel.
+
+⚠️ **Zwei Funde beim Bauen des Prüfstands, beide lehrreich:**
+1. **Die Farm-Schleife über EINEN Post ist am Schema schon unmöglich** —
+   `unique (post_id, from_user_id)` lässt keine zweite Anfrage zu. Ein echter Schutz,
+   aber ein schwächerer als gedacht: über drei Posts geht es sehr wohl, und genau so
+   sähe der Missbrauch aus. Die Prüfung misst jetzt den Weg, den es wirklich gibt.
+2. **Abgeräumt wird VORNE, nicht nur hinten.** Der erste Lauf scheiterte mittendrin,
+   `ON_ERROR_STOP` brach ab, das Aufräumen am Ende lief nie — und der nächste Lauf
+   starb an den Leichen des vorigen, mit einer Meldung, die nach kaputtem Prüfstand
+   aussah. Genau die Falle vom *„Schönwetter-Lauf"*. **Ein Prüfstand, der sich nur
+   selbst hinterherräumt, ist nach dem ersten roten Lauf unbrauchbar — und das ist der
+   Lauf, bei dem man ihn am dringendsten braucht.**
+
+**Zwei Wächter schlugen an, und beide zu Recht:**
+- `pruef-etikett` rot: `treffen_anzahl` fehlte im Datenschutz-Etikett (harte Regel 107).
+  Jetzt Punkt 8, „Sonstige Daten".
+- `pruef-alter` rot: die Zahl der Abhängigkeiten stieg von 30 auf 31 (`expo-haptics`).
+  Der Wächter fragt „sammelt das neue Paket Daten?" — nein, es löst den
+  Vibrationsmotor aus und sonst nichts. Zahl nachgezogen, Antwort bei Werbung bleibt NEIN.
+
+⚠️ **Die App läuft auch OHNE die Migration** — `laden.ts` holt `select('*')`, die
+fehlende Spalte kommt einfach nicht mit, und `?? 0` fängt sie ab. Es steht dann überall
+0. **Der echte Lauf gehört Ian** (`_FUER_IAN/TREFFEN_ZAEHLER.md`), an seine Supabase
+komme ich nicht.
+
+**Gemessen:** `tsc` sauber · `aufbauen.sh` um `26_treffen.sql` erweitert · zehn
+serverlose Prüfstände grün · `expo lint` **89** statt 82 — **vier neue, alle
+zugeordnet**: zwei zusätzliche `pan.x.interpolate()`-Zeilen (`tonLinks`/`tonRechts`),
+jede meldet doppelt. `react-hooks/refs` an derselben bewussten Stelle wie die 24
+bestehenden dieser Datei; kein neuer Fehlertyp.
+
+---
+
+## Phase 20.11 — Die Liste weg, die Posts groß ✅ *(2026-09-14 spätabends)*
+
+> Ians zwei Sätze direkt nach dem Glas-Durchgang: *„okan gib die Liste weg brauchen wir
+> nicht merh"* und *„die Posts sollen cool er aussehen."*
+
+### Teil 1 — die Liste
+
+**„Die Liste" gab es an DREI Stellen, und nur eine war gemeint.** Vor dem Wegwerfen
+gemessen: (1) die Stufe im Umschalter, (2) unter dem durchgewischten Stapel, (3) im
+Blatt der Kartenansicht. Die beiden letzten haben eine Aufgabe, die der Umschalter nicht
+hatte — Ians Regel aus Phase 11 (*am Ende des Stapels keine leere Fläche, sondern das
+schon Gesehene*) und Entscheidung 40. Ian vorgelegt, seine Wahl: **nur der Umschalter.**
+
+Der Umschalter ist damit zweistufig (Stapel · Karte), `type Ansicht` hat einen Wert
+weniger. **Was inhaltlich wegfällt, ist die Möglichkeit, den Stapel zu ÜBERSPRINGEN** —
+das ist die Entscheidung, nicht ein Nebeneffekt: Der Stapel ist seit dem 2026-09-01 die
+Startansicht, und eine Stufe daneben, die ihn umgeht, macht ihn zu einem Angebot statt
+zum Weg.
+
+Mitgegangen: der Link *„Zur Listenansicht wechseln"* in `StapelDurch`. Er war laut
+seinem eigenen Kommentar *„die Erklärung und der Weg in einem"* — die Erklärung dafür,
+dass der Umschalter „Stapel" sagt, während unten eine Liste steht. **Beide Hälften sind
+weg, und beide zu Recht:** Das Ziel gibt es nicht mehr, und erklärungsbedürftig ist es
+auch nicht mehr, weil es keine zweite Ansicht gibt, in die man wechseln könnte.
+
+### Teil 2 — die Posts
+
+Drei Fassungen als ASCII-Entwurf vorgelegt (Farbband oben · ganz in der Kategoriefarbe ·
+groß und ruhig), dazu die Möglichkeit, ein Vorbildbild zu schicken. **Ians Wahl: „groß
+und ruhig"** — kein Kasten, viel Luft, Titel deutlich größer, Kategorie als kleines
+farbiges Wort statt als Pille. **Entscheidung 82.**
+
+**Der Fund, der den ganzen Umbau bestimmt hat:** Die `WischKarte` hat **keine eigene
+Fläche**. Sie ist ein absolut positionierter Rahmen mit Abrisskante und Stempel — die
+weiße Fläche, die man im Stapel wischt, kam aus genau der `SsCard`, die „kein Kasten"
+entfernt. Ersatzlos entfernt hätte man **durchsichtigen Text gewischt**. Das steht in
+keiner Datei, das sieht man nur, wenn man vor dem Ändern nachschaut.
+
+**Die Lösung war schon im Projekt:** `PostCard` bekommt `umgebung: 'liste' | 'karte'` und
+bringt die Fläche nur dort mit, wo keine ist — dasselbe Muster wie beim Umschalter in
+der Glas-Pille (*„der Umschalter darin gibt seine eigene Fläche ab, zwei Untergründe
+übereinander wären einer zu viel"*). **Es sind ausdrücklich nicht zwei Karten:** Inhalt,
+Reihenfolge, Schriftgrößen und jede Regel darüber, was draufsteht, sind identisch;
+verschieden ist nur der Untergrund, und darüber entscheidet der Ort, nicht die Karte.
+Damit bleibt **harte Regel 18** unangetastet — die Vorschau im Erstellen-Screen ist
+dieselbe Karte wie im Stapel (`'karte'`), nicht eine nachgebaute. **Jetzt harte Regel 114.**
+
+**Warum eine benannte Umgebung und kein `mitRahmen`-Boolean:** Der Aufrufer weiß, WO er
+ist, aber nicht, welchen Untergrund das nach sich zieht. Ein Name für den Ort hält die
+Entscheidung in einer Datei; ein `true`/`false` hätte sie auf fünf verteilt.
+
+**Was aufgegeben wurde, mit seiner alten Begründung:** Der 6 pt breite Farbstreifen links
+war bis hierher *das Einzige*, was die Kategorie einfärbte — ausdrücklich, damit zehn
+Posts untereinander kein Flickenteppich werden. **Die Sorge bleibt richtig**, deshalb ist
+die Kategorie jetzt ein WORT in Farbe und keine Fläche: gleich schnell zu erkennen, ohne
+Fläche zu nehmen. Genau deshalb schied auch die bunte Fassung aus der Auswahl aus, und
+das stand so in der Frage.
+
+⚠️ **Beim Bauen gefunden und behoben, bevor es jemand sah:** `post.category.toUpperCase()`
+hätte **„FOOD"** auf die Karte geschrieben. Der Schlüssel heißt `food`, das Wort heißt
+„Essen", und die Wörter stehen in `config/categories.ts`. Ein englischer Brocken mitten
+in einer deutschen Oberfläche — und `tsc` sagt dazu nichts, weil beides `string` ist.
+
+Die Trennlinie ist `StyleSheet.hairlineWidth` statt 1 px (Apples Maß, auf 3× ein
+Drittel). **Sie darf so fein sein, weil sie nichts mehr TRÄGT:** Bis hierher hielt eine
+1-px-Kante die Karte auf dem Papierweiß zusammen, jetzt trennt sie nur zwei Einträge.
+Der `ItemSeparatorComponent` der Liste ist entfallen — eine Lücke hätte die Linien
+freigestellt, statt sie trennen zu lassen.
+
+**Gemessen:** `tsc` sauber · `expo lint` **82**, dieselbe Zahl wie vor Phase 20.10 · neun
+serverlose Prüfstände unverändert. `pruef-moderation` weiterhin rot aus dem in 20.10
+belegten Grund (lokale Wegwerf-DB, nicht der Code).
+
+⏳ **Am Gerät noch nicht beurteilt** — Gerätedurchgang 7 deckt 20.10 und 20.11 zusammen ab.
+
+---
+
+## Phase 20.10 — Liquid Glass ernst gemeint ✅ *(2026-09-14 abends)*
+
+> Ians Satz: *„bitte liquid Glass einfügen es sieht immer noch wie Android ode rso
+> aus."* — **gefällt am iPhone**, auf dem Liquid Glass seit Phase 19e-2 läuft.
+
+**Die erste Arbeit war eine Frage, und sie hat die Phase entschieden.** „Sieht wie
+Android aus" hat zwei Lesarten mit völlig verschiedener Arbeit dahinter: Im Browser
+gibt es per **Entscheidung 43** gar kein Glas — dort stellt der Code das Gegenteil
+absichtlich her, und jedes Nachbessern wäre am falschen Ende gewesen. Ians Antwort war
+**das iPhone**. Damit stand fest: Es fehlt nicht an Glas, es liegt an etwas anderem.
+
+**Der Befund.** Glas lief an genau drei Flächen (Tab-Kapsel, Umschalter-Pille über der
+Karte, Blattkopf) und auf den elf Screens außerhalb der Tabs an **keiner**. Aber der
+eigentliche Störer war ein anderer: der **4 pt dicke farbige Rand unter jedem Knopf**
+(`DEPTH`), den PLAN.md Abschnitt 3 *„die Signatur der App"* nannte. Er stand auf jedem
+Bildschirm, oft mehrfach, und war das Lauteste darauf. Ein Knopf mit dicker farbiger
+Unterkante, der sich körperlich hinunterdrücken lässt, ist das Erkennungszeichen von
+Duolingo und Material Design; iOS 26 macht das Gegenteil — randlose Kapseln, Tiefe
+durch Unschärfe und Bewegung. **Solange der Rand stand, konnte kein Glas der Welt das
+Bild drehen.** Das war Ian vorgelegt und von ihm entschieden: **Entscheidung 81**, der
+Rand kommt weg.
+
+**Drei Eingriffe, keiner davon Kosmetik:**
+
+1. **Der Knopf wird eine iOS-Kapsel.** `radius.pill`, kein Tiefenrand, gefüllte Knöpfe
+   ohne Umriss, Umrisse von 2 auf 1 pt herunter (2 war die Stärke, die neben einer
+   4-pt-Kante nicht verschwand). Was beim Drücken passiert, steht jetzt **einmal** in
+   `theme/druck.ts`: Schrumpfen auf 96 % plus Opazität 0,82. **Beides zusammen, nicht
+   eines** — auf einem `block`-Knopf sind 4 % von 340 pt etwa 13 pt auf zwei Seiten
+   verteilt und kaum zu sehen; die Opazität wirkt bei jeder Knopfgröße gleich.
+   **Warum eine eigene Datei:** Der runde „Posten"-Knopf im Feed rechnete dieselbe
+   Rechnung ein zweites Mal nach, mit einem Kommentar daneben (*„dieselbe Rechnung wie
+   in `SsButton`, damit sich beide gleich anfühlen"*). **Genau dieser Kommentar war der
+   Grund** — wo einer steht, ist Gleichheit eine Absichtserklärung, keine Tatsache, und
+   sie hält nur so lange, wie sich jemand erinnert. Aufgefallen wäre das Auseinanderlaufen
+   nie: Die zwei Knöpfe stehen nebeneinander, und Bewegung vergleicht man nicht, man
+   spürt sie nur.
+
+2. **Die Apple-Ecke.** `borderRadius: 20` ist ein Viertelkreis; Apple zeichnet seit
+   iOS 7 ein **Squircle**, bei dem die Krümmung allmählich anwächst. React Native kann
+   es seit 0.76 mit `borderCurve: 'continuous'` (nur iOS, `react-native-web` kennt die
+   Eigenschaft nicht — deshalb `Platform.select` mit `undefined` und nicht `'circular'`,
+   das wäre totes CSS im Bündel). Beim Nachmessen: **24 Radien in 20 Dateien.** Deshalb
+   steht es nicht als zweite Zeile daneben, sondern als Spread `...ecke.lg`, der Radius
+   und Kurve zusammen trägt — 24 Gelegenheiten zu vergessen wären sonst 24 geblieben,
+   und eine einzelne Ecke im falschen Bogen meldet sich nie, sie macht das Bild nur um
+   eine Spur unruhiger. **Jetzt harte Regel 112.**
+   ⚠️ **`ecke` ist ein blankes Objekt und kein `StyleSheet.create`** — ein
+   `create`-Eintrag ist je nach Fassung eine registrierte Kennung statt des Objekts, und
+   ein Spread darüber gäbe still **nichts**: kein Fehler, keine Ecke, und bemerkt hätte
+   es niemand. Neue Falle.
+   An den Blättern und der Chat-Blase steht `borderCurve` einzeln daneben, weil dort
+   nicht alle vier Ecken gleich sind und ein voller `borderRadius` sie kaputtmachen würde.
+
+3. **Der Zurück-Knopf wird eine Glaskapsel.** Auf Ians Vorbild
+   (`vorbild-liquid-glass-bierbuddy.png`) ist der Knopf oben links die **zweite
+   Glasfläche neben der Tab-Kapsel**. In der App war dort ein nackter schwarzer Pfeil
+   auf Papierweiß — auf elf Screens, also auf den meisten der App.
+   **Das dreht ein altes Argument um, und zwar zu Recht:** Der Pfeil saß links oben in
+   seinen 44 × 44 statt zentriert, damit er mit dem Inhalt darunter fluchtet. Sobald die
+   Fläche **sichtbar** ist, ist ein Zeichen, das in der Ecke klebt, einfach kaputt — und
+   die Flucht ist nicht verloren, sondern gewechselt: Ab jetzt fluchtet die **Kapsel**,
+   nicht der Pfeil darin (der rückt um 11 pt nach rechts). Genau so macht es iOS 26
+   selbst, und es braucht keinen negativen Rand (die sind hier in Phase 12 schiefgegangen).
+   Die Kapsel **ist** die Trefferfläche — ein kleinerer sichtbarer Kreis in einer größeren
+   unsichtbaren Fläche wäre eine zweite Wahrheit über dieselbe Sache.
+
+**Was bewusst NICHT verglast wurde, und warum:** Feed-Karten, Eingabefelder und der
+Umschalter im normalen Feed. Apples eigene Regel ist, dass Glas der **Navigations- und
+Steuerungsebene** gehört, nicht dem Inhalt — und Glas braucht etwas dahinter, das
+durchläuft. Über einfarbigem Papierweiß ist es nur eine leicht getönte Fläche. Eine
+Liste aus Glaskarten sähe matschiger aus als jetzt, nicht besser.
+
+**`DEPTH` ist nicht gelöscht, sondern außer Dienst gestellt** (harte Regel 58): Ein
+ersatzloses Löschen ließe PLAN.md Abschnitt 3 von einer Signatur sprechen, die im Code
+nicht mehr vorkommt. Der Wert steht mit seiner Begründung und dem Datum der Abkehr da;
+niemand importiert ihn mehr (nachgesehen).
+
+**Gemessen:** `npx tsc --noEmit` sauber · `expo lint` **82 Probleme — dieselbe Zahl wie
+vorher**, also keine neue · zehn serverlose Prüfstände unverändert grün.
+⚠️ **`npm run pruef-moderation` ist rot, und das ist NICHT diese Phase** — belegt per
+`git stash`: Er scheitert ohne die Änderungen identisch, am **Aufbau** der lokalen
+Wegwerf-DB (verwaister Fremdschlüssel auf `join_requests.from_user_id` aus einem früher
+abgebrochenen Lauf). Genau die Falle *„Ein Abräumen, das den Zustand eines GESCHEITERTEN
+Abräumens nicht aufräumen kann, ist nur beim Schönwetter-Lauf vollständig"*. Offen.
+
+---
+
 ## Phase 20.6-d — Der runde Zuschnitt ✅ *(2026-09-13 nachts)*
 
 > Ians Wunsch vom Nachmittag: *„bitte kreisförmiges Zuschneiden."* Der Volltext der

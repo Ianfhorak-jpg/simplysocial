@@ -66,7 +66,7 @@ Alle folgenden Fragen haben drei Möglichkeiten (*Keine · Selten/mild · Häufi
 | Gesundheits- und Wellness-Themen | **NEIN** ← *siehe die Frage an dich unten* |
 | Gewinnspiele / Wettbewerbe | **NEIN** |
 | Uneingeschränkter Webzugriff | **NEIN** — im ganzen Quellcode steht **kein einziges** `openURL`, `Linking` oder `WebBrowser`. Das einzige Browserfenster ist Googles Anmeldeseite über `expo-auth-session`, und das ist eine feste Adresse, kein freier Webzugang |
-| Werbung | **NEIN** — unter **30** Abhängigkeiten ist **kein** Werbe-, Analyse- oder Absturzbericht-Paket. Dieselbe Zählung trägt schon das Datenschutz-Etikett |
+| Werbung | **NEIN** — unter **31** Abhängigkeiten ist **kein** Werbe-, Analyse- oder Absturzbericht-Paket. Dieselbe Zählung trägt schon das Datenschutz-Etikett |
 
 ### Teil 4 — nicht anfassen
 
@@ -113,3 +113,18 @@ beantworten muss.
 Ein eigenes Mindestalter in den Nutzungsbedingungen ist davon unabhängig und
 üblich. Die App kennt den Jahrgang bereits — technisch wäre eine Grenze also machbar,
 falls ihr eine wollt.
+
+
+---
+
+## Wenn die Zahl 31 nicht mehr stimmt
+
+`npm run pruef-alter` vergleicht sie mit `package.json` und wird rot, sobald ein
+Paket dazukommt. **Das ist kein Fehlalarm, sondern die Frage: Sammelt das neue Paket
+Daten?** Ein Werbe- oder Analysepaket würde aus dem „NEIN" bei Werbung ein „JA"
+machen — und eine falsche Antwort bei Apple ist teurer als jede Verzögerung.
+
+**Am 2026-09-14 ist die Zahl von 30 auf 31 gestiegen:** `expo-haptics` (Phase 20.12,
+die Vibration beim Wischen und beim Match). Es löst den Vibrationsmotor aus und
+sonst nichts — kein Netz, kein Speicher, keine Kennung, keine Daten. Die Antwort bei
+Werbung bleibt **NEIN**, und die Zahl ist nachgezogen.

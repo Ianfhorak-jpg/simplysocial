@@ -42,6 +42,8 @@ import type { IconName } from '@/theme/icons';
  * die Liste überhaupt noch gibt.
  *
  * ── Warum die Karte im Stapel dieselbe `PostCard` ist wie in der Liste ────────
+ * (Seit Phase 20.11 mit `umgebung="karte"` — derselbe Baustein, nur bringt er hier
+ * die weiße Fläche mit, weil die `WischKarte` keine hat. Kein zweiter Bauplan.)
  * Es ist derselbe Post. Eine zweite, größere Karte nur für den Stapel wäre ein
  * zweiter Ort, an dem steht, was ein Post über sich zeigt — und in dem Moment, in
  * dem jemand eine Zeile ergänzt, zeigen Liste und Stapel Verschiedenes. Dieselbe
@@ -135,7 +137,10 @@ export function WischStapel({
               {karte.art === 'anleitung' ? (
                 <AnleitungsKarte />
               ) : (
-                <PostCard eintrag={karte.eintrag} />
+                // `umgebung="karte"`: Die `WischKarte` hat KEINE eigene Fläche,
+                // also bringt der Post sie mit (Phase 20.11). Ohne das wischt man
+                // durchsichtigen Text.
+                <PostCard eintrag={karte.eintrag} umgebung="karte" />
               )}
             </WischKarte>
           ))

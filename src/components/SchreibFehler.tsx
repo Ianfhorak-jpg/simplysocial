@@ -5,7 +5,7 @@ import { SsButton, SsIcon, SsText } from '@/components/ui';
 import { schreibFehlerFolgen, type SchreibFehler as SchreibFehlerTyp } from '@/data/schreiben';
 import { abmelden } from '@/features/auth/hooks';
 import { schreibFehlerWeg } from '@/features/store';
-import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '@/theme';
+import { colors, ecke, MAX_CONTENT_WIDTH, spacing } from '@/theme';
 
 /**
  * Was dasteht, wenn ein Schreibvorgang nicht durchkam — Phase 20.5.
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    ...ecke.md,
     borderWidth: 1,
     borderColor: colors.line,
     paddingVertical: spacing.sm,

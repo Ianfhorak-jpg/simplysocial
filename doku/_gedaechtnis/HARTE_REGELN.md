@@ -1,4 +1,4 @@
-# SimplySocial — die 105 harten Regeln
+# SimplySocial — die 116 harten Regeln
 
 > Herausgelöst aus `CLAUDE.md` am 2026-09-13. **Kein Zeichen geändert** — nur
 > verschoben, damit die auto-geladene `CLAUDE.md` nicht mehr ~101.500 Tokens je
@@ -1493,3 +1493,140 @@
    sind trennbar, weil die Fassung eine Zeichenkette ist: Sobald Ian den Text hat,
    ändert sich genau eine Konstante. **Was dann passiert, ist noch nicht entschieden**
    — PLAN.md Abschnitt 6, Punkt 67, `TODO(Ian)` in `brauchtNeueZustimmung()`.
+
+112. **Eine Ecke wird mit `ecke.*` gerundet, nie mit blankem `borderRadius`.** Wer eine
+   Fläche rundet, nimmt den Spread aus `theme/spacing.ts` —
+   `karte: { ...ecke.lg, padding: spacing.lg }` — und nicht `borderRadius: radius.lg`.
+   Der Spread bringt Apples `borderCurve: 'continuous'` mit, das **Squircle**, das iOS
+   seit Version 7 für jede Fläche zeichnet (Homescreen-Symbole, Systemkarten, Blätter).
+   Eine gewöhnliche Rundung ist ein Viertelkreis: Die Gerade trifft den Bogen mit einem
+   Knick in der Krümmung.
+   **Warum das eine Regel ist und kein Hinweis:** Beim Nachmessen am 2026-09-14 standen
+   **24 Radien in 20 Dateien**. Stünde `borderCurve` als zweite Zeile daneben, wären das
+   24 Gelegenheiten, sie zu vergessen, und bei jeder neuen Fläche eine mehr. **Vergessen
+   sieht man ihr nicht an** — eine einzelne Ecke im falschen Bogen meldet sich nie, sie
+   macht das Bild nur um eine Spur unruhiger. Genau daraus besteht der Eindruck „sieht
+   aus wie Android", der Phase 20.10 ausgelöst hat (Ians Entscheidung 81). Als Spread
+   ist es eine Sache, die man ganz nimmt oder gar nicht.
+   **Drei Ausnahmen, jede aus einem anderen Grund:** (1) `radius.pill` — ein Halbkreis
+   ist ein Halbkreis, `continuous` ändert daran nichts. (2) Nur EINE Kante rund
+   (`borderTopLeftRadius` am Blatt, an der Antwort-Leiste, an der Chat-Blase) — dort
+   steht `borderCurve: KURVE` einzeln daneben, weil `ecke.*` einen vollen `borderRadius`
+   mitbringt und die anderen Ecken kaputtmachen würde. (3) Rohe Zahlen für echte Kreise
+   (`borderRadius: 4` an einem 8-px-Punkt).
+   ⚠️ **`ecke` ist ein blankes Objekt und KEIN `StyleSheet.create`.** Ein
+   `create`-Eintrag ist je nach React-Native-Fassung nicht das Objekt, sondern eine
+   registrierte Kennung — ein Spread darüber gäbe still **nichts**: kein Fehler, keine
+   Ecke, und bemerkt hätte es niemand. Wer `ecke` je in ein `StyleSheet.create`
+   verschiebt, schaltet die Regel wortlos ab.
+   ⚠️ **Auf Web ist `KURVE` `undefined`, nicht `'circular'`** — `react-native-web` kennt
+   die Eigenschaft in dieser Fassung gar nicht (nachgesehen in `node_modules`). Ein
+   durchgereichtes `border-curve: circular` wäre totes CSS im Bündel.
+   Verwandt: Regel 61 (was „Glas" hier heißt) und 52 (eine Bedeutung, ein Ort).
+113. **Was beim Drücken passiert, steht in `theme/druck.ts` — und nirgends sonst.** Jeder
+   Knopf nimmt `DRUCK`: `style={({ pressed }) => [styles.knopf, pressed && DRUCK]}`.
+   Kein Screen rechnet sich seine eigene Rückmeldung aus, auch nicht „dieselbe wie
+   drüben".
+   **Woher die Regel kommt:** Bis Phase 20.10 gab es sie zweimal — `SsButton` rechnete
+   sie aus `DEPTH` und dem Umriss, und der runde „Posten"-Knopf im Feed rechnete
+   dieselbe Rechnung noch einmal nach, mit einem Kommentar daneben: *„dieselbe Rechnung
+   wie in `SsButton`, damit sich beide gleich anfühlen"*. **Genau dieser Kommentar war
+   der Grund für die Datei.** Wo einer steht, ist die Gleichheit eine Absichtserklärung
+   und keine Tatsache; sie hält so lange, wie sich jemand erinnert. Beim nächsten Drehen
+   hätte einer der beiden Knöpfe die Änderung mitbekommen und der andere nicht — **und
+   aufgefallen wäre es niemandem**, weil die zwei Knöpfe nebeneinander stehen und man
+   Bewegung nicht vergleicht, sondern nur spürt.
+   **Die zwei Zahlen darin sind Gefühl und gehören Ian** (Schrumpfen auf 96 %, Opazität
+   0,82) und sind am **Gerät** zu beurteilen, nicht am Mac. Ab etwa 0,92 sieht ein
+   breiter Knopf aus, als kippe er weg, statt gedrückt zu werden — die Bewegung liest
+   sich dann als Animation und nicht mehr als Berührung. Wer dreht, dreht dort, und es
+   gilt sofort für jeden Knopf.
+   **Warum `transform` und nicht Layout:** Der alte Weg (`borderBottomWidth` weg,
+   `marginTop` dazu) musste die Höhe von Hand konstant halten, sonst wäre alles darunter
+   geruckt. Ein `transform` wirkt NACH dem Layout — der Kasten belegt unverändert seinen
+   Platz, es gibt nichts auszugleichen.
+   Ersetzt die aufgegebene Signatur aus PLAN.md Abschnitt 3 (`DEPTH`, außer Dienst seit
+   2026-09-14; **nicht gelöscht, sondern beschriftet** — Regel 58).
+114. **Ein Post sagt, WO er steht — `umgebung`, nie ein `mitRahmen`-Boolean.** `PostCard`
+   nimmt `umgebung: 'liste' | 'karte'` und bringt ihre Fläche nur dort mit, wo keine ist:
+   `'liste'` (Feed, Profil, Gruppe) ist eine Zeile ohne Kasten mit feiner Linie unten,
+   `'karte'` (Wischstapel, Vorschau im Erstellen-Screen) bringt die weiße Fläche mit.
+   **Warum es die Prop überhaupt gibt:** Die `WischKarte` hat **keine eigene Fläche** —
+   sie ist ein absolut positionierter Rahmen mit Abrisskante und Stempel. Die weiße
+   Fläche, die man im Stapel wischt, kam bis Phase 20.11 aus der `SsCard` in der
+   `PostCard`. Ians „kein Kasten" (Entscheidung 82) ersatzlos umgesetzt hätte bedeutet:
+   **im Stapel wischt man durchsichtigen Text.** Das steht in keiner Datei, das sieht nur,
+   wer vor dem Ändern nachschaut.
+   **Es sind ausdrücklich NICHT zwei Karten.** Inhalt, Reihenfolge, Schriftgrößen und
+   jede Regel darüber, was draufsteht, sind in beiden Fällen identisch; verschieden ist
+   nur der Untergrund, und darüber entscheidet der ORT, nicht die Karte. Dasselbe Muster
+   wie beim Umschalter in der Glas-Pille (*„der Umschalter darin gibt seine eigene Fläche
+   ab — zwei Untergründe übereinander wären einer zu viel"*, Regel 61).
+   **Warum ein NAME und kein Boolean:** Der Aufrufer weiß, wo er ist, aber nicht, welchen
+   Untergrund das nach sich zieht. Ein Name für den Ort hält die Entscheidung in einer
+   Datei; ein `true`/`false` verteilt sie auf die fünf Stellen, die `PostCard` einbetten.
+   **Harte Regel 18 bleibt damit unangetastet** — die Vorschau im Erstellen-Screen ist
+   dieselbe Karte wie im Stapel und keine Nachbildung. Wer je eine sechste Einbettung
+   baut, wählt eine der zwei Umgebungen und erfindet keine dritte Darstellung.
+   ⚠️ **Der Kategoriename kommt aus `CATEGORIES[…].label`, nie aus `post.category`.** Der
+   Schlüssel heißt `food`, das Wort heißt „Essen" — und `tsc` sagt dazu nichts, weil
+   beides `string` ist. Beim Bau dieser Regel stand kurzzeitig „FOOD" auf der Karte.
+115. **Was die App SPÜREN lässt, steht in `lib/haptik.ts` / `.native.ts` — und die
+   Funktionen heißen nach dem ANLASS, nie nach der Stärke.** Ein Screen ruft
+   `haptik.schwelle()`, `haptik.match()`, `haptik.zurueck()` — nie
+   `Haptics.impactAsync(Light)`. Sonst fiele die Frage „wie stark fühlt sich ein Wisch
+   an" im Bildschirm, und beim nächsten Ort, der wischt, noch einmal, vielleicht
+   anders. **Derselbe Gedanke wie `theme/druck.ts` (Regel 113): Ein Gefühl gehört dem
+   Anlass, nicht dem Bildschirm.**
+   **Die Stärken sind gewählt, nicht geraten.** Apple trennt zwei Familien:
+   `impactAsync` heißt „etwas ist gegen etwas gestoßen" und gehört zu BEWEGUNG, die man
+   selbst gemacht hat; `notificationAsync` heißt „das System sagt dir etwas" und gehört
+   zu einem Ergebnis, das ANKOMMT. Deshalb ist `match` ein `Success` und kein `Heavy` —
+   es folgt nicht aus der Bewegung, sondern aus der Antwort einer anderen Person. Und
+   `schwelle` ist `Light`: eine Geste, die man zwanzigmal hintereinander macht, darf
+   nicht zwanzigmal poltern. **Daran scheitern Apps, die Haptik entdecken** — überall
+   und gleich stark, und nach zwei Minuten schaltet man sie im System ab.
+   **Der wichtigste Anlass liegt MITTEN in der Bewegung.** `schwelle()` feuert, sobald
+   der Zug weit genug ist — während der Finger noch unten liegt und man noch zurück
+   kann. Erst beim Wegfliegen wäre es eine Meldung statt einer Auskunft. ⚠️ Der schnelle
+   Schnipser überschreitet die Schwelle nie (`schnellGenug` über `vx`); dort wird sie in
+   `onPanResponderRelease` nachgeholt, sonst wäre genau dieser Wisch als einziger stumm.
+   ⚠️ **Wo bewusst NICHTS vibriert:** Tippen, Scrollen, Screenwechsel, Filtern. Haptik
+   markiert die paar Momente, die zählen — wo alles vibriert, bedeutet es nichts (Regel
+   63, angewandt auf den Tastsinn).
+   ⚠️ **Jedes `Promise` bekommt ein `.catch(() => {})`**, und das ist hier richtig, nicht
+   nachlässig: Eine nicht ausgelöste Vibration ist kein Fehler, den jemand sehen müsste
+   — auf einem Gerät mit abgeschalteter System-Haptik ist sie der Normalfall. Ohne
+   `catch` wäre es die Falle aus `lib/programmfehler.ts`.
+   **Web ist leer, und zwar als eigene Datei** (Regel 52): `navigator.vibrate` gibt es
+   in Safari nicht, und ein Paket, das nichts tut, gehört nicht ins Web-Bündel.
+116. **Was der Treffen-Zähler zählt, steht im TRIGGER `treffen_buchen` (0012) — nie in
+   einer Funktion und nie in der App.** `profiles.treffen_anzahl` wird ausschließlich
+   dort gepflegt; `authenticated` hat auf der Spalte kein Update-Recht.
+   **Warum eine gezählte Spalte und keine Rechnung im Client:** Policy `anfragen_lesen`
+   (0002) zeigt jedem nur die eigenen Anfragen und die an die eigenen Posts — *„sie ist
+   nicht 'nicht eingebaut', sie ist UNMÖGLICH"*. Wer die Zahl eines FREMDEN Profils
+   rechnen wollte, müsste dessen Anfragen lesen dürfen, und daraus ließe sich ableiten,
+   wo diese Person sonst noch hingeht, auch aus privaten Gruppen. **Eine aggregierte
+   Zahl verrät das nicht** — sie ist deshalb nicht der bequemere Weg, sondern der
+   einzige, der die Zusage von 0002 nicht bricht.
+   **Warum ein Trigger und keine Funktion:** Zwei Gründe, und der zweite ist der
+   wichtigere. (1) Hier ist nichts zu entscheiden, es ist Buchhaltung — dieselbe
+   Begründung, die schon bei `nachricht_notiert` (0004) steht. (2) **Zähler-Code in
+   `anfrage_bestaetigen` wäre farmbar:** Zurücknehmen ist ein DELETE (Policy aus 0006)
+   **ohne Status-Prüfung**, auch eine bestätigte Anfrage lässt sich löschen. Ein Trigger
+   sieht Statuswechsel UND Löschen — und jeden Schreibweg, den es heute noch nicht gibt.
+   **Ein Post ist EIN Treffen für den Verfasser**, egal wie viele Gäste bestätigt sind:
+   Der Poster zählt nur beim ERSTEN und verliert erst beim LETZTEN. Sonst belohnte der
+   Zähler das Anlegen großer Runden statt das Treffen. Gezählt wird über die ANDEREN
+   bestätigten Anfragen desselben Posts — **nicht über `posts.spots_filled`**, das wäre
+   eine zweite Wahrheit über dieselbe Sache und wird von einer anderen Stelle gepflegt.
+   ⚠️ **Zwei Rechte-Fallen gelten hier gleichzeitig:** Regel 85 (eine neue Spalte erbt
+   die Tabellenrechte — deshalb `revoke update on profiles` plus eine Spaltenliste ohne
+   `treffen_anzahl`) und Regel 104 (`PUBLIC` darf jede neue Funktion ausführen —
+   deshalb `revoke execute` auf beide). Ohne diese zwei Zeilen könnte jeder seinen
+   eigenen Zähler setzen.
+   ⚠️ **Was NICHT gezählt wird: ob das Treffen stattgefunden hat.** Die App weiß das
+   nicht — es gibt kein „war da"-Häkchen, und das wäre eine eigene Entscheidung.
+   Bewacht von `npm run pruef-treffen` (**22 Häkchen**, mit Gegenprobe).
+

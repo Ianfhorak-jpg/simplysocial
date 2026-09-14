@@ -37,7 +37,7 @@ import type { Bilddatei, Bildquelle } from '@/lib/bild-waehlen-typen';
 import { WARTE_TEXT } from '@/data/schreiben';
 import { useWartetAuf } from '@/features/store';
 import { istWienerBezirk } from '@/lib/bezirk';
-import { accent, colors, danger, radius, spacing } from '@/theme';
+import { accent, colors, danger, ecke, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
 import { handleText } from '@/lib/handle';
 
@@ -470,6 +470,15 @@ export default function EinstellungenScreen() {
           hinweis="Alle Elemente der App nebeneinander"
           href="/bausteine"
         />
+        {/* ⚠️ TEMPORÄR (Phase 20.11-b) — fliegt raus, sobald Ian eine Fassung gewählt
+            hat. Steht bewusst HIER und nicht weiter oben: Der Abschnitt „Für die
+            Entwicklung" ist der Ort für Dinge, die es nur gibt, solange gebaut wird. */}
+        <Zeile
+          icon="pinsel"
+          label="Post-Fassungen vergleichen"
+          hinweis="Drei Entwürfe nebeneinander — zum Aussuchen"
+          href="/post-fassungen"
+        />
       </View>
 
       <SsText variant="caption" color={colors.inkSoft} center style={styles.fuss}>
@@ -601,7 +610,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.line,
-    borderRadius: radius.lg,
+    ...ecke.lg,
     cursor: 'pointer',
   },
   zeileGedrueckt: { backgroundColor: colors.bg },

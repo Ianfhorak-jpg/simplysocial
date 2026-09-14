@@ -47,7 +47,7 @@ import {
   uhrzeitText,
   zeitpunkt,
 } from '@/lib/zeit';
-import { CATEGORY_ORDER, colors, radius, spacing, status } from '@/theme';
+import { CATEGORY_ORDER, colors, ecke, radius, spacing, status } from '@/theme';
 import type { IconName } from '@/theme/icons';
 import type { ActivityCategory, PostAlter, SkillLevel, VisibilityKind } from '@/types/models';
 
@@ -763,7 +763,10 @@ function Vorschau({ eintrag }: { eintrag: FeedEintrag | null }) {
         So sehen es die anderen
       </SsText>
       {eintrag ? (
-        <PostCard eintrag={eintrag} />
+        // `umgebung="karte"`: Die Vorschau steht allein auf der Seite und braucht
+        // ihre Fläche selbst — und sie zeigt damit genau das, was im Stapel steht
+        // (harte Regel 18: die Vorschau ist die Absicherung, keine Nachbildung).
+        <PostCard eintrag={eintrag} umgebung="karte" />
       ) : (
         <View style={styles.vorschauLeer}>
           <SsText variant="caption" color={colors.inkSoft} center>
@@ -981,21 +984,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
     borderStyle: 'dashed',
-    borderRadius: radius.lg,
+    ...ecke.lg,
     padding: spacing.xl,
     justifyContent: 'center',
     minHeight: 96,
   },
 
   // Die Zeile sieht bewusst aus wie eine Einstellungszeile und nicht wie ein Button:
-  // Sie führt weiter, sie tut nichts. Ein Button mit der Tiefe der App (`DEPTH`)
-  // stünde in Konkurrenz zu „Posten" — und es gibt hier nur eine Handlung.
+  // Sie führt weiter, sie tut nichts. Ein vollwertiger Knopf stünde in Konkurrenz zu
+  // „Posten" — und es gibt hier nur eine Handlung. (Bis Phase 20.10 stand hier
+  // `DEPTH` als das, was diese Zeile NICHT hat; den Tiefenrand gibt es seither
+  // nirgends mehr, das Argument gilt unverändert.)
   mehr: {
     gap: spacing.xs,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.line,
-    borderRadius: radius.md,
+    ...ecke.md,
     backgroundColor: colors.surface,
     cursor: 'pointer',
   },

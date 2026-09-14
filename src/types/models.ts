@@ -333,6 +333,25 @@ export interface User {
   handle: string; // "ian" — OHNE @; das Zeichen setzt `handleText()`
   displayName: string;
   /**
+   * Wie viele bestätigte Verabredungen diese Person hat — Phase 20.12,
+   * Ians Entscheidung 83.
+   *
+   * ── Warum das Feld vom SERVER kommt und nicht gerechnet wird ───────────────
+   * Weil der Client es nicht rechnen KANN. Policy `anfragen_lesen` (0002) zeigt
+   * jedem nur die eigenen Anfragen und die an die eigenen Posts — fremde Treffen
+   * sind unsichtbar, und zwar ausdrücklich („sie ist hier nicht 'nicht eingebaut',
+   * sie ist UNMÖGLICH"). Eine aggregierte Zahl verrät nichts darüber, mit wem oder
+   * wann; die Liste dahinter täte es.
+   *
+   * Gepflegt wird sie vom Trigger `treffen_buchen` (Migration 0012). **Die App
+   * schreibt sie nie** — `authenticated` hat auf der Spalte kein Update-Recht.
+   *
+   * Ein Post mit mehreren Gästen zählt für den Verfasser als EIN Treffen: Wer
+   * einmal Tennis spielt und drei Leute mitnimmt, war bei einem Treffen. Sonst
+   * belohnte der Zähler große Posts statt Treffen.
+   */
+  treffenAnzahl: number;
+  /**
    * KEIN Avatarfeld mehr.
    *
    * Bis Phase 14 stand hier `avatar: string` mit einem Emoji je Person. Das Feld ist

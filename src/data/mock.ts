@@ -136,6 +136,20 @@ const FOLLOW_EDGES: [string, string][] = [
 // wer wem folgt, kommt aus `FOLLOW_EDGES`, und blockiert ist niemand.
 type UserSeed = Omit<User, 'followerIds' | 'followingIds' | 'blockedIds'>;
 
+/**
+ * ── Warum `treffenAnzahl` hier eine erfundene Zahl ist ──────────────────────
+ * Am Server rechnet sie der Trigger `treffen_buchen` (Migration 0012) aus den
+ * bestätigten Anfragen. Hier steht sie fest am Seed, und das ist Absicht: Die Regel
+ * ein zweites Mal nachzubauen — Anfragen zählen, Poster nur beim ersten Gast —
+ * hieße, dieselbe Entscheidung an zwei Orten zu treffen. Beim nächsten Umbau liefen
+ * sie auseinander, und der Prototyp zeigte etwas anderes als das Gerät.
+ *
+ * Erfundene Zahlen sind hier der Normalfall (harte Regel 12 verbietet nur
+ * Persönliches, und eine Zahl ist nichts davon). Die Werte sind so gewählt, dass
+ * man den Unterschied SIEHT: jemand ganz Neues bei 0, die meisten im einstelligen
+ * Bereich, eine Person deutlich darüber.
+ */
+
 const USER_SEEDS: UserSeed[] = [
   {
     id: 'u_ian',
@@ -145,6 +159,7 @@ const USER_SEEDS: UserSeed[] = [
     district: '1070',
     jahrgang: jahrgang(16),
     interests: ['creative', 'sport', 'study'],
+    treffenAnzahl: 7,
   },
   {
     id: 'u_lea',
@@ -154,6 +169,7 @@ const USER_SEEDS: UserSeed[] = [
     district: '1220',
     jahrgang: jahrgang(16),
     interests: ['sport', 'outdoor', 'culture'],
+    treffenAnzahl: 12,
   },
   {
     id: 'u_tobi',
@@ -163,6 +179,7 @@ const USER_SEEDS: UserSeed[] = [
     district: '1100',
     jahrgang: jahrgang(21),
     interests: ['sport', 'food'],
+    treffenAnzahl: 3,
   },
   {
     id: 'u_mira',
@@ -172,6 +189,7 @@ const USER_SEEDS: UserSeed[] = [
     district: '1050',
     jahrgang: jahrgang(31),
     interests: ['creative', 'food', 'culture'],
+    treffenAnzahl: 5,
   },
   {
     id: 'u_flo',
@@ -181,6 +199,7 @@ const USER_SEEDS: UserSeed[] = [
     district: '1020',
     jahrgang: jahrgang(16),
     interests: ['sport', 'outdoor'],
+    treffenAnzahl: 9,
   },
   {
     id: 'u_sara',
@@ -190,6 +209,7 @@ const USER_SEEDS: UserSeed[] = [
     district: '1030',
     jahrgang: jahrgang(21),
     interests: ['study', 'culture'],
+    treffenAnzahl: 0,
   },
 ];
 

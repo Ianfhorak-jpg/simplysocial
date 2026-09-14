@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { SsAvatar, SsButton, SsCard, SsChip, SsIcon, SsIconText, SsKonfetti, SsScreen, SsText } from '@/components/ui';
@@ -6,6 +7,7 @@ import { useChatZuPost } from '@/features/chat/hooks';
 import { usePost } from '@/features/posts/hooks';
 import { useCurrentUser, useUser } from '@/features/social/hooks';
 import { ortText } from '@/lib/bezirk';
+import { haptik } from '@/lib/haptik';
 import { zurueckOderFeed } from '@/lib/navigation';
 import { startOderSeit } from '@/lib/zeit';
 import { categoryColors, colors, spacing } from '@/theme';
@@ -32,6 +34,40 @@ export default function MatchScreen() {
   // hier wird er nur nachgeschlagen. Mit `userId`, weil bei mehreren Plätzen mehrere
   // Fäden am selben Post hängen und der Knopf in DIESEN führen soll.
   const chat = useChatZuPost(postId, userId);
+
+  /**
+   * Der Match vibriert — Phase 20.12.
+   *
+   * **Der einzige Anlass in der App, den man spürt, ohne ihn selbst ausgelöst zu
+   * haben.** Bis hierher wurde der emotionale Höhepunkt der App stumm gefeiert:
+   * eigener Screen, Konfetti, und kein Ton, kein Zucken. Genau das macht Tinder
+   * anders, und es ist der billigste Unterschied im ganzen Projekt.
+   *
+   * ── Warum ein Effekt mit leerer Abhängigkeitsliste ──────────────────────────
+   * Einmal beim Öffnen des Screens, nie wieder. Ein Aufruf im Rumpf würde bei JEDEM
+   * Rendern vibrieren — und dieser Screen rendert neu, sobald der Chat geladen ist.
+   *
+   * ── Warum das NICHT gegen „der Screen verändert nichts" verstößt ────────────
+   * Der Kopfkommentar oben sagt, dieser Screen speichere bewusst nichts, weil man
+   * eine Adresse im Browser neu laden kann und dann zweimal speichern würde. Eine
+   * Vibration ist keine Speicherung: Sie hinterlässt nichts, und wer den Screen
+   * zweimal öffnet, darf sie zweimal spüren. **Auf Web passiert ohnehin nichts**
+   * (`lib/haptik.ts` ist dort leer).
+   */
+  /**
+   * ⚠️ **Die Bedingung steht IM Effekt, nicht davor** — und sie ist nicht
+   * vorsorglich: `/match` ist auf Web eine ganz normale Adresse, die jeder direkt
+   * aufrufen kann, und `NichtsZuFeiern` unten ist genau für diesen Fall da. Ein
+   * `useEffect` mit leerer Liste hätte dort trotzdem vibriert — eine Erfolgsmeldung
+   * für einen Bildschirm, auf dem steht, dass es nichts zu feiern gibt.
+   *
+   * Davor darf die Bedingung nicht stehen, weil ein Hook nach einem bedingten
+   * `return` nicht mehr in jedem Durchlauf aufgerufen würde.
+   */
+  const gibtEsWasZuFeiern = Boolean(eintrag && gast);
+  useEffect(() => {
+    if (gibtEsWasZuFeiern) haptik.match();
+  }, [gibtEsWasZuFeiern]);
 
   if (!eintrag || !gast) return <NichtsZuFeiern />;
 

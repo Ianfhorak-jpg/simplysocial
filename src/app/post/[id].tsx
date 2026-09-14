@@ -21,7 +21,7 @@ import { postIds } from '@/features/statisch';
 import { useSlice } from '@/features/store';
 import { ortText } from '@/lib/bezirk';
 import { startOderSeit, vergangen } from '@/lib/zeit';
-import { categoryColors, colors, radius, spacing } from '@/theme';
+import { categoryColors, colors, ecke, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
 import { handleText } from '@/lib/handle';
 
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.line,
-    borderRadius: radius.lg,
+    ...ecke.lg,
   },
   // Auf die Mitte der ersten Zeile, nicht des ganzen Blocks — sonst rutscht das
   // Icon bei dreizeiligen Hinweisen in die Mitte (ACTA-Falle aus Phase 12).

@@ -9,7 +9,7 @@ import { kontoAnlegen } from '@/features/auth/hooks';
 import { BEZIRK_GRUND, fehltNoch, handleVorschlag, kontoFolgen } from '@/features/auth/konto';
 import { KontoFehler } from '@/features/auth/konten';
 import { HAKEN_TEXT, zustimmungFehltText } from '@/features/auth/zustimmung';
-import { colors, MAX_CONTENT_WIDTH, radius, spacing, status } from '@/theme';
+import { colors, ecke, MAX_CONTENT_WIDTH, spacing, status } from '@/theme';
 
 /**
  * Das erste Konto fertig machen — **Ians 44. Entscheidung** vom 2026-09-12.
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MAX_CONTENT_WIDTH,
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    ...ecke.lg,
     borderWidth: 1,
     borderColor: colors.line,
     padding: spacing.xl,

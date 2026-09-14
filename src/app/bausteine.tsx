@@ -19,7 +19,7 @@ import {
 } from '@/components/ui';
 import { jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
 import { CATEGORIES } from '@/config/categories';
-import { CATEGORY_ORDER, categoryColors, colors, radius, spacing } from '@/theme';
+import { CATEGORY_ORDER, categoryColors, colors, ecke, spacing } from '@/theme';
 import { ICONS, type IconName } from '@/theme/icons';
 
 /** Alle Icons, in der Reihenfolge, in der sie in `theme/icons.ts` stehen. */
@@ -302,5 +302,5 @@ const styles = StyleSheet.create({
   farbzeile: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   farbname: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   farbnameText: { fontSize: 14 },
-  farbfeld: { width: 34, height: 26, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line },
+  farbfeld: { width: 34, height: 26, ...ecke.sm, borderWidth: 1, borderColor: colors.line },
 });

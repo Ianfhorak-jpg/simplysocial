@@ -55,7 +55,7 @@ import {
 } from '@/features/posts/wisch';
 import { anfrageSenden } from '@/features/requests/hooks';
 import { useTabRand } from '@/lib/tabs';
-import { accent, CATEGORY_ORDER, categoryColors, colors, DEPTH, radius, spacing } from '@/theme';
+import { accent, CATEGORY_ORDER, categoryColors, colors, DRUCK, ecke, radius, spacing } from '@/theme';
 
 /**
  * Der Feed — der erste Screen der App und der einzige, den man täglich sieht.
@@ -125,7 +125,21 @@ import { accent, CATEGORY_ORDER, categoryColors, colors, DEPTH, radius, spacing 
  *     Umschalter — dort ist Platz, seit „Posten" ein runder Knopf ist.
  */
 
-type Ansicht = 'stapel' | 'liste' | 'karte';
+/**
+ * **Zwei Ansichten seit Phase 20.11** — bis dahin drei.
+ *
+ * Ians Satz am 2026-09-14: *„gib die Liste weg brauchen wir nicht mehr."* Gemeint war
+ * die STUFE IM UMSCHALTER, nicht die Liste als Darstellung: Die steht weiterhin unter
+ * dem durchgewischten Stapel (Ians Regel aus Phase 11 — am Ende des Stapels keine
+ * leere Fläche, sondern das schon Gesehene) und im Blatt der Kartenansicht
+ * (Entscheidung 40). **Beide haben dort eine Aufgabe, die der Umschalter nicht hatte.**
+ *
+ * Was wegfällt, ist die Möglichkeit, den Stapel zu ÜBERSPRINGEN und gleich alles als
+ * Liste zu sehen. Das ist die Entscheidung, nicht ein Nebeneffekt: Der Stapel ist seit
+ * dem 2026-09-01 die Startansicht, und eine Stufe daneben, die ihn umgeht, macht ihn
+ * zu einem Angebot statt zum Weg.
+ */
+type Ansicht = 'stapel' | 'karte';
 
 /**
  * Wo bin ich hier? — die eine Zeile, die auf dem Bezirks-Vollbild stehen bleibt.
@@ -398,7 +412,6 @@ export default function FeedScreen() {
       // kann nicht abgeschnitten werden.
       options={[
         { wert: 'stapel', label: 'Stapel', icon: 'stapel' },
-        { wert: 'liste', label: 'Liste', icon: 'liste' },
         { wert: 'karte', label: 'Karte', icon: 'karte' },
       ]}
     />
@@ -569,9 +582,7 @@ export default function FeedScreen() {
         <View style={styles.filterImFluss}>{filterFeld}</View>
       ) : null}
 
-      {ansicht === 'liste' ? (
-        <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
-      ) : stapelLeer ? (
+      {stapelLeer ? (
         // Ians Regel, Phase 11: Am Ende des Stapels steht keine leere Fläche,
         // sondern die Liste des schon Gesehenen.
         //
@@ -586,7 +597,7 @@ export default function FeedScreen() {
         // in keinem Post vorkommt.
         <>
           {listeHatWas ? (
-            <StapelDurch filterAktiv={filterAktiv} zurListe={() => setAnsicht('liste')} />
+            <StapelDurch filterAktiv={filterAktiv} />
           ) : null}
           <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
         </>
@@ -604,9 +615,9 @@ export default function FeedScreen() {
  *
  * ── Warum kein `SsButton` ────────────────────────────────────────────────────
  * Der bringt einen Text mit, und genau der soll hier weg: Ein Kreis mit einem
- * Symbol steht neben dem Umschalter, ohne ihn schmaler zu machen. Die Signatur der
- * App kommt trotzdem mit — der harte Rand unten und der Versatz beim Drücken
- * (`DEPTH`, PLAN.md Abschnitt 3), damit er sich anfühlt wie jeder andere Knopf.
+ * Symbol steht neben dem Umschalter, ohne ihn schmaler zu machen. Damit er sich
+ * anfühlt wie jeder andere Knopf, nimmt er `DRUCK` aus dem Theme — seit Phase 20.10
+ * dieselbe Quelle wie `SsButton` und nicht mehr dieselbe Rechnung daneben.
  *
  * ── Warum `stift` und nicht `plus` ───────────────────────────────────────────
  * Weil es in dieser App überall der Stift ist: `StapelDurch`, `LeererFeed` und der
@@ -621,7 +632,7 @@ function PostenKnopf() {
       onPress={() => router.push('/create')}
       accessibilityRole="button"
       accessibilityLabel="Posten"
-      style={({ pressed }) => [styles.posten, pressed && styles.postenGedrueckt]}>
+      style={({ pressed }) => [styles.posten, pressed && DRUCK]}>
       <SsIcon name="stift" size={20} color={accent.onBase} />
     </Pressable>
   );
@@ -644,6 +655,10 @@ function FeedListe({
    */
   randUnten?: number;
 }) {
+  // Seit Phase 20.11 gibt es hier KEINEN `ItemSeparatorComponent` mehr: Jeder Post
+  // bringt seine feine Linie selbst mit (`umgebung="liste"`). Eine Lücke dazwischen
+  // würde die Linien freistellen, statt sie zwei Einträge trennen zu lassen — und der
+  // Abstand steckt bereits in der Polsterung des Posts.
   return (
     <FlatList
       data={eintraege}
@@ -654,7 +669,6 @@ function FeedListe({
           onPress={() => router.push({ pathname: '/post/[id]', params: { id: item.post.id } })}
         />
       )}
-      ItemSeparatorComponent={() => <View style={styles.luecke} />}
       style={styles.listeAussen}
       contentContainerStyle={[styles.liste, randUnten > 0 && { paddingBottom: randUnten }]}
       showsVerticalScrollIndicator={false}
@@ -893,13 +907,7 @@ function KarteVollbild({
  * der sagt, dass man durch ist, und darunter alles noch einmal — das ist derselbe
  * Bildschirm mit einer Aufgabe mehr.
  */
-function StapelDurch({
-  filterAktiv,
-  zurListe,
-}: {
-  filterAktiv: boolean;
-  zurListe: () => void;
-}) {
+function StapelDurch({ filterAktiv }: { filterAktiv: boolean }) {
   return (
     <View style={styles.durch}>
       <View style={styles.durchText}>
@@ -920,16 +928,13 @@ function StapelDurch({
         style={styles.durchKnopf}
         onPress={() => router.push('/create')}
       />
-      {/* Der Umschalter oben sagt weiter „Stapel", während unten eine Liste steht —
-          das stimmt (der Stapel ist durch, die Liste fängt ihn auf), sieht aber
-          erklärungsbedürftig aus. Diese Zeile ist die Erklärung und der Weg in
-          einem. „Ganze Liste ansehen" stand hier zuerst und war falsch: Die Liste
-          steht ja schon da, es wechselt nur die Ansicht. */}
-      <Pressable onPress={zurListe} accessibilityRole="button" style={styles.durchLink}>
-        <SsText variant="caption" color={categoryColors.creative.base}>
-          Zur Listenansicht wechseln
-        </SsText>
-      </Pressable>
+      {/* Hier stand bis Phase 20.11 „Zur Listenansicht wechseln" — die Erklärung
+          dafür, dass der Umschalter oben weiter „Stapel" sagt, während unten eine
+          Liste steht, und der Weg dorthin in einem. **Die Stufe gibt es nicht mehr**
+          (Ians Satz vom 14.09.), also hat der Link kein Ziel. Und die Erklärung
+          braucht es auch nicht mehr: Es gibt keine zweite Ansicht, in die man
+          wechseln könnte — was hier steht, ist das Einzige, was es gibt. Der
+          Untertitel oben sagt es bereits („steht unten weiter in der Liste"). */}
     </View>
   );
 }
@@ -1306,8 +1311,8 @@ const styles = StyleSheet.create({
 
   /**
    * Der runde „Posten"-Knopf. Die Höhe von 44 ist Apples Mindestmaß für ein
-   * Berührungsziel und zugleich die Höhe des Umschalters daneben — der harte Rand
-   * unten kommt oben drauf, wie bei jedem `SsButton`.
+   * Berührungsziel und zugleich die Höhe des Umschalters daneben. Seit Phase 20.10
+   * ohne Tiefenrand: Die 44 sind jetzt die ganze Höhe und nicht mehr 44 plus 4.
    */
   posten: {
     width: 44,
@@ -1316,14 +1321,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: accent.base,
-    borderBottomWidth: DEPTH,
-    borderColor: accent.deep,
     cursor: 'pointer',
   },
-  // Rand weg (−4), Margin dazu (+4): Die Höhe bleibt gleich, der Knopf sitzt
-  // sichtbar tiefer. Dieselbe Rechnung wie in `SsButton`, damit sich beide gleich
-  // anfühlen.
-  postenGedrueckt: { borderBottomWidth: 0, marginTop: DEPTH },
 
   // ── Phase 15: Suche und Filter ──────────────────────────────────────────
   sucheZeile: {
@@ -1352,7 +1351,7 @@ const styles = StyleSheet.create({
     // Höhe kommt über die Polsterung ohnehin darüber.
     minWidth: 44,
     paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
+    ...ecke.md,
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.surface,
@@ -1370,7 +1369,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginBottom: spacing.sm,
     padding: spacing.md,
-    borderRadius: radius.md,
+    ...ecke.md,
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.surface,
@@ -1450,7 +1449,6 @@ const styles = StyleSheet.create({
   // `flexGrow: 1` am Inhalt, damit der leere Zustand die volle Höhe bekommt und
   // mittig sitzt statt oben zu kleben.
   liste: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, flexGrow: 1 },
-  luecke: { height: spacing.md },
 
   durch: {
     alignItems: 'center',
@@ -1460,7 +1458,6 @@ const styles = StyleSheet.create({
   },
   durchText: { alignItems: 'center', gap: spacing.xs },
   durchKnopf: { alignSelf: 'center' },
-  durchLink: { cursor: 'pointer' },
 
   rueck: {
     flexDirection: 'row',

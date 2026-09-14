@@ -266,9 +266,15 @@ Der naheliegende Ton `#7A1C18` kam auf 1,92:1 und fiel damit durch.
 > 2,0:1 gegen `base`, `onBase`/`onSoft` je 4,5:1. Sonst verschwindet entweder die Tiefe
 > oder der Text.
 
-### Die Signatur: Button mit Tiefe
-Der wichtigste Baustein der App. Kein Schatten-Blur, sondern ein **harter Rand unten**,
-der beim Drücken verschwindet:
+### ~~Die Signatur: Button mit Tiefe~~ → **die iOS-Kapsel** (seit 20.10)
+
+> ⛔️ **Aufgegeben am 2026-09-14, Ians Entscheidung 81.** Der Abschnitt bleibt stehen,
+> weil harte Regel 58 gilt: Eine neue Entscheidung überschreibt keine alte still. Wer
+> den Rand zurückholen will, findet hier, was er war.
+
+**Was es war:** Kein Schatten-Blur, sondern ein harter Rand unten, der beim Drücken
+verschwindet — ein 1px-Umriss in `deep` rundum, unten `borderBottomWidth: 4` in `deep`;
+gedrückt blieb nur der Umriss und `marginTop` glich die Differenz aus.
 
 ```
 Ruhezustand                 Gedrückt
@@ -277,9 +283,54 @@ Ruhezustand                 Gedrückt
 └──────────────────┘         wirklich runtergedrückt)
  ████████████████     ← 4px in der "tief"-Farbe
 ```
-Umsetzung (siehe Phase 1 für die Begründung der Abweichung): ein 1px-Umriss in `deep`
-rundum, unten `borderBottomWidth: 4` in `deep`. Gedrückt bleibt nur der Umriss stehen
-und `marginTop` gleicht die Differenz aus. JS-only, Web und nativ identisch.
+
+**Warum er weg ist:** Ians Urteil am 2026-09-14 — *„bitte liquid Glass einfügen, es
+sieht immer noch wie Android aus"*, gefällt **am iPhone**, auf dem Liquid Glass seit
+Phase 19e-2 läuft. Beim Nachmessen war nicht das Glas zu schwach, sondern dieser Rand
+zu laut: Ein Knopf mit dicker farbiger Unterkante ist das Erkennungszeichen von
+Duolingo und Material Design. iOS 26 macht das Gegenteil — randlose Kapseln, Tiefe
+durch Unschärfe und Bewegung statt durch eine gezeichnete Kante. Der Rand stand auf
+jedem Bildschirm, oft mehrfach, und war das Lauteste darauf; solange er stand, konnte
+kein Glas das Bild drehen.
+
+**Was jetzt gilt:**
+
+```
+Ruhezustand                 Gedrückt
+╭──────────────────╮        (schrumpft auf 96 %
+│   BIN DABEI      │         und wird etwas
+╰──────────────────╯         durchsichtiger)
+```
+
+- `borderRadius: radius.pill`, kein Tiefenrand, gefüllte Knöpfe ohne Umriss
+- Die Rückmeldung steht **einmal** in `theme/druck.ts` (`DRUCK`) und gilt für jeden
+  Knopf der App — vorher rechnete der runde „Posten"-Knopf im Feed dieselbe Rechnung
+  ein zweites Mal nach
+- `DEPTH = 4` steht weiter in `theme/spacing.ts`, **außer Dienst und beschriftet**
+
+**Was verloren geht, und das ist ausgesprochen:** Der alte Knopf war unverwechselbar.
+Der neue ist es nicht — er sieht aus wie ein iOS-Knopf, weil er einer ist. Die
+Wiedererkennung muss ab jetzt aus den Farben kommen, nicht mehr aus der Form.
+
+### Die Apple-Ecke (seit 20.10)
+`borderRadius: 20` zeichnet einen Viertelkreis — die Gerade trifft die Rundung mit
+einem Knick in der Krümmung. Apple zeichnet seit iOS 7 ein **Squircle**: Die Krümmung
+wächst allmählich an. Jedes App-Symbol auf dem Homescreen ist so gebaut. Man kann es
+nicht benennen, wenn man es sieht, aber man sieht es — und es ist ein guter Teil davon,
+warum eine App „nach Android" wirkt, ohne dass man sagen kann, woran es liegt.
+
+React Native kann es seit 0.76 mit `borderCurve: 'continuous'` (nur iOS). Es steht in
+`theme/spacing.ts` an **einer** Stelle:
+
+```ts
+export const ecke = { sm: {…}, md: {…}, lg: {…}, xl: {…} };   // Radius UND Kurve
+// karte: { ...ecke.lg, padding: spacing.lg }
+```
+
+**Warum als Spread und nicht `borderCurve` daneben:** Beim Nachmessen standen 24 Radien
+in 20 Dateien — also 24 Gelegenheiten, die Kurve zu vergessen, und bei jeder neuen
+Fläche eine mehr. Und vergessen sieht man ihr nicht an: Eine einzelne Ecke im falschen
+Bogen meldet sich nie, sie macht das Bild nur um eine Spur unruhiger.
 
 ### Typografie
 Eine kräftige Display-Schrift für Überschriften, eine gut lesbare für den Rest.

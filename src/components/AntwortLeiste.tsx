@@ -7,7 +7,7 @@ import { SsAvatar, SsButton, SsInput, SsText } from './ui';
 import type { FeedEintrag } from '@/features/posts/hooks';
 import { grussVorschlag } from '@/features/posts/wisch';
 import { useKollisionen } from '@/features/requests/hooks';
-import { categoryColors, colors, radius, spacing } from '@/theme';
+import { categoryColors, colors, KURVE, radius, spacing } from '@/theme';
 
 /**
  * Was nach dem Wisch nach rechts hochfährt — Ians elfte Entscheidung, 2026-09-01.
@@ -137,6 +137,9 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
+    // Apples Squircle. Hier NICHT über `ecke`, weil das alle vier Ecken rundet —
+    // eine Leiste, die unten am Schirm klebt, ist nur oben rund.
+    borderCurve: KURVE,
   },
   kopf: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   kopfText: { flex: 1, gap: 1 },

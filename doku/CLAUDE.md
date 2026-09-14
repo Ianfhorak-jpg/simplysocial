@@ -17,8 +17,8 @@ Kontext für Claude Code in diesem Projekt. Chatsprache: **Deutsch** (englische 
 > | Datei | Inhalt | statt |
 > |---|---|---|
 > | `_gedaechtnis/HISTORIE.md` | Phase 0 bis 20.9 im Volltext, alle 75 Entscheidungen | ~49.500 Tk |
-> | `_gedaechtnis/HARTE_REGELN.md` | die 105 Regeln im Volltext | ~24.500 Tk |
-> | `_gedaechtnis/FALLEN.md` | die 166 Fallen im Volltext | ~23.200 Tk |
+> | `_gedaechtnis/HARTE_REGELN.md` | die 116 Regeln im Volltext | ~24.500 Tk |
+> | `_gedaechtnis/FALLEN.md` | die 196 Fallen im Volltext | ~23.200 Tk |
 >
 > **Unten steht von Regeln und Fallen nur der TITEL** (Ians Entscheidung 76). Das genügt,
 > um zu wissen, DASS eine Regel existiert — **wer eine anfasst, liest vorher ihren
@@ -72,10 +72,40 @@ Nutzungsbedingungen · Konto löschen — und sie werden gelesen UND beantwortet
 `npm run meldungen`, dazu `-- post-loeschen <id>` und `-- konto-loeschen <@name>`
 (beide zeigen ohne `--wirklich` nur eine Vorschau).
 
-**Fertige Phasen:** 0–19i · 20.1 bis 20.9 · **20.6-d**. Zuletzt **20.6-d, der runde
-Zuschnitt** (Ians Wunsch vom 13.09.): ein eigener Zuschneide-Bildschirm mit rundem
-Fenster, dazu **Ians Entscheidung 77 — 512 px**. Volltext aller Phasen in
+**Fertige Phasen:** 0–19i · 20.1 bis 20.9 · 20.6-d · **20.10**. Zuletzt **20.10,
+Liquid Glass ernst gemeint** (Ians Satz vom 14.09.: *„sieht immer noch wie Android aus"*,
+gefällt **am iPhone**). Der Befund war nicht zu wenig Glas, sondern der **4-pt-Rand unter
+jedem Knopf** — bis dahin „die Signatur der App", jetzt **Ians Entscheidung 81**
+aufgegeben. Drei Eingriffe: iOS-Kapseln statt Tiefenrand (`theme/druck.ts`, harte Regel
+113) · Apples Squircle an allen 24 Radien (`ecke.*`, harte Regel 112) · der Zurück-Knopf
+ist eine Glaskapsel wie auf Ians Vorbild. Volltext aller Phasen in
 `_gedaechtnis/HISTORIE.md`.
+
+Direkt danach **20.11 — die Liste weg, die Posts groß** (Ians zwei Sätze vom selben
+Abend). Der Umschalter ist zweistufig (Stapel · Karte); die Liste bleibt, wo sie eine
+Aufgabe hat — unter dem durchgewischten Stapel und im Karten-Blatt. Die Posts sind
+**„groß und ruhig"** (**Ians Entscheidung 82**): kein Kasten, Titel 26 statt 19 pt,
+Kategorie als farbiges Wort statt Pille. Dass „kein Kasten" im Wischstapel nicht geht,
+löst `umgebung: 'liste' | 'karte'` — **harte Regel 114**.
+
+Und **20.12 — Gamification** (Ians Satz: *„Inspiriere dich von Tinder, GAMIFICATION ist
+ein Keyword"*), zwei Teile:
+· **Tastsinn** — die App hatte KEINEN; der Match-Moment wurde stumm gefeiert.
+`expo-haptics` kam **ohne prebuild** ins Xcode-Projekt (`pod install` genügt, die
+Signatur blieb unangetastet), benannte Anlässe in `lib/haptik.ts`/`.native.ts` —
+**harte Regel 115**. Dazu ein Farb-Overlay beim Ziehen **in den Farben der App**, nicht
+in Tinder-Grün/Rot (Rot ist `danger`, Grün ist *Essen*).
+· **Treffen-Zähler** auf jedem Profil — **Ians Entscheidung 83**, Migration 0012, ein
+TRIGGER statt Funktion (**harte Regel 116**), bewacht von `npm run pruef-treffen`
+(**22 Häkchen** mit Gegenprobe).
+
+⏳ **Am Gerät noch NICHT beurteilt.** Der Build mit allen drei Phasen ist am 14.09. um
+20:12 aufs iPhone gespielt; ob es jetzt aussieht und sich anfühlt wie gemeint, sagt
+allein Ian — **Gerätedurchgang 7** (`_FUER_IAN/HANDY_DURCHGANG.md`).
+
+🔴 **Die Migration 0012 läuft noch NICHT auf Ians echter Supabase.** Die App geht
+trotzdem (`select('*')` plus `?? 0`), zeigt dann aber überall **0 Treffen**. Ein
+Befehl, Anleitung in `_FUER_IAN/TREFFEN_ZAEHLER.md`.
 
 🎉 **Aufgespielt und am Gerät durchgeprüft — Durchgang 4: 6 von 6** (iPhone 16,
 2026-09-13 abends). Kein Apple-Dialog mehr · Schieben · Kneifen · Übernehmen ·
@@ -105,7 +135,7 @@ Fenster, dazu **Ians Entscheidung 77 — 512 px**. Volltext aller Phasen in
 | `npm run pruef-alter` | **16** | nichts |
 | `npm run pruef-zustimmung` | **28** | nichts |
 
-Dazu: `npx tsc --noEmit` sauber · `expo lint` **82 Probleme** (81 vorbestehend plus
+Dazu: `npx tsc --noEmit` sauber · `expo lint` **89 Probleme** (Stand 20.12: 82 vorbestehend, plus vier aus den zwei neuen `pan.x.interpolate()`-Zeilen der WischKarte — jede meldet doppelt; dazu
 **einer mit Namen**: `react-hooks/refs` in `BildZuschneiden.tsx` — derselbe, den
 `SsWienKarte.tsx:552` trägt, und aus demselben Grund, ein `PanResponder` muss seine
 Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
@@ -141,7 +171,15 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
    JSX der Nutzungsbedingungen** — auf genau dem Screen, den ein Reviewer bei einer
    1.2-App aufmacht, und Apple weist Apps zurück, die sich als Beta ausgeben. Der
    Gerätedurchgang „kein Prototyp-Hinweis ✓" meinte das VOLLBILD, nicht diese Zeile.
-   **Offen: 21.2 (der Rechtstext selbst, wartet auf Ian) und 21.4 (TestFlight).**
+   **21.4, TestFlight, ist seit 2026-09-14 EIN BEFEHL** — `npm run testflight`,
+   sechs Schritte von der Signierung bis zum Upload, mit drei Vorprüfungen VOR dem
+   20-Minuten-Build (Build-Nummer frei? Schalter auf `supabase`? Schlüssel da?).
+   Er startet ihn selbst: Zwei Schritte fassen den Schlüsselbund an und legen in
+   seinem Apple-Konto ein **Distribution-Zertifikat** an, und das blockt der
+   Auto-Mode. 🔍 **Dabei gefunden:** Build 1 (11.09.) ist bei Apple, aber im Konto ist
+   keine Spur davon — kein Distribution-Zertifikat, kein Profil, `eas build:list`
+   leer. Wie er signiert wurde, ist unbekannt; ab jetzt steht der Weg im Skript.
+   **Offen: 21.2 (der Rechtstext selbst, wartet auf Ian) und der LAUF von 21.4.**
 2. ~~**Phase 20.6-d — runder Zuschnitt.**~~ ✅ **fertig und am Gerät geprüft**
    (2026-09-13, Durchgang 4: 6 von 6). Nichts mehr offen.
 3. **19d-2** (MapKit JS im Browser) — fällt nach Phase 20 nebenbei ab.
@@ -150,6 +188,10 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 
 | | Wo | Blockiert? |
 |---|---|---|
+| 🎨 **Die drei Post-Fassungen aussuchen** — A (Farbband) · B (bunt) · C (groß und ruhig, steht gerade drin). Am Handy unter Einstellungen → „Für die Entwicklung" → „Post-Fassungen vergleichen". ⚠️ **Der Screen `app/post-fassungen.tsx` und sein Eintrag in `einstellungen.tsx` sind WEGWERF-CODE** und fliegen raus, sobald Ian gewählt hat | am iPhone | nein, aber es blockiert das Aufräumen |
+| 🚀 **TestFlight — `npm run testflight`** (ein Befehl, 15–25 Min). Zwei Schritte darin fassen Ians Schlüsselbund an und legen in seinem Apple-Konto ein **Distribution-Zertifikat** an (0 von 2 belegt) — der Auto-Mode blockt das bei mir, zu Recht. Alles andere ist vorbereitet und die Vorprüfungen sind getestet | `_FUER_IAN/TESTFLIGHT.md` | für Phase 21 ja |
+| 🔴 **Migration 0012 einspielen** — `npm run einspielen 0012_treffen_zaehler.sql`. Ohne sie steht überall „0 Treffen". An Ians echte Supabase komme ich nicht heran | `_FUER_IAN/TREFFEN_ZAEHLER.md` | für den Zähler ja |
+| 🔵 **Gerätedurchgang 7 — sieht es jetzt nach iOS aus?** Der Build mit Phase 20.10 UND 20.11 ist seit 14.09. 19:45 drauf. Sechs Punkte: Umschalter zweistufig · Knöpfe als Kapseln · **das Gefühl beim Drücken** (die zwei Zahlen in `theme/druck.ts` sind Ians) · Zurück-Knopf als Glaskreis · die neuen Posts im Stapel · die Liste darunter. **Punkt 5 ist die eigentliche Frage** — „groß und ruhig" war eine von drei Fassungen | `_FUER_IAN/HANDY_DURCHGANG.md` | für Phase 21 nein, für das Aussehen ja |
 | 🔵 **Gerätedurchgang 6 — das Zustimmungs-Häkchen.** Build ist seit 14.09. auf dem iPhone, der Durchgang steht aus. Schritt 1 beweist zugleich, ob der neue Build drauf ist | `_FUER_IAN/HANDY_DURCHGANG.md` | für Phase 21 ja |
 | 🔑 **Management-Token widerrufen** — darf alles im Supabase-Konto, wird nie wieder gebraucht. **Am 14.09. nachgesehen: `~/.simplysocial/mgmt-token` existiert nicht mehr** — entweder schon erledigt oder nie abgelegt. Im Dashboard nachsehen | `supabase.com/dashboard/account/tokens` → Revoke | nein |
 | **Der Knopf unter dem Vollbild-Kasten** — „Nochmal versuchen" oder nichts | PLAN.md 5b, 20.9 | nein |
@@ -299,9 +341,14 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 109. Eine Demo-Welt in der ECHTEN Datenbank ist `followers`, nie `public` — und die Adresse des Demo-Kontos endet auf `.invalid`
 110. Was Apple über das ALTER fragt, steht in `_FUER_IAN/ALTERSFREIGABE.md` — und die NEIN-Antworten sind die gefährlichen
 111. Was eine Zustimmung ist und welcher FASSUNG jemand zugestimmt hat, steht in `features/auth/zustimmung.ts` — und der Riegel sitzt in `profilAnlegen()`, nie im Bildschirm
+112. Eine Ecke wird mit `ecke.*` gerundet, nie mit blankem `borderRadius` — und `ecke` ist ein blankes Objekt, kein `StyleSheet.create`
+113. Was beim Drücken passiert, steht in `theme/druck.ts` — und nirgends sonst
+114. Ein Post sagt, WO er steht — `umgebung`, nie ein `mitRahmen`-Boolean; und der Kategoriename kommt aus `CATEGORIES`, nie aus `post.category`
+115. Was die App SPÜREN lässt, steht in `lib/haptik.ts` / `.native.ts` — und die Funktionen heißen nach dem ANLASS, nie nach der Stärke
+116. Was der Treffen-Zähler zählt, steht im TRIGGER `treffen_buchen` (0012) — nie in einer Funktion und nie in der App
 ## Fallen — Index
 
-> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 179 Stück, jede schon
+> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 196 Stück, jede schon
 > einmal einen Abend gekostet — die meisten stammen aus ACTA (`17_Tennis_Optimma`), der
 > Rest aus diesem Projekt. Hier steht nur der Titel; **die Diagnose steht im Volltext.**
 
@@ -486,6 +533,15 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Ändert eine Migration KEINE geprüfte Zahl, kann auch keine geprüfte Zahl belegen, dass sie drin ist
 - Eine Prüfung, die nur ZÄHLT, weiß nicht, was sie gezählt hat — die Zahl findet Verlust, die Namen finden Verwechslung
 - Eine Meldung, die den eigenen Ablauf nicht kennt, ist keine Auskunft — auch nicht nach der Reparatur
+- Ein `StyleSheet.create`-Eintrag lässt sich nicht verlässlich spreaden
+- `npm run geraet` fragt zurück — im Hintergrund stirbt es daran stumm
+- Ein neues Expo-Modul braucht KEIN `prebuild` — `pod install` reicht, und das rettet die Signatur
+- Ein `useEffect` mit leerer Liste feuert auch im Leer-Zustand des Screens
+- Ein Prüfstand, der sich nur HINTERHERräumt, ist nach dem ersten roten Lauf unbrauchbar
+- `unique (post_id, from_user_id)` macht den naheliegenden Farm-Angriff unmöglich — und täuscht über den echten hinweg
+- `security import` meldet „wrong password?", wenn OpenSSL 3 die .p12 geschrieben hat — die Ursache ist der MAC-Algorithmus, nicht das Passwort
+- Ein Skript, das an einer Stelle abbricht, hat die Schritte DAVOR schon getan
+- Ein laufendes Shell-Skript zu ÄNDERN zerlegt es mitten im Lauf — und der Fehler steht in keiner Fassung der Datei
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

@@ -3,7 +3,7 @@ import { Animated, PanResponder, Platform, StyleSheet, View } from 'react-native
 
 import { SsGlas } from './SsGlas';
 
-import { colors, MAX_CONTENT_WIDTH, radius } from '@/theme';
+import { colors, KURVE, MAX_CONTENT_WIDTH, radius } from '@/theme';
 
 /**
  * Das ziehbare Blatt — Phase 19e, Ians Entscheidung 40.
@@ -445,6 +445,10 @@ const styles = StyleSheet.create({
     // läge HINTER dem Glas und machte es zu einer teuren weißen Fläche.
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
+    // Apples Squircle — an einem Blatt, das von unten hereinkommt, ist das die
+    // sichtbarste Rundung der ganzen App. Nicht über `ecke`, weil das alle vier
+    // Ecken rundet und ein Blatt nur oben rund ist.
+    borderCurve: KURVE,
     borderTopWidth: 1,
     borderColor: colors.line,
     overflow: 'hidden',
@@ -460,7 +464,7 @@ const styles = StyleSheet.create({
   // war es genau so hoch wie Kopf plus Körper — beim Ziehen wächst aber die sichtbare
   // Fläche, nicht der Inhalt, und darunter kam die Karte zum Vorschein. Was zu viel
   // ist, klippt die Hülle weg (siehe dort).
-  blattGlas: { flex: 1, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl },
+  blattGlas: { flex: 1, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, borderCurve: KURVE },
   koerper: { overflow: 'hidden' },
   kopfInhalt: { width: '100%' },
   // Der Griff ist der EINZIGE Ort mit einem Gesten-Erkenner. Die Fläche ist

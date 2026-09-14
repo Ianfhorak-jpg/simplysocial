@@ -26,7 +26,7 @@ import {
 } from '@/features/requests/hooks';
 import { ortText } from '@/lib/bezirk';
 import { startOderSeit, vergangen } from '@/lib/zeit';
-import { colors, radius, spacing } from '@/theme';
+import { colors, ecke, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
 import type { Group, Post, RequestStatus } from '@/types/models';
 import { handleText } from '@/lib/handle';
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
 
   nachricht: {
     backgroundColor: colors.bg,
-    borderRadius: radius.md,
+    ...ecke.md,
     padding: spacing.md,
   },
 

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { SsIconText } from './ui';
 
 import { doppelHinweisText, type Termin } from '@/features/requests/kollision';
-import { accent, colors, radius, spacing } from '@/theme';
+import { accent, colors, ecke, spacing } from '@/theme';
 
 /**
  * „Du bist heute 17:00 schon bei ‚Tennis spielen'." — der Hinweis über dem Knopf,
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     backgroundColor: accent.soft,
     borderLeftWidth: 3,
     borderLeftColor: accent.base,
-    borderRadius: radius.sm,
+    ...ecke.sm,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
   },

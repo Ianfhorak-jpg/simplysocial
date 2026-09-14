@@ -11,7 +11,7 @@
     "ios": {
       "bundleIdentifier": "at.simplysocial.app",
       "supportsTablet": false,
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },

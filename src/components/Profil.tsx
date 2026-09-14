@@ -8,7 +8,7 @@ import { SsAvatar, SsCard, SsChip, SsIconText, SsText } from './ui';
 import { alterAmProfil } from '@/config/alter';
 import { useProfilPosts } from '@/features/posts/hooks';
 import { useCurrentUserId } from '@/features/auth/hooks';
-import { colors, radius, spacing } from '@/theme';
+import { colors, ecke, spacing } from '@/theme';
 import type { User } from '@/types/models';
 import { handleText } from '@/lib/handle';
 
@@ -109,6 +109,17 @@ export function Profil({
               router.push({ pathname: '/user/[id]/following', params: { id: person.id } })
             }
           />
+          <View style={styles.zahlenTrenner} />
+          {/* Phase 20.12, Ians Entscheidung 83. Die Zahl kommt vom SERVER (Trigger
+              `treffen_buchen`, Migration 0012) und nicht aus einer Rechnung hier —
+              der Client sieht fremde Anfragen gar nicht.
+
+              Sie steht auf JEDEM Profil, auch auf fremden, und das ist der ganze
+              Sinn: Ein Zähler, den nur man selbst sieht, ist keiner. Verraten wird
+              dabei nichts über WEN oder WANN — nur, dass es stattgefunden hat. */}
+          {/* Kein Einzahl/Mehrzahl-Ternär wie bei `postText()` weiter unten:
+              „1 Treffen" und „7 Treffen" heißen beide „Treffen". */}
+          <Zahl wert={person.treffenAnzahl} wort="Treffen" />
         </View>
 
         {aktion}
@@ -185,19 +196,47 @@ export function Profil({
  * ist die Zahl das Große und das Wort die Erklärung, und beide Blöcke sind gleich
  * breit, egal ob dort 3 oder 128 steht.
  */
-function Zahl({ wert, wort, onPress }: { wert: number; wort: string; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${wert} ${wort}`}
-      style={({ pressed }) => [styles.zahl, pressed && styles.zahlGedrueckt]}>
+/**
+ * Eine Zahl in der Kopfkarte.
+ *
+ * ── Seit Phase 20.12 ist `onPress` optional, und das ist eine Aussage ───────
+ * Follower und Folgt führen in eine Liste — dort steht, WER das ist. Die Treffen
+ * führen nirgendwohin, **und das ist kein fehlendes Feature**: Eine Liste der
+ * Menschen, mit denen jemand verabredet war, gibt es nicht und darf es nicht geben
+ * (harte Regel 47, und Policy `anfragen_lesen` in 0002 macht sie unmöglich). Die
+ * Zahl ist alles, was gesagt werden darf.
+ *
+ * Ohne `onPress` ist es deshalb kein Knopf, sondern eine Angabe — kein `Pressable`,
+ * keine `accessibilityRole="button"`, kein Zeiger. Ein Knopf, der nichts tut, ist
+ * schlimmer als kein Knopf: Er verspricht eine Liste, die es nicht gibt.
+ */
+function Zahl({ wert, wort, onPress }: { wert: number; wort: string; onPress?: () => void }) {
+  const inhalt = (
+    <>
       <SsText variant="heading" center>
         {wert}
       </SsText>
       <SsText variant="caption" center color={colors.inkSoft}>
         {wort}
       </SsText>
+    </>
+  );
+
+  if (!onPress) {
+    return (
+      <View style={styles.zahl} accessible accessibilityLabel={`${wert} ${wort}`}>
+        {inhalt}
+      </View>
+    );
+  }
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${wert} ${wort}`}
+      style={({ pressed }) => [styles.zahl, pressed && styles.zahlGedrueckt]}>
+      {inhalt}
     </Pressable>
   );
 }
@@ -222,7 +261,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   zahlenTrenner: { width: 1, alignSelf: 'stretch', backgroundColor: colors.line },
-  zahl: { flex: 1, paddingVertical: spacing.xs, borderRadius: radius.sm, cursor: 'pointer' },
+  zahl: { flex: 1, paddingVertical: spacing.xs, ...ecke.sm, cursor: 'pointer' },
   zahlGedrueckt: { backgroundColor: colors.bg },
 
   block: { gap: spacing.sm },

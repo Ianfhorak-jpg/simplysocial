@@ -11,7 +11,7 @@ import { chatIds } from '@/features/statisch';
 import { useCurrentUserId } from '@/features/auth/hooks';
 import { ortText } from '@/lib/bezirk';
 import { startOderSeit, tagText, uhrzeit } from '@/lib/zeit';
-import { accent, categoryColors, colors, radius, spacing, type CategoryPalette } from '@/theme';
+import { accent, categoryColors, colors, ecke, KURVE, radius, spacing, type CategoryPalette } from '@/theme';
 import type { Message, Post, User } from '@/types/models';
 import { handleText } from '@/lib/handle';
 
@@ -298,7 +298,7 @@ function Blase({
           styles.blase,
           meins
             ? { backgroundColor: palette.base, borderColor: palette.deep, borderBottomRightRadius: radius.sm }
-            : { backgroundColor: colors.surface, borderColor: colors.line, borderBottomLeftRadius: radius.sm },
+            : { backgroundColor: colors.surface, borderColor: colors.line, borderBottomLeftRadius: radius.sm, borderCurve: KURVE },
         ]}>
         <SsText variant="body" color={meins ? palette.onBase : colors.ink}>
           {nachricht.text}
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
   blase: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    borderRadius: radius.lg,
+    ...ecke.lg,
     borderWidth: 1,
   },
   zeit: { paddingHorizontal: spacing.xs },

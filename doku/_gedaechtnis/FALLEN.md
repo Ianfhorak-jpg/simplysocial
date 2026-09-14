@@ -1,4 +1,4 @@
-# SimplySocial — 166 Fallen
+# SimplySocial — 196 Fallen
 
 > Herausgelöst aus `CLAUDE.md` am 2026-09-13. **Kein Zeichen geändert** — nur
 > verschoben, damit die auto-geladene `CLAUDE.md` nicht mehr ~101.500 Tokens je
@@ -1452,3 +1452,99 @@
   Fälle (frisch eingespielt · eine Migration nachgezogen · nur nachgemessen), die
   Meldung kannte zwei. **Wer eine Meldung repariert, zählt zuerst die Fälle, die sie
   abdecken muss** — sonst tauscht man eine falsche Auskunft gegen eine andere.
+
+- **Ein `StyleSheet.create`-Eintrag lässt sich nicht verlässlich spreaden.**
+  `StyleSheet.create({ lg: { borderRadius: 20 } })` gibt je nach React-Native-Fassung
+  nicht das Objekt zurück, sondern eine **registrierte Kennung**. Ein Spread darüber
+  (`karte: { ...ecke.lg, padding: 16 }`) ergibt dann **still gar nichts**: kein
+  Typfehler, kein Laufzeitfehler, keine Ecke — die Fläche ist einfach eckig, und niemand
+  sucht danach, weil der Code richtig aussieht. Deshalb ist `ecke` (harte Regel 112) ein
+  blankes Objekt mit `as const satisfies Record<string, ViewStyle>`. `StyleSheet.create`
+  lohnt sich, wo ein Stil als ganzes an ein `style`-Prop geht; für Bausteine, die **in
+  andere Stile hineingespreadet** werden, ist es die falsche Verpackung. Dieselbe Falle
+  wie bei `StyleSheet.absoluteFill` (Phase 4, am Konfetti gelernt). Gefunden 2026-09-14.
+- **`npm run geraet` fragt zurück — im Hintergrund stirbt es daran stumm.**
+  `scripts/geraet-bauen.sh` hat zwei `read`-Aufrufe (Zeile 196/201): die UDID und *„Ist
+  das wirklich dein iPhone? [j/N]"*. Das ist eine **gewollte** Schranke gegen das
+  Aufspielen auf ein fremdes Gerät. Im Hintergrund gibt es kein stdin: `read` scheitert
+  an EOF, `UDID` bleibt leer, das Skript geht mit 1 hinaus — **und das Protokoll endet
+  nach „Gefundene Geräte", ohne eine einzige Fehlerzeile.** Der Build davor ist zu dem
+  Zeitpunkt längst fertig und gültig; es fehlt nur `xcrun devicectl device install app
+  --device <UDID> <…>/SimplySocial.app`.
+  ⚠️ **Die zweite Lehre ist die wichtigere:** `cmd > log 2>&1; echo "EXIT $?"` meldet dem
+  Aufrufer den Exit-Code des `echo`, nicht den des Befehls. Die Harness-Meldung sagte
+  „exit code 0", während im Log `EXIT 1` stand. Derselbe Fehlertyp wie *„`npx expo
+  run:ios` gibt EXIT 0 zurück, auch wenn `xcodebuild` darunter gescheitert ist"* — nur
+  diesmal selbst gebaut. Der Exit-Code, den man sehen will, gehört **in dieselbe Datei**
+  wie die Ausgabe. Gefunden 2026-09-14.
+- **Ein neues Expo-Modul braucht KEIN `prebuild` — `pod install` reicht, und das rettet
+  die Signatur.** Die Fallen daneben sagen, `expo prebuild` werfe `DEVELOPMENT_TEAM`
+  weg (auch ohne `--clean`) und `geraet-bauen.sh` mache weder prebuild noch
+  `pod install`. Daraus folgt aber NICHT, dass ein neues Modul einen prebuild braucht:
+  Die Podfile ruft `use_expo_modules!` auf, und **das Autolinking passiert beim
+  `pod install`**. Gemessen am 2026-09-14 mit `expo-haptics`: `ExpoHaptics` steht in
+  der `Podfile.lock`, `project.pbxproj` ist byteweise unverändert,
+  `DEVELOPMENT_TEAM = 5TQTMP2L2H` steht noch. Nachgemessen wurde, weil `pod install`
+  Fehlschläge mit EXIT 0 meldet — die Prüfung ist `grep ExpoHaptics ios/Podfile.lock`
+  plus `diff` auf die vorher gesicherte `project.pbxproj`.
+- **Ein `useEffect` mit leerer Liste feuert auch im Leer-Zustand des Screens.** Beim
+  Einbau der Match-Vibration (Phase 20.12) hätte sie auch auf `NichtsZuFeiern`
+  gezuckt — `/match` ist auf Web eine ganz normale Adresse, die jeder direkt aufrufen
+  kann, und genau dafür gibt es diesen Zweig. Eine Erfolgsmeldung für einen Bildschirm,
+  auf dem steht, dass es nichts zu feiern gibt. **Die Bedingung gehört IN den Effekt,
+  nicht davor:** Ein Hook nach einem bedingten `return` würde nicht mehr in jedem
+  Durchlauf aufgerufen. Gefunden 2026-09-14.
+- **Ein Prüfstand, der sich nur HINTERHERräumt, ist nach dem ersten roten Lauf
+  unbrauchbar.** `26_treffen.sql` scheiterte mittendrin, `ON_ERROR_STOP` brach ab, das
+  Aufräumen am Ende lief nie — und der nächste Lauf starb am `users_pkey`, also an den
+  Leichen des vorigen, mit einer Meldung, die nach kaputtem Prüfstand aussah statt nach
+  liegengebliebenen Daten. **Und das ist der Lauf, bei dem man ihn am dringendsten
+  braucht.** Abgeräumt wird deshalb VORNE und hinten, in der Reihenfolge der
+  Fremdschlüssel. Die Schwesterfalle *„Ein Abräumen, das den Zustand eines
+  GESCHEITERTEN Abräumens nicht aufräumen kann"* beschreibt dieselbe Sache von der
+  anderen Seite. Gefunden 2026-09-14.
+- **`unique (post_id, from_user_id)` macht den naheliegenden Farm-Angriff unmöglich —
+  und täuscht damit über den echten hinweg.** Beim Bau von `26_treffen.sql` sollte eine
+  Schleife dreimal am SELBEN Post bestätigen und löschen; sie scheiterte am Constraint.
+  Das sieht nach Schutz aus, ist aber der schwächere: Über DREI Posts geht es sehr wohl,
+  und genau so sähe der Missbrauch auch aus (ein Komplize legt mehrere Posts an). **Ein
+  Angriff, den das Schema abwehrt, ist kein Beleg dafür, dass die Sache sicher ist —
+  nur dafür, dass dieser eine Weg zu ist.** Gefunden 2026-09-14.
+- **`security import` meldet „wrong password?", wenn OpenSSL 3 die .p12 geschrieben
+  hat — und das Passwort ist nie das Problem.** Die volle Meldung lautet
+  `SecKeychainItemImport: MAC verification failed during PKCS12 import (wrong
+  password?)`, und sie schickt jeden in die falsche Richtung. **Die Ursache ist der
+  MAC-Algorithmus:** `openssl pkcs12 -export` schreibt unter OpenSSL 3 mit MAC
+  **sha256** und AES-256-CBC; Apples Security-Framework liest nur das alte Format
+  (MAC **sha1**, RC2). Es kann den MAC gar nicht prüfen und nennt das „falsches
+  Passwort". Behebung: **`-legacy`** beim `-export`.
+  **Gemessen, nicht vermutet** (2026-09-14): dasselbe Wegwerf-Zertifikat zweimal
+  verpackt, beide in einen Wegwerf-Schlüsselbund importiert — ohne `-legacy`
+  derselbe Fehler, mit `-legacy` „1 identity imported". Die Formate daneben gelegt:
+  `MAC: sha256` gegen `MAC: sha1`.
+  ⚠️ **Der Auslöser ist der PATH, nicht das Skript.** `/usr/bin/openssl` ist Apples
+  LibreSSL 3.3.6 und schreibt von sich aus das alte Format; `/opt/homebrew/bin/openssl`
+  ist OpenSSL 3.6.4 und nicht. Wer nur „bei mir geht es" misst, misst seinen PATH —
+  deshalb steht im Skript `-legacy` und nicht der absolute Pfad.
+- **Ein Skript, das an einer Stelle abbricht, hat die Schritte DAVOR schon getan.**
+  `testflight.sh` scheiterte am 2026-09-14 in Schritt 2 (Schlüsselbund) — aber
+  Schritt 1 hatte das Distribution-Zertifikat im Apple-Konto **bereits angelegt**.
+  Der zweite Lauf meldete korrekt „liegt schon", und die Meldung in Schritt 1 („du
+  hast 0") war damit in derselben Minute veraltet, in der sie zum ersten Mal
+  erschien. **Jede feste Zahl in einer Meldung, die einen Zustand beschreibt, ist
+  eine Falle** (siehe *„Eine Warnung mit einer ZAHL darin veraltet genauso still"*) —
+  wer zählen muss, zählt beim Aufruf nach, hier `asc.py zertifikat-anlegen`.
+- **Ein laufendes Shell-Skript zu ÄNDERN zerlegt es mitten im Lauf — und der Fehler
+  steht in keiner Fassung der Datei.** Bash liest ein Skript nicht auf einmal ein,
+  sondern häppchenweise nach BYTE-POSITION. Wer die Datei bearbeitet, während sie
+  läuft, verschiebt alles hinter der Änderung; Bash liest an der alten Stelle weiter
+  und landet mitten in einem Wort. Am 2026-09-14 meldete `testflight.sh` einen
+  `syntax error near unexpected token '('` in einer Zeile, die reiner Kommentar ist —
+  `bash -n` fand davor und danach nichts, weil die Datei in beiden Zuständen richtig
+  war. **Der Fehler entstand aus zwei Fassungen gleichzeitig.**
+  Die Schwesterfalle *„Die Quelle NICHT anfassen, während ein Gerätebuild läuft"*
+  beschreibt dasselbe für `xcodebuild`; hier ist es die Shell selbst, und sie ist
+  empfindlicher — ein Build liest seine Quellen einmal, Bash liest bis zum Schluss.
+  **Wer einem Menschen ein Skript zum Ausführen gibt, ändert es erst wieder, wenn er
+  gesagt hat, dass es durch ist.**
+
