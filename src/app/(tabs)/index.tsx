@@ -20,7 +20,6 @@ import {
   SsChip,
   SsGlas,
   SsIcon,
-  SsInput,
   SsScreen,
   SsJahrgangBalken,
   SsScrollReihe,
@@ -54,7 +53,7 @@ import {
   type WischRichtung,
 } from '@/features/posts/wisch';
 import { anfrageSenden } from '@/features/requests/hooks';
-import { useTabRand } from '@/lib/tabs';
+import { useTabUeberdeckung } from '@/lib/tabs';
 import { accent, CATEGORY_ORDER, categoryColors, colors, DRUCK, ecke, radius, spacing } from '@/theme';
 
 /**
@@ -420,17 +419,26 @@ export default function FeedScreen() {
           (harte Regel 61: Kante und Schatten gehören dem Glas). */}
       <SsGlas schwebt style={styles.kopfGlas}>
         {umschalter(styles.umschalterInKapsel)}
-        <SsInput
-          value={filter.suche}
-          onChangeText={(t) => setzen('suche', t)}
-          onClear={() => setzen('suche', '')}
-          placeholder="Suchen …"
-          icon="lupe"
-          style={styles.sucheFeld}
-          // Harte Regel 114: ein NAME für den Ort. Das Feld gibt seine Fläche
-          // und seine Ruhekante ab — das Glas darum bringt beides mit.
-          umgebung="kapsel"
-        />
+        {/* ⚠️ **Hier stand bis zum 2026-09-19 abends das Suchfeld** — Ians
+            Entscheidung 95: *„Ne das oben find ich nicht gut, gib die Suchleiste
+            weg."* Vorgelegt wurden drei Wege (in den Regler · ganz weg · als
+            aufklappende Lupe); **er hat „ganz weg" gewählt.**
+
+            Der Einwand stand vorher in der Frage und ist nicht widerlegt,
+            sondern überstimmt: Die Suche war Leopolds direkteste Rückmeldung
+            aus Phase 15 (*„man kann nicht so genau filtern, was ein Problem
+            wird, wenn es viele Anfragen gibt"*). **Was heute an ihrer Stelle
+            filtert:** die Entfernung (der Feed steht ohnehin von der eigenen
+            Haustür aus sortiert da, `sort.ts`), die sechs Kategorien im Regler,
+            Wann, Jahrgang und die Karte.
+
+            🔴 **Die MECHANIK ist nicht gelöscht, nur die Eingabe** — harte
+            Regel 51, und die Lehre hat sich in diesem Projekt schon zweimal
+            bezahlt gemacht (die Blase kam nach elf Tagen mit EINEM Aufruf
+            zurück). `filter.suche`, `passtZumText()` und ihre Prüfungen stehen
+            unverändert da; solange niemand schreibt, ist der Wert `''` und der
+            Filter lässt alles durch. **Ein `<SsInput value={filter.suche} …>`
+            holt die Suche zurück, wo immer Ian sie haben will.** */}
         <FilterKnopf
           offen={filterOffen}
           anzahl={anzahlFilter}
@@ -796,7 +804,24 @@ function KarteVollbild({
    * Das Blatt darf das nicht, sein Griff wäre sonst unerreichbar; deshalb geht die
    * Zahl an zwei Stellen hin, mit zwei verschiedenen Bedeutungen (siehe unten).
    */
-  const tabRand = useTabRand();
+  /**
+   * ⚠️ **Hier stand bis zum 2026-09-19 `useTabRand()`, und das war der Fehler.**
+   *
+   * Es gibt zwei Zahlen, die auf Web gleich sind und auf iOS auseinanderlaufen:
+   *
+   *   `useTabRand()`         was Inhalt im FLUSS an Rand braucht. Auf iOS **0**,
+   *                          weil Apples Leiste ihre Insets selbst in den
+   *                          Scroll-Container einträgt — das ist richtig.
+   *   `useTabUeberdeckung()` wie hoch die Leiste WIRKLICH steht. Wer absolut
+   *                          darüber liegt, braucht diese.
+   *
+   * Harte Regel 62 trennt genau das: *Was scrollt, scrollt unter das Glas; was
+   * fest steht, weicht ihm aus.* **Dieser Screen hat nur festes** — die
+   * Kartenfläche und die „nichts los"-Kapsel darüber. Mit der 0 klebte die
+   * Kapsel in der Tab-Leiste und die Karte zoomte nach Niederösterreich hinaus;
+   * beides hat Ian am Gerät gesehen, bevor es jemand im Code gefunden hat.
+   */
+  const tabUeberdeckung = useTabUeberdeckung();
   const bezirk = filter.bezirk;
 
   /**
@@ -860,7 +885,22 @@ function KarteVollbild({
           // (`NENNUNG_MIN_KARTE`, Phase 19g): Eine Nennung, die niemand sehen
           // kann, ist keine. Dass die Karte selbst unter der Kapsel durchläuft,
           // bleibt gewollt (harte Regel 62, letzter Absatz).
-          randUnten={tabRand}
+          // 🔴 **`tabUeberdeckung`, nicht `tabRand` — das behebt einen Fehler,
+          // den Ian am 2026-09-19 fotografiert hat.** Die Karte stand viel zu
+          // weit draußen: Stockerau, Mödling, Schwechat im Bild, Wien ein
+          // Fleck. Genau der Zustand, den der Effekt bei `verdeckt` in
+          // `SsAppleKarte.native.tsx` beschreibt (*„Brünn, Bratislava und
+          // St. Pölten"*) — und den er beheben SOLLTE.
+          //
+          // **Warum er es nicht mehr tat:** `verdeckt` wird aus `randUnten`
+          // gerechnet, und `useTabRand()` gibt seit Entscheidung 85
+          // (NativeTabs) auf iOS **0** zurück. Damit war `verdeckt` konstant 0,
+          // der Effekt lief nur EINMAL — beim `bereit`-Wechsel — und wenn
+          // dieser eine `animateToRegion` vor `onMapReady` verpufft (die
+          // dokumentierte Falle), kam nie ein zweiter. Mit der JS-Leiste sprang
+          // `randUnten` von 0 auf ~100, sobald die Höhe bekannt war, und der
+          // zweite Lauf hat Wien eingefangen.
+          randUnten={tabUeberdeckung}
           randOben={leisteBelegt}
           // Ians Entscheidung 57. Der Slot liegt als Geschwister ÜBER der
           // Kartenfläche (harte Regel 51) — die Karte selbst weiß nichts von
@@ -915,10 +955,11 @@ function KarteVollbild({
 
       {/* Ist gar nichts los, sagt das EINE Kapsel unten — die Karte bleibt stehen
           (Ians Entscheidung 93). Sie liegt über der Tab-Kapsel, nicht dahinter:
-          `tabRand` ist deren Höhe samt Sicherheitsabstand, und ein Ausweg-Knopf,
-          den die Leiste verdeckt, ist keiner. */}
+          `tabUeberdeckung` ist deren GEMESSENE Höhe samt Sicherheitsabstand —
+          nicht `tabRand`, der auf iOS 0 ist. Ein Ausweg-Knopf, den die Leiste
+          verdeckt, ist keiner. */}
       {nichtsDa ? (
-        <View style={[styles.nichtsLos, { bottom: tabRand + spacing.md }]}>
+        <View style={[styles.nichtsLos, { bottom: tabUeberdeckung + spacing.md }]}>
           <KarteNichtsLos filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
         </View>
       ) : null}
@@ -1487,6 +1528,11 @@ const styles = StyleSheet.create({
   kopfZeile: {
     flexDirection: 'row',
     alignItems: 'center',
+    // Seit Entscheidung 96 trägt die ZEILE die Verteilung, nicht die Kapsel:
+    // Kapsel links, Posten-Knopf rechts am Rand. Der Zwischenraum gehört damit
+    // niemandem — und genau das ist der Unterschied zu einer leeren Kapsel,
+    // die so tut, als stünde etwas darin.
+    justifyContent: 'space-between',
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
@@ -1503,20 +1549,38 @@ const styles = StyleSheet.create({
    * Die kleine Polsterung hält Umschalter und Regler von der Rundung weg.
    */
   kopfGlas: {
-    flex: 1,
-    minWidth: 0,
+    // ⚠️ **KEIN `flex: 1` — Ians Entscheidung 96 vom 2026-09-19.** Die Kapsel
+    // ist so breit wie ihr Inhalt, nicht wie der Bildschirm.
+    //
+    // Beide Zwischenstände sahen falsch aus, und der Grund war jedes Mal
+    // derselbe: **Eine Glaskapsel behauptet, dass in ihr etwas steht.** Mit
+    // Suchfeld (Entscheidung 90) füllte der Inhalt die Breite; ohne Suchfeld
+    // (Entscheidung 95) blieb sie breit und leer — erst links
+    // zusammengedrängt, dann mit `space-between` auseinandergezogen. Ians
+    // Urteil zu beidem: *„sieht nicht gut aus"*. **Eine leere Fläche liest
+    // sich als Fehler, nicht als Ruhe.**
+    //
+    // Die Verteilung trägt jetzt `kopfZeile`: Kapsel links, Posten-Knopf
+    // rechts. Die Kapsel misst nur noch ihren Inhalt — Umschalter (feste 104)
+    // und Regler (mindestens 44).
     flexDirection: 'row',
     alignItems: 'center',
+    // ⚠️ **`space-between` seit Ians Entscheidung 95.** Solange das Suchfeld
+    // dazwischenstand, füllte es den Raum und ein `gap` genügte. Ohne es
+    // stünden Umschalter und Regler links zusammengedrängt, und rechts wäre
+    // die halbe Kapsel leer — das sähe nach einem Fehler aus, nicht nach
+    // Absicht. Verteilt liest sie sich wie die Tab-Leiste unten, und genau
+    // das war Ians Bild: *„oben und unten halt ein Dings"*.
     gap: spacing.xs,
     paddingHorizontal: spacing.xs,
     borderRadius: radius.pill,
   },
 
   // ── Phase 15: Suche und Filter ──────────────────────────────────────────
-  // `minWidth: 0` ist hier Pflicht und nicht Vorsicht: Ohne das schrumpft ein
-  // `flex: 1`-Kind im Browser nicht unter seine Eigenbreite (`min-width: auto`),
-  // und der lange Platzhaltertext schiebt den Filter-Knopf aus dem Bild.
-  sucheFeld: { flex: 1, minWidth: 0 },
+  // ⚠️ **`sucheFeld` ist mit Ians Entscheidung 95 weggefallen.** Der Stil trug
+  // die Lehre `minWidth: 0` (ein `flex: 1`-Kind schrumpft im Browser sonst nicht
+  // unter seine Eigenbreite) — sie steht weiter in `_gedaechtnis/FALLEN.md` und
+  // an `umschalterInKapsel`, wo sie heute wirkt.
 
   filterKnopf: {
     flexDirection: 'row',

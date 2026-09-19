@@ -75,7 +75,22 @@ export interface FeedFilter {
    * gleich. Was sie unterscheidet, ist die REGEL — und die steht in `passtZumAlter`.
    */
   alter: PostAlter;
-  /** Freitext über Titel und Notiz. Leer heißt „nicht suchen". Phase 15. */
+  /**
+   * Freitext über Titel und Notiz. Leer heißt „nicht suchen". Phase 15.
+   *
+   * 🔴 **Seit Ians Entscheidung 95 (2026-09-19) gibt es kein Eingabefeld mehr,
+   * das diesen Wert setzt** — *„gib die Suchleiste weg"*. Er steht damit
+   * dauerhaft auf `''`, und `passtZumText()` lässt alles durch.
+   *
+   * ⚠️ **Das ist ein AUSBAU, kein Rest.** Harte Regel 51: Wer eine geprüfte
+   * Arbeit ausbaut, löscht sie nicht — die Blase war elf Tage aus der Anzeige
+   * und kam mit EINEM Aufruf zurück. Hier gilt dasselbe: Feld, Filterfunktion
+   * und Prüfungen sind unverändert, ein `<SsInput value={filter.suche} …>`
+   * genügt, wo Ian die Suche haben will.
+   *
+   * **Wer ihn löschen will, löscht mit:** `passtZumText()` in `filter.ts`, die
+   * Zeile in `anzahlFilter()` unten und den Zweig in `useFeed()`.
+   */
   suche: string;
 }
 

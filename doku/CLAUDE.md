@@ -67,12 +67,83 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 ## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-19)
 
 > **Der genehmigte Plan liegt in
-> [`~/.claude/plans/oben-wie-unten-glas-kapsel.md`](~/.claude/plans/oben-wie-unten-glas-kapsel.md)**
-> und ist **selbsttragend geschrieben** — ohne Chatverlauf ausführbar. **Zuerst lesen.**
-> Er wird nicht automatisch geladen; ohne diesen Verweis findet ihn niemand.
-> *(Der Plan der VORIGEN Phase, abgeschlossen: `ich-will-liquid-glass-calm-pinwheel.md`.)*
+> [`~/.claude/plans/oben-wie-unten-glas-kapsel.md`](~/.claude/plans/oben-wie-unten-glas-kapsel.md).**
+> **Alle vier Teile sind GEBAUT und committet** (`8d37edb`). Was fehlt, ist allein
+> **Ians Urteil am Gerät — Durchgang 9** (`_FUER_IAN/HANDY_DURCHGANG.md`).
 
-### 🎉 Gerätedurchgang 8 ist GEMACHT — Ians Urteil am 2026-09-19
+### 🔵 Was auf Ian wartet: `npm run geraet`, dann Durchgang 9
+
+**Die zwei Fragen, die nur er beantworten kann:**
+
+| | Frage |
+|---|---|
+| **1** | **Vermisst er die Kategorien oben?** Sie sind jetzt im Regler statt sichtbar. Das war sein Wunsch („schlichter"), aber es ist eine echte Verhaltensänderung — wer den Feed öffnet, sieht nicht mehr auf einen Blick, welche Kategorien es gibt |
+| **2** | **Flimmert das Reinweiß?** Das war mein Einwand, er hat trotzdem „pur" gewählt. Rückweg ist eine Zeile in `colors.ts` |
+
+⚠️ **Und ein Befund, der ihm vorzulegen ist:** Am Beleg `at04` sind die größten hellen
+Flächen die **drei Anmelde-Knöpfe**, und die sind mit `accent.base = #E8E7E3` weiter
+**cremig**. Entscheidung 92 betraf nur die Schrift. Ob sein *„die Farben sind zu cremig"*
+die Knöpfe mitmeinte, sagt nur er — es wäre eine Zeile.
+
+### Ians Entscheidungen 90–94 (2026-09-19), alle umgesetzt
+
+| # | Entscheidung | Stand |
+|---|---|---|
+| **90** | **Oben eine Glaskapsel wie unten**, die sechs Kategorie-Chips wandern in den Regler | ✅ Beleg `at06` |
+| **91** | **Die Anfragen-Zahl wird TÜRKIS** (`#00E5D0`), nicht rot | ✅ |
+| **92** | **Die Schrift wird PUR** — `ink` Reinweiß, `inkSoft` zieht mit | ✅ Beleg `at04` |
+| **93** | **Die Wien-Karte bleibt sichtbar**, auch wenn nichts los ist | ✅ (Lesart mit Ian geklärt: die **Kartenansicht**, nicht der Stapel) |
+| **94** | **Auf iOS ein PUNKT statt der Zahl** — weil Apple die Schriftfarbe nicht hergibt | ✅ neu, siehe unten |
+
+### 🔴 Zwei Befunde, die der Plan nicht kannte — beide aus Ians *„warum ist die Hand rot?"*
+
+**1. Der rote Punkt war ein ECHTER FEHLER, kein Geschmack.** `appendBadgeOptions`
+(`NativeTabTrigger.js:131`) hat zwei Zweige, und **keiner davon bedeutet „kein Badge"**:
+Bei leerem Kind greift `else if (!props.hidden)` und setzt `badgeValue = ' '` — ein
+Leerzeichen ist bei `react-native-screens` der Punkt ohne Zahl. **Am Gerät stand er
+dauerhaft, ohne dass je eine Anfrage offen war.** Die Doku am Typ verspricht das
+Gegenteil (*„If not provided, the badge will not be displayed"*), und der Kommentar im
+eigenen Code hatte ihr geglaubt. **Ians Feed ist leer — er kann nie eine Zahl gesehen
+haben, nur den Punkt.** Behoben mit `hidden={wartend === 0}` UND `children: undefined`;
+**beides ist nötig**, keines allein genügt.
+
+**2. Auf iOS gehört uns die Schriftfarbe des Badges nicht.** `badgeTextColor` ist im Typ
+`@platform android`/`@platform web`, `appearance.ios.js:26` reicht von allen
+Badge-Werten nur `badgeBackgroundColor` durch, und
+`RNSTabBarAppearanceCoordinator.mm:258` setzt entsprechend nur den Hintergrund —
+**UIKit zeichnet die Zahl weiß**, und weiß auf Türkis ist **1,60**. Drei Wege wurden
+vorgelegt (pur Türkis mit unlesbarer Zahl · gedecktes Petrol `#00756D` · **pur Türkis
+ohne Zahl**); Ian hat den dritten gewählt: *„es muss ja einfach ein Problem lösen"*.
+**Der Preis ist benannt:** Am iPhone sieht man DASS jemand wartet, nicht wie viele —
+auf Web bleibt die Zahl. Ausgeglichen im Tab-Namen (`anfragenName()`), den VoiceOver
+liest. → **harte Regel 117.**
+
+### Was beim Bauen gemessen und behoben wurde
+
+🔴 **Der erste Beleg der Kopfkapsel zeigte nur den Umschalter** — Suchfeld und Regler
+standen auf **Breite null**. Mit dem Auge war das nicht zu entscheiden, weil der
+Prototyp-Hinweis (harte Regel 22) alles abdunkelt; **die spaltenweise Helligkeit schon**:
+`68 · 68 · … · 8,3 · 8,3 · … · 66`. Ursache ist die alte ACTA-Falle *„`flex: 1` heißt in
+React Native `flexBasis: 0`"* — das Suchfeld durfte auf null schrumpfen, der `SsSegment`
+daneben nicht. **Behoben am Umschalter (feste Breite), nicht am Suchfeld**: Ein
+`flexShrink` dort verlagerte den Streit nur.
+
+⚠️ **Und ein Eigentor, aus dem eine Falle wurde:** Die Gegenproben des neuen Prüfstands
+ändern die Quelle — sie liefen, **während ein Gerätebuild aus derselben Quelle baute**.
+Der zweite Lauf reparierte es nicht, er zementierte es: `schirm.sh` Schritt 3 vergleicht
+ZEITSTEMPEL, und nach dem Zurückschreiben ist die Quelle nicht neuer als das verdorbene
+Bündel — *„installiert und aktuell"*, mit grünem Haken. Ausweg: `touch` auf eine
+Quelldatei.
+
+### Was `SsInput` und der Filter-Knopf dazubekommen haben
+
+`umgebung: 'block' | 'kapsel'` — **harte Regel 114 in ihrer zweiten Anwendung.** In der
+Kapsel geben sie Fläche und **Ruhe**kante ab (das Glas bringt beides mit, Regel 61);
+⚠️ **der FOKUS-Rahmen bleibt** — er ist auf iOS die einzige Rückmeldung, in welchem Feld
+man schreibt. Ebenso bleibt die gefüllte Fläche des **aktiven** Filter-Knopfs: Sie ist
+die einzige Stelle, an der ein vergessener Filter noch auffällt (Regel 26).
+
+### Gerätedurchgang 8 — Ians Urteil am 2026-09-19 (die Grundlage dieser Phase)
 
 | Frage | Antwort |
 |---|---|
@@ -81,176 +152,9 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 | Stören Apples SF Symbols? | ✅ *„stören mich gar nicht. Die sehen super aus"* |
 | Stimmt der Dunkelmodus? | ✅ *„passt eigentlich auch. Sieht gut aus"* |
 
-**Damit sind Teil 1 (dunkel) und Teil 2 (NativeTabs) am GERÄT abgenommen.** Offen
-allein das Scroll-Verhalten — das ist keine Bauaufgabe, es braucht echte Posts.
-
-### Ians Entscheidungen 90–93 (2026-09-19), Plan steht
-
-| # | Entscheidung |
-|---|---|
-| **90** | **Oben eine Glaskapsel wie unten**, die sechs Kategorie-Chips wandern in den Regler — aus drei Reihen wird eine |
-| **91** | **Die Anfragen-Zahl wird TÜRKIS** (`#00E5D0`), nicht rot — *„so ein flashie Türkis, so pur türkis"* |
-| **92** | **Die Schrift wird PUR** — `ink` Reinweiß statt Cremeweiß, `inkSoft` zieht mit |
-| **93** | **Die Wien-Karte bleibt sichtbar**, auch wenn nichts los ist |
-
-🔴 **Ian hat einen echten Fehler gefunden, ohne den Code zu kennen:** *„warum ist die
-Hand rot?"* — `colors.ts` sagt in EINER Zeile *„Zahl am Anfragen-Tab, Ablehnen,
-Blockieren, Melden"*. **Eine Anfrage ist das Gegenteil von Gefahr**, jemand will
-mitmachen. In `Anmelden.tsx:497` steht dieselbe Einsicht schon als Kommentar; an der
-Tab-Zahl war sie nie nachgezogen. ⚠️ **Türkis braucht DUNKLEN Text darauf** (weiß wäre
-1,60 — unlesbar), genau wie Sport.
-
-**Ians Auftrag:** *„ICH WILL LIQUID GLASS VON APPLE DIREKT NICHT VON DIR NACHGEBAUT."*
-
-**Der gemessene Befund, und er ist die ganze Phase:** Es IST Apples echtes Glas
-(`expo-glass-effect` → `UIGlassEffect`, kein Nachbau im Projekt). **Es ist nur unsichtbar,
-weil hinter jeder Glasfläche Papierweiß liegt.** Glas zeigt sich als UNTERSCHIED zum
-Untergrund — Ians Vorbild hebt sich um **33,2** Helligkeitsstufen ab, SimplySocial um
-**3,3**. *Mehr Glas einbauen ändert daran nichts.*
-
-🔴 **Ians Entscheidung 89 (2026-09-19): Gerätedurchgänge am iPhone — Entscheidung 87
-(„Claude prüft sich selbst am Simulator") ist damit EINGESCHRÄNKT.** Gemessen: Am
-Simulator kann sich niemand anmelden. Die Anmeldung selbst klappt (Server **200**,
-zweimal), aber `expo-secure-store` kann die Sitzung nicht speichern —
-`KeyChainException: Eine erforderliche Berechtigung fehlt`. Ein Simulator-Build
-bekommt keine Entitlements, und `keychain-access-groups` lässt sich **nicht**
-nachrüsten: ad hoc signiert nimmt der Simulator das restricted entitlement nicht an,
-mit einer echten Apple-Development-Identität verlangt er ein Provisioning-Profil, das
-es dort nicht gibt. Beide Male meldet `codesign` Erfolg, die Rechte stehen
-nachweislich in der App, und `simctl launch` sagt *„denied by service delegate"*.
-Dazu schreibt `sitzungsspeicher.native.ts` mit `WHEN_UNLOCKED_THIS_DEVICE_ONLY` —
-gerätegebunden, im Simulator ohne Unterbau.
-
-**Vorgelegt wurden drei Wege; Ian hat den ohne neuen Code gewählt:** ein
-Simulator-Ausweichweg im Sitzungsspeicher · Gerätedurchgänge wie bisher · das
-Schutz-Attribut lockern. *Kein Sonderweg im Code, nur weil eine Prüfumgebung ärmer
-ist als das Gerät* — dieselbe Haltung wie harte Regel 101.
-
-**Was `npm run schirm` weiterhin kann:** alles VOR dem Torwächter — den
-Anmelde-Bildschirm, `/bausteine`, die Farbmessung. Hinter den Torwächter kommt es
-nicht, und das ist keine Einstellung, die sich umlegen ließe.
-
-⚠️ **Ians iPhone ist NICHT betroffen** (Gerätedurchgang 5 am 14.09. war grün), und
-der Apple-Review auch nicht: Der Reviewer bekommt einen signierten TestFlight-Build.
-
-**Ians vier Entscheidungen (84–87):** ganze App dunkel (fast schwarz, `#14161A`) ·
-**NativeTabs** statt JS-Tabs · **SF Symbols** in der Leiste · Claude prüft sich **selbst**
-per Simulator (Ian gibt die Bedienungshilfen-Berechtigung).
-
-🔴 **Ians Entscheidung 88 (2026-09-14 nachts): die Zielzahl ≥ 25 trägt nicht, und das ist
-gemessen.** Die Gegenprobe des Messgeräts hat gezeigt, dass „Abhebung" am **selben Bild**
-je nach Messstelle **89,3 oder 5,4** ergibt (`ae07`, Kapselinneres gegen Untergrund
-darüber, zwei Stellen 250 px auseinander). Die dokumentierte **33,2 liegt dazwischen —
-aber in PLAN.md steht nur das Ergebnis, nicht über welchen Rechtecken es gemessen wurde.**
-Wer die Rechtecke sucht, bis 33,2 herauskommt, hat eine Kurve angepasst und nichts
-geprüft. Damit war das Erfolgskriterium der ganzen Phase frei wählbar.
-
-**Ians Antwort: beides.**
-
-| | Zahl | heute | Ians Vorbild | Ziel |
-|---|---|---|---|---|
-| **Hauptzahl** | mittlere Bildhelligkeit | `z02` **240,5** | **90,8** | **< 60** |
-| **Nebenzahl** | Abhebung an FESTEN Rechtecken | — | — | wird beim ersten Lauf gesetzt |
-
-Die Hauptzahl braucht keine Koordinaten und ist unbestreitbar; sie misst aber die
-**Ursache** (der Untergrund ist dunkel), nicht die **Wirkung** (man sieht das Glas).
-Dafür die Nebenzahl aus einer Datei mit festen Messrechtecken je Bildschirm — nur so ist
-sie über die Zeit vergleichbar. ⚠️ **Verschiebt sich ein Knopf, misst sie still daneben**;
-deshalb steht neben jedem Rechteck, worauf es zeigt.
-
-*Verworfen, weil gemessen:* der „Kantensprung" (größter Helligkeitssprung über vier
-Zeilen) klang robuster, fand aber bei `ae06` **y = 3** — die Zuschnittkante des Bildes,
-nicht die Kapsel. Er verschiebt das Koordinatenproblem, er löst es nicht.
-
-**Reihenfolge 0 → 3 → 1 → 2**, und die Begründung steht im Plan: Das Messgerät zuerst,
-weil der Erfolg eine ZAHL ist (**Ziel: Abhebung ≥ 25**) und ein Messgerät erst die
-bekannten Zahlen treffen muss, bevor eine neue eine Aussage ist.
-
-| | Stand |
-|---|---|
-| **Teil 0 — sichern** | ✅ Commit `723120b` auf `main`, Zweig `dunkel` steht |
-| **Teil 3 — Selbstprüfung** | ✅ `npm run pruef-glas` **33 Häkchen** · `npm run schirm` läuft und knipst am Simulator · `scripts/messstellen.json` steht. **Offen: `scripts/tippen.sh`** — braucht Ians Bedienungshilfen-Berechtigung |
-| **Teil 1 — dunkel** | ✅ **fertig und gemessen** (Belege `at00` hell / `at01` dunkel — ⚠️ die Reihe `af` war entgegen dem Plan NICHT frei). `npm run pruef-farben` 58 Häkchen · Hauptzahl **219,5 → 55,7** (Ziel < 60) · Nebenzahl **13,8 → 31,6**. ⚠️ Nur am ANMELDE-Bildschirm belegt — der Rest liegt hinter dem Torwächter |
-| **Teil 2 — NativeTabs** | 🔨 **gebaut, Web belegt, iOS unbeurteilt.** Zwei neue Dateien mit `.native`-Endung; `_layout.tsx` und `lib/tabs.ts` unangetastet (= Web-Fassungen). **Rückbau = diese zwei Dateien löschen.** Web-Beleg `at03`: vier Tabs mit eigenen Symbolen und der roten Zahl, also die ALTE Fassung. **Ob Apples Leiste am iPhone wirklich Glas trägt und beim Scrollen schrumpft, sagt allein Ian** |
-
-✅ **Die Gegenprobe ist gelaufen und hat geliefert, wofür sie da ist.** Sie konnte die
-33,2 und die 3,3 **nicht** reproduzieren — aber nicht, weil das Werkzeug falsch rechnet,
-sondern weil die Rechtecke nirgends aufgeschrieben sind (→ Entscheidung 88 oben). Gefunden
-und behoben wurden dabei **drei** Fehler:
-
-1. **16 Bit ging nicht.** `vorbild-liquid-glass-bierbuddy.png` ist **1179×2556, Typ 2,
-   16 Bit** — so speichert ein iPhone einen P3-Screenshot. Das Werkzeug konnte genau die
-   eine Datei nicht lesen, an der es sich beweisen sollte. Der gefährliche Teil sitzt in
-   der Filter-Schleife: Die fünf PNG-Filter rechnen auf **Bytes**, bei 16 Bit sechs je
-   Pixel statt drei.
-2. **Adam7 war ein stiller Fehlerpfad** — verschränkte PNGs hätten verschobene Streifen
-   mit plausiblen Mittelwerten ergeben. Wird jetzt abgewiesen.
-3. **Die Farbzählung brach nie ab.** `farben.add(('viele',))` fügte immer dasselbe Tupel
-   ein; das Set wuchs weiter über alle 1,5 Mio. Bildpunkte. Der Kommentar versprach einen
-   Abbruch, den es nicht gab.
-
-**Die Gegenprobe misst an SELBSTGEBAUTEN Bildern, deren Antwort vorher ausgerechnet ist**
-(zwei Flächen, 21,858 und 73,716) — nicht an geratenen Rechtecken in Screenshots. Dazu die
-Gegenprobe gegen sich selbst: mit absichtlich falscher Schrittweite **muss** 129,188 statt
-21,858 herauskommen, sonst prüft das Testbild nichts. Genau daran war mein **erstes**
-Testbild wertlos — 16-Bit-Werte als `wert × 257` kodiert, dabei sind oberes und unteres
-Byte gleich (20 × 257 = 0x1414) und ein Schrittweiten-Fehler fällt nicht auf.
-
-**Was auf Ian wartet, bevor Teil 3 fertig werden kann:** die Bedienungshilfen-Berechtigung
-(Systemeinstellungen → Datenschutz → Bedienungshilfen) und eine einmalige Anmeldung als
-Demo-Konto im Simulator (sonst landet jeder Deep Link auf dem Anmelde-Bildschirm).
-
-🎉 **Die App läuft auf Ians iPhone** (iPhone 16, iOS 26.6.1, `at.simplysocial.app`,
-gültig bis **2027-09-13**). Der Gerätedurchgang ist gemacht: **7 von 7** — Apple-Login ·
-Google-Login · angemeldet über Neustart · Profilbild · Merker · kein Prototyp-Hinweis ·
-@-Namen.
-
-🎉 **Apple Guideline 1.2 ist VOLLSTÄNDIG** (seit 20.7-b): Melden · Blockieren ·
-Nutzungsbedingungen · Konto löschen — und sie werden gelesen UND beantwortet:
-`npm run meldungen`, dazu `-- post-loeschen <id>` und `-- konto-loeschen <@name>`
-(beide zeigen ohne `--wirklich` nur eine Vorschau).
-
-**Fertige Phasen:** 0–19i · 20.1 bis 20.9 · 20.6-d · **20.10**. Zuletzt **20.10,
-Liquid Glass ernst gemeint** (Ians Satz vom 14.09.: *„sieht immer noch wie Android aus"*,
-gefällt **am iPhone**). Der Befund war nicht zu wenig Glas, sondern der **4-pt-Rand unter
-jedem Knopf** — bis dahin „die Signatur der App", jetzt **Ians Entscheidung 81**
-aufgegeben. Drei Eingriffe: iOS-Kapseln statt Tiefenrand (`theme/druck.ts`, harte Regel
-113) · Apples Squircle an allen 24 Radien (`ecke.*`, harte Regel 112) · der Zurück-Knopf
-ist eine Glaskapsel wie auf Ians Vorbild. Volltext aller Phasen in
-`_gedaechtnis/HISTORIE.md`.
-
-Direkt danach **20.11 — die Liste weg, die Posts groß** (Ians zwei Sätze vom selben
-Abend). Der Umschalter ist zweistufig (Stapel · Karte); die Liste bleibt, wo sie eine
-Aufgabe hat — unter dem durchgewischten Stapel und im Karten-Blatt. Die Posts sind
-**„groß und ruhig"** (**Ians Entscheidung 82**): kein Kasten, Titel 26 statt 19 pt,
-Kategorie als farbiges Wort statt Pille. Dass „kein Kasten" im Wischstapel nicht geht,
-löst `umgebung: 'liste' | 'karte'` — **harte Regel 114**.
-
-Und **20.12 — Gamification** (Ians Satz: *„Inspiriere dich von Tinder, GAMIFICATION ist
-ein Keyword"*), zwei Teile:
-· **Tastsinn** — die App hatte KEINEN; der Match-Moment wurde stumm gefeiert.
-`expo-haptics` kam **ohne prebuild** ins Xcode-Projekt (`pod install` genügt, die
-Signatur blieb unangetastet), benannte Anlässe in `lib/haptik.ts`/`.native.ts` —
-**harte Regel 115**. Dazu ein Farb-Overlay beim Ziehen **in den Farben der App**, nicht
-in Tinder-Grün/Rot (Rot ist `danger`, Grün ist *Essen*).
-· **Treffen-Zähler** auf jedem Profil — **Ians Entscheidung 83**, Migration 0012, ein
-TRIGGER statt Funktion (**harte Regel 116**), bewacht von `npm run pruef-treffen`
-(**22 Häkchen** mit Gegenprobe).
-
-⏳ **Am Gerät noch NICHT beurteilt.** Der Build mit allen drei Phasen ist am 14.09. um
-20:12 aufs iPhone gespielt; ob es jetzt aussieht und sich anfühlt wie gemeint, sagt
-allein Ian — **Gerätedurchgang 7** (`_FUER_IAN/HANDY_DURCHGANG.md`).
-
-🔴 **Die Migration 0012 läuft noch NICHT auf Ians echter Supabase.** Die App geht
-trotzdem (`select('*')` plus `?? 0`), zeigt dann aber überall **0 Treffen**. Ein
-Befehl, Anleitung in `_FUER_IAN/TREFFEN_ZAEHLER.md`.
-
-🎉 **Aufgespielt und am Gerät durchgeprüft — Durchgang 4: 6 von 6** (iPhone 16,
-2026-09-13 abends). Kein Apple-Dialog mehr · Schieben · Kneifen · Übernehmen ·
-**Querformat-Foto** · Abbrechen. Ians Urteil zum Gefühl: **„läuft flüssig"** — der
-`PanResponder` reicht, `react-native-reanimated` wird nicht gebraucht.
-**Und damit ist die einzige begründete Annahme der Phase eine Messung:**
-`ImageRef.width` meldet die GEDREHTE Breite, nicht die gespeicherte.
+**Damit sind Teil 1 (dunkel) und Teil 2 (NativeTabs) der vorigen Phase am GERÄT
+abgenommen.** Offen allein das Scroll-Verhalten — das ist keine Bauaufgabe, es braucht
+echte Posts.
 
 ### Gemessene Zahlen (grün, Stand 20.9/20.8)
 
@@ -273,7 +177,8 @@ Befehl, Anleitung in `_FUER_IAN/TREFFEN_ZAEHLER.md`.
 | `npm run pruef-alter` | **16** | nichts |
 | `npm run pruef-zustimmung` | **28** | nichts |
 | `npm run pruef-glas` | **33** | nichts |
-| `npm run pruef-farben` | **58** | nichts |
+| `npm run pruef-farben` | **66** | nichts |
+| `npm run pruef-kopf` | **16** | nichts |
 
 Dazu: `npx tsc --noEmit` sauber · `expo lint` **89 Probleme** (Stand 20.12: 82 vorbestehend, plus vier aus den zwei neuen `pan.x.interpolate()`-Zeilen der WischKarte — jede meldet doppelt; dazu
 **einer mit Namen**: `react-hooks/refs` in `BildZuschneiden.tsx` — derselbe, den
@@ -334,7 +239,7 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 | 🎨 **Die drei Post-Fassungen aussuchen** — A (Farbband) · B (bunt) · C (groß und ruhig, steht gerade drin). Am Handy unter Einstellungen → „Für die Entwicklung" → „Post-Fassungen vergleichen". ⚠️ **Der Screen `app/post-fassungen.tsx` und sein Eintrag in `einstellungen.tsx` sind WEGWERF-CODE** und fliegen raus, sobald Ian gewählt hat | am iPhone | nein, aber es blockiert das Aufräumen |
 | 🚀 **TestFlight — `npm run testflight`** (ein Befehl, 15–25 Min). Zwei Schritte darin fassen Ians Schlüsselbund an und legen in seinem Apple-Konto ein **Distribution-Zertifikat** an (0 von 2 belegt) — der Auto-Mode blockt das bei mir, zu Recht. Alles andere ist vorbereitet und die Vorprüfungen sind getestet | `_FUER_IAN/TESTFLIGHT.md` | für Phase 21 ja |
 | 🔴 **Migration 0012 einspielen** — `npm run einspielen 0012_treffen_zaehler.sql`. Ohne sie steht überall „0 Treffen". An Ians echte Supabase komme ich nicht heran | `_FUER_IAN/TREFFEN_ZAEHLER.md` | für den Zähler ja |
-| 🔵 **Gerätedurchgang 7 — sieht es jetzt nach iOS aus?** Der Build mit Phase 20.10 UND 20.11 ist seit 14.09. 19:45 drauf. Sechs Punkte: Umschalter zweistufig · Knöpfe als Kapseln · **das Gefühl beim Drücken** (die zwei Zahlen in `theme/druck.ts` sind Ians) · Zurück-Knopf als Glaskreis · die neuen Posts im Stapel · die Liste darunter. **Punkt 5 ist die eigentliche Frage** — „groß und ruhig" war eine von drei Fassungen | `_FUER_IAN/HANDY_DURCHGANG.md` | für Phase 21 nein, für das Aussehen ja |
+| 🔵 **Gerätedurchgang 9 — oben wie unten, pur, Türkis.** `npm run geraet`, dann sieben Punkte. **Die zwei, auf die es ankommt:** Vermisst er die Kategorien oben (sie sind jetzt im Regler)? Und flimmert das Reinweiß? Beides ist ein Rückweg von einer Zeile. Dazu der offene Befund: die Anmelde-Knöpfe sind noch cremig (`accent.base`) | `_FUER_IAN/HANDY_DURCHGANG.md` | für das Aussehen ja |
 | 🔵 **Gerätedurchgang 6 — das Zustimmungs-Häkchen.** Build ist seit 14.09. auf dem iPhone, der Durchgang steht aus. Schritt 1 beweist zugleich, ob der neue Build drauf ist | `_FUER_IAN/HANDY_DURCHGANG.md` | für Phase 21 ja |
 | 🔑 **Management-Token widerrufen** — darf alles im Supabase-Konto, wird nie wieder gebraucht. **Am 14.09. nachgesehen: `~/.simplysocial/mgmt-token` existiert nicht mehr** — entweder schon erledigt oder nie abgelegt. Im Dashboard nachsehen | `supabase.com/dashboard/account/tokens` → Revoke | nein |
 | **Der Knopf unter dem Vollbild-Kasten** — „Nochmal versuchen" oder nichts | PLAN.md 5b, 20.9 | nein |
@@ -708,6 +613,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Ein `block()`, der geschweifte Klammern zählt, gibt die PARAMETERLISTE zurück
 - Ein Prüfstand, der seine Gegenprobe durch ÄNDERN der Quelle fährt, darf nicht während eines Gerätebuilds laufen
 - Ein Screenshot, über dem ein Vollbild liegt, beantwortet keine Layout-Frage — die ZAHLENREIHE schon
+- Ein Änderungs-Skript, das seine Häkchen VOR dem Schreiben druckt, lügt bei jedem Abbruch
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

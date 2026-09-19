@@ -165,3 +165,27 @@ export function useTabRand(): number {
   if (!inLeiste) return 0;
   return TAB_KAPSEL_HOEHE + tabKapselUnten(insets.bottom) + spacing.sm;
 }
+
+/**
+ * Wie viel die Tab-Leiste am unteren Rand ÜBERDECKT — für Dinge, die absolut
+ * darüber liegen.
+ *
+ * ⚠️ **Das ist NICHT `useTabRand()`, und die Verwechslung war ein echter
+ * Fehler** (Ians Screenshot vom 2026-09-19, 16:23). Harte Regel 62 unterscheidet
+ * zwei Fälle: *„Was scrollt, scrollt unter das Glas; was fest steht, weicht ihm
+ * aus."*
+ *
+ *   `useTabRand()`        was der Inhalt im FLUSS an Rand braucht. Auf iOS **0**,
+ *                         und das ist richtig: Apples Leiste trägt ihre Insets
+ *                         selbst in den Scroll-Container ein (`tabs.native.ts`).
+ *   `useTabUeberdeckung()` wie hoch die Leiste WIRKLICH steht. Das braucht, wer
+ *                         absolut positioniert ist und nicht dahinter
+ *                         verschwinden will — auf iOS ist das **nicht 0**.
+ *
+ * Auf Web sind beide Zahlen gleich (die Kapsel ist unsere eigene, wir kennen ihr
+ * Maß); auf iOS laufen sie auseinander, und genau daran ist die „nichts
+ * los"-Kapsel gescheitert: Sie bekam die 0 und klebte in der Leiste.
+ */
+export function useTabUeberdeckung(): number {
+  return useTabRand();
+}

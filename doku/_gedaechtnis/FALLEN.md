@@ -1746,3 +1746,17 @@
   nicht. **Die Behebung gehört an den, der NICHT schrumpfen darf** — eine feste Breite
   am Icon-Umschalter, nicht ein `flexShrink` am Suchfeld: Sonst quetscht beim nächsten
   längeren Platzhalter der Text die Symbole zusammen.
+- **Ein Änderungs-Skript, das seine Häkchen VOR dem Schreiben druckt, lügt bei jedem
+  Abbruch.** Das Muster war: eine `tausche()`-Hilfsfunktion, die `print('✓ …')` macht
+  und den Text in einer Variablen sammelt, dann drei Aufrufe, dann ein `write_text()`
+  am Ende. Schlägt der DRITTE Anker fehl, beendet `sys.exit` das Skript — **die zwei
+  Häkchen davor stehen schon auf dem Schirm, geschrieben wurde aber gar nichts.**
+  Am 2026-09-19 hat das einen kompletten Gerätebau (3 Minuten) verbrannt: Der Beleg
+  zeigte die alte Fassung, und ich habe zuerst am Layout gesucht statt an der Datei.
+  ⚠️ **Gefährlich ist es, weil es wie ein LAYOUT-Problem aussieht** — der Code, den
+  man im Editor liest, ist ja der alte, aber man liest ihn nicht, man glaubt den
+  Häkchen. **Richtig ist die Reihenfolge: alle Anker prüfen → alle ersetzen →
+  schreiben → DANN melden.** Und danach den Ist-Zustand aus der Datei zurücklesen,
+  nicht der Meldung glauben. Verwandt mit *„Ein Skript, das an einer Stelle abbricht,
+  hat die Schritte DAVOR schon getan"* — hier ist es die Umkehrung: Es hat sie
+  gemeldet und NICHT getan.

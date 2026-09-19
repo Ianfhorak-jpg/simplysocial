@@ -1,3 +1,5 @@
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 /**
  * Was die Tab-Leiste an Platz kostet — **die iOS-Fassung, seit Phase 22 Teil 2.**
  *
@@ -36,4 +38,45 @@
  */
 export function useTabRand(): number {
   return 0;
+}
+
+/**
+ * Wie hoch Apples Tab-Leiste am unteren Rand WIRKLICH steht — **gemessen, nicht
+ * aus der Dokumentation.**
+ *
+ * 🔴 **Warum es diese Zahl geben muss:** `useTabRand()` gibt hier 0 zurück, und
+ * das ist für Inhalt im Fluss richtig. Wer aber absolut über der Leiste liegt,
+ * bekommt mit der 0 die Position *hinter* ihr. Genau das ist am 2026-09-19
+ * passiert — die „nichts los"-Kapsel klebte in der Tab-Leiste, halb unlesbar,
+ * und Ian hat es am Gerät gesehen. **Zwei verschiedene Fragen brauchen zwei
+ * Funktionen**, sonst beantwortet die eine irgendwann die andere falsch.
+ *
+ * ⚠️ **NativeTabs gibt die Höhe nicht her.** Weder `BottomTabBarHeightContext`
+ * (der gehört `expo-router/js-tabs`) noch ein eigener Haken — `hooks.d.ts`
+ * exportiert allein `usePlacement` für die BottomAccessory. Nachgesehen, nicht
+ * vermutet. Also bleibt Messen.
+ *
+ * 🔴 **`insets.bottom` IST die Antwort — hier stand zuerst `insets.bottom + 66`,
+ * und das hat doppelt gezählt.** Der Weg dahin ist die Lehre:
+ *
+ * Zuerst am Bild gemessen (Beleg `at07`, zeilenweise Helligkeit über die
+ * untersten 140 pt): Die Leiste zeichnet von **100 pt** über der Unterkante bis
+ * etwa 13 pt. Bei angenommenen 34 pt Sicherheitsabstand schienen das **66 pt**
+ * Leiste zu sein — also `insets.bottom + 66`.
+ *
+ * **Die 34 waren die Annahme, und sie war falsch.** Der Messstreifen in `at11`
+ * hat `insets.bottom` direkt ausgelesen: **83**. Das sind 34 pt Home-Indikator
+ * plus 49 pt `UITabBar` — *`react-native-screens` trägt Apples Leiste bereits
+ * in die Safe Area ein.* Genau das behauptet der Kopfkommentar dieser Datei
+ * seit Entscheidung 85; ich habe es gelesen, geglaubt — und trotzdem noch
+ * einmal 66 draufgelegt. Ergebnis war ein `mapPadding` von 149 statt 83, und
+ * die Karte zoomte entsprechend heraus.
+ *
+ * ⚠️ **Eine am BILD gemessene Zahl kann richtig sein und trotzdem falsch
+ * verwendet** — die 100 pt stimmen, nur waren sie nicht `insets.bottom + X`,
+ * sondern `insets.bottom` plus Rundung. Wer eine Zahl aus einem Screenshot
+ * ableitet, muss die Größe, gegen die er sie rechnet, AUCH messen.
+ */
+export function useTabUeberdeckung(): number {
+  return useSafeAreaInsets().bottom;
 }

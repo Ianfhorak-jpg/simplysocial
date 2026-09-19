@@ -135,9 +135,24 @@ kapsel = code[i:code.find('\n  );', i) + 5] if i >= 0 else ''
 pruef('… und sie ist `SsGlas schwebt`, nicht eine nachgebaute Fläche',
       '<SsGlas schwebt' in kapsel,
       'harte Regel 61/62: Fläche, Kante und Schatten gehören dem Glas')
-pruef('… Suchfeld und Regler geben ihre Fläche ab (`umgebung="kapsel"`)',
-      kapsel.count('umgebung="kapsel"') == 2,
-      f'gefunden: {kapsel.count("umgebung=")} — zwei Untergründe übereinander wären einer zu viel')
+# ⚠️ **Eins, nicht zwei** — bis zu Ians Entscheidung 95 stand hier `== 2`
+# (Suchfeld UND Regler). Das Suchfeld ist weg; wer die Zahl nicht nachzieht,
+# hat einen Wächter, der eine alte Fassung verlangt.
+pruef('… der Regler gibt seine Fläche ab (`umgebung="kapsel"`)',
+      kapsel.count('umgebung="kapsel"') == 1,
+      f'gefunden: {kapsel.count(chr(117) + chr(109) + "gebung=")} — zwei Untergründe übereinander wären einer zu viel')
+# Entscheidung 95: *„gib die Suchleiste weg"*. Die verworfene Möglichkeit ist,
+# sie wieder hineinzustellen — also wird genau darauf geprüft.
+pruef('… und es steht KEIN Suchfeld in der Kapsel (Entscheidung 95)',
+      '<SsInput' not in kapsel,
+      'Ians Satz vom 19.09.: „Ne das oben find ich nicht gut, gib die Suchleiste weg"')
+# Die Gegenprobe dazu: Die MECHANIK muss weiterhin da sein (harte Regel 51,
+# ausbauen statt löschen). Ein Wächter, der nur das Verschwinden prüft, wäre mit
+# einem `rm` auf `filter.ts` zufrieden.
+FILTER = WURZEL / 'src' / 'features' / 'posts' / 'filter.ts'
+pruef('… aber `passtZumText()` steht weiter da (ausgebaut, nicht gelöscht)',
+      FILTER.exists() and 'export function passtZumText' in FILTER.read_text(),
+      'harte Regel 51 — ein `<SsInput value={filter.suche} …>` muss sie zurückholen können')
 pruef('… der Posten-Knopf steht DRAUSSEN und rund',
       vor(kapsel, '</SsGlas>', '<PostenKnopf />'),
       'er ist die wichtigste Handlung — in den Regler gehört er nicht')
@@ -168,6 +183,15 @@ pruef('Der Ausweg ist eine Kapsel über der Karte',
 pruef('… und sie ist ein GESCHWISTER der Karte, kein Kind (harte Regel 51)',
       vor(vollbild, '<SsKarte', '<KarteNichtsLos'),
       'die Kartenfläche klippt und zieht jede Berührung an sich')
+# 🔴 **Der Fehler, den Ian am 2026-09-19 um 16:23 fotografiert hat.**
+# `useTabRand()` gibt auf iOS 0 zurück — richtig für Inhalt im FLUSS, falsch für
+# alles, was absolut über der Leiste liegt. Die Kapsel klebte damit IN der
+# Tab-Leiste, halb unlesbar. Harte Regel 62 trennt die zwei Fälle; dieser
+# Wächter hält fest, dass die Kapsel im zweiten steht.
+m2 = re.search(r'styles\.nichtsLos, \{ bottom: (\w+)', vollbild)
+pruef(f'Die „nichts los"-Kapsel weicht der ECHTEN Leiste aus (gefunden: {m2.group(1) if m2 else "NICHTS"})',
+      bool(m2) and m2.group(1) == 'tabUeberdeckung',
+      '`tabRand` ist auf iOS 0 — die Kapsel läge hinter Apples Tab-Leiste')
 pruef('`LeererFeed` steht NICHT über der Karte',
       'LeererFeed' not in vollbild,
       'er ist ein Vollflächen-Zustand — er würde Wien wieder ersetzen statt ergänzen')
