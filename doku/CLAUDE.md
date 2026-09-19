@@ -79,6 +79,31 @@ weil hinter jeder Glasfläche Papierweiß liegt.** Glas zeigt sich als UNTERSCHI
 Untergrund — Ians Vorbild hebt sich um **33,2** Helligkeitsstufen ab, SimplySocial um
 **3,3**. *Mehr Glas einbauen ändert daran nichts.*
 
+🔴 **Ians Entscheidung 89 (2026-09-19): Gerätedurchgänge am iPhone — Entscheidung 87
+(„Claude prüft sich selbst am Simulator") ist damit EINGESCHRÄNKT.** Gemessen: Am
+Simulator kann sich niemand anmelden. Die Anmeldung selbst klappt (Server **200**,
+zweimal), aber `expo-secure-store` kann die Sitzung nicht speichern —
+`KeyChainException: Eine erforderliche Berechtigung fehlt`. Ein Simulator-Build
+bekommt keine Entitlements, und `keychain-access-groups` lässt sich **nicht**
+nachrüsten: ad hoc signiert nimmt der Simulator das restricted entitlement nicht an,
+mit einer echten Apple-Development-Identität verlangt er ein Provisioning-Profil, das
+es dort nicht gibt. Beide Male meldet `codesign` Erfolg, die Rechte stehen
+nachweislich in der App, und `simctl launch` sagt *„denied by service delegate"*.
+Dazu schreibt `sitzungsspeicher.native.ts` mit `WHEN_UNLOCKED_THIS_DEVICE_ONLY` —
+gerätegebunden, im Simulator ohne Unterbau.
+
+**Vorgelegt wurden drei Wege; Ian hat den ohne neuen Code gewählt:** ein
+Simulator-Ausweichweg im Sitzungsspeicher · Gerätedurchgänge wie bisher · das
+Schutz-Attribut lockern. *Kein Sonderweg im Code, nur weil eine Prüfumgebung ärmer
+ist als das Gerät* — dieselbe Haltung wie harte Regel 101.
+
+**Was `npm run schirm` weiterhin kann:** alles VOR dem Torwächter — den
+Anmelde-Bildschirm, `/bausteine`, die Farbmessung. Hinter den Torwächter kommt es
+nicht, und das ist keine Einstellung, die sich umlegen ließe.
+
+⚠️ **Ians iPhone ist NICHT betroffen** (Gerätedurchgang 5 am 14.09. war grün), und
+der Apple-Review auch nicht: Der Reviewer bekommt einen signierten TestFlight-Build.
+
 **Ians vier Entscheidungen (84–87):** ganze App dunkel (fast schwarz, `#14161A`) ·
 **NativeTabs** statt JS-Tabs · **SF Symbols** in der Leiste · Claude prüft sich **selbst**
 per Simulator (Ian gibt die Bedienungshilfen-Berechtigung).

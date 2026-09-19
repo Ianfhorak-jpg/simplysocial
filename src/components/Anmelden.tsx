@@ -319,16 +319,28 @@ function EmailWeg({
       // Ein `KontoFehler` ist beantwortbar; alles andere ist der Riegel aus
       // `demoAnmelden()` und damit ein PROGRAMMfehler (harte Regel 103) — er
       // soll laut in der Konsole stehen und nicht als „kein Netz" verkleidet.
-      // ⚠️ WEGWERF-DIAGNOSE (2026-09-19) — fliegt raus, sobald der Fehler steht.
-      // Die Demo-Anmeldung scheitert am Simulator, obwohl der Server mit 200
-      // antwortet und die Sitzung im Schlüsselbund landet. `console.warn` wird im
-      // Release-Build wegoptimiert, also muss der Code auf den BILDSCHIRM.
+      // Ein `KontoFehler` ist beantwortbar; alles andere ist der Riegel aus
+      // `demoAnmelden()` und damit ein PROGRAMMfehler (harte Regel 103) — er
+      // soll laut in der Konsole stehen und nicht als „kein Netz" verkleidet.
+      //
+      // ⚠️ **Gemessen am 2026-09-19, und es ist ein offener Befund:** `catch`
+      // umspannt hier ZWEI Schritte — `demoAnmelden()` und `sitzungUebernehmen()`
+      // —, aber übersetzt wird mit `passwortFehlerText()`, und die kennt nur die
+      // Codes des ersten. Ein Fehler aus dem zweiten fällt in ihren `default` und
+      // liest sich als *„Prüf dein Netz"*. Am Simulator stand dieser Satz auf dem
+      // Bildschirm, während der Server zweimal mit **200** geantwortet hatte —
+      // die Anmeldung war gelungen, das SPEICHERN der Sitzung nicht.
+      //
+      // Aufgeschrieben statt repariert: Was hier stehen SOLL, wenn der zweite
+      // Schritt scheitert, ist eine Frage an Ian und keine Messung. Der rohe Code
+      // gehört nicht auf den Bildschirm — der einzige Mensch, der ihn je sieht,
+      // ist der Apple-Reviewer.
       if (f instanceof KontoFehler) {
         console.warn(f.message);
-        setFehler(`[${f.schritt ?? '?'} · ${f.code}] ${f.message}`.slice(0, 300));
+        setFehler(passwortFehlerText(f.code));
       } else {
         console.warn(String(f));
-        setFehler(`[roh] ${String(f)}`.slice(0, 300));
+        setFehler(passwortFehlerText('unbekannt'));
       }
       setLaeuft(false);
     }
