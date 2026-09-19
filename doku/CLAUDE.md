@@ -64,12 +64,41 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
 ---
 
-## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-14 nachts)
+## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-19)
 
 > **Der genehmigte Plan liegt in
-> [`~/.claude/plans/ich-will-liquid-glass-calm-pinwheel.md`](~/.claude/plans/ich-will-liquid-glass-calm-pinwheel.md)**
-> und ist **selbsttragend geschrieben** — er ist ohne Chatverlauf ausführbar. **Zuerst
-> lesen.** Er wird nicht automatisch geladen; ohne diesen Verweis findet ihn niemand.
+> [`~/.claude/plans/oben-wie-unten-glas-kapsel.md`](~/.claude/plans/oben-wie-unten-glas-kapsel.md)**
+> und ist **selbsttragend geschrieben** — ohne Chatverlauf ausführbar. **Zuerst lesen.**
+> Er wird nicht automatisch geladen; ohne diesen Verweis findet ihn niemand.
+> *(Der Plan der VORIGEN Phase, abgeschlossen: `ich-will-liquid-glass-calm-pinwheel.md`.)*
+
+### 🎉 Gerätedurchgang 8 ist GEMACHT — Ians Urteil am 2026-09-19
+
+| Frage | Antwort |
+|---|---|
+| Trägt Apples Tab-Leiste sichtbar Glas? | ✅ *„sieht super aus … ich bin echt stolz"* |
+| Schrumpft sie beim Scrollen? | ⏳ **unbeurteilt** — der Feed ist leer, es gibt nichts zu scrollen |
+| Stören Apples SF Symbols? | ✅ *„stören mich gar nicht. Die sehen super aus"* |
+| Stimmt der Dunkelmodus? | ✅ *„passt eigentlich auch. Sieht gut aus"* |
+
+**Damit sind Teil 1 (dunkel) und Teil 2 (NativeTabs) am GERÄT abgenommen.** Offen
+allein das Scroll-Verhalten — das ist keine Bauaufgabe, es braucht echte Posts.
+
+### Ians Entscheidungen 90–93 (2026-09-19), Plan steht
+
+| # | Entscheidung |
+|---|---|
+| **90** | **Oben eine Glaskapsel wie unten**, die sechs Kategorie-Chips wandern in den Regler — aus drei Reihen wird eine |
+| **91** | **Die Anfragen-Zahl wird TÜRKIS** (`#00E5D0`), nicht rot — *„so ein flashie Türkis, so pur türkis"* |
+| **92** | **Die Schrift wird PUR** — `ink` Reinweiß statt Cremeweiß, `inkSoft` zieht mit |
+| **93** | **Die Wien-Karte bleibt sichtbar**, auch wenn nichts los ist |
+
+🔴 **Ian hat einen echten Fehler gefunden, ohne den Code zu kennen:** *„warum ist die
+Hand rot?"* — `colors.ts` sagt in EINER Zeile *„Zahl am Anfragen-Tab, Ablehnen,
+Blockieren, Melden"*. **Eine Anfrage ist das Gegenteil von Gefahr**, jemand will
+mitmachen. In `Anmelden.tsx:497` steht dieselbe Einsicht schon als Kommentar; an der
+Tab-Zahl war sie nie nachgezogen. ⚠️ **Türkis braucht DUNKLEN Text darauf** (weiß wäre
+1,60 — unlesbar), genau wie Sport.
 
 **Ians Auftrag:** *„ICH WILL LIQUID GLASS VON APPLE DIREKT NICHT VON DIR NACHGEBAUT."*
 
