@@ -116,7 +116,7 @@ bekannten Zahlen treffen muss, bevor eine neue eine Aussage ist.
 |---|---|
 | **Teil 0 — sichern** | ✅ Commit `723120b` auf `main`, Zweig `dunkel` steht |
 | **Teil 3 — Selbstprüfung** | ✅ `npm run pruef-glas` **33 Häkchen** · `npm run schirm` läuft und knipst am Simulator · `scripts/messstellen.json` steht. **Offen: `scripts/tippen.sh`** — braucht Ians Bedienungshilfen-Berechtigung |
-| **Teil 1 — dunkel** | ✅ **fertig und gemessen.** `npm run pruef-farben` 58 Häkchen · Hauptzahl **219,5 → 55,7** (Ziel < 60) · Nebenzahl **13,8 → 31,6**. ⚠️ Nur am ANMELDE-Bildschirm belegt — der Rest liegt hinter dem Torwächter |
+| **Teil 1 — dunkel** | ✅ **fertig und gemessen** (Belege `at00` hell / `at01` dunkel — ⚠️ die Reihe `af` war entgegen dem Plan NICHT frei). `npm run pruef-farben` 58 Häkchen · Hauptzahl **219,5 → 55,7** (Ziel < 60) · Nebenzahl **13,8 → 31,6**. ⚠️ Nur am ANMELDE-Bildschirm belegt — der Rest liegt hinter dem Torwächter |
 | **Teil 2 — NativeTabs** | ⬜ noch nicht angefangen |
 
 ✅ **Die Gegenprobe ist gelaufen und hat geliefert, wofür sie da ist.** Sie konnte die
@@ -437,7 +437,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 116. Was der Treffen-Zähler zählt, steht im TRIGGER `treffen_buchen` (0012) — nie in einer Funktion und nie in der App
 ## Fallen — Index
 
-> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 205 Stück, jede schon
+> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 213 Stück, jede schon
 > einmal einen Abend gekostet — die meisten stammen aus ACTA (`17_Tennis_Optimma`), der
 > Rest aus diesem Projekt. Hier steht nur der Titel; **die Diagnose steht im Volltext.**
 
@@ -640,6 +640,14 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Ein Debug-Build ohne laufenden Metro zeigt den roten Kasten „No script URL provided" — mit 822 Farben und damit ein „gültiges" Bild
 - `ioreg -n IODisplayWrangler` hat auf Apple Silicon keinen `IOPowerManagement`-Eintrag
 - `awk '… {print; exit}'` in einer Pipe tötet ein Skript unter `set -euo pipefail`
+- `CODE_SIGNING_ALLOWED=NO` nimmt einem Simulator-Build die ENTITLEMENTS — und damit den Schlüsselbund
+- `keychain-access-groups` lässt sich im Simulator nicht nachrüsten
+- `simctl launch` scheitert laut — aber nur, wenn jemand zuhört
+- Ein Aktualitäts-Wächter, der nur die QUELLE kennt, merkt eine geänderte BUILD-KONFIGURATION nicht
+- Ein Fehler aus Schritt ZWEI, der durch die Fehlerübersetzung von Schritt EINS läuft, wird zur Lüge
+- Ein `osascript`-Klick, der ein UI-Element zurückgibt, ist noch kein Klick
+- `screencapture -R` mit der Fenstergeometrie eines Programms knipst das OBERSTE Fenster an dieser Stelle
+- `timeout` gibt es auf macOS nicht
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

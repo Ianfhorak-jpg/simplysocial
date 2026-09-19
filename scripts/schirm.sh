@@ -158,14 +158,38 @@ NEUSTE_QUELLE=""
 if [[ -n "$APP_PFAD" ]]; then
   # Direkt gegen das installierte Bündel — und `src` allein genügt nicht:
   # `app.json`, die Migrationen und `package.json` gehören genauso ins Bündel.
+  # ⚠️ **Dieses Skript gehört in die Liste.** Am 2026-09-19 stand hier nur
+  # `src`, `app.json`, `package.json` — dann wurde die BUILD-KONFIGURATION
+  # geändert (`CODE_SIGNING_ALLOWED=NO` raus), und der Wächter meldete brav
+  # „installiert und aktuell". Die Quelle war ja unverändert. **Was gebaut wird,
+  # ist nicht dasselbe wie WIE gebaut wird** — und beides entscheidet, ob das
+  # installierte Bündel noch das richtige ist.
   NEUSTE_QUELLE="$(find "$WURZEL/src" "$WURZEL/app.json" "$WURZEL/package.json" \
-                      -newer "$APP_PFAD" 2>/dev/null | head -1 || true)"
+                      "${BASH_SOURCE[0]}" -newer "$APP_PFAD" 2>/dev/null | head -1 || true)"
 fi
 
 bauen() {
   echo "  … baue für den Simulator (das dauert beim ersten Mal ~10 Minuten)"
   # Ein SIMULATOR-Build braucht keine Apple-Signatur — ein Gerätebuild schon.
   # Deshalb geht das hier ohne Schlüsselbund, ohne Zertifikat, ohne Ian.
+  #
+  # ⚠️⚠️ **KEIN `CODE_SIGNING_ALLOWED=NO`** — und das ist die teuerste Zeile
+  # dieses Skripts (2026-09-19). Die Fallen-Liste sagt *„Ein Simulator-Build
+  # braucht keine Apple-Signatur"*, und das stimmt — aber daraus folgt NICHT, dass
+  # man die Signierung abschalten darf. Ein Simulator-Build wird ad-hoc signiert
+  # (`Signature=adhoc`, ohne Apple-Konto, ohne Zertifikat), und **erst dabei
+  # bekommt die App ihre ENTITLEMENTS**.
+  #
+  # Ohne sie gibt es keine `keychain-access-groups`, und `expo-secure-store`
+  # scheitert beim Schreiben der Sitzung mit
+  #
+  #     KeyChainException: Eine erforderliche Berechtigung fehlt.
+  #     (ExpoSecureStore/SecureStoreModule.swift)
+  #
+  # Die Anmeldung sieht dann **erfolgreich** aus — der Server antwortet mit 200,
+  # das Log zeigt `SecItemAdd_ios` (den AUFRUF, nicht den Erfolg) — und die App
+  # bleibt trotzdem auf dem Anmeldebildschirm, mit der Meldung „Prüf dein Netz".
+  # Zwei Stunden Fehlersuche an der falschen Stelle.
   #
   # ⚠️ **RELEASE, nicht Debug** — und das ist beim ersten Lauf am 2026-09-14
   # teuer gelernt worden. Ein Debug-Build holt sein JS-Bündel vom Metro-Server;
@@ -182,7 +206,7 @@ bauen() {
   xcodebuild -workspace "$WURZEL/ios/SimplySocial.xcworkspace" \
     -scheme SimplySocial -configuration Release \
     -destination "id=$UDID" -derivedDataPath "$DERIVED" \
-    CODE_SIGNING_ALLOWED=NO > "$log" 2>&1
+    > "$log" 2>&1
   set -e
   # Geprüft wird die ANWESENHEIT von BUILD SUCCEEDED, nicht die Abwesenheit von
   # „error:" — ein gescheiterter Build hat nicht immer eine `error:`-Zeile.
@@ -193,6 +217,19 @@ bauen() {
   fi
   local gebaut="$DERIVED/Build/Products/Release-iphonesimulator/SimplySocial.app"
   [[ -d "$gebaut" ]] || { echo "✗ BUILD SUCCEEDED, aber $gebaut fehlt."; exit 1; }
+
+  # ⚠️ **Hier stand bis zum 2026-09-19 ein Nachsignieren mit eigenen
+  # Entitlements** (`keychain-access-groups`), weil `expo-secure-store` ohne sie
+  # mit *„Eine erforderliche Berechtigung fehlt"* scheiterte. **Es ist wieder
+  # draussen: Der Simulator startet die App dann gar nicht mehr** — ad hoc
+  # signiert nimmt er das restricted entitlement nicht an, und mit einer echten
+  # „Apple Development"-Identität verlangt er ein Provisioning-Profil, das es im
+  # Simulator nicht gibt. `codesign` meldet beide Male Erfolg, die Rechte stehen
+  # nachweislich drin, und `simctl launch` sagt „denied by service delegate".
+  #
+  # Was bleibt: **nicht eingreifen.** Ohne `CODE_SIGNING_ALLOWED=NO` signiert
+  # Xcode den Simulator-Build selbst, und das ist der einzige Stand, den der
+  # Simulator akzeptiert.
   xcrun simctl install "$UDID" "$gebaut"
   echo "$SOLL" > "$MARKE"
   echo "  ✓ gebaut und installiert (Release)"
@@ -249,7 +286,17 @@ echo "  ✓ 9:41, volle Balken"
 # ══════════════════════════════════════════════════════════════════════════════
 sag "6. Starten und zur Route"
 # ══════════════════════════════════════════════════════════════════════════════
-xcrun simctl launch "$UDID" "$BUNDLE" >/dev/null
+# ⚠️ `simctl launch` scheitert LAUT, aber der Rückgabewert allein reichte nicht:
+# Am 2026-09-19 stand hier `>/dev/null`, der Start scheiterte an einer falschen
+# Entitlement — und das Skript meldete danach fröhlich „App läuft". **Ein Schritt,
+# dessen Fehlermeldung ins Nichts geht, ist kein Schritt, sondern eine Annahme.**
+if ! START="$(xcrun simctl launch "$UDID" "$BUNDLE" 2>&1)"; then
+  echo "✗ Die App startet nicht:"
+  echo "$START" | sed 's/^/    /'
+  echo "    (Bei 'denied by service delegate' sind meist die Entitlements schuld -"
+  echo "     siehe den Abschnitt Nachsignieren weiter oben.)"
+  exit 1
+fi
 sleep 3
 ZIEL="simplysocial://${ROUTE#/}"
 echo "  … $ZIEL"

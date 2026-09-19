@@ -319,12 +319,16 @@ function EmailWeg({
       // Ein `KontoFehler` ist beantwortbar; alles andere ist der Riegel aus
       // `demoAnmelden()` und damit ein PROGRAMMfehler (harte Regel 103) — er
       // soll laut in der Konsole stehen und nicht als „kein Netz" verkleidet.
+      // ⚠️ WEGWERF-DIAGNOSE (2026-09-19) — fliegt raus, sobald der Fehler steht.
+      // Die Demo-Anmeldung scheitert am Simulator, obwohl der Server mit 200
+      // antwortet und die Sitzung im Schlüsselbund landet. `console.warn` wird im
+      // Release-Build wegoptimiert, also muss der Code auf den BILDSCHIRM.
       if (f instanceof KontoFehler) {
         console.warn(f.message);
-        setFehler(passwortFehlerText(f.code));
+        setFehler(`[${f.schritt ?? '?'} · ${f.code}] ${f.message}`.slice(0, 300));
       } else {
         console.warn(String(f));
-        setFehler(passwortFehlerText('unbekannt'));
+        setFehler(`[roh] ${String(f)}`.slice(0, 300));
       }
       setLaeuft(false);
     }

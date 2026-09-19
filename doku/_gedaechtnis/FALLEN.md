@@ -1,4 +1,4 @@
-# SimplySocial — 205 Fallen
+# SimplySocial — 213 Fallen
 
 > Herausgelöst aus `CLAUDE.md` am 2026-09-13. **Kein Zeichen geändert** — nur
 > verschoben, damit die auto-geladene `CLAUDE.md` nicht mehr ~101.500 Tokens je
@@ -1620,3 +1620,64 @@
   *„`find … | grep -v …` unter `set -euo pipefail` tötet das Skript STUMM"*, nur mit
   einem Erfolg statt einer leeren Menge am linken Ende. `grep -m1` davor statt `exit`
   darin, und ein `|| true` an die Pipeline.
+- **`CODE_SIGNING_ALLOWED=NO` nimmt einem Simulator-Build die ENTITLEMENTS — und
+  damit den Schlüsselbund.** Die Schwesterfalle *„Ein Simulator-Build braucht keine
+  Apple-Signatur"* stimmt und ist trotzdem die Ursache dieses Abends gewesen: Sie
+  sagt, dass man **kein Apple-Konto** braucht, nicht, dass man die Signierung
+  **abschalten** darf. Ein Simulator-Build wird ad-hoc signiert, und **erst dabei
+  bekommt die App ihre Entitlements**. Ohne sie fehlt `keychain-access-groups`, und
+  `expo-secure-store` scheitert mit `KeyChainException: Eine erforderliche
+  Berechtigung fehlt` — **nachdem** die Anmeldung beim Server mit **200** durch war.
+  Das Log zeigt dabei `SecItemAdd_ios`, also den AUFRUF und nicht den Erfolg, und die
+  App bleibt mit „Prüf dein Netz" auf dem Anmeldebildschirm stehen. Zwei Stunden
+  Suche an der falschen Stelle. **Eine Falle, die eine Erlaubnis ausspricht, sagt
+  nichts darüber, wie weit sie reicht.**
+- **`keychain-access-groups` lässt sich im Simulator nicht nachrüsten.** Der
+  naheliegende Ausweg — die fertige `.app` mit eigenen Entitlements nachsignieren —
+  scheitert in BEIDE Richtungen, und zwar nicht beim Signieren, sondern beim
+  STARTEN (`FBSOpenApplicationServiceErrorDomain`, *„denied by service delegate"*):
+  ad hoc signiert nimmt der Simulator das restricted entitlement nicht an, und mit
+  einer echten „Apple Development"-Identität verlangt er ein Provisioning-Profil,
+  das es im Simulator nicht gibt. `codesign` meldet beide Male Erfolg und die Rechte
+  stehen nachweislich in der App. **Der einzige Weg ist, gar nicht erst
+  einzugreifen** — normal bauen lassen (`npx expo run:ios`), statt `xcodebuild`
+  Flags mitzugeben, die man für harmlos hält.
+- **`simctl launch` scheitert laut — aber nur, wenn jemand zuhört.** Mit
+  `>/dev/null` verschwindet die Meldung, und das Skript läuft fröhlich weiter und
+  meldet „App läuft". Danach knipst es einen Bildschirm, den es für das Ergebnis
+  hält. **Ein Schritt, dessen Fehlermeldung ins Nichts geht, ist keine Prüfung,
+  sondern eine Annahme** — dieselbe Familie wie *„Ein gescheiterter Build hat nicht
+  immer eine `error:`-Zeile"*, nur umgekehrt: Hier gab es die Zeile, und niemand las
+  sie.
+- **Ein Aktualitäts-Wächter, der nur die QUELLE kennt, merkt eine geänderte
+  BUILD-KONFIGURATION nicht.** `schirm.sh` verglich `src`, `app.json` und
+  `package.json` gegen das installierte Bündel. Dann wurde im Skript selbst
+  `CODE_SIGNING_ALLOWED=NO` entfernt — eine Änderung, die das Ergebnis völlig
+  verändert —, und der Wächter meldete „installiert und aktuell". **Was gebaut wird,
+  ist nicht dasselbe wie WIE gebaut wird**, und beides entscheidet, ob das
+  installierte Bündel noch das richtige ist. Das Bauskript gehört in seine eigene
+  Vergleichsliste.
+- **Ein Fehler aus Schritt ZWEI, der durch die Fehlerübersetzung von Schritt EINS
+  läuft, wird zur Lüge.** `anmeldenAlsDemo()` ruft `demoAnmelden()` und danach
+  `sitzungUebernehmen()`; der Bildschirm fängt beides in einem `catch` und schickt
+  es durch `passwortFehlerText()`. Diese Funktion kennt nur die Codes des
+  Anmeldens — alles andere fällt in ihren `default` und liest sich als *„Das hat
+  gerade nicht geklappt. Prüf dein Netz."* **Bei einem Netz, das 200 zurückgibt.**
+  Verwandt mit *„Eine Meldung, die den eigenen Ablauf nicht kennt, ist keine
+  Auskunft"*, aber die Ursache ist eine andere: nicht ein veralteter Text, sondern
+  ein `catch`, das zwei Schritte umspannt und den Übersetzer des ersten nimmt.
+- **Ein `osascript`-Klick, der ein UI-Element zurückgibt, ist noch kein Klick.**
+  `tell process "Simulator" to click at {100, 100}` antwortete mit `menu bar 1` und
+  sah damit aus wie ein Erfolg — die Bedienungshilfen-Berechtigung fehlte trotzdem.
+  Erst `tell application "System Events" to click at {…}` brachte den echten
+  Fehlercode **-25211**. **Die Rückgabe einer AppleScript-Zeile beschreibt, was sie
+  GEFUNDEN hat, nicht was sie GETAN hat.**
+- **`screencapture -R` mit der Fenstergeometrie eines Programms knipst das OBERSTE
+  Fenster an dieser Stelle, nicht das gemeinte.** Die Geometrie kam von
+  `window 1 of process "Simulator"` und war richtig; im Bild stand trotzdem das
+  Editorfenster, weil der Simulator dahinterlag. Zwei Eichversuche scheiterten
+  daran mit völlig unplausiblen Skalen (0,008 statt ~0,6) — und **die Unplausibilität
+  war das Einzige, was den Fehler verriet.** Erst `activate`, dann knipsen; und eine
+  Eichung, deren zwei Achsen nicht fast gleich herauskommen, ist keine.
+- **`timeout` gibt es auf macOS nicht** (das ist GNU coreutils). Ein Aufruf damit
+  stirbt mit `command not found`, bevor irgendetwas läuft.
