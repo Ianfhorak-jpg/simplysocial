@@ -142,7 +142,7 @@ bekannten Zahlen treffen muss, bevor eine neue eine Aussage ist.
 | **Teil 0 — sichern** | ✅ Commit `723120b` auf `main`, Zweig `dunkel` steht |
 | **Teil 3 — Selbstprüfung** | ✅ `npm run pruef-glas` **33 Häkchen** · `npm run schirm` läuft und knipst am Simulator · `scripts/messstellen.json` steht. **Offen: `scripts/tippen.sh`** — braucht Ians Bedienungshilfen-Berechtigung |
 | **Teil 1 — dunkel** | ✅ **fertig und gemessen** (Belege `at00` hell / `at01` dunkel — ⚠️ die Reihe `af` war entgegen dem Plan NICHT frei). `npm run pruef-farben` 58 Häkchen · Hauptzahl **219,5 → 55,7** (Ziel < 60) · Nebenzahl **13,8 → 31,6**. ⚠️ Nur am ANMELDE-Bildschirm belegt — der Rest liegt hinter dem Torwächter |
-| **Teil 2 — NativeTabs** | ⬜ noch nicht angefangen |
+| **Teil 2 — NativeTabs** | 🔨 **gebaut, Web belegt, iOS unbeurteilt.** Zwei neue Dateien mit `.native`-Endung; `_layout.tsx` und `lib/tabs.ts` unangetastet (= Web-Fassungen). **Rückbau = diese zwei Dateien löschen.** Web-Beleg `at03`: vier Tabs mit eigenen Symbolen und der roten Zahl, also die ALTE Fassung. **Ob Apples Leiste am iPhone wirklich Glas trägt und beim Scrollen schrumpft, sagt allein Ian** |
 
 ✅ **Die Gegenprobe ist gelaufen und hat geliefert, wofür sie da ist.** Sie konnte die
 33,2 und die 3,3 **nicht** reproduzieren — aber nicht, weil das Werkzeug falsch rechnet,
