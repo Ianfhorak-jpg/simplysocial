@@ -1,5 +1,36 @@
 # Der Durchgang am Handy
 
+## 🔵 DURCHGANG 9 — oben wie unten, pur, Türkis *(dran, 19.09.2026)*
+
+> **Vier Sachen sind neu, und drei davon hast du selbst ausgelöst.**
+
+**Zuerst das Wichtigste, weil es der größte Eingriff ist:**
+
+| | Wo | Was anders ist | Passt? |
+|---|---|---|---|
+| 1 | **Ganz oben im Feed** | Statt **drei Reihen** steht dort jetzt **eine Glaskapsel** — wie die Leiste unten. Darin: der Umschalter (Stapel · Karte), das Suchfeld und der Regler. Der Posten-Knopf steht rund daneben | ⬜ |
+| 2 | **Dieselbe Kapsel** | **Steht sie frei?** Sie soll ringsum Luft haben und nicht am Rand kleben — genau wie die Leiste unten. Klebt sie, sag es | ⬜ |
+| 3 | **Auf den Regler tippen** | Die **sechs Kategorien stehen jetzt da drin**, ganz oben. Vorher standen sie immer sichtbar über dem Stapel. 🔴 **Das ist die Frage, auf die es ankommt:** Vermisst du sie dort oben? Sie sind ein Tipp entfernt statt sichtbar — dafür ist der Bildschirm ruhig. Wenn es sich falsch anfühlt, hole ich sie zurück | ⬜ |
+| 4 | **Die Schrift überall** | Sie ist **rein weiß** statt cremig. Flimmert sie auf dem dunklen Grund? Das war mein Einwand, du hast trotzdem „pur" gesagt — der Rückweg ist eine Zeile | ⬜ |
+| 5 | **Die drei großen Knöpfe beim Anmelden** | ⚠️ **Die sind noch cremig** (`#E8E7E3`), nicht weiß — deine Entscheidung 92 betraf nur die Schrift. Wenn du „zu cremig" auch auf die Knöpfe gemeint hast, sag es, das ist eine Zeile | ⬜ |
+| 6 | **Der Anfragen-Tab unten (die Hand)** | Der rote Punkt ist **weg**, wenn niemand wartet. 🔴 **Und das war ein echter Fehler**, kein Geschmack: Er stand dauerhaft da, obwohl nie eine Anfrage offen war. **Du hast ihn gefunden, ohne den Code zu sehen.** Wartet jemand, steht dort jetzt ein **türkiser** Punkt | ⬜ |
+| 7 | **Kartenansicht bei leerem Feed** | Wien ist jetzt **zu sehen, auch wenn nichts los ist** — vorher war der Bildschirm leer. Unten drüber steht eine kleine Kapsel „In Wien ist gerade nichts los" mit dem Posten-Knopf | ⬜ |
+
+### Was ich dir NICHT beantworten kann
+
+**Punkt 3 ist die eigentliche Frage dieses Durchgangs.** Die Kategorien wegzuräumen war
+dein Wunsch („schlichter"), aber es ist eine echte Verhaltensänderung: Wer den Feed
+öffnet, sieht nicht mehr auf einen Blick, welche Kategorien es gibt. Ob das gut ist,
+merkt man erst beim Benutzen — nicht auf einem Bild.
+
+**Und Punkt 6 hat einen Preis:** Am iPhone steht jetzt ein Punkt statt einer Zahl. Du
+siehst, *dass* jemand wartet, nicht *wie viele*. Das war deine Wahl aus drei Wegen, und
+der Grund ist: Apple lässt uns die Schriftfarbe im Punkt nicht setzen, die Zahl wäre
+weiß auf Türkis und damit unlesbar gewesen. Im Browser steht die Zahl weiter da.
+
+---
+
+
 ## 🔵 DURCHGANG 7 — sieht es jetzt nach iOS aus? *(dran, 14.09.2026 abends)*
 
 > **Was neu ist — drei Sachen auf einmal:**

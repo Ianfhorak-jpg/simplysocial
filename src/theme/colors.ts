@@ -42,8 +42,8 @@ import type { ActivityCategory } from '@/types/models';
  *
  * Alle Werte gegen `bg` gemessen (WCAG), die alten Zahlen in Klammern:
  *
- *   ink      16,03  (war 16,73)  — praktisch unverändert, nur gespiegelt
- *   inkSoft   5,78  (war  4,59)  — besser als vorher
+ *   ink      18,11  (war 16,03 cremig, davor 16,73 hell) — seit 19.09. pur
+ *   inkSoft   6,22  (war  5,78 blaustichig, davor 4,59)     — zieht mit `ink` mit
  *   surface   1,20  (war  1,05)  — die Karte hebt sich MEHR ab als früher
  *   line      1,32  (war  1,19)
  *
@@ -57,8 +57,21 @@ import type { ActivityCategory } from '@/types/models';
 export const colors = {
   bg: '#14161A', // fast schwarz (Ians Entscheidung 84), nicht #000: Reinschwarz nimmt dem Glas die Tiefe
   surface: '#24262A', // Karten — nur 7 % heller als bg und trotzdem deutlicher als früher (siehe oben)
-  ink: '#F2F1ED', // Text: das Papierweiß von früher, jetzt als Schrift. Nicht #FFF — das sticht auf Dunkel
-  inkSoft: '#8B929E', // Sekundärtext: derselbe Blaugrau-Ton wie früher (#6B7280), aufgehellt
+  // ⚠️ **Seit dem 2026-09-19 REINWEISS (Ians Entscheidung 92).** Der Kommentar
+  // davor sagte *„Nicht #FFF — das sticht auf Dunkel"*, und das ist kein
+  // Irrtum, sondern der bekannte Einwand: Reinweiß auf sehr dunklem Grund kann
+  // flimmern. **Ian hat „pur" gewählt, NACHDEM dieser Einwand in der Frage
+  // stand** (*„ich finde die Farben auch noch zu cremig … pur einfach"*).
+  // Wenn es am Gerät stört, ist der Rückweg diese eine Zeile — aber nicht
+  // vorher zurückrudern. 16,03 → 18,11 gegen `bg`.
+  ink: '#FFFFFF', // Text, pur
+  // ⚠️ **`inkSoft` MUSS mitziehen, und das ist Ians Bedingung, nicht Kosmetik:**
+  // *„alles sollte immer noch zusammenpassen"*. Der alte Ton war blaustichig
+  // (#8B929E); neben einem cremigen `ink` fällt das nicht auf, neben Reinweiß
+  // schon — dann liest der Nebentext als „andere Farbe" statt als „leiser".
+  // Der neue Ton ist neutralgrau. Abstand zu `ink` bleibt 2,91 (war 2,77),
+  // Haupt- und Nebentext also weiter klar unterscheidbar. 5,78 → 6,22 gegen `bg`.
+  inkSoft: '#97979B', // Sekundärtext, neutralgrau statt blaustichig
   line: '#2C2D31', // Trennlinien
 } as const;
 
@@ -195,9 +208,42 @@ export const danger: CategoryPalette = {
  * zwei Stellen ist zwei Wahrheiten, und die laufen beim nächsten Farbwunsch auseinander.
  */
 export const status = {
-  danger: danger.base, // Zahl am Anfragen-Tab, Ablehnen, Blockieren, Melden
+  // ⚠️ **Hier stand bis zum 2026-09-19 „Zahl am Anfragen-Tab" mit dabei, und das
+  // war falsch.** Ian hat es am Gerät gesehen, ohne den Code zu kennen: *„warum
+  // ist die Hand rot?"* — **eine Anfrage ist das Gegenteil von Gefahr**, jemand
+  // will mitmachen. Rot ist in dieser App die Farbe des Ablehnens; an der
+  // sichtbarsten Stelle der App stand damit die Einladung in der Farbe der
+  // Absage. In `Anmelden.tsx:497` steht dieselbe Einsicht schon als Kommentar
+  // (*„`status.danger` wäre der naheliegende Griff und ist falsch"*) — an der
+  // Tab-Zahl war sie nur nie nachgezogen worden.
+  danger: danger.base, // Ablehnen, Blockieren, Melden — nicht mehr die Tab-Zahl
   dangerSoft: danger.soft,
   dangerAufGrund: danger.aufGrund, // Warntext DIREKT auf der Grundfläche, ohne Knopf darunter
+
+  /**
+   * Türkis — „jemand wartet auf dich" (Ians Entscheidung 91, *„so ein flashie
+   * Türkis, so pur türkis"*). Heute allein die Zahl am Anfragen-Tab.
+   *
+   * **Warum es NICHT aus einer bestehenden Palette kommt:** Jede der sechs
+   * Kategoriefarben würde eine Kategorie behaupten, die die Zahl nicht meint —
+   * derselbe Grund, aus dem es `accent` gibt. Türkis ist unter den sechs frei.
+   *
+   * Gemessen: 11,31 gegen `bg`. Zum nächsten Ton (Sport, Gelb) sind es 1,29 —
+   * das ist ein Abstand in der HELLIGKEIT, nicht im Farbton; Türkis und Gelb
+   * verwechselt niemand.
+   */
+  hinweis: '#00E5D0',
+  /**
+   * Die Schrift AUF `hinweis`. ⚠️ **Dieser Wert ist kein Beiwerk, er ist der
+   * halbe Punkt der Änderung:** Weiß auf Türkis ergibt **1,60** — unlesbar. Wer
+   * nur die Hintergrundfarbe tauscht und die helle Zahl stehen lässt, macht sie
+   * unsichtbar und merkt es nicht, **denn `tsc` sieht keine Farben.** Deshalb
+   * stehen die zwei Werte als Paar da, genau wie `onBase` bei jeder Palette.
+   *
+   * Derselbe Fall wie Sport (Gelb): hell genug, dass der Text darunter dunkel
+   * sein muss. Gemessen 11,00 gegen `hinweis`.
+   */
+  hinweisAufFlaeche: '#17191C',
 } as const;
 
 /** Die sechs Kategorien in der Reihenfolge, in der sie überall auftauchen sollen. */

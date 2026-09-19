@@ -180,6 +180,81 @@ for n, soll in sorted(IDENTITAET.items()):
           f"steht auf {PALETTEN.get(n, {}).get('base')} — das ist eine Identitätsänderung")
 
 print('')
+print('── 4c. Der Hinweis-Ton — und warum er auf iOS keinen Text tragen darf ──')
+# Ians Entscheidung 91 vom 2026-09-19: Die Zahl am Anfragen-Tab ist TÜRKIS, nicht
+# rot. Sein Befund, ohne den Code zu kennen: *„warum ist die Hand rot?"* — eine
+# Anfrage ist das Gegenteil von Gefahr, jemand will mitmachen.
+#
+# ⚠️ **Der zweite Wert ist hier kein Beiwerk.** Weiss auf Türkis ist 1,60. Wer
+# nur den Hintergrund tauscht und die helle Zahl stehen lässt, macht sie
+# unlesbar und merkt es nicht — *`tsc` sieht keine Farben*, und das ist der Satz,
+# der über diesem ganzen Prüfstand steht.
+STATUS = {}
+teil = text.split('export const status')
+if len(teil) > 1:
+    STATUS = dict(re.findall(r"(\w+): '(#[0-9A-Fa-f]{6})'", teil[1].split('} as const')[0]))
+# Die Gegenprobe des Lesers, wie in Abschnitt 1: *Eine Textsuche mit null
+# Treffern beweist nichts.* Findet er die zwei Werte nicht, prüft er unten Luft.
+pruef(f'`status` gelesen ({", ".join(sorted(STATUS)) or "NICHTS"})',
+      {'hinweis', 'hinweisAufFlaeche'} <= set(STATUS),
+      'der Aufbau von `status` in colors.ts hat sich geändert')
+
+if {'hinweis', 'hinweisAufFlaeche'} <= set(STATUS):
+    k = kontrast(STATUS['hinweis'], GRUND['bg'])
+    pruef(f'{"hinweis":9} hebt sich vom Grund ab: {k:6.2f} ≥ 4,5', k >= 4.5,
+          'der Punkt am Anfragen-Tab verschwindet im Grund')
+    k = kontrast(STATUS['hinweisAufFlaeche'], STATUS['hinweis'])
+    pruef(f'{"":9} Zahl auf dem Hinweis (Web): {k:6.2f} ≥ 4,5', k >= 4.5,
+          'die Zahl am Anfragen-Tab ist auf ihrer eigenen Fläche unlesbar')
+    # Und der Abstand zur nächsten Kategorie — ein Hinweis, den man für eine
+    # Kategorie hält, ist ein falscher Hinweis. 1,29 ist der Abstand zu Sport
+    # und AUSDRÜCKLICH in Ordnung: Das ist ein Abstand in der HELLIGKEIT, nicht
+    # im Farbton. Geprüft wird deshalb nicht der Kontrast, sondern dass der Ton
+    # nicht mit einer Kategoriefarbe ZUSAMMENFÄLLT.
+    gleich = [n for n, pp in PALETTEN.items() if pp['base'].upper() == STATUS['hinweis'].upper()]
+    pruef(f'{"":9} `hinweis` ist keine Kategoriefarbe', not gleich,
+          f'er ist derselbe Ton wie {gleich} — dann behauptet er eine Kategorie')
+
+    # ── Der Befund, der KEINE Sperre ist ────────────────────────────────────
+    # Auf iOS lässt sich die Schriftfarbe des Badges nicht setzen: `types.d.ts`
+    # markiert `badgeTextColor` als android/web, `appearance.ios.js` reicht nur
+    # `badgeBackgroundColor` durch, und `RNSTabBarAppearanceCoordinator.mm:258`
+    # schreibt entsprechend nur den Hintergrund. **UIKit zeichnet die Zahl
+    # weiss.** Deshalb steht dort seit Ians Entscheidung 94 ein PUNKT.
+    weiss = kontrast('#FFFFFF', STATUS['hinweis'])
+    print(f'  ⚠️  Weiss auf `hinweis`: {weiss:5.2f} — **deshalb trägt der iOS-Badge keinen Text.**')
+    print(f'      Das ist kein Fehler, sondern Ians Entscheidung 94. Der Wächter darunter hält sie fest.')
+
+# ── Dass die Entscheidung im Code steht, und nicht nur im Kommentar ─────────
+# ⚠️ **Eine ENTSCHEIDUNG kann von keiner einzigen Prüfung bewacht sein** — und
+# das sieht man nur, indem man die verworfene Möglichkeit hinschreibt (FALLEN.md).
+# Die verworfene Möglichkeit ist hier `String(wartend)` im Badge.
+NATIV = WURZEL / 'src' / 'app' / '(tabs)' / '_layout.native.tsx'
+if not NATIV.exists():
+    pruef('`_layout.native.tsx` liegt da', False, 'ohne sie gilt auf iOS die Web-Fassung')
+else:
+    n_text = NATIV.read_text()
+    # Nur der JSX-Teil zählt. Im Kommentar darüber STEHT `String(children)` als
+    # Zitat aus dem fremden Code — ein Wächter, der die eigene BEGRÜNDUNG für
+    # den Verstoß hält, wird abgeschaltet statt gelesen (FALLEN.md).
+    code = '\n'.join(z for z in n_text.splitlines()
+                     if not z.strip().startswith(('*', '//', '/*', '·')))
+    pruef('iOS-Badge trägt KEINE Zahl (Entscheidung 94)',
+          'String(wartend)' not in code,
+          'Weiss auf Türkis ist 1,60 — die Zahl wäre am Gerät nicht zu lesen')
+    pruef('iOS-Badge ist bei 0 Anfragen `hidden`',
+          'hidden={wartend === 0}' in code,
+          'ohne das setzt `appendBadgeOptions` selbst ein Leerzeichen — '
+          'ein Punkt, der NIE weggeht')
+    pruef('iOS-Badge nimmt den Hinweis-Ton',
+          'badgeBackgroundColor={status.hinweis}' in code)
+    # Die Gegenprobe: Findet der Leser überhaupt das Badge? Sonst meldet er
+    # oben dreimal grün, weil die Datei umgebaut wurde.
+    pruef('… und der Leser hat das Badge wirklich gefunden',
+          'NativeTabs.Trigger.Badge' in code,
+          'die Datei ist umgebaut — die drei Prüfungen darüber messen nichts')
+
+print('')
 print('── 5. Kein Farbliteral ausserhalb von colors.ts ────────────────────────')
 # `tsc` sieht keine Farben. Wer `#FFFFFF` in einen Screen schreibt, hat eine
 # Farbe gebaut, die der Dunkelmodus nicht erreicht — und sie fällt erst am

@@ -92,6 +92,28 @@ export interface SsInputProps {
   autoFocus?: boolean;
   style?: StyleProp<ViewStyle>;
   inputStyle?: StyleProp<TextStyle>;
+  /**
+   * Wo steht dieses Feld? — **harte Regel 114 angewandt auf das Eingabefeld.**
+   *
+   *   `'block'`  im Fluss einer Seite. Es bringt seine Fläche und seine Kante
+   *              selbst mit, weil dort keine ist. Das ist der Normalfall und
+   *              der Stand aller 14 Felder vor dem 2026-09-19.
+   *   `'kapsel'` in einer Glaskapsel (Feed-Kopfzeile seit Entscheidung 90). Es
+   *              gibt Fläche und Ruhe-Kante AB — das Glas bringt beides schon
+   *              mit (harte Regel 61), und zwei Untergründe übereinander wären
+   *              einer zu viel.
+   *
+   * ⚠️ **Der FOKUS-Rahmen bleibt in beiden Umgebungen.** Er ist auf iOS die
+   * einzige Rückmeldung, in welchem Feld man gerade schreibt — ihn mit der
+   * Ruhekante zusammen wegzunehmen wäre der bequeme Fehler. Weil nur die FARBE
+   * wechselt und nie die Breite, springt dabei weiterhin nichts (siehe den
+   * Kopfkommentar zum Fehler-Rahmen).
+   *
+   * **Warum ein Name und kein `imGlas`-Boolean:** Der Aufrufer weiß, wo er ist,
+   * aber nicht, welchen Untergrund das nach sich zieht. Derselbe Grund wie bei
+   * `PostCard.umgebung`.
+   */
+  umgebung?: 'block' | 'kapsel';
 }
 
 /**
@@ -130,10 +152,14 @@ export function SsInput({
   autoFocus,
   style,
   inputStyle,
+  umgebung = 'block',
 }: SsInputProps) {
   const [fokus, setFokus] = useState(false);
 
-  const rahmen = error ? status.danger : fokus ? colors.ink : colors.line;
+  // Die RUHEkante ist das Einzige, was die Umgebung wegnimmt. Fehler und Fokus
+  // gelten unverändert — siehe die Warnung bei `umgebung`.
+  const ruhe = umgebung === 'kapsel' ? 'transparent' : colors.line;
+  const rahmen = error ? status.danger : fokus ? colors.ink : ruhe;
 
   return (
     <View style={[styles.block, style]}>
@@ -148,7 +174,13 @@ export function SsInput({
         </View>
       ) : null}
 
-      <View style={[styles.feld, { borderColor: rahmen }, multiline && styles.feldHoch]}>
+      <View
+        style={[
+          styles.feld,
+          umgebung === 'kapsel' && styles.feldInKapsel,
+          { borderColor: rahmen },
+          multiline && styles.feldHoch,
+        ]}>
         {icon ? <SsIcon name={icon} size={18} color={colors.inkSoft} /> : null}
         <TextInput
           value={value}
@@ -214,6 +246,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   feldHoch: { alignItems: 'flex-start' },
+  // In der Glaskapsel: keine eigene Fläche. Die Kante bleibt als Zeile stehen
+  // (`borderWidth: 1` oben), sie ist nur durchsichtig — dadurch springt beim
+  // Fokus nichts, denn es wechselt allein die Farbe.
+  feldInKapsel: { backgroundColor: 'transparent' },
 
   eingabe: {
     ...type.body,

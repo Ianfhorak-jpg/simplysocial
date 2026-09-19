@@ -213,5 +213,16 @@ const styles = StyleSheet.create({
   eintrag: { paddingVertical: 0 },
   // Der Ausgleich für den Platz, den die weggefallene Beschriftung hinterlässt.
   symbol: { marginTop: TAB_SYMBOL_VERSATZ },
-  zahl: { backgroundColor: status.danger, color: colors.surface, fontSize: 11, fontWeight: '700' },
+  // Die Zahl am Anfragen-Tab. ⚠️ **Türkis, nicht Rot** (Ians Entscheidung 91):
+  // Eine Anfrage ist das Gegenteil von Gefahr — jemand will mitmachen. Und der
+  // dunkle Text darauf ist Pflicht, nicht Geschmack: Weiß auf Türkis wäre 1,60.
+  // ⚠️ **Auf iOS steht das ANDERS da, und zwar nicht aus Nachlässigkeit:** Dort
+  // zeichnet UIKit den Badge-Text und lässt ihn sich nicht abnehmen — siehe die
+  // Begründung in `_layout.native.tsx`.
+  zahl: {
+    backgroundColor: status.hinweis,
+    color: status.hinweisAufFlaeche,
+    fontSize: 11,
+    fontWeight: '700',
+  },
 });

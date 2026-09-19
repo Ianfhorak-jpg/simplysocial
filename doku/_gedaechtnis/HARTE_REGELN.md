@@ -1571,6 +1571,15 @@
    ⚠️ **Der Kategoriename kommt aus `CATEGORIES[…].label`, nie aus `post.category`.** Der
    Schlüssel heißt `food`, das Wort heißt „Essen" — und `tsc` sagt dazu nichts, weil
    beides `string` ist. Beim Bau dieser Regel stand kurzzeitig „FOOD" auf der Karte.
+   **Seit dem 2026-09-19 gilt dieselbe Regel für `SsInput` und den Filter-Knopf**
+   (Ians Entscheidung 90, die Kopfzeile als Glaskapsel): `umgebung: 'block' | 'kapsel'`.
+   `'block'` ist der Normalfall und bringt Fläche und Kante mit; `'kapsel'` gibt beides
+   ab, weil `SsGlas` es schon hat (harte Regel 61). ⚠️ **Der FOKUS-Rahmen bleibt in
+   beiden Umgebungen** — er ist auf iOS die einzige Rückmeldung, in welchem Feld man
+   schreibt, und ihn mit der Ruhekante zusammen wegzunehmen wäre der bequeme Fehler.
+   Weil dabei nur die FARBE wechselt und nie die Breite, springt weiterhin nichts.
+   Dasselbe am Filter-Knopf: Die gefüllte Fläche des AKTIVEN Zustands bleibt, sie ist
+   die einzige Stelle, an der ein vergessener Filter noch auffällt (harte Regel 26).
 115. **Was die App SPÜREN lässt, steht in `lib/haptik.ts` / `.native.ts` — und die
    Funktionen heißen nach dem ANLASS, nie nach der Stärke.** Ein Screen ruft
    `haptik.schwelle()`, `haptik.match()`, `haptik.zurueck()` — nie
@@ -1630,3 +1639,34 @@
    nicht — es gibt kein „war da"-Häkchen, und das wäre eine eigene Entscheidung.
    Bewacht von `npm run pruef-treffen` (**22 Häkchen**, mit Gegenprobe).
 
+
+117. **Eine ZAHL an einem Tab gibt es nur, wo uns ihre Schriftfarbe gehört — sonst
+   ist es ein Punkt.** *(Ians Entscheidungen 91 und 94, 2026-09-19.)* Entscheidung 91
+   färbt die Anfragen-Zahl **türkis** (`status.hinweis`, `#00E5D0`) statt rot: *„warum
+   ist die Hand rot?"* — **eine Anfrage ist das Gegenteil von Gefahr**, jemand will
+   mitmachen. Rot gehört in dieser App dem Absagen, Blockieren und Melden; an der
+   sichtbarsten Stelle stand damit die Einladung in der Farbe der Absage. In
+   `Anmelden.tsx:497` stand dieselbe Einsicht seit Phase 20 als Kommentar, nur nie
+   nachgezogen.
+   ⚠️ **Türkis ist hell und braucht deshalb DUNKLEN Text** — weiss darauf ist **1,60**.
+   Deshalb steht `status.hinweis` nie allein, sondern immer als **Paar** mit
+   `status.hinweisAufFlaeche` (`#17191C`, gemessen 11,00). Derselbe Bau wie `onBase`
+   bei jeder Palette, und aus demselben Grund: **`tsc` sieht keine Farben.** Wer nur
+   die Hintergrundfarbe tauscht, macht die Schrift darauf unlesbar und merkt es nicht.
+   🔴 **Und auf iOS gehört uns dieser zweite Wert nicht.** `badgeTextColor` ist im Typ
+   `@platform android`/`@platform web`, `appearance.ios.js` reicht nur
+   `badgeBackgroundColor` durch, `RNSTabBarAppearanceCoordinator.mm:258` setzt nur den
+   Hintergrund — **UIKit zeichnet die Zahl weiss, und das lässt sich nicht abstellen.**
+   Vorgelegt wurden drei Wege: pur Türkis mit unlesbarer Zahl · ein gedecktes Petrol
+   (`#00756D`, weiss darauf 5,58), auf dem die Zahl bliebe · **pur Türkis ohne Zahl**.
+   Ian hat den dritten gewählt (*„es muss ja einfach ein Problem lösen"*) — auf iOS
+   steht ein **Punkt**, auf Web die **Zahl**, weil dort der zweite Wert gilt.
+   **Der Preis ist benannt:** Am Gerät sieht man, DASS jemand wartet, nicht wie viele.
+   Ausgeglichen wird er im Namen des Tabs (`anfragenName()`) — VoiceOver liest den
+   Badge-Wert mit vor, und unser Badge-Wert ist ab jetzt ein Leerzeichen; ohne diese
+   Zeile verlöre die gesprochene Fassung die Zahl ganz.
+   ⚠️ **Das Badge braucht BEIDE Props** — `hidden={wartend === 0}` UND
+   `children: undefined`. Keiner der zwei Zweige in `appendBadgeOptions` bedeutet
+   „kein Badge"; der zweite malt bei leerem Kind einen Punkt. Genau daran hing der
+   rote Dauerpunkt, den Ian gesehen hat (FALLEN.md). Bewacht von `npm run pruef-farben`
+   (**66 Häkchen**, drei davon mit Gegenprobe gegen genau diese drei Fehler).

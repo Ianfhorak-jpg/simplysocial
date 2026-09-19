@@ -342,45 +342,24 @@ export default function FeedScreen() {
    * eines Tages einen Filter weniger hat als die Liste — und auffallen würde es nur
    * dem, der umschaltet (dieselbe Überlegung wie bei `useStapel`, harte Regel 16).
    */
-  const sucheZeile = (
-    <View style={styles.sucheZeile}>
-      <SsInput
-        value={filter.suche}
-        onChangeText={(t) => setzen('suche', t)}
-        onClear={() => setzen('suche', '')}
-        placeholder="Suchen — Tennis, lernen, Kaffee …"
-        icon="lupe"
-        style={styles.sucheFeld}
-      />
-      <FilterKnopf
-        offen={filterOffen}
-        anzahl={anzahlFilter}
-        umschalten={() => setFilterOffen((o) => !o)}
-      />
-    </View>
-  );
 
-  // Die Kategorien bleiben IMMER sichtbar und wandern nicht mit in den
-  // Filterbereich. Sie sind der meistbenutzte Filter, und sie sind das
-  // Erkennungszeichen der App — sechs Farben, die sonst nirgends vorkommen.
-  // Eingeklappt wäre der Feed eine Liste ohne Gesicht.
-  const chipZeile = (
-    <SsScrollReihe style={styles.chipZeile} contentContainerStyle={styles.chipInhalt}>
-      <SsChip
-        label="Alle"
-        selected={filter.kategorie === 'alle'}
-        onPress={() => setzen('kategorie', 'alle')}
-      />
-      {CATEGORY_ORDER.map((k) => (
-        <SsChip
-          key={k}
-          category={k}
-          selected={filter.kategorie === k}
-          onPress={() => setzen('kategorie', filter.kategorie === k ? 'alle' : k)}
-        />
-      ))}
-    </SsScrollReihe>
-  );
+  // ⚠️ **Die Kategorien stehen seit dem 2026-09-19 IM Regler** — Ians
+  // Entscheidung 90. Hier stand vorher das Gegenteil, und die Begründung war
+  // gut: *„Sie sind der meistbenutzte Filter und das Erkennungszeichen der App
+  // — eingeklappt wäre der Feed eine Liste ohne Gesicht."*
+  //
+  // **Was die Entscheidung dagegen setzt, ist eine andere Frage als die alte.**
+  // Die alte lautete „welcher Filter ist wichtig genug für eine eigene Reihe?".
+  // Ians lautet: *„ich würde gerne oben und unten ein Dings haben, dass es
+  // einfach schlichter aussieht … es muss ja ein Problem lösen."* Drei Reihen
+  // über einem Wischstapel sind das Problem; welche der drei am nützlichsten
+  // ist, beantwortet es nicht.
+  //
+  // 🔴 **Der Preis ist benannt und Ian vorzulegen:** Wer den Feed öffnet, sieht
+  // nicht mehr auf einen Blick, welche Kategorien es gibt. Die sechs Farben
+  // sind einen Tipp entfernt statt sichtbar. Das ist eine
+  // Verhaltensänderung, kein Umräumen — sie gehört ihm am BILD gezeigt, bevor
+  // sie bleibt.
 
   /**
    * Der Umschalter und der runde „Posten"-Knopf — Ians Entscheidung 41.
@@ -431,6 +410,40 @@ export default function FeedScreen() {
       )}
       <PostenKnopf />
     </>
+  );
+
+  const kopfKapsel = (
+    <View style={styles.kopfZeile}>
+      {/* `SsGlas schwebt` — **derselbe Baustein wie unten, nicht ein zweiter,
+          der auch so aussieht.** Auf iOS 26 ist das Apples echtes Glas, im
+          Browser die helle Ersatzfläche. Was hier steht, ist nur Geometrie
+          (harte Regel 61: Kante und Schatten gehören dem Glas). */}
+      <SsGlas schwebt style={styles.kopfGlas}>
+        {umschalter(styles.umschalterInKapsel)}
+        <SsInput
+          value={filter.suche}
+          onChangeText={(t) => setzen('suche', t)}
+          onClear={() => setzen('suche', '')}
+          placeholder="Suchen …"
+          icon="lupe"
+          style={styles.sucheFeld}
+          // Harte Regel 114: ein NAME für den Ort. Das Feld gibt seine Fläche
+          // und seine Ruhekante ab — das Glas darum bringt beides mit.
+          umgebung="kapsel"
+        />
+        <FilterKnopf
+          offen={filterOffen}
+          anzahl={anzahlFilter}
+          umschalten={() => setFilterOffen((o) => !o)}
+          umgebung="kapsel"
+        />
+      </SsGlas>
+      {/* Der Posten-Knopf bleibt DRAUSSEN und rund. Er ist die wichtigste
+          Handlung der App, und seine Form sagt, dass er etwas anderes tut als
+          die Bedienelemente daneben — genau das Muster aus Ians BierBuddy-Bild
+          (Entscheidung 41). In den Regler gehört er nicht. */}
+      <PostenKnopf />
+    </View>
   );
 
   /**
@@ -571,10 +584,7 @@ export default function FeedScreen() {
     // — ein Wechsel würde den ganzen Inhalt neu einhängen und mitten in der
     // Wischbewegung den Stapel zurücksetzen.
     <SsScreen tabScreen keyboard contentStyle={styles.seite}>
-      <View style={styles.ansichtZeile}>{ansichtZeile(false)}</View>
-
-      {sucheZeile}
-      {chipZeile}
+      {kopfKapsel}
 
       {/* Im Fluss, wo darunter etwas scrollt. Im Stapel liegt dasselbe Feld weiter
           unten als Blatt über den Karten — Begründung bei `filterFeld` oben. */}
@@ -718,12 +728,36 @@ function FeedListe({
  * und dann auf „Liste" umschaltet, sieht dieselbe Auswahl weiter — das ist keine
  * Zugabe, sondern das, was harte Regel 26 verlangt.
  *
- * ── Warum bei einem völlig leeren Feed GAR KEINE Karte dasteht ───────────────
- * Eine Karte ohne Posts ist nicht leer, sie ist 23 graue Flächen — sie sieht kaputt
- * aus, nicht ruhig. Und stünde `LeererFeed` darunter, hätte der Screen wieder zwei
- * Antworten auf dieselbe Frage (die Lehre vom 2026-09-03 mit `StapelDurch`).
- * Deshalb: nichts da, keine Karte, nur der Satz mit dem Ausweg — der Umschalter
- * schwebt trotzdem darüber, sonst käme man nicht mehr weg.
+ * ── Die Karte bleibt sichtbar, auch wenn nichts los ist ─────────────────────
+ * **Ians Entscheidung 93 vom 2026-09-19**, und sie geht gegen den Absatz, der hier
+ * stand. Er lautete: *„Eine Karte ohne Posts ist nicht leer, sie ist 23 graue
+ * Flächen — sie sieht kaputt aus, nicht ruhig."* Deshalb wurde bei `nichtsDa` gar
+ * keine Karte gezeichnet, sondern nur ein Satz mit Ausweg.
+ *
+ * **Ian hat genau das am Gerät gesehen und es als Fehler gelesen:** *„ich würde
+ * gerne, dass man die Karte auch sieht, wenn nichts los ist."* Sein Feed ist leer,
+ * also bekam er die Kartenansicht ohne Karte — ein Bildschirm, der nach seinem
+ * eigenen Namen nicht aussieht. **Eine Ansicht, die ihren Gegenstand versteckt,
+ * sobald er leer ist, beantwortet die Frage „wo ist gerade was los?" gar nicht** —
+ * sie beantwortet sie mit „nirgends", und das ist eine Auskunft, für die man Wien
+ * sehen darf.
+ *
+ * ⚠️ **Der alte Einwand ist damit NICHT widerlegt, sondern eingepreist.** Er hatte
+ * zwei Teile, und nur einer fällt weg:
+ *
+ *   · *„sieht kaputt aus"* — das ist Ians Urteil, und er hat es getroffen.
+ *   · *„zwei Antworten auf dieselbe Frage"* — **das gilt weiter und ist der Grund
+ *     für die Bauform.** `LeererFeed` steht hier NICHT: Er ist ein
+ *     Vollflächen-Zustand mit 46-pt-Icon und würde Wien verdecken, also wieder
+ *     ersetzen statt ergänzen. Stattdessen `KarteNichtsLos` — EINE Kapsel unten,
+ *     eine Zeile, ein Ausweg. Dieselben zwei Fälle wie in `LeererFeed`
+ *     (Filter zu eng · wirklich nichts los), dieselben zwei Antworten, nur in der
+ *     Form, die neben eine Karte passt statt an ihre Stelle.
+ *
+ * Und harte Regel 51 gilt unverändert: Die Kapsel ist ein GESCHWISTER der Karte,
+ * kein Kind. Die Kartenfläche hat `overflow: hidden` und einen `PanResponder`, der
+ * jede Berührung an sich zieht — ein Ausweg-Knopf darin wäre halb abgeschnitten
+ * und nicht antippbar.
  */
 function KarteVollbild({
   zaehlung,
@@ -811,80 +845,83 @@ function KarteVollbild({
     // Sicherheitsabstand wandert deshalb an die schwebende Leiste — sie ist das
     // einzige hier, das ihn braucht.
     <View style={styles.vollbild}>
+      {/* ⚠️ **Hier stand bis zum 2026-09-19 ein `nichtsDa ? … : …`**, das die Karte
+          gegen `LeererFeed` TAUSCHTE. Ians Entscheidung 93 dreht das um: Die Karte
+          steht immer, der Ausweg kommt als Kapsel darüber (`KarteNichtsLos`, weiter
+          unten in diesem Baum). Die Begründung steht im Kopfkommentar. */}
+      <SsKarte
+          zaehlung={zaehlung}
+          gewaehlt={gewaehlt}
+          onWaehlen={bezirkTippen}
+          fuellt
+          // Seit Phase 19i gibt es kein Blatt mehr, das von unten verdeckt —
+          // übrig bleibt die schwebende Tab-Kapsel. Wien wird zwischen ihr und
+          // der Leiste oben zentriert, und **die Apple-Nennung weicht ihr aus**
+          // (`NENNUNG_MIN_KARTE`, Phase 19g): Eine Nennung, die niemand sehen
+          // kann, ist keine. Dass die Karte selbst unter der Kapsel durchläuft,
+          // bleibt gewollt (harte Regel 62, letzter Absatz).
+          randUnten={tabRand}
+          randOben={leisteBelegt}
+          // Ians Entscheidung 57. Der Slot liegt als Geschwister ÜBER der
+          // Kartenfläche (harte Regel 51) — die Karte selbst weiß nichts von
+          // Posts, sie gibt nur her, wo der Bezirk gerade liegt.
+          blase={(anker) =>
+            // Ein leerer Bezirk bekommt KEINE Blase — sonst steht ein weißer
+            // Balken mit Pfeil über der Stadt, der nichts sagt. Seit Phase 19i
+            // ist das zugleich die einzige Antwort auf „hier ist nichts los":
+            // Der Blattkopf, der sie vorher auch gab („1090 Wien · 0 Posts"),
+            // ist weg. Eine Antwort ist richtig, zwei wären eine zu viel — die
+            // Lehre vom 2026-09-03.
+            eintraege.length === 0 ? null : (
+            <KartenBlase
+              anker={anker}
+              eintraege={eintraege}
+              onPost={(id) => router.push({ pathname: '/post/[id]', params: { id } })}
+              // **Ians Entscheidung 65 (Phase 19i):** Von hier geht es ins
+              // Bezirks-Vollbild. Dritte Fassung derselben Zeile — 19c wechselte
+              // in die Listenansicht, 19g zog das Blatt auf. Der Bezirksfilter
+              // bleibt in allen dreien stehen (harte Regel 50).
+              onAlle={oeffneBezirk}
+            />
+            )
+          }
+        />
+
+        {/* ⚠️ **Hier lag bis Phase 19i das Blatt** (`SsBlatt`) — Ians
+            Entscheidung 65 hat es weggenommen: *„Die Leiste ist okay, aber würde
+            sie ehrlich gesagt weglassen und es so machen, dass man direkt, wenn
+            man auf einen Bezirk draufklickt, auf ein Fenster kommt, auf den
+            Stapel."*
+
+            **Mit ihm sind Suche, Kategorien, Filter, die Überschrift, das ✕ und
+            der Chip „3 Posts ohne Bezirk" aus der KARTENANSICHT verschwunden.**
+            Übrig bleibt oben der Umschalter samt Posten-Knopf (sonst käme man
+            nicht mehr von der Karte weg) und sonst Karte.
+
+            ── Warum der Chip „ohne Bezirk" ohne Ersatz weggehen darf ───────────
+            Er stand für Ians Entscheidung 31: *eine Ansicht darf nicht still
+            Posts verschlucken.* Das Wort, auf das es ankommt, ist **still** —
+            gemeint war eine LISTE, in der etwas fehlt. Seit 19i gibt es in der
+            Kartenansicht keine Liste mehr, aus der etwas fehlen könnte: Die Karte
+            zeigt Orte, und ein Post ohne Ort hat dort keinen. Vollständig sind
+            Stapel und Liste, und beide sind einen Tipp entfernt — der Umschalter
+            steht darüber. **Es ist trotzdem meine Auslegung und nicht seine
+            Entscheidung; sie gehört ihm am Bild vorgelegt.**
+
+            `SsBlatt` selbst bleibt stehen und wird NICHT gelöscht — harte Regel 51,
+            dieselbe Lehre wie bei der Blase: Die war elf Tage aus der Anzeige und
+            kam mit EINEM Aufruf zurück. Wer eine geprüfte Arbeit ausbaut, löscht
+            sie nicht. */}
+
+      {/* Ist gar nichts los, sagt das EINE Kapsel unten — die Karte bleibt stehen
+          (Ians Entscheidung 93). Sie liegt über der Tab-Kapsel, nicht dahinter:
+          `tabRand` ist deren Höhe samt Sicherheitsabstand, und ein Ausweg-Knopf,
+          den die Leiste verdeckt, ist keiner. */}
       {nichtsDa ? (
-        // Ohne den Rand stünde der Ausweg-Knopf hinter der schwebenden Leiste:
-        // Der leere Zustand zentriert sich in seinem Platz, und der reicht seit
-        // Phase 19e-2 bis an die Unterkante des Fensters.
-        <View style={[styles.vollbildLeer, { marginBottom: tabRand }]}>
-          <LeererFeed filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
+        <View style={[styles.nichtsLos, { bottom: tabRand + spacing.md }]}>
+          <KarteNichtsLos filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
         </View>
-      ) : (
-        <>
-          <SsKarte
-            zaehlung={zaehlung}
-            gewaehlt={gewaehlt}
-            onWaehlen={bezirkTippen}
-            fuellt
-            // Seit Phase 19i gibt es kein Blatt mehr, das von unten verdeckt —
-            // übrig bleibt die schwebende Tab-Kapsel. Wien wird zwischen ihr und
-            // der Leiste oben zentriert, und **die Apple-Nennung weicht ihr aus**
-            // (`NENNUNG_MIN_KARTE`, Phase 19g): Eine Nennung, die niemand sehen
-            // kann, ist keine. Dass die Karte selbst unter der Kapsel durchläuft,
-            // bleibt gewollt (harte Regel 62, letzter Absatz).
-            randUnten={tabRand}
-            randOben={leisteBelegt}
-            // Ians Entscheidung 57. Der Slot liegt als Geschwister ÜBER der
-            // Kartenfläche (harte Regel 51) — die Karte selbst weiß nichts von
-            // Posts, sie gibt nur her, wo der Bezirk gerade liegt.
-            blase={(anker) =>
-              // Ein leerer Bezirk bekommt KEINE Blase — sonst steht ein weißer
-              // Balken mit Pfeil über der Stadt, der nichts sagt. Seit Phase 19i
-              // ist das zugleich die einzige Antwort auf „hier ist nichts los":
-              // Der Blattkopf, der sie vorher auch gab („1090 Wien · 0 Posts"),
-              // ist weg. Eine Antwort ist richtig, zwei wären eine zu viel — die
-              // Lehre vom 2026-09-03.
-              eintraege.length === 0 ? null : (
-              <KartenBlase
-                anker={anker}
-                eintraege={eintraege}
-                onPost={(id) => router.push({ pathname: '/post/[id]', params: { id } })}
-                // **Ians Entscheidung 65 (Phase 19i):** Von hier geht es ins
-                // Bezirks-Vollbild. Dritte Fassung derselben Zeile — 19c wechselte
-                // in die Listenansicht, 19g zog das Blatt auf. Der Bezirksfilter
-                // bleibt in allen dreien stehen (harte Regel 50).
-                onAlle={oeffneBezirk}
-              />
-              )
-            }
-          />
-
-          {/* ⚠️ **Hier lag bis Phase 19i das Blatt** (`SsBlatt`) — Ians
-              Entscheidung 65 hat es weggenommen: *„Die Leiste ist okay, aber würde
-              sie ehrlich gesagt weglassen und es so machen, dass man direkt, wenn
-              man auf einen Bezirk draufklickt, auf ein Fenster kommt, auf den
-              Stapel."*
-
-              **Mit ihm sind Suche, Kategorien, Filter, die Überschrift, das ✕ und
-              der Chip „3 Posts ohne Bezirk" aus der KARTENANSICHT verschwunden.**
-              Übrig bleibt oben der Umschalter samt Posten-Knopf (sonst käme man
-              nicht mehr von der Karte weg) und sonst Karte.
-
-              ── Warum der Chip „ohne Bezirk" ohne Ersatz weggehen darf ───────────
-              Er stand für Ians Entscheidung 31: *eine Ansicht darf nicht still
-              Posts verschlucken.* Das Wort, auf das es ankommt, ist **still** —
-              gemeint war eine LISTE, in der etwas fehlt. Seit 19i gibt es in der
-              Kartenansicht keine Liste mehr, aus der etwas fehlen könnte: Die Karte
-              zeigt Orte, und ein Post ohne Ort hat dort keinen. Vollständig sind
-              Stapel und Liste, und beide sind einen Tipp entfernt — der Umschalter
-              steht darüber. **Es ist trotzdem meine Auslegung und nicht seine
-              Entscheidung; sie gehört ihm am Bild vorgelegt.**
-
-              `SsBlatt` selbst bleibt stehen und wird NICHT gelöscht — harte Regel 51,
-              dieselbe Lehre wie bei der Blase: Die war elf Tage aus der Anzeige und
-              kam mit EINEM Aufruf zurück. Wer eine geprüfte Arbeit ausbaut, löscht
-              sie nicht. */}
-        </>
-      )}
+      ) : null}
 
       {/* Der Umschalter schwebt über der Karte (Entscheidung 44) — wie die
           Suchleiste bei Apple Karten. Auf iOS bekommt diese Pille in 19e-2 echtes
@@ -985,10 +1022,22 @@ function FilterKnopf({
   offen,
   anzahl,
   umschalten,
+  umgebung = 'block',
 }: {
   offen: boolean;
   anzahl: number;
   umschalten: () => void;
+  /**
+   * Wo steht der Knopf? — dieselbe Frage wie bei `SsInput.umgebung`, harte
+   * Regel 114. In der Glaskapsel gibt er Fläche und Kante ab (Regel 61); im
+   * Fluss bringt er beides mit.
+   *
+   * ⚠️ **Der AKTIVE Zustand bleibt in beiden Umgebungen gefüllt.** Er ist die
+   * einzige Stelle, an der ein vergessener Filter noch auffällt — ihn in der
+   * Kapsel mit der Ruhefläche zusammen wegzunehmen wäre genau der Fehler, vor
+   * dem harte Regel 26 seit Phase 15 warnt.
+   */
+  umgebung?: 'block' | 'kapsel';
 }) {
   const hervor = anzahl > 0;
   return (
@@ -999,6 +1048,7 @@ function FilterKnopf({
       accessibilityLabel={anzahl > 0 ? `Filter, ${anzahl} aktiv` : 'Filter'}
       style={({ pressed }) => [
         styles.filterKnopf,
+        umgebung === 'kapsel' && styles.filterKnopfInKapsel,
         hervor && styles.filterKnopfAktiv,
         pressed && styles.filterKnopfGedrueckt,
       ]}>
@@ -1066,6 +1116,30 @@ function FilterBereich({
           { wert: true, label: 'Wem ich folge' },
         ]}
       />
+
+      {/* Die Kategorien — seit Ians Entscheidung 90 hier statt in einer eigenen
+          Reihe über dem Stapel. Sie stehen ZUERST, weil sie der meistbenutzte
+          Filter sind: Was am häufigsten angefasst wird, steht beim Aufklappen
+          ohne Scrollen da.
+
+          `FilterGruppe` bringt `SsScrollReihe` mit (harte Regel 19) — sieben
+          Pillen passen auf kein Handy nebeneinander, und eine Reihe, die
+          umbricht, schiebt beim Tippen den ganzen Bereich auseinander. */}
+      <FilterGruppe titel="Kategorie">
+        <SsChip
+          label="Alle"
+          selected={filter.kategorie === 'alle'}
+          onPress={() => setzen('kategorie', 'alle')}
+        />
+        {CATEGORY_ORDER.map((k) => (
+          <SsChip
+            key={k}
+            category={k}
+            selected={filter.kategorie === k}
+            onPress={() => setzen('kategorie', filter.kategorie === k ? 'alle' : k)}
+          />
+        ))}
+      </FilterGruppe>
 
       <FilterGruppe titel="Wann">
         {WANN_ORDER.map((w) => (
@@ -1217,6 +1291,55 @@ function FilterGruppe({
 }
 
 /**
+ * „Hier ist gerade nichts los" — **über der Karte, nicht an ihrer Stelle.**
+ *
+ * Ians Entscheidung 93. Es ist derselbe Sachverhalt wie in `LeererFeed` und
+ * bewusst ein zweiter Baustein, nicht ein Prop an jenem: **Die Form ist der
+ * ganze Unterschied.** `LeererFeed` nimmt die Fläche ein (`flex: 1`, 46-pt-Icon,
+ * mittig) — das ist richtig, wo sonst nichts steht, und falsch über einer Karte,
+ * die man gerade sehen soll. Hier ist es eine Kapsel: eine Zeile, ein Ausweg.
+ *
+ * **Die zwei Fälle sind dieselben wie dort und werden gleich beantwortet** —
+ * *ein zu enger Filter* ist ein Bedienungsproblem und bekommt den Weg zurück,
+ * *wirklich nichts los* ist der Moment, in dem die App um einen Beitrag bitten
+ * darf. Ein einziger Text für beides wäre in mindestens einem Fall die falsche
+ * Antwort; das gilt hier unverändert.
+ *
+ * ⚠️ **Kein Icon.** In `LeererFeed` trägt die Lupe die Aussage mit, weil dort
+ * sonst nichts steht. Hier steht Wien darunter — ein Zeichen mehr wäre das
+ * Gegenteil von dem, was Ian mit *„schlichter"* meint (harte Regel 63).
+ */
+function KarteNichtsLos({
+  filterAktiv,
+  zuruecksetzen,
+}: {
+  filterAktiv: boolean;
+  zuruecksetzen: () => void;
+}) {
+  return (
+    <SsGlas schwebt style={styles.nichtsLosGlas}>
+      <SsText variant="body" center>
+        {filterAktiv ? 'Dazu ist gerade nichts da' : 'In Wien ist gerade nichts los'}
+      </SsText>
+      {filterAktiv ? (
+        <Pressable onPress={zuruecksetzen} accessibilityRole="button" style={styles.leerLink}>
+          <SsText variant="label" color={categoryColors.creative.aufGrund}>
+            Filter zurücksetzen
+          </SsText>
+        </Pressable>
+      ) : (
+        <SsButton
+          label="Posten"
+          icon="stift"
+          style={styles.leerKnopf}
+          onPress={() => router.push('/create')}
+        />
+      )}
+    </SsGlas>
+  );
+}
+
+/**
  * Zwei verschiedene leere Zustände, weil es zwei verschiedene Situationen sind.
  *
  * "Der Filter ist zu eng" ist ein Bedienungsproblem — dort gehört der Ausweg hin,
@@ -1299,15 +1422,31 @@ const styles = StyleSheet.create({
   // gehört jetzt der Glas-Pille darum. Die Polsterung behält er, sonst kleben die
   // drei Stufen am Rand.
   ansichtImGlas: { backgroundColor: 'transparent', borderWidth: 0 },
-
-  ansichtZeile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-  },
+  /**
+   * Der Umschalter IN der Kopfkapsel — wie `ansichtImGlas`, **aber mit fester
+   * Breite**, und die ist nicht Geschmack, sondern die Behebung eines gemessenen
+   * Fehlers.
+   *
+   * 🔴 **Ohne sie nahm er die ganze Kapsel ein und drückte Suchfeld und Regler
+   * auf Breite null.** Gemessen am Beleg `at05` (erste Fassung), spaltenweise über
+   * die Kapselzeile: bei x 80–500 das aktive Feld, bei 520–1000 das inaktive,
+   * danach nur noch der Posten-Knopf — **dazwischen nichts.** Am Bild allein war
+   * das nicht zu entscheiden, weil der Prototyp-Hinweis darüberliegt und alles
+   * abdunkelt; erst die Zahlenreihe hat es gezeigt.
+   *
+   * ⚠️ **Warum eine feste Breite und kein `flexShrink`:** Das Suchfeld daneben hat
+   * `flex: 1`, und das heißt in React Native `flexBasis: 0` — es darf also bis auf
+   * null schrumpfen, ohne dass etwas dagegen spricht (ACTA-Falle). Wer stattdessen
+   * dem Umschalter das Schrumpfen erlaubt, verlagert den Streit nur: Dann quetscht
+   * ein langer Platzhaltertext die zwei Symbole zusammen. **Ein zweistufiger
+   * Icon-Umschalter hat keine variable Breite zu verteidigen** — zwei Zeichen à 19
+   * pt, ihre Polsterung und der Zwischenraum, das ist alles.
+   *
+   * **In der KARTENANSICHT gilt das nicht** (`ansichtZeile`, `ansichtImGlas`):
+   * Dort steht der Umschalter allein in seiner Pille, es gibt nichts, dem er
+   * Platz wegnehmen könnte.
+   */
+  umschalterInKapsel: { backgroundColor: 'transparent', borderWidth: 0, width: 104 },
 
   /**
    * Der runde „Posten"-Knopf. Die Höhe von 44 ist Apples Mindestmaß für ein
@@ -1324,14 +1463,56 @@ const styles = StyleSheet.create({
     cursor: 'pointer',
   },
 
-  // ── Phase 15: Suche und Filter ──────────────────────────────────────────
-  sucheZeile: {
+  /**
+   * ── Die Kopfzeile, seit Ians Entscheidung 90 EINE Reihe ──────────────────
+   *
+   * Hier standen bis zum 2026-09-19 drei: Umschalter samt Posten-Knopf ·
+   * Suche samt Regler · sechs Kategorie-Chips. Ians Satz: *„ich würde gerne
+   * oben und unten halt ein Dings haben, dass es halt einfach schlichter
+   * aussieht."* Das „Dings" ist die Glaskapsel der Tab-Leiste.
+   *
+   * ⚠️ **Harte Regel 62 gilt hier genauso wie unten: Glas braucht RAND.** Die
+   * Kapsel hat nach links und rechts `spacing.lg` und nach oben `spacing.sm`
+   * unter der Statusleiste — sie klebt an keiner Kante. Eine Fläche, die an
+   * drei Kanten am Schirm klebt, sieht aus wie eine getönte Leiste; das war
+   * unten vier Wochen lang der Fehler (19i).
+   *
+   * **Was sie NICHT tut: schweben.** Die Tab-Leiste liegt absolut, und der
+   * Inhalt scrollt unter ihr durch. Diese hier steht im Fluss. Der Unterschied
+   * ist Absicht und keine Nachlässigkeit — darunter liegt der Wischstapel, und
+   * der scrollt nicht; eine Kapsel, unter der nichts durchläuft, gewinnt nichts
+   * und nähme dem Stapel Höhe. **Ob sie trotzdem schweben soll, sieht man am
+   * Bild, nicht am Code.**
+   */
+  kopfZeile: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
   },
+  /**
+   * Die Kapsel selbst — **nur Geometrie.** Fläche, Kante und Schatten gehören
+   * `SsGlas` (harte Regel 61); stünde hier eine `backgroundColor`, wäre das
+   * Glas wieder eine Karte mit unscharfem Hintergrund.
+   *
+   * `minWidth: 0` ist Pflicht und nicht Vorsicht: Ohne das schrumpft ein
+   * `flex: 1`-Kind im Browser nicht unter seine Eigenbreite, und der
+   * Platzhalter im Suchfeld schiebt den Regler aus der Kapsel heraus.
+   * Die kleine Polsterung hält Umschalter und Regler von der Rundung weg.
+   */
+  kopfGlas: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radius.pill,
+  },
+
+  // ── Phase 15: Suche und Filter ──────────────────────────────────────────
   // `minWidth: 0` ist hier Pflicht und nicht Vorsicht: Ohne das schrumpft ein
   // `flex: 1`-Kind im Browser nicht unter seine Eigenbreite (`min-width: auto`),
   // und der lange Platzhaltertext schiebt den Filter-Knopf aus dem Bild.
@@ -1357,6 +1538,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     cursor: 'pointer',
   },
+  // In der Glaskapsel: keine eigene Fläche, keine Ruhekante. Die `borderWidth`
+  // bleibt stehen und wird nur durchsichtig — sonst springt der Knopf, sobald
+  // ein Filter läuft und `filterKnopfAktiv` die Kante zurückholt.
+  filterKnopfInKapsel: { backgroundColor: 'transparent', borderColor: 'transparent' },
   filterKnopfAktiv: { backgroundColor: colors.ink, borderColor: colors.ink },
   filterKnopfGedrueckt: { opacity: 0.7 },
 
@@ -1380,23 +1565,13 @@ const styles = StyleSheet.create({
   filterBalken: { marginTop: spacing.sm },
   filterZuruecksetzen: { alignSelf: 'flex-start', cursor: 'pointer' },
 
-  // Die Reihe geht von Kante zu Kante (damit die Pillen unter dem Rand
-  // hindurchscrollen), das Innenmaß unten setzt die erste Pille bündig unter den
-  // Rest. KEIN negativer Rand mehr: Der stammte aus Phase 2, als `SsScreen` noch
-  // seine eigenen 16 px Seitenrand hatte. Seit `seite: { paddingHorizontal: 0 }`
-  // gab es nichts mehr aufzuheben — er zog die Reihe 16 px ÜBER die Kante hinaus,
-  // und das Innenmaß schob die erste Pille dadurch exakt auf x = 0. Genau das hat
-  // Ian am Handy gesehen: „Alle" klebte am Bildschirmrand.
-  //
-  // `flexGrow/flexShrink: 0` stehen jetzt in `SsScrollReihe` selbst — es war nie
-  // eine Eigenschaft dieses Screens, sondern eine jeder waagrechten Reihe neben
-  // einer Liste.
-  chipZeile: {},
-  chipInhalt: {
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
+  // ⚠️ **Hier standen `chipZeile` und `chipInhalt`** — die Maße der
+  // Kategorie-Reihe samt der Lehre, warum sie KEINEN negativen Rand haben darf
+  // (Ian am Handy: „Alle" klebte am Bildschirmrand). Mit Entscheidung 90 ist die
+  // Reihe in den Regler gewandert und benutzt dort `filterPillen`; die Maße
+  // hatten kein Zuhause mehr. **Die Lehre selbst ist nicht verloren** — sie steht
+  // im Volltext in `_gedaechtnis/FALLEN.md`, und `SsScrollReihe` trägt
+  // `flexGrow/flexShrink: 0` seit Phase 19 ohnehin selbst.
 
   // Der Stapel bekommt seinen Seitenabstand von hier und nicht von der Kartenfläche
   // darin: Die Karten liegen absolut übereinander, und wo Yoga bei absoluten Kindern
@@ -1413,7 +1588,25 @@ const styles = StyleSheet.create({
   // Kante. Was Abstand braucht, holt ihn sich selbst (die schwebende Leiste den
   // oberen, das Blatt seinen eigenen).
   vollbild: { flex: 1, backgroundColor: colors.bg },
-  vollbildLeer: { flex: 1 },
+  // ⚠️ `vollbildLeer` ist mit Ians Entscheidung 93 weggefallen — der leere
+  // Zustand nimmt die Kartenfläche nicht mehr ein, er legt sich als Kapsel
+  // darüber (`nichtsLos`).
+
+  // Die Kapsel „nichts los" liegt absolut über der Karte und ist ihr
+  // GESCHWISTER, nie ihr Kind (harte Regel 51: `overflow: hidden` und ein
+  // PanResponder, der jede Berührung an sich zieht). `left`/`right` statt
+  // einer Breite, genau wie bei `schwebeLeiste` darüber: gleicher Abstand zu
+  // den Kanten auf jedem Schirm. Das `bottom` kommt vom Aufrufer, weil nur
+  // dort die Höhe der Tab-Kapsel bekannt ist.
+  nichtsLos: { position: 'absolute', left: spacing.lg, right: spacing.lg },
+  // Nur Geometrie — Fläche, Kante und Schatten gehören `SsGlas` (harte Regel 61).
+  nichtsLosGlas: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    ...ecke.lg,
+  },
 
   // Die Pille schwebt über der Karte und liegt deshalb absolut. `left`/`right`
   // statt einer Breite: So bleibt sie auf jedem Schirm gleich weit von den Kanten,

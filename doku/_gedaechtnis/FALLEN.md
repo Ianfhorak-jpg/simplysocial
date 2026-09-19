@@ -1681,3 +1681,68 @@
   Eichung, deren zwei Achsen nicht fast gleich herauskommen, ist keine.
 - **`timeout` gibt es auf macOS nicht** (das ist GNU coreutils). Ein Aufruf damit
   stirbt mit `command not found`, bevor irgendetwas läuft.
+- **Ein `<Badge>`-Element ohne Kind zeichnet einen PUNKT, statt nichts zu zeichnen —
+  und die Doku am Typ sagt das Gegenteil.** `NativeTabsTriggerBadgeProps.children`
+  trägt den Kommentar *„If not provided, the badge will not be displayed"*.
+  `appendBadgeOptions` (NativeTabTrigger.js:131) tut daneben dies: `if
+  (props.children)` → Wert setzen, **`else if (!props.hidden)` → `badgeValue = ' '`**.
+  Ein Leerzeichen ist bei `react-native-screens` der Punkt ohne Zahl. **Am Gerät
+  stand dadurch dauerhaft ein roter Punkt am Anfragen-Tab, obwohl nie eine Anfrage
+  offen war** — und der Kommentar im eigenen Code behauptete das Gegenteil, weil er
+  der Doku geglaubt hatte. Gefunden erst, als Ian *„warum ist die Hand rot?"* fragte:
+  Sein Feed war leer, eine ZAHL konnte er nie gesehen haben. **`hidden` allein reicht
+  nicht** (Zweig eins liest es nicht), **`children: undefined` allein auch nicht**
+  (Zweig zwei greift) — es braucht beide. Verwandt mit *„Ein Mechanismus, den man im
+  fremden Quelltext FINDET, ist eine Hypothese"*, nur schärfer: Hier war die
+  Hypothese **dokumentiert** und trotzdem falsch.
+- **Auf iOS gehört einem die Schriftfarbe eines Tab-Badges NICHT.** `badgeTextColor`
+  steht im Typ mit `@platform android` / `@platform web`; `appearance.ios.js:26`
+  reicht von allen Badge-Werten nur `badgeBackgroundColor` durch, und
+  `RNSTabBarAppearanceCoordinator.mm:258` setzt entsprechend nur den Hintergrund —
+  `badgeTextAttributes` wird nie beschrieben, **UIKit zeichnet die Zahl weiss.** Das
+  macht jede helle Badge-Farbe unbrauchbar, sobald eine Zahl darauf steht: Türkis
+  `#00E5D0` kommt gegen Weiss auf **1,60**. Die Farbe erst zu setzen und am Gerät zu
+  schauen hätte einen Abend gekostet; drei `grep` in `node_modules` kosteten fünf
+  Minuten. ⚠️ **Und es ist die eine Sorte Fehler, die `tsc` niemals findet** — der
+  Prop existiert im Typ, er wird nur auf dieser Plattform nicht gelesen.
+- **Ein `block(text, 'function X(')`, der geschweifte Klammern zählt, gibt die
+  PARAMETERLISTE zurück.** Bei `function X({ filter, setzen }: { … })` ist die erste
+  `{` die Destrukturierung, nicht der Rumpf — der Zähler steht schon wieder auf 0,
+  bevor der Körper anfängt. Der Anlauf davor (`re.search(kopf + '.*?\n\}', re.S)`)
+  war genauso falsch, nur anders: Non-greedy hört bei der ersten Zeile auf, die mit
+  `}` beginnt, und das ist das Ende des ersten verschachtelten Objekts. **Richtig ist:
+  erst die runden Klammern bis Tiefe 0, dann die geschweiften.** Beide Male hat es
+  allein der Wächter *„der Leser hat gefunden, was da ist"* gezeigt — ohne ihn hätte
+  der Prüfstand drei echte Verstösse gemeldet, die keine waren.
+- **Ein Prüfstand, der seine Gegenprobe durch ÄNDERN der Quelle fährt, darf nicht
+  laufen, während ein Gerätebuild aus derselben Quelle baut.** Dieselbe Falle wie
+  *„Die Quelle NICHT anfassen, während ein Gerätebuild läuft"*, nur aus einer
+  Richtung, die sich harmlos anfühlt: Die Datei wird ja sofort wieder
+  zurückgeschrieben, und `git diff` sieht danach sauber aus. **Metro bündelt aber
+  irgendwann dazwischen**, und das Bild, das herauskommt, gehört dann zu einer
+  Fassung, die es nie gab — ohne dass irgendetwas rot wird.
+  🔴 **Und der zweite Lauf repariert es NICHT, er zementiert es.** `schirm.sh`
+  Schritt 3 vergleicht ZEITSTEMPEL: Quelle gegen Bündel. Nach dem Zurückschreiben
+  ist die Quelle nicht neuer als das verdorbene Bündel, also meldet er *„installiert
+  und aktuell"*, überspringt den Build und knipst **dasselbe falsche Bündel noch
+  einmal** — mit einem grünen Haken davor. **Ein Aktualitäts-Wächter beantwortet
+  „hat sich die Quelle seitdem geändert?", nicht „ist das Bündel aus DIESER
+  Quelle gebaut worden?"** Die zwei Fragen fallen genau dann auseinander, wenn
+  jemand eine Änderung zurückgenommen hat. Ausweg: `touch` auf eine Quelldatei,
+  dann muss er bauen. Verwandt mit *„Ein Aktualitäts-Wächter, der nur die QUELLE
+  kennt, merkt eine geänderte BUILD-KONFIGURATION nicht"* — dieselbe Lücke, andere
+  Ursache.
+- **Ein Screenshot, über dem ein Vollbild liegt, beantwortet keine Layout-Frage — die
+  ZAHLENREIHE schon.** Die neue Kopfkapsel (Entscheidung 90) zeigte am Beleg nur den
+  Umschalter; Suchfeld und Regler fehlten. Ob sie *nicht da* waren oder nur vom
+  Prototyp-Hinweis (`rgba(23,25,28,0.55)`, harte Regel 22) verschluckt, war mit dem
+  Auge **nicht entscheidbar** — und genau da fängt das Raten an. Die Antwort kam aus
+  `glasmessung.py`: die Kapselzeile in 40-px-Spalten gemessen, Helligkeit
+  **68 · 68 · … · 8,3 · 8,3 · … · 66**. Zwischen dem inaktiven Umschalter-Feld und dem
+  Posten-Knopf lagen 480 px mit **8,3** — leer. *Geometrie prüfen ist nicht hinschauen*
+  gilt hier andersherum als sonst: **Hinschauen war nicht genug, messen schon.**
+  ⚠️ Der Fehler selbst ist die alte ACTA-Falle *„`flex: 1` heißt in React Native
+  `flexBasis: 0`"*: Das Suchfeld durfte auf null schrumpfen, der `SsSegment` daneben
+  nicht. **Die Behebung gehört an den, der NICHT schrumpfen darf** — eine feste Breite
+  am Icon-Umschalter, nicht ein `flexShrink` am Suchfeld: Sonst quetscht beim nächsten
+  längeren Platzhalter der Text die Symbole zusammen.

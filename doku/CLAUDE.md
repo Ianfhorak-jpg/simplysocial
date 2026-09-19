@@ -489,6 +489,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 114. Ein Post sagt, WO er steht — `umgebung`, nie ein `mitRahmen`-Boolean; und der Kategoriename kommt aus `CATEGORIES`, nie aus `post.category`
 115. Was die App SPÜREN lässt, steht in `lib/haptik.ts` / `.native.ts` — und die Funktionen heißen nach dem ANLASS, nie nach der Stärke
 116. Was der Treffen-Zähler zählt, steht im TRIGGER `treffen_buchen` (0012) — nie in einer Funktion und nie in der App
+117. Eine ZAHL an einem Tab gibt es nur, wo uns ihre Schriftfarbe gehört — sonst ist es ein Punkt
 ## Fallen — Index
 
 > **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 213 Stück, jede schon
@@ -702,6 +703,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Ein `osascript`-Klick, der ein UI-Element zurückgibt, ist noch kein Klick
 - `screencapture -R` mit der Fenstergeometrie eines Programms knipst das OBERSTE Fenster an dieser Stelle
 - `timeout` gibt es auf macOS nicht
+- Ein `<Badge>`-Element ohne Kind zeichnet einen PUNKT, statt nichts zu zeichnen — und die Doku am Typ sagt das Gegenteil
+- Auf iOS gehört einem die Schriftfarbe eines Tab-Badges NICHT
+- Ein `block()`, der geschweifte Klammern zählt, gibt die PARAMETERLISTE zurück
+- Ein Prüfstand, der seine Gegenprobe durch ÄNDERN der Quelle fährt, darf nicht während eines Gerätebuilds laufen
+- Ein Screenshot, über dem ein Vollbild liegt, beantwortet keine Layout-Frage — die ZAHLENREIHE schon
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)
