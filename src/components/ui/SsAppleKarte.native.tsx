@@ -192,7 +192,37 @@ export function SsAppleKarte({
    * `KARTE_MIN_BAND` gilt weiter, aber nur noch dort, wo es hingehört: im
    * gezeichneten Zeichner, dessen Maßstab wirklich am freien Streifen hängt.
    */
-  const verdeckt = Math.min(randUnten, Math.max(0, hoehe - randOben - NENNUNG_MIN_KARTE));
+  /**
+   * 🔴 **Am 2026-09-20 an Ians Bildschirmaufnahme GEMESSEN — und die Annahme
+   * darüber war falsch.**
+   *
+   * Der Kommentar oben sagt, MapKit zeichne Logo und Rechtelink „am unteren Rand
+   * seines gepolsterten Bereichs". Wäre das so, säße die Nennung bei
+   * `mapPadding.bottom = 83` rund 83 Punkte über der Kartenunterkante. Gemessen am
+   * Standbild (iPhone 16, 3×, unterer Bildrand als Nullpunkt):
+   *
+   *   ·  Apples „ Karten · Rechtl. Informationen"  **184 pt**
+   *   ·  unsere „Bezirksgrenzen"-Zeile                93 pt
+   *   ·  Oberkante der Tab-Kapsel                     82 pt
+   *
+   * **MapKit legt also rund 100 Punkte EIGENEN Abstand über die Polsterung.** Ians
+   * Urteil dazu, dreimal in Folge: *„das mit Apple Karten rechtliche Informationen,
+   * das muss runter."*
+   *
+   * ── Was das kostet, und warum es trotzdem richtig ist ───────────────────────
+   * `mapPadding` ist EIN Regler für zwei Fragen (Entscheidung 58): wo Wien sitzt und
+   * wo die Nennung sitzt. Mit `0` rutscht Wien um diese 83 Punkte nach unten, und
+   * sein unterster Rand liegt dann hinter der Tab-Kapsel.
+   *
+   * **Die Nennung gewinnt** — das ist Entscheidung 58 wörtlich, und sie ist hier
+   * zum ersten Mal wirklich fällig: Sie ist Lizenzbedingung, Wiens Lage ist eine
+   * Vorliebe. Wien ist außerdem klein und steht mittig; die 83 Punkte kosten es
+   * einen Rand, keine Sichtbarkeit.
+   *
+   * ⚠️ **`randUnten` bleibt stehen und wird weiter gebraucht** — `fussHoehe` unten
+   * rechnet damit, und das ist die Zeile, die nachweislich richtig sitzt.
+   */
+  const verdeckt = 0;
   /** Über dem Blatt, aber nie hinter der schwebenden Leiste — siehe `fussHoehe` im
    *  gezeichneten Zeichner, dieselbe Rechnung und derselbe Grund. */
   const fussHoehe = Math.min(randUnten, Math.max(0, hoehe - randOben - 20));

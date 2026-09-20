@@ -182,7 +182,28 @@ export default function FeedScreen() {
    * weiter — das ist der Teil, den Regel 50 verlangt.
    */
   const [bezirkStapel, setBezirkStapel] = useState(false);
+  /**
+   * Ob die Karte im Baum BLEIBT, auch wenn sie gerade nicht dran ist.
+   *
+   * 🔴 **Ians Befund vom 2026-09-20, an seiner Bildschirmaufnahme nachgesehen:**
+   * *„es switcht irgendwie komisch."* Im Video ist der Ablauf dreistufig — bei
+   * 2,75 s steht die Karte noch WEISS und leer da (MapKits Kachel-Platzhalter),
+   * dann erscheint sie hart, und **danach** fährt erst die Kamera auf Wien zu.
+   *
+   * Das war kein Animationsproblem: Die Karte wurde bei jedem Wechsel **neu
+   * aufgebaut**, weil der Kartenzweig ein eigenes `return` war. MapKit fängt dann
+   * jedes Mal bei null an — Kacheln laden, `onMapReady`, Kamerafahrt. Eine längere
+   * Pillen-Animation hätte das eher verschlimmert: Sie liefe noch, während die
+   * Karte schon springt.
+   *
+   * ⚠️ **Erst beim ersten Mal, nicht von Anfang an.** Wer die Karte nie öffnet,
+   * soll MapKit auch nicht im Rücken laufen haben — das kostet Speicher und Akku
+   * auf einem Bildschirm, den es gar nicht betrifft. Deshalb ein Zustand, der nur
+   * EINMAL wächst und nie wieder zurückgeht.
+   */
+  const [karteBleibt, setKarteBleibt] = useState(false);
   const setAnsicht = (a: Ansicht) => {
+    if (a === 'karte') setKarteBleibt(true);
     setBezirkStapel(false);
     setAnsichtRoh(a);
   };
@@ -614,8 +635,11 @@ export default function FeedScreen() {
   }
 
   // ── Die Kartenansicht: ein eigener Baum (Phase 19e) ─────────────────────────
-  if (ansicht === 'karte') {
-    return (
+  //
+  // Seit dem 2026-09-20 steht sie NEBEN dem anderen Baum statt an seiner Stelle —
+  // siehe `karteBleibt` oben. Sichtbar ist trotzdem immer nur eine von beiden.
+  const karteBaum = karteBleibt ? (
+    <View style={[styles.vollbild, ansicht !== 'karte' && styles.ausgeblendet]}>
       <KarteVollbild
         zaehlung={proBezirk}
         ohneBezirk={ohneBezirk}
@@ -627,15 +651,20 @@ export default function FeedScreen() {
         ansichtZeile={ansichtZeile}
         oeffneBezirk={() => setBezirkStapel(true)}
       />
-    );
-  }
+    </View>
+  ) : null;
+
+  if (ansicht === 'karte') return karteBaum;
 
   return (
-    // `keyboard` steht hier wegen der Antwort-Leiste: Sie klebt am unteren Rand, und
-    // auf iOS läge sie sonst unter der Tastatur. Fest gesetzt und nicht umgeschaltet
-    // — ein Wechsel würde den ganzen Inhalt neu einhängen und mitten in der
-    // Wischbewegung den Stapel zurücksetzen.
-    <SsScreen tabScreen keyboard contentStyle={styles.seite}>
+    <>
+      {karteBaum}
+
+      {/* `keyboard` steht hier wegen der Antwort-Leiste: Sie klebt am unteren Rand,
+          und auf iOS läge sie sonst unter der Tastatur. Fest gesetzt und nicht
+          umgeschaltet — ein Wechsel würde den ganzen Inhalt neu einhängen und
+          mitten in der Wischbewegung den Stapel zurücksetzen. */}
+      <SsScreen tabScreen keyboard contentStyle={styles.seite}>
       {/* Im Fluss, wo darunter etwas scrollt. Im Stapel liegt dasselbe Feld weiter
           unten als Blatt über den Karten — Begründung bei `filterFeld` oben.
 
@@ -686,10 +715,11 @@ export default function FeedScreen() {
           Überlegung wie bei der Pille in `SsSegment`. */}
       <View style={styles.kopfSchwebend} onLayout={(e) => setKopfHoehe(e.nativeEvent.layout.height)}>
         {kopfKapsel}
-      </View>
+        </View>
 
-      {antwortLeiste}
-    </SsScreen>
+        {antwortLeiste}
+      </SsScreen>
+    </>
   );
 }
 
@@ -1752,6 +1782,18 @@ const styles = StyleSheet.create({
   // Kante. Was Abstand braucht, holt ihn sich selbst (die schwebende Leiste den
   // oberen, das Blatt seinen eigenen).
   vollbild: { flex: 1, backgroundColor: colors.bg },
+  /**
+   * Die Karte ist da, aber nicht dran — siehe `karteBleibt` oben.
+   *
+   * `display: 'none'` und nicht `opacity: 0` oder eine Verschiebung ins Abseits:
+   * Nur `display` nimmt die Fläche wirklich aus dem Layout, sodass der andere Baum
+   * daneben den ganzen Platz bekommt. Die native View bleibt dabei bestehen —
+   * genau darum geht es, MapKit soll seine Kacheln behalten.
+   *
+   * ⚠️ `opacity: 0` wäre hier doppelt falsch: Es nimmt keinen Platz weg UND es
+   * schaltet auf iOS Glaseffekte im ganzen Teilbaum ab (harte Regel 61).
+   */
+  ausgeblendet: { display: 'none' },
   // ⚠️ `vollbildLeer` ist mit Ians Entscheidung 93 weggefallen — der leere
   // Zustand nimmt die Kartenfläche nicht mehr ein, er legt sich als Kapsel
   // darüber (`nichtsLos`).
