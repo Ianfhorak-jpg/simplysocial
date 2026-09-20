@@ -15,6 +15,17 @@
 #          Satz *„eingeklappt wäre der Feed eine Liste ohne Gesicht"*.
 #    · 93: bei leerem Feed stand GAR KEINE Karte da, mit dem Satz *„eine Karte
 #          ohne Posts ist nicht leer, sie ist 23 graue Flächen"*.
+#    · 99: die Kopfkapsel war echtes Liquid Glass, und `glas-typen.ts` erklärt
+#          auf 170 Zeilen, warum das richtig ist. `GLAS_AN = false` steht in
+#          EINER Zeile darunter. **Kein anderer Prüfstand sieht diese Zeile.**
+#
+#  🔴 **Warum Entscheidung 99 ausgerechnet hier steht.** `npm run pruef-glas`
+#  klingt zuständig, ist es aber nicht: `31_glasmessung.py` bewacht das MESSGERÄT
+#  `scripts/glasmessung.py` (PNG-Dekoder, Helligkeitsrechnung) und erwähnt
+#  `SsGlas`, `GLAS_AN` und `glas-typen` mit keinem Wort. Seine 33 Häkchen sind
+#  richtig und von `GLAS_AN` überhaupt nicht berührt — **der Name verspricht
+#  mehr als der Wächter prüft**, und das ist die Falle *„Ein Wächter, der eine
+#  ÄHNLICHE Frage stellt, ist kein Wächter"* in ihrer Namensform.
 #
 #  ⚠️ **Was dieser Prüfstand NICHT kann.** Er liest Text, er zeichnet nichts.
 #  Ob die Kapsel gut aussieht, ob sie freisteht, ob das Suchfeld darin breit
@@ -40,9 +51,14 @@ def pruef(text, ok, dazu=''):
     else:
         print(f'  ✗ {text}' + (f'  ({dazu})' if dazu else '')); NEIN += 1
 
+GLAS = WURZEL / 'src' / 'components' / 'ui' / 'glas-typen.ts'
+
 if not FEED.exists():
     sys.exit(f'✗ {FEED} fehlt.')
+if not GLAS.exists():
+    sys.exit(f'✗ {GLAS} fehlt.')
 roh = FEED.read_text()
+glas_roh = GLAS.read_text()
 
 # ── Kommentare weg ──────────────────────────────────────────────────────────
 # In den Kommentaren steht die VERWORFENE Fassung ausdrücklich zitiert — das
@@ -198,6 +214,49 @@ pruef('`LeererFeed` steht NICHT über der Karte',
 # Und er muss es weiterhin GEBEN, an seiner eigenen Stelle: die Liste.
 pruef('… aber es gibt ihn weiter, für die Liste', 'function LeererFeed' in code,
       'die beiden leeren Zustände sind zwei Situationen, nicht einer')
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  IANS ENTSCHEIDUNG 99 — matt statt Liquid Glass
+# ══════════════════════════════════════════════════════════════════════════════
+#  Sein Satz: *„dann probier es halt so zu machen, dass es halt nicht so wie
+#  Liquid Glass aussieht, sondern einfach so matt halt, so wie die anderen
+#  Knöpfe."* Zurückzudrehen ist EINE Zeile — deshalb muss eine Prüfung sie sehen.
+#
+#  ⚠️ **Was dieser Abschnitt NICHT behauptet.** Er sagt nicht, dass die Flächen
+#  matt AUSSEHEN. Ob `expo-glass-effect` auf diesem Gerät überhaupt zeichnet,
+#  beantwortet nur ein Bild vom iPhone. Er hält fest, dass der Schalter steht,
+#  dass er wirkt und dass er an genau einer Stelle steht.
+print('')
+print('── Ians Entscheidung 99: matt, nicht Liquid Glass ──')
+
+glas_code = '\n'.join(
+    z for z in re.sub(r'/\*.*?\*/', '', glas_roh, flags=re.S).splitlines()
+    if not z.strip().startswith('//')
+)
+m_an = re.search(r'export const GLAS_AN = (\w+);', glas_code)
+pruef(f'`GLAS_AN` steht in `glas-typen.ts` (gefunden: {m_an.group(1) if m_an else "NICHTS"})',
+      bool(m_an),
+      'ohne die Konstante hat Entscheidung 99 keinen Ort mehr')
+pruef('… und zwar auf `false` — Ians Entscheidung 99',
+      bool(m_an) and m_an.group(1) == 'false',
+      'auf `true` ist die Kopfkapsel wieder echtes Glas; das hat Ian abgelehnt')
+
+# Ein Schalter, den niemand liest, ist keiner. `SsGlas.native.tsx` ist die
+# Stelle, an der er wirkt — im Web-Zweig gibt es ohnehin nie Glas.
+NATIV = WURZEL / 'src' / 'components' / 'ui' / 'SsGlas.native.tsx'
+nativ = NATIV.read_text() if NATIV.exists() else ''
+pruef('Der iOS-Zeichner liest ihn', 'GLAS_AN' in nativ,
+      'sonst steht die Entscheidung da und wirkt nicht')
+m_da = re.search(r'const GLAS_DA = ([^;]+);', nativ)
+pruef('… und zwar als ERSTE Bedingung, vor Apples Verfügbarkeitsfragen',
+      bool(m_da) and m_da.group(1).strip().startswith('GLAS_AN &&'),
+      'steht er dahinter, entscheidet weiter das Gerät statt Ian')
+
+# Die Gegenprobe gegen den Wächter selbst: Fände er `GLAS_AN` nirgends, sähen
+# beide Prüfungen oben genauso aus wie bei einer umgebauten Datei.
+pruef('Gegenprobe: `glas-typen.ts` enthält überhaupt Glas-Konstanten',
+      'GLAS_STIL' in glas_code and 'GLAS_FARBSCHEMA' in glas_code,
+      'eine Textsuche mit null Treffern beweist nichts')
 
 print('')
 print(f'  {JA} Häkchen, {NEIN} Kreuze')

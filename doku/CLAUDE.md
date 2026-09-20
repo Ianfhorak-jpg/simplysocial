@@ -108,8 +108,17 @@ system Liquid Glass material"*; von drei nötigen Apple-Methoden wird
 `GLAS_AN = false` in `glas-typen.ts` zwingt iOS deshalb auf den Ersatzweg: matte
 Fläche mit Kante und Schatten. **Zurückdrehen ist eine Zeile.**
 
-⚠️ **`npm run pruef-glas` merkt das nicht** — 33 Häkchen, obwohl Glas ganz aus ist.
-Der Wächter prüft, DASS `SsGlas` benutzt wird, nicht OB Glas herauskommt.
+🔴 **Berichtigung vom 2026-09-20:** Hier stand, `npm run pruef-glas` prüfe, „DASS
+`SsGlas` benutzt wird". **Das tut er nicht.** `31_glasmessung.py` bewacht das
+MESSGERÄT `scripts/glasmessung.py` — PNG-Dekoder und Helligkeitsrechnung — und
+erwähnt `SsGlas`, `GLAS_AN` und `glas-typen` mit **keinem Wort**. Seine 33 Häkchen
+sind richtig und von `GLAS_AN` gar nicht berührt; **nur sein NAME verspricht mehr
+als er prüft.**
+
+Entscheidung 99 hat seither einen echten Wächter: **`npm run pruef-kopf`** (jetzt
+**24** statt 19). Er hält fest, dass `GLAS_AN` auf `false` steht, dass
+`SsGlas.native.tsx` ihn liest und dass er die ERSTE Bedingung in `GLAS_DA` ist —
+mit Gegenprobe, am umgelegten Schalter rot gesehen.
 
 ### Ians Entscheidungen 98–100 (2026-09-20)
 
@@ -188,9 +197,9 @@ selbst verschoben hatte (dann zentriert die App absichtlich nicht zurück).
 | `npm run pruef-demoregel` | **29** | nichts |
 | `npm run pruef-alter` | **16** | nichts |
 | `npm run pruef-zustimmung` | **28** | nichts |
-| `npm run pruef-glas` | **33** | nichts (⚠️ merkt NICHT, dass `GLAS_AN` aus ist) |
+| `npm run pruef-glas` | **33** | nichts (bewacht das **Messgerät**, nicht die App — siehe oben) |
 | `npm run pruef-farben` | **66** | nichts |
-| `npm run pruef-kopf` | **19** | nichts |
+| `npm run pruef-kopf` | **24** | nichts (seit 20.9 auch Ians Entscheidung 99) |
 
 Dazu: `npx tsc --noEmit` sauber · `expo lint` **89 Probleme** (Stand 20.12: 82 vorbestehend, plus vier aus den zwei neuen `pan.x.interpolate()`-Zeilen der WischKarte — jede meldet doppelt; dazu
 **einer mit Namen**: `react-hooks/refs` in `BildZuschneiden.tsx` — derselbe, den
