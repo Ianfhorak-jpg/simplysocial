@@ -8,7 +8,7 @@ import { SsAvatar, SsButton, SsInput, SsText } from './ui';
 import type { FeedEintrag } from '@/features/posts/hooks';
 import { grussVorschlag } from '@/features/posts/wisch';
 import { useKollisionen } from '@/features/requests/hooks';
-import { TAB_KAPSEL_SEITE, useTabUeberdeckung } from '@/lib/tabs';
+import { useTabUeberdeckung } from '@/lib/tabs';
 import { colors, ecke, spacing, type } from '@/theme';
 
 /**
@@ -212,19 +212,33 @@ const styles = StyleSheet.create({
    *
    * *Eine Regel, deren GRUND wegfällt, hinterlässt ihre Wirkung* (FALLEN.md).
    *
-   * ── Warum `TAB_KAPSEL_SEITE` und nicht irgendein Rand ───────────────────
-   * Damit stehen Leiste und Tab-Kapsel auf derselben senkrechten Linie. Die
-   * Zahl steht in `lib/tabs.ts` und nirgends sonst (harte Regel 62) — ein
-   * eigenes `spacing.lg` hier wäre heute derselbe Wert und morgen nicht mehr.
+   * ── 🔴 Warum `spacing.lg` und NICHT `TAB_KAPSEL_SEITE` ──────────────────
+   * Der erste Anlauf nahm `TAB_KAPSEL_SEITE` aus `lib/tabs`, um mit der
+   * Tab-Kapsel auf einer Linie zu stehen. **Am Gerät war die Leiste danach
+   * schmal und klebte links am Rand** (Ians Bild, 2026-09-20, 21:04).
+   *
+   * `lib/tabs.native.ts` exportiert die Kapsel-Maße mit ABSICHT nicht: Auf iOS
+   * gibt es keine eigene Kapsel mehr, die man messen könnte — sie gehört Apple
+   * (Entscheidung 85, NativeTabs). Der Import lief trotzdem durch, denn
+   * `tsc` löst `@/lib/tabs` immer auf `tabs.ts` auf; `moduleSuffixes` steht in
+   * der `tsconfig.json` nicht. Zur Laufzeit war der Wert damit `undefined`, und
+   * ein absolutes Kind ohne `left`/`right` wird inhaltsbreit und setzt sich an
+   * seine statische Position — x = 0.
+   *
+   * **Der Bezugspunkt ist jetzt ein anderer, und ein besserer:** `spacing.lg`
+   * ist der Seitenrand, den `stapelBereich` den Post-Karten gibt. Die Leiste
+   * steht also mit dem auf einer Linie, worüber sie liegt. Apples Leiste
+   * darunter hat ihren eigenen Rand, und den kennen wir nicht — sich daran
+   * ausrichten zu wollen war von vornherein eine Frage ohne Antwort.
    *
    * `ecke.xl` statt zweier Radien: Jetzt sollen wirklich alle vier Ecken rund
    * sein, und damit ist es der Fall, für den es `ecke` gibt (harte Regel 112).
    */
   leiste: {
     position: 'absolute',
-    right: TAB_KAPSEL_SEITE,
+    right: spacing.lg,
     bottom: 0,
-    left: TAB_KAPSEL_SEITE,
+    left: spacing.lg,
     gap: spacing.md,
     padding: spacing.lg,
     backgroundColor: colors.surface,

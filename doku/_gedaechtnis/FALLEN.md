@@ -1826,3 +1826,34 @@
   TABELLE (`a` Aktivität, `b` Anfrage, `c` Chat, `d` Nachricht), die Ziffer davor
   sagt WESSEN Welt (`0` die Demo-Welt, `1` das eigene Konto). Damit kommt man nie in
   die Nähe von `g`, und die ID sagt beim Lesen, was sie ist.
+- **`tsc` löst `@/lib/tabs` IMMER auf die Web-Datei auf — eine `.native`-Fassung,
+  die etwas WEGLÄSST, ist am Mac unsichtbar.** Am 2026-09-20 hat die Antwort-Leiste
+  `TAB_KAPSEL_SEITE` aus `@/lib/tabs` geholt. `tsc` sauber, `expo lint` 89, alle
+  Wächter grün — und am iPhone klebte die Leiste schmal am linken Bildrand.
+  `lib/tabs.native.ts` exportiert die Kapsel-Maße **mit Absicht nicht** (auf iOS
+  gehört die Leiste Apple, Entscheidung 85). Metro kennt die Plattform-Endungen,
+  TypeScript nur mit `moduleSuffixes` in der `tsconfig.json` — und das steht dort
+  nicht.
+  ⚠️ **Der Schaden entsteht erst in `StyleSheet.create`.** Der Wert war zur Laufzeit
+  `undefined`, und `StyleSheet.create` läuft beim LADEN des Moduls und friert ihn so
+  ein. Ein absolut positioniertes Kind ohne `left`/`right` wird dann inhaltsbreit und
+  setzt sich an seine statische Position, also x = 0. Eine Funktion aus derselben
+  Datei (`useTabUeberdeckung`) funktionierte daneben einwandfrei — sie wird beim
+  AUFRUF gelesen, nicht beim Laden.
+  🔴 **Das Schlimmste daran stand als Zusage in der Datei selbst:** *„Wer sie auf iOS
+  liest, bekommt jetzt einen Typfehler statt einer stillen Falschmessung."* Diesen
+  Typfehler hat es nie gegeben. *Eine Regel, die nichts vorfindet, sieht aus wie eine
+  Regel, die tut* — hier in ihrer teuersten Form, denn die Begründung daneben war
+  richtig und hat die Zusage glaubwürdig gemacht.
+  **Absicherung seit dem 2026-09-20: `npm run pruef-plattform`.** Er vergleicht für
+  jedes `.native`-Paar die exportierten NAMEN und meldet, wer einen holt, den es am
+  Gerät nicht gibt. `moduleSuffixes` zu setzen wäre die naheliegende und die falsche
+  Antwort: Dann läge der WEB-Zweig ungeprüft da, und die Dateien gibt es ja gerade
+  deshalb doppelt.
+  ⚠️ **Der Wächter selbst hatte die Falle zweimal im Kleinen:** Zuerst prüfte er die
+  WEB-Hälften der Paare mit (die laufen am Gerät nie und dürfen die Maße lesen) und
+  übersprang die `.native`-Hälften (die laufen dort sehr wohl) — vier Fehlalarme in
+  `app/(tabs)/_layout.tsx`. Und seine Prüfung auf die falsche Zusage suchte den Satz
+  als TEXT und ging an der BERICHTIGUNG darüber rot. Jetzt ist es ein positiver Test:
+  Steht der Verweis auf den Wächter in der Datei?
+

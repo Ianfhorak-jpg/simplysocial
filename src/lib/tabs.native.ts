@@ -22,9 +22,23 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
  * ── Was diese Datei mit ABSICHT nicht exportiert ─────────────────────────────
  * Die Kapsel-Maße (`TAB_KAPSEL_HOEHE`, `TAB_KAPSEL_SEITE`, `TAB_SYMBOL_VERSATZ`,
  * `tabKapselUnten` …). Auf iOS gibt es keine eigene Kapsel mehr, die man messen
- * könnte — sie gehört Apple. **Wer sie auf iOS liest, bekommt jetzt einen
- * Typfehler statt einer stillen Falschmessung.** Das ist dieselbe Technik wie
- * `aufGrund` als Pflichtfeld in `colors.ts`: `tsc` schreibt die Arbeitsliste.
+ * könnte — sie gehört Apple.
+ *
+ * 🔴 **BERICHTIGUNG vom 2026-09-20.** Hier stand: *„Wer sie auf iOS liest,
+ * bekommt jetzt einen Typfehler statt einer stillen Falschmessung."* **Den
+ * Typfehler gibt es nicht.** `tsc` löst `@/lib/tabs` IMMER auf `tabs.ts` auf;
+ * die Plattform-Endungen kennt nur Metro, TypeScript bräuchte dafür
+ * `moduleSuffixes` in der `tsconfig.json`, und das steht dort nicht.
+ *
+ * Genau diese stille Falschmessung ist dann passiert: `AntwortLeiste.tsx`
+ * holte `TAB_KAPSEL_SEITE`, tsc war sauber, und am iPhone klebte die Leiste
+ * schmal am linken Rand — `undefined` als `left`/`right`, von
+ * `StyleSheet.create` eingefroren.
+ *
+ * Die Absicherung heißt seither **`npm run pruef-plattform`** und prüft ALLE
+ * `.native`-Paare, nicht nur dieses. `moduleSuffixes` wäre die naheliegende
+ * Antwort und ist die falsche: Damit läge auch der WEB-Zweig ungeprüft da,
+ * und die Dateien gibt es ja gerade deshalb doppelt.
  *
  * Auf Web bleibt `tabs.ts` unverändert und liefert weiter alles — dort steht die
  * Kapsel ja noch (Entscheidung 43: zwei Dateien mit Absicht, wie `SsGlas`).

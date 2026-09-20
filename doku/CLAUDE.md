@@ -719,6 +719,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Es gibt keine Buchstaben nach `f` — eine UUID ist HEX
 - Eine Wegwerf-Datenbank in `/tmp` überlebt macOS' Aufräumen nicht — und das Skript prüft nur, OB das Verzeichnis da ist
 - `npx prettier` ohne Projekt-Konfiguration ist kein Formatierer, sondern eine Umschreibung
+- `tsc` löst `@/lib/tabs` IMMER auf die Web-Datei auf — eine `.native`-Fassung, die etwas WEGLÄSST, ist am Mac unsichtbar
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

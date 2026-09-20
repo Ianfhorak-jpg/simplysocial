@@ -84,7 +84,8 @@
     "schirm": "bash scripts/schirm.sh",
     "pruef-farben": "python3 supabase/pruefen/32_farben.py",
     "pruef-kopf": "python3 supabase/pruefen/33_kopfzeile.py",
-    "pruef-nennung": "python3 supabase/pruefen/35_nennung.py"
+    "pruef-nennung": "python3 supabase/pruefen/35_nennung.py",
+    "pruef-plattform": "python3 supabase/pruefen/36_plattform.py"
   },
   "private": true
 }
