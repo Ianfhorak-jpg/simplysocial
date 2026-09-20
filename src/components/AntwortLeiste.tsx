@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DoppelHinweis } from './DoppelHinweis';
 import { SsAvatar, SsButton, SsInput, SsText } from './ui';
@@ -7,6 +8,7 @@ import { SsAvatar, SsButton, SsInput, SsText } from './ui';
 import type { FeedEintrag } from '@/features/posts/hooks';
 import { grussVorschlag } from '@/features/posts/wisch';
 import { useKollisionen } from '@/features/requests/hooks';
+import { useTabUeberdeckung } from '@/lib/tabs';
 import { categoryColors, colors, KURVE, radius, spacing } from '@/theme';
 
 /**
@@ -41,6 +43,32 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
   const { post, author } = eintrag;
   const palette = categoryColors[post.category];
   const [text, setText] = useState(() => grussVorschlag(author.displayName));
+  /**
+   * 🔴 **Die Leiste lag unter der Tab-Kapsel** — Ians Befund vom 2026-09-20:
+   * *„wenn man nach rechts wischt, dann ist dieses Feld, was von unten raufkommt,
+   * auch von dem Liquid-Glass-Ding … das sieht nicht gut aus."*
+   *
+   * `bottom: 0` heißt auf einem Tab-Screen die Bildschirmkante und nicht die
+   * Oberkante der schwebenden Kapsel: `SsScreen` gibt unten keinen Abstand
+   * (`edges={['top']}`, und `useTabRand()` ist auf iOS 0). Dieselbe Ursache wie bei
+   * den Knöpfen im `WischStapel`.
+   */
+  const tabUeberdeckung = useTabUeberdeckung();
+  /**
+   * Wie weit der Schleier nach OBEN über seinen Platz hinausreichen muss.
+   *
+   * 🔴 Ians zweiter Befund am selben Moment: *„alles wird ja so ein bisschen
+   * grau-weiß, und oben wird es aber nicht grau-weiß — da wo dann meine Kamera
+   * ist."* Der Schleier ist ein Kind des Screen-Inhalts, und der beginnt UNTER der
+   * `SafeAreaView`-Kante. Die Statusleiste blieb deshalb als heller Streifen stehen,
+   * während darunter alles abdunkelte — und dieser Streifen ist genau der Ort, an
+   * den man ohnehin schaut.
+   *
+   * ⚠️ Ein negativer Rand, und die sind in diesem Projekt schon schiefgegangen
+   * (Phase 12). Hier ist er tragbar, weil die Fläche **absolut positioniert** ist
+   * und nichts verschiebt: Sie deckt zu, sie schiebt nicht.
+   */
+  const insets = useSafeAreaInsets();
   // Phase 18d: dieselbe Pruefung wie im Post-Detail, weil der Wischstapel derselbe
   // Weg zu derselben Anfrage ist. Stuende sie nur im Detail, waere sie ausgerechnet
   // auf dem Startbildschirm still — dort, wo am schnellsten zugesagt wird.
@@ -65,7 +93,7 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
     <>
       {/* Der Schleier ist nicht Dekoration: Er sagt, dass der Stapel gerade nicht
           dran ist, und er ist die zweite Art abzubrechen — daneben tippen. */}
-      <Animated.View style={[styles.schleier, { opacity: schleier }]}>
+      <Animated.View style={[styles.schleier, { top: -insets.top, opacity: schleier }]}>
         <Pressable
           onPress={onAbbrechen}
           accessibilityRole="button"
@@ -74,7 +102,8 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
         />
       </Animated.View>
 
-      <Animated.View style={[styles.leiste, { transform: [{ translateY: hoch }] }]}>
+      <Animated.View
+        style={[styles.leiste, { bottom: tabUeberdeckung, transform: [{ translateY: hoch }] }]}>
         <View style={styles.kopf}>
           <SsAvatar name={author.displayName} seed={author.id} photoUrl={author.photoUrl} size="sm" />
           <View style={styles.kopfText}>

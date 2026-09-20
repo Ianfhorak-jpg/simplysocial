@@ -14,6 +14,7 @@ import { WischKarte, type WischKarteHandle } from './WischKarte';
 import { SsButton, SsCard, SsIcon, SsText } from './ui';
 
 import { merkerGesehen, merkerSetzen } from '@/lib/merker';
+import { useTabUeberdeckung } from '@/lib/tabs';
 
 import type { FeedEintrag } from '@/features/posts/hooks';
 import { SICHTBARE_KARTEN, type WischRichtung } from '@/features/posts/wisch';
@@ -96,6 +97,9 @@ export function WischStapel({
   blatt,
 }: WischStapelProps) {
   const obenRef = useRef<WischKarteHandle>(null);
+  // ⚠️ VOR dem `return null` weiter unten — ein Hook darf nicht hinter einer
+  // Abzweigung stehen. Wofür die Zahl da ist, steht bei den Knöpfen im Baum.
+  const tabUeberdeckung = useTabUeberdeckung();
 
   const alle: Karte[] = [
     ...(anleitung ? [{ art: 'anleitung' } as const] : []),
@@ -152,7 +156,23 @@ export function WischStapel({
         {blatt ? <Blatt>{blatt}</Blatt> : null}
       </View>
 
-      <View style={styles.knoepfe}>
+      {/* 🔴 **Der Abstand zur Tab-Kapsel gehört HIERHER, nicht in den Screen.**
+          Ians Befund vom 2026-09-20: *„unten hast du ja zwei Buttons … die sieht
+          man nicht, weil sie halb unter der Liquid-Glass-Leiste sind."*
+
+          Die Ursache liegt in `SsScreen`: Auf einem `tabScreen` behandelt die
+          `SafeAreaView` die untere Kante NICHT (`edges={['top']}`), und der
+          `marginBottom` kommt aus `useTabRand()` — das ist auf iOS seit
+          Entscheidung 85 (NativeTabs) **0**. Der Inhalt läuft damit bis zur
+          Bildschirmkante, und die schwebende Kapsel legt sich darüber.
+
+          ⚠️ **Behoben wird es hier und nicht dort**, weil `SsScreen` jeden
+          Tab-Screen trägt: Ein zusätzlicher Abstand für alle gäbe an den
+          scrollenden Screens doppelten Rand (die rechnen ihren eigenen schon in
+          `contentContainerStyle`). Das ist harte Regel 62 in ihrer eigentlichen
+          Aussage — was FEST steht, weicht der Leiste aus, und zwar dort, wo man
+          weiß, was schon dasteht. */}
+      <View style={[styles.knoepfe, { paddingBottom: spacing.sm + tabUeberdeckung }]}>
         <SsButton
           variant="ghost"
           label="Weg"
