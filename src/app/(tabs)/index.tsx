@@ -250,7 +250,35 @@ export default function FeedScreen() {
    * Kapsel, Posten-Knopf und Polsterung bezieht — drei Dinge, die sich schon
    * mehrfach geändert haben (harte Regel 60).
    */
+  // Gebraucht für `kopfUeberInhalt` darunter: Die Kopfleiste trägt den oberen
+  // Sicherheitsabstand seit dem 2026-09-20 selbst, `SsScreen` ebenfalls.
+  const insets = useSafeAreaInsets();
   const [kopfHoehe, setKopfHoehe] = useState(0);
+  /**
+   * 🔴 **Wie weit die Kopfleiste in den INHALT des Stapels ragt — und das ist
+   * eine andere Zahl als `kopfHoehe`.**
+   *
+   * `kopfHoehe` wird ab dem 2026-09-20 vom oberen BILDRAND aus gemessen: Die
+   * Leiste steht in beiden Ansichten außerhalb von `SsScreen` und bringt
+   * `insets.top` selbst mit. Für die Karte ist das genau richtig, sie hat
+   * keinen Screen um sich.
+   *
+   * ⚠️ **Der Stapel steckt dagegen IN `SsScreen`, und der hat `insets.top`
+   * schon abgezogen** (`edges={['top']}`). Wer dort mit `kopfHoehe` polstert,
+   * polstert den Sicherheitsabstand ein zweites Mal — auf einem iPhone 16 rund
+   * 59 Punkte Luft zu viel.
+   *
+   * *Das ist die Falle „Zwei Größen mit fast gleichem Namen sind der Fehler,
+   * den man nur beim Lesen findet" — und zugleich der Grund, warum es sie als
+   * eigene Zeile mit eigenem Namen gibt und nicht als `- insets.top` an zwei
+   * Stellen im JSX.*
+   *
+   * Vorher gab es diesen Unterschied auch schon, nur unausgesprochen: Da
+   * MEINTE `kopfHoehe` in der Karte etwas anderes als im Stapel, je nachdem,
+   * welcher Zweig gerade lief. Jetzt hat es EINE Bedeutung und eine benannte
+   * Ableitung daneben.
+   */
+  const kopfUeberInhalt = Math.max(0, kopfHoehe - insets.top);
   const anzahlFilter = aktiveFilter(filter);
   const filterAktiv = anzahlFilter > 0;
   // Dieselbe Ableitung, die `KarteVollbild` für die Karte benutzt — aus
@@ -490,9 +518,6 @@ export default function FeedScreen() {
   const kopfLeiste = (
     <KopfLeiste
       aufKarte={ansicht === 'karte'}
-      // Nur die Karte hat keinen `SsScreen` um sich, der den oberen
-      // Sicherheitsabstand schon trägt (Ians Entscheidung 44: randlose Karte).
-      eigenerRandOben={ansicht === 'karte'}
       umschalter={umschalter}
       filterOffen={filterOffen}
       anzahlFilter={anzahlFilter}
@@ -641,19 +666,48 @@ export default function FeedScreen() {
   // ⚠️ **Als LETZTES Kind in beiden Zweigen, und das ist kein Stil.** Ohne
   // `zIndex` liegt in React Native oben, was später im Baum steht — ein
   // `zIndex` wäre die zweite Wahrheit über dieselbe Sache.
-  if (ansicht === 'karte') {
-    return (
-      <>
-        {karteBaum}
-        <View style={styles.kopfSchwebend}>{kopfLeiste}</View>
-      </>
-    );
-  }
-
+  /**
+   * 🔴 **EINE Rückgabe für Karte UND Stapel — Ians Befund vom 2026-09-20:**
+   * *„die Animation ist nur zwei Frames lang, also es ist nicht wirklich eine
+   * Animation, und das ist direkt wenn man auf den Stapel klickt."*
+   *
+   * ── Was hier vorher stand und warum es die Animation zerstörte ────────────
+   * Es gab ZWEI Rückgaben. In der einen war die Kopfleiste das zweite Kind des
+   * Fragments, in der anderen steckte sie tief in `SsScreen`:
+   *
+   *     Karte   <>{karteBaum}<View>{kopfLeiste}</View></>
+   *     Stapel  <>{karteBaum}<SsScreen> … <View>{kopfLeiste}</View> … </SsScreen></>
+   *
+   * React vergleicht Kind für Kind. An Position 2 stand einmal ein `View` und
+   * einmal ein `SsScreen` — **zwei verschiedene Typen, also wirft React den
+   * ganzen Teilbaum weg und baut ihn neu**, `KopfLeiste` mit. Und beim Neubau
+   * gilt `useState(() => new Animated.Value(aufKarte ? 1 : 0))`: Der Taktgeber
+   * **startet direkt am Ziel**. Das `useEffect` animiert danach von 1 nach 1 —
+   * es bewegt sich nichts. Dazu stehen `zeile`, `filterNatur` und
+   * `abwaehlNatur` wieder auf 0, `bereit` ist also für ein, zwei Bilder false,
+   * und es gibt überhaupt keine Breiten. Genau die zwei Frames.
+   *
+   * 🔴 **Das war die Wurzel der vier gescheiterten Runden zu Entscheidung 105.**
+   * Tempo, Pillenbreite und Kapselbreite waren jede für sich richtig zu
+   * reparieren — sie liefen nur alle auf einem `Animated.Value`, der beim
+   * Umschalten jedes Mal neu geboren wurde und schon am Ziel stand. *Zweimal
+   * die STILLE repariert, bevor die URSACHE gesucht war* (FALLEN.md).
+   *
+   * ── Warum `null` und nicht zwei Rückgaben ─────────────────────────────────
+   * Die Kinder dieses Fragments stehen fest an ihrer Stelle: `karteBaum`, der
+   * Stapel-Baum, die Kopfleiste. Ein `null` an Platz zwei RÄUMT den Stapel ab,
+   * ohne Platz drei zu verschieben — und nur darauf kommt es an.
+   *
+   * ⚠️ **Der Bezirks-Zweig weiter oben bleibt eine eigene Rückgabe.** Dort gibt
+   * es die Kopfleiste gar nicht (harte Regel 67), also auch keine Bewegung,
+   * die ein Neubau zerstören könnte.
+   */
   return (
     <>
       {karteBaum}
 
+      {ansicht === 'karte' ? null : (
+      <>
       {/* `keyboard` steht hier wegen der Antwort-Leiste: Sie klebt am unteren Rand,
           und auf iOS läge sie sonst unter der Tastatur. Fest gesetzt und nicht
           umgeschaltet — ein Wechsel würde den ganzen Inhalt neu einhängen und
@@ -666,7 +720,7 @@ export default function FeedScreen() {
           Ein Filterfeld, das halb hinter Glas beginnt, ist nicht schön, sondern
           unlesbar — der Stapel darunter ist der Fall, der das Glas trägt. */}
       {!stapelSichtbar ? (
-        <View style={[styles.filterImFluss, { marginTop: kopfHoehe }]}>{filterFeld}</View>
+        <View style={[styles.filterImFluss, { marginTop: kopfUeberInhalt }]}>{filterFeld}</View>
       ) : null}
 
       {stapelLeer ? (
@@ -698,23 +752,30 @@ export default function FeedScreen() {
         // ⚠️ Die Überlappung ist bewusst klein. Die `PostCard` bringt oben ihre
         // eigene Polsterung mit; verschwände mehr als dieser Rand, wäre Inhalt
         // verdeckt statt Fläche.
-        <View style={[styles.stapelBereich, { paddingTop: Math.max(0, kopfHoehe - spacing.md) }]}>
+        <View style={[styles.stapelBereich, { paddingTop: Math.max(0, kopfUeberInhalt - spacing.md) }]}>
           {stapelBaum(true)}
         </View>
+      )}
+
+        {antwortLeiste}
+      </SsScreen>
+      </>
       )}
 
       {/* ⚠️ **Als LETZTES Kind, und das ist kein Stil, sondern die Reihenfolge.**
           Ohne `zIndex` liegt in React Native oben, was später im Baum steht. Ein
           `zIndex` wäre die zweite Wahrheit über dieselbe Sache — dieselbe
-          Überlegung wie bei der Pille in `SsSegment`. */}
-      {/* Die absolute Hülle hier OHNE `top`: `SsScreen` trägt den oberen
-          Sicherheitsabstand schon (`edges={['top']}`). Im Kartenzweig gibt es
-          keinen Screen darum — dort bringt `KopfLeiste` ihn selbst mit
-          (`eigenerRandOben`). */}
-      <View style={styles.kopfSchwebend}>{kopfLeiste}</View>
+          Überlegung wie bei der Pille in `SsSegment`.
 
-        {antwortLeiste}
-      </SsScreen>
+          🔴 **Und es ist die EINE Stelle, an der die Kopfleiste steht** — in der
+          Karte wie im Stapel, unverändert über den Wechsel hinweg. Nur deshalb
+          überlebt ihr Taktgeber den Umschalter und bewegt sich wirklich, statt
+          neu geboren zu werden und schon am Ziel zu stehen. Die Begründung im
+          Volltext steht bei der Rückgabe oben.
+
+          Der obere Sicherheitsabstand kommt jetzt aus `KopfLeiste` selbst: Hier
+          gibt es keinen `SsScreen` mehr darüber, der ihn tragen könnte. */}
+      <View style={styles.kopfSchwebend}>{kopfLeiste}</View>
     </>
   );
 }
@@ -938,10 +999,10 @@ function KarteVollbild({
   // Entscheidung 105 gibt es sie hier gar nicht mehr.
   //
   // ⚠️ **Ohne `insets.top` davor — die Berichtigung eines Fehlers, den kein
-  // Typcheck sieht.** In der Kartenansicht trägt `KopfLeiste` den oberen
-  // Sicherheitsabstand SELBST (`eigenerRandOben`). Er steckt also schon in der
-  // gemessenen Höhe; ihn hier noch einmal zu addieren hätte Wien ein zweites
-  // Mal nach unten geschoben — genau Ians Befund verdoppelt.
+  // Typcheck sieht.** `KopfLeiste` trägt den oberen Sicherheitsabstand SELBST
+  // (seit dem 2026-09-20 in beiden Ansichten, siehe `kopfUeberInhalt`). Er
+  // steckt also schon in der gemessenen Höhe; ihn hier noch einmal zu addieren
+  // hätte Wien ein zweites Mal nach unten geschoben — Ians Befund verdoppelt.
   const leisteBelegt = kopfHoehe;
 
   const nichtsDa = Object.keys(zaehlung).length === 0 && ohneBezirk === 0;
@@ -1240,7 +1301,6 @@ function KopfLeiste({
    * selbst mit. **Eine Prop und kein `ansicht === 'karte'` daneben:** Die Frage
    * ist „steckt oben schon ein Abstand drin", nicht „welche Ansicht ist dran".
    */
-  eigenerRandOben,
   umschalter,
   filterOffen,
   anzahlFilter,
@@ -1250,7 +1310,6 @@ function KopfLeiste({
   onHoehe,
 }: {
   aufKarte: boolean;
-  eigenerRandOben: boolean;
   umschalter: (
     style: StyleProp<ViewStyle>,
     aufGlas?: boolean,
@@ -1346,7 +1405,20 @@ function KopfLeiste({
 
   return (
     <View
-      style={[styles.kopfLeiste, eigenerRandOben && { paddingTop: insets.top + spacing.sm }]}
+      /**
+       * 🔴 **Der obere Sicherheitsabstand gehört seit dem 2026-09-20 IMMER der
+       * Kopfleiste selbst** — vorher nur in der Kartenansicht (`eigenerRandOben`).
+       *
+       * Der Grund ist der Umbau darunter: Die Leiste steht jetzt in BEIDEN
+       * Ansichten außerhalb von `SsScreen`, an einer festen Stelle im Baum.
+       * Damit gibt es keinen `SafeAreaView` mehr über ihr, der den Abstand
+       * trägt — und keine zwei Fälle mehr, die man verwechseln kann.
+       *
+       * Die Geometrie bleibt Punkt für Punkt dieselbe: Im Stapel kam der
+       * Abstand bisher von `SsScreen` (`edges={['top']}`) und `spacing.sm` von
+       * hier. Jetzt kommt beides von hier.
+       */
+      style={[styles.kopfLeiste, { paddingTop: insets.top + spacing.sm }]}
       onLayout={(e) => {
         setZeile(e.nativeEvent.layout.width);
         onHoehe(e.nativeEvent.layout.height);

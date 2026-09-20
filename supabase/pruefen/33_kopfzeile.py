@@ -387,6 +387,57 @@ pruef('… und dieser Platz ist GEMESSEN, nicht geraten',
       'setAbwaehlNatur(e.nativeEvent.layout.width)' in roh,
       'die Breite hängt an der Schriftgröße des Geräts, nicht an einer Konstante')
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  EINE STELLE IM BAUM — sonst wird die Kapsel neu gebaut statt bewegt
+# ══════════════════════════════════════════════════════════════════════════════
+#  🔴 **Das war die Wurzel der VIER gescheiterten Runden zu Entscheidung 105.**
+#  Es gab zwei Rückgaben; in der einen war die Kopfleiste das zweite Kind des
+#  Fragments, in der anderen steckte sie in `SsScreen`. React vergleicht Kind
+#  für Kind — an Position 2 standen zwei verschiedene Typen, also wurde der
+#  ganze Teilbaum verworfen und neu gebaut. Beim Neubau startet
+#  `useState(() => new Animated.Value(aufKarte ? 1 : 0))` **direkt am Ziel**,
+#  und `useEffect` animiert von 1 nach 1. Ians Befund vom 2026-09-20: *„die
+#  Animation ist nur zwei Frames lang, also es ist nicht wirklich eine
+#  Animation."*
+#
+#  ⚠️ **Was dieser Abschnitt NICHT kann.** Er sieht nicht, ob React neu baut —
+#  das sagt nur ein laufendes Bild. Er hält fest, dass es GENAU EINE Stelle
+#  gibt, an der die Leiste gerendert wird. Zwei Stellen sind der Fehler,
+#  unabhängig davon, wie sie zustande kommen.
+print('')
+print('── Die Kopfleiste steht an EINER Stelle im Baum ──')
+
+stellen = roh.count('<View style={styles.kopfSchwebend}>{kopfLeiste}</View>')
+pruef(f'Sie wird genau EINMAL gerendert (gefunden: {stellen}×)',
+      stellen == 1,
+      'zwei Stellen heissen zwei Baumpositionen — React baut die Kapsel dann neu, '
+      'statt sie zu bewegen, und der Taktgeber startet schon am Ziel')
+pruef('… und NICHT innerhalb von `SsScreen`',
+      bool(re.search(r'</SsScreen>\s*</>\s*\)\}\s*(?:\{/\*.*?\*/\}\s*)?<View style=\{styles\.kopfSchwebend\}>', roh, re.S)),
+      'steckt sie im Screen, hat sie im Kartenzweig zwangsläufig eine andere Stelle')
+
+# Der Sicherheitsabstand gehört damit IMMER ihr — ein `eigenerRandOben` wäre
+# die zweite Wahrheit darüber, wer ihn trägt.
+# Gesucht wird die PROP, nicht das Wort: Warum es sie einmal gab, steht weiter
+# unten im Text und soll dort auch stehen bleiben. *Ein Wächter, der die eigene
+# BEGRÜNDUNG für den Verstoß hält, wird abgeschaltet statt gelesen* (FALLEN.md).
+alsProp = re.findall(r'eigenerRandOben\s*[=,:]', roh)
+pruef(f'Der obere Sicherheitsabstand gehört immer der Kopfleiste (Prop-Reste: {len(alsProp)})',
+      not alsProp
+      and 'styles.kopfLeiste, { paddingTop: insets.top + spacing.sm }' in roh,
+      'ohne `SsScreen` darüber trägt ihn sonst niemand — ein Schalter dafür wäre '
+      'die zweite Wahrheit über die Frage, wer ihn trägt')
+
+# Und der Stapel darf ihn nicht ein ZWEITES Mal polstern.
+pruef('Der Stapel rechnet mit `kopfUeberInhalt`, nicht mit `kopfHoehe`',
+      'const kopfUeberInhalt = Math.max(0, kopfHoehe - insets.top);' in roh
+      and 'marginTop: kopfUeberInhalt' in roh
+      and 'paddingTop: Math.max(0, kopfUeberInhalt - spacing.md)' in roh,
+      '`SsScreen` hat `insets.top` schon abgezogen — sonst rund 59 pt Luft zu viel')
+pruef('… und die Karte weiterhin mit `kopfHoehe`',
+      'kopfHoehe={kopfHoehe}' in roh,
+      'sie hat keinen Screen um sich, ihr Nullpunkt IST der Bildrand')
+
 print('')
 print(f'  {JA} Häkchen, {NEIN} Kreuze')
 sys.exit(1 if NEIN else 0)
