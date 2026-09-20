@@ -19,6 +19,7 @@ import {
   stufeFuer,
 } from '@/features/posts/karte';
 import { BEZIRKE_GEO, WIEN_REGION, nachRaster } from '@/lib/karte-geo';
+import { bewegung } from '@/lib/bewegung';
 import { bezirkAn } from '@/lib/karte-treffer';
 import { colors } from '@/theme';
 
@@ -359,10 +360,57 @@ export function SsAppleKarte({
    * würde genau den Fehler machen, den dieser Effekt behebt. Und die 280 ms sind
    * Ians Entscheidung 60: *„eine leichte Transition, die man fast gar nicht merkt."*
    */
+  /**
+   * ═══════════════════════════════════════════════════════════════════════════
+   *  WIEN STEHT MITTIG IM SICHTBAREN STREIFEN — Ians Befund vom 2026-09-20
+   * ═══════════════════════════════════════════════════════════════════════════
+   *
+   * Sein Satz am Gerät: *„die Karte halt, dass sie nicht mittig ist auf meinem
+   * Handy."* (Zur BESCHREIBUNG hatte er vorher „passt so" gesagt — am Bild sah er
+   * es anders, und das Bild zählt mehr.)
+   *
+   * ── Warum sie schief stand, und warum das kein Fehler war ─────────────────
+   * `mapPadding` ist EIN Regler für zwei Fragen (Entscheidung 58): wo Wien sitzt
+   * und wo Apples Nennung sitzt. Mit `verdeckt = 0` geht die Nennung herunter —
+   * das war der Zweck —, aber MapKit zentriert den Ausschnitt dann im Rechteck
+   * **[randOben … Unterkante]**, während der wirklich SICHTBARE Streifen bei
+   * `hoehe − randUnten` aufhört: Die Tab-Kapsel deckt den Rest.
+   *
+   * Die zwei Mitten liegen damit genau `randUnten / 2` Punkte auseinander — und
+   * um so viel steht Wien zu tief.
+   *
+   * ── Warum die KAMERA und nicht die Polsterung ─────────────────────────────
+   * `mapPadding.bottom` zurückzudrehen würde Wien geradebiegen und **Apples
+   * Nennung wieder mit hochziehen**. Das ist derselbe Regler, und die Nennung hat
+   * Vorrang (Lizenzbedingung, Entscheidung 58). Die Kamera trennt die zwei Fragen:
+   * Sie verschiebt nur, WOHIN geschaut wird.
+   *
+   * ⚠️ **Nur in DIESEM Zeichner, und das bricht harte Regel 52 nicht.** Die
+   * Verschiebung ist keine Bedeutung („wo ist ganz Wien"), sondern der Ausgleich
+   * für ein Verhalten von MapKit: dass es im GEPOLSTERTEN Rechteck zentriert.
+   * `SsWienKarte` hat keine Polsterung und keinen Grund dazu — `WIEN_REGION`
+   * bleibt für beide dieselbe Antwort auf dieselbe Frage.
+   *
+   * ⚠️ **Nach SÜDEN verschoben, obwohl Wien nach OBEN soll.** Was in der Mitte des
+   * Rechtecks steht, ist der Kameramittelpunkt; legt man ihn südlich von Wien, dann
+   * liegt Wien nördlich der Mitte — also weiter oben im Bild. Das ist die Stelle,
+   * an der man beim Lesen zweimal hinsehen muss.
+   */
+  const wienAusschnitt = useMemo(() => {
+    // Das Rechteck, in dem MapKit den Ausschnitt einpasst — `bottom` ist 0.
+    const rechteck = hoehe - randOben;
+    if (rechteck <= 0 || randUnten <= 0) return WIEN_REGION;
+    const gradJePunkt = WIEN_REGION.latitudeDelta / rechteck;
+    return {
+      ...WIEN_REGION,
+      latitude: WIEN_REGION.latitude - (randUnten / 2) * gradJePunkt,
+    };
+  }, [hoehe, randOben, randUnten]);
+
   useEffect(() => {
     if (!bereit || eigen.current) return;
-    karte.current?.animateToRegion(WIEN_REGION, UEBERGANG_MS);
-  }, [bereit, verdeckt, randOben]);
+    karte.current?.animateToRegion(wienAusschnitt, UEBERGANG_MS);
+  }, [bereit, verdeckt, randOben, wienAusschnitt]);
 
   const tippen = useCallback(
     (koordinate: { latitude: number; longitude: number }) => {
@@ -387,10 +435,63 @@ export function SsAppleKarte({
   const knopfPlatz =
     ZURUECK_KNOPF_BEI_GANZ || hoehe - randOben - randUnten > NENNUNG_MIN_KARTE;
 
+  /**
+   * ═══════════════════════════════════════════════════════════════════════════
+   *  DER ERSTE WECHSEL AUF DIE KARTE RUCKT NICHT MEHR — Ians Befund 2026-09-20
+   * ═══════════════════════════════════════════════════════════════════════════
+   *
+   * Seine Worte: *„wenn ich die App jetzt neu starte und auf Karten drauf gehe,
+   * dann buggt es noch … aber wenn ich es nochmal probiere, dann sieht es super
+   * aus."*
+   *
+   * ── Warum ausgerechnet beim ERSTEN Mal ────────────────────────────────────
+   * `karteBleibt` in `(tabs)/index.tsx` hängt die Karte erst beim ersten Öffnen in
+   * den Baum — bewusst, damit MapKit nicht im Rücken läuft, wenn jemand die Karte
+   * nie aufmacht. Der Preis fällt genau einmal an, und er ist dreistufig:
+   *
+   *   1. weiße Kacheln, solange MapKit lädt
+   *   2. die Karte erscheint hart
+   *   3. `mapPadding` wird erst jetzt bekannt → MapKit zoomt → der Effekt oben
+   *      fährt zurück, und **diese Fahrt sieht man.**
+   *
+   * Ab dem zweiten Mal steht alles schon, deshalb war es „super".
+   *
+   * ── Was hier passiert, und warum nicht das Naheliegende ───────────────────
+   * Verworfen: die Karte von Anfang an mitlaufen zu lassen. Das behebt das Bild,
+   * kostet aber Speicher und Akku bei jedem, der nie auf die Karte geht — genau
+   * die Abwägung, die `karteBleibt` schon getroffen hat.
+   *
+   * Stattdessen wird sie **erst gezeigt, wenn sie fertig ist**: `bereit` (MapKit
+   * hat geladen) UND `randOben > 0` (die Polsterung ist gemessen, die Kamerafahrt
+   * aus Schritt 3 ist also schon gelaufen). Vorher steht dort die leere Fläche der
+   * App statt weißer Kacheln.
+   *
+   * Es blendet **nur einmal** ein: Das Bauteil bleibt danach montiert, der Wert
+   * steht auf 1 und bleibt dort.
+   */
+  const sichtbar = bereit && randOben > 0;
+  const [einblenden] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    if (!sichtbar) return;
+    const lauf = Animated.timing(einblenden, {
+      toValue: 1,
+      ...bewegung.klappeAuf,
+      useNativeDriver: true,
+    });
+    lauf.start();
+    return () => lauf.stop();
+  }, [sichtbar, einblenden]);
+
   return (
     <View style={[styles.rahmen, fuellt && styles.rahmenVoll]}>
-      <View
-        style={[styles.flaeche, fuellt ? styles.flaecheVoll : { height: hoehe }]}
+      <Animated.View
+        style={[
+          styles.flaeche,
+          fuellt ? styles.flaecheVoll : { height: hoehe },
+          // Siehe `sichtbar` oben: Die Karte erscheint erst fertig, statt weiß zu
+          // blitzen und dann die Kamerafahrt vorzuführen.
+          { opacity: einblenden },
+        ]}
         onLayout={(e) =>
           setPlatz({ breite: e.nativeEvent.layout.width, hoehe: e.nativeEvent.layout.height })
         }>
@@ -503,14 +604,16 @@ export function SsAppleKarte({
               // Der Knopf gibt die Karte zurück — danach passt sie sich wieder von
               // selbst ein, wenn das Blatt seine Stufe wechselt.
               eigen.current = false;
-              karte.current?.animateToRegion(WIEN_REGION, UEBERGANG_MS);
+              // Derselbe verschobene Ausschnitt wie oben — sonst stünde Wien
+              // nach dem Zurücksetzen wieder zu tief.
+              karte.current?.animateToRegion(wienAusschnitt, UEBERGANG_MS);
             }}>
             <SsText variant="caption" color={colors.surface}>
               Ganz Wien
             </SsText>
           </Pressable>
         ) : null}
-      </View>
+      </Animated.View>
 
       {/* Apples eigene Namensnennung zeichnet MapKit selbst in die Fläche. Diese
           Zeile betrifft etwas anderes: Die BEZIRKSGRENZEN kommen weiter von der
