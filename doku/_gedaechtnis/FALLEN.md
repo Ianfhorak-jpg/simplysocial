@@ -1813,3 +1813,16 @@
   **Die Behebung ist `rm -rf` auf das Verzeichnis**, danach baut das Skript es selbst
   neu. Verwandt mit *„Ein verwaister Playwright-Lock sieht aus wie ein laufender
   Browser"*: ein Überbleibsel, das als gültiger Zustand gelesen wird.
+- **Es gibt keine Buchstaben nach `f` — eine UUID ist HEX.** Am 2026-09-20 beim
+  Erweitern der Demo-Welt vergeben: `dddddddd-dddd-dddd-dddd-ddddddddd0g1` für einen
+  Chat und `…0h1` für eine Nachricht. In einer Reihe aus lauter `d`-Platzhaltern
+  sieht das völlig normal aus, und die bestehenden IDs `0a1`/`0b1`/`0c1`/`0d1` legen
+  die Fortsetzung `e, f, g, h` sogar nahe — aber erlaubt sind nur `0-9a-f`. Postgres
+  meldet `invalid input syntax for type uuid` und zeigt dabei auf die ganze Zeile,
+  nicht auf das eine Zeichen.
+  ⚠️ **Gefährlich ist die Lesbarkeit:** Platzhalter-IDs werden beim Schreiben nicht
+  gelesen, sondern gemustert. Wer `0f1` sieht, schreibt `0g1` weiter, ohne zu prüfen.
+  **Besser als durchzuzählen ist ein Schema mit Bedeutung:** Der Buchstabe sagt die
+  TABELLE (`a` Aktivität, `b` Anfrage, `c` Chat, `d` Nachricht), die Ziffer davor
+  sagt WESSEN Welt (`0` die Demo-Welt, `1` das eigene Konto). Damit kommt man nie in
+  die Nähe von `g`, und die ID sagt beim Lesen, was sie ist.

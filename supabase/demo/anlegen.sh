@@ -91,12 +91,21 @@ SQL
       $PSQL -v wer="$WER" -f "$HIER/40_mir_zeigen.sql"
     else
       echo "Nehme die Demo-Welt für $WER wieder weg …"
+      # ⚠️ **Die Reihenfolge ist die des Fremdschlüssels**, von innen nach aussen:
+      # Nachrichten hängen am Chat, der Chat an der Aktivität, die Anfragen auch.
+      # Und BEIDE Folge-Richtungen, nicht nur die eigene — die Gegenrichtung ist
+      # eine eigene Zeile (harte Regel 8) und bliebe sonst liegen.
       $PSQL -v wer="$WER" <<'SQL'
-delete from follows f
-using auth.users u
-where f.follower_id = u.id
-  and lower(u.email) = lower(:'wer')
-  and f.followee_id::text like 'dddddddd-%';
+delete from messages          where id::text        like 'dddddddd-dddd-dddd-dddd-ddddddddd1%';
+delete from chat_participants where thread_id::text like 'dddddddd-dddd-dddd-dddd-ddddddddd1%';
+delete from chat_threads      where id::text        like 'dddddddd-dddd-dddd-dddd-ddddddddd1%';
+delete from join_requests     where id::text        like 'dddddddd-dddd-dddd-dddd-ddddddddd1%';
+delete from posts             where id::text        like 'dddddddd-dddd-dddd-dddd-ddddddddd1%';
+
+delete from follows f using auth.users u
+where lower(u.email) = lower(:'wer')
+  and (   (f.follower_id = u.id and f.followee_id::text like 'dddddddd-%')
+       or (f.followee_id = u.id and f.follower_id::text like 'dddddddd-%'));
 SQL
     fi
     # Gezählt, nicht behauptet — dieselbe Haltung wie unten bei der Welt.

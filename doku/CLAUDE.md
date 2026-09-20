@@ -187,7 +187,7 @@ selbst verschoben hatte (dann zentriert die App absichtlich nicht zurück).
 | `npm run pruef-programmfehler` | 25 | nichts |
 | `npm run pruef-zuschnitt` | **47** | nichts |
 | `npm run pruef-etikett` | 12 | nichts |
-| `npm run pruef-demo` | **29** | nichts (Wegwerf-DB) |
+| `npm run pruef-demo` | **32** | nichts (Wegwerf-DB) |
 | `npm run pruef-demoregel` | **29** | nichts |
 | `npm run pruef-alter` | **16** | nichts |
 | `npm run pruef-zustimmung` | **28** | nichts |
@@ -630,6 +630,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Ein Screenshot, über dem ein Vollbild liegt, beantwortet keine Layout-Frage — die ZAHLENREIHE schon
 - Ein Änderungs-Skript, das seine Häkchen VOR dem Schreiben druckt, lügt bei jedem Abbruch
 - `psql` ersetzt `:'variable'` weder bei `-c` noch in einem `$$`-Block — nur über `-f` und stdin
+- Es gibt keine Buchstaben nach `f` — eine UUID ist HEX
 - Eine Wegwerf-Datenbank in `/tmp` überlebt macOS' Aufräumen nicht — und das Skript prüft nur, OB das Verzeichnis da ist
 - `npx prettier` ohne Projekt-Konfiguration ist kein Formatierer, sondern eine Umschreibung
 ---

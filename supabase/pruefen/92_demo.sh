@@ -220,7 +220,51 @@ else
     NEIN=$((NEIN + 1))
   fi
 
+  # Teil 2: das Profil sieht nicht mehr leer aus. Gezählt statt behauptet — hier
+  # hängen drei Tabellen aneinander, und ein fehlgeschlagener Fremdschlüssel wäre
+  # der Sorte Fehler, den man erst am Gerät bemerkt.
+  EIGEN="$($P -tA -c "
+    select (select count(*) from posts         where id::text like 'dddddddd-dddd-dddd-dddd-ddddddddd1%')
+        || '/' || (select count(*) from join_requests where id::text like 'dddddddd-dddd-dddd-dddd-ddddddddd1%')
+        || '/' || (select count(*) from chat_threads  where id::text like 'dddddddd-dddd-dddd-dddd-ddddddddd1%')
+        || '/' || (select count(*) from messages      where id::text like 'dddddddd-dddd-dddd-dddd-ddddddddd1%');")"
+  if [ "$EIGEN" = "1/2/1/2" ]; then
+    echo "  ✓ Eigene Welt steht: 1 Aktivität, 2 Anfragen, 1 Chat, 2 Nachrichten"
+    JA=$((JA + 1))
+  else
+    echo "  ✗ $EIGEN STATT 1/2/1/2 — das eigene Profil ist unvollständig"
+    NEIN=$((NEIN + 1))
+  fi
+
+  # Genau EINE Anfrage bleibt offen — sie ist der türkise Punkt am Tab und der
+  # Knopf, an dem das Bestätigen hängt. Zwei offene wären eine zu viel, null
+  # nähme dem Profil seinen einzigen Handlungsgrund.
+  OFFEN="$($P -tA -c "select count(*) from join_requests
+    where id::text like 'dddddddd-dddd-dddd-dddd-ddddddddd1%' and status = 'pending';")"
+  if [ "$OFFEN" = "1" ]; then
+    echo "  ✓ Genau eine Anfrage ist offen (der Punkt am Tab)"
+    JA=$((JA + 1))
+  else
+    echo "  ✗ $OFFEN OFFENE ANFRAGEN — erwartet war genau eine"
+    NEIN=$((NEIN + 1))
+  fi
+
   DEMO_DB="$DB" bash "$HIER/../demo/anlegen.sh" --mir-nicht-mehr "$MAIL" > /dev/null
+
+  # Der Rückweg muss auch Teil 2 mitnehmen. Ein halber Rückweg ist schlimmer als
+  # keiner: Er sieht aus wie ein ganzer.
+  REST2="$($P -tA -c "
+    select (select count(*) from posts         where id::text like 'dddddddd-dddd-dddd-dddd-ddddddddd1%')
+         + (select count(*) from join_requests where id::text like 'dddddddd-dddd-dddd-dddd-ddddddddd1%')
+         + (select count(*) from chat_threads  where id::text like 'dddddddd-dddd-dddd-dddd-ddddddddd1%')
+         + (select count(*) from messages      where id::text like 'dddddddd-dddd-dddd-dddd-ddddddddd1%');")"
+  if [ "$REST2" = "0" ]; then
+    echo "  ✓ --mir-nicht-mehr nimmt auch Aktivität, Anfragen und Chat mit"
+    JA=$((JA + 1))
+  else
+    echo "  ✗ $REST2 ZEILEN BLEIBEN LIEGEN — erfundene Daten ohne Weg zurück"
+    NEIN=$((NEIN + 1))
+  fi
   N3="$($P -tA -c "select count(*) from follows
         where follower_id = 'eeeeeeee-0000-0000-0000-00000000ee01'
           and followee_id::text like 'dddddddd-%';")"
