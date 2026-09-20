@@ -1270,8 +1270,29 @@ function KopfLeiste({
   const [filterNatur, setFilterNatur] = useState(0);
 
   const bereit = zeile > 0 && filterNatur > 0;
-  const voll = Math.max(0, zeile - POSTEN_GROESSE - spacing.md);
-  const schmal = spacing.xs * 2 + UMSCHALTER_BREITE + spacing.xs + filterNatur;
+  /**
+   * 🔴 **`- spacing.lg * 2` — der Fehler auf Ians Bild vom 2026-09-20, 17:41.**
+   *
+   * `onLayout` meldet die Breite EINSCHLIESSLICH der eigenen Polsterung
+   * (border-box). `kopfLeiste` hat `paddingHorizontal: spacing.lg`, also sind in
+   * `zeile` 32 Punkte enthalten, die dem Inhalt gar nicht gehören. Ohne den Abzug
+   * wurde die Kapsel um genau diese 32 Punkte zu breit, schob den Posten-Knopf
+   * über den Bildrand — und an der rechten Kante blieb ein heller Schnipsel von
+   * ihm stehen. Ians Worte: *„when you look behind the liquid glass, you see that
+   * there is something there."* Das war er.
+   */
+  const inhalt = Math.max(0, zeile - spacing.lg * 2);
+  const voll = Math.max(0, inhalt - POSTEN_GROESSE - spacing.md);
+  /**
+   * ⚠️ **Gedeckelt, und der Deckel ist kein Schmuck.** `schmal` ist eine gerechnete
+   * Summe; wird einer ihrer Summanden zu gross (wie `filterNatur` es war), wächst
+   * die Kapsel aus dem Bild. Ein Anteil kann nicht ausweichen, ein gemessener
+   * Deckel schon (FALLEN.md) — mehr als `voll` gibt es nie.
+   */
+  const schmal = Math.min(
+    voll,
+    spacing.xs * 2 + UMSCHALTER_BREITE + spacing.xs + filterNatur,
+  );
 
   return (
     <View
@@ -1811,7 +1832,29 @@ const styles = StyleSheet.create({
    * darin steht absolut und behält seine natürliche Breite, die gemessen werden
    * kann, ohne an der Animation zu hängen.
    */
-  filterHuelle: { height: POSTEN_GROESSE, justifyContent: 'center', overflow: 'hidden' },
+  /**
+   * 🔴 **`alignItems: 'flex-end'` ist hier Pflicht, nicht Geschmack.**
+   *
+   * Diese Hülle hat kein `flexDirection`, ist also eine SPALTE — ihre Querachse
+   * ist damit die waagrechte. Und `alignItems` steht in React Native von Haus aus
+   * auf `stretch`. Das gilt auch für ein absolut gesetztes Kind, das nur EINE
+   * waagrechte Kante gesetzt hat: Es wurde auf die Breite der Hülle gezogen.
+   *
+   * **Damit maß `onLayout` nicht den Filterknopf, sondern die Hülle** — und der
+   * Wert ging als `filterNatur` in `schmal` ein, das daraufhin die halbe Zeile
+   * breit wurde. Der zweite Teil von Ians Befund am 2026-09-20.
+   *
+   * *Das ist die Falle „Zwei Stilwerte, die einzeln stimmen, ergeben zusammen den
+   * Fehler": `position: absolute` ist richtig (es hält die Messung aus der
+   * Animation heraus), `stretch` ist die Voreinstellung — zusammen messen sie das
+   * Falsche.*
+   */
+  filterHuelle: {
+    height: POSTEN_GROESSE,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    overflow: 'hidden',
+  },
   filterNatuerlich: { position: 'absolute', right: 0 },
 
   // `flex: 1` gibt dem Umschalter den Rest der Zeile, die Mindestbreite ist der
