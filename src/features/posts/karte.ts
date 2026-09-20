@@ -26,12 +26,20 @@ import { colors } from '@/theme';
 /**
  * Die Namensnennung. Sie ist **Bedingung der Lizenz**, nicht Höflichkeit: Die
  * Umrisse in `data/wien-bezirke.ts` stammen von der Stadt Wien und stehen unter
- * CC BY 4.0. Der Satz steht unter der Karte; wer die Karte woanders einbaut, nimmt
- * ihn mit.
+ * CC BY 4.0.
  *
- * Bewusst hier und nicht im Screen — aus demselben Grund wie alles andere in dieser
- * Datei: Eine Lizenzzeile, die in einem Screen lebt, verschwindet beim nächsten
- * Umbau, und dann verstößt die App still gegen eine Lizenz.
+ * 🔴 **Seit dem 2026-09-20 steht sie in Einstellungen → Rechtliches, nicht mehr
+ * auf der Karte** — Ians Entscheidung. Auf der Karte überschnitt sie sich mit
+ * Apples eigener Nennung, die MapKit selbst zeichnet und deren Lage uns nicht
+ * gehört. CC BY 4.0 verlangt die Nennung „in angemessener Weise, dem Medium
+ * entsprechend"; eine Rechtliches-Seite ist dafür in einer App der übliche Ort.
+ *
+ * ⚠️ **Der Text bleibt trotzdem HIER und nicht im Screen** — und das ist jetzt
+ * wichtiger als vorher, nicht weniger: Eine Lizenzzeile, die in einem Screen
+ * lebt, verschwindet beim nächsten Umbau, und dann verstößt die App still gegen
+ * eine Lizenz. Der Screen holt sich die Konstante; **dass er sie überhaupt noch
+ * anzeigt, bewacht `npm run pruef-nennung`.** Solange sie auf der Karte stand,
+ * trug die Karte selbst diese Sicherung — dieser Wächter ist ihr Ersatz.
  */
 export const KARTE_QUELLE = 'Bezirksgrenzen: Stadt Wien (data.wien.gv.at), CC BY 4.0';
 

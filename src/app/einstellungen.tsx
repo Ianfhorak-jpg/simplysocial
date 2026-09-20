@@ -17,6 +17,9 @@ import { abmelden } from '@/features/auth/hooks';
 import { entblocken, useBlockierte } from '@/features/safety/hooks';
 import { standortAnschalten, standortAusschalten, useStandortStand } from '@/features/posts/hooks';
 import { standortFolgen } from '@/features/posts/standort';
+// Die Namensnennung für die Bezirksumrisse. Sie steht in `karte.ts` und nicht
+// hier — siehe den Kommentar bei ihrer Anzeige unten.
+import { KARTE_QUELLE } from '@/features/posts/karte';
 import {
   bezirkSetzen,
   profilbildEntfernen,
@@ -446,6 +449,23 @@ export default function EinstellungenScreen() {
           hinweis="Was hier gilt und ab welchem Alter"
           href="/nutzungsbedingungen"
         />
+        {/* 🔴 **Die Namensnennung für die Bezirksumrisse — Bedingung der Lizenz
+            (CC BY 4.0), keine Höflichkeit.**
+
+            Sie stand bis zum 2026-09-20 auf der Karte und überschnitt sich dort
+            mit Apples eigener Nennung, die MapKit selbst zeichnet und deren Lage
+            uns nicht gehört. Ians Entscheidung: hierher. CC BY verlangt die
+            Nennung „in angemessener Weise, dem Medium entsprechend" — in einer
+            App ist das die Rechtliches-Seite.
+
+            ⚠️ **Keine `Zeile`, sondern Text.** Eine `Zeile` verspricht, dass
+            dahinter etwas aufgeht; hier steht die Auskunft schon da. Der Text
+            selbst kommt aus `KARTE_QUELLE` und wird NICHT hier hingeschrieben —
+            sonst stünde eine Lizenzzeile in einem Screen und verschwände beim
+            nächsten Umbau. */}
+        <SsText variant="caption" color={colors.inkSoft}>
+          {KARTE_QUELLE}
+        </SsText>
       </View>
 
       <View style={styles.block}>

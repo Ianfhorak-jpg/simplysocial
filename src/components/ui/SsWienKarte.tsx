@@ -7,7 +7,6 @@ import { BEZIRKE, KARTE_BREITE, KARTE_HOEHE } from '@/data/wien-bezirke';
 import {
   KARTE_LEER,
   KARTE_MIN_BAND,
-  KARTE_QUELLE,
   STUFEN,
   TIPP_WEG_MAX,
   ZAHLEN_AN,
@@ -596,19 +595,27 @@ export function SsWienKarte({
         ) : null}
       </View>
 
-      {/* Die Namensnennung liegt IN der Karte und nicht daneben im Screen — sie ist
-          Bedingung der Lizenz (CC BY), und was neben einem Baustein steht, bleibt beim
-          nächsten Umbau liegen. So reist sie mit, wohin die Karte auch kommt.
+      {/* 🔴 **Die Namensnennung steht seit dem 2026-09-20 NICHT mehr hier** —
+          Ians Entscheidung: Einstellungen → Rechtliches.
 
-          Mit `fuellt` steht sie ÜBER der Karte statt darunter, und zwar oberhalb von
-          `randUnten`: Sonst läge die Lizenzzeile hinter dem Blatt, und eine Nennung,
-          die niemand sehen kann, ist keine. */}
-      <SsText
-        variant="caption"
-        color={colors.inkSoft}
-        style={[styles.quelle, fuellt && [styles.quelleVoll, { bottom: fussHoehe + 4 }]]}>
-        {KARTE_QUELLE}
-      </SsText>
+          Sie lag über der Karte und überschnitt sich dort mit Apples eigener
+          Nennung, die MapKit selbst zeichnet und die uns nicht gehört: Seit
+          `verdeckt = 0` sitzt Apples Zeile rund 101 Punkte über der Unterkante,
+          unsere bei `fussHoehe + 4` — zwei Zeilen im selben Streifen, beide
+          links. Ians Worte: *„da überlappt ein Text, das ist nicht gut."*
+
+          **Warum nicht einfach darüber gestapelt:** Wo Apples Zeile genau sitzt
+          und wie hoch sie ist, entscheidet MapKit. Dafür gibt es EINE Messung
+          (101 pt) und keine für die Höhe — eine geschätzte Zahl an dieser
+          Stelle ist genau die Sorte, die in diesem Projekt dreimal danebenlag.
+
+          ⚠️ **Die Nennung ist nicht weggefallen, sie ist umgezogen.** Sie bleibt
+          Bedingung der Lizenz (CC BY 4.0), und CC BY verlangt sie „in
+          angemessener Weise" — eine Rechtliches-Seite ist dafür der übliche Ort.
+          Dass sie dort wirklich steht, hält `npm run pruef-nennung` fest; ohne
+          ihn wäre genau das eingetreten, wovor der Kommentar an `KARTE_QUELLE`
+          warnt: eine Lizenzzeile, die in einem Screen lebt und beim nächsten
+          Umbau verschwindet. */}
 
       {/* Steht nur da, wenn er etwas tut. Ein Knopf „Ganz Wien" auf einer Karte, die
           schon ganz Wien zeigt, sieht aus wie ein kaputter Knopf. */}
@@ -642,8 +649,6 @@ const styles = StyleSheet.create({
   },
   /** Mit `fuellt` nimmt die Karte allen Platz, den sie bekommt — Phase 19e. */
   rahmenVoll: { flex: 1, alignSelf: 'stretch' },
-  quelle: { fontSize: 10, lineHeight: 14, paddingTop: 2 },
-  quelleVoll: { position: 'absolute', left: 8, paddingTop: 0 },
   /** Karte und Blase liegen deckungsgleich übereinander — dafür braucht es einen
       gemeinsamen Bezugsrahmen. Ohne ihn müsste die Blase im `rahmen` positioniert
       werden, und der ist bei schmaler Karte breiter als sie (`alignItems: 'center'`). */

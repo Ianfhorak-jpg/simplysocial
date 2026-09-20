@@ -9,7 +9,6 @@ import {
   APPLE_KARTE_ART,
   APPLE_ZOOM_MAX,
   APPLE_ZOOM_MIN,
-  KARTE_QUELLE,
   NENNUNG_MIN_KARTE,
   UEBERGANG_MS,
   ZAHLEN_AN,
@@ -615,15 +614,27 @@ export function SsAppleKarte({
         ) : null}
       </Animated.View>
 
-      {/* Apples eigene Namensnennung zeichnet MapKit selbst in die Fläche. Diese
-          Zeile betrifft etwas anderes: Die BEZIRKSGRENZEN kommen weiter von der
-          Stadt Wien (CC BY 4.0), auch wenn der Hintergrund von Apple ist. */}
-      <SsText
-        variant="caption"
-        color={colors.inkSoft}
-        style={[styles.quelle, fuellt && [styles.quelleVoll, { bottom: fussHoehe + 4 }]]}>
-        {KARTE_QUELLE}
-      </SsText>
+      {/* 🔴 **Die Namensnennung steht seit dem 2026-09-20 NICHT mehr hier** —
+          Ians Entscheidung: Einstellungen → Rechtliches.
+
+          Sie lag über der Karte und überschnitt sich dort mit Apples eigener
+          Nennung, die MapKit selbst zeichnet und die uns nicht gehört: Seit
+          `verdeckt = 0` sitzt Apples Zeile rund 101 Punkte über der Unterkante,
+          unsere bei `fussHoehe + 4` — zwei Zeilen im selben Streifen, beide
+          links. Ians Worte: *„da überlappt ein Text, das ist nicht gut."*
+
+          **Warum nicht einfach darüber gestapelt:** Wo Apples Zeile genau sitzt
+          und wie hoch sie ist, entscheidet MapKit. Dafür gibt es EINE Messung
+          (101 pt) und keine für die Höhe — eine geschätzte Zahl an dieser
+          Stelle ist genau die Sorte, die in diesem Projekt dreimal danebenlag.
+
+          ⚠️ **Die Nennung ist nicht weggefallen, sie ist umgezogen.** Sie bleibt
+          Bedingung der Lizenz (CC BY 4.0), und CC BY verlangt sie „in
+          angemessener Weise" — eine Rechtliches-Seite ist dafür der übliche Ort.
+          Dass sie dort wirklich steht, hält `npm run pruef-nennung` fest; ohne
+          ihn wäre genau das eingetreten, wovor der Kommentar an `KARTE_QUELLE`
+          warnt: eine Lizenzzeile, die in einem Screen lebt und beim nächsten
+          Umbau verschwindet. */}
     </View>
   );
 }
@@ -634,10 +645,8 @@ const styles = StyleSheet.create({
   rahmenVoll: { flex: 1, alignSelf: 'stretch' },
   flaeche: { position: 'relative', overflow: 'hidden' },
   flaecheVoll: { flex: 1, alignSelf: 'stretch' },
-  quelle: { fontSize: 10, lineHeight: 14, paddingTop: 2, textAlign: 'center' },
   // Über der Karte statt darunter — und oberhalb des Blattes, sonst wäre die
   // Lizenzzeile verdeckt. Apples eigene Nennung zeichnet MapKit selbst.
-  quelleVoll: { position: 'absolute', left: 8, paddingTop: 0, textAlign: 'left' },
   zahl: { fontWeight: '600' },
   // `StyleSheet.absoluteFillObject` gibt es in React Native 0.86 nicht mehr (ACTA).
   ueberKarte: {
