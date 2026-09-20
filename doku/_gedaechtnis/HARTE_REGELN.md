@@ -1670,3 +1670,70 @@
    „kein Badge"; der zweite malt bei leerem Kind einen Punkt. Genau daran hing der
    rote Dauerpunkt, den Ian gesehen hat (FALLEN.md). Bewacht von `npm run pruef-farben`
    (**66 Häkchen**, drei davon mit Gegenprobe gegen genau diese drei Fehler).
+
+---
+
+## 118. Das TEMPO einer Bewegung steht in `lib/bewegung.ts` — benannt nach dem ANLASS, nie nach der Dauer
+
+Dieselbe Bauart und derselbe Grund wie `lib/haptik.ts` (Regel 115). Die Einträge heißen
+`druckHinein`, `klappeAuf`, `gleiten` — nicht `timing90` oder `kurz`. Stünde im Screen
+`duration: 90`, wäre die Entscheidung „wie schnell reagiert ein Knopf" dort gefallen,
+und beim nächsten Knopf noch einmal, vielleicht anders.
+
+**Alle vier Zahlen sind am GERÄT beurteilt worden, keine am Mac.** `gleiten` steht auf
+420, weil Ian sie in zwei Durchgängen von 240 über 320 dorthin gezogen hat. Wer hier
+dreht, dreht an einer Zahl, die jemandem gehört.
+
+⚠️ Kein `StyleSheet.create` — ein registrierter Eintrag kann keine `Animated`-Knoten
+tragen und täte still nichts (dieselbe Falle wie bei `ecke` in `spacing.ts`).
+
+## 119. Was beim Drücken passiert, kommt aus `useDruck(art)` — und `'glas'` ist die Art ohne Deckkraft
+
+Die Nachfolgerin von Regel 113. `theme/druck.ts` besitzt weiter das **Gefühl** (0,96 ·
+0,82 — Ians Zahlen), `lib/bewegung.ts` das **Tempo**.
+
+🔴 **`'glas'` ist keine Vorliebe, sondern Regel 61 in ausführbarer Form.**
+Eltern-Opazität gilt für den ganzen Teilbaum: Liegt sie auf einem `Pressable`, das ein
+`<SsGlas schwebt>` enthält, schaltet der Knopf sein Glas beim Drücken ab. Genau das tat
+`SsBack` von Phase 20.10 bis 20.13, ohne dass es jemandem auffiel — man schaut beim
+Drücken auf den eigenen Finger, nicht auf die Fläche darunter.
+
+⚠️ `druck.stil` steht im Style-Array **zuletzt**. Sonst überschreibt ein
+durchgereichtes `style` die Animation still.
+
+## 120. Ein Auf- und Zuklappen MISST seine Höhe (`useKlappe`)
+
+`LayoutAnimation` wäre eine Zeile und ist trotzdem falsch: React Native 0.86 sagt im
+eigenen Quelltext, es sei *„unconditionally enabled for Android, and **conditionally
+enabled on iOS**"*. Dieses Projekt läuft auf Fabric. Eine Animation, die still
+ausfallen kann, ist die schlechteste Sorte — man sieht denselben harten Sprung wie
+vorher und sucht den Fehler im Timing statt in der Plattform.
+
+`useKlappe` gibt `sichtbar`, `messen` und `stil` zurück. **Es ist ein Hook und kein
+Baustein**, weil `null` eine Bedeutung trägt: Der Regler hängt auch als `blatt` im
+Wischstapel, und der prüft `blatt ? … : null` (Regel 36). Ein Baustein, der immer ein
+Element zurückgibt, gäbe dem Stapel dauerhaft ein Blatt über den Karten.
+
+⚠️ `onLayout` gehört ans INNERE View. Am animierten meldete es die Höhe zurück, die man
+ihm gerade selbst gegeben hat — die Klappe bliebe bei 0 stehen.
+
+## 121. Wo Apple die Leiste selbst zeichnet, bleibt Glas; was wir danebenstellen, ist matt
+
+Ians Entscheidung 99, und sie ist kein Aufgeben. `SsGlas` ruft Apples `UIGlassEffect`
+über `expo-glass-effect` auf — das Material war nie nachgebaut, und an Ians Aufnahme
+vom 2026-09-20 ist belegt, dass es arbeitet.
+
+**Was fehlt, ist Apples LEISTE.** Die Tab-Leiste unten sieht richtig aus, weil sie eine
+echte `UITabBar` ist (NativeTabs, Entscheidung 85). Für oben wäre die Entsprechung die
+`UINavigationBar`, und die kann React Native heute nicht mit Liquid Glass zeichnen —
+`react-native-screens` ruft `configureWithDefaultBackground` nicht auf (Diskussion
+#4021). Ein freistehendes `GlassView` daneben ist deshalb immer ein ANDERES Material
+als die Leiste darunter, und zwei fast gleiche Materialien nebeneinander sehen
+schlechter aus als zwei klar verschiedene.
+
+`GLAS_AN = false` schaltet auf den Ersatzweg, den Browser und iOS 25 immer schon gehen.
+**Zurückdrehen ist eine Zeile** — sobald die Bibliothek die Navigationsleiste kann, ist
+das die erste Stelle, die wieder zur Debatte steht.
+
+⚠️ **`npm run pruef-glas` bewacht diese Regel NICHT.** Er meldet 33 Häkchen, auch wenn
+Glas komplett aus ist: Er prüft, DASS `SsGlas` benutzt wird, nicht OB Glas herauskommt.

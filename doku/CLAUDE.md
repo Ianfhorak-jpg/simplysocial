@@ -64,79 +64,76 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
 ---
 
-## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-20)
+## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-20, abends)
 
-> **Der genehmigte Plan liegt in
-> [`~/.claude/plans/spicy-sprouting-balloon.md`](~/.claude/plans/spicy-sprouting-balloon.md)**
+> **Der Plan liegt in
+> [`~/.claude/plans/karte-schaerfen-und-bezirke.md`](~/.claude/plans/karte-schaerfen-und-bezirke.md)**
 > und ist **selbsttragend** — ohne Chatverlauf ausführbar. **Zuerst lesen.**
 > Er wird nicht automatisch geladen; ohne diesen Verweis findet ihn niemand.
-> *(Die zwei Pläne davor, beide abgeschlossen: `oben-wie-unten-glas-kapsel.md`,
-> `ich-will-liquid-glass-calm-pinwheel.md`.)*
+> *(Die Pläne davor, alle abgeschlossen: `spicy-sprouting-balloon.md`,
+> `oben-wie-unten-glas-kapsel.md`, `ich-will-liquid-glass-calm-pinwheel.md`.)*
 
-### 🎉 Gerätedurchgang 9 ist GEMACHT — Ians Urteil am 2026-09-20: **4 von 4**
+### Was am 2026-09-20 gebaut wurde — sechs Commits, alle am Gerät geprüft
 
-Kompakte Kopfkapsel · Kategorien im Regler · türkiser Punkt · reparierte Karte —
-*„es klappt alles, eins zwei drei vier, passt alles so."*
-
-⚠️ **Der türkise Punkt war RICHTIG, nicht zu viel:** Ian hat wirklich offene Anfragen.
-Er hat kurz überlegt, dort noch etwas zu ändern, und es selbst verworfen: *„lass, es
-passt eigentlich. Hast recht, es geht."*
-
-### 🔴 NÄCHSTE PHASE — Bewegung. Ians Auftrag vom 2026-09-20
-
-> *„Jetzt will ich, dass du ein bisschen Animations reinpackst … Apple hat das
-> natürlich auch, dass wenn man auf einen Button klickt, dass die Änderungen nicht
-> instant kommen, sondern so eine kurze kleine minimalistische Animation. Das macht
-> einen Riesenunterschied … Ich will, dass du die App einfach smoother machst."*
-
-**Zwei Wörter sind die ganze Vorgabe: „minimalistisch" und „smoother"** — nicht „mehr
-Effekte". **Ians Entscheidung 97:** *Drücken + die großen Sprünge*; Listen bleiben
-vorerst (dort kann es beim Scrollen ruckeln und sich mit dem Wischstapel streiten).
-
-#### 🟡 Stand 2026-09-20: Teil 1 und 2 sind GEBAUT — **der Abnahmepunkt steht aus**
-
-| | |
+| Commit | Inhalt |
 |---|---|
-| **`src/lib/bewegung.ts`** (neu) | Das Tempo-Vokabular. Zwei Einträge, nach dem ANLASS benannt (Regel 115): `druckHinein` 90 ms `Easing.out(quad)`, `druckHeraus` 240 ms `Easing.out(cubic)` — dieselbe Kurve wie `AntwortLeiste:55`. Blankes Objekt, kein `StyleSheet.create`. Dazu der Typ `Spur` |
-| **`theme/druck.ts`** | `DRUCK` (statischer Style) → `useDruck(art)` + `DruckFlaeche`. **Ians zwei Zahlen 0,96 und 0,82 stehen unverändert da**, nur werden sie jetzt ANGEFAHREN statt gesetzt |
-| **Vier Stellen umgestellt** | `SsButton:134` · `PostenKnopf` (`index.tsx:653`) · `PostCard:165` · `SsBack:93` |
+| `3ff2f9b` | **Bewegung.** `lib/bewegung.ts` (Tempo-Vokabular), `useDruck`, `useKlappe`, gleitende Pille im `SsSegment` — und **Glas wird matt** |
+| `402d62b` | Filterknopf sitzt IN der Kapsel · `npm run demo -- --mir-zeigen <e-mail>` |
+| `40c1bc0` | Der gewählte Bezirk hat dieselbe Strichstärke wie die anderen Grenzen |
+| `f998226` | Nichts liegt mehr unter der Tab-Kapsel · der Schleier deckt auch oben |
+| `e7fdcf5` | Das eigene Konto hat Aktivität, Anfragen und Chat |
+| `916c5fc` | Die Karte wird nicht mehr neu aufgebaut · Apples Nennung geht runter |
 
-🔴 **`SsBack` ist repariert** — der Bruch von Regel 61 ist weg: Der Zurück-Knopf nimmt
-`useDruck('glas')` (nur Skalierung, **keine** Deckkraft) und schaltet sein Liquid Glass
-beim Drücken nicht mehr ab. Dass 4 % von 44 pt reichen, ist erst seit der Animation
-wahr — statisch waren sie es nicht.
-
-⚠️ **`'zeile'` gibt es noch NICHT**, anders als der Plan es in Teil 2 vorsieht. Grund:
-Die acht `backgroundColor: colors.bg`-Stellen sind *Verdunkeln* (`surface` → `bg`), und
-eine Animation braucht auch den ANFANGSwert — der ist an drei der acht gar nicht
-`surface`. Die Art kommt in **Teil 3**, zusammen mit ihren Aufrufern. Ein Zweig, den
-beim Abnahmepunkt niemand benutzt, ist ungemessen (*„Ein ungenutzter Parameter ist
-einer, den nie jemand geprüft hat"*).
-
-**Gemessen am 2026-09-20:** `npx tsc --noEmit` sauber · `expo lint` **89**, exakt die
-Grundlinie (gegen den gestashten Stand nachgemessen, nicht geschätzt) · `pruef-glas`
-**33** · `pruef-farben` **66** · `pruef-kopf` **19** · Web-Bundle baut (HTTP 200,
-7,15 MB) und enthält `useDruck`/`DruckFlaeche`, Gegenprobe mit erfundenem Namen 0.
-
-🔴 **Was JETZT dran ist: `npm run geraet`, und Ian fühlt.** Ein Screenshot kann
-Bewegung nicht beurteilen — ein Standbild zeigt einen Knopf bei 96 %, egal ob er
-dorthin gesprungen oder gefedert ist. Stimmt das Timing nicht, ist es **eine Zahl in
-`bewegung.ts`** und nicht 14 Stellen. **Erst danach Teil 3** (die 14 Fremd-Werte
-einsammeln, `DRUCK` löschen, Wächter `pruef-bewegung`) **und Teil 4** (die großen
-Sprünge).
-
-**Drei Befunde, die beim Planen aufgetaucht sind — alle im Plan ausgeführt:**
+### 🔴 Die drei Befunde, die mehr sind als ihre Zeile Code
 
 | # | Befund |
 |---|---|
-| **1** | **`DRUCK` ist gar keine Animation.** `theme/druck.ts` ist ein statischer Style; der Knopf springt auf 96 % und hart zurück. Genau das „instant". ⚠️ Die zwei Zahlen (0,96 · 0,82) sind Ians und bleiben — neu ist nur der WEG |
-| **2** | 🔴 **Harte Regel 113 gilt an 14 Stellen NICHT.** `DRUCK` benutzen nur vier Stellen; daneben stehen **fünf verschiedene Deckkraftwerte** für dieselbe Frage (0,6 · 0,65 · 0,7 · 0,72 · achtmal `backgroundColor`). Jeder für sich plausibel — man sieht sie nie nebeneinander. Wörtlich die Lage, die Regel 113 verhindern sollte |
-| **3** | 🔴 **`SsBack:102` bricht schon heute Regel 61.** Dort liegt `DRUCK` samt `opacity: 0.82` auf einem `Pressable`, das ein `<SsGlas schwebt>` enthält — Eltern-Opazität gilt für den ganzen Teilbaum. **Der Zurück-Knopf schaltet sein Liquid Glass beim Drücken ab**, ausgerechnet der Knopf aus Ians Vorbild. Der „Glas-Fall" im Plan ist deshalb eine Reparatur, keine Kür |
+| **1** | **`DRUCK` war gar keine Animation.** Ein statischer Style über `pressed && DRUCK` — der Knopf sprang auf 96 % und hart zurück. Ians zwei Zahlen (0,96 · 0,82) sind unverändert; neu ist nur der WEG. Nebenbei behoben: **`SsBack` brach Regel 61**, seit die Kapsel in 20.10 kam — der Zurück-Knopf schaltete sein Liquid Glass beim Drücken ab |
+| **2** | **`LayoutAnimation` hätte auf iOS still nichts getan.** RN 0.86 sagt es im eigenen Quelltext: *„unconditionally enabled for Android, and **conditionally enabled on iOS**"*. Der Plan wollte dort „eine Zeile" — es wurde `useKlappe` mit gemessener Höhe |
+| **3** | **Apples Nennung sitzt NICHT am Rand der Polsterung.** Der Code nahm das seit Phase 19g an. An Ians Standbild gemessen (iPhone 16, 3×, unterer Rand = null): Apples Zeile **184 pt**, unsere Bezirksgrenzen **93**, Tab-Kapsel **82**. Bei `mapPadding.bottom = 83` müsste Apples Zeile bei ~83 sitzen — **MapKit legt rund 100 pt eigenen Abstand darüber** |
 
-⚠️ **Was kein Screenshot kann: Bewegung beurteilen.** Ein Standbild zeigt einen Knopf
-bei 96 %, egal ob er dorthin gesprungen oder gefedert ist. **Die Abnahme ist ein
-Gerätedurchgang** — wie bei den zwei Zahlen in `druck.ts`, die schon immer Ian gehören.
-Der Plan hält deshalb nach den ersten vier Stellen an, bevor 14 weitere angefasst werden.
+### 🔴 Kein Liquid Glass mehr — und warum das keine Niederlage ist
+
+**Ians Entscheidung 99.** Das Material war **nie** nachgebaut: `SsGlas` ruft
+`expo-glass-effect` → `GlassView` → Apples `UIGlassEffect`. An seiner Aufnahme wurde
+auch belegt, dass es arbeitet — die Wien-Karte schimmert durch die Kopfkapsel.
+
+**Was fehlt, ist Apples LEISTE, nicht Apples Material.** Die Tab-Leiste unten sieht
+richtig aus, weil sie eine echte `UITabBar` ist. Für oben wäre die Entsprechung die
+`UINavigationBar` — und die kann React Native heute nicht mit Glas zeichnen
+(`react-native-screens` #4021: *„there's no way to make the Stack header adopt the
+system Liquid Glass material"*; von drei nötigen Apple-Methoden wird
+`configureWithDefaultBackground` gar nicht aufgerufen).
+
+`GLAS_AN = false` in `glas-typen.ts` zwingt iOS deshalb auf den Ersatzweg: matte
+Fläche mit Kante und Schatten. **Zurückdrehen ist eine Zeile.**
+
+⚠️ **`npm run pruef-glas` merkt das nicht** — 33 Häkchen, obwohl Glas ganz aus ist.
+Der Wächter prüft, DASS `SsGlas` benutzt wird, nicht OB Glas herauskommt.
+
+### Ians Entscheidungen 98–100 (2026-09-20)
+
+| # | Entscheidung | Stand |
+|---|---|---|
+| **98** | **„In Wien ist gerade nichts los" ist WEG** — *„that's what you see."* Der Fall MIT Filter bleibt: der sagt etwas, das man NICHT sieht | ✅ |
+| **99** | **Kein Liquid Glass, sondern matt** — *„so wie die anderen Knöpfe."* Die Tab-Leiste unten bleibt echtes Glas, weil sie Apples eigene ist | ✅ |
+| **100** | **Der gewählte Bezirk sieht aus wie die anderen** — gleiche Strichstärke, die Auswahl trägt allein die Farbe. Eine dicke Linie zeigt sonst die Auflösung der Geometrie statt der Grenze | ✅ |
+
+### Die vier Tempo-Zahlen in `lib/bewegung.ts` gehören Ian
+
+| Spur | ms | wofür |
+|---|---|---|
+| `druckHinein` | 90 | unter ~100 ms liest man es als Teil der eigenen Berührung |
+| `druckHeraus` | 240 | der Rückweg ist die App, die loslässt — darf Zeit haben |
+| `klappeAuf` / `klappeZu` | 260 / 190 | zu darf schneller sein: die Entscheidung ist gefallen |
+| `gleiten` | **420** | in ZWEI Durchgängen von Ian beurteilt (240 → 320 → 420) |
+
+### Was auf Ians Urteil wartet
+
+- **Wien sitzt 83 pt tiefer** (Preis für Apples Nennung, `verdeckt = 0`)
+- **Die Bezirksauswahl im Filter gibt es nicht** — er hat sie selbst gestrichen
+  (Entscheidung 63). Rückgängig nur auf Ansage, und dann als `SsBezirkFeld` (Regel 81)
+- **Zackige Umrisse beim Hineinzoomen** · **Zahlen weg + direkt in den Stapel**
 
 ### Ians Entscheidungen 90–97 (2026-09-19/20)
 
@@ -149,7 +146,7 @@ Der Plan hält deshalb nach den ersten vier Stellen an, bevor 14 weitere angefas
 | **94** | Auf iOS ein **Punkt** statt der Zahl — Apple gibt die Schriftfarbe nicht her | ✅ |
 | **95** | **Die Suchleiste ist WEG** — *„gib die Suchleiste weg"*. Drei Wege vorgelegt, „ganz weg" gewählt. 🔴 Die MECHANIK bleibt (Regel 51): `filter.suche` und `passtZumText()` stehen unverändert da | ✅ |
 | **96** | **Die Kapsel ist so breit wie ihr Inhalt** — Kapsel links, Posten-Knopf rechts. Eine leere Glasfläche liest sich als Fehler, nicht als Ruhe | ✅ Beleg `at13` |
-| **97** | **Bewegung: Drücken + die großen Sprünge**, keine Listen | 🔨 geplant |
+| **97** | **Bewegung: Drücken + die großen Sprünge**, keine Listen | ✅ `3ff2f9b` |
 
 ### Was in dieser Runde sonst repariert wurde
 
@@ -191,7 +188,7 @@ selbst verschoben hatte (dann zentriert die App absichtlich nicht zurück).
 | `npm run pruef-demoregel` | **29** | nichts |
 | `npm run pruef-alter` | **16** | nichts |
 | `npm run pruef-zustimmung` | **28** | nichts |
-| `npm run pruef-glas` | **33** | nichts |
+| `npm run pruef-glas` | **33** | nichts (⚠️ merkt NICHT, dass `GLAS_AN` aus ist) |
 | `npm run pruef-farben` | **66** | nichts |
 | `npm run pruef-kopf` | **19** | nichts |
 
@@ -410,6 +407,10 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 115. Was die App SPÜREN lässt, steht in `lib/haptik.ts` / `.native.ts` — und die Funktionen heißen nach dem ANLASS, nie nach der Stärke
 116. Was der Treffen-Zähler zählt, steht im TRIGGER `treffen_buchen` (0012) — nie in einer Funktion und nie in der App
 117. Eine ZAHL an einem Tab gibt es nur, wo uns ihre Schriftfarbe gehört — sonst ist es ein Punkt
+118. Das TEMPO einer Bewegung steht in `lib/bewegung.ts` — benannt nach dem ANLASS, nie nach der Dauer
+119. Was beim Drücken passiert, kommt aus `useDruck(art)` — und `'glas'` ist die Art ohne Deckkraft (Regel 61)
+120. Ein Auf- und Zuklappen MISST seine Höhe (`useKlappe`) — `LayoutAnimation` ist auf iOS unter Fabric nur bedingt an
+121. Wo Apple die Leiste selbst zeichnet, bleibt Glas; was wir danebenstellen, ist matt (`GLAS_AN`)
 ## Fallen — Index
 
 > **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 213 Stück, jede schon
