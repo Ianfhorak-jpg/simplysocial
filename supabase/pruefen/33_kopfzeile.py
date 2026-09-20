@@ -263,6 +263,28 @@ m2 = re.search(r'styles\.nichtsLos, \{ bottom: (\w+)', vollbild)
 pruef(f'Die „nichts los"-Kapsel weicht der ECHTEN Leiste aus (gefunden: {m2.group(1) if m2 else "NICHTS"})',
       bool(m2) and m2.group(1) == 'tabUeberdeckung',
       '`tabRand` ist auf iOS 0 — die Kapsel läge hinter Apples Tab-Leiste')
+# 🔴 **Dieselbe Regel, zweite Stelle — Ians Befund vom 2026-09-20.**
+# Im Wischstapel hing der Ausweich-Abstand an der KNOPFREIHE. Das ist die
+# vorletzte Zeile der Spalte; die Fußnote („Oder die Karte einfach zur Seite
+# schieben.") kommt danach und lag damit genau in dem Abstand, der die Kapsel
+# freihalten sollte. *Was fest steht, weicht der Kapsel aus* heißt: das
+# UNTERSTE, was fest steht — sonst weicht ein Teil der Spalte aus und der Rest
+# rutscht nach.
+WISCH = WURZEL / 'src' / 'components' / 'WischStapel.tsx'
+wisch = WISCH.read_text() if WISCH.exists() else ''
+pruef('`WischStapel.tsx` ist gefunden', bool(wisch),
+      'eine Textsuche mit null Treffern beweist nichts')
+pruef('Die FUSSNOTE weicht der Tab-Kapsel aus, nicht die Knopfreihe',
+      'styles.fussnote, { marginBottom: tabUeberdeckung }' in wisch,
+      'die Fußnote steht UNTER den Knöpfen — weicht nur die Reihe aus, liegt der Satz hinter dem Glas')
+pruef('… und die Knopfreihe trägt den Abstand nicht mehr doppelt',
+      'styles.knoepfe, { paddingBottom' not in wisch,
+      'beide zusammen wären der Abstand zweimal, also rund 83 pt Luft zu viel')
+# Gegenprobe gegen den Wächter selbst.
+pruef('Gegenprobe: der Satz steht überhaupt noch da',
+      'Oder die Karte einfach zur Seite schieben.' in wisch,
+      'ohne ihn prüfen die zwei Zeilen darüber eine Fußnote, die es nicht gibt')
+
 pruef('`LeererFeed` steht NICHT über der Karte',
       'LeererFeed' not in vollbild,
       'er ist ein Vollflächen-Zustand — er würde Wien wieder ersetzen statt ergänzen')

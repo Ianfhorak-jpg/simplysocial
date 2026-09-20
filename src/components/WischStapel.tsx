@@ -172,7 +172,7 @@ export function WischStapel({
           `contentContainerStyle`). Das ist harte Regel 62 in ihrer eigentlichen
           Aussage — was FEST steht, weicht der Leiste aus, und zwar dort, wo man
           weiß, was schon dasteht. */}
-      <View style={[styles.knoepfe, { paddingBottom: spacing.sm + tabUeberdeckung }]}>
+      <View style={styles.knoepfe}>
         <SsButton
           variant="ghost"
           label="Weg"
@@ -200,7 +200,23 @@ export function WischStapel({
           stünde er bei jedem Post noch einmal, und ab dem dritten liest ihn niemand
           mehr. Hier ist er Beschriftung der Knöpfe — genau so lange lesbar, wie man
           ihn braucht. */}
-      <View style={styles.fussnote}>
+      {/* 🔴 **Der Ausweich-Abstand vor der Tab-Kapsel gehört HIERHER, nicht an
+          die Knopfreihe darüber — Ians Befund vom 2026-09-20.**
+
+          Er stand bis dahin an `knoepfe`. Das ist die vorletzte Zeile der
+          Spalte; die Fußnote kommt DANACH und landete damit genau in dem
+          Abstand, der die Kapsel freihalten sollte. Ians Worte: *„unter meiner
+          Liquid-Glass-Leiste unten ist noch ein Text, und das will ich weg
+          oder woanders haben."*
+
+          Harte Regel 62 wörtlich: *Was fest steht, weicht der Kapsel aus.* Das
+          muss das UNTERSTE sein, was fest steht — sonst weicht nur ein Teil
+          der Spalte aus und der Rest rutscht nach.
+
+          ⚠️ **Das kostet die Karten Höhe, und das ist richtig so.** Die
+          Fußnote war vorher nicht „platzsparend untergebracht", sie war
+          verdeckt. Sichtbar braucht sie ihre 44 Punkte. */}
+      <View style={[styles.fussnote, { marginBottom: tabUeberdeckung }]}>
         {fussnote ?? (
           <SsText variant="caption" center color={colors.inkSoft}>
             Oder die Karte einfach zur Seite schieben.
