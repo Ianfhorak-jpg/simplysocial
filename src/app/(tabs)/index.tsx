@@ -433,7 +433,11 @@ export default function FeedScreen() {
    * Auch diese Zeile gibt es nur einmal: In der Kartenansicht schwebt sie über der
    * Karte (Entscheidung 44), sonst steht sie im Fluss.
    */
-  const umschalter = (style: StyleProp<ViewStyle>, aufGlas?: boolean) => (
+  const umschalter = (
+    style: StyleProp<ViewStyle>,
+    aufGlas?: boolean,
+    breite?: Animated.AnimatedInterpolation<number>,
+  ) => (
     <SsSegment<Ansicht>
       value={ansicht}
       onChange={setAnsicht}
@@ -449,6 +453,11 @@ export default function FeedScreen() {
       // von Hand nachgezogen werden müsste, wäre genau die Sorte Wissen, die beim
       // Umlegen vergessen wird.
       aufGlas={aufGlas && GLAS_AN}
+      // 🔴 Die Innenbreite als ANIMIERTER Wert, wenn die Kapsel sie fährt. Damit
+      // rechnet die Pille aus demselben Takt, statt sich pro Bild neu zu messen —
+      // die Begründung steht bei `breite` in `SsSegment`. Ians „sie springt so
+      // komisch und ist nicht smooth" kam genau von der Messung.
+      breite={breite}
       // Ians Entscheidung 54 (Phase 19f): drei Zeichen statt drei Woerter. Er hatte
       // den Stapel zuerst als Vollbild beschrieben („alles weg, nur Zurueck-Pfeil,
       // Karten und die Leiste unten") und auf die Frage, wie man dann zur Karte
@@ -1242,7 +1251,11 @@ function KopfLeiste({
 }: {
   aufKarte: boolean;
   eigenerRandOben: boolean;
-  umschalter: (style: StyleProp<ViewStyle>, aufGlas?: boolean) => ReactNode;
+  umschalter: (
+    style: StyleProp<ViewStyle>,
+    aufGlas?: boolean,
+    breite?: Animated.AnimatedInterpolation<number>,
+  ) => ReactNode;
   filterOffen: boolean;
   anzahlFilter: number;
   filterUmschalten: () => void;
@@ -1294,6 +1307,24 @@ function KopfLeiste({
     spacing.xs * 2 + UMSCHALTER_BREITE + spacing.xs + filterNatur,
   );
 
+  /**
+   * Die Innenbreite des Umschalters in den zwei Endzuständen — **gerechnet, nicht
+   * gemessen**, und aus demselben Takt gespeist wie die Kapsel.
+   *
+   *   Stapel  die feste Breite des Umschalters; rechts daneben steht der Filter
+   *   Karte   alles, was die Kapsel innerhalb ihrer Polsterung hergibt, weil der
+   *           Filter dort auf null gefahren ist
+   *
+   * Dass beide Enden hier stehen, ist der Punkt: Dazwischen interpoliert Animated,
+   * ohne dass irgendwer messen oder neu zeichnen muss.
+   */
+  const segmentBreite = bereit
+    ? takt.interpolate({
+        inputRange: [0, 1],
+        outputRange: [UMSCHALTER_BREITE, Math.max(0, voll - spacing.xs * 2)],
+      })
+    : undefined;
+
   return (
     <View
       style={[styles.kopfLeiste, eigenerRandOben && { paddingTop: insets.top + spacing.sm }]}
@@ -1331,7 +1362,7 @@ function KopfLeiste({
         {/* 🔴 **`flex: 1`, nicht die feste 104 — daran hängt Ians ganzer Effekt.**
             Bliebe der Umschalter 104 breit, bliebe auch die Pille gleich groß,
             und die Kapsel wüchse um eine leere Fläche daneben. */}
-        {umschalter(styles.umschalterInKapsel, true)}
+        {umschalter(styles.umschalterInKapsel, true, segmentBreite)}
         {/* ⚠️ **Nur auf der KARTE** — Ians Entscheidung 103. Im Stapel sagt es
             schon der Filterknopf (`aktiveFilter()` zählt den Bezirk mit). Beides
             zugleich wären zwei Antworten auf dieselbe Frage. Seit die Kapsel EINE
@@ -1938,12 +1969,19 @@ const styles = StyleSheet.create({
    * Wirkung eine Kapsel, die wächst, während der Umschalter darin stehen bleibt.
    * Die `minWidth` bleibt als Boden: Sie ist das, was die feste Breite schützte.
    */
-  umschalterInKapsel: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    flex: 1,
-    minWidth: UMSCHALTER_BREITE,
-  },
+  /**
+   * 🔴 **Kein `flex: 1` mehr, und kein `width` — die Breite kommt als ANIMIERTER
+   * Wert von `KopfLeiste` (Prop `breite`).**
+   *
+   * Die Geschichte dieser Zeile in drei Schritten:
+   *   · feste 104 — richtig, solange ein Suchfeld daneben stand (Beleg `at05`)
+   *   · `flex: 1` — damit der Umschalter mit der Kapsel wächst (Entscheidung 105)
+   *   · gar nichts — weil `flex: 1` die Hälften bei JEDEM Bild neu vermessen ließ
+   *     und die Pille dadurch hinterherhinkte (Ians „springt so komisch")
+   *
+   * Eine zweite Breitenangabe hier wäre die zweite Wahrheit über dieselbe Sache.
+   */
+  umschalterInKapsel: { backgroundColor: 'transparent', borderWidth: 0 },
 
   /**
    * Der runde „Posten"-Knopf. Die Höhe von 44 ist Apples Mindestmaß für ein

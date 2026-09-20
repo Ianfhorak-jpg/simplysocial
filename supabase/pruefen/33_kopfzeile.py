@@ -180,9 +180,22 @@ pruef('… und es gibt sie nur EINMAL (Entscheidung 105)',
       'zwei Kapseln in zwei Bäumen werden beim Umschalten getauscht statt bewegt')
 # Der Umschalter muss MITWACHSEN, sonst wächst die Kapsel um eine leere Fläche
 # und die weisse Pille bleibt stehen — der ganze Effekt hinge daran.
-pruef('… der Umschalter wächst mit der Kapsel (`flex: 1`, nicht feste Breite)',
-      'flex: 1,\n    minWidth: UMSCHALTER_BREITE,' in code,
-      'mit fester Breite bleibt die Pille gleich gross — Ians Effekt wäre weg')
+# 🔴 **Mechanismus gewechselt am 2026-09-20, Ians dritte Meldung.** Hier stand
+# `flex: 1` — der Umschalter wuchs damit zwar mit, aber die Hälften vermassen
+# sich bei JEDEM Bild neu, jede Messung war ein Neuzeichnen, und die Pille hinkte
+# hinterher: *„sie springt so komisch und ist nicht smooth."*
+#
+# Jetzt bekommt er seine Innenbreite als ANIMIERTEN Wert aus demselben Takt wie
+# die Kapsel (`segmentBreite` → `SsSegment`-Prop `breite`). Die Absicht ist
+# dieselbe geblieben — der Umschalter wächst mit —, nur das Mittel ist ein
+# anderes. Deshalb prüft dieser Abschnitt jetzt zwei Dinge:
+pruef('… der Umschalter bekommt seine Breite ANIMIERT (`segmentBreite`)',
+      'const segmentBreite = bereit' in code
+      and 'umschalter(styles.umschalterInKapsel, true, segmentBreite)' in code,
+      'ohne sie misst er sich pro Bild neu — das war das Ruckeln')
+pruef('… und hat KEINE zweite Breitenangabe im Stil',
+      "umschalterInKapsel: { backgroundColor: 'transparent', borderWidth: 0 }," in code,
+      'ein `flex` oder `width` daneben wäre die zweite Wahrheit über dieselbe Sache')
 
 # 🔴 **Der Fehler vom 2026-09-20, den weder tsc noch Lint noch ein Bild am Mac
 # gezeigt hat.** Die animierte Breite stand auf `SsGlas` — und das rendert mit

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
@@ -37,6 +37,31 @@ export interface SsSegmentProps<T> {
    * — dort trägt gerade die deckende Fläche die Aussage „genau dieses von beidem".
    */
   aufGlas?: boolean;
+  /**
+   * Die INNENBREITE des Umschalters, wenn die Umgebung sie ANIMIERT.
+   *
+   * ── Warum es diese Prop gibt (Ians Befund vom 2026-09-20) ─────────────────
+   * Normalerweise misst dieser Baustein seine Hälften selbst (`onLayout`) und
+   * interpoliert die Pille zwischen den gemeldeten Lagen. Das ist richtig,
+   * solange die Breite STEHT.
+   *
+   * 🔴 **Ändert die Umgebung die Breite animiert, bricht es.** In `KopfLeiste`
+   * wächst die Kapsel über 420 ms; die Hälften melden dann in JEDEM Bild neue
+   * Maße, jede Meldung ist ein `setState` und ein Neuzeichnen, und die Pille
+   * interpoliert zwischen Werten, die sich unter ihr verschieben. Ians Urteil:
+   * *„sie springt so komisch und ist nicht smooth."* Sie hinkt der Kapsel ein
+   * Bild hinterher — **sie misst, statt zu rechnen.**
+   *
+   * Mit dieser Prop rechnet sie: Breite und Lage der Pille kommen aus DERSELBEN
+   * Animation wie die Kapsel (`Animated.divide` / `multiply`), die Messung
+   * entfällt vollständig, und während der Bewegung gibt es **kein einziges
+   * Neuzeichnen**.
+   *
+   * ⚠️ **Nur setzen, wenn die Hälften wirklich GLEICH breit sind.** Die Rechnung
+   * teilt schlicht durch ihre Anzahl. Bei ungleichen Beschriftungen ist die
+   * Messung richtig und diese Prop falsch.
+   */
+  breite?: Animated.AnimatedInterpolation<number>;
 }
 
 /**
@@ -75,11 +100,13 @@ export function SsSegment<T extends string | number | boolean>({
   onChange,
   style,
   aufGlas,
+  breite,
 }: SsSegmentProps<T>) {
   const index = Math.max(0, options.findIndex((o) => o.wert === value));
   // Lage und Breite jeder Hälfte, wie sie sich selbst gemeldet haben.
   const [masse, setMasse] = useState<{ x: number; breite: number }[]>([]);
-  const bereit = masse.length === options.length && options.length > 0;
+  // Mit `breite` braucht es keine Messung — die Geometrie ist gerechnet.
+  const bereit = breite !== undefined || (masse.length === options.length && options.length > 0);
 
   const [gleit] = useState(() => new Animated.Value(index));
   useEffect(() => {
@@ -101,7 +128,10 @@ export function SsSegment<T extends string | number | boolean>({
     options.length > 1 ? masse.map((m) => m[feld]) : [masse[0]?.[feld] ?? 0, masse[0]?.[feld] ?? 0];
 
   return (
-    <View style={[styles.leiste, style]}>
+    // `Animated.View`, nicht `View` — ein gewöhnliches `View` verwirft eine
+    // animierte Breite im `style` STILL. Genau daran hing Ians Befund vom
+    // 2026-09-20 schon einmal, eine Ebene höher bei `SsGlas`.
+    <Animated.View style={[styles.leiste, style]}>
       {bereit ? (
         // Die Pille steht als ERSTES Kind im Baum und liegt damit unter den Hälften.
         // Ein `zIndex` wäre die zweite Wahrheit über dieselbe Sache.
@@ -110,10 +140,21 @@ export function SsSegment<T extends string | number | boolean>({
           style={[
             styles.pille,
             aufGlas && styles.pilleAufGlas,
-            {
-              transform: [{ translateX: gleit.interpolate({ inputRange: stuetzen, outputRange: werte('x') }) }],
-              width: gleit.interpolate({ inputRange: stuetzen, outputRange: werte('breite') }),
-            },
+            // Gerechnet, wenn die Umgebung die Breite animiert (siehe `breite`);
+            // gemessen, wenn sie steht. Beide Wege speisen dieselbe Pille.
+            breite !== undefined
+              ? {
+                  transform: [
+                    { translateX: Animated.multiply(Animated.divide(breite, options.length), gleit) },
+                  ],
+                  width: Animated.divide(breite, options.length),
+                }
+              : {
+                  transform: [
+                    { translateX: gleit.interpolate({ inputRange: stuetzen, outputRange: werte('x') }) },
+                  ],
+                  width: gleit.interpolate({ inputRange: stuetzen, outputRange: werte('breite') }),
+                },
           ]}
         />
       ) : null}
@@ -124,6 +165,9 @@ export function SsSegment<T extends string | number | boolean>({
             key={String(o.wert)}
             onPress={() => onChange(o.wert)}
             onLayout={(e) => {
+              // Mit `breite` wird gerechnet — jede Messung hier wäre ein
+              // Neuzeichnen mitten in der Bewegung, und genau das ruckelte.
+              if (breite !== undefined) return;
               const { x, width } = e.nativeEvent.layout;
               setMasse((alt) => {
                 if (alt[i] && Math.abs(alt[i].x - x) < 0.5 && Math.abs(alt[i].breite - width) < 0.5) return alt;
@@ -162,7 +206,7 @@ export function SsSegment<T extends string | number | boolean>({
           </Pressable>
         );
       })}
-    </View>
+    </Animated.View>
   );
 }
 
