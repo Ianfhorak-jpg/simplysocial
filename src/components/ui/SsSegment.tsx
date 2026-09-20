@@ -10,6 +10,14 @@ import { bewegung } from '@/lib/bewegung';
 import { colors, radius, spacing } from '@/theme';
 import type { IconName } from '@/theme/icons';
 
+/**
+ * Die Rahmenstärke der Leiste — **als Konstante, weil sie an ZWEI Stellen
+ * gebraucht wird**: einmal in `styles.leiste` und einmal in der Pillenrechnung,
+ * die sie von der Außenbreite abziehen muss. Eine `1`, die an einer der beiden
+ * Stellen geändert wird, verschiebt die Pille lautlos um einen Punkt.
+ */
+const RAHMEN = 1;
+
 export interface SsSegmentOption<T> {
   wert: T;
   label: string;
@@ -127,11 +135,59 @@ export function SsSegment<T extends string | number | boolean>({
   const werte = (feld: 'x' | 'breite') =>
     options.length > 1 ? masse.map((m) => m[feld]) : [masse[0]?.[feld] ?? 0, masse[0]?.[feld] ?? 0];
 
+  /**
+   * 🔴 **Die SPUR, auf der die Hälften wirklich liegen — nicht die Außenbreite.**
+   *
+   * `breite` ist die AUSSENbreite der Leiste (dieselbe Zahl, die oben als
+   * `width` gesetzt wird). Was den Hälften davon bleibt, ist kleiner, und drei
+   * Posten stehen dazwischen — alle drei in `styles.leiste`:
+   *
+   *   · `borderWidth: RAHMEN` zweimal
+   *   · `padding: spacing.xs` zweimal
+   *   · `gap: spacing.xs` zwischen je zwei Hälften
+   *
+   * Vorher rechnete die Pille schlicht `breite / anzahl` und fing bei `left: 0`
+   * an. Bei zwei Stufen und 104 pt Außenbreite ergibt das 52 pt statt 45 und
+   * einen Start 4 pt zu weit links — **die Pille war breiter als die Hälfte,
+   * über die sie sich legen sollte.** Ians *„dieser weiße Punkt ist nicht
+   * mittig beim Stapel."*
+   *
+   * ⚠️ **Warum der Start `spacing.xs` ist und nicht 0.** Ein absolut gesetztes
+   * Kind zählt in Yoga vom INNENrand des Rahmens, die Polsterung bekommt es
+   * nicht geschenkt. Dass das hier stimmt, sagt die Gegenprobe im selben Stil:
+   * `pille` steht auf `top: spacing.xs` und ist damit seit jeher genau so hoch
+   * wie eine Hälfte — wäre die Polsterung schon drin, säße sie 4 pt zu tief.
+   */
+  const spur =
+    breite === undefined
+      ? undefined
+      : Animated.subtract(
+          breite,
+          RAHMEN * 2 + spacing.xs * 2 + spacing.xs * (options.length - 1),
+        );
+  const haelfteBreit = spur === undefined ? undefined : Animated.divide(spur, options.length);
+
   return (
     // `Animated.View`, nicht `View` — ein gewöhnliches `View` verwirft eine
     // animierte Breite im `style` STILL. Genau daran hing Ians Befund vom
     // 2026-09-20 schon einmal, eine Ebene höher bei `SsGlas`.
-    <Animated.View style={[styles.leiste, style]}>
+    <Animated.View
+      style={[
+        styles.leiste,
+        style,
+        // 🔴 **Hier fehlte die Breite — der zweite Teil von Ians Befund vom
+        //    2026-09-20 („dieser weiße Punkt ist nicht mittig beim Stapel").**
+        //
+        //    `breite` ging bisher NUR in die Pillenrechnung. Die Wurzel selbst
+        //    maß sich weiter nach ihrem Inhalt: zwei Zeichen à 19 pt mit ihrer
+        //    Polsterung, zusammen 84 pt — während die Pille mit 104 rechnete.
+        //    Zwei Wahrheiten über dieselbe Breite, und die Pille ragte 20 pt
+        //    über den Umschalter hinaus.
+        //
+        //    ⚠️ Nach `style`, nicht davor: `umschalterInKapsel` darf Fläche und
+        //    Rahmen abschalten, aber nicht die Breite überstimmen.
+        breite !== undefined ? { width: breite } : null,
+      ]}>
       {bereit ? (
         // Die Pille steht als ERSTES Kind im Baum und liegt damit unter den Hälften.
         // Ein `zIndex` wäre die zweite Wahrheit über dieselbe Sache.
@@ -142,12 +198,23 @@ export function SsSegment<T extends string | number | boolean>({
             aufGlas && styles.pilleAufGlas,
             // Gerechnet, wenn die Umgebung die Breite animiert (siehe `breite`);
             // gemessen, wenn sie steht. Beide Wege speisen dieselbe Pille.
-            breite !== undefined
+            haelfteBreit !== undefined
               ? {
                   transform: [
-                    { translateX: Animated.multiply(Animated.divide(breite, options.length), gleit) },
+                    {
+                      // Ein Schritt ist eine Hälfte PLUS der Zwischenraum — sonst
+                      // bliebe die Pille bei der zweiten Stufe um genau ein `gap`
+                      // zurück. Der Start ist die linke Polsterung.
+                      translateX: Animated.add(
+                        spacing.xs,
+                        Animated.multiply(
+                          Animated.add(haelfteBreit, spacing.xs),
+                          gleit,
+                        ),
+                      ),
+                    },
                   ],
-                  width: Animated.divide(breite, options.length),
+                  width: haelfteBreit,
                 }
               : {
                   transform: [
@@ -216,7 +283,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     padding: spacing.xs,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: RAHMEN,
     borderColor: colors.line,
     borderRadius: radius.pill,
   },

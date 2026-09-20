@@ -1281,6 +1281,22 @@ function KopfLeiste({
   // Hängt NICHT an der Animation und ist deshalb gefahrlos zu messen.
   const [zeile, setZeile] = useState(0);
   const [filterNatur, setFilterNatur] = useState(0);
+  /**
+   * 🔴 **Die natürliche Breite des ✕ — nötig, seit der Umschalter seine Breite
+   * WIRKLICH bekommt (2026-09-20).**
+   *
+   * Bis dahin ging `segmentBreite` nur in die Pillenrechnung; die Wurzel des
+   * Umschalters maß sich nach ihrem Inhalt (≈84 pt) und ließ dem ✕ reichlich
+   * Platz. Jetzt ist die Breite echt — und ihr weites Ende war die GANZE
+   * Innenbreite der Kapsel. Das ✕ (Entscheidung 103) steht als Geschwister
+   * daneben, `flexShrink` ist in React Native von Haus aus 0, und
+   * `kopfKapselGlas` hat bewusst kein `overflow: hidden`: Es wäre rechts aus
+   * der Kapsel herausgeragt, genau dorthin, wo der Posten-Knopf sitzt.
+   *
+   * Gemessen statt gerechnet, und zwar aus demselben Grund wie `filterNatur`:
+   * Die Breite hängt an der Schriftgröße des Geräts, nicht an einer Konstante.
+   */
+  const [abwaehlNatur, setAbwaehlNatur] = useState(0);
 
   const bereit = zeile > 0 && filterNatur > 0;
   /**
@@ -1318,10 +1334,13 @@ function KopfLeiste({
    * Dass beide Enden hier stehen, ist der Punkt: Dazwischen interpoliert Animated,
    * ohne dass irgendwer messen oder neu zeichnen muss.
    */
+  // Auf der Karte teilt sich der Umschalter die Kapsel mit dem ✕, sonst mit
+  // nichts. `0`, solange nicht gemessen — ein Bild lang, beim allerersten Mal.
+  const abwaehlRaum = aufKarte && gewaehlt ? abwaehlNatur : 0;
   const segmentBreite = bereit
     ? takt.interpolate({
         inputRange: [0, 1],
-        outputRange: [UMSCHALTER_BREITE, Math.max(0, voll - spacing.xs * 2)],
+        outputRange: [UMSCHALTER_BREITE, Math.max(0, voll - spacing.xs * 2 - abwaehlRaum)],
       })
     : undefined;
 
@@ -1367,7 +1386,11 @@ function KopfLeiste({
             schon der Filterknopf (`aktiveFilter()` zählt den Bezirk mit). Beides
             zugleich wären zwei Antworten auf dieselbe Frage. Seit die Kapsel EINE
             ist, muss das dastehen — vorher trug es die Trennung der zwei Bäume. */}
-        {aufKarte && gewaehlt ? <BezirkAbwaehlen plz={gewaehlt} abwaehlen={abwaehlen} /> : null}
+        {aufKarte && gewaehlt ? (
+          <View onLayout={(e) => setAbwaehlNatur(e.nativeEvent.layout.width)}>
+            <BezirkAbwaehlen plz={gewaehlt} abwaehlen={abwaehlen} />
+          </View>
+        ) : null}
         <Animated.View
           style={[
             styles.filterHuelle,
@@ -1856,6 +1879,24 @@ const styles = StyleSheet.create({
   kopfLeiste: {
     flexDirection: 'row',
     alignItems: 'center',
+    /**
+     * 🔴 **`space-between` ist Ians Entscheidung 96 wörtlich: Kapsel links,
+     * Posten-Knopf rechts am Rand.**
+     *
+     * Die Vorgängerin `kopfZeile` trug es; `kopfLeiste` hat es beim Umbau auf
+     * die EINE Kapsel (Entscheidung 105) nicht mitbekommen. Ohne die Zeile
+     * klebt der Knopf am `gap` der Kapsel — und weil die Kapsel im Stapel nur
+     * `schmal` breit ist (≈160 pt statt der vollen Zeile), landet er in der
+     * BILDMITTE. Ians Befund am 2026-09-20: *„der Post-Button ist irgendwie in
+     * der Mitte gelandet."*
+     *
+     * ⚠️ Am weiten Ende ist es folgenlos und muss es sein: `voll` ist als
+     * `inhalt − POSTEN_GROESSE − spacing.md` gerechnet, Kapsel + Lücke + Knopf
+     * füllen die Zeile also genau aus. `space-between` verteilt dann nichts —
+     * es wirkt ausschließlich am schmalen Ende. Das `gap` bleibt daneben
+     * stehen: Es ist der Mindestabstand, `space-between` nur der Rest.
+     */
+    justifyContent: 'space-between',
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,

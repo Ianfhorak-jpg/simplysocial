@@ -313,6 +313,80 @@ pruef('Gegenprobe: `glas-typen.ts` enthält überhaupt Glas-Konstanten',
       'GLAS_STIL' in glas_code and 'GLAS_FARBSCHEMA' in glas_code,
       'eine Textsuche mit null Treffern beweist nichts')
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  IANS ENTSCHEIDUNG 96 — Kapsel links, Posten-Knopf RECHTS AM RAND
+# ══════════════════════════════════════════════════════════════════════════════
+#  🔴 **Diese Entscheidung ist am 2026-09-20 stillschweigend verschwunden**, und
+#  kein einziger Prüfstand hat es bemerkt. Sie stand als
+#  `justifyContent: 'space-between'` in `kopfZeile`; beim Umbau auf die EINE
+#  Kapsel (Entscheidung 105) wurde `kopfZeile` nicht umbenannt, sondern durch
+#  `kopfLeiste` ERSETZT — und ein Neubau erbt nichts. Der Knopf klebte danach am
+#  `gap` der Kapsel und landete, weil die Kapsel im Stapel nur `schmal` breit
+#  ist, in der Bildmitte. Ians Befund: *„der Post-Button ist irgendwie in der
+#  Mitte gelandet."*
+#
+#  ⚠️ **Was dieser Abschnitt NICHT behauptet.** Er sagt nicht, dass der Knopf am
+#  Rand SITZT — das sagt nur ein Bild vom Gerät. Er hält fest, dass die eine
+#  Eigenschaft dasteht, ohne die er es sicher nicht tut.
+print('')
+print('── Ians Entscheidung 96: Kapsel links, Posten-Knopf rechts ──')
+
+m_leiste = re.search(r'\n  kopfLeiste: \{(.*?)\n  \},', roh, re.S)
+pruef('`kopfLeiste` ist gefunden',
+      bool(m_leiste),
+      'ohne den Style hat Entscheidung 96 keinen Ort — umbenannt? dann hier nachziehen')
+leiste = m_leiste.group(1) if m_leiste else ''
+pruef('… und trägt `space-between` — Ians Entscheidung 96',
+      "justifyContent: 'space-between'" in leiste,
+      'ohne sie klebt der Posten-Knopf an der Kapsel und steht im Stapel mittig')
+# Die Kapsel muss weiterhin VOR dem Knopf stehen — `space-between` allein sagt
+# nur „auseinander", nicht „in dieser Reihenfolge".
+m_reihe = re.search(r'<SsGlas schwebt style=\{styles\.kopfKapselGlas\}>', roh)
+pruef('Die Kapsel steht VOR dem Posten-Knopf im Baum',
+      bool(m_reihe) and roh.index('<PostenKnopf />') > m_reihe.start(),
+      'sonst verteilt `space-between` sie in der falschen Reihenfolge')
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  DIE EINE BREITE — der Umschalter bekommt sie WIRKLICH (2026-09-20)
+# ══════════════════════════════════════════════════════════════════════════════
+#  🔴 `segmentBreite` ging ein halbes Jahr lang NUR in die Pillenrechnung. Die
+#  Wurzel von `SsSegment` maß sich weiter nach ihrem Inhalt — zwei Wahrheiten
+#  über dieselbe Breite, 84 gegen 104 Punkte. Ians *„dieser weiße Punkt ist
+#  nicht mittig beim Stapel."*
+#
+#  Das ist die Falle *„Ein ungenutzter Parameter ist einer, den nie jemand
+#  geprüft hat"*: Eine Prop, die ankommt und verpufft, sieht im Typcheck aus wie
+#  eine, die wirkt.
+print('')
+print('── Eine Breite, eine Quelle ──')
+
+SEG = WURZEL / 'src' / 'components' / 'ui' / 'SsSegment.tsx'
+seg = SEG.read_text() if SEG.exists() else ''
+pruef('`SsSegment.tsx` ist gefunden', bool(seg),
+      'eine Textsuche mit null Treffern beweist nichts')
+pruef('Die Wurzel setzt `breite` als eigene Breite',
+      'breite !== undefined ? { width: breite } : null' in seg,
+      'ohne das misst sich der Umschalter nach seinem Inhalt und die Pille rechnet daneben')
+pruef('Die Pille zieht Rahmen, Polsterung und Zwischenraum ab (`spur`)',
+      'const spur =' in seg and 'RAHMEN * 2 + spacing.xs * 2 + spacing.xs * (options.length - 1)' in seg,
+      '`breite / anzahl` macht die Pille um Polsterung und Lücke zu breit')
+pruef('… und startet an der linken Polsterung, nicht bei 0',
+      'Animated.add(\n                        spacing.xs,' in seg,
+      'ein absolut gesetztes Kind zählt vom Innenrand des RAHMENS, die Polsterung fehlt ihm')
+pruef('Die Rahmenstärke hat EINEN Ort (`RAHMEN`)',
+      'const RAHMEN = 1;' in seg and 'borderWidth: RAHMEN,' in seg,
+      'eine 1 an zwei Stellen verschiebt die Pille lautlos um einen Punkt')
+
+# Das ✕ ist ein Geschwister des Umschalters in derselben Kapsel. Seit die Breite
+# echt ist, muss sie ihm Platz lassen — sonst ragt es aus der Kapsel heraus,
+# und `kopfKapselGlas` hat bewusst kein `overflow: hidden`.
+pruef('Die Kapselbreite lässt dem ✕ Platz (`abwaehlRaum`)',
+      'const abwaehlRaum =' in roh and '- abwaehlRaum' in roh,
+      'sonst nimmt der Umschalter die ganze Kapsel und das ✕ landet beim Posten-Knopf')
+pruef('… und dieser Platz ist GEMESSEN, nicht geraten',
+      'setAbwaehlNatur(e.nativeEvent.layout.width)' in roh,
+      'die Breite hängt an der Schriftgröße des Geräts, nicht an einer Konstante')
+
 print('')
 print(f'  {JA} Häkchen, {NEIN} Kreuze')
 sys.exit(1 if NEIN else 0)
