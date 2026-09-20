@@ -34,6 +34,7 @@ import { FILTER_EGAL, jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/confi
 import { useCurrentUser } from '@/features/social/hooks';
 import {
   BEZIRK_ALLE,
+  gewaehlterBezirk,
   WANN_LABELS,
   WANN_ORDER,
 } from '@/features/posts/filter';
@@ -251,6 +252,10 @@ export default function FeedScreen() {
   const [kopfHoehe, setKopfHoehe] = useState(0);
   const anzahlFilter = aktiveFilter(filter);
   const filterAktiv = anzahlFilter > 0;
+  // Dieselbe Ableitung, die `KarteVollbild` für die Karte benutzt — aus
+  // `features/posts/filter.ts`, nicht zweimal hingeschrieben. Gebraucht für das
+  // ✕ in der Kapsel (Ians Entscheidung 103).
+  const gewaehltImFilter = gewaehlterBezirk(filter.bezirk);
   const zuruecksetzen = () => setFilter(FILTER_LEER);
 
   // Beim allerersten Öffnen liegt die Anleitungskarte oben. Erst im Effekt gesetzt
@@ -468,6 +473,28 @@ export default function FeedScreen() {
         // übereinander wären einer zu viel, und der obere wäre der deckende.
         <SsGlas schwebt style={[styles.ansicht, styles.ansichtSchwebend]}>
           {umschalter(styles.ansichtImGlas, true)}
+          {/* 🔴 **Ians Entscheidung 103 (2026-09-20).** Er hat den 14. Bezirk
+              weiß umrandet gesehen und gefragt, warum — obwohl er „nicht drauf
+              geklickt" hatte. Im Code nachgesehen: **kein Fehler.** `gewaehlt`
+              ist in EINER Zeile aus `filter.bezirk` abgeleitet, und `find` trifft
+              bei `null` nie etwas; ein markierter Bezirk ohne laufenden Filter
+              kann es gar nicht geben (harte Regel 50, wörtlich umgesetzt).
+
+              **Es fehlte also keine Reparatur, sondern eine Auskunft.** Der
+              Filter lief, und das Einzige, was es sagte, war ein Chip im
+              zugeklappten Regler — den man erst sieht, wenn man ihn aufmacht.
+
+              ⚠️ **Nur in der KARTENANSICHT, und das ist kein Vergessen.** In der
+              Stapelansicht sagt es schon der Filterknopf: `aktiveFilter()` zählt
+              `bezirk.kind !== 'alle'` mit, der Knopf wird weiß und trägt die Zahl.
+              Ein ✕ daneben wäre die zweite Antwort auf dieselbe Frage — genau die
+              Falle, an der in diesem Projekt schon einmal ein Abend hing. */}
+          {gewaehltImFilter ? (
+            <BezirkAbwaehlen
+              plz={gewaehltImFilter}
+              abwaehlen={() => setzen('bezirk', BEZIRK_ALLE)}
+            />
+          ) : null}
         </SsGlas>
       ) : (
         umschalter(styles.ansicht)
@@ -936,7 +963,7 @@ function KarteVollbild({
   const leisteBelegt = leisteHoehe > 0 ? insets.top + spacing.sm + leisteHoehe + spacing.sm : 0;
 
   const nichtsDa = Object.keys(zaehlung).length === 0 && ohneBezirk === 0;
-  const gewaehlt = bezirk.kind === 'einer' ? bezirk.plz : null;
+  const gewaehlt = gewaehlterBezirk(bezirk);
 
   /**
    * Ians Entscheidung 49: **Ein Tipp auf denselben Bezirk hebt die Auswahl auf.**
@@ -948,20 +975,42 @@ function KarteVollbild({
    * gedacht, aber es hat den Fall übersehen, den Ian beim BENUTZEN traf: Man
    * kommt ohne Umweg nicht mehr zu ganz Wien zurück.
    *
-   * ⚠️ **Seit Phase 19i ist der zweite Tipp der EINZIGE Weg zurück zu ganz Wien.**
-   * Bis dahin stand daneben ein ✕ im Blattkopf, ausdrücklich „zusätzlich und nicht
-   * ersatzweise", weil ein zweiter Tipp auf einen 14 × 11 px großen Bezirk (die
-   * Josefstadt, gemessen in 19b) nicht zuverlässig zu treffen ist. **Das Blatt ist
-   * mit Entscheidung 65 weggefallen, und das ✕ mit ihm** — der Grund für die
-   * Doppelung ist damit nicht erledigt, nur der Ort dafür. Gehört Ian am Bild
-   * vorgelegt: Wenn ihn ein klebender Bezirk stört, ist der Ersatz ein kleines ✕
-   * neben dem Umschalter.
+   * 🔴 **Ians Entscheidung 102 (2026-09-20): Der Tipp geht DIREKT in den Stapel.**
+   * Seine Worte: *„dass man nicht mehr sieht, wie viele Anfragen da sind, sondern
+   * eher einfach draufklickt und dann redirected wird … dass man so swipen kann
+   * eben direkt."* Vorher war es zweistufig: tippen wählte aus, die Karte blieb
+   * stehen, und erst „Alle" in der Blase öffnete den Stapel.
+   *
+   * ── Was dadurch WEGFÄLLT, und warum es ersetzt ist ──────────────────────────
+   * **Der zweite Tipp auf denselben Bezirk war seit Phase 19i der einzige Weg
+   * zurück zu ganz Wien** (Entscheidung 49). Er kann es nicht mehr sein: Der erste
+   * Tipp verlässt die Karte, also kommt nie ein zweiter auf derselben Ansicht.
+   * Deshalb hebt hier auch nichts mehr auf — ein Tipp auf den schon gewählten
+   * Bezirk geht wieder hinein, und das ist die Lesart, die zu „draufklicken und
+   * redirected werden" gehört.
+   *
+   * **Der Ersatz ist Ians Entscheidung 103: das ✕ in der Kapsel** (`BezirkAbwaehlen`
+   * in `ansichtZeile`). Es war schon einmal da — bis Phase 19i im Blattkopf,
+   * ausdrücklich „zusätzlich und nicht ersatzweise", weil ein zweiter Tipp auf einen
+   * 14 × 11 px großen Bezirk (die Josefstadt, gemessen in 19b) nicht zuverlässig zu
+   * treffen ist. Mit dem Blatt fiel es weg, **der Grund dafür war nie erledigt** —
+   * nur der Ort. Jetzt hat es einen neuen.
+   *
+   * ⚠️ **Die Blase ist damit NICHT tot** (Entscheidung 57, harte Regel 51). Sie
+   * hängt an `gewaehlt`, nicht am Tippen: Kommt man aus dem Stapel auf die Karte
+   * zurück, steht der Bezirk noch gewählt da und sie zeigt seine Posts.
    *
    * **Harte Regel 50 gilt weiter:** Was gewählt ist, IST der Bezirksfilter — das
    * Aufheben setzt `filter.bezirk`, nicht eine eigene Variable daneben.
    */
-  const bezirkTippen = (plz: string | null) =>
-    setzen('bezirk', plz === null || plz === gewaehlt ? BEZIRK_ALLE : { kind: 'einer', plz });
+  const bezirkTippen = (plz: string | null) => {
+    if (plz === null) {
+      setzen('bezirk', BEZIRK_ALLE);
+      return;
+    }
+    setzen('bezirk', { kind: 'einer', plz });
+    oeffneBezirk();
+  };
 
   return (
     // KEIN `SsScreen`: Der bringt Seitenrand und `edges={['top']}` mit, und genau
@@ -1150,6 +1199,59 @@ function Rueckgaengig({ eintrag, onZurueck }: { eintrag: FeedEintrag; onZurueck:
         </SsText>
       </Pressable>
     </View>
+  );
+}
+
+/**
+ * Das ✕, das den Bezirk wieder abwählt — **Ians Entscheidung 103 (2026-09-20).**
+ *
+ * ── Was es beantwortet ──────────────────────────────────────────────────────
+ * Zwei Fragen, die dieselbe sind. Erstens Ians Beobachtung, dass ein Bezirk weiß
+ * umrandet bleibt, obwohl er ihn „nicht angeklickt" hat — er IST gewählt, und die
+ * Karte sagt es nicht. Zweitens den Rückweg: Seit Entscheidung 102 springt ein
+ * Tipp direkt in den Stapel, also gibt es den zweiten Tipp nicht mehr, der bis
+ * dahin der einzige Weg zurück zu ganz Wien war (Entscheidung 49).
+ *
+ * **Ein Knopf für beides ist richtig und nicht Sparsamkeit:** Beide Male fehlt
+ * dieselbe Sache — eine sichtbare Stelle, an der „ich sehe gerade nur diesen
+ * Bezirk" steht und weggenommen werden kann.
+ *
+ * ── Warum die PLZ danebensteht und nicht nur ein ✕ ──────────────────────────
+ * Ein nacktes ✕ in einer Leiste sagt „schließen", nicht „Filter weg" — und was
+ * hier zu schließen wäre, ist nicht zu sehen. Mit der Postleitzahl liest sich die
+ * Kapsel als Satz: *Karte · Stapel · nur 1140 ✕*. Dieselbe Sprache wie der Chip
+ * „Nur 1140 Wien" im Regler, der dasselbe tut — nur dass man den erst aufklappen
+ * muss. (Das ist KEINE Bezirksauswahl: Ian hat die gestrichen, Entscheidung 63.
+ * Hier wird nichts gewählt, nur weggenommen.)
+ *
+ * ── Die Geometrie ist geerbt, nicht geraten ─────────────────────────────────
+ * Höhe 36 statt 44 und `radius.pill` statt `ecke.md` — beides aus
+ * `filterKnopfInKapsel`, wo es am 2026-09-20 an Ians Befund gemessen wurde
+ * (*„der ist dann größer als die ganze Leiste"*). `kopfGlas` hat kein vertikales
+ * Polster, die Kapsel ist also genau so hoch wie ihr höchster Inhalt; ein Knopf
+ * mit 44 würde sie aufblähen und mit engeren Ecken über ihre Rundung ragen.
+ * **Damit fällt er unter Apples 44** — deshalb `hitSlop`, wie bei `SsBack`.
+ *
+ * `useDruck('glas')`: nur Skalierung, keine Deckkraft. Harte Regel 119 — auf Glas
+ * (oder auf dem matten Ersatz, der seine Kante trägt) nimmt eine Deckkraft dem
+ * Knopf genau das weg, was ihn sichtbar macht.
+ */
+function BezirkAbwaehlen({ plz, abwaehlen }: { plz: string; abwaehlen: () => void }) {
+  const druck = useDruck('glas');
+  return (
+    <DruckFlaeche
+      onPress={abwaehlen}
+      {...druck.griff}
+      accessibilityRole="button"
+      accessibilityLabel={`Bezirk ${plz} nicht mehr filtern`}
+      hitSlop={{ top: 4, bottom: 4 }}
+      // `druck.stil` zuletzt — sonst überschriebe das Array die Animation still.
+      style={[styles.bezirkWeg, druck.stil]}>
+      <SsText variant="label" color={colors.ink}>
+        Nur {plz}
+      </SsText>
+      <SsIcon name="kreuz" size={14} color={colors.inkSoft} />
+    </DruckFlaeche>
   );
 }
 
@@ -1735,6 +1837,21 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
+  },
+  /**
+   * Das ✕ neben dem Umschalter (Ians Entscheidung 103). Geometrie wie
+   * `filterKnopfInKapsel` — 36 hoch, `radius.pill` — damit es die Kapsel nicht
+   * aufbläht und nicht über ihre Rundung ragt. Keine eigene Fläche und keine
+   * Kante: Die bringt das Glas mit (harte Regel 61).
+   */
+  bezirkWeg: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    cursor: 'pointer',
   },
   filterKnopfAktiv: { backgroundColor: colors.ink, borderColor: colors.ink },
   filterKnopfGedrueckt: { opacity: 0.7 },

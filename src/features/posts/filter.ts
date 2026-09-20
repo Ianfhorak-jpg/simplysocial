@@ -118,6 +118,26 @@ export const BEZIRK_ALLE: BezirkFilter = { kind: 'alle' };
 export const BEZIRK_OHNE: BezirkFilter = { kind: 'ohne' };
 
 /**
+ * Welcher EINE Bezirk gerade gewählt ist — oder `null`.
+ *
+ * ── Warum das eine Funktion ist und keine Zeile im Screen ────────────────────
+ * Genau diese Ableitung stand am 2026-09-20 an ZWEI Stellen in `(tabs)/index.tsx`:
+ * einmal in `KarteVollbild` für die Karte, einmal gebraucht in der Kopfzeile für
+ * das ✕ (Ians Entscheidung 103). Zwei Kopien derselben Frage sind die Falle *„Zwei
+ * Bausteine, die einzeln stimmen, geben zusammen zwei Antworten auf dieselbe
+ * Frage"* — hier besonders teuer, weil harte Regel 50 gerade darauf beruht, dass
+ * die Karten-Auswahl und der Filter EIN Ding sind.
+ *
+ * ⚠️ **`'ohne'` gibt `null` zurück, und das ist Absicht.** „Posts ohne Bezirk" ist
+ * keine Fläche auf der Karte und kann dort weder markiert noch abgewählt werden.
+ * Wer wissen will, ob überhaupt gefiltert wird, fragt `aktiveFilter()` — die zählt
+ * `'ohne'` mit.
+ */
+export function gewaehlterBezirk(bezirk: BezirkFilter): string | null {
+  return bezirk.kind === 'einer' ? bezirk.plz : null;
+}
+
+/**
  * Passt der Post zum gewählten Bezirk?
  *
  * ── Der Fall, den man leicht übersieht ───────────────────────────────────────

@@ -10,6 +10,7 @@ import {
   KARTE_QUELLE,
   STUFEN,
   TIPP_WEG_MAX,
+  ZAHLEN_AN,
   ZOOM_MAX,
   ZOOM_MIN,
   stufeFuer,
@@ -434,7 +435,11 @@ export function SsWienKarte({
           anzahl,
           fuellung: farben ? farben.flaeche : KARTE_LEER,
           zahlFarbe: farben ? farben.zahl : colors.inkSoft,
-          zeigeZahl: anzahl > 0 && zahlPasst(b.label.r, String(anzahl).length),
+          // `ZAHLEN_AN` steht in `features/posts/karte.ts` und gilt für BEIDE
+          // Zeichner (Ians Entscheidung 101, harte Regel 52). Der Rest der
+          // Rechnung bleibt stehen und wird nicht gelöscht — harte Regel 51:
+          // Ein `true` dort oben holt die Zahlen vollständig zurück.
+          zeigeZahl: ZAHLEN_AN && anzahl > 0 && zahlPasst(b.label.r, String(anzahl).length),
         };
       }),
     // `zahlPasst` hängt an `zahlEinheiten` und wird bewusst nicht als Funktion in die

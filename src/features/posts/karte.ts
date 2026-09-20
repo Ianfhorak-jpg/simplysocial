@@ -56,10 +56,50 @@ export const KARTE_QUELLE = 'Bezirksgrenzen: Stadt Wien (data.wien.gv.at), CC BY
  *             das Muster sieht, ohne zu lesen, ist weg.
  *
  * **Den Haken kennt er:** Die Karte sieht bei drei Posts genauso „voll" aus wie bei
- * dreihundert. Deshalb steht die Zahl in der Fläche (siehe `STUFEN` unten) — sie
- * ist die einzige absolute Angabe auf der ganzen Karte.
+ * dreihundert. Dagegen stand bis zum 2026-09-20 die Zahl in der Fläche — sie war
+ * die einzige absolute Angabe auf der ganzen Karte. 🔴 **Sie ist seit Ians
+ * Entscheidung 101 weg** (`ZAHLEN_AN` gleich unten); der Haken bleibt also
+ * unbeantwortet, und das ist bewusst so entschieden, nicht übersehen.
  */
 export const EINFAERBUNG: 'relativ' | 'fest' | 'zahlen' = 'relativ';
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  🔴 IANS ENTSCHEIDUNG 101 (2026-09-20): KEINE ZAHLEN AUF DER KARTE
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Seine Worte: *„vielleicht, dass man gar keine zwei oder so sieht — also dass man
+ * nicht mehr sieht, wie viele Anfragen da sind."* Vorgelegt wurden drei Wege
+ * (Zahlen weg und die Farbe trägt es · Zahlen weg und leere Bezirke gar nicht
+ * antippbar · Zahlen bleiben); **er hat den ersten gewählt.**
+ *
+ * ── Warum das hier steht und nicht in einem Zeichner ────────────────────────
+ * Es gibt zwei Kartenzeichner und GENAU EINE Bedeutung (harte Regel 52). Stünde
+ * der Schalter bei einem von ihnen, wäre dieser der heimliche Maßstab, und Web
+ * und iOS liefen beim nächsten Handgriff auseinander. Dieselbe Bauart wie
+ * `GLAS_AN` in `glas-typen.ts` — **auf `true` zurückzudrehen ist eine Zeile.**
+ *
+ * ── ⚠️ Was die Zahlen mitgetragen haben, und was jetzt offen ist ────────────
+ * Sie waren nicht nur Auskunft, sie waren ein BARRIEREFREIHEITS-Argument. Der
+ * Abstand zwischen „leer" und „ein Post" ist mit **1,62:1** der schwächste
+ * Sprung der ganzen Skala (gemessen, siehe `STUFEN` unten) — und ausgerechnet
+ * der wichtigste. Getragen wurde er von der Zahl: *eine leere Fläche bekommt gar
+ * keine.* **Diesen Träger gibt es nicht mehr.**
+ *
+ * Verschärft wird es durch Ians Entscheidung 102: Ein Tipp geht jetzt DIREKT in
+ * den Stapel. Wer einen leeren Bezirk erwischt, landet ohne Zwischenschritt bei
+ * „Hier ist alles durch".
+ *
+ * 🔴 **Das ist Ian vorgelegt und wartet auf sein Urteil** — die Behebung wäre
+ * EINE Zahl: Stufe 1 war nur deshalb so nah an `KARTE_LEER`, weil eine weiße
+ * Zahl darauf lesbar sein musste (8,63:1). Ohne Zahl ist diese Fessel weg, die
+ * Stufe darf also weiter weg von „leer" rücken. Die Skala ist heute
+ * 1,62 · 1,91 · 1,95 · 2,12; gleichmäßig wären es 1,89 je Schritt.
+ * **Nicht in einem Zug mit den Zahlen geändert**, sonst ist nachher nicht mehr
+ * zuzuordnen, welche der beiden Änderungen gewirkt hat — dieselbe Begründung,
+ * mit der `GLAS_STIL` unverändert stehen blieb.
+ */
+export const ZAHLEN_AN = false;
 
 /**
  * Die Farbskala. Fünf Zustände: leer, dann vier Stufen.

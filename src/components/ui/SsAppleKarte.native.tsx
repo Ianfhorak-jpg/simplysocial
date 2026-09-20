@@ -12,6 +12,7 @@ import {
   KARTE_QUELLE,
   NENNUNG_MIN_KARTE,
   UEBERGANG_MS,
+  ZAHLEN_AN,
   ZURUECK_KNOPF_BEI_GANZ,
   STUFEN,
   appleFuellung,
@@ -259,7 +260,11 @@ export function SsAppleKarte({
         anzahl,
         fuellung: appleFuellung(stufe),
         zahlFarbe: stufe < 0 ? colors.inkSoft : STUFEN[stufe].zahl,
-        zeigeZahl: anzahl > 0 && b.radius >= zahlEinheiten * (0.32 * ziffern + 0.3),
+        // Derselbe Schalter wie im Web-Zeichner — er steht in
+        // `features/posts/karte.ts`, weil es zwei Zeichner und EINE Bedeutung
+        // gibt (harte Regel 52). Ians Entscheidung 101.
+        zeigeZahl:
+          ZAHLEN_AN && anzahl > 0 && b.radius >= zahlEinheiten * (0.32 * ziffern + 0.3),
       };
     });
   }, [zaehlung, hoechst, region.longitudeDelta, breite]);
