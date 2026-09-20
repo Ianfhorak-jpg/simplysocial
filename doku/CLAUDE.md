@@ -66,9 +66,18 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
 ## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-20, nachts)
 
-> **Der Plan liegt in
-> [`~/.claude/plans/karte-schaerfen-und-bezirke.md`](~/.claude/plans/karte-schaerfen-und-bezirke.md)**
-> und ist **selbsttragend** — ohne Chatverlauf ausführbar. **Zuerst lesen.**
+> 🔴 **Der AKTUELLE Plan ist
+> [`~/.claude/plans/kopfleiste-geradeziehen.md`](~/.claude/plans/kopfleiste-geradeziehen.md)**
+> — selbsttragend, ohne Chatverlauf ausführbar. **Zuerst lesen, vor allem die
+> Arbeitsregel in Teil 4: EIN Befund pro Gerätedurchgang.**
+>
+> Er entstand aus Ians **viertem** Durchgang zu Entscheidung 105 (eine Kopfkapsel,
+> die sich bewegt). Vier Runden, drei behobene Fehler, immer noch nicht gut — und
+> jeder davon war am Mac unsichtbar. Ians Entscheidung dazu: **weitermachen**,
+> nicht zurückbauen.
+>
+> *(Der Plan davor, abgearbeitet:
+> [`karte-schaerfen-und-bezirke.md`](~/.claude/plans/karte-schaerfen-und-bezirke.md).)*
 > Er wird nicht automatisch geladen; ohne diesen Verweis findet ihn niemand.
 > *(Die Pläne davor, alle abgeschlossen: `spicy-sprouting-balloon.md`,
 > `oben-wie-unten-glas-kapsel.md`, `ich-will-liquid-glass-calm-pinwheel.md`.)*
