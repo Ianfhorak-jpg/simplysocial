@@ -183,6 +183,22 @@ pruef('… und es gibt sie nur EINMAL (Entscheidung 105)',
 pruef('… der Umschalter wächst mit der Kapsel (`flex: 1`, nicht feste Breite)',
       'flex: 1,\n    minWidth: UMSCHALTER_BREITE,' in code,
       'mit fester Breite bleibt die Pille gleich gross — Ians Effekt wäre weg')
+
+# 🔴 **Der Fehler vom 2026-09-20, den weder tsc noch Lint noch ein Bild am Mac
+# gezeigt hat.** Die animierte Breite stand auf `SsGlas` — und das rendert mit
+# `GLAS_AN = false` ein gewöhnliches `View`, das eine
+# `Animated.AnimatedInterpolation` STILL verwirft. Die Kapsel bekam nie eine
+# Breite, und es bewegte sich nichts. Ian musste es zweimal melden.
+#
+# Geprüft wird deshalb die REIHENFOLGE im Baum: Zwischen der Interpolation und
+# `SsGlas` darf nichts anderes stehen als eine `Animated.View`.
+i_anim = code.find('<Animated.View')
+i_glas = code.find('<SsGlas schwebt style={styles.kopfKapselGlas}>')
+i_takt = code.find('takt.interpolate')
+pruef('Die animierte Breite sitzt auf einer `Animated.View`, nicht auf `SsGlas`',
+      i_anim >= 0 and i_glas > i_anim and 0 <= i_takt < i_glas,
+      'ein gewöhnliches `View` verwirft eine Animated-Breite STILL — dann bewegt '
+      'sich nichts, und kein Typcheck sagt es')
 # Entscheidung 95: *„gib die Suchleiste weg"*. Die verworfene Möglichkeit ist,
 # sie wieder hineinzustellen — also wird genau darauf geprüft.
 pruef('… und es steht KEIN Suchfeld in der Kapsel (Entscheidung 95)',

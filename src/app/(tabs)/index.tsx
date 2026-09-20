@@ -1301,16 +1301,33 @@ function KopfLeiste({
         setZeile(e.nativeEvent.layout.width);
         onHoehe(e.nativeEvent.layout.height);
       }}>
-      <SsGlas
-        schwebt
-        style={[
-          styles.kopfKapselGlas,
+      {/* 🔴 **Die animierte Breite sitzt auf einer `Animated.View` HÜLLE, nicht
+          auf `SsGlas` — und das ist kein Stilfrage, sondern der Fehler, den Ian
+          am 2026-09-20 zweimal gemeldet hat.**
+
+          `SsGlas` rendert mit `GLAS_AN = false` ein gewöhnliches `View`
+          (`SsGlas.native.tsx`). Ein gewöhnliches `View` kann mit einer
+          `Animated.AnimatedInterpolation` als `width` NICHTS anfangen — der Wert
+          wird still verworfen. Die Kapsel bekam also nie eine gerechnete Breite,
+          sondern ihre natürliche, und bewegt hat sich gar nichts. Ians Satz *„the
+          animation is completely wrong"* war wörtlich zu nehmen.
+
+          ⚠️ **Das verschluckt keine Fehlermeldung und kein Typcheck:** `style`
+          nimmt beides an, und auf Web (wo `SsGlas` ebenfalls ein `View` ist) fällt
+          es genauso wenig auf. Sichtbar wird es nur am laufenden Bild.
+
+          Die Hülle ist eine Spalte mit `alignItems: 'stretch'` (Voreinstellung),
+          deshalb nimmt `SsGlas` ihre Breite von selbst an — es braucht dafür
+          keine eigene Eigenschaft. */}
+      <Animated.View
+        style={
           // Vor der ersten Messung KEINE gerechnete Breite — eine Kapsel mit
           // Breite 0 wäre ein Blitzer im ersten Bild.
           bereit
             ? { width: takt.interpolate({ inputRange: [0, 1], outputRange: [schmal, voll] }) }
-            : null,
-        ]}>
+            : undefined
+        }>
+      <SsGlas schwebt style={styles.kopfKapselGlas}>
         {/* 🔴 **`flex: 1`, nicht die feste 104 — daran hängt Ians ganzer Effekt.**
             Bliebe der Umschalter 104 breit, bliebe auch die Pille gleich groß,
             und die Kapsel wüchse um eine leere Fläche daneben. */}
@@ -1348,6 +1365,7 @@ function KopfLeiste({
           </View>
         </Animated.View>
       </SsGlas>
+      </Animated.View>
       {/* Der Posten-Knopf bleibt DRAUSSEN und rund — Ians Entscheidung 41. */}
       <PostenKnopf />
     </View>
