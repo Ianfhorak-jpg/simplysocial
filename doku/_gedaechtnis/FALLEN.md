@@ -1780,3 +1780,36 @@
   Projekts ist `expo lint` gegen seine gemessene Zahl — nicht ein zweites Werkzeug mit
   eigener Meinung. Verwandt mit *„Ein `sed` auf einen Wert trifft auch den KOMMENTAR
   daneben"*: ein Werkzeug, das mehr anfasst, als die Absicht deckt.
+- **`psql` ersetzt `:'variable'` weder bei `-c` noch in einem `$$`-Block — nur über
+  `-f` und stdin.** Am 2026-09-20 zweimal hintereinander in dieselbe Wand gelaufen,
+  beide Male mit derselben nichtssagenden Meldung `syntax error at or near ":"`.
+  **Erster Anlauf:** die Existenzprüfung als `do $$ … if not exists (… lower(:'wer'))
+  … $$`. In einem Dollar-Quoted Block sieht psql den Inhalt als reinen Text und
+  ersetzt darin nichts — Postgres bekommt den Doppelpunkt roh.
+  **Zweiter Anlauf:** dieselbe Abfrage nach `psql -tA -c "… lower(:'wer')"` verlegt.
+  `-c` schickt den String direkt an den Server, **ohne den psql-Parser** — also auch
+  ohne Variablen-Ersetzung. Das steht in der Doku, liest aber niemand, weil `-c` und
+  `-f` sonst austauschbar wirken.
+  **Richtig ist ein QUOTIERTES Heredoc**, denn stdin läuft durch den Parser:
+  ```bash
+  ZAHL="$($PSQL -tA -v wer="$WER" <<'SQL'
+  select count(*) from auth.users where lower(email) = lower(:'wer');
+  SQL
+  )"
+  ```
+  ⚠️ Die Quotes am `<<'SQL'` sind Pflicht — sonst bekommt die SHELL den SQL-Text und
+  deutet `$` darin selbst (eigene Falle, siehe oben).
+  ⚠️ **Die Fehlermeldung zeigt auf den Doppelpunkt und nicht auf die Ursache.** Wer
+  sie wörtlich nimmt, baut die Abfrage um, statt den WEG zu wechseln — und läuft
+  dann in dieselbe Wand, nur an anderer Stelle. Genau das ist hier passiert.
+- **Eine Wegwerf-Datenbank in `/tmp` überlebt macOS' Aufräumen nicht — und das
+  Skript prüft nur, OB das Verzeichnis da ist.** `92_demo.sh` legt sein Cluster unter
+  `/tmp/simplysocial-pgdata` an und überspringt `initdb`, wenn das Verzeichnis
+  existiert (`[ -d "$DATEN" ] || initdb …`). macOS räumt `/tmp` periodisch auf und
+  löscht dabei ALTE DATEIEN, nicht aber die Verzeichnisse: Übrig bleibt ein
+  vollständiger Ordnerbaum mit leerem `global/` und leerem `pg_logical/`. Die Prüfung
+  ist damit grün, `pg_ctl` scheitert und meldet *„directory … is not a database
+  cluster directory"* — was nach einem kaputten Postgres aussieht und keines ist.
+  **Die Behebung ist `rm -rf` auf das Verzeichnis**, danach baut das Skript es selbst
+  neu. Verwandt mit *„Ein verwaister Playwright-Lock sieht aus wie ein laufender
+  Browser"*: ein Überbleibsel, das als gültiger Zustand gelesen wird.

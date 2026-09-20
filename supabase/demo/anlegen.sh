@@ -5,6 +5,8 @@
 #    npm run demo                     anlegen / auffrischen, Passwort UNBERÜHRT
 #    npm run demo -- --neues-passwort ein neues Passwort erzeugen und anzeigen
 #    npm run demo -- --abraeumen      die ganze Demo-Welt wieder löschen
+#    npm run demo -- --mir-zeigen <e-mail>      ein ECHTES Konto sieht die Welt mit
+#    npm run demo -- --mir-nicht-mehr <e-mail>  … und wieder nicht
 #
 #  ── Was es tut ──────────────────────────────────────────────────────────────
 #  Es legt das eine Konto an, das der Apple-Reviewer benutzt, gibt ihm ein Profil
@@ -58,11 +60,64 @@ case "${1:-}" in
     echo "✓ Weg. Der Zugang in App Store Connect funktioniert ab jetzt NICHT mehr."
     exit 0
     ;;
+  --mir-zeigen|--mir-nicht-mehr)
+    WER="${2:-}"
+    [ -n "$WER" ] || {
+      echo "✗ Ohne E-Mail geht es nicht:  npm run demo -- $1 du@beispiel.at"
+      exit 1
+    }
+    # ⚠️ **Hier steht überall ein Heredoc und kein `-c`.** `psql -c` ersetzt
+    # `:'wer'` NICHT — Variablen kennt nur der Weg über `-f` oder stdin. Am
+    # 2026-09-20 hat genau das zweimal hintereinander `syntax error at or near ":"`
+    # gemeldet, einmal im Dollar-Quoted Block und einmal bei `-c`.
+    #
+    # Das Heredoc ist QUOTIERT (`<<'SQL'`): Sonst bekäme die Shell den SQL-Text zu
+    # sehen, und `$`-Zeichen darin wären ihre Sache — die Falle steht in FALLEN.md.
+    #
+    # Ohne Konto keine Folge-Beziehung. Ein leerer `insert` liefe stumm durch, und
+    # der Fehler würde danach in der App gesucht statt hier.
+    DA="$($PSQL -tA -v wer="$WER" <<'SQL'
+select count(*) from auth.users where lower(email) = lower(:'wer');
+SQL
+)"
+    [ "$DA" = "1" ] || {
+      echo "✗ Kein Konto mit dieser E-Mail: $WER"
+      echo "  (gefunden: $DA — bei 0 gibt es das Konto nicht, bei mehr als 1 stimmt"
+      echo "   etwas Grundsätzliches nicht)"
+      exit 1
+    }
+    if [ "$1" = "--mir-zeigen" ]; then
+      echo "Zeige die Demo-Welt für $WER …"
+      $PSQL -v wer="$WER" -f "$HIER/40_mir_zeigen.sql"
+    else
+      echo "Nehme die Demo-Welt für $WER wieder weg …"
+      $PSQL -v wer="$WER" <<'SQL'
+delete from follows f
+using auth.users u
+where f.follower_id = u.id
+  and lower(u.email) = lower(:'wer')
+  and f.followee_id::text like 'dddddddd-%';
+SQL
+    fi
+    # Gezählt, nicht behauptet — dieselbe Haltung wie unten bei der Welt.
+    ZAHL="$($PSQL -tA -v wer="$WER" <<'SQL'
+select count(*) from follows f join auth.users u on u.id = f.follower_id
+where lower(u.email) = lower(:'wer') and f.followee_id::text like 'dddddddd-%';
+SQL
+)"
+    echo "✓ $WER folgt jetzt $ZAHL von 5 Demo-Menschen."
+    echo
+    echo "  ⚠️  Dieses Konto ist damit KEIN Maßstab mehr dafür, was ein neuer"
+    echo "      Mensch in Wien sieht — der leere Anfangszustand braucht ein Konto"
+    echo "      ohne diese Zeilen (oder --mir-nicht-mehr)."
+    exit 0
+    ;;
   --neues-passwort) SETZEN=true ;;
   '')               SETZEN=false ;;
   *)
     echo "✗ Unbekannt: $1"
     echo "  Erlaubt: (nichts) · --neues-passwort · --abraeumen"
+    echo "           --mir-zeigen <e-mail> · --mir-nicht-mehr <e-mail>"
     exit 1
     ;;
 esac

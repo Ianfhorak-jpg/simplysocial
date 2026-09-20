@@ -178,6 +178,74 @@ else
   NEIN=$((NEIN + 1))
 fi
 
+echo '── --mir-zeigen: ein ECHTES Konto darf die Welt sehen, wenn es folgt ────'
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Ians Wunsch vom 2026-09-20 — und der Grund, warum er KEIN Bruch von Regel 109
+#  ist: Er macht ein echtes Konto zum FOLLOWER der Demo-Menschen. Genau das misst
+#  „Gegenprobe 2" weiter oben schon als wirksam. Die Policy bleibt unverändert;
+#  jedes Konto, das nicht folgt, sieht weiterhin nichts.
+#
+#  Die E-Mail wird zur LAUFZEIT geholt und nicht hingeschrieben: Eine zweite
+#  Stelle mit derselben Adresse wäre genau die Sorte, die beim nächsten Umbau
+#  auseinanderläuft.
+# ═══════════════════════════════════════════════════════════════════════════════
+MAIL="$($P -tA -c "select email from auth.users where id = 'eeeeeeee-0000-0000-0000-00000000ee01';")"
+if [ -z "$MAIL" ]; then
+  echo "  ✗ Das fremde Konto hat keine E-Mail — der Weg ist ungeprüft"
+  NEIN=$((NEIN + 1))
+else
+  DEMO_DB="$DB" bash "$HIER/../demo/anlegen.sh" --mir-zeigen "$MAIL" > /dev/null
+  N1="$($P -tA -c "select count(*) from follows
+        where follower_id = 'eeeeeeee-0000-0000-0000-00000000ee01'
+          and followee_id::text like 'dddddddd-%';")"
+  if [ "$N1" = "5" ]; then
+    echo "  ✓ --mir-zeigen legt genau 5 Folge-Beziehungen an"
+    JA=$((JA + 1))
+  else
+    echo "  ✗ $N1 STATT 5 — das Konto sieht die Welt nicht oder nur halb"
+    NEIN=$((NEIN + 1))
+  fi
+
+  # Zweimal laufen darf nichts verdoppeln: `on conflict do nothing` ist die
+  # Zusage, und eine Zusage ohne Messung ist eine Absichtserklärung.
+  DEMO_DB="$DB" bash "$HIER/../demo/anlegen.sh" --mir-zeigen "$MAIL" > /dev/null
+  N2="$($P -tA -c "select count(*) from follows
+        where follower_id = 'eeeeeeee-0000-0000-0000-00000000ee01'
+          and followee_id::text like 'dddddddd-%';")"
+  if [ "$N2" = "5" ]; then
+    echo "  ✓ Ein zweiter Lauf verdoppelt nichts"
+    JA=$((JA + 1))
+  else
+    echo "  ✗ $N2 NACH ZWEI LÄUFEN — das on-conflict greift nicht"
+    NEIN=$((NEIN + 1))
+  fi
+
+  DEMO_DB="$DB" bash "$HIER/../demo/anlegen.sh" --mir-nicht-mehr "$MAIL" > /dev/null
+  N3="$($P -tA -c "select count(*) from follows
+        where follower_id = 'eeeeeeee-0000-0000-0000-00000000ee01'
+          and followee_id::text like 'dddddddd-%';")"
+  if [ "$N3" = "0" ]; then
+    echo "  ✓ --mir-nicht-mehr nimmt sie restlos wieder weg"
+    JA=$((JA + 1))
+  else
+    echo "  ✗ $N3 BLEIBEN LIEGEN — der Rückweg ist unvollständig"
+    NEIN=$((NEIN + 1))
+  fi
+
+  # Und es darf NUR dieses eine Konto betroffen sein. Die Demo-Menschen folgen
+  # einander (20 Zeilen, 5×4); nähme `--mir-nicht-mehr` die mit, wäre die ganze
+  # Welt für den Reviewer unsichtbar — und zwar lautlos.
+  UNTER="$($P -tA -c "select count(*) from follows
+        where follower_id::text like 'dddddddd-%' and followee_id::text like 'dddddddd-%';")"
+  if [ "$UNTER" = "20" ]; then
+    echo "  ✓ Die Demo-Menschen folgen einander unverändert (5 × 4)"
+    JA=$((JA + 1))
+  else
+    echo "  ✗ $UNTER STATT 20 — der Rückweg hat fremde Zeilen mitgenommen"
+    NEIN=$((NEIN + 1))
+  fi
+fi
+
 echo '── Abräumen: geht die Demo-Welt auch wieder ganz weg? ───────────────────'
 # `anlegen.sh --abraeumen` ist der Weg zurück, und er wird gebraucht, sobald die
 # echten Menschen kommen. Ein Abräumen, das Reste lässt, merkt man erst, wenn ein

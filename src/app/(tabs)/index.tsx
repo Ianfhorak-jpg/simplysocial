@@ -1166,6 +1166,10 @@ function FilterKnopf({
       accessibilityRole="button"
       accessibilityState={{ expanded: offen }}
       accessibilityLabel={anzahl > 0 ? `Filter, ${anzahl} aktiv` : 'Filter'}
+      // In der Kapsel ist die sichtbare Fläche 36 hoch statt 44 (siehe
+      // `filterKnopfInKapsel`). `hitSlop` holt Apples Mindestmaß zurück, ohne dass
+      // man es sieht — dieselbe Bauart wie bei `SsBack`.
+      hitSlop={umgebung === 'kapsel' ? { top: 4, bottom: 4 } : undefined}
       style={({ pressed }) => [
         styles.filterKnopf,
         umgebung === 'kapsel' && styles.filterKnopfInKapsel,
@@ -1677,7 +1681,31 @@ const styles = StyleSheet.create({
   // In der Glaskapsel: keine eigene Fläche, keine Ruhekante. Die `borderWidth`
   // bleibt stehen und wird nur durchsichtig — sonst springt der Knopf, sobald
   // ein Filter läuft und `filterKnopfAktiv` die Kante zurückholt.
-  filterKnopfInKapsel: { backgroundColor: 'transparent', borderColor: 'transparent' },
+  /**
+   * 🔴 **Der Knopf IN der Kapsel ist kleiner als die Kapsel — Ians Befund vom
+   * 2026-09-20.** Sein Satz: *„wenn ich einen Filter aussuche, dann wird dieser
+   * Filterknopf weiß und der ist dann größer als die ganze Leiste."*
+   *
+   * Das war keine Geschmacksfrage, sondern Geometrie. `kopfGlas` hat **kein**
+   * vertikales Polster, also war die Kapsel genau so hoch wie ihr höchster Inhalt —
+   * und das war dieser Knopf mit 12 + 20 + 12 = **44**. Dazu kam der Eckradius: Der
+   * Knopf trug `ecke.md` (**14**), die Kapsel `radius.pill` (**22**). Eine Fläche
+   * gleicher Höhe mit ENGEREN Ecken ragt an allen vier Ecken über die Rundung
+   * hinaus. Sichtbar wurde es erst, als die Fläche bei aktivem Filter WEISS wurde —
+   * vorher war sie durchsichtig und die Ecken hatten nichts zu zeigen.
+   *
+   * Die Behebung ist dieselbe wie bei der Pille in `SsSegment`: 8 statt 12 Polster
+   * (Höhe 36, also 4 Punkte Luft) und `radius.pill` statt `ecke.md`.
+   *
+   * ⚠️ **Damit fällt er unter Apples 44** — deshalb trägt der Knopf in dieser
+   * Umgebung `hitSlop`. Die Trefferfläche bleibt, nur die sichtbare Fläche schrumpft.
+   */
+  filterKnopfInKapsel: {
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+  },
   filterKnopfAktiv: { backgroundColor: colors.ink, borderColor: colors.ink },
   filterKnopfGedrueckt: { opacity: 0.7 },
 
