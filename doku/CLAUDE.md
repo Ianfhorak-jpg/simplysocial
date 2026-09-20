@@ -64,97 +64,112 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
 ---
 
-## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-19)
+## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-20)
 
 > **Der genehmigte Plan liegt in
-> [`~/.claude/plans/oben-wie-unten-glas-kapsel.md`](~/.claude/plans/oben-wie-unten-glas-kapsel.md).**
-> **Alle vier Teile sind GEBAUT und committet** (`8d37edb`). Was fehlt, ist allein
-> **Ians Urteil am Gerät — Durchgang 9** (`_FUER_IAN/HANDY_DURCHGANG.md`).
+> [`~/.claude/plans/spicy-sprouting-balloon.md`](~/.claude/plans/spicy-sprouting-balloon.md)**
+> und ist **selbsttragend** — ohne Chatverlauf ausführbar. **Zuerst lesen.**
+> Er wird nicht automatisch geladen; ohne diesen Verweis findet ihn niemand.
+> *(Die zwei Pläne davor, beide abgeschlossen: `oben-wie-unten-glas-kapsel.md`,
+> `ich-will-liquid-glass-calm-pinwheel.md`.)*
 
-### 🔵 Was auf Ian wartet: `npm run geraet`, dann Durchgang 9
+### 🎉 Gerätedurchgang 9 ist GEMACHT — Ians Urteil am 2026-09-20: **4 von 4**
 
-**Die zwei Fragen, die nur er beantworten kann:**
+Kompakte Kopfkapsel · Kategorien im Regler · türkiser Punkt · reparierte Karte —
+*„es klappt alles, eins zwei drei vier, passt alles so."*
 
-| | Frage |
+⚠️ **Der türkise Punkt war RICHTIG, nicht zu viel:** Ian hat wirklich offene Anfragen.
+Er hat kurz überlegt, dort noch etwas zu ändern, und es selbst verworfen: *„lass, es
+passt eigentlich. Hast recht, es geht."*
+
+### 🔴 NÄCHSTE PHASE — Bewegung. Ians Auftrag vom 2026-09-20
+
+> *„Jetzt will ich, dass du ein bisschen Animations reinpackst … Apple hat das
+> natürlich auch, dass wenn man auf einen Button klickt, dass die Änderungen nicht
+> instant kommen, sondern so eine kurze kleine minimalistische Animation. Das macht
+> einen Riesenunterschied … Ich will, dass du die App einfach smoother machst."*
+
+**Zwei Wörter sind die ganze Vorgabe: „minimalistisch" und „smoother"** — nicht „mehr
+Effekte". **Ians Entscheidung 97:** *Drücken + die großen Sprünge*; Listen bleiben
+vorerst (dort kann es beim Scrollen ruckeln und sich mit dem Wischstapel streiten).
+
+#### 🟡 Stand 2026-09-20: Teil 1 und 2 sind GEBAUT — **der Abnahmepunkt steht aus**
+
+| | |
 |---|---|
-| **1** | **Vermisst er die Kategorien oben?** Sie sind jetzt im Regler statt sichtbar. Das war sein Wunsch („schlichter"), aber es ist eine echte Verhaltensänderung — wer den Feed öffnet, sieht nicht mehr auf einen Blick, welche Kategorien es gibt |
-| **2** | **Flimmert das Reinweiß?** Das war mein Einwand, er hat trotzdem „pur" gewählt. Rückweg ist eine Zeile in `colors.ts` |
+| **`src/lib/bewegung.ts`** (neu) | Das Tempo-Vokabular. Zwei Einträge, nach dem ANLASS benannt (Regel 115): `druckHinein` 90 ms `Easing.out(quad)`, `druckHeraus` 240 ms `Easing.out(cubic)` — dieselbe Kurve wie `AntwortLeiste:55`. Blankes Objekt, kein `StyleSheet.create`. Dazu der Typ `Spur` |
+| **`theme/druck.ts`** | `DRUCK` (statischer Style) → `useDruck(art)` + `DruckFlaeche`. **Ians zwei Zahlen 0,96 und 0,82 stehen unverändert da**, nur werden sie jetzt ANGEFAHREN statt gesetzt |
+| **Vier Stellen umgestellt** | `SsButton:134` · `PostenKnopf` (`index.tsx:653`) · `PostCard:165` · `SsBack:93` |
 
-⚠️ **Und ein Befund, der ihm vorzulegen ist:** Am Beleg `at04` sind die größten hellen
-Flächen die **drei Anmelde-Knöpfe**, und die sind mit `accent.base = #E8E7E3` weiter
-**cremig**. Entscheidung 92 betraf nur die Schrift. Ob sein *„die Farben sind zu cremig"*
-die Knöpfe mitmeinte, sagt nur er — es wäre eine Zeile.
+🔴 **`SsBack` ist repariert** — der Bruch von Regel 61 ist weg: Der Zurück-Knopf nimmt
+`useDruck('glas')` (nur Skalierung, **keine** Deckkraft) und schaltet sein Liquid Glass
+beim Drücken nicht mehr ab. Dass 4 % von 44 pt reichen, ist erst seit der Animation
+wahr — statisch waren sie es nicht.
 
-### Ians Entscheidungen 90–94 (2026-09-19), alle umgesetzt
+⚠️ **`'zeile'` gibt es noch NICHT**, anders als der Plan es in Teil 2 vorsieht. Grund:
+Die acht `backgroundColor: colors.bg`-Stellen sind *Verdunkeln* (`surface` → `bg`), und
+eine Animation braucht auch den ANFANGSwert — der ist an drei der acht gar nicht
+`surface`. Die Art kommt in **Teil 3**, zusammen mit ihren Aufrufern. Ein Zweig, den
+beim Abnahmepunkt niemand benutzt, ist ungemessen (*„Ein ungenutzter Parameter ist
+einer, den nie jemand geprüft hat"*).
+
+**Gemessen am 2026-09-20:** `npx tsc --noEmit` sauber · `expo lint` **89**, exakt die
+Grundlinie (gegen den gestashten Stand nachgemessen, nicht geschätzt) · `pruef-glas`
+**33** · `pruef-farben` **66** · `pruef-kopf` **19** · Web-Bundle baut (HTTP 200,
+7,15 MB) und enthält `useDruck`/`DruckFlaeche`, Gegenprobe mit erfundenem Namen 0.
+
+🔴 **Was JETZT dran ist: `npm run geraet`, und Ian fühlt.** Ein Screenshot kann
+Bewegung nicht beurteilen — ein Standbild zeigt einen Knopf bei 96 %, egal ob er
+dorthin gesprungen oder gefedert ist. Stimmt das Timing nicht, ist es **eine Zahl in
+`bewegung.ts`** und nicht 14 Stellen. **Erst danach Teil 3** (die 14 Fremd-Werte
+einsammeln, `DRUCK` löschen, Wächter `pruef-bewegung`) **und Teil 4** (die großen
+Sprünge).
+
+**Drei Befunde, die beim Planen aufgetaucht sind — alle im Plan ausgeführt:**
+
+| # | Befund |
+|---|---|
+| **1** | **`DRUCK` ist gar keine Animation.** `theme/druck.ts` ist ein statischer Style; der Knopf springt auf 96 % und hart zurück. Genau das „instant". ⚠️ Die zwei Zahlen (0,96 · 0,82) sind Ians und bleiben — neu ist nur der WEG |
+| **2** | 🔴 **Harte Regel 113 gilt an 14 Stellen NICHT.** `DRUCK` benutzen nur vier Stellen; daneben stehen **fünf verschiedene Deckkraftwerte** für dieselbe Frage (0,6 · 0,65 · 0,7 · 0,72 · achtmal `backgroundColor`). Jeder für sich plausibel — man sieht sie nie nebeneinander. Wörtlich die Lage, die Regel 113 verhindern sollte |
+| **3** | 🔴 **`SsBack:102` bricht schon heute Regel 61.** Dort liegt `DRUCK` samt `opacity: 0.82` auf einem `Pressable`, das ein `<SsGlas schwebt>` enthält — Eltern-Opazität gilt für den ganzen Teilbaum. **Der Zurück-Knopf schaltet sein Liquid Glass beim Drücken ab**, ausgerechnet der Knopf aus Ians Vorbild. Der „Glas-Fall" im Plan ist deshalb eine Reparatur, keine Kür |
+
+⚠️ **Was kein Screenshot kann: Bewegung beurteilen.** Ein Standbild zeigt einen Knopf
+bei 96 %, egal ob er dorthin gesprungen oder gefedert ist. **Die Abnahme ist ein
+Gerätedurchgang** — wie bei den zwei Zahlen in `druck.ts`, die schon immer Ian gehören.
+Der Plan hält deshalb nach den ersten vier Stellen an, bevor 14 weitere angefasst werden.
+
+### Ians Entscheidungen 90–97 (2026-09-19/20)
 
 | # | Entscheidung | Stand |
 |---|---|---|
-| **90** | **Oben eine Glaskapsel wie unten**, die sechs Kategorie-Chips wandern in den Regler | ✅ Beleg `at06` |
-| **91** | **Die Anfragen-Zahl wird TÜRKIS** (`#00E5D0`), nicht rot | ✅ |
-| **92** | **Die Schrift wird PUR** — `ink` Reinweiß, `inkSoft` zieht mit | ✅ Beleg `at04` |
-| **93** | **Die Wien-Karte bleibt sichtbar**, auch wenn nichts los ist | ✅ (Lesart mit Ian geklärt: die **Kartenansicht**, nicht der Stapel) |
-| **94** | **Auf iOS ein PUNKT statt der Zahl** — weil Apple die Schriftfarbe nicht hergibt | ✅ neu, siehe unten |
+| **90** | Oben eine Glaskapsel wie unten, Kategorien in den Regler | ✅ Beleg `at13` |
+| **91** | Die Anfragen-Zahl wird TÜRKIS (`#00E5D0`) | ✅ |
+| **92** | Die Schrift wird PUR (`ink` Reinweiß, `inkSoft` zieht mit) | ✅ Beleg `at04` |
+| **93** | Die Wien-Karte bleibt sichtbar, auch wenn nichts los ist | ✅ (Lesart: die **Kartenansicht**) |
+| **94** | Auf iOS ein **Punkt** statt der Zahl — Apple gibt die Schriftfarbe nicht her | ✅ |
+| **95** | **Die Suchleiste ist WEG** — *„gib die Suchleiste weg"*. Drei Wege vorgelegt, „ganz weg" gewählt. 🔴 Die MECHANIK bleibt (Regel 51): `filter.suche` und `passtZumText()` stehen unverändert da | ✅ |
+| **96** | **Die Kapsel ist so breit wie ihr Inhalt** — Kapsel links, Posten-Knopf rechts. Eine leere Glasfläche liest sich als Fehler, nicht als Ruhe | ✅ Beleg `at13` |
+| **97** | **Bewegung: Drücken + die großen Sprünge**, keine Listen | 🔨 geplant |
 
-### 🔴 Zwei Befunde, die der Plan nicht kannte — beide aus Ians *„warum ist die Hand rot?"*
+### Was in dieser Runde sonst repariert wurde
 
-**1. Der rote Punkt war ein ECHTER FEHLER, kein Geschmack.** `appendBadgeOptions`
-(`NativeTabTrigger.js:131`) hat zwei Zweige, und **keiner davon bedeutet „kein Badge"**:
-Bei leerem Kind greift `else if (!props.hidden)` und setzt `badgeValue = ' '` — ein
-Leerzeichen ist bei `react-native-screens` der Punkt ohne Zahl. **Am Gerät stand er
-dauerhaft, ohne dass je eine Anfrage offen war.** Die Doku am Typ verspricht das
-Gegenteil (*„If not provided, the badge will not be displayed"*), und der Kommentar im
-eigenen Code hatte ihr geglaubt. **Ians Feed ist leer — er kann nie eine Zahl gesehen
-haben, nur den Punkt.** Behoben mit `hidden={wartend === 0}` UND `children: undefined`;
-**beides ist nötig**, keines allein genügt.
+🔴 **`useTabRand()` gibt auf iOS seit Entscheidung 85 (NativeTabs) 0 zurück** — der
+`BottomTabBarHeightContext` gehört `expo-router/js-tabs` und existiert unter NativeTabs
+nicht. Für Inhalt im FLUSS ist die 0 richtig (`react-native-screens` trägt Apples Insets
+selbst ein); für alles, was ABSOLUT darüber liegt, ist sie falsch. **Harte Regel 62
+trennt genau diese zwei Fälle.** Neu: `useTabUeberdeckung()` mit `.native`-Fassung.
 
-**2. Auf iOS gehört uns die Schriftfarbe des Badges nicht.** `badgeTextColor` ist im Typ
-`@platform android`/`@platform web`, `appearance.ios.js:26` reicht von allen
-Badge-Werten nur `badgeBackgroundColor` durch, und
-`RNSTabBarAppearanceCoordinator.mm:258` setzt entsprechend nur den Hintergrund —
-**UIKit zeichnet die Zahl weiß**, und weiß auf Türkis ist **1,60**. Drei Wege wurden
-vorgelegt (pur Türkis mit unlesbarer Zahl · gedecktes Petrol `#00756D` · **pur Türkis
-ohne Zahl**); Ian hat den dritten gewählt: *„es muss ja einfach ein Problem lösen"*.
-**Der Preis ist benannt:** Am iPhone sieht man DASS jemand wartet, nicht wie viele —
-auf Web bleibt die Zahl. Ausgeglichen im Tab-Namen (`anfragenName()`), den VoiceOver
-liest. → **harte Regel 117.**
+⚠️ **Der erste Anlauf dazu war selbst falsch:** `insets.bottom + 66`, wobei die 66 aus
+einem Screenshot abgeleitet waren. Ein Messstreifen in der App hat `insets.bottom` direkt
+ausgelesen — **83**, also 34 Home-Indikator PLUS 49 UITabBar. Die Leiste steckt schon
+drin. *Eine am Bild gemessene Zahl kann richtig sein und trotzdem falsch verwendet.*
 
-### Was beim Bauen gemessen und behoben wurde
-
-🔴 **Der erste Beleg der Kopfkapsel zeigte nur den Umschalter** — Suchfeld und Regler
-standen auf **Breite null**. Mit dem Auge war das nicht zu entscheiden, weil der
-Prototyp-Hinweis (harte Regel 22) alles abdunkelt; **die spaltenweise Helligkeit schon**:
-`68 · 68 · … · 8,3 · 8,3 · … · 66`. Ursache ist die alte ACTA-Falle *„`flex: 1` heißt in
-React Native `flexBasis: 0`"* — das Suchfeld durfte auf null schrumpfen, der `SsSegment`
-daneben nicht. **Behoben am Umschalter (feste Breite), nicht am Suchfeld**: Ein
-`flexShrink` dort verlagerte den Streit nur.
-
-⚠️ **Und ein Eigentor, aus dem eine Falle wurde:** Die Gegenproben des neuen Prüfstands
-ändern die Quelle — sie liefen, **während ein Gerätebuild aus derselben Quelle baute**.
-Der zweite Lauf reparierte es nicht, er zementierte es: `schirm.sh` Schritt 3 vergleicht
-ZEITSTEMPEL, und nach dem Zurückschreiben ist die Quelle nicht neuer als das verdorbene
-Bündel — *„installiert und aktuell"*, mit grünem Haken. Ausweg: `touch` auf eine
-Quelldatei.
-
-### Was `SsInput` und der Filter-Knopf dazubekommen haben
-
-`umgebung: 'block' | 'kapsel'` — **harte Regel 114 in ihrer zweiten Anwendung.** In der
-Kapsel geben sie Fläche und **Ruhe**kante ab (das Glas bringt beides mit, Regel 61);
-⚠️ **der FOKUS-Rahmen bleibt** — er ist auf iOS die einzige Rückmeldung, in welchem Feld
-man schreibt. Ebenso bleibt die gefüllte Fläche des **aktiven** Filter-Knopfs: Sie ist
-die einzige Stelle, an der ein vergessener Filter noch auffällt (Regel 26).
-
-### Gerätedurchgang 8 — Ians Urteil am 2026-09-19 (die Grundlage dieser Phase)
-
-| Frage | Antwort |
-|---|---|
-| Trägt Apples Tab-Leiste sichtbar Glas? | ✅ *„sieht super aus … ich bin echt stolz"* |
-| Schrumpft sie beim Scrollen? | ⏳ **unbeurteilt** — der Feed ist leer, es gibt nichts zu scrollen |
-| Stören Apples SF Symbols? | ✅ *„stören mich gar nicht. Die sehen super aus"* |
-| Stimmt der Dunkelmodus? | ✅ *„passt eigentlich auch. Sieht gut aus"* |
-
-**Damit sind Teil 1 (dunkel) und Teil 2 (NativeTabs) der vorigen Phase am GERÄT
-abgenommen.** Offen allein das Scroll-Verhalten — das ist keine Bauaufgabe, es braucht
-echte Posts.
+✅ **Die Karte rechnet KORREKT** (Belege `at11`/`at12`): `bereit true`, `eigen false`,
+Mitte exakt 48,2203/16,3797, `dLon` auf vier Stellen gleich dem Sollwert. Die drei
+Verdächtigen — verpuffter Kamerabefehl, falsches `eigen`, `minZoomLevel` — sind
+**ausgeschlossen**. Wien steht mittig mit Bezirken und Zahlen. Der Klecks auf Ians Bild
+liess sich am Simulator **nicht** reproduzieren; am nächsten liegt, dass er die Karte
+selbst verschoben hatte (dann zentriert die App absichtlich nicht zurück).
 
 ### Gemessene Zahlen (grün, Stand 20.9/20.8)
 
@@ -178,7 +193,7 @@ echte Posts.
 | `npm run pruef-zustimmung` | **28** | nichts |
 | `npm run pruef-glas` | **33** | nichts |
 | `npm run pruef-farben` | **66** | nichts |
-| `npm run pruef-kopf` | **16** | nichts |
+| `npm run pruef-kopf` | **19** | nichts |
 
 Dazu: `npx tsc --noEmit` sauber · `expo lint` **89 Probleme** (Stand 20.12: 82 vorbestehend, plus vier aus den zwei neuen `pan.x.interpolate()`-Zeilen der WischKarte — jede meldet doppelt; dazu
 **einer mit Namen**: `react-hooks/refs` in `BildZuschneiden.tsx` — derselbe, den
@@ -239,7 +254,7 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 | 🎨 **Die drei Post-Fassungen aussuchen** — A (Farbband) · B (bunt) · C (groß und ruhig, steht gerade drin). Am Handy unter Einstellungen → „Für die Entwicklung" → „Post-Fassungen vergleichen". ⚠️ **Der Screen `app/post-fassungen.tsx` und sein Eintrag in `einstellungen.tsx` sind WEGWERF-CODE** und fliegen raus, sobald Ian gewählt hat | am iPhone | nein, aber es blockiert das Aufräumen |
 | 🚀 **TestFlight — `npm run testflight`** (ein Befehl, 15–25 Min). Zwei Schritte darin fassen Ians Schlüsselbund an und legen in seinem Apple-Konto ein **Distribution-Zertifikat** an (0 von 2 belegt) — der Auto-Mode blockt das bei mir, zu Recht. Alles andere ist vorbereitet und die Vorprüfungen sind getestet | `_FUER_IAN/TESTFLIGHT.md` | für Phase 21 ja |
 | 🔴 **Migration 0012 einspielen** — `npm run einspielen 0012_treffen_zaehler.sql`. Ohne sie steht überall „0 Treffen". An Ians echte Supabase komme ich nicht heran | `_FUER_IAN/TREFFEN_ZAEHLER.md` | für den Zähler ja |
-| 🔵 **Gerätedurchgang 9 — oben wie unten, pur, Türkis.** `npm run geraet`, dann sieben Punkte. **Die zwei, auf die es ankommt:** Vermisst er die Kategorien oben (sie sind jetzt im Regler)? Und flimmert das Reinweiß? Beides ist ein Rückweg von einer Zeile. Dazu der offene Befund: die Anmelde-Knöpfe sind noch cremig (`accent.base`) | `_FUER_IAN/HANDY_DURCHGANG.md` | für das Aussehen ja |
+| 🎨 **Sind die Anmelde-Knöpfe zu cremig?** `accent.base` ist weiter `#E8E7E3`; Entscheidung 92 betraf nur die SCHRIFT. Ob Ians *„die Farben sind zu cremig"* die drei großen Knöpfe mitmeinte, sagt nur er — es wäre eine Zeile. ~~Gerätedurchgang 9~~ ist **erledigt, 4 von 4** (2026-09-20) | `_belege/at04` | nein |
 | 🔵 **Gerätedurchgang 6 — das Zustimmungs-Häkchen.** Build ist seit 14.09. auf dem iPhone, der Durchgang steht aus. Schritt 1 beweist zugleich, ob der neue Build drauf ist | `_FUER_IAN/HANDY_DURCHGANG.md` | für Phase 21 ja |
 | 🔑 **Management-Token widerrufen** — darf alles im Supabase-Konto, wird nie wieder gebraucht. **Am 14.09. nachgesehen: `~/.simplysocial/mgmt-token` existiert nicht mehr** — entweder schon erledigt oder nie abgelegt. Im Dashboard nachsehen | `supabase.com/dashboard/account/tokens` → Revoke | nein |
 | **Der Knopf unter dem Vollbild-Kasten** — „Nochmal versuchen" oder nichts | PLAN.md 5b, 20.9 | nein |
@@ -614,6 +629,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Ein Prüfstand, der seine Gegenprobe durch ÄNDERN der Quelle fährt, darf nicht während eines Gerätebuilds laufen
 - Ein Screenshot, über dem ein Vollbild liegt, beantwortet keine Layout-Frage — die ZAHLENREIHE schon
 - Ein Änderungs-Skript, das seine Häkchen VOR dem Schreiben druckt, lügt bei jedem Abbruch
+- `npx prettier` ohne Projekt-Konfiguration ist kein Formatierer, sondern eine Umschreibung
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

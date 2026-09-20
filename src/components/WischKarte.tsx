@@ -30,7 +30,7 @@ import {
   type WischRichtung,
 } from '@/features/posts/wisch';
 import { haptik } from '@/lib/haptik';
-import { colors, ecke, spacing, type CategoryPalette } from '@/theme';
+import { colors, ecke, spacing, useDruck, type CategoryPalette } from '@/theme';
 
 /**
  * Eine Karte, die man wegziehen kann.
@@ -123,6 +123,17 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
   // wegfliegt, soll die nächste sichtbar AUFRÜCKEN. Ein Sprung von 0,95 auf 1,0
   // wäre genau der Moment, in dem der Stapel wie eine Liste aussieht.
   const tiefeWert = useRef(new Animated.Value(tiefe)).current;
+
+  /**
+   * Das Nachgeben beim Antippen — Ians Auftrag vom 2026-09-20.
+   *
+   * ⚠️ **Der `PanResponder` unten hält `druck.griff` für immer fest**, und das ist
+   * erlaubt: `useDruck` gibt sein Ergebnis aus einem `useMemo` über einen
+   * `useState`-Wert und ein Literal zurück — die Griffe sind über die ganze
+   * Lebensdauer dieselben Funktionen. Für Werte, die sich ändern, steht direkt
+   * darunter der Umweg über Refs; hier braucht es ihn nicht.
+   */
+  const druck = useDruck();
 
   // PanResponder wird EINMAL gebaut (siehe unten) und muss trotzdem immer die
   // aktuellen Werte sehen. Deshalb der Umweg über Refs: Props ändern sich, die
@@ -231,10 +242,20 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
         // Eine Karte, die gerade zurückfedert, kann man erneut anfassen. Ohne das
         // Anhalten läuft die alte Animation weiter und zerrt gegen den Finger.
         pan.stopAnimation();
+        // Ians Auftrag vom 2026-09-20: Die Karte soll beim Antippen nachgeben wie
+        // jeder Knopf. Siehe Kopfkommentar dazu, warum das eine eigene EBENE braucht.
+        druck.griff.onPressIn();
       },
 
       onPanResponderMove: (_, g) => {
-        if (Math.abs(g.dx) > 6 || Math.abs(g.dy) > 6) bewegt.current = true;
+        if (Math.abs(g.dx) > 6 || Math.abs(g.dy) > 6) {
+          // Der Übergang vom Drücken zum WISCHEN. Ab hier ist es keine Berührung
+          // mehr, die auf eine Antwort wartet, sondern eine Bewegung — die Karte
+          // gibt den Druck ab, bevor sie dem Finger folgt. Sonst zöge man eine
+          // dauerhaft geschrumpfte Karte über den Schirm.
+          if (!bewegt.current) druck.griff.onPressOut();
+          bewegt.current = true;
+        }
         // Senkrecht stark gedämpft: Die Karte darf dem Finger folgen, aber sie soll
         // sichtbar an einer waagrechten Schiene hängen.
         pan.setValue({ x: g.dx, y: g.dy * 0.25 });
@@ -262,6 +283,8 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
         // anders überlegt und sie zurückschiebt. Dann steht `dx` beim Loslassen
         // wieder auf null, und die App öffnete den Post, den man gerade NICHT
         // wollte.
+        druck.griff.onPressOut();
+
         if (!bewegt.current && Math.abs(g.dx) < 6 && Math.abs(g.dy) < 6) {
           onAntippenRef.current?.();
           return;
@@ -291,6 +314,9 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
       },
 
       onPanResponderTerminate: () => {
+        // Auch hier zurücknehmen: Eine abgebrochene Geste ist der Fall, in dem eine
+        // geschrumpfte Karte sonst für immer geschrumpft bliebe.
+        druck.griff.onPressOut();
         Animated.spring(pan, {
           toValue: { x: 0, y: 0 },
           friction: 6,
@@ -392,7 +418,15 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
       // Nur die oberste Karte hört zu. Die hinteren dürfen nicht einmal einen Tipp
       // abfangen — sonst öffnet man ein Post-Detail, das man gar nicht sieht.
       {...(tiefe === 0 ? responder.panHandlers : {})}>
-      {children}
+      {/* 🔴 **Eine eigene Ebene, und das ist der ganze Punkt.** Der `transform` des
+          äußeren Views gehört dem `PanResponder`; läge der Druck dort mit drauf,
+          schrieben zwei Quellen abwechselnd dieselbe Eigenschaft und die Karte
+          zuckte beim Wischen. Auf einem eigenen Knoten stören sie einander nicht.
+
+          Deshalb bekommt `PostCard` mit `umgebung="karte"` weiterhin KEINEN eigenen
+          Druck (harte Regel 15): Der Tipp gehört der Karte, also gehört ihr auch die
+          Rückmeldung darauf — nur eben hier und nicht im Inhalt. */}
+      <Animated.View style={druck.stil}>{children}</Animated.View>
 
       {/* Der Farbschleier liegt ÜBER dem Inhalt und UNTER den Stempeln: Er tönt die
           Karte, er verdeckt sie nicht — und die Stempel sollen auf dem Ton stehen,

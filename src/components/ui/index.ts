@@ -25,3 +25,6 @@ export * from './karte-typen';
 /** Dasselbe für die zwei Glas-Zeichner (Phase 19e-2): was Glas hier bedeutet und
  *  wie die Fläche aussieht, wo es keines gibt. */
 export * from './glas-typen';
+/** Das Auf- und Zuklappen (Phase 20.13) — ein Hook, kein Baustein, weil `null`
+ *  beim Wischstapel eine Bedeutung trägt (harte Regel 36). */
+export * from './klappe';

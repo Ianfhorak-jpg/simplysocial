@@ -1,10 +1,10 @@
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
 
 import { WARTE_TEXT } from '@/data/schreiben';
-import { accent, categoryColors, colors, danger, DRUCK, KURVE, radius, spacing } from '@/theme';
+import { accent, categoryColors, colors, danger, KURVE, radius, spacing, useDruck } from '@/theme';
 import type { IconName } from '@/theme/icons';
 import type { ActivityCategory } from '@/types/models';
 
@@ -98,6 +98,7 @@ export function SsButton({
   category,
   style,
 }: SsButtonProps) {
+  const druck = useDruck();
   const disabled = disabledRoh || wartet;
   const beschriftung = wartet ? WARTE_TEXT : label;
 
@@ -132,29 +133,27 @@ export function SsButton({
         : colors.ink;
 
   return (
+    // Die Griffe liegen auf dem `Pressable`, der Stil auf der FLÄCHE darunter. Ein
+    // abgeschaltetes `Pressable` feuert gar keine Press-Events — die frühere Abfrage
+    // `pressed && !disabled` braucht deshalb keine Entsprechung mehr.
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      {...druck.griff}
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled }}
       style={[block ? styles.block : styles.inline, disabled && styles.notAllowed, style]}>
-      {({ pressed }) => (
-        <View
-          style={[
-            styles.face,
-            size === 'lg' ? styles.faceLg : styles.faceMd,
-            face,
-            pressed && !disabled && DRUCK,
-          ]}>
-          {/* Das Icon wächst mit der Größe mit und nimmt die Textfarbe an — das ist
-              der Unterschied zum Emoji davor, das immer bunt blieb und deshalb auf
-              einem farbigen Knopf wie ein Aufkleber saß. */}
-          {icon ? <SsIcon name={icon} size={size === 'lg' ? 20 : 17} color={textColor} /> : null}
-          <SsText variant="label" color={textColor} numberOfLines={1} style={size === 'lg' && styles.labelLg}>
-            {beschriftung}
-          </SsText>
-        </View>
-      )}
+      {/* Der Stil bleibt auf dem INNEREN View. Zöge man ihn aufs `Pressable` hoch,
+          änderte sich `alignSelf`/Flex — der Knopf säße anders im Screen. */}
+      <Animated.View style={[styles.face, size === 'lg' ? styles.faceLg : styles.faceMd, face, druck.stil]}>
+        {/* Das Icon wächst mit der Größe mit und nimmt die Textfarbe an — das ist
+            der Unterschied zum Emoji davor, das immer bunt blieb und deshalb auf
+            einem farbigen Knopf wie ein Aufkleber saß. */}
+        {icon ? <SsIcon name={icon} size={size === 'lg' ? 20 : 17} color={textColor} /> : null}
+        <SsText variant="label" color={textColor} numberOfLines={1} style={size === 'lg' && styles.labelLg}>
+          {beschriftung}
+        </SsText>
+      </Animated.View>
     </Pressable>
   );
 }

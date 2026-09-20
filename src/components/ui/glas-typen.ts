@@ -103,6 +103,75 @@ export const GLAS_FARBSCHEMA = 'dark' as const;
  */
 export const GLAS_STIL = 'regular' as const;
 
+/**
+ * Was auf Glas als AUSGEWÄHLT gilt — und warum es keine Farbe aus `colors.ts` ist.
+ *
+ * 🔴 **Der Befund vom 2026-09-20, an Ians Bildschirmaufnahme gemessen.** Sein Urteil
+ * war *„Liquid Glass ist bis jetzt immer noch nur unten"*. Der Vergleich zweier
+ * Ausschnitte aus DEMSELBEN Bild zeigte etwas anderes als erwartet: **Das Glas oben
+ * arbeitet** — die Wien-Karte schimmert grün hindurch. Was das Bild beherrschte,
+ * waren zwei völlig DECKENDE Flächen darin: die aktive Pille des Umschalters
+ * (`colors.ink`, Reinweiß) und der Posten-Knopf (`accent.base`). Zusammen mehr als
+ * die halbe Kapselbreite.
+ *
+ * Apples eigene Tab-Leiste darunter macht es anders: Ihre aktive Kapsel ist nur eine
+ * Spur heller als das Glas, und der Hintergrund bricht sichtbar durch sie hindurch.
+ * **Genau das ist der Unterschied, den Ian sieht.**
+ *
+ * ── Warum ein Literal und nicht `colors.*` ──────────────────────────────────
+ * Weil es keine FARBE ist, sondern eine Aufhellung. Jede Farbe in `colors.ts` hat in
+ * diesem Projekt eine Bedeutung und einen gemessenen Kontrast gegen einen bekannten
+ * Grund. Diese Fläche hat keinen bekannten Grund — hinter ihr liegt, was gerade auf
+ * dem Schirm ist. Sie sagt nicht „weiß", sie sagt „heller als das hier".
+ *
+ * ⚠️ **Der Kontrast der Schrift darauf ist deshalb NICHT gemessen und kann es nicht
+ * sein.** Tragbar ist das nur, weil darauf ausschließlich weiße Zeichen mit eigener
+ * Kante stehen — dieselbe Wette, die Apple in der Leiste darunter eingeht.
+ */
+export const GLAS_AUSWAHL = 'rgba(255, 255, 255, 0.22)';
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  🔴 IANS ENTSCHEIDUNG 99 (2026-09-20): KEIN LIQUID GLASS MEHR — MATT
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Sein Satz: *„wenn es nicht geht mit dem Liquid Glass, dann ist auch nicht schlimm
+ * … dann probier es halt so zu machen, dass es halt nicht so wie Liquid Glass
+ * aussieht, sondern einfach so matt halt, so wie die anderen Knöpfe."*
+ *
+ * ── Was vorausging, damit das niemand für Aufgeben hält ─────────────────────
+ * Das Material war NIE nachgebaut: `SsGlas` ruft `expo-glass-effect` → `GlassView`
+ * → Apples `UIGlassEffect` auf. An Ians Bildschirmaufnahme vom 2026-09-20 wurde
+ * auch belegt, dass es arbeitet — die Wien-Karte schimmert durch die Kopfkapsel.
+ *
+ * **Was fehlt, ist Apples LEISTE, nicht Apples Material.** Die Tab-Leiste unten
+ * sieht richtig aus, weil sie eine echte `UITabBar` ist. Für oben wäre die
+ * Entsprechung die `UINavigationBar` — und die kann React Native heute nicht mit
+ * Liquid Glass zeichnen. Aus der offenen Diskussion bei `react-native-screens`
+ * (#4021): *„there's no way to make the Stack header adopt the system Liquid Glass
+ * material"*; von drei nötigen Apple-Methoden wird `configureWithDefaultBackground`
+ * gar nicht erst aufgerufen. Das ist eine Lücke in der Bibliothek, nichts, was in
+ * diesem Projekt zu beheben wäre.
+ *
+ * Ein freistehendes `GlassView` daneben ist deshalb immer eine ANDERE Fläche als
+ * die Leiste darunter — und zwei fast gleiche Materialien nebeneinander sehen
+ * schlechter aus als zwei klar verschiedene.
+ *
+ * ── Was dieser Schalter tut ─────────────────────────────────────────────────
+ * `false` zwingt die iOS-Fassung auf denselben Weg, den Browser und iOS 25 schon
+ * immer gehen: `glasErsatz` plus `glasSchwebt` — eine matte Fläche mit Kante und
+ * Schatten, also genau „wie die anderen Knöpfe".
+ *
+ * ⚠️ **Die Tab-Leiste unten ist davon NICHT betroffen.** Sie geht nicht durch
+ * `SsGlas`, sondern ist Apples eigene Leiste (NativeTabs, Entscheidung 85). Sie
+ * bleibt echtes Glas, und das ist der Punkt: Was Apple selbst zeichnet, bleibt;
+ * was wir danebenstellen, gibt vor, nichts anderes zu sein als eine Fläche.
+ *
+ * **Auf `true` zurückzudrehen ist eine Zeile** — sobald `react-native-screens` die
+ * Navigationsleiste kann, ist das die erste Stelle, die wieder zur Debatte steht.
+ */
+export const GLAS_AN = false;
+
 /** Was jeder Glas-Zeichner können muss. */
 export interface SsGlasProps {
   children?: ReactNode;

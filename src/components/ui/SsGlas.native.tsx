@@ -2,6 +2,7 @@ import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'ex
 import { View } from 'react-native';
 
 import {
+  GLAS_AN,
   GLAS_FARBSCHEMA,
   GLAS_STIL,
   glasErsatz,
@@ -36,10 +37,19 @@ import {
  */
 
 /**
- * Ob dieses Gerät Glas kann. Zwei Prüfungen, siehe oben — die Reihenfolge ist
- * Absicht: Erst „gibt es die API?", dann „ist das Design an?".
+ * Ob hier Glas gezeichnet wird.
+ *
+ * 🔴 **`GLAS_AN` steht seit Ians Entscheidung 99 auf `false`** — die Begründung
+ * steht bei der Konstante in `glas-typen.ts` und ist zu lang für hier. Kurz: Das
+ * Material ist Apples und funktioniert; was fehlt, ist Apples LEISTE, und die kann
+ * React Native heute nicht. Deshalb steht hier bewusst eine matte Fläche.
+ *
+ * Die zwei Geräte-Prüfungen bleiben dahinter stehen und werden dank
+ * Kurzschluss-Auswertung gar nicht mehr erreicht. Sie sind nicht tot, sondern die
+ * Bedingung, die wieder zählt, sobald der Schalter umgelegt wird — die Reihenfolge
+ * darin ist Absicht: erst „gibt es die API?", dann „ist das Design an?".
  */
-const GLAS_DA = isGlassEffectAPIAvailable() && isLiquidGlassAvailable();
+const GLAS_DA = GLAS_AN && isGlassEffectAPIAvailable() && isLiquidGlassAvailable();
 
 export function SsGlas({ children, schwebt, style }: SsGlasProps) {
   if (!GLAS_DA) return <View style={[glasErsatz, schwebt && glasSchwebt, style]}>{children}</View>;

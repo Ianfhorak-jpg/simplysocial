@@ -1760,3 +1760,23 @@
   nicht der Meldung glauben. Verwandt mit *„Ein Skript, das an einer Stelle abbricht,
   hat die Schritte DAVOR schon getan"* — hier ist es die Umkehrung: Es hat sie
   gemeldet und NICHT getan.
+- **`npx prettier` ohne Projekt-Konfiguration ist kein Formatierer, sondern eine
+  Umschreibung.** Dieses Projekt hat **keine** Prettier-Konfiguration — nur
+  `eslint.config.js`. Zeilenbreite (bis ~150) und einfache Anführungszeichen sind
+  gelebte Konvention, nirgends festgeschrieben. `npx prettier --write` installiert
+  Prettier frisch, findet nichts, und setzt seine eigenen Vorgaben durch: **80 Zeichen
+  und `"…"`**. Am 2026-09-20 hat ein einziger Aufruf über fünf Dateien **484 Zeilen in
+  `(tabs)/index.tsx`** umgebrochen — in einer Datei, in der acht zu ändern waren.
+  ⚠️ **Gefährlich ist nicht der Schaden, sondern seine Tarnung.** `tsc` blieb sauber,
+  die App lief, nichts meldete sich. Aufgefallen ist es nur an `git diff --stat`:
+  539 Einfügungen, wo 180 zu erwarten waren. **Wäre das mitcommittet worden, wäre die
+  echte Änderung im Diff nicht mehr auffindbar gewesen** — und die nächste Sitzung
+  hätte die Umschreibung für Absicht gehalten.
+  ⚠️ Die deutschen Anführungszeichen („…") überleben, die **Code**-Anführungszeichen
+  nicht. Ein `grep -c '"'` auf die Datei sagt deshalb *nichts* darüber, ob der Lauf
+  Schaden angerichtet hat.
+  **Richtig ist: gar nicht formatieren lassen.** Die Einrückung von Hand setzen und mit
+  `git diff --stat` gegenprüfen, dass der Umfang zur Absicht passt. Der Maßstab dieses
+  Projekts ist `expo lint` gegen seine gemessene Zahl — nicht ein zweites Werkzeug mit
+  eigener Meinung. Verwandt mit *„Ein `sed` auf einen Wert trifft auch den KOMMENTAR
+  daneben"*: ein Werkzeug, das mehr anfasst, als die Absicht deckt.

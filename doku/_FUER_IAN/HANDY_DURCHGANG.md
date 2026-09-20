@@ -1,6 +1,14 @@
 # Der Durchgang am Handy
 
-## 🔵 DURCHGANG 9 — oben wie unten, pur, Türkis *(dran, 19.09.2026)*
+## ✅ DURCHGANG 9 — oben wie unten, pur, Türkis *(GEMACHT am 20.09.2026: **4 von 4**)*
+
+> **Ians Urteil:** *„es klappt alles, eins zwei drei vier, passt alles so."*
+> Der türkise Punkt war übrigens richtig — er hat wirklich offene Anfragen.
+>
+> **Offen geblieben ist nur eine Frage, und sie ist keine Prüfung, sondern Geschmack:**
+> Die drei großen Knöpfe beim Anmelden sind weiter **cremig** (`#E8E7E3`), nicht weiß.
+> Entscheidung 92 betraf nur die Schrift. Wenn dein *„zu cremig"* die auch meinte,
+> sag Bescheid — das ist eine Zeile.
 
 > **Vier Sachen sind neu, und drei davon hast du selbst ausgelöst.**
 

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { SichtMarke } from './SichtMarke';
 import { SsAvatar, SsIconText, SsText } from './ui';
@@ -9,7 +9,7 @@ import { freiePlaetze, istOffen, type FeedEintrag } from '@/features/posts/hooks
 import { useMeineAnfrage } from '@/features/requests/hooks';
 import { ortText } from '@/lib/bezirk';
 import { startOderSeit } from '@/lib/zeit';
-import { categoryColors, colors, DRUCK, ecke, spacing } from '@/theme';
+import { categoryColors, colors, ecke, spacing, useDruck } from '@/theme';
 
 /**
  * Ein Post.
@@ -86,6 +86,11 @@ export function PostCard({
   onPress?: () => void;
   umgebung?: PostUmgebung;
 }) {
+  // Der Hook steht IMMER hier, auch für `umgebung === 'karte'` — Hooks dürfen nicht in
+  // einer Abzweigung stehen. Ob seine Bewegung ankommt, entscheidet erst der Stil
+  // unten; die Griffe hängen ohnehin nur am `Pressable`, das es auf der Karte nicht
+  // gibt.
+  const druck = useDruck();
   const { post, author } = eintrag;
   // Eine abgelehnte Anfrage ist erledigt und wird nicht mehr angezeigt — sonst
   // stünde an der Karte dauerhaft eine Absage, die man nicht wegbekommt.
@@ -163,27 +168,31 @@ export function PostCard({
     </>
   );
 
-  const flaeche = (gedrueckt: boolean) => (
-    <View
+  const flaeche = (
+    <Animated.View
       style={[
         styles.block,
         umgebung === 'karte' ? styles.alsKarte : styles.alsZeile,
         !offen && styles.geschlossen,
-        // In der Liste ist die Rückmeldung `DRUCK` (harte Regel 113) wie an jedem
-        // anderen antippbaren Ding. Auf der KARTE nicht: Dort schrumpfte eine Karte,
-        // die man gerade wischt — und der Tipp gehört ohnehin der `WischKarte`
-        // (harte Regel 15), die ihre eigene Rückmeldung mitbringt.
-        gedrueckt && umgebung === 'liste' && DRUCK,
+        // In der Liste ist die Rückmeldung `useDruck()` (harte Regel 113) wie an jedem
+        // anderen antippbaren Ding.
+        //
+        // 🔴 Auf der KARTE nicht, und das ist keine Geschmacksfrage: Dort beschreibt
+        // der `PanResponder` der `WischKarte` DENSELBEN `transform`. Zwei Quellen auf
+        // einer Eigenschaft schreiben abwechselnd — die Karte würde beim Wischen
+        // zucken. Der Tipp gehört ohnehin der Karte darum herum (harte Regel 15), und
+        // die bringt ihre eigene Rückmeldung mit.
+        umgebung === 'liste' && druck.stil,
       ]}>
       {inhalt}
-    </View>
+    </Animated.View>
   );
 
-  if (!onPress) return flaeche(false);
+  if (!onPress) return flaeche;
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={styles.pressable}>
-      {({ pressed }) => flaeche(pressed)}
+    <Pressable onPress={onPress} {...druck.griff} accessibilityRole="button" style={styles.pressable}>
+      {flaeche}
     </Pressable>
   );
 }

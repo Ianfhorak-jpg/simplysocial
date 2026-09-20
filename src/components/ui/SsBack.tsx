@@ -1,10 +1,10 @@
-import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { SsGlas } from './SsGlas';
 import { SsIcon } from './SsIcon';
 
 import { zurueckOderFeed } from '@/lib/navigation';
-import { colors, DRUCK, radius, spacing } from '@/theme';
+import { colors, DruckFlaeche, radius, spacing, useDruck } from '@/theme';
 
 /** Apples Mindestmaß für eine Trefferfläche. Kein gerundeter Wert, sondern die Zahl
  *  aus den Human Interface Guidelines — deshalb steht sie hier benannt und nicht
@@ -69,6 +69,19 @@ const PFEIL = 22;
  * vorher" — vorher gab es gar keine Fläche. Der Knopf wird dadurch auf BEIDEN
  * Plattformen deutlicher als er war, nur auf einer davon ist er aus Glas.
  *
+ * ── Seit Phase 20.13: der Knopf schaltet sein Glas nicht mehr AB ────────────
+ * Bis dahin lag hier `DRUCK` auf dem `Pressable` — samt `opacity: 0.82`. **Eltern-
+ * Opazität gilt für den ganzen Teilbaum**, also auch für das `<SsGlas schwebt>` eine
+ * Zeile darunter: Ausgerechnet der Knopf aus Ians Vorbild verlor sein Liquid Glass in
+ * dem Moment, in dem man ihn drückte. Das war ein Bruch von harter Regel 61, und er
+ * stand da, seit die Kapsel in Phase 20.10 dazukam — gesehen hat ihn niemand, weil man
+ * beim Drücken auf den eigenen Finger schaut und nicht auf die Fläche darunter.
+ *
+ * Deshalb nimmt der Knopf `useDruck('glas')`: dieselbe Skalierung wie jeder andere
+ * Knopf, **keine** Deckkraft. Dass das reicht, ist erst seit der Animation wahr —
+ * ein statischer Sprung um 4 % von 44 pt wäre zu wenig gewesen, eine BEWEGUNG um
+ * dieselben 4 % sieht das Auge sehr wohl.
+ *
  * ── Seit Phase 19i: `onPress` darf überschrieben werden ──────────────────────
  * Nicht jedes „zurück" ist ein Screen-Wechsel. Das Bezirks-Vollbild (Ians
  * Entscheidung 65) ist ein ZUSTAND im Feed-Screen und keine eigene Adresse —
@@ -89,9 +102,13 @@ export function SsBack({
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }) {
+  // `'glas'`: nur Skalierung, keine Deckkraft — siehe Kopfkommentar (harte Regel 61).
+  const druck = useDruck('glas');
+
   return (
-    <Pressable
+    <DruckFlaeche
       onPress={onPress ?? zurueckOderFeed}
+      {...druck.griff}
       accessibilityRole="button"
       accessibilityLabel={label}
       // Nach links und oben ist die Fläche zu Ende, weil dort der Seitenrand des
@@ -99,13 +116,16 @@ export function SsBack({
       // Im Browser ist es wirkungslos (react-native-web setzt es nicht um), dort
       // trägt allein die echte Fläche.
       hitSlop={{ left: spacing.lg, top: spacing.sm }}
-      style={({ pressed }) => [styles.knopf, pressed && DRUCK, style]}>
+      // `druck.stil` steht ZULETZT: Sonst überschriebe ein durchgereichtes `style` die
+      // Animation still. Heute reicht kein Aufrufer eines durch (am 2026-09-20 an allen
+      // 17 Aufrufen nachgesehen), aber das ist eine Tatsache von heute, keine Zusage.
+      style={[styles.knopf, style, druck.stil]}>
       {/* `schwebt`: Der Knopf liegt über dem Screen-Inhalt, also bekommt er dort,
           wo es kein Glas gibt, Kante und Schatten als Ersatz (harte Regel 61). */}
       <SsGlas schwebt style={styles.kapsel}>
         <SsIcon name="pfeilLinks" size={PFEIL} color={colors.ink} />
       </SsGlas>
-    </Pressable>
+    </DruckFlaeche>
   );
 }
 

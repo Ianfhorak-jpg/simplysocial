@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
+  Animated,
   FlatList,
   Pressable,
   StyleSheet,
@@ -26,6 +27,8 @@ import {
   SsKarte,
   SsSegment,
   SsText,
+  GLAS_AN,
+  useKlappe,
 } from '@/components/ui';
 import { FILTER_EGAL, jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
 import { useCurrentUser } from '@/features/social/hooks';
@@ -54,7 +57,7 @@ import {
 } from '@/features/posts/wisch';
 import { anfrageSenden } from '@/features/requests/hooks';
 import { useTabUeberdeckung } from '@/lib/tabs';
-import { accent, CATEGORY_ORDER, categoryColors, colors, DRUCK, ecke, radius, spacing } from '@/theme';
+import { accent, CATEGORY_ORDER, categoryColors, colors, DruckFlaeche, ecke, radius, spacing, useDruck } from '@/theme';
 
 /**
  * Der Feed — der erste Screen der App und der einzige, den man täglich sieht.
@@ -203,6 +206,28 @@ export default function FeedScreen() {
 
   /** Ist der Filterbereich aufgeklappt? Zu beim Aufschlagen — wie beim Posten. */
   const [filterOffen, setFilterOffen] = useState(false);
+  // Ians Auftrag vom 2026-09-20: *„es kommt ja noch nicht runter … ich will, dass es
+  // so mäßig rauskommt."* Der Regler ist der größte Sprung der App — halbe
+  // Bildschirmhöhe in einem Frame. Siehe `ui/klappe.ts`, auch dazu, warum das KEIN
+  // `LayoutAnimation` ist.
+  const klappe = useKlappe(filterOffen);
+  /**
+   * Wie hoch die Kopfzeile wirklich ist — gemessen, nicht gerechnet.
+   *
+   * Ians Urteil am 2026-09-20: *„das oben ist noch nicht wirklich Liquid Glass."*
+   * Der Befund dazu war kein Materialfehler, sondern die SCHICHTUNG: Die Kapsel
+   * stand im Fluss, der Inhalt begann darunter — **hinter dem Glas lag nichts als
+   * die einfarbige Seitenfläche.** Liquid Glass bricht, was dahinter liegt; über
+   * einer einzigen Farbe kann es nichts anderes sein als eine getönte Fläche.
+   *
+   * Apples eigene Leisten liegen deshalb ÜBER dem Inhalt — die Tab-Kapsel unten tut
+   * das seit Entscheidung 85 auch, und genau die hat Ian als Vergleich vor Augen.
+   *
+   * Gemessen und nicht als Zahl hingeschrieben, weil die Zeile ihre Höhe aus
+   * Kapsel, Posten-Knopf und Polsterung bezieht — drei Dinge, die sich schon
+   * mehrfach geändert haben (harte Regel 60).
+   */
+  const [kopfHoehe, setKopfHoehe] = useState(0);
   const anzahlFilter = aktiveFilter(filter);
   const filterAktiv = anzahlFilter > 0;
   const zuruecksetzen = () => setFilter(FILTER_LEER);
@@ -322,14 +347,22 @@ export default function FeedScreen() {
    * Er ist der Grund, warum Überdecken hier reicht: Man sieht das Ergebnis, ohne die
    * Karten zu sehen.
    */
-  const filterFeld = filterOffen ? (
-    <FilterBereich
-      filter={filter}
-      setzen={setzen}
-      aktiv={filterAktiv}
-      zuruecksetzen={zuruecksetzen}
-      meinJahrgang={ich.jahrgang}
-    />
+  const filterFeld = klappe.sichtbar ? (
+    // ⚠️ **Zwei Views, und beide werden gebraucht.** Das äußere trägt die animierte
+    // Höhe; das innere wird gemessen. Stünde `onLayout` am äußeren, meldete es die
+    // Höhe zurück, die wir ihm gerade selbst gegeben haben — die Klappe bliebe bei 0
+    // stehen und niemand sähe, warum.
+    <Animated.View style={klappe.stil}>
+      <View onLayout={klappe.messen}>
+        <FilterBereich
+          filter={filter}
+          setzen={setzen}
+          aktiv={filterAktiv}
+          zuruecksetzen={zuruecksetzen}
+          meinJahrgang={ich.jahrgang}
+        />
+      </View>
+    </Animated.View>
   ) : null;
 
   /**
@@ -373,11 +406,22 @@ export default function FeedScreen() {
    * Auch diese Zeile gibt es nur einmal: In der Kartenansicht schwebt sie über der
    * Karte (Entscheidung 44), sonst steht sie im Fluss.
    */
-  const umschalter = (style: StyleProp<ViewStyle>) => (
+  const umschalter = (style: StyleProp<ViewStyle>, aufGlas?: boolean) => (
     <SsSegment<Ansicht>
       value={ansicht}
       onChange={setAnsicht}
       style={style}
+      // `aufGlas` nur dort, wo wirklich Glas darunter liegt. Im Fluss bleibt die
+      // Auswahl eine deckende Fläche; eine Aufhellung um 22 % wäre auf `surface`
+      // kaum zu sehen.
+      //
+      // 🔴 Seit Ians Entscheidung 99 ist `GLAS_AN` false, also greift das nirgends
+      // mehr — die Kapseln sind matt, und auf matt ist die deckende Pille richtig.
+      // **Die Stelle bleibt trotzdem stehen und wird nicht gelöscht:** Sie hängt am
+      // selben Schalter wie das Glas, kommt also mit ihm zurück. Ein `aufGlas`, das
+      // von Hand nachgezogen werden müsste, wäre genau die Sorte Wissen, die beim
+      // Umlegen vergessen wird.
+      aufGlas={aufGlas && GLAS_AN}
       // Ians Entscheidung 54 (Phase 19f): drei Zeichen statt drei Woerter. Er hatte
       // den Stapel zuerst als Vollbild beschrieben („alles weg, nur Zurueck-Pfeil,
       // Karten und die Leiste unten") und auf die Frage, wie man dann zur Karte
@@ -402,7 +446,7 @@ export default function FeedScreen() {
         // Der Umschalter darin gibt seine eigene Fläche ab — zwei Untergründe
         // übereinander wären einer zu viel, und der obere wäre der deckende.
         <SsGlas schwebt style={[styles.ansicht, styles.ansichtSchwebend]}>
-          {umschalter(styles.ansichtImGlas)}
+          {umschalter(styles.ansichtImGlas, true)}
         </SsGlas>
       ) : (
         umschalter(styles.ansicht)
@@ -418,7 +462,7 @@ export default function FeedScreen() {
           Browser die helle Ersatzfläche. Was hier steht, ist nur Geometrie
           (harte Regel 61: Kante und Schatten gehören dem Glas). */}
       <SsGlas schwebt style={styles.kopfGlas}>
-        {umschalter(styles.umschalterInKapsel)}
+        {umschalter(styles.umschalterInKapsel, true)}
         {/* ⚠️ **Hier stand bis zum 2026-09-19 abends das Suchfeld** — Ians
             Entscheidung 95: *„Ne das oben find ich nicht gut, gib die Suchleiste
             weg."* Vorgelegt wurden drei Wege (in den Regler · ganz weg · als
@@ -592,12 +636,14 @@ export default function FeedScreen() {
     // — ein Wechsel würde den ganzen Inhalt neu einhängen und mitten in der
     // Wischbewegung den Stapel zurücksetzen.
     <SsScreen tabScreen keyboard contentStyle={styles.seite}>
-      {kopfKapsel}
-
       {/* Im Fluss, wo darunter etwas scrollt. Im Stapel liegt dasselbe Feld weiter
-          unten als Blatt über den Karten — Begründung bei `filterFeld` oben. */}
+          unten als Blatt über den Karten — Begründung bei `filterFeld` oben.
+
+          `marginTop` in Höhe des Kopfes: Hier soll nichts UNTER die Kapsel laufen.
+          Ein Filterfeld, das halb hinter Glas beginnt, ist nicht schön, sondern
+          unlesbar — der Stapel darunter ist der Fall, der das Glas trägt. */}
       {!stapelSichtbar ? (
-        <View style={styles.filterImFluss}>{filterFeld}</View>
+        <View style={[styles.filterImFluss, { marginTop: kopfHoehe }]}>{filterFeld}</View>
       ) : null}
 
       {stapelLeer ? (
@@ -620,8 +666,27 @@ export default function FeedScreen() {
           <FeedListe eintraege={eintraege} filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
         </>
       ) : (
-        <View style={styles.stapelBereich}>{stapelBaum(true)}</View>
+        // 🔴 **Hier entsteht das Glas.** Der Stapel beginnt eine Spur HÖHER als die
+        // Kapsel endet, also läuft die oberste Karte unter ihr hindurch — und erst
+        // damit hat das Material etwas zu brechen. Genau das Bild aus Ians Vorbild
+        // (`vorbild-liquid-glass-bierbuddy.png`, Entscheidung 41/43): eine Karte,
+        // die unter der Leiste verschwindet, statt vor ihr aufzuhören.
+        //
+        // ⚠️ Die Überlappung ist bewusst klein. Die `PostCard` bringt oben ihre
+        // eigene Polsterung mit; verschwände mehr als dieser Rand, wäre Inhalt
+        // verdeckt statt Fläche.
+        <View style={[styles.stapelBereich, { paddingTop: Math.max(0, kopfHoehe - spacing.md) }]}>
+          {stapelBaum(true)}
+        </View>
       )}
+
+      {/* ⚠️ **Als LETZTES Kind, und das ist kein Stil, sondern die Reihenfolge.**
+          Ohne `zIndex` liegt in React Native oben, was später im Baum steht. Ein
+          `zIndex` wäre die zweite Wahrheit über dieselbe Sache — dieselbe
+          Überlegung wie bei der Pille in `SsSegment`. */}
+      <View style={styles.kopfSchwebend} onLayout={(e) => setKopfHoehe(e.nativeEvent.layout.height)}>
+        {kopfKapsel}
+      </View>
 
       {antwortLeiste}
     </SsScreen>
@@ -634,8 +699,8 @@ export default function FeedScreen() {
  * ── Warum kein `SsButton` ────────────────────────────────────────────────────
  * Der bringt einen Text mit, und genau der soll hier weg: Ein Kreis mit einem
  * Symbol steht neben dem Umschalter, ohne ihn schmaler zu machen. Damit er sich
- * anfühlt wie jeder andere Knopf, nimmt er `DRUCK` aus dem Theme — seit Phase 20.10
- * dieselbe Quelle wie `SsButton` und nicht mehr dieselbe Rechnung daneben.
+ * anfühlt wie jeder andere Knopf, nimmt er `useDruck()` aus dem Theme — seit Phase
+ * 20.10 dieselbe Quelle wie `SsButton` und nicht mehr dieselbe Rechnung daneben.
  *
  * ── Warum `stift` und nicht `plus` ───────────────────────────────────────────
  * Weil es in dieser App überall der Stift ist: `StapelDurch`, `LeererFeed` und der
@@ -645,14 +710,18 @@ export default function FeedScreen() {
  * jenen, die das Symbol nicht sehen.
  */
 function PostenKnopf() {
+  const druck = useDruck();
+
   return (
-    <Pressable
+    <DruckFlaeche
       onPress={() => router.push('/create')}
+      {...druck.griff}
       accessibilityRole="button"
       accessibilityLabel="Posten"
-      style={({ pressed }) => [styles.posten, pressed && DRUCK]}>
+      // `druck.stil` zuletzt — sonst überschriebe der Style die Animation still.
+      style={[styles.posten, druck.stil]}>
       <SsIcon name="stift" size={20} color={accent.onBase} />
-    </Pressable>
+    </DruckFlaeche>
   );
 }
 
@@ -953,14 +1022,24 @@ function KarteVollbild({
             kam mit EINEM Aufruf zurück. Wer eine geprüfte Arbeit ausbaut, löscht
             sie nicht. */}
 
-      {/* Ist gar nichts los, sagt das EINE Kapsel unten — die Karte bleibt stehen
-          (Ians Entscheidung 93). Sie liegt über der Tab-Kapsel, nicht dahinter:
-          `tabUeberdeckung` ist deren GEMESSENE Höhe samt Sicherheitsabstand —
-          nicht `tabRand`, der auf iOS 0 ist. Ein Ausweg-Knopf, den die Leiste
-          verdeckt, ist keiner. */}
-      {nichtsDa ? (
+      {/* 🔴 **Ians Entscheidung 98 (2026-09-20): „In Wien ist gerade nichts los"
+          ist WEG.** Sein Satz dazu: *„That's not needed because that's what you
+          see."* Das ist harte Regel 63 in Reinform — eine leere Karte sagt schon,
+          dass nichts los ist; ein Kasten davor sagt dasselbe noch einmal und nimmt
+          dabei Sicht auf genau das, worüber er spricht.
+
+          ⚠️ **Der Fall MIT Filter bleibt, und das ist kein Zögern.** Dort sagt die
+          Kapsel etwas, das man NICHT sieht: dass die Leere am Filter liegt und
+          nicht an Wien. Ohne sie stünde man vor einer leeren Karte ohne Ausweg und
+          ohne Grund — das wäre die Falle *„eine Regel, deren GRUND wegfällt,
+          hinterlässt ihre Wirkung"*, nur andersherum.
+
+          Sie liegt über der Tab-Kapsel, nicht dahinter: `tabUeberdeckung` ist deren
+          GEMESSENE Höhe samt Sicherheitsabstand — nicht `tabRand`, der auf iOS 0
+          ist. Ein Ausweg-Knopf, den die Leiste verdeckt, ist keiner. */}
+      {nichtsDa && filterAktiv ? (
         <View style={[styles.nichtsLos, { bottom: tabUeberdeckung + spacing.md }]}>
-          <KarteNichtsLos filterAktiv={filterAktiv} zuruecksetzen={zuruecksetzen} />
+          <KarteNichtsLos zuruecksetzen={zuruecksetzen} />
         </View>
       ) : null}
 
@@ -1350,32 +1429,15 @@ function FilterGruppe({
  * sonst nichts steht. Hier steht Wien darunter — ein Zeichen mehr wäre das
  * Gegenteil von dem, was Ian mit *„schlichter"* meint (harte Regel 63).
  */
-function KarteNichtsLos({
-  filterAktiv,
-  zuruecksetzen,
-}: {
-  filterAktiv: boolean;
-  zuruecksetzen: () => void;
-}) {
+function KarteNichtsLos({ zuruecksetzen }: { zuruecksetzen: () => void }) {
   return (
     <SsGlas schwebt style={styles.nichtsLosGlas}>
-      <SsText variant="body" center>
-        {filterAktiv ? 'Dazu ist gerade nichts da' : 'In Wien ist gerade nichts los'}
-      </SsText>
-      {filterAktiv ? (
-        <Pressable onPress={zuruecksetzen} accessibilityRole="button" style={styles.leerLink}>
-          <SsText variant="label" color={categoryColors.creative.aufGrund}>
-            Filter zurücksetzen
-          </SsText>
-        </Pressable>
-      ) : (
-        <SsButton
-          label="Posten"
-          icon="stift"
-          style={styles.leerKnopf}
-          onPress={() => router.push('/create')}
-        />
-      )}
+      <SsText variant="body" center>Dazu ist gerade nichts da</SsText>
+      <Pressable onPress={zuruecksetzen} accessibilityRole="button" style={styles.leerLink}>
+        <SsText variant="label" color={categoryColors.creative.aufGrund}>
+          Filter zurücksetzen
+        </SsText>
+      </Pressable>
     </SsGlas>
   );
 }
@@ -1438,6 +1500,16 @@ function LeererFeed({
 
 const styles = StyleSheet.create({
   seite: { paddingHorizontal: 0 },
+
+  /**
+   * Die Kopfzeile schwebt über dem Inhalt, statt ihn wegzuschieben — siehe
+   * `kopfHoehe` oben, warum das die ganze Glas-Frage ist.
+   *
+   * Kein `backgroundColor`: Was hier eine Fläche braucht, ist die Kapsel darin, und
+   * die ist aus Glas (harte Regel 61). Eine Farbe an dieser Stelle legte einen
+   * deckenden Streifen über genau das, was das Glas zeigen soll.
+   */
+  kopfSchwebend: { position: 'absolute', top: 0, left: 0, right: 0 },
 
   // `flex: 1` gibt dem Umschalter den Rest der Zeile, die Mindestbreite ist der
   // Boden darunter. Beides zusammen ist die Reparatur einer Falle: `flex: 1` heißt
