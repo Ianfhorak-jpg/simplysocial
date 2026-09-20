@@ -57,6 +57,7 @@ import {
   type WischRichtung,
 } from '@/features/posts/wisch';
 import { anfrageSenden } from '@/features/requests/hooks';
+import { bewegung } from '@/lib/bewegung';
 import { useTabUeberdeckung } from '@/lib/tabs';
 import { accent, CATEGORY_ORDER, categoryColors, colors, DruckFlaeche, ecke, radius, spacing, useDruck } from '@/theme';
 
@@ -465,85 +466,32 @@ export default function FeedScreen() {
     />
   );
 
-  const ansichtZeile = (schwebend: boolean) => (
-    <>
-      {schwebend ? (
-        // Über der Karte steht die Pille auf Glas (Phase 19e-2, Entscheidung 43).
-        // Der Umschalter darin gibt seine eigene Fläche ab — zwei Untergründe
-        // übereinander wären einer zu viel, und der obere wäre der deckende.
-        <SsGlas schwebt style={[styles.ansicht, styles.ansichtSchwebend]}>
-          {umschalter(styles.ansichtImGlas, true)}
-          {/* 🔴 **Ians Entscheidung 103 (2026-09-20).** Er hat den 14. Bezirk
-              weiß umrandet gesehen und gefragt, warum — obwohl er „nicht drauf
-              geklickt" hatte. Im Code nachgesehen: **kein Fehler.** `gewaehlt`
-              ist in EINER Zeile aus `filter.bezirk` abgeleitet, und `find` trifft
-              bei `null` nie etwas; ein markierter Bezirk ohne laufenden Filter
-              kann es gar nicht geben (harte Regel 50, wörtlich umgesetzt).
-
-              **Es fehlte also keine Reparatur, sondern eine Auskunft.** Der
-              Filter lief, und das Einzige, was es sagte, war ein Chip im
-              zugeklappten Regler — den man erst sieht, wenn man ihn aufmacht.
-
-              ⚠️ **Nur in der KARTENANSICHT, und das ist kein Vergessen.** In der
-              Stapelansicht sagt es schon der Filterknopf: `aktiveFilter()` zählt
-              `bezirk.kind !== 'alle'` mit, der Knopf wird weiß und trägt die Zahl.
-              Ein ✕ daneben wäre die zweite Antwort auf dieselbe Frage — genau die
-              Falle, an der in diesem Projekt schon einmal ein Abend hing. */}
-          {gewaehltImFilter ? (
-            <BezirkAbwaehlen
-              plz={gewaehltImFilter}
-              abwaehlen={() => setzen('bezirk', BEZIRK_ALLE)}
-            />
-          ) : null}
-        </SsGlas>
-      ) : (
-        umschalter(styles.ansicht)
-      )}
-      <PostenKnopf />
-    </>
-  );
-
-  const kopfKapsel = (
-    <View style={styles.kopfZeile}>
-      {/* `SsGlas schwebt` — **derselbe Baustein wie unten, nicht ein zweiter,
-          der auch so aussieht.** Auf iOS 26 ist das Apples echtes Glas, im
-          Browser die helle Ersatzfläche. Was hier steht, ist nur Geometrie
-          (harte Regel 61: Kante und Schatten gehören dem Glas). */}
-      <SsGlas schwebt style={styles.kopfGlas}>
-        {umschalter(styles.umschalterInKapsel, true)}
-        {/* ⚠️ **Hier stand bis zum 2026-09-19 abends das Suchfeld** — Ians
-            Entscheidung 95: *„Ne das oben find ich nicht gut, gib die Suchleiste
-            weg."* Vorgelegt wurden drei Wege (in den Regler · ganz weg · als
-            aufklappende Lupe); **er hat „ganz weg" gewählt.**
-
-            Der Einwand stand vorher in der Frage und ist nicht widerlegt,
-            sondern überstimmt: Die Suche war Leopolds direkteste Rückmeldung
-            aus Phase 15 (*„man kann nicht so genau filtern, was ein Problem
-            wird, wenn es viele Anfragen gibt"*). **Was heute an ihrer Stelle
-            filtert:** die Entfernung (der Feed steht ohnehin von der eigenen
-            Haustür aus sortiert da, `sort.ts`), die sechs Kategorien im Regler,
-            Wann, Jahrgang und die Karte.
-
-            🔴 **Die MECHANIK ist nicht gelöscht, nur die Eingabe** — harte
-            Regel 51, und die Lehre hat sich in diesem Projekt schon zweimal
-            bezahlt gemacht (die Blase kam nach elf Tagen mit EINEM Aufruf
-            zurück). `filter.suche`, `passtZumText()` und ihre Prüfungen stehen
-            unverändert da; solange niemand schreibt, ist der Wert `''` und der
-            Filter lässt alles durch. **Ein `<SsInput value={filter.suche} …>`
-            holt die Suche zurück, wo immer Ian sie haben will.** */}
-        <FilterKnopf
-          offen={filterOffen}
-          anzahl={anzahlFilter}
-          umschalten={() => setFilterOffen((o) => !o)}
-          umgebung="kapsel"
-        />
-      </SsGlas>
-      {/* Der Posten-Knopf bleibt DRAUSSEN und rund. Er ist die wichtigste
-          Handlung der App, und seine Form sagt, dass er etwas anderes tut als
-          die Bedienelemente daneben — genau das Muster aus Ians BierBuddy-Bild
-          (Entscheidung 41). In den Regler gehört er nicht. */}
-      <PostenKnopf />
-    </View>
+  /**
+   * Die EINE Kopfleiste (Ians Entscheidung 105).
+   *
+   * 🔴 **Hier standen bis zum 2026-09-20 ZWEI Bausteine** — `ansichtZeile` für die
+   * Karte und `kopfKapsel` für den Stapel. Sie zeichneten dieselbe Leiste an
+   * derselben Stelle, waren aber verschieden breit gebaut, und beim Umschalten
+   * wurde die eine gegen die andere getauscht. **Das war das Springen, das Ian
+   * gesehen hat.** Der Volltext steht am Kopf von `KopfLeiste`.
+   *
+   * Sie wird AUSSERHALB beider Bäume gerendert — sonst gäbe es sie beim Wechsel
+   * wieder zweimal, und der Umbau wäre umsonst.
+   */
+  const kopfLeiste = (
+    <KopfLeiste
+      aufKarte={ansicht === 'karte'}
+      // Nur die Karte hat keinen `SsScreen` um sich, der den oberen
+      // Sicherheitsabstand schon trägt (Ians Entscheidung 44: randlose Karte).
+      eigenerRandOben={ansicht === 'karte'}
+      umschalter={umschalter}
+      filterOffen={filterOffen}
+      anzahlFilter={anzahlFilter}
+      filterUmschalten={() => setFilterOffen((o) => !o)}
+      gewaehlt={gewaehltImFilter}
+      abwaehlen={() => setzen('bezirk', BEZIRK_ALLE)}
+      onHoehe={setKopfHoehe}
+    />
   );
 
   /**
@@ -675,13 +623,23 @@ export default function FeedScreen() {
         eintraege={eintraege}
         filterAktiv={filterAktiv}
         zuruecksetzen={zuruecksetzen}
-        ansichtZeile={ansichtZeile}
+        kopfHoehe={kopfHoehe}
         oeffneBezirk={() => setBezirkStapel(true)}
       />
     </View>
   ) : null;
 
-  if (ansicht === 'karte') return karteBaum;
+  // ⚠️ **Als LETZTES Kind in beiden Zweigen, und das ist kein Stil.** Ohne
+  // `zIndex` liegt in React Native oben, was später im Baum steht — ein
+  // `zIndex` wäre die zweite Wahrheit über dieselbe Sache.
+  if (ansicht === 'karte') {
+    return (
+      <>
+        {karteBaum}
+        <View style={styles.kopfSchwebend}>{kopfLeiste}</View>
+      </>
+    );
+  }
 
   return (
     <>
@@ -740,9 +698,11 @@ export default function FeedScreen() {
           Ohne `zIndex` liegt in React Native oben, was später im Baum steht. Ein
           `zIndex` wäre die zweite Wahrheit über dieselbe Sache — dieselbe
           Überlegung wie bei der Pille in `SsSegment`. */}
-      <View style={styles.kopfSchwebend} onLayout={(e) => setKopfHoehe(e.nativeEvent.layout.height)}>
-        {kopfKapsel}
-        </View>
+      {/* Die absolute Hülle hier OHNE `top`: `SsScreen` trägt den oberen
+          Sicherheitsabstand schon (`edges={['top']}`). Im Kartenzweig gibt es
+          keinen Screen darum — dort bringt `KopfLeiste` ihn selbst mit
+          (`eigenerRandOben`). */}
+      <View style={styles.kopfSchwebend}>{kopfLeiste}</View>
 
         {antwortLeiste}
       </SsScreen>
@@ -901,7 +861,7 @@ function KarteVollbild({
   eintraege,
   filterAktiv,
   zuruecksetzen,
-  ansichtZeile,
+  kopfHoehe,
   oeffneBezirk,
 }: {
   zaehlung: Record<string, number>;
@@ -917,11 +877,17 @@ function KarteVollbild({
   eintraege: FeedEintrag[];
   filterAktiv: boolean;
   zuruecksetzen: () => void;
-  ansichtZeile: (schwebend: boolean) => ReactNode;
+  /**
+   * Wie hoch die Kopfleiste ist — GEMESSEN, von `KopfLeiste` gemeldet.
+   *
+   * 🔴 Hier stand bis zum 2026-09-20 `ansichtZeile`, also die Leiste SELBST.
+   * Seit Entscheidung 105 steht sie außerhalb beider Bäume, und dieser
+   * Bildschirm braucht von ihr nur noch eine Zahl.
+   */
+  kopfHoehe: number;
   /** Ians Entscheidung 65: Aus der Blase heraus ins Bezirks-Vollbild. */
   oeffneBezirk: () => void;
 }) {
-  const insets = useSafeAreaInsets();
   /**
    * Wie hoch die schwebende Tab-Leiste ist (Phase 19e-2).
    *
@@ -959,8 +925,15 @@ function KarteVollbild({
    * unter die Pille fuhr — das Blatt gibt es nicht mehr, der Grund für die Messung
    * bleibt.
    */
-  const [leisteHoehe, setLeisteHoehe] = useState(0);
-  const leisteBelegt = leisteHoehe > 0 ? insets.top + spacing.sm + leisteHoehe + spacing.sm : 0;
+  // 🔴 Bis zum 2026-09-20 maß dieser Bildschirm die Leiste selbst. Seit
+  // Entscheidung 105 gibt es sie hier gar nicht mehr.
+  //
+  // ⚠️ **Ohne `insets.top` davor — die Berichtigung eines Fehlers, den kein
+  // Typcheck sieht.** In der Kartenansicht trägt `KopfLeiste` den oberen
+  // Sicherheitsabstand SELBST (`eigenerRandOben`). Er steckt also schon in der
+  // gemessenen Höhe; ihn hier noch einmal zu addieren hätte Wien ein zweites
+  // Mal nach unten geschoben — genau Ians Befund verdoppelt.
+  const leisteBelegt = kopfHoehe;
 
   const nichtsDa = Object.keys(zaehlung).length === 0 && ohneBezirk === 0;
   const gewaehlt = gewaehlterBezirk(bezirk);
@@ -1122,14 +1095,10 @@ function KarteVollbild({
         </View>
       ) : null}
 
-      {/* Der Umschalter schwebt über der Karte (Entscheidung 44) — wie die
-          Suchleiste bei Apple Karten. Auf iOS bekommt diese Pille in 19e-2 echtes
-          Glas; bis dahin ist sie eine gewöhnliche helle Fläche mit Schatten. */}
-      <View
-        style={[styles.schwebeLeiste, { top: insets.top + spacing.sm }]}
-        onLayout={(e) => setLeisteHoehe(e.nativeEvent.layout.height)}>
-        {ansichtZeile(true)}
-      </View>
+      {/* 🔴 **Hier schwebte bis zum 2026-09-20 der Umschalter** (Entscheidung 44).
+          Er ist nicht weg, er steht nur eine Ebene höher: Seit Entscheidung 105
+          gibt es EINE Kopfleiste außerhalb beider Bäume, damit sie beim
+          Umschalten bewegt statt ausgetauscht wird. */}
     </View>
   );
 }
@@ -1198,6 +1167,168 @@ function Rueckgaengig({ eintrag, onZurueck }: { eintrag: FeedEintrag; onZurueck:
           Rückgängig
         </SsText>
       </Pressable>
+    </View>
+  );
+}
+
+/**
+ * Die zwei Zahlen, aus denen `KopfLeiste` die schmale Kapselbreite rechnet.
+ * Sie standen bisher nur in `styles.posten` (44) und `styles.umschalterInKapsel`
+ * (104) — eine Rechnung, die Zahlen aus fremden Stilen abliest, veraltet beim
+ * ersten Handgriff dort.
+ */
+const POSTEN_GROESSE = 44;
+const UMSCHALTER_BREITE = 104;
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  DIE KOPFLEISTE — **eine** Kapsel für beide Ansichten (Ians Entscheidung 105)
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Ians Beobachtung am Gerät: *„dass eben dieses weiße Dings eben größer wird zuerst
+ * und dann mit dem grauen nach rechts kommt … so dass dieses Einstellungsraster
+ * wegkommt, und genau das gleiche in reverse, wenn ich wieder auf Stapel klicke."*
+ *
+ * ── Warum das sprang, und warum seine Beschreibung STIMMTE ─────────────────
+ * Es gab **zwei** Kapseln in zwei getrennten Bäumen, verschieden gebaut:
+ *
+ *   Stapel  `kopfGlas`  so breit wie ihr Inhalt (Entscheidung 96) — Umschalter
+ *                       (feste 104) plus Filterknopf
+ *   Karte   `ansicht`   `flex: 1` — sie füllt die Zeile bis zum Posten-Knopf
+ *
+ * Beim Wechsel wurde die eine aus- und die andere eingeblendet. Die Pille glitt
+ * zwar sauber (`bewegung.gleiten`), aber **innerhalb einer Kapsel, die im selben
+ * Moment ausgetauscht wurde.** Ian hat damit nicht beschrieben, was er sich
+ * wünscht, sondern **was ohnehin passiert — nur ohne die Bilder dazwischen.**
+ *
+ * ── Was jetzt passiert ────────────────────────────────────────────────────
+ * Eine Kapsel, außerhalb beider Bäume. Ein Taktgeber (`takt`, 0 = Stapel,
+ * 1 = Karte) fährt zwei Dinge gleichzeitig: die **Breite der Kapsel** und die
+ * **Breite des Filterknopfs** (auf null, mit Ausblenden).
+ *
+ * Die weiße Pille braucht dafür **keine Zeile Code**: `SsSegment` misst seine
+ * Hälften selbst (`onLayout`) und interpoliert zwischen den gemeldeten Lagen.
+ * Wächst die Kapsel, melden die Hälften neue Maße, und die Pille wächst und
+ * wandert mit. *Genau deshalb wird die Kapsel bewegt und nicht die Pille.*
+ *
+ * ── Warum der Filterknopf ein absolut gesetztes Kind ist ──────────────────
+ * Seine natürliche Breite schwankt (mit Zahl ist er breiter), muss also gemessen
+ * werden — aber messen kann man nur, was nicht gerade animiert wird. **Ein Kind
+ * mit `position: absolute` in einer klippenden Hülle behält seine natürliche
+ * Breite**, egal wie schmal die Hülle ist. Damit hängt die Messung nicht an der
+ * Animation, die sie steuert.
+ *
+ * ⚠️ **Der Zwischenraum gehört IN die Hülle.** Läge er als `gap` in der Kapsel,
+ * blieben am Ende 4 Punkte Luft stehen, wo nichts mehr ist.
+ */
+function KopfLeiste({
+  aufKarte,
+  /**
+   * Trägt dieser Baum den oberen Sicherheitsabstand schon?
+   *
+   * Im Stapel ja — `SsScreen` hat `edges={['top']}`. Auf der Karte gibt es keinen
+   * Screen darum (Entscheidung 44, randlose Karte), dort bringt die Leiste ihn
+   * selbst mit. **Eine Prop und kein `ansicht === 'karte'` daneben:** Die Frage
+   * ist „steckt oben schon ein Abstand drin", nicht „welche Ansicht ist dran".
+   */
+  eigenerRandOben,
+  umschalter,
+  filterOffen,
+  anzahlFilter,
+  filterUmschalten,
+  gewaehlt,
+  abwaehlen,
+  onHoehe,
+}: {
+  aufKarte: boolean;
+  eigenerRandOben: boolean;
+  umschalter: (style: StyleProp<ViewStyle>, aufGlas?: boolean) => ReactNode;
+  filterOffen: boolean;
+  anzahlFilter: number;
+  filterUmschalten: () => void;
+  gewaehlt: string | null;
+  abwaehlen: () => void;
+  onHoehe: (h: number) => void;
+}) {
+  const insets = useSafeAreaInsets();
+  // Der EINE Taktgeber. Dieselbe Spur wie die Pille in `SsSegment` — deshalb
+  // kommen Kapsel, Filterknopf und Pille zur selben Zeit an (harte Regel 118).
+  const [takt] = useState(() => new Animated.Value(aufKarte ? 1 : 0));
+  useEffect(() => {
+    const lauf = Animated.timing(takt, {
+      toValue: aufKarte ? 1 : 0,
+      ...bewegung.gleiten,
+      // Breite kann der native Treiber nicht — dieselbe Lage wie in `SsSegment`.
+      useNativeDriver: false,
+    });
+    lauf.start();
+    return () => lauf.stop();
+  }, [aufKarte, takt]);
+
+  // Hängt NICHT an der Animation und ist deshalb gefahrlos zu messen.
+  const [zeile, setZeile] = useState(0);
+  const [filterNatur, setFilterNatur] = useState(0);
+
+  const bereit = zeile > 0 && filterNatur > 0;
+  const voll = Math.max(0, zeile - POSTEN_GROESSE - spacing.md);
+  const schmal = spacing.xs * 2 + UMSCHALTER_BREITE + spacing.xs + filterNatur;
+
+  return (
+    <View
+      style={[styles.kopfLeiste, eigenerRandOben && { paddingTop: insets.top + spacing.sm }]}
+      onLayout={(e) => {
+        setZeile(e.nativeEvent.layout.width);
+        onHoehe(e.nativeEvent.layout.height);
+      }}>
+      <SsGlas
+        schwebt
+        style={[
+          styles.kopfKapselGlas,
+          // Vor der ersten Messung KEINE gerechnete Breite — eine Kapsel mit
+          // Breite 0 wäre ein Blitzer im ersten Bild.
+          bereit
+            ? { width: takt.interpolate({ inputRange: [0, 1], outputRange: [schmal, voll] }) }
+            : null,
+        ]}>
+        {/* 🔴 **`flex: 1`, nicht die feste 104 — daran hängt Ians ganzer Effekt.**
+            Bliebe der Umschalter 104 breit, bliebe auch die Pille gleich groß,
+            und die Kapsel wüchse um eine leere Fläche daneben. */}
+        {umschalter(styles.umschalterInKapsel, true)}
+        {/* ⚠️ **Nur auf der KARTE** — Ians Entscheidung 103. Im Stapel sagt es
+            schon der Filterknopf (`aktiveFilter()` zählt den Bezirk mit). Beides
+            zugleich wären zwei Antworten auf dieselbe Frage. Seit die Kapsel EINE
+            ist, muss das dastehen — vorher trug es die Trennung der zwei Bäume. */}
+        {aufKarte && gewaehlt ? <BezirkAbwaehlen plz={gewaehlt} abwaehlen={abwaehlen} /> : null}
+        <Animated.View
+          style={[
+            styles.filterHuelle,
+            bereit
+              ? {
+                  width: takt.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [filterNatur + spacing.xs, 0],
+                  }),
+                  opacity: takt.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+                }
+              : null,
+          ]}
+          // Auf der Karte gibt es ihn nicht mehr — dann darf ihn auch niemand
+          // treffen. Im `style`, nie als Prop (ACTA-Falle).
+          pointerEvents={aufKarte ? 'none' : 'auto'}>
+          <View
+            style={styles.filterNatuerlich}
+            onLayout={(e) => setFilterNatur(e.nativeEvent.layout.width)}>
+            <FilterKnopf
+              offen={filterOffen}
+              anzahl={anzahlFilter}
+              umschalten={filterUmschalten}
+              umgebung="kapsel"
+            />
+          </View>
+        </Animated.View>
+      </SsGlas>
+      {/* Der Posten-Knopf bleibt DRAUSSEN und rund — Ians Entscheidung 41. */}
+      <PostenKnopf />
     </View>
   );
 }
@@ -1647,6 +1778,42 @@ const styles = StyleSheet.create({
    */
   kopfSchwebend: { position: 'absolute', top: 0, left: 0, right: 0 },
 
+  /**
+   * Die Zeile der EINEN Kopfleiste (Entscheidung 105). Sie ersetzt `kopfZeile`
+   * UND `schwebeLeiste` — zwei Zeilen für dieselbe Sache an derselben Stelle,
+   * und genau daher kam das Springen.
+   */
+  kopfLeiste: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    // Die Leiste selbst fängt nichts ab, ihre Kinder schon. Im `style`, nie als
+    // Prop (ACTA-Falle).
+    pointerEvents: 'box-none',
+  },
+  /** Die Kapsel. Die BREITE kommt animiert von `KopfLeiste`. */
+  kopfKapselGlas: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xs,
+    borderRadius: radius.pill,
+    // ⚠️ **KEIN `overflow: hidden`.** Es klänge richtig — die Kapsel schrumpft —,
+    // würde aber auf iOS `clipsToBounds` setzen und damit den SCHATTEN
+    // abschneiden, den `glasSchwebt` mitbringt. Der ist keine Zierde, sondern
+    // der Ersatz für Apples Glaskante (harte Regel 61). Gebraucht wird er auch
+    // nicht: Am schmalen Ende ist die Kapsel genau so breit wie ihr Inhalt.
+  },
+  /**
+   * Die klippende Hülle um den Filterknopf. Ihre Breite fährt auf null; das Kind
+   * darin steht absolut und behält seine natürliche Breite, die gemessen werden
+   * kann, ohne an der Animation zu hängen.
+   */
+  filterHuelle: { height: POSTEN_GROESSE, justifyContent: 'center', overflow: 'hidden' },
+  filterNatuerlich: { position: 'absolute', right: 0 },
+
   // `flex: 1` gibt dem Umschalter den Rest der Zeile, die Mindestbreite ist der
   // Boden darunter. Beides zusammen ist die Reparatur einer Falle: `flex: 1` heißt
   // in React Native `flexBasis: 0` (im Browser wäre es `auto`). Die Hälften von
@@ -1695,7 +1862,27 @@ const styles = StyleSheet.create({
    * Dort steht der Umschalter allein in seiner Pille, es gibt nichts, dem er
    * Platz wegnehmen könnte.
    */
-  umschalterInKapsel: { backgroundColor: 'transparent', borderWidth: 0, width: 104 },
+  /**
+   * 🔴 **Seit Entscheidung 105 `flex: 1` statt der festen Breite.**
+   *
+   * Die feste 104 kam aus einem gemessenen Fehler (Beleg `at05`): Der Umschalter
+   * nahm die ganze Kapsel ein und drückte **Suchfeld** und Regler auf Breite
+   * null, weil `flex: 1` in React Native `flexBasis: 0` heißt. **Das Suchfeld
+   * gibt es seit Entscheidung 95 nicht mehr** — und die zwei Nachbarn von heute
+   * können gar nicht gequetscht werden: Die Filter-Hülle hat eine gesetzte
+   * (animierte) Breite, das ✕ eine Inhaltsbreite, und `flexShrink` ist in React
+   * Native von Haus aus 0.
+   *
+   * *Eine Regel, deren GRUND wegfällt, hinterlässt ihre Wirkung* — hier wäre die
+   * Wirkung eine Kapsel, die wächst, während der Umschalter darin stehen bleibt.
+   * Die `minWidth` bleibt als Boden: Sie ist das, was die feste Breite schützte.
+   */
+  umschalterInKapsel: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    flex: 1,
+    minWidth: UMSCHALTER_BREITE,
+  },
 
   /**
    * Der runde „Posten"-Knopf. Die Höhe von 44 ist Apples Mindestmaß für ein
@@ -1703,8 +1890,8 @@ const styles = StyleSheet.create({
    * ohne Tiefenrand: Die 44 sind jetzt die ganze Höhe und nicht mehr 44 plus 4.
    */
   posten: {
-    width: 44,
-    height: 44,
+    width: POSTEN_GROESSE,
+    height: POSTEN_GROESSE,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',

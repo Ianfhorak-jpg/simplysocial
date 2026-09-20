@@ -1,4 +1,4 @@
-# SimplySocial — die 116 harten Regeln
+# SimplySocial — die 124 harten Regeln
 
 > Herausgelöst aus `CLAUDE.md` am 2026-09-13. **Kein Zeichen geändert** — nur
 > verschoben, damit die auto-geladene `CLAUDE.md` nicht mehr ~101.500 Tokens je
@@ -1735,5 +1735,73 @@ schlechter aus als zwei klar verschiedene.
 **Zurückdrehen ist eine Zeile** — sobald die Bibliothek die Navigationsleiste kann, ist
 das die erste Stelle, die wieder zur Debatte steht.
 
-⚠️ **`npm run pruef-glas` bewacht diese Regel NICHT.** Er meldet 33 Häkchen, auch wenn
-Glas komplett aus ist: Er prüft, DASS `SsGlas` benutzt wird, nicht OB Glas herauskommt.
+🔴 **Berichtigt am 2026-09-20.** Hier stand: *„`npm run pruef-glas` bewacht diese Regel
+NICHT … er prüft, DASS `SsGlas` benutzt wird, nicht OB Glas herauskommt."* Der zweite
+Halbsatz stimmt nicht. `31_glasmessung.py` bewacht das **Messgerät**
+`scripts/glasmessung.py` — PNG-Dekoder und Helligkeitsrechnung — und erwähnt `SsGlas`,
+`GLAS_AN` und `glas-typen` mit **keinem Wort**. Seine 33 Häkchen sind richtig und von
+`GLAS_AN` gar nicht berührt; **nur sein NAME verspricht mehr als er prüft.**
+
+Der Befund dahinter stimmte trotzdem: `GLAS_AN` stand in drei Dateien und in keiner
+Prüfung. **Seit dem 2026-09-20 bewacht `npm run pruef-kopf` diese Regel** (19 → 24
+Häkchen) — dort, wo die anderen Entscheidungen stehen, die GEGEN eine ältere Fassung
+gehen, deren Begründung im Code stehenbleibt. Am umgelegten Schalter rot gesehen.
+
+
+## 122. Wie genau die Bezirksgrenzen sind, steht in `bezirke-bauen.py` — und ein grobes RASTER spart NICHTS
+
+Zwei Zahlen tragen die ganze Geometrie: `RASTER` (worauf Punkte gerundet werden) und
+`TOLERANZ` (Douglas-Peucker). Am 2026-09-20 von 1.0/2.0 auf 0.05/0.05 gesetzt, weil Ian
+sagte, die Umrandungen seien *„noch zu zackig … wenn man da so reinzoomt"*.
+
+**Die Reihenfolge ist der Punkt:** Gerundet wird VOR Douglas-Peucker. Ein grobes Gitter
+nimmt ihm die Auswahl, und er braucht dann MEHR Punkte für dieselbe Abweichung —
+gemessen ergibt `0.25/0.5` **1863** Punkte und 21766 Zeichen, `0.1/0.5` nur **1780** und
+20178, bei 2,4× feinerem Gitter. Wer am Raster spart, zahlt zweimal.
+
+**Und unter `TOLERANZ = RASTER` bricht der Nutzen weg:** Liegt die Toleranz unter dem
+Gitter, gibt es nichts mehr wegzulassen — `0.1/0.07` kostet 1,9× so viele Punkte wie
+`0.1/0.1` für 1,4× Genauigkeit. Beide gehören gleich groß.
+
+⚠️ **Nicht glätten.** Ein geglätteter Umriss ist eine ANDERE Grenze als die amtliche, und
+die Karte trägt eine Lizenznennung, die sagt, woher die Grenzen stammen (CC BY 4.0,
+`BEZIRKSGRENZEOGD`). Feiner ja, erfunden nein.
+
+**Die Messstelle ist `python3 scripts/bezirke-messen.py`** — sie importiert die echten
+Funktionen aus `bezirke-bauen.py`, baut sie nicht nach, und druckt die ganze Tabelle.
+*Eine dokumentierte Zahl ohne ihre Messstelle ist nicht reproduzierbar.*
+
+## 123. Ob die Karte Zahlen zeigt, steht in `ZAHLEN_AN` — und ohne sie trägt die FARBE die Grenze „leer / nicht leer"
+
+Ians Entscheidung 101. Der Schalter steht in `features/posts/karte.ts`, nicht bei einem
+Zeichner: Es gibt zwei Kartenzeichner und GENAU EINE Bedeutung (harte Regel 52), und die
+Rechnung dahinter (`zahlPasst`, `label.r`, die Marker) bleibt vollständig stehen — ein
+`true` holt die Zahlen zurück (harte Regel 51).
+
+🔴 **Was daran leicht übersehen wird:** Die Zahlen waren nicht nur Auskunft, sie waren ein
+BARRIEREFREIHEITS-Argument. Der Sprung zwischen „leer" und „ein Post" war mit 1,62:1 der
+schwächste der ganzen Skala, und getragen hat ihn die Zahl — *eine leere Fläche bekommt
+gar keine.* Verschärft durch Entscheidung 102: Seither landet ein Tipp auf einen leeren
+Bezirk direkt bei „Hier ist alles durch".
+
+**Deshalb gehört Entscheidung 104 dazu und ist nicht bloß Kosmetik** — die Skala wurde
+gleichmäßig gemacht, der Sprung wuchs auf 1,89. Wer `ZAHLEN_AN` je wieder auf `true`
+dreht, dreht damit NICHT 104 zurück: Die beiden hängen zusammen, sind aber zwei
+Entscheidungen.
+
+## 124. Welcher EINE Bezirk gewählt ist, sagt `gewaehlterBezirk()` — nie eine zweite Ableitung
+
+`filter.bezirk` ist ein Union (`alle` · `einer` · `ohne`), und die Frage „welche PLZ ist
+markiert" beantwortet **`gewaehlterBezirk()` in `features/posts/filter.ts`**, sonst
+niemand. Am 2026-09-20 stand dieselbe Zeile an zwei Stellen in `(tabs)/index.tsx` —
+einmal für die Karte, einmal für das ✕ der Entscheidung 103.
+
+**Warum das hier teurer ist als anderswo:** Harte Regel 50 sagt, was auf der Karte
+gewählt ist, IST der Bezirksfilter. Diese Gleichsetzung hält nur, solange es EINE
+Ableitung gibt; zwei Kopien sind zwei Gelegenheiten, dass Karte und Filter eines Tages
+Verschiedenes meinen — *zwei Bausteine, die einzeln stimmen, geben zusammen zwei
+Antworten auf dieselbe Frage.*
+
+⚠️ **`'ohne'` gibt `null` zurück, und das ist Absicht.** „Posts ohne Bezirk" ist keine
+Fläche auf der Karte und kann dort weder markiert noch abgewählt werden. Wer wissen will,
+ob überhaupt gefiltert wird, fragt `aktiveFilter()` — die zählt `'ohne'` mit.

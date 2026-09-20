@@ -64,7 +64,7 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
 ---
 
-## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-20, abends)
+## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-20, nachts)
 
 > **Der Plan liegt in
 > [`~/.claude/plans/karte-schaerfen-und-bezirke.md`](~/.claude/plans/karte-schaerfen-und-bezirke.md)**
@@ -73,7 +73,67 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 > *(Die Pläne davor, alle abgeschlossen: `spicy-sprouting-balloon.md`,
 > `oben-wie-unten-glas-kapsel.md`, `ich-will-liquid-glass-calm-pinwheel.md`.)*
 
-### Was am 2026-09-20 gebaut wurde — sechs Commits, alle am Gerät geprüft
+### ✅ Der Plan ist ABGEARBEITET — vier Commits, **keiner am Gerät geprüft**
+
+| Commit | Inhalt |
+|---|---|
+| `fb874e2` | **Teil 2.** Bezirksgrenzen 39-mal genauer (39,1 m → 1,0 m) · Messstelle `scripts/bezirke-messen.py` |
+| `e5496ce` | **Teil 4.** Echter Wächter für Entscheidung 99 · die Warnung zu `pruef-glas` war falsch |
+| `6c204e1` | **Teil 3 + 1.** Ians Entscheidungen **101–103** — keine Zahlen, Tipp direkt in den Stapel, ✕ in der Kapsel |
+| `6e7ad17` | Ians Entscheidung **104** — die Kartenskala wird gleichmäßig |
+
+🔴 **Was jetzt dran ist: ein Gerätedurchgang.** Alles oben ist am Mac belegt
+(tsc sauber, `expo lint` 89, alle Wächter grün) — und am Mac ist nur belegbar,
+dass nichts kaputtging. **Ob die Zacken weg sind, ob die Bezirke ohne Zahlen
+auseinandergehen und ob der direkte Sprung sich richtig anfühlt, sagt nur Ian.**
+
+```bash
+cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
+printf '09CDB3CF-11DC-5B42-AC22-C4C99AE803A6\nj\n' | npm run geraet
+```
+
+### Ians Entscheidungen 101–104 (2026-09-20, nachts)
+
+| # | Entscheidung | Stand |
+|---|---|---|
+| **101** | **Keine Zahlen auf der Karte** — *„dass man gar keine zwei oder so sieht."* Die Farbstufe trägt es allein. Schalter `ZAHLEN_AN` in `features/posts/karte.ts`, gilt für BEIDE Zeichner (Regel 52) | ✅ |
+| **102** | **Ein Tipp geht DIREKT in den Stapel** — *„draufklickt und dann redirected wird."* Damit fällt der zweite Tipp als Rückweg weg (Entscheidung 49); Ersatz ist 103 | ✅ |
+| **103** | **Ein ✕ in der Kapsel wählt den Bezirk ab** — nur in der KARTENansicht. Im Stapel sagt es schon der Filterknopf; zwei Antworten auf dieselbe Frage wären eine zu viel | ✅ |
+| **104** | **Die Kartenskala wird gleichmäßig** — der Sprung „leer → ein Post" wächst von 1,62 auf 1,89, die Spannweite fällt von 0,50 auf 0,10 | ✅ |
+| — | **Wien 83 pt tiefer: passt so.** Vorgelegt und angenommen; die Kamera bleibt, wo sie ist | ✅ geschlossen |
+
+### 🔴 Die vier Befunde dieser Runde
+
+| # | Befund |
+|---|---|
+| **1** | **Ein grobes Raster spart nichts.** In `bezirke-bauen.py` wird VOR Douglas-Peucker gerundet — ein grobes Gitter nimmt ihm die Auswahl, und er braucht dann MEHR Punkte für dieselbe Abweichung (`0.25/0.5` → 1863 Punkte, `0.1/0.5` → 1780 bei 2,4× feinerem Gitter). Gespart wird über `TOLERANZ`. Und unter `TOLERANZ = RASTER` bricht der Nutzen weg |
+| **2** | **Die Warnung zu `pruef-glas` war falsch.** Er prüft nicht, ob `SsGlas` benutzt wird — `31_glasmessung.py` bewacht das MESSGERÄT und nennt `SsGlas`/`GLAS_AN` kein einziges Mal. Seine 33 Häkchen sind richtig; **nur sein NAME verspricht mehr.** Entscheidung 99 hat jetzt einen echten Wächter in `pruef-kopf` |
+| **3** | **Ians „der 14. ist immer noch dunkler" war KEIN Fehler.** `gewaehlt` ist in einer Zeile aus `filter.bezirk` abgeleitet, `find` trifft bei `null` nie etwas — ein markierter Bezirk ohne laufenden Filter kann es nicht geben. Es fehlte keine Reparatur, sondern eine **Auskunft** (→ 103) |
+| **4** | **Zwei dokumentierte Kontraste waren veraltet.** Im Kommentar 8,63 und 4,53, gemessen 9,75 und 5,11. Stufe 3 und 4 stimmten weiter — weil sie `DUNKLE_ZAHL` benutzen, während `colors.ink` mit Entscheidung 92 auf Reinweiß ging. Neu: `python3 scripts/skala-messen.py` liest alle zehn Zahlen AUS DEM CODE |
+
+### Die Skala ist eine GERADE, keine Farbsammlung
+
+Nachgerechnet: Die vier Stufen liegen auf einer Geraden im sRGB-Raum von
+`KARTE_LEER` nach `accent.base`, auf das Byte genau. Entscheidung 104 verschiebt
+deshalb nur die **vier Abtastpunkte** (0,171 · 0,382 · 0,638 · 1,0 →
+0,219 · 0,426 · 0,686 · 1,0) und keine Farbe — die Regel *„die Skala läuft auf
+`accent.base` zu"* bleibt wörtlich.
+
+⚠️ **Stufe 2 sitzt bewusst nicht exakt auf der Gleichverteilung.** Bei t = 0,435
+fiele heller Text auf 4,43:1, also unter WCAG AA. Heute folgenlos (es gibt keine
+Zahlen), aber `ZAHLEN_AN` ist eine Zeile — t = 0,426 hält 4,54:1.
+
+### Was von dieser Runde OFFEN blieb
+
+- **Die Bezirksauswahl im Filter** gibt es weiter nicht (Entscheidung 63, von Ian
+  selbst gestrichen). Rückgängig nur auf Ansage, und dann als `SsBezirkFeld` (Regel 81)
+- **`pruef-moderation` braucht eine lokale Wegwerf-DB**, die hier nicht lief
+  (`database "ss" does not exist`) — unabhängig von diesen Änderungen, aber
+  `CLAUDE.md` sagt bei ihm „braucht nichts", und das stimmt so nicht
+
+---
+
+### Die Runde davor (2026-09-20, abends) — sechs Commits, alle am Gerät geprüft
 
 | Commit | Inhalt |
 |---|---|
@@ -139,10 +199,14 @@ mit Gegenprobe, am umgelegten Schalter rot gesehen.
 
 ### Was auf Ians Urteil wartet
 
-- **Wien sitzt 83 pt tiefer** (Preis für Apples Nennung, `verdeckt = 0`)
+- ~~**Wien sitzt 83 pt tiefer**~~ ✅ vorgelegt, *„passt so"*
+- ~~**Zackige Umrisse beim Hineinzoomen**~~ ✅ 39,1 m → 1,0 m (`fb874e2`)
+- ~~**Zahlen weg + direkt in den Stapel**~~ ✅ Entscheidungen 101–103 (`6c204e1`)
 - **Die Bezirksauswahl im Filter gibt es nicht** — er hat sie selbst gestrichen
   (Entscheidung 63). Rückgängig nur auf Ansage, und dann als `SsBezirkFeld` (Regel 81)
-- **Zackige Umrisse beim Hineinzoomen** · **Zahlen weg + direkt in den Stapel**
+- 🔴 **Alles aus dieser Runde wartet auf einen Gerätedurchgang** — ob die Zacken weg
+  sind, ob die Bezirke ohne Zahlen auseinandergehen und ob der direkte Sprung sich
+  richtig anfühlt, ist am Mac nicht zu beantworten
 
 ### Ians Entscheidungen 90–97 (2026-09-19/20)
 
@@ -420,6 +484,9 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 119. Was beim Drücken passiert, kommt aus `useDruck(art)` — und `'glas'` ist die Art ohne Deckkraft (Regel 61)
 120. Ein Auf- und Zuklappen MISST seine Höhe (`useKlappe`) — `LayoutAnimation` ist auf iOS unter Fabric nur bedingt an
 121. Wo Apple die Leiste selbst zeichnet, bleibt Glas; was wir danebenstellen, ist matt (`GLAS_AN`)
+122. Wie genau die Bezirksgrenzen sind, steht in `bezirke-bauen.py` — und ein grobes RASTER spart NICHTS
+123. Ob die Karte Zahlen zeigt, steht in `ZAHLEN_AN` — und ohne sie trägt die FARBE die Grenze „leer / nicht leer"
+124. Welcher EINE Bezirk gewählt ist, sagt `gewaehlterBezirk()` — nie eine zweite Ableitung
 ## Fallen — Index
 
 > **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 213 Stück, jede schon

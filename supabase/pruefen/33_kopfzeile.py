@@ -140,16 +140,30 @@ pruef('… und der Code ist noch da', 'export default function FeedScreen' in co
 
 print('')
 print('── 1. Entscheidung 90: EINE Kapsel oben, Kategorien im Regler ──────────')
-pruef('Die Kopfkapsel gibt es', 'const kopfKapsel = (' in code,
-      'Ians Entscheidung 90 ist aus dem Code verschwunden')
-# Sie muss DERSELBE Baustein sein wie unten, nicht ein zweiter, der auch so
-# aussieht — Punkt 4 der vier Fragen im Plan.
-# Die Kapsel ist kein `function`-Block, sondern ein `const … = (…)`. Sie endet
-# an ihrer eigenen schliessenden Klammer.
-i = code.find('const kopfKapsel = (')
-kapsel = code[i:code.find('\n  );', i) + 5] if i >= 0 else ''
+# 🔴 **Adresse geändert am 2026-09-20 — Ians Entscheidung 105.**
+# Hier stand `const kopfKapsel = (`. Es gab damals ZWEI Kapseln: `kopfKapsel`
+# für den Stapel und `ansichtZeile` für die Karte, in getrennten Bäumen. Beim
+# Umschalten wurde die eine gegen die andere getauscht — **das war das Springen,
+# das Ian gesehen hat.** Seither gibt es EINE, und sie ist ein Bauteil.
+#
+# ⚠️ Die vier Prüfungen darunter sind INHALTLICH unverändert: Es sind dieselben
+# Fragen an dieselben Entscheidungen (90, 95, 41), nur an der neuen Adresse.
+# Vier Kreuze nach dem Umbau waren deshalb kein gebrochener Beschluss, sondern
+# ein Wächter, der zu Recht sagte „das steht nicht mehr, wo ich suche".
+pruef('Die Kopfleiste gibt es', 'function KopfLeiste(' in code,
+      'Ians Entscheidungen 90 und 105 sind aus dem Code verschwunden')
+kapsel = block(code, 'function KopfLeiste(')
+# ⚠️ **Über das ÖFFNENDE TAG gesucht, nicht über die Zeichenkette
+# `<SsGlas schwebt`.** Genau daran ist diese Prüfung am 2026-09-20 rot geworden,
+# obwohl nichts kaputt war: Der Umbau hat das Tag auf mehrere Zeilen verteilt,
+# und `schwebt` stand plötzlich in der nächsten. *Ein Wächter, der eine
+# SCHREIBWEISE aufzählt, merkt nicht, wenn dieselbe Sache anders geschrieben
+# dasteht* (FALLEN.md) — hier in seiner harmloseren, aber lästigeren Form: Er
+# meldet einen Verstoss, den es nicht gibt, und wird beim dritten Mal
+# abgeschaltet statt gelesen.
+m_glas = re.search(r'<SsGlas\b[^>]*>', kapsel, re.S)
 pruef('… und sie ist `SsGlas schwebt`, nicht eine nachgebaute Fläche',
-      '<SsGlas schwebt' in kapsel,
+      bool(m_glas) and re.search(r'\bschwebt\b', m_glas.group(0)) is not None,
       'harte Regel 61/62: Fläche, Kante und Schatten gehören dem Glas')
 # ⚠️ **Eins, nicht zwei** — bis zu Ians Entscheidung 95 stand hier `== 2`
 # (Suchfeld UND Regler). Das Suchfeld ist weg; wer die Zahl nicht nachzieht,
@@ -157,6 +171,18 @@ pruef('… und sie ist `SsGlas schwebt`, nicht eine nachgebaute Fläche',
 pruef('… der Regler gibt seine Fläche ab (`umgebung="kapsel"`)',
       kapsel.count('umgebung="kapsel"') == 1,
       f'gefunden: {kapsel.count(chr(117) + chr(109) + "gebung=")} — zwei Untergründe übereinander wären einer zu viel')
+
+# ── Ians Entscheidung 105: EINE Kapsel, nicht zwei ────────────────────────
+# Die verworfene Fassung ist hier nicht bloss „anders", sie ist NAMENTLICH
+# bekannt — also wird genau auf ihre Rückkehr geprüft.
+pruef('… und es gibt sie nur EINMAL (Entscheidung 105)',
+      'const kopfKapsel' not in code and 'const ansichtZeile' not in code,
+      'zwei Kapseln in zwei Bäumen werden beim Umschalten getauscht statt bewegt')
+# Der Umschalter muss MITWACHSEN, sonst wächst die Kapsel um eine leere Fläche
+# und die weisse Pille bleibt stehen — der ganze Effekt hinge daran.
+pruef('… der Umschalter wächst mit der Kapsel (`flex: 1`, nicht feste Breite)',
+      'flex: 1,\n    minWidth: UMSCHALTER_BREITE,' in code,
+      'mit fester Breite bleibt die Pille gleich gross — Ians Effekt wäre weg')
 # Entscheidung 95: *„gib die Suchleiste weg"*. Die verworfene Möglichkeit ist,
 # sie wieder hineinzustellen — also wird genau darauf geprüft.
 pruef('… und es steht KEIN Suchfeld in der Kapsel (Entscheidung 95)',
