@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   FlatList,
@@ -312,15 +312,28 @@ export default function FeedScreen() {
     };
   }, []);
 
-  // Die Karte, für die gerade die Antwort-Leiste offen ist. Sie ist so lange NICHT
-  // im Stapel: „Abbrechen legt die Karte zurück" heißt, dass sie erst mit dem
-  // Schicken wirklich weg ist. Weil sie dabei aus- und wieder einhängt, kommt sie
-  // dann auch wieder mit einem sauberen Zustand zurück.
+  /**
+   * Die Karte, für die gerade die Antwort-Leiste offen ist.
+   *
+   * 🔴 **Sie bleibt seit dem 2026-09-20 IM Stapel liegen — Ians Entscheidung.**
+   *
+   * Vorher wurde sie herausgefiltert, solange die Leiste offen war. Das war die
+   * Umsetzung von *„Abbrechen legt die Karte zurück"*: Sie hängte aus und wieder
+   * ein und kam dadurch mit sauberem Zustand zurück. Der Preis stand auf Ians
+   * Bild vom 2026-09-20 — hinter der Leiste lag der NÄCHSTE Post. Er schrieb an
+   * Mira über die Statik-Prüfung, dahinter „Spaziergang durch den Prater".
+   *
+   * Das Aushängen war ohnehin nur die halbe Miete: Die Karte war zu diesem
+   * Zeitpunkt schon AUS DEM BILD geflogen (`fliegen`, x = Breite + 240), der
+   * Filter räumte nur hinterher auf. Jetzt federt sie stattdessen zurück
+   * (`haeltRechts` in `WischKarte`) und liegt da, bis wirklich abgeschickt ist —
+   * dann fällt der Post von selbst aus dem Stapel (Regel in `wisch.ts`).
+   *
+   * **Damit stimmt der Satz „Abbrechen legt die Karte zurück" wörtlich**, statt
+   * über zwei Umwege hergestellt zu werden.
+   */
   const [antwortAuf, setAntwortAuf] = useState<FeedEintrag | null>(null);
-  const karten = useMemo(
-    () => (antwortAuf ? stapel.filter((e) => e.post.id !== antwortAuf.post.id) : stapel),
-    [stapel, antwortAuf],
-  );
+  const karten = stapel;
 
   const [rueckgaengig, setRueckgaengig] = useState<FeedEintrag | null>(null);
   const uhr = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -552,6 +565,10 @@ export default function FeedScreen() {
         setAnleitung(false);
       }}
       onWeg={gewischt}
+      // Was ein Rechts-Wisch tut, steht in `wisch.ts` und nicht hier. Bei
+      // `'leiste'` ist nach dem Wisch noch nichts entschieden — also bleibt die
+      // Karte liegen, statt wegzufliegen.
+      haeltRechts={WISCH_WIRKUNG.rechts === 'leiste'}
       onAntippen={(e) => router.push({ pathname: '/post/[id]', params: { id: e.post.id } })}
       fussnote={
         rueckgaengig ? (

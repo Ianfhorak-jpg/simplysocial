@@ -57,6 +57,13 @@ export interface WischStapelProps {
   anleitung: boolean;
   onAnleitungWeg: () => void;
   onWeg: (eintrag: FeedEintrag, richtung: WischRichtung) => void;
+  /**
+   * Ein Rechts-Wisch federt zurück, statt wegzufliegen — siehe `haeltRechts` in
+   * `WischKarte`. Der Stapel reicht es nur durch und entscheidet es NICHT
+   * selbst: Was ein Wisch bedeutet, steht in `features/posts/wisch.ts`, und
+   * dieser Baustein führt aus, was dort entschieden ist.
+   */
+  haeltRechts?: boolean;
   onAntippen: (eintrag: FeedEintrag) => void;
   /**
    * Die Zeile ganz unten. Ohne Angabe steht dort der Hinweis auf die Geste; der
@@ -92,6 +99,7 @@ export function WischStapel({
   anleitung,
   onAnleitungWeg,
   onWeg,
+  haeltRechts,
   onAntippen,
   fussnote,
   blatt,
@@ -125,6 +133,9 @@ export function WischStapel({
               ref={tiefe === 0 ? obenRef : undefined}
               tiefe={tiefe}
               palette={karte.art === 'post' ? categoryColors[karte.eintrag.post.category] : accent}
+              // Nur die Anleitung nicht: Sie hat keine Leiste, die aufgeht, und
+              // bliebe sonst nach dem Wisch liegen.
+              haeltRechts={haeltRechts && karte.art === 'post'}
               onWeg={
                 karte.art === 'anleitung'
                   ? onAnleitungWeg

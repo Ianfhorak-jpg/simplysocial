@@ -72,6 +72,28 @@ export interface WischKarteProps {
   palette: CategoryPalette;
   onWeg: (richtung: WischRichtung) => void;
   /**
+   * 🔴 **Ein Rechts-Wisch fliegt NICHT weg, sondern federt zurück — gemeldet
+   * wird er trotzdem.** Ians Entscheidung vom 2026-09-20.
+   *
+   * Der Fall ist `WISCH_WIRKUNG.rechts === 'leiste'`: Nach dem Wisch geht die
+   * Antwort-Leiste auf, und entschieden ist noch gar nichts — „Doch nicht"
+   * legt die Karte zurück. Bis dahin flog sie erst aus dem Bild (x = Breite
+   * + 240) und wurde aus dem Stapel genommen; hinter der Leiste stand dann der
+   * NÄCHSTE Post. Ians Bild vom 2026-09-20 zeigt das: Er schreibt an Mira über
+   * die Statik-Prüfung, dahinter liegt „Spaziergang durch den Prater".
+   *
+   * **Die Karte bleibt jetzt liegen, bis wirklich abgeschickt ist** — dann
+   * fällt der Post von selbst aus dem Stapel (Regel in `wisch.ts`). Damit
+   * stimmt auch wieder, was in `index.tsx` seit jeher danebensteht:
+   * *„Abbrechen legt die Karte zurück."*
+   *
+   * ⚠️ **Gemeldet wird SOFORT, nicht nach der Feder.** Beim Wegfliegen wartet
+   * `onWeg` auf `finished`, weil ein unterbrochener Flug keine Entscheidung
+   * ist. Hier ist es umgekehrt: Die Leiste soll aufgehen, WÄHREND die Karte
+   * sich setzt — wartete sie, käme sie sichtbar zu spät.
+   */
+  haeltRechts?: boolean;
+  /**
    * Ein Tipp auf die Karte. Kommt bewusst HIER an und nicht über ein `Pressable`
    * im Inhalt — die Begründung steht unten bei `onStartShouldSetPanResponder`.
    */
@@ -86,7 +108,7 @@ const SKALA = [1, 0.95, 0.9];
 const ZAEHNE = 19;
 
 export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function WischKarte(
-  { children, tiefe, palette, onWeg, onAntippen },
+  { children, tiefe, palette, onWeg, onAntippen, haeltRechts },
   ref,
 ) {
   const { width: fensterBreite } = useWindowDimensions();
@@ -138,16 +160,20 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
   // PanResponder wird EINMAL gebaut (siehe unten) und muss trotzdem immer die
   // aktuellen Werte sehen. Deshalb der Umweg über Refs: Props ändern sich, die
   // Handler nicht.
+  // Wie `onWegRef`: `fliegen` unten hält seine Fassung für immer fest, darf den
+  // Wert also nicht direkt lesen.
+  const haeltRef = useRef(haeltRechts);
   const onWegRef = useRef(onWeg);
   const onAntippenRef = useRef(onAntippen);
   const tiefeRef = useRef(tiefe);
   const breiteRef = useRef(b);
   useEffect(() => {
     onWegRef.current = onWeg;
+    haeltRef.current = haeltRechts;
     onAntippenRef.current = onAntippen;
     tiefeRef.current = tiefe;
     breiteRef.current = b;
-  }, [onWeg, onAntippen, tiefe, b]);
+  }, [onWeg, haeltRechts, onAntippen, tiefe, b]);
 
   useEffect(() => {
     Animated.spring(tiefeWert, {
@@ -161,6 +187,18 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
   /** Die Karte verlässt den Stapel: erst hinausfliegen, dann Bescheid sagen. */
   const fliegen = useCallback(
     (richtung: WischRichtung, schwungY = 0) => {
+      if (richtung === 'rechts' && haeltRef.current) {
+        // Dieselbe Feder wie beim Zurückschnappen unter der Schwelle — es IST
+        // dasselbe Ereignis: Die Karte kommt an ihren Platz zurück.
+        Animated.spring(pan, {
+          toValue: { x: 0, y: 0 },
+          friction: 6,
+          tension: 90,
+          useNativeDriver: false,
+        }).start();
+        onWegRef.current(richtung);
+        return;
+      }
       const ziel = (richtung === 'rechts' ? 1 : -1) * (breiteRef.current + 240);
       Animated.timing(pan, {
         toValue: { x: ziel, y: schwungY * 80 },

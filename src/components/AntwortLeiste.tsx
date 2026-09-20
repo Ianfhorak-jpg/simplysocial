@@ -8,8 +8,8 @@ import { SsAvatar, SsButton, SsInput, SsText } from './ui';
 import type { FeedEintrag } from '@/features/posts/hooks';
 import { grussVorschlag } from '@/features/posts/wisch';
 import { useKollisionen } from '@/features/requests/hooks';
-import { useTabUeberdeckung } from '@/lib/tabs';
-import { categoryColors, colors, KURVE, radius, spacing } from '@/theme';
+import { TAB_KAPSEL_SEITE, useTabUeberdeckung } from '@/lib/tabs';
+import { colors, ecke, spacing, type } from '@/theme';
 
 /**
  * Was nach dem Wisch nach rechts hochfährt — Ians elfte Entscheidung, 2026-09-01.
@@ -41,7 +41,6 @@ export interface AntwortLeisteProps {
 
 export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteProps) {
   const { post, author } = eintrag;
-  const palette = categoryColors[post.category];
   const [text, setText] = useState(() => grussVorschlag(author.displayName));
   /**
    * 🔴 **Die Leiste lag unter der Tab-Kapsel** — Ians Befund vom 2026-09-20:
@@ -116,11 +115,21 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
           </View>
         </View>
 
+        {/* 🔴 **Zwei Zeilen statt vier** — Ians Entscheidung vom 2026-09-20.
+            Vier Zeilen waren das größte Element der Leiste, für einen Satz, der
+            optional ist und meistens „Hey X! Bin dabei" lautet. `multiline`
+            bleibt: Wer mehr schreibt, bekommt mehr Platz, das Feld wächst mit.
+            Die Höhe ist die VORGABE, nicht die Grenze. */}
         <SsInput
           value={text}
           onChangeText={setText}
           placeholder="Kurz was dazuschreiben (optional)"
           multiline
+          // GERECHNET, nicht hingeschrieben: zwei Zeilen der Grundschrift. Ein
+          // blankes `minHeight: 45` wäre beim nächsten Schriftwechsel falsch,
+          // ohne dass es jemandem auffällt. Die Voreinstellung in `SsInput`
+          // (76) sind gut drei Zeilen und gilt weiter, wo mehr geschrieben wird.
+          inputStyle={{ minHeight: type.body.lineHeight * 2 }}
           maxLength={200}
         />
 
@@ -136,11 +145,47 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
           onPress={() => onSenden(text)}
         />
 
-        <SsText variant="caption" center color={palette.onSoft}>
+        {/* 🔴 **`colors.inkSoft`, nicht `palette.onSoft` — gemessen am 2026-09-20.**
+            `onSoft` ist laut seiner eigenen Definition „die Textfarbe AUF soft".
+            Dieser Satz steht aber nicht auf `soft`, sondern auf `colors.surface`,
+            der Fläche der Leiste. Auf der falschen Fläche gemessen:
+
+              Essen 4,43 · Kultur 4,37 · Kreativ 4,39   ← unter WCAG AA (4,5)
+              Lernen 4,50 · Outdoor 4,61 · Sport 7,36
+
+            Drei von sechs Kategorien fallen durch, und Lernen liegt genau auf
+            der Kante. `aufGrund` wäre die richtige Frage, aber die falsche
+            Antwort: Es ist gegen `colors.bg` gemessen und kommt auf der Leiste
+            nur auf 3,87.
+
+            **Derselbe Satz im Detail-Screen stand immer schon auf `inkSoft`**
+            (`post/[id].tsx`). Zwei Antworten auf dieselbe Frage, und der
+            Ausreißer war der, der durchfällt — 5,21:1 statt 4,37. */}
+        <SsText variant="caption" center color={colors.inkSoft}>
           {author.displayName} entscheidet, wer mitkommt.
         </SsText>
 
-        <SsButton variant="ghost" label="Doch nicht" block onPress={onAbbrechen} />
+        {/* 🔴 **Text statt Knopf** — Ians Entscheidung vom 2026-09-20.
+            Als Knopf in voller Breite war „Doch nicht" das zweitgrößte Element,
+            obwohl es schon zwei andere Wege hinaus gibt: danebentippen (der
+            Schleier oben) und die Leiste nach unten schieben. Harte Regel 63:
+            Ein Bildschirm zeigt, was für DIESE Entscheidung nötig ist — und die
+            Entscheidung hier heißt „schicken oder nicht", nicht „drei gleich
+            große Knöpfe".
+
+            ⚠️ **Es bleibt ein echtes Berührungsziel.** `hitSlop` macht die
+            Fläche auf Apples 44 Punkte, ohne den Text größer zu zeichnen — ein
+            Ausstieg, den man nicht trifft, ist keiner. */}
+        <Pressable
+          onPress={onAbbrechen}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Doch nicht"
+          style={styles.abbrechen}>
+          <SsText variant="caption" center color={colors.inkSoft}>
+            Doch nicht
+          </SsText>
+        </Pressable>
       </Animated.View>
     </>
   );
@@ -153,23 +198,43 @@ const styles = StyleSheet.create({
   schleier: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: colors.ink },
   schleierFlaeche: { flex: 1, cursor: 'pointer' },
 
+  /**
+   * 🔴 **Eine schwebende KARTE, nicht mehr eine randlose Leiste** — Ians
+   * Entscheidung vom 2026-09-20.
+   *
+   * ── Was vorher nicht mehr stimmte ──────────────────────────────────────
+   * Hier standen nur `borderTopLeftRadius`/`borderTopRightRadius`, mit der
+   * Begründung: *„eine Leiste, die unten am Schirm klebt, ist nur oben rund."*
+   * **Sie klebt aber nicht mehr unten.** Seit sie mit
+   * `bottom: tabUeberdeckung` der Tab-Kapsel ausweicht (harte Regel 62),
+   * schwebt sie — mit zwei harten Ecken unten, unter denen der Schleier
+   * durchscheint. Genau die Kante auf Ians Bild.
+   *
+   * *Eine Regel, deren GRUND wegfällt, hinterlässt ihre Wirkung* (FALLEN.md).
+   *
+   * ── Warum `TAB_KAPSEL_SEITE` und nicht irgendein Rand ───────────────────
+   * Damit stehen Leiste und Tab-Kapsel auf derselben senkrechten Linie. Die
+   * Zahl steht in `lib/tabs.ts` und nirgends sonst (harte Regel 62) — ein
+   * eigenes `spacing.lg` hier wäre heute derselbe Wert und morgen nicht mehr.
+   *
+   * `ecke.xl` statt zweier Radien: Jetzt sollen wirklich alle vier Ecken rund
+   * sein, und damit ist es der Fall, für den es `ecke` gibt (harte Regel 112).
+   */
   leiste: {
     position: 'absolute',
-    right: 0,
+    right: TAB_KAPSEL_SEITE,
     bottom: 0,
-    left: 0,
+    left: TAB_KAPSEL_SEITE,
     gap: spacing.md,
     padding: spacing.lg,
-    paddingBottom: spacing.xl,
     backgroundColor: colors.surface,
-    borderTopWidth: 1,
+    borderWidth: 1,
     borderColor: colors.line,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    // Apples Squircle. Hier NICHT über `ecke`, weil das alle vier Ecken rundet —
-    // eine Leiste, die unten am Schirm klebt, ist nur oben rund.
-    borderCurve: KURVE,
+    ...ecke.xl,
   },
+  // 44 sind Apples Mindestmaß für ein Berührungsziel — hier als Höhe des
+  // Bereichs, nicht als Größe der Schrift.
+  abbrechen: { minHeight: 44, justifyContent: 'center', cursor: 'pointer' },
   kopf: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   kopfText: { flex: 1, gap: 1 },
 });
