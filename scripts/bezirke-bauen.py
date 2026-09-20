@@ -38,8 +38,33 @@ QUELLE = (
 )
 
 BREITE = 1000.0   # Einheiten im viewBox. 1 Einheit ≈ 29 m.
-RASTER = 1.0      # Punkte werden hierauf gerundet (siehe Entscheidung 2).
-TOLERANZ = 2.0    # Douglas-Peucker. Bei ~320 px Anzeigebreite sind das 0,6 px.
+# ── RASTER und TOLERANZ: die zwei Zahlen, an denen die Zackigkeit hängt ──────
+# Bis zum 2026-09-20 standen hier 1.0 und 2.0. Ians Urteil danach: *„die
+# Umrandungen sind noch zu zackig … wenn man da so reinzoomt, sieht das nicht so
+# super aus."* Gemessen wurde mit `scripts/bezirke-messen.py` — **das ist die
+# Messstelle zu diesen Zahlen**, und ohne sie sind sie nicht reproduzierbar.
+#
+# Zwei Befunde aus der Messung, beide gegen die Intuition:
+#
+#  1. **Ein grobes RASTER spart nichts.** Gerundet wird unten in `main()` VOR
+#     Douglas-Peucker. Ein grobes Gitter nimmt ihm die Auswahl, und er braucht
+#     dann mehr Punkte für dieselbe Abweichung: 0.25/0.5 ergibt 1863 Punkte und
+#     21766 Zeichen, 0.1/0.5 nur 1780 und 20178 — bei 2,4× feinerem Gitter.
+#     **Gespart wird über TOLERANZ, nie über RASTER.**
+#  2. **Unter TOLERANZ = RASTER bricht der Nutzen weg.** Liegt die Toleranz unter
+#     dem Gitter, gibt es nichts mehr wegzulassen: 0.1/0.07 kostet 1,9× so viele
+#     Punkte wie 0.1/0.1 für 1,4× Genauigkeit. Deshalb sind beide gleich.
+#
+# Warum gerade 0.05, also 1,0 m: `APPLE_ZOOM_MAX = 15` (features/posts/karte.ts)
+# ist die Stadtviertel-Ebene — nach Lehrbuch rund 3,18 m je Punkt. Dieselbe Datei
+# warnt aber, `react-native-maps` liege „gut anderthalb Stufen neben der
+# Lehrbuchformel"; im ungünstigsten Fall sind es 1,12 m je Punkt. 1,0 m bleibt
+# damit unter EINEM Punkt, egal welche der beiden Lesarten stimmt. Die alte
+# Einstellung lag bei 39,1 m, also 12 bis 35 pt — **das war Ians Zacken.**
+#
+# Der Preis: 886 → 6252 Punkte, 6820 → 78945 Zeichen Pfad (gzip 2,9 → 26,5 kB).
+RASTER = 0.05     # Punkte werden hierauf gerundet (siehe Entscheidung 2). 1,0 m.
+TOLERANZ = 0.05   # Douglas-Peucker. Gleich dem Raster — siehe Befund 2 oben.
 
 
 def ringe(geom):
@@ -207,10 +232,19 @@ def main():
  * ── Wie genau das ist ───────────────────────────────────────────────────────
  * Aus {roh} amtlichen Stützpunkten sind {fein} geworden ({fein / roh:.1%}) — auf
  * ein Raster von {RASTER:g} Einheiten gerundet und mit Douglas-Peucker geglättet
- * (Toleranz {TOLERANZ:g}). Eine Einheit sind rund {1000 / massstab * k * 111320 / 1000:.0f} m;
- * bei der Anzeigebreite der App ist die Abweichung kleiner als ein Bildpunkt.
- * **Das ist eine Übersichtskarte, keine Vermessung** — sie beantwortet „wo ist
- * gerade etwas los", nicht „wo genau verläuft die Grenze".
+ * (Toleranz {TOLERANZ:g}). Eine Einheit des viewBox sind rund {1000 / massstab * k * 111320 / 1000:.0f} m — ein
+ * RASTERSCHRITT also {RASTER * 1000 / massstab * k * 111320 / 1000:.1f} m, und die Abweichung der Grenze
+ * höchstens **{TOLERANZ * 1000 / massstab * k * 111320 / 1000:.1f} m**.
+ *
+ * ⚠️ **Diese Zahl ist gewählt, nicht geerbt.** Bis zum 2026-09-20 lag sie bei
+ * 39,1 m, und Ian sah das beim Hineinzoomen als Zacken. Warum jetzt gerade
+ * dieser Wert — und warum ein GRÖBERES Raster nichts spart — steht bei `RASTER`
+ * in `scripts/bezirke-bauen.py`; nachmessen lässt es sich mit
+ * `python3 scripts/bezirke-messen.py`. **Das ist die Messstelle dazu**, ohne
+ * sie wäre die Zahl oben nicht reproduzierbar.
+ *
+ * **Das ist trotzdem eine Übersichtskarte, keine Vermessung** — sie beantwortet
+ * „wo ist gerade etwas los", nicht „wo genau verläuft die Grenze".
  */
 
 /** Ein Bezirk als Fläche. `plz` ist derselbe Wert wie `Post.district`. */

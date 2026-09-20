@@ -82,3 +82,7 @@ db-url
 # nur steht die Liste diesmal hier. Der nächste Prüfstand ist jetzt von selbst
 # gedeckt, ohne dass jemand daran denken muss.
 .pruef-*/
+
+# Die 3 MB Rohdaten, die `scripts/bezirke-messen.py` beim ersten Lauf holt.
+# Sie ändern sich nicht, gehören aber nicht ins Repo — das Skript lädt sie neu.
+scripts/.bezirke-roh.json
