@@ -64,7 +64,27 @@ const ZAHL_PX = 11;
  *  trennt sie zwei Flächen, hier liegt ein Stadtplan darunter, den sie nicht
  *  zudecken soll. */
 const FUGE = 1;
-const AUSWAHL_STRICH = 3;
+
+/**
+ * Der Umriss um den gewählten Bezirk — **gleich dick wie jede andere Fuge.**
+ *
+ * 🔴 **Ians Entscheidung 100 (2026-09-20):** *„es soll so aussehen wie die
+ * anderen."* Vorher war dieser Strich 3 und damit rund drei-mal so dick wie die
+ * Fugen daneben. Sein Urteil davor am Gerät: *„das sieht echt scheiße aus … da
+ * sieht es ganz komisch aus."*
+ *
+ * ── Warum eine DICKE Linie hier schlechter aussieht als anderswo ────────────
+ * Die Bezirksgrenzen sind ein vereinfachter Umriss, kein glatter Pfad. Bei
+ * Fugenstärke fällt das nicht auf; verdreifacht man die Linie, wird jede
+ * Vereinfachung zur sichtbaren Zacke — **die Linie zeigt dann die Auflösung der
+ * Geometrie statt der Grenze.** Genau das war auf Ians Bild zu sehen.
+ *
+ * ⚠️ **Die Auswahl trägt jetzt allein die FARBE** (`colors.ink` gegen `colors.bg`).
+ * Das ist keine Schwächung: Weiß gegen Fast-Schwarz ist der größte Unterschied,
+ * den dieses Farbsystem hat — vorher sagten Farbe UND Dicke dasselbe, und eine
+ * der beiden Aussagen war die lautere, ohne mehr zu sagen.
+ */
+const AUSWAHL_STRICH = FUGE;
 
 /**
  * Wie lange nach einer Änderung die Marker-Bilder neu aufgenommen werden.
