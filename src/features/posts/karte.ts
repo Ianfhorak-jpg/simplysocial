@@ -119,21 +119,57 @@ export const ZAHLEN_AN = false;
  * Entscheidung, sondern dieselbe: „voll" heißt *am weitesten von der
  * Grundfläche entfernt*.
  *
- * ── Alle Werte sind gemessen, nicht geschätzt (WCAG) ──────────────────────────
- * Die Zahl in der Fläche erreicht auf jeder Stufe mindestens **4,53:1**:
- *   Stufe 1 #434446 · heller Text · 8,63:1
- *   Stufe 2 #6D6E6E · heller Text · 4,53:1
- *   Stufe 3 #A0A09F · dunkler Text · 6,73:1
- *   Stufe 4 #E8E7E3 · dunkler Text · 14,23:1
+ * ═══════════════════════════════════════════════════════════════════════════
+ *  🔴 IANS ENTSCHEIDUNG 104 (2026-09-20): DIE SKALA WIRD GLEICHMÄSSIG
+ * ═══════════════════════════════════════════════════════════════════════════
  *
- * ── Warum ausgerechnet der wichtigste Sprung der schwächste ist ───────────────
- * Zwischen „leer" und „ein Post" liegen nur **1,62:1** (auf Dunkel etwas mehr als
- * die früheren 1,41) — und das ist genau die
- * Grenze, auf die es ankommt. Sie über die Farbe zu tragen ginge nur mit einem
- * harten Bruch, und der ließe die Karte fleckig aussehen. **Getragen wird sie
- * deshalb von der ZAHL: Eine leere Fläche bekommt gar keine.** Das ist zugleich die
- * Antwort auf Punkt 2 aus PLAN.md, Phase 19b — wer Farben schlecht unterscheidet,
- * bekommt sonst gar nichts.
+ * ── Was vorher hier stand, und warum es nicht mehr gilt ────────────────────
+ * *„Zwischen ‚leer' und ‚ein Post' liegen nur 1,62:1 — und das ist genau die
+ * Grenze, auf die es ankommt. Getragen wird sie deshalb von der ZAHL: Eine leere
+ * Fläche bekommt gar keine."* Das war richtig, solange es Zahlen gab.
+ * **Entscheidung 101 hat sie weggenommen, und damit stand die wichtigste
+ * Unterscheidung der Karte ohne Träger da** — verschärft durch Entscheidung 102,
+ * seit der ein Tipp auf einen leeren Bezirk direkt bei „Hier ist alles durch"
+ * landet. Vorgelegt, gemessen, und Ian hat „gleich stärker machen" gewählt.
+ *
+ * ── Warum die Farbe das jetzt DARF ────────────────────────────────────────
+ * Stufe 1 lag nur deshalb so dicht an `KARTE_LEER`, weil eine weiße Zahl darauf
+ * lesbar bleiben musste. **Ohne Zahl ist diese Fessel weg.**
+ *
+ * ── Was geändert wurde: vier Zahlen, keine Farbe ───────────────────────────
+ * Die Skala ist keine Sammlung ausgesuchter Grautöne, sondern eine GERADE im
+ * sRGB-Raum von `KARTE_LEER` nach `accent.base`, abgetastet bei vier Werten.
+ * Nachgerechnet am 2026-09-20: Die alten Hex-Werte liegen auf dieser Geraden bei
+ * t = 0,171 · 0,382 · 0,638 · 1,0, auf das Byte genau. **Verschoben wurden nur
+ * die Abtastpunkte** — die Regel *„die Skala läuft auf `accent.base` zu"* und die
+ * Tonwanderung von bläulich-dunkel nach warm-hell sind unberührt.
+ *
+ *     alt  0,171 · 0,382 · 0,638 · 1,0   Sprünge 1,62 · 1,91 · 1,95 · 2,12
+ *     neu  0,219 · 0,426 · 0,686 · 1,0   Sprünge 1,89 · 1,84 · 1,93 · 1,90
+ *
+ * Die Spannweite fällt von 0,50 auf 0,10 — **fünfmal gleichmäßiger**, und der
+ * wichtigste Sprung wächst von 1,62 auf 1,89.
+ *
+ * ── Warum Stufe 2 nicht exakt auf der Gleichverteilung sitzt ───────────────
+ * Rechnerisch gleichmäßig wäre t = 0,435 (`#777878`). Dort fällt heller Text auf
+ * **4,43:1** und damit unter WCAG AA. Das ist heute folgenlos — es gibt keine
+ * Zahlen —, aber `ZAHLEN_AN` ist ausdrücklich mit EINER Zeile umlegbar, und eine
+ * Skala, die beim Zurückdrehen still unter AA fällt, ist eine Falle für später.
+ * t = 0,426 hält 4,54:1 und kostet an Gleichmäßigkeit 0,05 Spannweite.
+ *
+ * ── Alle Werte sind gemessen, nicht geschätzt (WCAG) ──────────────────────────
+ * ⚠️ **Die Zahlen, die hier bis zum 2026-09-20 standen (8,63 und 4,53), waren
+ * veraltet.** Sie stammten von vor Ians Entscheidung 92, die `colors.ink` auf
+ * Reinweiß gezogen hat; Stufe 3 und 4 stimmten weiter, weil sie `DUNKLE_ZAHL`
+ * benutzen. Gemessen mit `ink = #FFFFFF`, für den Fall, dass `ZAHLEN_AN` wieder
+ * `true` wird:
+ *
+ *   Stufe 1 #4D4E4F · heller Text ·  8,34:1   (alt #434446 ·  9,75)
+ *   Stufe 2 #767677 · heller Text ·  4,54:1   (alt #6D6E6E ·  5,11)
+ *   Stufe 3 #AAA9A8 · dunkler Text ·  7,51:1  (alt #A0A09F ·  6,73)
+ *   Stufe 4 #E8E7E3 · dunkler Text · 14,23:1  (unverändert)
+ *
+ * Nachrechnen: `python3 scripts/skala-messen.py`.
  */
 /**
  * Die Zahl auf den beiden HELLEN Stufen. Sie ist nicht `colors.bg`: Der Grund ist
@@ -146,9 +182,9 @@ const DUNKLE_ZAHL = '#17191C';
 export const KARTE_LEER = '#212326'; // knapp über bg — 1,15:1, die leere Fläche soll nicht auffallen
 
 export const STUFEN: readonly { flaeche: string; zahl: string }[] = [
-  { flaeche: '#434446', zahl: colors.ink },
-  { flaeche: '#6D6E6E', zahl: colors.ink },
-  { flaeche: '#A0A09F', zahl: DUNKLE_ZAHL },
+  { flaeche: '#4D4E4F', zahl: colors.ink },
+  { flaeche: '#767677', zahl: colors.ink },
+  { flaeche: '#AAA9A8', zahl: DUNKLE_ZAHL },
   { flaeche: '#E8E7E3', zahl: DUNKLE_ZAHL },
 ];
 
