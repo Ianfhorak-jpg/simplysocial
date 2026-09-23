@@ -324,6 +324,88 @@ for f, warum in sorted(AUSNAHMEN.items()):
     n = len(gefunden.get(f, []))
     print(f'     · {f:34} {n:2} Literal(e) — {warum}')
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  DIE FARBEN IN `app.json` — die einzigen, die NICHT aus `colors.ts` kommen
+# ══════════════════════════════════════════════════════════════════════════════
+#  🔴 **Der Fehler vom 2026-09-23.** Ians Bild zeigte weiße Streifen oben und
+#  unten am Rand der App. React zeichnet dort überall `colors.bg`: Der Wurzel-
+#  `View` hat sie (`_layout.tsx`, `styles.app`), die Stack-Screens auch
+#  (`contentStyle`). **Das Weiß kam von UNTER React** — aus der Wurzel-Ansicht
+#  von React Native, und die behält ihren Standard, solange niemand ihr etwas
+#  anderes sagt.
+#
+#  Gesagt wird es in `app.json`. `expo-system-ui` liest dort
+#  `ios.backgroundColor || backgroundColor` und schreibt daraus
+#  `RCTRootViewBackgroundColor` in die `Info.plist`
+#  (`plugin/build/withIosRootViewBackgroundColor.js`). Stand nichts da, kehrte
+#  das Plugin mit `if (!backgroundColor) return;` einfach um — kein Schlüssel,
+#  keine Meldung, und sichtbar wird es nur, wenn eine Bewegung die Ansicht
+#  darunter kurz freilegt.
+#
+#  ⚠️ **`app.json` kann `colors.ts` nicht importieren.** Diese Farbe MUSS also
+#  zweimal dastehen — und genau deshalb steht sie hier unter Bewachung. Es ist
+#  die einzige erlaubte Ausnahme von *„eine Farbe hat EINEN Ort"*, und sie ist
+#  nur erlaubt, weil sie geprüft wird.
+#
+#  ⚠️ **Was dieser Abschnitt NICHT kann.** Er sieht nicht, ob der Wert im Bündel
+#  ankommt — dazwischen liegt ein `prebuild`. Dass die `Info.plist` ihn trägt,
+#  prüft der Abschnitt darunter, und ob am Gerät wirklich kein Weiß mehr
+#  aufblitzt, sagt nur ein Bild.
+print('')
+print('── Die zwei Farben in `app.json` ──')
+
+import json as _json
+APPJSON = WURZEL / 'app.json'
+pruef('`app.json` ist gefunden', APPJSON.exists(),
+      'eine Textsuche mit null Treffern beweist nichts')
+konfig = _json.loads(APPJSON.read_text())['expo'] if APPJSON.exists() else {}
+
+# `colors.bg` ist die Wahrheit. Aus der Quelle gelesen, nicht hier wiederholt.
+m_bg = re.search(r"bg: '(#[0-9A-Fa-f]{6})'", QUELLE.read_text())
+pruef(f'`colors.bg` ist gefunden (gefunden: {m_bg.group(1) if m_bg else "NICHTS"})',
+      bool(m_bg),
+      'ohne sie hat dieser Abschnitt nichts, womit er vergleichen könnte')
+BG = m_bg.group(1).upper() if m_bg else None
+
+wurzel_farbe = konfig.get('ios', {}).get('backgroundColor') or konfig.get('backgroundColor')
+pruef(f'`expo.backgroundColor` steht da (gefunden: {wurzel_farbe or "NICHTS"})',
+      bool(wurzel_farbe),
+      'ohne sie schreibt `expo-system-ui` kein `RCTRootViewBackgroundColor` — '
+      'die Wurzel-Ansicht bleibt auf ihrem Standard und blitzt bei jeder Bewegung durch')
+pruef('… und ist `colors.bg`',
+      bool(wurzel_farbe) and wurzel_farbe.upper() == BG,
+      'eine zweite Grundfarbe ist genau der Streifen, den man am Rand sieht')
+
+splash = next((p[1] for p in konfig.get('plugins', [])
+               if isinstance(p, list) and p[0] == 'expo-splash-screen'), None)
+pruef('Der Splash-Eintrag ist gefunden', isinstance(splash, dict),
+      'ohne ihn prüft die Zeile darunter einen Eintrag, den es nicht gibt')
+pruef(f'… und seine Farbe ist `colors.bg` (gefunden: {splash.get("backgroundColor") if splash else "NICHTS"})',
+      bool(splash) and str(splash.get('backgroundColor', '')).upper() == BG,
+      'sonst springt die Farbe beim Start von der Splash-Fläche auf die App')
+
+# ── Und was davon im nativen Projekt ANKOMMT ────────────────────────────────
+# `ios/` ist git-ignoriert (CNG) und nach einem frischen Checkout nicht da.
+# Fehlt der Ordner, ist das kein Verstoß — aber auch kein Häkchen, das etwas
+# behauptet: Dann sagt die Zeile ausdrücklich, dass sie nichts geprüft hat.
+PLIST = WURZEL / 'ios' / 'SimplySocial' / 'Info.plist'
+if PLIST.exists():
+    plist = PLIST.read_text()
+    # Die Plist trägt die Farbe als ARGB-GANZZAHL, nicht als `#RRGGBB` — das
+    # Plugin rechnet sie um. Also zurückrechnen und vergleichen: Die blosse
+    # Anwesenheit des Schlüssels sagt nur, dass IRGENDEINE Farbe dasteht.
+    m_plist = re.search(r'<key>RCTRootViewBackgroundColor</key>\s*<integer>(\d+)</integer>', plist)
+    pruef(f'Die `Info.plist` trägt `RCTRootViewBackgroundColor` (gefunden: {m_plist.group(1) if m_plist else "NICHTS"})',
+          bool(m_plist),
+          'die Zeile entsteht erst beim `prebuild` — ohne sie ist die Änderung in '
+          'app.json am Gerät noch nicht angekommen')
+    argb = int(m_plist.group(1)) if m_plist else 0
+    pruef(f'… und zwar `colors.bg`, deckend (gerechnet: #{argb & 0xFFFFFF:06X}, Alpha {argb >> 24})',
+          bool(m_plist) and f'#{argb & 0xFFFFFF:06X}' == BG and (argb >> 24) == 255,
+          'eine durchsichtige oder andere Farbe hier ist genau der Streifen am Rand')
+else:
+    print('  · ios/ ist nicht da (CNG, git-ignoriert) — nichts geprüft')
+
 print('')
 print(f'  {JA} Häkchen, {NEIN} Kreuze')
 sys.exit(1 if NEIN else 0)

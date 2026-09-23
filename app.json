@@ -8,6 +8,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "simplysocial",
     "userInterfaceStyle": "dark",
+    "backgroundColor": "#14161A",
     "ios": {
       "bundleIdentifier": "at.simplysocial.app",
       "supportsTablet": false,
