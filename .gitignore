@@ -86,3 +86,12 @@ db-url
 # Die 3 MB Rohdaten, die `scripts/bezirke-messen.py` beim ersten Lauf holt.
 # Sie ändern sich nicht, gehören aber nicht ins Repo — das Skript lädt sie neu.
 scripts/.bezirke-roh.json
+
+# Die Python-Umgebung für `npm run knipsen` (pymobiledevice3, ~90 MB).
+# Sie gehört INS Projekt und nicht nach /tmp — aus demselben Grund wie oben:
+# Ein Werkzeug, das anderswo liegt, ist beim nächsten Rechner nicht da.
+# Angelegt wird sie vom Skript selbst, wenn sie fehlt.
+scripts/.venv-geraet/
+# Die Bilder vom Gerät. Was davon ein BELEG ist, wandert von Hand nach
+# `_belege/` — sonst liegen hier hundert Versuche und ein brauchbares Bild.
+_schirm/
