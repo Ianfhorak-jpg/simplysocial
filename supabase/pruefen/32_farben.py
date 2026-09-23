@@ -406,6 +406,58 @@ if PLIST.exists():
 else:
     print('  · ios/ ist nicht da (CNG, git-ignoriert) — nichts geprüft')
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  DIE DRITTE SCHICHT — das Thema von React Navigation
+# ══════════════════════════════════════════════════════════════════════════════
+#  🔴 **Ians Befund vom 2026-09-23, zweiter Anlauf.** Helle Streifen am Rand,
+#  aber NUR während einer Bewegung. Im Stillstand alles dunkel.
+#
+#  Hinter den Screens liegt `react-navigation/elements/Background.js`:
+#
+#      <Animated.View style={[{ flex: 1, backgroundColor: colors.background }]} />
+#
+#  `colors` kommt aus `useTheme()`. Ohne `ThemeProvider` gilt Expo Routers
+#  Vorgabe — `NavigationContainerInner({ theme = DefaultTheme })` —, und
+#  `DefaultTheme.colors.background` ist `rgb(242, 242, 242)`.
+#
+#  ⚠️ **Es sind DREI Schichten, und jede braucht ihre eigene Angabe:**
+#
+#      Fenster + Wurzel-Ansicht   `expo.backgroundColor`   (Abschnitt darüber)
+#      Fläche hinter den Screens  das Navigations-THEMA    (hier)
+#      Inhalt eines Screens       `contentStyle`           (`_layout.tsx`)
+#
+#  Die mittlere liegt ÜBER dem Fenster. Deshalb war die Reparatur am Fenster
+#  richtig und für dieses Bild trotzdem folgenlos — *zweimal die STILLE
+#  repariert, bevor die URSACHE gesucht war* (FALLEN.md), wäre der Fehler
+#  gewesen, den sie beinahe geworden wäre.
+print('')
+print('── Die Fläche HINTER den Screens ──')
+
+LAYOUT = WURZEL / 'src' / 'app' / '_layout.tsx'
+pruef('`_layout.tsx` ist gefunden', LAYOUT.exists(),
+      'eine Textsuche mit null Treffern beweist nichts')
+layout = LAYOUT.read_text() if LAYOUT.exists() else ''
+
+pruef('Der `Stack` steckt in einem `ThemeProvider`',
+      re.search(r'<ThemeProvider value=\{NAV_THEMA\}>\s*<Stack', layout) is not None,
+      'ohne ihn gilt `DefaultTheme` — und dessen Hintergrund ist rgb(242, 242, 242)')
+# ⚠️ Gegen den CODE geprüft, nicht gegen den Text. Der erste Anlauf suchte
+# `DefaultTheme` in der ganzen Datei und ging an dem Kommentar rot, der ERKLÄRT,
+# warum es das nicht sein darf — dieselbe Falle wie bei `pruef-plattform`
+# vorgestern: *Ein Wächter, der die eigene Begründung für den Verstoß hält,
+# wird abgeschaltet statt gelesen.*
+layout_code = re.sub(r'/\*.*?\*/', '', layout, flags=re.S)
+layout_code = '\n'.join(z for z in layout_code.splitlines() if not z.strip().startswith('//'))
+pruef('Das Thema baut auf `DarkTheme` auf, nicht auf `DefaultTheme`',
+      '...DarkTheme,' in layout_code and 'DefaultTheme' not in layout_code,
+      'die App ist dunkel; ein helles Grundthema ist die falsche Ausgangslage')
+pruef('… und seine Hintergrundfarbe ist `colors.bg`',
+      'colors: { ...DarkTheme.colors, background: colors.bg }' in layout,
+      '`DarkTheme` steht auf rgb(1, 1, 1) — das wäre eine ZWEITE Grundfarbe neben colors.bg')
+pruef('Der Screen-Inhalt hat sie weiterhin auch',
+      'contentStyle: { backgroundColor: colors.bg }' in layout,
+      'Thema und `contentStyle` sind zwei Schichten, nicht dieselbe Angabe zweimal')
+
 print('')
 print(f'  {JA} Häkchen, {NEIN} Kreuze')
 sys.exit(1 if NEIN else 0)

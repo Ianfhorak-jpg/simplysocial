@@ -1,6 +1,6 @@
 import '../global.css';
 
-import { Stack } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 // `AppState` heißt in React Native genauso wie der Typ des eigenen Speichers.
 // Umbenannt statt verwechselt: Ein `AppState` in dieser Datei wäre sonst je nach
@@ -154,12 +154,48 @@ export default function RootLayout() {
             // ein zweites Warte-Bild über dem ersten, und Entscheidung 50 verlangt
             // eine Begründung dafür, dass etwas im Weg steht.
             null : (
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: colors.bg },
-                }}
-              />
+              /**
+               * 🔴 **Das Thema der Navigation — Ians Befund vom 2026-09-23.**
+               *
+               * Sein Bild zeigte helle Streifen oben und unten, und zwar NUR
+               * während einer Bewegung. Im Stillstand war alles dunkel.
+               *
+               * ── Wo die Farbe herkam ──────────────────────────────────────
+               * `react-navigation/elements/Background.js` zeichnet die Fläche
+               * HINTER den Screens:
+               *
+               *     <Animated.View style={[{ flex: 1,
+               *       backgroundColor: colors.background }, style]} />
+               *
+               * `colors` kommt aus `useTheme()`, und ohne `ThemeProvider` ist
+               * das Expo Routers Vorgabe: `NavigationContainerInner({ theme =
+               * DefaultTheme })` — und `DefaultTheme.colors.background` ist
+               * **`rgb(242, 242, 242)`**, also fast Weiß.
+               *
+               * Solange ein Screen die Fläche deckt, sieht man sie nie. Sobald
+               * ein Übergang läuft, liegt sie frei.
+               *
+               * ⚠️ **`contentStyle` unten reicht dafür NICHT**, und das ist der
+               * Grund, warum es so lange unentdeckt blieb: Es färbt den INHALT
+               * eines Screens, nicht die Fläche darunter. Ebensowenig half das
+               * Fenster (`expo.backgroundColor`, 23.9): Die Fläche liegt
+               * DARÜBER, nicht darunter — deshalb war die Reparatur davor
+               * richtig und für dieses Bild trotzdem folgenlos.
+               *
+               * `DarkTheme` und nicht `DefaultTheme`, weil die App dunkel ist;
+               * `background` wird trotzdem überschrieben, weil `DarkTheme` auf
+               * `rgb(1, 1, 1)` steht und das eine ZWEITE Grundfarbe wäre.
+               */
+              <ThemeProvider value={NAV_THEMA}>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    // Der INHALT eines Screens. Die Fläche dahinter macht
+                    // `NAV_THEMA` — zwei Schichten, zwei Angaben.
+                    contentStyle: { backgroundColor: colors.bg },
+                  }}
+                />
+              </ThemeProvider>
             )}
           </View>
         </OhneOberenRand>
@@ -335,6 +371,19 @@ function useTabTitel() {
     document.title = BRAND.name;
   }, []);
 }
+
+/**
+ * Das Thema, das React Navigation für alles benutzt, was WIR nicht selbst
+ * zeichnen — vor allem die Fläche hinter den Screens (`Background`).
+ *
+ * Außerhalb der Komponente, damit es EIN Objekt für die ganze Laufzeit ist:
+ * `ThemeProvider` reicht es als Kontextwert weiter, und ein bei jedem Bild neu
+ * gebautes Objekt ließe jeden Leser neu zeichnen.
+ */
+const NAV_THEMA = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, background: colors.bg },
+};
 
 const styles = StyleSheet.create({
   app: { flex: 1, backgroundColor: colors.bg },
