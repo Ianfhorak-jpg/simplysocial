@@ -19,6 +19,31 @@
 #
 # Danach läuft `npm run knipsen` ohne Rückfrage, so oft man will.
 #
+# ✅ ERSTER ECHTER LAUF: 2026-09-26, 19:17. Beim Schreiben (23.09.) war nur Schritt 1
+# belegt — das iPhone hing nicht am Kabel. Jetzt ist die ganze Kette gemessen:
+# Tunnel → `developer dvt screenshot` → 1179×2556 von Ians iPhone 16.
+#
+# ⚠️ Was dabei unnötig Sorge gemacht hat, und deshalb hier steht: `sudo npm run tunnel`
+# druckt „Waiting for user pairing" und BLEIBT so stehen. Das sieht aus wie Hängen,
+# ist aber der Normalzustand — das Fenster gehört offen. Ob er WIRKLICH arbeitet,
+# sagt nicht die letzte Zeile, sondern der Port:
+#
+#     curl -s http://127.0.0.1:49151
+#     {"00008140-…":[{"tunnel-address":"fda1:…","tunnel-port":52541,…}]}
+#
+# Steht dort eine Adresse, läuft er. *Eine Meldung, die den eigenen Ablauf nicht
+# kennt, ist keine Auskunft* — hier in der harmlosen Richtung, aber sie kostet
+# trotzdem eine Rückfrage.
+#
+# ── 🔴 Was dieses Skript NICHT kann, und warum das so bleiben soll ───────────
+# Es knipst, es TIPPT nicht. `devicectl` hat keinen URL-Befehl und
+# `pymobiledevice3 developer dvt` keinen Tipp-Befehl (nachgesehen am 2026-09-26);
+# bliebe `xcuitest`. Das wird hier auch nicht nachgerüstet: Am Gerät steht
+# `ANMELDE_QUELLE` auf `supabase`, die App hängt also an der ECHTEN Datenbank. Ein
+# danebengegangener Tipp schickt ein „Bin dabei" an einen echten Menschen oder
+# stellt einen Post ein. Knipsen ist lesend, Tippen wäre es nicht.
+# Am SIMULATOR ist das eine andere Frage — dafür gibt es `scripts/schirm.sh`.
+#
 # ── Fallen, die hier schon drinstecken ───────────────────────────────────────
 #   1. `usbmux` sieht nur Geräte am KABEL. Xcodes `devicectl` sieht das iPhone
 #      auch über WLAN und meldet „available (paired)" — das ist KEIN Beleg, dass

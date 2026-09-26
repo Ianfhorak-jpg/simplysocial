@@ -151,11 +151,11 @@ braucht es vorher einen neuen Build.
 1. **Altersfreigabe schicken** — ein Befehl, sofort, kostet nichts.
 2. **Preis auf kostenlos setzen** — das ist die harte Sperre, und nur du kommst dran.
 3. **Der Tunnel-Befehl**, damit ich Screenshots holen kann.
-4. **Design durchgehen** — der Stand von heute ist **gebaut**, aber noch nicht
-   drauf: Dein iPhone hat sich während der 15 Minuten Bauzeit selbst gesperrt.
-   Sobald du es aufmachst, spielt es sich von selbst auf (ein Wartelauf läuft).
-   Falls nicht: `npm run aufspielen`. Was dir dann nicht passt, sagst du —
-   danach ist der Stand stabil.
+4. ✅ **Der heutige Stand ist seit 19:09 auf deinem iPhone** — der Wartelauf hat
+   das Entsperren bemerkt und selbst aufgespielt. **Jetzt bist du dran:** Mach die
+   App auf und sag, was dir nicht passt. Danach ist der Stand stabil.
+   *(Falls sie sich nicht öffnen lässt: Einstellungen → Allgemein → VPN &
+   Geräteverwaltung → Profil → Vertrauen.)*
 5. **Neuer Build → TestFlight** — erst wenn das Design steht.
 6. **Rechtstext** — das ist der einzige Punkt, der wirklich Zeit braucht und an
    dem kein Werkzeug hilft.

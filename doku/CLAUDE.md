@@ -134,11 +134,15 @@ npm run asc altersfreigabe -- --wirklich    # schreibt — gehört IAN
 🔴 **Nicht ausgeführt, und das ist richtig:** Es schreibt in Ians Apple-Konto, und
 der Auto-Mode blockt das. Dieselbe Grenze wie bei der echten Supabase.
 
-### Der Gerätestand: gebaut, aber noch nicht drauf
+### ✅ Der Gerätestand ist AKTUELL — seit 2026-09-26, 19:09
 
-Der Build vom 2026-09-26 18:50 ist fertig und richtig signiert (Release, 365 Tage,
-Schalter im Bündel auf `supabase`). Aufgespielt ist er **nicht** — Ians iPhone hat
-sich während der 15 Minuten Bauzeit selbst gesperrt.
+Der Build von 18:50 (Release, 365 Tage, Schalter im Bündel auf `supabase`) liegt auf
+Ians iPhone. `devicectl` hat es selbst bestätigt (`App installed · bundleID
+at.simplysocial.app`), nicht nur ein Exit-Code.
+
+Er ging NICHT direkt drauf: Ians iPhone hatte sich während der 15 Minuten Bauzeit
+selbst gesperrt. Der Wartelauf von `npm run aufspielen` hat das Entsperren bemerkt
+und es allein erledigt — das war sein erster echter Lauf.
 
 ```bash
 npm run aufspielen        # NEU: spielt das fertige Bündel auf, wartet bis zu 45 Min.
@@ -150,7 +154,7 @@ war: Bauen dauert 15 Minuten und braucht das iPhone nicht, Aufspielen dauert
 Sekunden und braucht es offen. „starte neu" hiess vorher: 15 Minuten für etwas,
 das fertig daliegt.
 
-🔴 **Was auf Ian wartet, sobald die App drauf ist:** das Urteil zu den
+🔴 **Was auf Ian wartet — und es ist jetzt wirklich nur noch er:** das Urteil zu den
 Entscheidungen 101–110. Ob die Zacken weg sind, ob die Bezirke ohne Zahlen
 auseinandergehen, ob der direkte Sprung sich richtig anfühlt — am Mac ist nichts
 davon belegbar.
