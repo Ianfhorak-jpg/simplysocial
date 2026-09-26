@@ -53,6 +53,7 @@
     "db-url": "bash scripts/db-url.sh",
     "einspielen": "bash supabase/einspielen.sh",
     "geraet": "bash scripts/geraet-bauen.sh",
+    "aufspielen": "bash scripts/aufspielen.sh",
     "asc": "python3 scripts/asc.py",
     "anon-key": "bash scripts/anon-key.sh",
     "pruef-lesen": "bash supabase/pruefen/50_lesen.sh",

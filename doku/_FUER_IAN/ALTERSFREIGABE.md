@@ -1,6 +1,36 @@
-# Die Altersfreigabe — zum Abtippen in App Store Connect
+# Die Altersfreigabe — EIN BEFEHL statt 28 Klicks
 
-**Stand: 2026-09-14 · Phase 21.1 · Ergebnis: 13+**
+**Stand: 2026-09-26 · Phase 21.1 · Ergebnis: 13+**
+
+---
+
+## 🟢 Das Wichtigste zuerst: du musst nichts mehr abtippen
+
+Bis zum 26.09. stand hier eine Liste von 28 Antworten, die du in ein Webformular
+klicken solltest. **Das ist jetzt ein Befehl.**
+
+```bash
+cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
+npm run asc altersfreigabe                 # zeigt nur, was geschickt würde
+npm run asc altersfreigabe -- --wirklich   # schickt es
+```
+
+Der erste Lauf ändert **nichts**. Er stellt die 25 Zeilen nebeneinander: was jetzt
+bei Apple steht und was hingeschickt würde. Erst der zweite schreibt.
+
+> ⚠️ **Warum du den zweiten Befehl selbst tippst und nicht ich.** Er schreibt in
+> **dein** Apple-Konto. Alles, was von hier aus nach außen wirkt — dein Apple-Konto,
+> die echte Datenbank, TestFlight — machst du, nicht ich. Das ist keine Schikane,
+> sondern die Regel, die verhindert, dass ein Versehen von mir bei Apple landet.
+>
+> Zurücknehmen kannst du es jederzeit: Der Fragebogen ist ein Formular, kein Versand.
+> Die App wird dadurch **nicht** eingereicht.
+
+Was danach dasteht, prüfst du mit:
+
+```bash
+npm run asc einreichbereit
+```
 
 ---
 
@@ -10,13 +40,14 @@ Apple stellt vor dem Einreichen einen Fragebogen: Was ist in eurer App drin? Aus
 Antworten rechnet Apple die Altersfreigabe aus — du wählst sie nicht, sie **ergibt
 sich**.
 
-> 🔴 **Nachgesehen am 14.09. über Apples eigene Schnittstelle: Von den 28 Feldern ist
-> bisher KEIN EINZIGES beantwortet** (alle stehen auf `null`). Ohne diesen Fragebogen
-> lässt sich die App nicht einreichen. Das ist kein Schönheitsfehler, sondern eine
-> Sperre.
+> 🔴 **Nachgemessen am 2026-09-26 über Apples Schnittstelle: 27 von 30 Feldern
+> stehen auf `null`.** Am 14.09. waren es 28 von 30 — es hat sich seither also nichts
+> bewegt. Ohne diesen Fragebogen lässt sich die App nicht einreichen. Das ist kein
+> Schönheitsfehler, sondern eine Sperre.
 
-**Wo:** App Store Connect → SimplySocial → links **„Allgemeine Informationen"** →
-Abschnitt **„Altersfreigabe"** → **Bearbeiten**.
+**Falls du es doch lieber klickst:** App Store Connect → SimplySocial → links
+**„Allgemeine Informationen"** → Abschnitt **„Altersfreigabe"** → **Bearbeiten**.
+Die Antworten stehen unten alle.
 
 ---
 

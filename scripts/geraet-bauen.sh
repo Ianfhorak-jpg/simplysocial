@@ -240,7 +240,21 @@ if ! geraet_offen "$UDID"; then
       for _ in $(seq 10); do sleep 2; geraet_offen "$UDID" && break; done ;;
   esac
   if ! geraet_offen "$UDID"; then
-    echo "✗ Immer noch zu. Stell die automatische Sperre auf „Nie“ und starte neu."
+    # 🔴 „starte neu" war hier falsch, und zwar teuer: Der Build ist an dieser
+    # Stelle FERTIG und richtig signiert. Noch einmal zu starten heisst 15 Minuten
+    # bauen für etwas, das schon daliegt — und am 2026-09-26 stand genau das hier,
+    # nachdem Ian sein entsperrtes iPhone hingelegt hatte und es während der
+    # Bauzeit von selbst zuging.
+    #
+    # *Ein Abbruch, der nur so HEISST* (FALLEN.md): Abgebrochen ist nicht der
+    # Build, sondern nur das Aufspielen. Die Meldung muss sagen, was noch da ist.
+    echo "✗ Immer noch zu — ABER der Build ist fertig und signiert."
+    echo
+    echo "  Nichts ist verloren. Aufspielen geht getrennt und dauert Sekunden:"
+    echo "      npm run aufspielen        (wartet bis zu 45 Min. auf ein offenes iPhone)"
+    echo
+    echo "  Damit es beim nächsten Mal gar nicht passiert:"
+    echo "      Einstellungen → Anzeige & Helligkeit → Automatische Sperre → Nie"
     exit 1
   fi
 fi
