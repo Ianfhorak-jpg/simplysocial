@@ -11,21 +11,14 @@
 #  Aufruf:         bash supabase/pruefen/aufbauen.sh
 # ═══════════════════════════════════════════════════════════════════════════════
 set -e
-export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
 HIER="$(cd "$(dirname "$0")" && pwd)"
-DATEN="${PGDATEN:-/tmp/simplysocial-pgdata}"
-PORT=55432
-PSQL="psql -h 127.0.0.1 -p $PORT -U postgres -v ON_ERROR_STOP=1"
 
-# Gefragt wird der PORT, nicht der Datenordner: Läuft auf 55432 schon ein Server
-# (z. B. aus einer früheren Sitzung mit anderem Datenordner), würde ein zweiter
-# Start dort scheitern — mit einer Meldung, die nach einem kaputten Cluster aussieht
-# statt nach einem belegten Port.
-if ! pg_isready -h 127.0.0.1 -p $PORT -q; then
-  [ -d "$DATEN" ] || initdb -D "$DATEN" -U postgres --auth=trust > /dev/null
-  pg_ctl -D "$DATEN" -o "-p $PORT -k /tmp -h 127.0.0.1" -l "$DATEN/pg.log" start > /dev/null
-  sleep 2
-fi
+# Hochfahren steht in EINER Datei, nicht zweimal daneben — und sie erkennt eine
+# halb ausgeräumte Wegwerf-DB, statt an ihr zu scheitern (FALLEN.md).
+# Sie setzt DATEN und PORT.
+source "$HIER/wegwerf-db.sh"
+
+PSQL="psql -h 127.0.0.1 -p $PORT -U postgres -v ON_ERROR_STOP=1"
 
 $PSQL -q -c "drop database if exists ss;" -c "create database ss;" > /dev/null 2>&1
 $PSQL -q -d ss -f "$HIER/00_supabase_lokal.sql"

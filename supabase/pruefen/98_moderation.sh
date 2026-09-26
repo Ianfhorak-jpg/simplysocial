@@ -120,6 +120,26 @@ insert into group_members (group_id, user_id, joined_at) values
 SQL
 then
   echo "  ✗ Der AUFBAU ist gescheitert — was danach käme, sagt nichts über den Code."
+
+  # ⚠️ Dieser Prüfstand ist der, der LÖSCHT — und der häufigste Grund für einen
+  # gescheiterten Aufbau ist deshalb SEIN EIGENER letzter Lauf: Er entfernt Ians
+  # Konto, und ohne Ian gibt es keinen Absender für eine Anfrage. Der Fehler von
+  # Postgres lautet dann `violates foreign key constraint`, was nach einem
+  # kaputten Schema aussieht und keines ist.
+  #
+  # FALLEN.md: *Eine Meldung, die den eigenen Ablauf nicht kennt, ist keine
+  # Auskunft.* Also nachsehen, statt es den Nächsten raten zu lassen.
+  if [ "$($PSQL -c "select count(*) from profiles where id='$IAN';" 2>/dev/null)" = "0" ]
+  then
+    echo
+    echo "  → Ian gibt es in dieser Datenbank nicht mehr, und das war ICH:"
+    echo "    Dieser Prüfstand löscht sein Konto und steht deshalb als LETZTER in"
+    echo "    aufbauen.sh. Allein läuft er nur auf einer FRISCHEN Datenbank."
+    echo
+    echo "        bash supabase/pruefen/aufbauen.sh"
+    echo
+    echo "    Der baut sie neu und lässt ihn am Ende selbst mitlaufen."
+  fi
   exit 1
 fi
 

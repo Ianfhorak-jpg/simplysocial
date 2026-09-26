@@ -28,19 +28,13 @@
 #  dafür ist die Wegwerf-Datenbank kein Ersatz, sondern das Original.
 # ═══════════════════════════════════════════════════════════════════════════════
 set -euo pipefail
-export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
 HIER="$(cd "$(dirname "$0")" && pwd)"
-DATEN="${PGDATEN:-/tmp/simplysocial-pgdata}"
-PORT=55432
+
+# Hochfahren steht in EINER Datei, nicht zweimal daneben (FALLEN.md:
+# eine halb ausgeräumte Wegwerf-DB in /tmp). Sie setzt DATEN und PORT.
+source "$HIER/wegwerf-db.sh"
+
 DB="postgresql://postgres@127.0.0.1:$PORT/demopruef"
-
-command -v psql > /dev/null || { echo "✗ Kein psql. brew install postgresql@17"; exit 1; }
-
-if ! pg_isready -h 127.0.0.1 -p $PORT -q; then
-  [ -d "$DATEN" ] || initdb -D "$DATEN" -U postgres --auth=trust > /dev/null
-  pg_ctl -D "$DATEN" -o "-p $PORT -k /tmp -h 127.0.0.1" -l "$DATEN/pg.log" start > /dev/null
-  sleep 2
-fi
 
 P="psql -h 127.0.0.1 -p $PORT -U postgres -v ON_ERROR_STOP=1 -q -d demopruef"
 psql -h 127.0.0.1 -p $PORT -U postgres -q \
