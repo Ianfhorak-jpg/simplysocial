@@ -154,8 +154,80 @@ war: Bauen dauert 15 Minuten und braucht das iPhone nicht, Aufspielen dauert
 Sekunden und braucht es offen. „starte neu" hiess vorher: 15 Minuten für etwas,
 das fertig daliegt.
 
-🔴 **Was auf Ian wartet — und es ist jetzt wirklich nur noch er:** das Urteil zu den
-Entscheidungen 101–110. Ob die Zacken weg sind, ob die Bezirke ohne Zahlen
+### ✅ Screenshots vom Gerät gehen jetzt selbst — Belege `au00`/`au01`
+
+`npm run knipsen` ist am 2026-09-26 um 19:17 zum ersten Mal am echten iPhone
+gelaufen. Damit endet der Vorgang, mit dem bisher JEDE Design-Runde endete
+(*„schick mir bitte einen Screenshot"*).
+
+⚠️ **`sudo npm run tunnel` druckt „Waiting for user pairing" und bleibt so stehen.**
+Das ist der Normalzustand, nicht ein Hänger — Ian hat deswegen nachgefragt. Ob er
+arbeitet, sagt der Port: `curl -s http://127.0.0.1:49151` gibt eine
+`tunnel-address` zurück.
+
+🔴 **TIPPEN geht nicht und wird nicht nachgerüstet.** `devicectl` hat keinen
+URL-Befehl, `dvt` keinen Tipp-Befehl. Vor allem aber: Am Gerät steht
+`ANMELDE_QUELLE` auf `supabase` — ein danebengegangener Tipp ginge in die ECHTE
+Datenbank. **Knipsen ist lesend, Tippen wäre es nicht.** Die Arbeitsteilung ist
+damit: Ian tippt, Claude knipst und misst.
+
+### ✅ Die zwei Kartenfragen sind am Gerät beantwortet (Beleg `au02`)
+
+| Frage | Antwort |
+|---|---|
+| **Zacken die Grenzen noch?** | **Nein.** Neunfach vergrössert am Donaukanal: durchgehende glatte Linie, keine Treppenstufen. `fb874e2` (39,1 m → 1,0 m) hält am Gerät |
+| **Gehen die Bezirke ohne Zahlen auseinander?** | **Nicht beurteilbar — und das ist ein DATEN-Befund, kein Design-Befund.** Gemessen mit `png_lesen()`: Genau EIN Bezirk (der 1.) trägt eine Fläche, `#828492` bei Helligkeit 132; alle anderen liegen zwischen 44 und 76 und das sind Apples Karteninhalte, nicht unsere Stufen. Die vier Stufen stehen gar nicht nebeneinander auf dem Schirm |
+
+⚠️ Die gemessenen Werte liegen NICHT auf der Skala aus `karte.ts`, weil die Fläche
+**halbdurchsichtig über Apples Karte** liegt. Wer hier eine Stufe nachmessen will,
+muss das mitrechnen.
+
+🔴 **Was daraus folgt:** Entscheidung 101 (keine Zahlen) lässt sich erst beurteilen,
+wenn Posts in MEHREREN Bezirken liegen. Das ist kein weiterer Gerätedurchgang,
+sondern eine Datenfrage — im Prototyp (`'attrappe'`) wäre sie sofort zu sehen.
+
+✅ **Entscheidung 102 ist am Gerät abgenommen** (2026-09-26, Ian: *„ja 102 passt"*).
+Der direkte Sprung von der Karte in den Stapel bleibt. Damit ist der Plan
+`kopfleiste-geradeziehen.md` vollständig durch — vier Runden, geschlossen.
+
+### 🔴 Die Skala ist am GERÄT nur halb so stark wie auf der gezeichneten Karte
+
+Beim Nachrechnen der Kartenfrage gefunden, und es betrifft Entscheidung 104.
+`python3 scripts/skala-messen.py` rechnet die Stufen jetzt auch **über Apples
+Karte** (neuer Abschnitt, Hintergrund `#222C3D` aus Beleg `au02` gemessen):
+
+| | leer→1 | 1→2 | 2→3 | 3→4 | schwächster | gesamt |
+|---|---|---|---|---|---|---|
+| gezeichnet (Prototyp, deckend) | 1,89 | 1,84 | 1,93 | 1,90 | **1,84** | **12,73** |
+| **am Gerät** (`APPLE_TOENUNG` 0,45) | **1,25** | 1,33 | 1,43 | 1,50 | **1,25** | **3,53** |
+
+**Die Gegenprobe trägt die Zahlen:** Stufe 4 über `#222C3D` ergibt rechnerisch
+`#7B8088` — und genau `#7B8088` wurde im 1. Bezirk gemessen. Tönung UND
+Hintergrund sind damit am Gerät belegt.
+
+🔴 **Zwei Dinge fallen damit auseinander, die zusammengehören sollten:**
+
+1. **Entscheidung 104 gilt nur für die gezeichnete Karte.** Dort ist die Skala
+   gleichmäßig (Spannweite 0,10). Am Gerät wächst sie von 1,25 auf 1,50 —
+   Spannweite 0,25, also zweieinhalbmal so ungleich.
+2. **Der SCHWÄCHSTE Sprung am Gerät ist der ERSTE** (leer → ein Post, 1,25).
+   Seit Entscheidung 101 (keine Zahlen) trägt die Farbe die Grenze
+   „leer / nicht leer" ALLEIN — der wichtigste Sprung ist der schwächste.
+
+⚠️ **`APPLE_TOENUNG` allein schließt die Lücke nicht.** Durchgerechnet: selbst bei
+0,70 (Stadtplan kaum noch lesbar) kommt der erste Sprung nur auf 1,43 und erreicht
+die 1,84 der gezeichneten Karte nie.
+
+| Tönung | leer→1 | schwächster | gesamt |
+|---|---|---|---|
+| 0,45 *(jetzt)* | 1,25 | 1,25 | 3,53 |
+| 0,55 | 1,33 | 1,33 | 4,54 |
+| 0,70 | 1,43 | 1,43 | 6,38 |
+
+**Das ist eine Entscheidung für Ian, nicht ein Fehler zum Beheben.** Vorgelegt,
+nicht gebaut.
+
+`au01` belegt den Stapel, `au02` die Karte. Ob die Zacken weg sind, ob die Bezirke ohne Zahlen
 auseinandergehen, ob der direkte Sprung sich richtig anfühlt — am Mac ist nichts
 davon belegbar.
 

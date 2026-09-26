@@ -94,6 +94,74 @@ def main():
     print(f'     Er steht gerade auf: '
           f'{eine(karte, r"ZAHLEN_AN = (\w+)", "ZAHLEN_AN")}\n')
 
+    # ── Und derselbe Satz Zahlen ÜBER Apples Karte ──────────────────────────
+    #
+    # 🔴 Warum das dazukam (2026-09-26): Alles oben rechnet die Stufen als
+    # DECKENDE Flächen. So sind sie auf dem gezeichneten Prototyp — am GERÄT
+    # liegen sie mit `APPLE_TOENUNG` über einem Stadtplan, und dort sieht man
+    # etwas anderes. An `APPLE_TOENUNG` stand die Behauptung *„bei 0,45 bleibt
+    # die Reihenfolge der vier Stufen unterscheidbar"* — ohne Zahl daneben.
+    #
+    # Seit Entscheidung 101 gibt es keine Zahlen mehr auf der Karte, die Fläche
+    # trägt die Auskunft ALLEIN. Damit ist aus dem Nebensatz die Hauptfrage
+    # geworden.
+    #
+    # ── Der Hintergrund ist GEMESSEN, nicht angenommen ──────────────────────
+    # Am Beleg `au02` (Ians iPhone 16, 2026-09-26) mit `png_lesen()` abgetastet:
+    # Apples dunkle Karte über bebautem Stadtgebiet liegt bei #222C3D.
+    #
+    # Gegenprobe, die diese Zahl trägt: Stufe 4 (#E8E7E3) mit 0,45 darüber
+    # ergibt rechnerisch #7B8088 — und genau #7B8088 wurde im 1. Bezirk
+    # gemessen. Tönung UND Hintergrund sind damit am Gerät belegt, nicht
+    # geschätzt.
+    #
+    # ⚠️ Es ist EIN Hintergrund, und Apples Karte hat viele (Wasser, Parks,
+    # Straßen). Er ist der häufigste, nicht der einzige — über Wasser sieht
+    # dieselbe Stufe anders aus. Das ist die bekannte offene Frage an
+    # `APPLE_TOENUNG` („der Schleier macht Wasserblau schmutzig").
+    toenung = float(eine(karte, r'APPLE_TOENUNG = ([0-9.]+)', 'APPLE_TOENUNG'))
+    APPLE_GRUND = '#222C3D'   # Beleg au02, gemessen
+    BELEG = ('#E8E7E3', '#7B8088')
+
+    def ueber(vorne, hinten, alpha):
+        v = vorne.lstrip('#'); h = hinten.lstrip('#')
+        misch = [round(alpha * int(v[i:i + 2], 16) + (1 - alpha) * int(h[i:i + 2], 16))
+                 for i in (0, 2, 4)]
+        return '#%02X%02X%02X' % tuple(misch)
+
+    print(f'  ── Dieselben Stufen ÜBER Apples Karte ({APPLE_GRUND}, '
+          f'Tönung {toenung}) ──\n')
+    gerechnet = ueber(BELEG[0], APPLE_GRUND, toenung)
+    print(f'  Gegenprobe am Beleg au02: Stufe 4 → {gerechnet}, '
+          f'gemessen {BELEG[1]}  '
+          f'{"✓ gleich" if gerechnet.upper() == BELEG[1].upper() else "⚠ WEICHT AB"}')
+    print()
+    print('           Fläche    am Gerät   Sprung zum Vorgänger')
+    # Leer heisst über Apples Karte GAR KEINE Fläche (`appleFuellung`, stufe < 0)
+    # — nicht KARTE_LEER. Der erste Sprung geht deshalb vom blanken Stadtplan aus.
+    vorher, apple_spruenge = APPLE_GRUND, []
+    print(f'  leer     —         {APPLE_GRUND}    (der blanke Stadtplan)')
+    for i, (flaeche, _w) in enumerate(stufen, 1):
+        drauf = ueber(flaeche, APPLE_GRUND, toenung)
+        sprung = kontrast(vorher, drauf)
+        apple_spruenge.append(sprung)
+        print(f'  Stufe {i}  {flaeche}   {drauf}    {sprung:5.2f}')
+        vorher = drauf
+    schwach_a = min(apple_spruenge)
+    print()
+    print(f'  schwächster Sprung      {schwach_a:.2f}')
+    print(f'  leer → Stufe 4 gesamt   '
+          f'{kontrast(APPLE_GRUND, ueber(stufen[-1][0], APPLE_GRUND, toenung)):.2f}')
+    # 1,2 ist keine Norm, sondern die Grenze, unterhalb derer zwei grosse Flächen
+    # nebeneinander erfahrungsgemäss als dieselbe gelesen werden. Deshalb steht
+    # hier eine EINORDNUNG und kein Häkchen — urteilen soll Ian am Bild.
+    print(f'  {"⚠ Mindestens ein Sprung liegt unter 1,20 — zwei Stufen nebeneinander"
+             if schwach_a < 1.20 else "· Alle Sprünge ≥ 1,20"}')
+    if schwach_a < 1.20:
+        print('    könnten als dieselbe Fläche gelesen werden. Das ist eine')
+        print('    EINORDNUNG, kein Häkchen: urteilen soll Ian am Bild.')
+    print()
+
 
 if __name__ == '__main__':
     main()
