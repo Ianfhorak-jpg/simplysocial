@@ -1810,9 +1810,22 @@
   vollständiger Ordnerbaum mit leerem `global/` und leerem `pg_logical/`. Die Prüfung
   ist damit grün, `pg_ctl` scheitert und meldet *„directory … is not a database
   cluster directory"* — was nach einem kaputten Postgres aussieht und keines ist.
-  **Die Behebung ist `rm -rf` auf das Verzeichnis**, danach baut das Skript es selbst
-  neu. Verwandt mit *„Ein verwaister Playwright-Lock sieht aus wie ein laufender
+  Verwandt mit *„Ein verwaister Playwright-Lock sieht aus wie ein laufender
   Browser"*: ein Überbleibsel, das als gültiger Zustand gelesen wird.
+  ✅ **Seit dem 2026-09-26 behoben, und nicht mehr von Hand.** Hier stand als
+  Behebung `rm -rf` — Handarbeit an etwas, das alle paar Tage wiederkommt. Am
+  2026-09-26 ist sie wieder zugeschlagen (übrig: `base/`, `global/`, `pg_wal/`,
+  `pg_logical/`; weg: `PG_VERSION`, `postgresql.conf`), und die Server-Prüfung lief
+  gar nicht an. Das Hochfahren steht jetzt in **`supabase/pruefen/wegwerf-db.sh`**,
+  von `aufbauen.sh` und `92_demo.sh` per `source` geladen — vorher stand der
+  Vierzeiler Zeichen für Zeichen zweimal da, und eine Behebung an einer Stelle hätte
+  die andere stehen gelassen. Gefragt wird `PG_VERSION`, die Datei, an der `pg_ctl`
+  selbst ein Cluster erkennt; fehlt sie, wird geworfen und neu gebaut. **Ein
+  WEGWERF-Cluster darf man wegwerfen.**
+  ⚠️ Es ist ein `rm -rf` auf eine Variable, und `PGDATEN` kommt von aussen. Vorher
+  wird geprüft, ob der Pfad überhaupt einer sein KANN und ob dort wirklich eine
+  Postgres-Leiche liegt (`base/`, `global/` oder leer). Ein Ordner, den das Skript
+  nicht erkennt, wird gemeldet statt gelöscht.
 - **Es gibt keine Buchstaben nach `f` — eine UUID ist HEX.** Am 2026-09-20 beim
   Erweitern der Demo-Welt vergeben: `dddddddd-dddd-dddd-dddd-ddddddddd0g1` für einen
   Chat und `…0h1` für eine Nachricht. In einer Reihe aus lauter `d`-Platzhaltern
@@ -1856,4 +1869,33 @@
   `app/(tabs)/_layout.tsx`. Und seine Prüfung auf die falsche Zusage suchte den Satz
   als TEXT und ging an der BERICHTIGUNG darüber rot. Jetzt ist es ein positiver Test:
   Steht der Verweis auf den Wächter in der Datei?
+- **Die `Info.plist` im gebauten Bündel ist kein Anker für „wann wurde gebaut".**
+  Am 2026-09-26 im ersten Lauf von `scripts/aufspielen.sh` gemessen. Der Build war
+  gerade durch, das Skript meldete *„Bündel gebaut: 2026-09-23 19:20"*:
+
+  ```
+  .app selbst      2026-09-26 18:50
+  main.jsbundle    2026-09-26 18:50
+  SimplySocial     2026-09-26 18:50
+  Info.plist       2026-09-23 19:20   ← drei Tage alt
+  ```
+
+  `xcodebuild` baut inkrementell und schreibt die `Info.plist` nur neu, wenn sich an
+  ihr etwas ändert — und das tut sie bei einer JS-Änderung nie.
+  ⚠️ **Die Richtung des Schadens ist die gefährliche:** Eine Zeile, die einen
+  frischen Build für drei Tage alt erklärt, lädt dazu ein, noch einmal 15 Minuten zu
+  bauen. Ein zu ALT gemeldeter Build kostet Zeit, ein zu NEU gemeldeter kostet eine
+  Fehldiagnose — beides vermeidet `main.jsbundle` als Anker, weil in diesem Projekt
+  fast jede Änderung eine JS-Änderung ist.
+- **„Build 2 · VALID" beantwortet nicht, ob der Build an der VERSION hängt.**
+  `npm run asc` listet, was bei Apple LIEGT. Ob Version 1.0 einen Build zugeordnet
+  hat, steht an einem anderen Pfad (`appStoreVersions/{id}/build`) — und ohne ihn ist
+  Einreichen gesperrt. Am 2026-09-26 gemessen: zwei valide Builds bei Apple, **keiner**
+  an der Version, und in `CLAUDE.md` stand seit dem 13.09. „Build 1 VALID **und
+  zugeordnet**". In ACTA (Projekt 17) hat dieselbe Verwechslung zwei Sitzungen
+  gekostet.
+  ⚠️ Derselben Klasse wie *„Eine Prüfung, die eine ÄHNLICHE Frage stellt, ist kein
+  Wächter"*: Die Liste war nie falsch, sie war nur eine Antwort auf etwas anderes.
+  Seither gibt es `npm run asc einreichbereit`, und der fragt die zehn Punkte, die
+  Apple wirklich verlangt.
 

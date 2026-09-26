@@ -360,10 +360,17 @@ def einreichbereit(token, app):
 
     # 🔴 DIE Frage, die `npm run asc` nicht stellt. „Build 2 · VALID" heisst, dass
     # er bei Apple liegt — nicht, dass er an dieser Version hängt.
+    # ⚠️ Zuständigkeit 🧑, obwohl ein PATCH das technisch könnte. Anhängen wäre nur
+    # dann Fortschritt, wenn der Build den Code von HEUTE trägt — und das tut der
+    # jüngste hier nicht (Build 2, 14.09., ohne die Entscheidungen 90–110). Einen
+    # veralteten Build anzuhängen und „erledigt" zu melden ist genau der Fehler, den
+    # ACTAs `build-verknuepfen` schon einmal gemacht hat. Es braucht vorher
+    # `npm run testflight`, und das fasst Ians Schlüsselbund an.
     b = hole(f"appStoreVersions/{v['id']}/build", token).get('data')
     zeile('Build an der Version', bool(b),
           f"Build {b['attributes']['version']}" if b else
-          'KEINER — ohne das bleibt Einreichen gesperrt', '🤖')
+          'KEINER — Einreichen gesperrt. Braucht einen NEUEN Build, nicht den alten',
+          '🧑 npm run testflight')
 
     rd = hole(f"appStoreVersions/{v['id']}/appStoreReviewDetail", token).get('data')
     if rd:

@@ -6,14 +6,19 @@
 
 ## 🔴 Zuerst die unangenehme Nachricht
 
-In unseren eigenen Notizen stand seit dem 13.09.:
-
-> „Store-Eintrag seit 13.09.2026 **vollständig** (Build 1 VALID und zugeordnet,
-> 7 Screenshots, Altersfreigabe 4+, Prüfinfos)."
-
-**Das stimmt nicht.** Ich habe es heute zum ersten Mal wirklich bei Apple
-nachgefragt, statt es aus unseren Notizen abzulesen. Von zehn Punkten ist **einer**
+Ich habe heute zum ersten Mal **die ganze Einreich-Liste** bei Apple abgefragt.
+Bisher haben wir immer nur nach Builds gefragt. Von zehn Punkten ist **einer**
 fertig.
+
+> ⚠️ **Eine Berichtigung an mir selbst, damit du der Liste trauen kannst.** Als ich
+> das vorhin zum ersten Mal aufgeschrieben habe, stand hier, unsere Notizen hätten
+> behauptet, der Store-Eintrag sei „vollständig". **Das war mein Fehler.** Dieser
+> Satz steht im Haupt-Register und gehört dort **ACTA** — deinem Tennis-Projekt, das
+> auch gerade bei Apple ist. SimplySocials Notizen haben das nie behauptet; beim
+> Fragebogen stand sogar ausdrücklich, dass er leer ist.
+>
+> **An der Liste unten ändert das nichts** — die ist gemessen. Es ist nur eine andere
+> Geschichte: Niemand hat gelogen, es hat nur nie jemand gefragt.
 
 | | Punkt | Was wirklich dasteht |
 |---|---|---|
@@ -36,8 +41,9 @@ fertig.
 *hängt*. Genau diese Verwechslung hat bei ACTA (deinem anderen Projekt) zwei
 Sitzungen gekostet.
 
-Und die sieben Screenshots waren „fertig" — **als Datei** in `_FUER_IAN/`.
-Hochgeladen war nie eines.
+Für die anderen acht Punkte gab es hier überhaupt kein Werkzeug. Store-Screenshots
+zum Beispiel gibt es noch nicht einmal als Datei — die müssen erst gemacht werden,
+und dafür brauche ich Bilder von deinem iPhone (siehe unten).
 
 **Ab jetzt gibt es dafür einen Befehl**, und der rät nicht:
 
@@ -89,6 +95,37 @@ Details und die Begründung je Antwort: [`ALTERSFREIGABE.md`](ALTERSFREIGABE.md)
 
 ---
 
+## Die Store-Texte — warum ich sie NICHT geschrieben habe
+
+Das ist der eine Punkt, bei dem ich absichtlich stehen bleibe. Zwei Gründe:
+
+1. **Es sind Inhalte, und Inhalte gehören dir.** Ein Store-Text ist das, was
+   jemand über deine App liest, bevor er sie lädt. Den erfinde ich dir nicht
+   nebenbei.
+2. **Das Marketing liegt bewusst in einem anderen Projekt** (`34_SimplySocial_Marketing`),
+   und dort steht die Positionierung schon: *„Du willst was machen. Du brauchst wen
+   dafür."* — mit deiner **offenen Frage daneben**, ob der Satz so stimmt
+   (`strategie/03_positionierung.md`). Wenn ich hier einen Store-Text schreibe,
+   beantworte ich die Frage still mit.
+
+**Was Apple genau verlangt**, damit die Arbeit in Projekt 34 ohne Rückfrage geht:
+
+| Feld | Zeichen | was es ist |
+|---|---|---|
+| Name | **30** | steht: „SimplySocial" |
+| Untertitel | **30** | die Zeile unter dem Namen im Store |
+| Werbetext | **170** | änderbar OHNE neuen Build — der einzige Text, den man später frei drehen kann |
+| Beschreibung | **4.000** | der lange Text. Die ersten ~3 Zeilen sind das, was ohne „mehr" sichtbar ist |
+| Keywords | **100** | komma-getrennt, NICHT sichtbar, nur für die Suche. Wörter aus Name und Untertitel nicht wiederholen — sie zählen schon |
+| Support-URL | — | Pflicht. Die Landing-Page geht |
+| Marketing-URL | — | freiwillig |
+
+> ⚠️ **Der Werbetext ist der wichtigste Trick dabei:** Er lässt sich jederzeit
+> ändern, ohne einen neuen Build und ohne neue Prüfung. Alles, was sich noch
+> bewegen könnte, gehört dorthin und nicht in die Beschreibung.
+
+---
+
 ## Der Build: was drauf ist und was fehlt
 
 Bei Apple liegen zwei Builds:
@@ -114,8 +151,11 @@ braucht es vorher einen neuen Build.
 1. **Altersfreigabe schicken** — ein Befehl, sofort, kostet nichts.
 2. **Preis auf kostenlos setzen** — das ist die harte Sperre, und nur du kommst dran.
 3. **Der Tunnel-Befehl**, damit ich Screenshots holen kann.
-4. **Design durchgehen** — die App vom heutigen Stand ist auf deinem iPhone
-   (siehe unten). Was dir nicht passt, sagst du; danach ist der Stand stabil.
+4. **Design durchgehen** — der Stand von heute ist **gebaut**, aber noch nicht
+   drauf: Dein iPhone hat sich während der 15 Minuten Bauzeit selbst gesperrt.
+   Sobald du es aufmachst, spielt es sich von selbst auf (ein Wartelauf läuft).
+   Falls nicht: `npm run aufspielen`. Was dir dann nicht passt, sagst du —
+   danach ist der Stand stabil.
 5. **Neuer Build → TestFlight** — erst wenn das Design steht.
 6. **Rechtstext** — das ist der einzige Punkt, der wirklich Zeit braucht und an
    dem kein Werkzeug hilft.

@@ -64,42 +64,96 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
 ---
 
-## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-20, nachts)
+## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-26)
 
-> 🔴 **Der AKTUELLE Plan ist
-> [`~/.claude/plans/kopfleiste-geradeziehen.md`](~/.claude/plans/kopfleiste-geradeziehen.md)**
-> — selbsttragend, ohne Chatverlauf ausführbar. **Zuerst lesen, vor allem die
-> Arbeitsregel in Teil 4: EIN Befund pro Gerätedurchgang.**
+> **Diese Sitzung hat drei Dinge getan, und keines war Design:**
+> das Backend gemessen, den App-Store-Stand gemessen, und beide Messgeräte gebaut,
+> die dafür fehlten. Der Design-Zweig (Entscheidungen 101–110) wartet unverändert
+> auf Ians Urteil am Gerät.
 >
-> Er entstand aus Ians **viertem** Durchgang zu Entscheidung 105 (eine Kopfkapsel,
-> die sich bewegt). Vier Runden, drei behobene Fehler, immer noch nicht gut — und
-> jeder davon war am Mac unsichtbar. Ians Entscheidung dazu: **weitermachen**,
-> nicht zurückbauen.
->
-> *(Der Plan davor, abgearbeitet:
-> [`karte-schaerfen-und-bezirke.md`](~/.claude/plans/karte-schaerfen-und-bezirke.md).)*
-> Er wird nicht automatisch geladen; ohne diesen Verweis findet ihn niemand.
-> *(Die Pläne davor, alle abgeschlossen: `spicy-sprouting-balloon.md`,
+> *(Der letzte Design-Plan, abgearbeitet:
+> [`kopfleiste-geradeziehen.md`](~/.claude/plans/kopfleiste-geradeziehen.md) —
+> seine Arbeitsregel gilt weiter: **EIN Befund pro Gerätedurchgang.** Davor:
+> `karte-schaerfen-und-bezirke.md`, `spicy-sprouting-balloon.md`,
 > `oben-wie-unten-glas-kapsel.md`, `ich-will-liquid-glass-calm-pinwheel.md`.)*
+>
+> ⚠️ **`i-dont-whant-to-purring-comet.md` gehört NICHT hierher** — das ist ACTAs
+> Apple-Rückmeldung (Projekt 17). Die Pläne liegen in einem gemeinsamen Ordner.
 
-### ✅ Der Plan ist ABGEARBEITET — vier Commits, **keiner am Gerät geprüft**
+### 🔴 Der Befund, der alles andere überholt: der Store-Eintrag ist fast LEER
 
-| Commit | Inhalt |
-|---|---|
-| `fb874e2` | **Teil 2.** Bezirksgrenzen 39-mal genauer (39,1 m → 1,0 m) · Messstelle `scripts/bezirke-messen.py` |
-| `e5496ce` | **Teil 4.** Echter Wächter für Entscheidung 99 · die Warnung zu `pruef-glas` war falsch |
-| `6c204e1` | **Teil 3 + 1.** Ians Entscheidungen **101–103** — keine Zahlen, Tipp direkt in den Stapel, ✕ in der Kapsel |
-| `6e7ad17` | Ians Entscheidung **104** — die Kartenskala wird gleichmäßig |
+Am 2026-09-26 zum ersten Mal **die ganze Einreich-Liste bei Apple abgefragt**.
+Bisher wurde immer nur nach BUILDS gefragt — **9 von 10 Punkten sind offen:**
 
-🔴 **Was jetzt dran ist: ein Gerätedurchgang.** Alles oben ist am Mac belegt
-(tsc sauber, `expo lint` 89, alle Wächter grün) — und am Mac ist nur belegbar,
-dass nichts kaputtging. **Ob die Zacken weg sind, ob die Bezirke ohne Zahlen
-auseinandergehen und ob der direkte Sprung sich richtig anfühlt, sagt nur Ian.**
+| | Punkt | gemessen |
+|---|---|---|
+| ✓ | Prüfinfos + Demo-Login | steht |
+| ✗ | **Build an der Version** | KEINER — Einreichen ist gesperrt |
+| ✗ | Altersfreigabe | 27 von 30 Feldern `null` |
+| ✗ | Inhaltsrechte · Copyright · **Preis** · Kategorie · Werbe-ID | nichts davon |
+| ✗ | Store-Texte · Screenshots | bei Apple liegt **kein einziges Bild** |
+| ? | Privacy-Label | über die API nicht lesbar |
+
+**Warum es niemandem auffiel:** Es hat nie jemand gefragt. `npm run asc` konnte nur
+Builds listen, und „Build 2 · VALID" beantwortet, ob ein Build bei Apple LIEGT — nicht
+ob er an der Version HÄNGT. Für die anderen acht Punkte gab es hier überhaupt kein
+Werkzeug.
+
+> 🔴 **Berichtigung zu Commit `319ca57` (2026-09-26).** Seine Beschreibung behauptet,
+> in dieser `CLAUDE.md` habe „Store-Eintrag seit 13.09.2026 vollständig (Build 1 VALID
+> und zugeordnet, 7 Screenshots, Altersfreigabe 4+, Prüfinfos)" gestanden. **Das ist
+> falsch.** Der Satz steht im Haupt-Register `C.C.Projekts_Ian/CLAUDE.md` und gehört
+> dort **ACTA (Projekt 17)**. SimplySocials eigene Doku hat das NIE behauptet — sie
+> war beim Fragebogen ausdrücklich ehrlich (*„Apples Fragebogen stand beim Nachsehen
+> auf 28 × `null`"*), und Store-Screenshots gibt es hier nicht einmal als Datei.
+> **Der gemessene Befund bleibt unverändert**, nur seine Geschichte ist eine andere:
+> Es war keine falsche Behauptung, sondern eine ungestellte Frage. Zwei Projekte mit
+> Apple-Einreichung im selben Ordner, und die Pläne liegen sogar im selben
+> Verzeichnis — das ist die Verwechslung, die hier droht.
+
+Neu und rein lesend: **`npm run asc einreichbereit`**. Zehn Punkte, jeder mit
+Zuständigkeit. Drei Lehren aus ACTAs zwei Ablehnungen stecken drin: der **Preis**
+ist ein harter Blocker ohne eigenes Feld (nur `APP_PRICING_REQUIRED` im 409),
+`appVersionState` kann `REJECTED` sein während alles grün ist, und das
+Privacy-Label trägt ein `?` statt eines `✗`, weil es von hier aus nicht
+feststellbar ist.
+
+📄 **Für Ian in seiner Sprache: [`_FUER_IAN/APP_STORE_STAND.md`](_FUER_IAN/APP_STORE_STAND.md).**
+
+### Der Fragebogen ist jetzt ein Befehl, und er wartet auf Ian
+
+28 Felder von Hand klicken war die Aufgabe. Jetzt Tabelle `ALTERSFREIGABE` in
+`scripts/asc.py` mit der Begründung je Feld, bewacht von `pruef-alter` (16 → 32,
+liest die Tabelle mit `ast`, nicht per Import).
 
 ```bash
-cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
-printf '09CDB3CF-11DC-5B42-AC22-C4C99AE803A6\nj\n' | npm run geraet
+npm run asc altersfreigabe                 # zeigt nur (gelaufen, steht)
+npm run asc altersfreigabe -- --wirklich    # schreibt — gehört IAN
 ```
+
+🔴 **Nicht ausgeführt, und das ist richtig:** Es schreibt in Ians Apple-Konto, und
+der Auto-Mode blockt das. Dieselbe Grenze wie bei der echten Supabase.
+
+### Der Gerätestand: gebaut, aber noch nicht drauf
+
+Der Build vom 2026-09-26 18:50 ist fertig und richtig signiert (Release, 365 Tage,
+Schalter im Bündel auf `supabase`). Aufgespielt ist er **nicht** — Ians iPhone hat
+sich während der 15 Minuten Bauzeit selbst gesperrt.
+
+```bash
+npm run aufspielen        # NEU: spielt das fertige Bündel auf, wartet bis zu 45 Min.
+npm run geraet            # baut UND spielt auf (15 Min.)
+```
+
+⚠️ **Bauen und Aufspielen sind seither getrennt**, weil die Kopplung der Fehler
+war: Bauen dauert 15 Minuten und braucht das iPhone nicht, Aufspielen dauert
+Sekunden und braucht es offen. „starte neu" hiess vorher: 15 Minuten für etwas,
+das fertig daliegt.
+
+🔴 **Was auf Ian wartet, sobald die App drauf ist:** das Urteil zu den
+Entscheidungen 101–110. Ob die Zacken weg sind, ob die Bezirke ohne Zahlen
+auseinandergehen, ob der direkte Sprung sich richtig anfühlt — am Mac ist nichts
+davon belegbar.
 
 ### Ians Entscheidungen 101–104 (2026-09-20, nachts)
 
@@ -254,25 +308,28 @@ selbst verschoben hatte (dann zentriert die App absichtlich nicht zurück).
 
 | Prüfstand | Häkchen | braucht |
 |---|---|---|
-| `bash supabase/pruefen/aufbauen.sh` | **171** | nichts (Wegwerf-DB) |
+| `bash supabase/pruefen/aufbauen.sh` | **171** | nichts (Wegwerf-DB, heilt sich selbst) |
 | `npm run pruef-schreiben` | 50 | echten Server |
 | `npm run pruef-konto` | 32 | echten Server |
 | `npm run pruef-bilder` | 32 | echten Server |
 | `npm run pruef-lesen` | 29 | echten Server |
 | `npm run pruef-anbieter` | 48 | nichts |
 | `npm run pruef-bildwahl` | 47 | nichts |
-| `npm run pruef-moderation` | 31 | nichts |
+| `npm run pruef-moderation` | 31 | eine **frische** Wegwerf-DB — siehe unten |
 | `npm run pruef-sitzung` | 29 | nichts |
 | `npm run pruef-programmfehler` | 25 | nichts |
 | `npm run pruef-zuschnitt` | **47** | nichts |
 | `npm run pruef-etikett` | 12 | nichts |
 | `npm run pruef-demo` | **32** | nichts (Wegwerf-DB) |
 | `npm run pruef-demoregel` | **29** | nichts |
-| `npm run pruef-alter` | **16** | nichts |
+| `npm run pruef-alter` | **32** | nichts (seit 20.9 auch die Tabelle in `asc.py`) |
 | `npm run pruef-zustimmung` | **28** | nichts |
 | `npm run pruef-glas` | **33** | nichts (bewacht das **Messgerät**, nicht die App — siehe oben) |
-| `npm run pruef-farben` | **66** | nichts |
-| `npm run pruef-kopf` | **24** | nichts (seit 20.9 auch Ians Entscheidung 99) |
+| `npm run pruef-farben` | **79** | nichts |
+| `npm run pruef-kopf` | **47** | nichts (seit 20.9 auch Ians Entscheidung 99) |
+| `npm run pruef-nennung` | **13** | nichts |
+| `npm run pruef-plattform` | **5** | nichts (vergleicht die 11 `.native`-Paare) |
+| `npm run pruef-treffen` | **22** | die Wegwerf-DB aus `aufbauen.sh` |
 
 Dazu: `npx tsc --noEmit` sauber · `expo lint` **89 Probleme** (Stand 20.12: 82 vorbestehend, plus vier aus den zwei neuen `pan.x.interpolate()`-Zeilen der WischKarte — jede meldet doppelt; dazu
 **einer mit Namen**: `react-hooks/refs` in `BildZuschneiden.tsx` — derselbe, den
@@ -299,8 +356,10 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
    **21.1, die Altersfreigabe, ist seit 2026-09-14 fertig** — Ergebnis **13+**, keine
    Wahl sondern Feststellung. 28 Antworten zum Abtippen in
    `_FUER_IAN/ALTERSFREIGABE.md`, bewacht von `npm run pruef-alter` (harte Regel 110).
-   ⚠️ **Apples Fragebogen stand beim Nachsehen auf 28 × `null`** — noch trägt Ian ihn
-   ein.
+   🔴 **Am 2026-09-26 nachgemessen: 27 von 30 Feldern stehen weiter auf `null`** — seit
+   dem 14.09. hat sich nichts bewegt. Seither ist es aber kein Abtippen mehr, sondern
+   `npm run asc altersfreigabe -- --wirklich`; die Antworten stehen als Tabelle
+   `ALTERSFREIGABE` in `scripts/asc.py`, bewacht von `pruef-alter` (16 → 32).
    **21.2, die MECHANIK der Zustimmung, ist seit 2026-09-14 fertig** — Ians
    Entscheidung 80, harte Regel 111. Häkchen beim ersten Konto, festgehalten mit
    Zeitpunkt **und Fassung**; der Riegel sitzt in `profilAnlegen()`, nicht im
@@ -339,7 +398,9 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 | **Der Knopf unter dem Vollbild-Kasten** — „Nochmal versuchen" oder nichts | PLAN.md 5b, 20.9 | nein |
 | **`meldungLage()` bei ZU SPÄT bearbeitet** | `TODO(Ian)`, PLAN.md 6 Punkt 60 | nein |
 | **Apple-Programm auf wessen Namen?** — mit 16 üblicherweise über einen Elternteil; daran hängen Anbietername, Verträge und der Sign-in-Schlüssel | `_FUER_IAN/OFFENE_SACHEN.md` | später teuer |
-| 🟢 **Die 28 Altersfragen eintragen** — App Store Connect → Allgemeine Informationen → Altersfreigabe. Alles vorbereitet, zwei Urteilsfragen liegen bei Ian | `_FUER_IAN/ALTERSFREIGABE.md` | für Phase 21 ja |
+| 🟢 **Die Altersfreigabe schicken — EIN BEFEHL** (seit 26.09.): `npm run asc altersfreigabe -- --wirklich`. 24 Felder gehen von `null` auf einen Wert; der Trockenlauf ohne `--wirklich` ist gelaufen und steht. Zwei Urteilsfragen (Alkohol, Wellness) liegen bei Ian und sind je eine Zeile | `_FUER_IAN/ALTERSFREIGABE.md` | für Phase 21 ja |
+| 🔑 **`sudo npm run tunnel`** — einmal pro Mac-Neustart, dann kann ich mir mit `npm run knipsen` selbst Bilder vom iPhone holen. Ohne ihn endet jede Design-Runde wieder mit „schick mir bitte einen Screenshot", und die Store-Screenshots (bei Apple liegt KEINES) sind blockiert | `scripts/knipsen.sh` | für die Screenshots ja |
+| 🔴 **Preis auf kostenlos setzen** — die HÄRTESTE Sperre. Apple nimmt die App ohne Preis nicht an (`APP_PRICING_REQUIRED`), und unser API-Schlüssel darf nicht an Preise (Admin-/Finanzrechte). Nur in der Weboberfläche | `_FUER_IAN/APP_STORE_STAND.md` | **ja, hart** |
 | **Rechtstext für die Nutzungsbedingungen** — kein Text, den Claude erfinden darf. **Das Häkchen dafür steht seit 14.09.**, es wartet nur noch auf den Text | `_FUER_IAN/OFFENE_SACHEN.md` Punkt 1 | für Phase 21 ja |
 | **Was passiert, wenn sich der Rechtstext ÄNDERT** — alle neu fragen, nur bei Wesentlichem, oder gar nicht. Vertagbar, ohne etwas zu verlieren (die Fassung wird schon geschrieben), aber am Tag des Rechtstexts fällig | PLAN.md 6, Punkt 67 · `TODO(Ian)` in `zustimmung.ts` | nein |
 | **Landing-Page-Farbe** — Olivgrün, Weinrot oder Türkis, dazu bunt vs. Leitfarbe | `landing-vorschau/LIESMICH.md`, OFFENE_SACHEN 4b | nein |
@@ -358,7 +419,10 @@ npm install
 npx expo start --web      # Web-Preview
 npx tsc --noEmit          # Typecheck
 npm run deploy            # bauen + auf GitHub Pages schieben (NUR gh-pages!)
-npm run geraet            # auf Ians iPhone spielen (iPhone entsperrt lassen)
+npm run geraet            # bauen UND auf Ians iPhone spielen (15 Min.)
+npm run aufspielen        # NUR aufspielen — wartet, bis das iPhone offen ist
+npm run asc einreichbereit  # was Apple vor dem Einreichen noch verlangt (nur lesen)
+npm run knipsen           # ein Bild vom iPhone (braucht EINMAL: sudo npm run tunnel)
 npm run doku              # Doku nach doku/ spiegeln (macht der pre-commit-Hook selbst)
 git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine.
 ```
@@ -720,6 +784,8 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Eine Wegwerf-Datenbank in `/tmp` überlebt macOS' Aufräumen nicht — und das Skript prüft nur, OB das Verzeichnis da ist
 - `npx prettier` ohne Projekt-Konfiguration ist kein Formatierer, sondern eine Umschreibung
 - `tsc` löst `@/lib/tabs` IMMER auf die Web-Datei auf — eine `.native`-Fassung, die etwas WEGLÄSST, ist am Mac unsichtbar
+- Die `Info.plist` im gebauten Bündel ist kein Anker für „wann wurde gebaut"
+- „Build 2 · VALID" beantwortet nicht, ob der Build an der VERSION hängt
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)
