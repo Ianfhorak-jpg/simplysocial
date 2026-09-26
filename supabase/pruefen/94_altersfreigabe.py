@@ -23,7 +23,7 @@
 #  Und er weiß nicht, was in App Store Connect eingetragen WURDE: Er bewacht das
 #  Dokument, nicht das Formular.
 # ══════════════════════════════════════════════════════════════════════════════
-import json, pathlib, re, subprocess, sys, tempfile
+import ast, json, pathlib, re, subprocess, sys, tempfile
 
 WURZEL = pathlib.Path(__file__).resolve().parents[2]
 DOK = WURZEL.parent / '_FUER_IAN' / 'ALTERSFREIGABE.md'
@@ -155,6 +155,96 @@ pruef('Die Kinder-Kategorie bleibt ausdrücklich leer',
       'Leer lassen' in text)
 pruef('Es steht dabei, dass Apples 13+ kein Rechtsurteil ist',
       'Store-Einstufung' in text)
+
+print('')
+print('── 6. Die Tabelle, die WIRKLICH zu Apple geht ──────────────────────────')
+# 🔴 Seit dem 2026-09-26 gibt es die Antworten an ZWEI Orten: in diesem Dokument
+# (fuer Ian) und als Tabelle `ALTERSFREIGABE` in `scripts/asc.py` (fuer Apple).
+# Bis dahin war das Dokument der einzige Ort, und „eintragen" hiess abtippen.
+#
+# Zwei Orte fuer dieselbe Aussage laufen auseinander, und zwar lautlos: Das
+# Dokument liest ein Mensch, die Tabelle liest Apple. Ab hier wird gemessen, dass
+# sie dasselbe sagen — und zwar in der Richtung von harter Regel 107: Der CODE
+# sagt, was in beiden stehen muss.
+#
+# ⚠️ Gelesen wird mit `ast`, NICHT mit `import`. Ein Import wuerde `asc.py`
+# ausfuehren, und das Modul kann nach aussen schreiben. Ein Pruefstand, der das
+# tut, um eine Konstante zu erfahren, ist die falsche Bauart.
+ASC = WURZEL / 'scripts' / 'asc.py'
+
+def tabelle_aus(pfad, name='ALTERSFREIGABE'):
+    """Den Dict-Literal `name` aus einer Python-Datei lesen, ohne sie zu starten."""
+    baum = ast.parse(pathlib.Path(pfad).read_text())
+    for k in baum.body:
+        if isinstance(k, ast.Assign) and any(
+                getattr(z, 'id', None) == name for z in k.targets):
+            return ast.literal_eval(k.value)
+    return None
+
+pruef(f'`{ASC.name}` traegt eine Tabelle ALTERSFREIGABE', ASC.exists()
+      and tabelle_aus(ASC) is not None)
+TAB = tabelle_aus(ASC) or {}
+
+# Die drei JA — sie koennen nicht still falsch werden, aber still verschwinden.
+for feld in ('userGeneratedContent', 'messagingAndChat', 'socialMedia'):
+    pruef(f'{feld} steht auf True — daraus FOLGT 13+',
+          TAB.get(feld) is True, f'steht auf {TAB.get(feld)!r}')
+
+# Die drei NEIN von September 2026. Das sind Zusagen ueber etwas, das NICHT da
+# ist — die gefaehrliche Richtung.
+for feld in ('socialMediaAgeRestricted', 'ageAssurance', 'parentalControls'):
+    pruef(f'{feld} steht auf False — es ist nichts davon gebaut',
+          TAB.get(feld) is False, f'steht auf {TAB.get(feld)!r}')
+
+# Diese zwei haengen an den Messungen aus Abschnitt 1 und 2 DIESES Pruefstands.
+# Waere die Tabelle hier anders, wuerde oben der Code gemessen und unten etwas
+# anderes an Apple geschickt.
+pruef('advertising steht auf False — und Abschnitt 2 hat das am package.json gemessen',
+      TAB.get('advertising') is False, f"steht auf {TAB.get('advertising')!r}")
+pruef('unrestrictedWebAccess steht auf False — Abschnitt 1 hat das am Quellcode gemessen',
+      TAB.get('unrestrictedWebAccess') is False,
+      f"steht auf {TAB.get('unrestrictedWebAccess')!r}")
+
+# Ians Auslegung aus dem Dokument, Frage 2. Anders als in ACTA (dort True, weil
+# der KI-Coach wirklich Training plant).
+pruef('healthOrWellnessTopics steht auf False — wie im Dokument beantwortet',
+      TAB.get('healthOrWellnessTopics') is False,
+      f"steht auf {TAB.get('healthOrWellnessTopics')!r}")
+
+# `kidsAgeBand` DARF nicht in der Tabelle stehen: Ein Wert dort waere eine Zusage
+# an Apples „Kids"-Kategorie, nicht eine Antwort. Das Dokument sagt „Leer lassen",
+# und ein Feld, das gar nicht geschickt wird, bleibt `null`.
+pruef('kidsAgeBand steht NICHT in der Tabelle — Kinder-Kategorie bleibt leer',
+      'kidsAgeBand' not in TAB)
+
+# Und die Inhaltsfragen sagen alle „keine". Gezaehlt statt aufgezaehlt: Eine Liste
+# von Namen merkt nicht, wenn eine Frage dazukommt (dieselbe Lehre wie bei den
+# Paketen in Abschnitt 2).
+inhalt = {f: w for f, w in TAB.items() if f not in (
+    'userGeneratedContent', 'messagingAndChat', 'socialMedia',
+    'socialMediaAgeRestricted', 'ageAssurance', 'parentalControls',
+    'ageRatingOverride')}
+laut = [f for f, w in inhalt.items() if w not in ('NONE', False)]
+pruef(f'Alle {len(inhalt)} Inhaltsfragen stehen auf „keine"', not laut,
+      f'nicht auf keine: {laut}')
+
+print('')
+print('── 7. Gegenprobe: merkt Abschnitt 6 eine falsche Antwort? ──────────────')
+# *Eine Pruefung, die nichts vorfindet, sieht aus wie eine Pruefung, die tut.*
+# Also einmal eine falsche Tabelle bauen und nachsehen, ob sie auffaellt.
+with tempfile.TemporaryDirectory() as tmp:
+    gefaelscht = pathlib.Path(tmp) / 'gefaelscht.py'
+    gefaelscht.write_text(
+        "ALTERSFREIGABE = {\n"
+        "    'userGeneratedContent': False,\n"   # die Luege, die 13+ kippen wuerde
+        "    'advertising': True,\n"             # und die, die Apple aergern wuerde
+        "    'kidsAgeBand': 'FIVE_AND_UNDER',\n" # und die Zusage, die keine Antwort ist
+        "}\n")
+    falsch = tabelle_aus(gefaelscht)
+    pruef('Eine gefaelschte Tabelle wird ueberhaupt gelesen', falsch is not None)
+    pruef('… userGeneratedContent=False faellt auf', falsch.get('userGeneratedContent') is not True)
+    pruef('… advertising=True faellt auf', falsch.get('advertising') is not False)
+    pruef('… ein gesetztes kidsAgeBand faellt auf', 'kidsAgeBand' in falsch)
 
 print('')
 print(f'  {JA} Häkchen, {NEIN} Kreuze')
