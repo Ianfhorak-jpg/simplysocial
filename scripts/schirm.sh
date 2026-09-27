@@ -262,15 +262,38 @@ sag "4. Echter Neustart der App"
 # ⚠️ `terminate` kehrt zurück, BEVOR der Prozess weg ist. Ohne die pgrep-Schleife
 # greift Fast Refresh und man knipst den alten Zustand — „was wie ein Neustart
 # aussieht, ist oft keiner".
+#
+# 🔴 Und die Suche muss auf DIESEN Simulator zeigen (2026-09-26 hier
+# hineingelaufen): Hier stand `pgrep -f "SimplySocial.app/SimplySocial"`, und das
+# findet die App auf JEDEM laufenden Simulator. Während eines Laufs auf dem
+# iPhone 17 Pro Max lief dieselbe App auf einem iPad-Simulator daneben — der
+# Prozess ging nie weg, und acht Bilder scheiterten hintereinander mit
+# „Die App läuft nach 10 s immer noch".
+#
+# Die Meldung war nicht falsch, sie war nur nicht die ganze Wahrheit: Der
+# Prozess lief wirklich, bloss woanders. Der Gerätepfad steht im Prozessnamen
+# (`…/Devices/<UDID>/data/Containers/…`), also wird danach gefragt.
+MEINER="Devices/$UDID/.*SimplySocial.app/SimplySocial"
 xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
 for _ in $(seq 1 40); do
-  pgrep -f "SimplySocial.app/SimplySocial" >/dev/null 2>&1 || break
+  pgrep -f "$MEINER" >/dev/null 2>&1 || break
   sleep 0.25
 done
-if pgrep -f "SimplySocial.app/SimplySocial" >/dev/null 2>&1; then
-  echo "✗ Die App läuft nach 10 s immer noch. Abgebrochen statt den alten Zustand zu knipsen."
+if pgrep -f "$MEINER" >/dev/null 2>&1; then
+  echo "✗ Die App läuft nach 10 s immer noch — auf DIESEM Simulator ($GERAET)."
+  echo "  Abgebrochen statt den alten Zustand zu knipsen."
   exit 1
 fi
+# Läuft sie auf einem ANDEREN Simulator, ist das kein Fehler — aber es soll
+# dastehen: Es ist die häufigste Erklärung für ein Bild, das nicht zum
+# erwarteten Gerät passt.
+# ⚠️ `|| true` ist hier PFLICHT und kein Schoenheitsfehler: `pgrep` gibt 1
+# zurueck, wenn es nichts findet — unter `set -euo pipefail` toetet das die
+# Pipeline STUMM. Am 2026-09-26 genau hier hineingelaufen, und zwar zum ZWEITEN
+# Mal an einem Tag (vorher mit `ls` in `store-bilder.sh`). Das Skript brach
+# wortlos nach „4. Echter Neustart" ab: kein Fehler, keine Zeile, nichts.
+ANDERE="$( (pgrep -f 'SimplySocial.app/SimplySocial' 2>/dev/null || true) | wc -l | tr -d ' ')"
+[ "$ANDERE" = "0" ] || echo "  · Hinweis: die App läuft auf $ANDERE weiteren Simulator(en)."
 echo "  ✓ Prozess ist wirklich weg"
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -302,6 +325,29 @@ ZIEL="simplysocial://${ROUTE#/}"
 echo "  … $ZIEL"
 xcrun simctl openurl "$UDID" "$ZIEL"
 sleep 3
+
+# ── Vor dem Knipsen: eine Gelegenheit, Vorhänge wegzuräumen ─────────────────
+#
+# 🔴 Seit dem 2026-09-26. Beim ersten Versuch, Store-Bilder zu holen, lagen auf
+# dem Bild ZWEI Schichten über der App: iOS' Rückfrage „In ‚SimplySocial'
+# öffnen?" (von `simctl openurl`) und der Prototyp-Hinweis (harte Regel 22, in
+# der Attrappe bei JEDEM Start — sein Merker ist `sessionStorage`, und die gibt
+# es am Gerät nicht).
+#
+# Das Skript TIPPT weiterhin nicht selbst — es räumt nur nicht mehr dem Weg, wer
+# es tun will. `SS_VOR_KNIPSEN` ist leer, solange niemand etwas hineinschreibt;
+# damit ändert sich für alle bestehenden Aufrufe nichts.
+#
+# ⚠️ Ein Fehlschlag hier bricht NICHT ab: Das Bild entsteht trotzdem, es trägt
+# dann eben einen Vorhang — und das sieht man ihm an. Abzubrechen wäre strenger
+# als nötig und verlöre das Bild, an dem man den Fehler erkennt.
+if [ -n "${SS_VOR_KNIPSEN:-}" ]; then
+  echo "  … SS_VOR_KNIPSEN"
+  if bash -c "$SS_VOR_KNIPSEN" 2>&1 | sed 's/^/     /'; then :; else
+    echo "     ⚠️ ist gescheitert — das Bild kann einen Vorhang tragen."
+  fi
+  sleep 1
+fi
 
 # ══════════════════════════════════════════════════════════════════════════════
 sag "7. Knipsen — und das Bild prüfen, bevor es herausgegeben wird"

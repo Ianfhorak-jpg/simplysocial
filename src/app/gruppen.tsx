@@ -29,7 +29,7 @@ export default function GruppenScreen() {
   const meine = eintraege.filter((e) => e.mitglied).length;
 
   return (
-    <SsScreen contentStyle={styles.seite}>
+    <SsScreen scrolltSelbst contentStyle={styles.seite}>
       <SsBack />
 
       <View style={styles.kopf}>

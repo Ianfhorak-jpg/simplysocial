@@ -142,7 +142,7 @@ export default function RequestsScreen() {
   );
 
   return (
-    <SsScreen tabScreen contentStyle={styles.seite}>
+    <SsScreen tabScreen scrolltSelbst contentStyle={styles.seite}>
       <View style={styles.kopf}>
         <SsText variant="title">Anfragen</SsText>
       </View>

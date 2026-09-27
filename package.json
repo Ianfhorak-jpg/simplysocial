@@ -87,6 +87,7 @@
     "pruef-kopf": "python3 supabase/pruefen/33_kopfzeile.py",
     "pruef-nennung": "python3 supabase/pruefen/35_nennung.py",
     "pruef-plattform": "python3 supabase/pruefen/36_plattform.py",
+    "pruef-boden": "python3 supabase/pruefen/37_boden.py",
     "knipsen": "bash scripts/knipsen.sh",
     "tunnel": "scripts/.venv-geraet/bin/pymobiledevice3 remote tunneld"
   },

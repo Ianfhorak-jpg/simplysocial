@@ -93,7 +93,7 @@ export default function ChatScreen() {
   };
 
   return (
-    <SsScreen keyboard contentStyle={styles.seite}>
+    <SsScreen keyboard scrolltSelbst contentStyle={styles.seite}>
       <View style={styles.kopf}>
         <SsBack />
         {post ? (

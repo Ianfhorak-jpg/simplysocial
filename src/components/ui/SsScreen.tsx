@@ -23,8 +23,49 @@ export interface SsScreenProps {
    * Leiste. Deshalb hier nur `top` als Kante.
    */
   tabScreen?: boolean;
-  /** Inhalt scrollbar machen. Für Listen und lange Formulare. */
+  /**
+   * Inhalt scrollbar machen — mit dem Abstandsverhalten für LANGE Inhalte.
+   *
+   * ⚠️ Seit dem 2026-09-26 ist das **nicht mehr der Unterschied zwischen
+   * „scrollt" und „scrollt nicht"**: Auch ohne `scroll` liegt der Inhalt jetzt
+   * in einem Scroll-Bereich (siehe `scrolltSelbst` und der Abschnitt „Der Boden"
+   * unten). `scroll` steuert nur noch, wohin der untere Abstand wandert.
+   */
   scroll?: boolean;
+  /**
+   * „Dieser Screen bringt sein eigenes Scrollen mit" — für Listen und Gesten.
+   *
+   * ── 🔴 Warum es diese Prop gibt (ACTA, Guideline 4) ────────────────────────
+   * Am 2026-09-22 hat Apple ACTA (Projekt 17) abgelehnt: *„The login screen was
+   * not entirely visible."* Prüfgerät ein iPad Air 11". Die App ist iPhone-only,
+   * läuft auf iPadOS aber in einem **veränderbaren Fenster** — und der
+   * Nicht-Scroll-Zweig der dortigen Hülle schnitt alles ab, was höher war als das
+   * Fenster. Ohne jede Rettung: Die Knöpfe waren unerreichbar.
+   *
+   * **SimplySocial ist Zeichen für Zeichen gleich konfiguriert** (nachgemessen am
+   * 2026-09-26): `supportsTablet: false`, `TARGETED_DEVICE_FAMILY = 1`,
+   * `UIRequiresFullScreen = false`, Portrait-Sperre. Die Portrait-Sperre hat ACTA
+   * nicht gerettet, also rettet sie diese App auch nicht.
+   *
+   * ── Und ACTAs eigentliche Lehre ───────────────────────────────────────────
+   * *„Eine Prop, die Rettung ANBIETET, rettet nur die, die sie setzen."* Dort
+   * setzten 23 Screens `scroll` und 8 nicht — und die 8 hatten keinen Boden.
+   * Deshalb wird hier nicht `scroll` nachgetragen, sondern die **Voreinstellung
+   * umgedreht**: Gerettet ist der Normalfall, `scrolltSelbst` ist die Ausnahme.
+   *
+   * ── Wann sie gesetzt gehört ───────────────────────────────────────────────
+   * Wenn der Screen eine `FlatList`/`SectionList` enthält (eine Liste in einem
+   * ScrollView verliert ihre Virtualisierung und wächst ins Unendliche — der
+   * klassische Bruch bei genau diesem Umbau) oder eine Gestenfläche, die den
+   * ganzen Schirm einnimmt (der Wischstapel).
+   *
+   * ⚠️ **ACTA konnte diesen Fall ausschliessen, SimplySocial nicht:** Dort liefen
+   * die beiden Listen-Screens gar nicht durch die Hülle. Hier tun es sieben.
+   * Deshalb ist die Behebung eine andere als dort — abgeschrieben wäre sie falsch
+   * gewesen. `npm run pruef-boden` bewacht, dass keine Liste ohne diese Prop
+   * dasteht.
+   */
+  scrolltSelbst?: boolean;
   /**
    * Für Screens mit Eingabefeldern: der Inhalt weicht der Tastatur aus.
    *
@@ -85,6 +126,7 @@ export function SsScreen({
   children,
   tabScreen,
   scroll,
+  scrolltSelbst,
   keyboard,
   scrollRef,
   style,
@@ -98,6 +140,44 @@ export function SsScreen({
   // Beim Scrollen übernimmt der Inhalt den unteren Abstand selbst (siehe oben).
   const kanten: ('top' | 'bottom')[] = tabScreen || scroll ? ['top'] : ['top', 'bottom'];
 
+  // ── Der Boden: ein Screen, der nicht scrollt, hat keinen ──────────────────
+  //
+  // Ein Screen, der weder `scroll` noch `scrolltSelbst` setzt, lag bis zum
+  // 2026-09-26 in einem `View` mit `flex: 1`. Passt der Inhalt nicht, wird er
+  // abgeschnitten — nicht gestaucht, nicht scrollbar, WEG. Auf einem iPhone
+  // fällt das nie auf, weil die Höhe immer reicht; auf dem iPad in einem
+  // verkleinerten Fenster hat genau das ACTA eine Ablehnung gekostet.
+  //
+  // `flexGrow: 1` im Inhalt ist der ganze Trick: Passt alles, füllt der Inhalt
+  // die Höhe wie vorher — `justifyContent`/`flex` der Kinder wirken unverändert,
+  // das Bild ist identisch. Passt es nicht, scrollt es, statt zu verschwinden.
+  if (!scroll && !scrolltSelbst) {
+    return (
+      <SafeAreaView style={[styles.safe, style]} edges={kanten}>
+        <Tastatur an={keyboard}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={[
+              styles.content,
+              styles.wachsen,
+              contentStyle,
+              { marginBottom: leiste },
+            ]}
+            // Ohne das federt der Inhalt auf dem iPhone, wo gar nichts zu
+            // scrollen ist — und eine Fläche, die nachgibt, ohne dass es etwas
+            // zu sehen gibt, liest sich als Fehler.
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            {children}
+          </ScrollView>
+        </Tastatur>
+      </SafeAreaView>
+    );
+  }
+
+  // `scrolltSelbst`: der alte Zweig, unverändert. Eine Liste oder eine
+  // Gestenfläche bringt ihr eigenes Scrollen mit.
   if (!scroll) {
     return (
       <SafeAreaView style={[styles.safe, style]} edges={kanten}>
@@ -150,6 +230,11 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { flex: 1 },
   fill: { flex: 1 },
+  // `flexGrow` statt `flex`: In einem `contentContainerStyle` heisst `flex: 1`
+  // „nimm genau die Höhe des Scroll-Bereichs" — dann gäbe es nie etwas zu
+  // scrollen, und der Inhalt wäre wieder abgeschnitten. `flexGrow: 1` heisst
+  // „mindestens so hoch, gerne höher", und genau das ist gemeint.
+  wachsen: { flexGrow: 1 },
   content: {
     width: '100%',
     maxWidth: MAX_CONTENT_WIDTH,

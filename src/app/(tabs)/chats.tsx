@@ -131,7 +131,7 @@ export default function ChatsScreen() {
   }, [chats]);
 
   return (
-    <SsScreen tabScreen contentStyle={styles.seite}>
+    <SsScreen tabScreen scrolltSelbst contentStyle={styles.seite}>
       <View style={styles.kopf}>
         <SsText variant="title">Chats</SsText>
         {/* Ians Entscheidung 56 (Phase 19f): Der Weg zu den Gruppen lag am Profil

@@ -623,7 +623,7 @@ export default function FeedScreen() {
    */
   if (ansicht === 'karte' && bezirkStapel) {
     return (
-      <SsScreen tabScreen keyboard contentStyle={styles.seite}>
+      <SsScreen tabScreen keyboard scrolltSelbst contentStyle={styles.seite}>
         <View style={styles.bezirkKopf}>
           <SsBack label="Zurück zur Karte" onPress={() => setBezirkStapel(false)} />
           <SsText variant="label" numberOfLines={1} style={styles.bezirkTitel}>
@@ -729,7 +729,7 @@ export default function FeedScreen() {
           und auf iOS läge sie sonst unter der Tastatur. Fest gesetzt und nicht
           umgeschaltet — ein Wechsel würde den ganzen Inhalt neu einhängen und
           mitten in der Wischbewegung den Stapel zurücksetzen. */}
-      <SsScreen tabScreen keyboard contentStyle={styles.seite}>
+      <SsScreen tabScreen keyboard scrolltSelbst contentStyle={styles.seite}>
       {/* Im Fluss, wo darunter etwas scrollt. Im Stapel liegt dasselbe Feld weiter
           unten als Blatt über den Karten — Begründung bei `filterFeld` oben.
 

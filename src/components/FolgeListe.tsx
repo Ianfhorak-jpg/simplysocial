@@ -38,7 +38,7 @@ export function FolgeListeScreen({ userId, art }: { userId: string | undefined; 
   const wen = person.id === ich.id ? { dativ: 'dir', nominativ: 'du' } : { dativ: person.displayName, nominativ: person.displayName };
 
   return (
-    <SsScreen contentStyle={styles.seite}>
+    <SsScreen scrolltSelbst contentStyle={styles.seite}>
       <View style={styles.kopf}>
         <SsBack />
         <SsText variant="title">{art === 'follower' ? 'Follower' : 'Folgt'}</SsText>

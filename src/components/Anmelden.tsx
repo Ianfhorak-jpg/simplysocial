@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SsButton, SsInput, SsText } from '@/components/ui';
@@ -120,11 +120,34 @@ export function Anmelden() {
   );
 
   return (
-    <View
-      style={[
-        styles.huelle,
+    // ── 🔴 Warum hier eine ScrollView steht, obwohl nichts zu scrollen ist ────
+    //
+    // **Das hier ist der erste Bildschirm, den Apples Prüfer sieht.** Solange der
+    // Torwächter zeigt, gibt es den `Stack` nicht — jeder Weg endet hier.
+    //
+    // Genau diesen Bildschirm hat Apple bei ACTA (Projekt 17) am 2026-09-22
+    // abgelehnt: *„The login screen was not entirely visible."* Prüfgerät ein
+    // iPad Air 11". Die App ist iPhone-only, läuft auf iPadOS aber in einem
+    // VERÄNDERBAREN Fenster — und der Kasten stand dort in einer Fläche mit
+    // `justifyContent: 'center'` ohne jede Rettung: Wird das Fenster kürzer als
+    // der Kasten, schneidet es ihn oben UND unten an, und die Knöpfe sind
+    // unerreichbar. SimplySocial ist Zeichen für Zeichen gleich konfiguriert
+    // (`supportsTablet: false`, `UIRequiresFullScreen = false`, Portrait-Sperre
+    // — die ACTA nicht gerettet hat).
+    //
+    // `flexGrow: 1` + `justifyContent: 'center'` im Inhalt hält das Bild exakt
+    // wie vorher, solange es passt: mittig, unbeweglich. Passt es nicht, scrollt
+    // es. **Auf dem iPhone ändert sich nichts** — dafür sorgt `bounces={false}`,
+    // sonst federte eine Fläche, auf der es nichts zu sehen gibt.
+    <ScrollView
+      style={styles.huelle}
+      contentContainerStyle={[
+        styles.inhalt,
         { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg },
-      ]}>
+      ]}
+      bounces={false}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}>
       <View style={styles.kasten}>
         {/* ÜBER der Wortmarke und nicht darunter: Sie ist die Antwort auf den
             letzten Klick und gehört an die Stelle, auf die das Auge zuerst fällt.
@@ -221,7 +244,7 @@ export function Anmelden() {
           </View>
         ) : null}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -470,16 +493,29 @@ function EmailWeg({
 const styles = StyleSheet.create({
   // Ausgeschriebene Kanten statt `absoluteFill` — das ist eine registrierte Style-ID
   // und lässt sich nicht mit eigenen Werten mischen (ACTA-Falle, siehe CLAUDE.md).
+  // Die FLAECHE. Sie bleibt absolut — der Torwaechter legt sie ueber alles.
+  // ⚠️ Zentrieren und Polstern gehoeren jetzt in `inhalt`: Auf einer ScrollView
+  // wirkt `alignItems`/`justifyContent` im `style` NICHT auf den Inhalt, dafuer
+  // gibt es `contentContainerStyle`. Beides am selben Ort zu lassen waere der
+  // stille Weg, die Zentrierung zu verlieren.
   huelle: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
+    backgroundColor: colors.bg,
+  },
+  // Der INHALT. `flexGrow: 1` heisst „mindestens so hoch wie die Flaeche, gerne
+  // hoeher" — damit zentriert `justifyContent` wie vorher, solange es passt, und
+  // gibt den Platz frei, sobald es nicht mehr passt. `flex: 1` waere hier falsch:
+  // Es deckelte die Hoehe auf die Flaeche, und dann gaebe es wieder nichts zu
+  // scrollen und der Kasten waere wieder abgeschnitten.
+  inhalt: {
+    flexGrow: 1,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.bg,
   },
   kasten: {
     width: '100%',

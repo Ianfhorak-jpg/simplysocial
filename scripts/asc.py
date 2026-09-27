@@ -18,7 +18,7 @@ Der Prototyp ist öffentlich abrufbar).
 Das Token ist absichtlich nur 15 Minuten gültig — Apple erlaubt bis 20, und ein
 Token, das länger lebt als der Aufruf, ist ein Schlüssel ohne Schloss.
 """
-import sys, json, time, glob, os, base64, urllib.request
+import sys, json, re, time, glob, os, base64, urllib.request
 import jwt
 
 BASIS = os.path.expanduser('~/.appstoreconnect')
@@ -579,6 +579,328 @@ def altersfreigabe(token, app):
     print("     (Erwartet: 13+ — sie FOLGT aus Feed · Chat · Social Media.)")
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Store-Bilder hochladen
+#
+#  🔴 Am 2026-09-26 gemessen: Bei Apple lag **kein einziges Bild**. In ACTA
+#  (Projekt 17) lagen sie als DATEI im Ordner, im Plan stand „Screenshots fertig"
+#  — und bei Apple war nichts. *Fertig als Datei ist nicht fertig bei Apple.*
+#
+#  Apples Upload ist DREISTUFIG, und nichts daran ist optional:
+#    1. POST appScreenshots → Apple antwortet mit `uploadOperations`: fertigen
+#       HTTP-Anweisungen (URL, Methode, Header, Byte-Bereich). Die URL zeigt NICHT
+#       auf api.appstoreconnect.apple.com und bekommt KEINEN Authorization-Header
+#       — der Zugang steckt schon in der signierten URL.
+#    2. Die Bytes per PUT hinschieben.
+#    3. PATCH uploaded=true + MD5. Ohne Schritt 3 bleibt das Bild in einem
+#       Halb-Zustand: hochgeladen, aber nie abgenommen.
+#
+#  ⚠️ „Hochgeladen" und „von Apple ABGENOMMEN" sind zwei Zustände. Ein Bild im
+#  falschen Format nimmt der PUT klaglos an und fällt erst im
+#  `assetDeliveryState` auf.
+SHOT_ORDNER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           '..', '_FUER_IAN', 'App-Store-Screenshots')
+
+# Die Reihenfolge im Store ist die Reihenfolge hier.
+# ⚠️ Sie ist eine MARKETING-Entscheidung und gehört Ian (Projekt 34) — das hier
+# ist die Folge, in der die Bilder entstanden sind, nicht sein Urteil darüber.
+SHOT_REIHENFOLGE = [
+    '01-stapel.png',    # der Wischstapel — was die App ist
+    '04-match.png',     # „Ihr seid verabredet" — wofür sie da ist
+    '02-posten.png',
+    '03-anfragen.png',
+    '05-chats.png',
+    '06-chat.png',
+    '07-profil.png',
+    '08-gruppen.png',
+]
+
+# Apples 6,9"-Pflichtformat (1320×2868). Es läuft unter dem alten Schlüssel
+# APP_IPHONE_67 — Apple hat den Namen nie nachgezogen, als 6,9" dazukam.
+SHOT_TYP = 'APP_IPHONE_67'
+
+
+def _put_roh(op, daten):
+    """Ein `uploadOperation` ausführen. Bewusst OHNE Authorization-Header."""
+    stueck = daten[op['offset']:op['offset'] + op['length']]
+    req = urllib.request.Request(op['url'], data=stueck, method=op['method'])
+    for h in op.get('requestHeaders', []):
+        req.add_header(h['name'], h['value'])
+    with urllib.request.urlopen(req) as r:
+        return r.status
+
+
+def screenshots(token, app, wirklich):
+    """Die Bilder aus `_FUER_IAN/App-Store-Screenshots/` zu Apple schieben."""
+    import hashlib
+    v = offene_version(token, app)
+    if not v:
+        print("✗ Keine bearbeitbare Version.")
+        return
+
+    dateien = []
+    fehlt = []
+    for name in SHOT_REIHENFOLGE:
+        p = os.path.normpath(os.path.join(SHOT_ORDNER, name))
+        (dateien.append((name, p)) if os.path.exists(p) else fehlt.append(name))
+    if fehlt:
+        print(f"✗ Diese Bilder fehlen: {', '.join(fehlt)}")
+        print("  → npm run store-bilder   (holt sie vom Simulator)")
+        return
+
+    # Die GRÖSSE vorher prüfen, nicht Apple entscheiden lassen: Ein falsches
+    # Format fällt sonst erst nach dem Hochladen auf, im `assetDeliveryState`.
+    import struct
+    schlecht = []
+    for name, p in dateien:
+        with open(p, 'rb') as f:
+            kopf = f.read(24)
+        if kopf[:8] != b'\x89PNG\r\n\x1a\n':
+            schlecht.append(f"{name}: kein PNG")
+            continue
+        breite, hoehe = struct.unpack('>II', kopf[16:24])
+        if (breite, hoehe) != (1320, 2868):
+            schlecht.append(f"{name}: {breite}×{hoehe}, Apple verlangt 1320×2868")
+    if schlecht:
+        print("✗ " + "\n✗ ".join(schlecht))
+        return
+
+    lokal = hole(f"appStoreVersions/{v['id']}/appStoreVersionLocalizations", token)['data']
+    print(f"Version {v['attributes']['versionString']} · {len(dateien)} Bilder · "
+          f"{len(lokal)} Sprache(n): {', '.join(l['attributes']['locale'] for l in lokal)}")
+
+    if not wirklich:
+        print("\n── Was geschickt würde ────────────────────────────────────────")
+        for i, (name, p) in enumerate(dateien, 1):
+            print(f"  {i}. {name:16} {os.path.getsize(p)//1024:4} KB  1320×2868 ✓")
+        print("\n  Alle Grössen geprüft. Es ist NICHTS passiert. Schicken:")
+        print("      npm run asc screenshots -- --wirklich")
+        return
+
+    for l in lokal:
+        loc = l['attributes']['locale']
+        print(f"\n{loc}:")
+        # Vorhandenes Set wiederverwenden — sonst legt jeder Lauf ein zweites an.
+        sets = hole(f"appStoreVersionLocalizations/{l['id']}/appScreenshotSets", token)['data']
+        menge = next((s for s in sets
+                      if s['attributes']['screenshotDisplayType'] == SHOT_TYP), None)
+        if menge:
+            print(f"  Set {SHOT_TYP} gibt es schon.")
+        else:
+            ok, r = sende('POST', 'appScreenshotSets',
+                          {'data': {'type': 'appScreenshotSets',
+                                    'attributes': {'screenshotDisplayType': SHOT_TYP},
+                                    'relationships': {'appStoreVersionLocalization': {
+                                        'data': {'type': 'appStoreVersionLocalizations',
+                                                 'id': l['id']}}}}}, token)
+            if not ok:
+                print(f"  ✗ Set anlegen: {r}")
+                continue
+            menge = r['data']
+            print(f"  Set {SHOT_TYP} angelegt.")
+
+        drin = {s['attributes']['fileName']: s
+                for s in hole(f"appScreenshotSets/{menge['id']}/appScreenshots", token)['data']}
+
+        ids = []
+        for name, pfad in dateien:
+            fertig = (drin.get(name, {}).get('attributes', {})
+                      .get('assetDeliveryState', {}) or {}).get('state')
+            if name in drin and fertig == 'COMPLETE':
+                print(f"  = {name} liegt schon da")
+                ids.append(drin[name]['id'])
+                continue
+            roh = open(pfad, 'rb').read()
+            ok, r = sende('POST', 'appScreenshots',
+                          {'data': {'type': 'appScreenshots',
+                                    'attributes': {'fileSize': len(roh), 'fileName': name},
+                                    'relationships': {'appScreenshotSet': {
+                                        'data': {'type': 'appScreenshotSets',
+                                                 'id': menge['id']}}}}}, token)
+            if not ok:
+                print(f"  ✗ {name} anmelden: {r}")
+                continue
+            shot = r['data']
+            try:
+                for op in shot['attributes']['uploadOperations']:
+                    _put_roh(op, roh)
+            except urllib.error.HTTPError as e:
+                print(f"  ✗ {name} hochschieben: HTTP {e.code}")
+                continue
+            ok, r = sende('PATCH', f"appScreenshots/{shot['id']}",
+                          {'data': {'type': 'appScreenshots', 'id': shot['id'],
+                                    'attributes': {'uploaded': True,
+                                                   'sourceFileChecksum': hashlib.md5(roh).hexdigest()}}},
+                          token)
+            if not ok:
+                print(f"  ✗ {name} abnehmen: {r}")
+                continue
+            print(f"  ✓ {name} ({len(roh)//1024} KB)")
+            ids.append(shot['id'])
+
+        # Reihenfolge festlegen — ohne das sortiert Apple nach EINGANG, und der
+        # hängt bei einem Wiederholungslauf davon ab, was schon da war.
+        if ids:
+            ok, r = sende('PATCH', f"appScreenshotSets/{menge['id']}/relationships/appScreenshots",
+                          {'data': [{'type': 'appScreenshots', 'id': i} for i in ids]}, token)
+            print("  Reihenfolge gesetzt." if ok else f"  ⚠️ Reihenfolge: {r}")
+
+        # Zurückfragen: „hochgeladen" ist nicht „angenommen".
+        nach = hole(f"appScreenshotSets/{menge['id']}/appScreenshots", token)['data']
+        kaputt = [s['attributes']['fileName'] for s in nach
+                  if (s['attributes'].get('assetDeliveryState') or {}).get('errors')]
+        print(f"  {len(nach)} Bilder im Set"
+              + (f" · ⚠️ Fehler bei: {kaputt}" if kaputt else ""))
+
+
+def metadaten(token, app, wirklich):
+    """Die drei Felder, die aus dem CODE folgen — Kategorie, Werbe-ID, Inhaltsrechte.
+
+    ── Warum genau diese drei und nicht mehr ──────────────────────────────────
+    Sie sind keine Geschmacksfrage: Zwei folgen aus dem, was die App tut, und
+    das dritte aus dem, was sie ist. Preis und Copyright stehen bewusst NICHT
+    hier — das sind Geld und Recht und gehören Ian (und der Preis lässt sich mit
+    diesem Schlüssel ohnehin nicht setzen, Apple antwortet mit FORBIDDEN).
+    """
+    v = offene_version(token, app)
+    info = app_info(token, app)
+    if not v or not info:
+        print("✗ Keine bearbeitbare Version.")
+        return
+
+    prim, sek = kategorien(token, app)
+    idfa = v['attributes'].get('usesIdfa')
+    cr = hole(f"apps/{app['id']}", token)['data']['attributes'].get('contentRightsDeclaration')
+
+    # Eine Treff-App für Wien mit Feed, Followern und Chat. Apples eigene
+    # Beschreibung von SOCIAL_NETWORKING trifft das wörtlich; LIFESTYLE wäre die
+    # Alternative und beschreibt eher Einrichtung, Mode und Essen.
+    SOLL_KAT = 'SOCIAL_NETWORKING'
+    # Es gibt kein Werbe-, Analyse- oder Absturzbericht-Paket unter den
+    # Abhängigkeiten — `pruef-alter` misst das am `package.json` und wird rot,
+    # sobald eines dazukommt. Dieselbe Tatsache trägt schon das Datenschutz-
+    # Etikett und die Altersfreigabe.
+    SOLL_IDFA = False
+    # ⚠️ NICHT gesetzt, und das ist Absicht: Apples Frage nach Inhaltsrechten ist
+    # eine RECHTSfrage („enthält die App Inhalte Dritter, und habt ihr die
+    # Rechte daran?"). Hier hängen zwei Dinge dran, über die nur Ian entscheidet:
+    # die Bezirksgrenzen der Stadt Wien (CC BY 4.0, Nennung in Einstellungen →
+    # Rechtliches) und alles, was Menschen selbst hochladen. Das gehört in
+    # dieselbe Schublade wie Preis und Copyright.
+    print("Stand bei Apple:")
+    print(f"  Kategorie       {prim or '—'}{' + ' + sek if sek else ''}")
+    print(f"  Werbe-ID (IDFA) {idfa!r}")
+    print(f"  Inhaltsrechte   {cr or '—'}   [🧑 Rechtsfrage, gehört Ian]")
+
+    tun = []
+    if prim != SOLL_KAT:
+        tun.append(('Kategorie', prim, SOLL_KAT))
+    if idfa is not SOLL_IDFA:
+        tun.append(('Werbe-ID', idfa, SOLL_IDFA))
+    if not tun:
+        print("\n✓ Beides steht schon richtig.")
+        return
+
+    print("\n── Was geändert würde ─────────────────────────────────────────")
+    for name, ist, soll in tun:
+        print(f"  {name:12} {ist!r} → {soll!r}")
+    if not wirklich:
+        print("\n  Es ist NICHTS passiert. Schreiben:")
+        print("      npm run asc metadaten -- --wirklich")
+        return
+
+    for name, _ist, soll in tun:
+        if name == 'Kategorie':
+            ok, r = sende('PATCH', f"appInfos/{info['id']}",
+                          {'data': {'type': 'appInfos', 'id': info['id'],
+                                    'relationships': {'primaryCategory': {
+                                        'data': {'type': 'appCategories', 'id': soll}}}}}, token)
+        else:
+            ok, r = sende('PATCH', f"appStoreVersions/{v['id']}",
+                          {'data': {'type': 'appStoreVersions', 'id': v['id'],
+                                    'attributes': {'usesIdfa': soll}}}, token)
+        print(f"  {'✓' if ok else '✗'} {name}" + ('' if ok else f": {r}"))
+
+    # Zurücklesen statt der Erfolgsmeldung glauben.
+    prim2, _ = kategorien(token, app)
+    idfa2 = offene_version(token, app)['attributes'].get('usesIdfa')
+    print(f"\n  zurückgelesen: Kategorie {prim2} · Werbe-ID {idfa2!r}")
+
+
+def pruefnotizen(token, app, wirklich):
+    """Die Prüfnotizen zu Apple schreiben — der Text steht in `pruefnotizen.md`.
+
+    ── 🔴 Warum das eine eigene Sache ist ──────────────────────────────────────
+    Am 2026-09-26 war `notes` an Version 1.0 **leer**. Genau das hat ACTA
+    (Projekt 17) eine ganze Prüfrunde gekostet: Apples erste Antwort war kein
+    Mangel an der App, sondern die Erstentwickler-Routine „Information Needed" —
+    Zweck, Zielgruppe, Zugang, Video. Was von Anfang an in den Notizen steht,
+    muss nicht erfragt werden.
+
+    Der Text liegt NICHT hier im Code, sondern in `scripts/pruefnotizen.md`:
+    Er ist Prosa für einen Menschen, und Prosa in einem String-Literal wird nicht
+    gelesen, sondern überblättert. Der HTML-Kommentar am Kopf der Datei erklärt
+    ihn und wird nicht mitgeschickt.
+
+    ⚠️ Das Feld hängt an der VERSION, nicht an der App — eine neue Version
+    startet ohne Notizen.
+    """
+    quelle = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pruefnotizen.md')
+    if not os.path.exists(quelle):
+        print(f"✗ {quelle} fehlt — ohne Text nichts zu schreiben.")
+        return
+    with open(quelle, encoding='utf-8') as f:
+        roh = f.read()
+    # Der erklärende HTML-Kommentar gehört uns, nicht Apple.
+    text = re.sub(r'<!--.*?-->', '', roh, flags=re.S).strip()
+
+    v = offene_version(token, app)
+    if not v:
+        print("✗ Keine bearbeitbare Version.")
+        return
+    rd = hole(f"appStoreVersions/{v['id']}/appStoreReviewDetail", token).get('data')
+    if not rd:
+        print("✗ Es gibt noch keinen Prüfinfo-Datensatz an dieser Version.")
+        print("  Der entsteht, sobald Kontakt und Demo-Zugang eingetragen sind.")
+        return
+    vorher = rd['attributes'].get('notes') or ''
+
+    # ⚠️ Apples Feld ist auf 4000 Zeichen begrenzt. Ein zu langer Text wird nicht
+    # gekürzt, sondern ABGELEHNT — und die Meldung nennt die Zahl nicht.
+    print(f"Version {v['attributes']['versionString']} · Prüfnotizen")
+    print(f"  bisher: {len(vorher)} Zeichen" + ("" if vorher else "  ← LEER"))
+    print(f"  neu:    {len(text)} Zeichen"
+          + ("  ⚠️ ÜBER 4000, Apple lehnt das ab" if len(text) > 4000 else "  (Grenze 4000)"))
+
+    if not wirklich:
+        print("\n── Was geschickt würde ────────────────────────────────────────")
+        for z in text.splitlines()[:14]:
+            print(f"  {z}")
+        print(f"  … ({len(text.splitlines())} Zeilen insgesamt, ganz in "
+              f"scripts/pruefnotizen.md)")
+        print("\n  Es ist NICHTS passiert. Schreiben:")
+        print("      npm run asc pruefnotizen -- --wirklich")
+        return
+    if len(text) > 4000:
+        print("✗ Zu lang. Nicht geschickt.")
+        return
+
+    ok, r = sende('PATCH', f"appStoreReviewDetails/{rd['id']}",
+                  {'data': {'type': 'appStoreReviewDetails', 'id': rd['id'],
+                            'attributes': {'notes': text}}}, token)
+    if not ok:
+        print(f"✗ Apple sagt nein:\n{r}")
+        return
+    # Zurücklesen statt der Erfolgsmeldung glauben.
+    nach = hole(f"appStoreVersions/{v['id']}/appStoreReviewDetail",
+                token)['data']['attributes'].get('notes') or ''
+    if nach.strip() == text.strip():
+        print(f"✓ Geschrieben und zurückgelesen: {len(nach)} Zeichen.")
+    else:
+        print(f"⚠️ Zurückgelesen stehen {len(nach)} Zeichen da, geschickt waren "
+              f"{len(text)}. In App Store Connect nachsehen.")
+
+
 def tester_einladen(t, app_id, leute, wirklich):
     """Christoph, Leopold und Daria als INTERNE Tester eintragen.
 
@@ -790,6 +1112,23 @@ def main():
             print("  ALTERSFREIGABE, in Ians Sprache in _FUER_IAN/ALTERSFREIGABE.md.")
             return
         altersfreigabe(t, app)
+        return
+
+    # ⚠️ SCHREIBT ebenfalls — und in ACTA ist genau dieser Befehl einmal als
+    # „liest nur" missverstanden worden. Deshalb derselbe Riegel.
+    if len(sys.argv) > 1 and sys.argv[1] == 'pruefnotizen':
+        print()
+        pruefnotizen(t, app, '--wirklich' in sys.argv)
+        return
+
+    if len(sys.argv) > 1 and sys.argv[1] == 'screenshots':
+        print()
+        screenshots(t, app, '--wirklich' in sys.argv)
+        return
+
+    if len(sys.argv) > 1 and sys.argv[1] == 'metadaten':
+        print()
+        metadaten(t, app, '--wirklich' in sys.argv)
         return
 
     builds = hole(f"builds?filter[app]={app['id']}&limit=5&sort=-version", t)['data']

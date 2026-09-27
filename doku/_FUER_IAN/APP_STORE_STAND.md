@@ -90,7 +90,7 @@ Details und die Begründung je Antwort: [`ALTERSFREIGABE.md`](ALTERSFREIGABE.md)
 | **Copyright** | Das ist der rechtliche Betreiber der App. Hängt an der Frage, auf wessen Namen das Apple-Programm läuft | **ja** |
 | **Rechtstext** für die Nutzungsbedingungen | Kein Text, den ich erfinden darf. Das Häkchen dafür steht seit dem 14.09. und wartet nur auf den Text | **ja** |
 | **Apple-Programm auf wessen Namen** | mit 16 üblicherweise über einen Elternteil | später teuer |
-| **TestFlight / neuer Build** | `npm run testflight` fasst deinen Schlüsselbund an und legt ein Zertifikat in deinem Apple-Konto an | **ja** |
+| **TestFlight / neuer Build** | `npm run testflight` lädt zu Apple hoch — das wirkt nach außen, also machst du es. 🟢 **Aber es ist leichter geworden, siehe unten** | **ja** |
 | **Privacy-Label** | Über die Schnittstelle weder les- noch schreibbar. Die sieben Einträge stehen fertig in [`DATENSCHUTZ_ETIKETT.md`](DATENSCHUTZ_ETIKETT.md) | **ja** |
 
 ---
@@ -123,6 +123,28 @@ Das ist der eine Punkt, bei dem ich absichtlich stehen bleibe. Zwei Gründe:
 > ⚠️ **Der Werbetext ist der wichtigste Trick dabei:** Er lässt sich jederzeit
 > ändern, ohne einen neuen Build und ohne neue Prüfung. Alles, was sich noch
 > bewegen könnte, gehört dorthin und nicht in die Beschreibung.
+
+---
+
+## 🟢 Gute Nachricht: TestFlight ist nicht mehr der Brocken, der es war
+
+In unseren Notizen steht, `npm run testflight` müsse erst ein **Distribution-Zertifikat**
+in deinem Apple-Konto anlegen, und dass ich genau daran nicht darf. Das galt am 14.09.
+
+**Heute nachgesehen — es ist alles schon da:**
+
+| | Zustand | gültig bis |
+|---|---|---|
+| Distribution-Zertifikat | vorhanden, auch in deinem Schlüsselbund | **14.09.2027** |
+| Profil „SimplySocial App Store" | **ACTIVE** | **14.09.2027** |
+| Development-Zertifikat | vorhanden | 22.05.2027 |
+
+Das hat dein eigener TestFlight-Lauf am 14.09. angelegt (daher Build 2). Der
+Schritt, der damals gehakt hat, **fällt beim nächsten Mal weg** — es bleibt Bauen
+und Hochladen, rund 20 Minuten, und du musst nur danebensitzen.
+
+> Warum ich den Lauf trotzdem nicht selbst mache: Hochladen wirkt nach außen. Alles,
+> was bei Apple, in der echten Datenbank oder in deinem Konto landet, machst du.
 
 ---
 

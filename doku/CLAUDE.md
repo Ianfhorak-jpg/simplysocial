@@ -224,8 +224,11 @@ die 1,84 der gezeichneten Karte nie.
 | 0,55 | 1,33 | 1,33 | 4,54 |
 | 0,70 | 1,43 | 1,43 | 6,38 |
 
-**Das ist eine Entscheidung für Ian, nicht ein Fehler zum Beheben.** Vorgelegt,
-nicht gebaut.
+✅ **Ians Entscheidung 111 (2026-09-26): die Skala bleibt.** Vorgelegt mit allen
+Zahlen, geantwortet *„ja es passt, mach weiter"*. Die drei Wege (Stufe 1 heller ·
+sichtbare Kontur statt nur Fläche · Skala stauchen) sind damit **nicht offen,
+sondern abgelehnt** — sie werden nur auf ausdrückliche Ansage wieder aufgemacht
+(harte Regel 58). Die Zahlen oben bleiben als Messung stehen, nicht als Mangel.
 
 `au01` belegt den Stapel, `au02` die Karte. Ob die Zacken weg sind, ob die Bezirke ohne Zahlen
 auseinandergehen, ob der direkte Sprung sich richtig anfühlt — am Mac ist nichts
@@ -414,6 +417,88 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
 
 ---
 
+## 🔴 Aus ACTA gelernt — zwei Ablehnungen, die hier NICHT passieren sollen
+
+> Ians Auftrag am 2026-09-26: *„schau dir das mal an, damit nicht die gleichen
+> Fehler passieren."* ACTA (`17_Tennis_Optimma`) ist bei seiner dritten
+> Einreichung. Beide Ablehnungen waren hier wiederholbar.
+
+### 1 · Guideline 4 — der iPad-Fehler war hier EINGEBAUT ✅ behoben
+
+Apple am 2026-09-22 zu ACTA: *„The login screen was not entirely visible."*
+Prüfgerät iPad Air 11". iPhone-only-Apps laufen auf iPadOS in einem
+**veränderbaren Fenster**; wird es kürzer als der Inhalt, schneidet ein
+`View` mit `flex: 1` ab — ohne Rettung, Knöpfe unerreichbar.
+
+**Nachgemessen: SimplySocial war Zeichen für Zeichen gleich konfiguriert.**
+`supportsTablet: false` · `TARGETED_DEVICE_FAMILY = 1` ·
+`UIRequiresFullScreen = false` · Portrait-Sperre. Die Portrait-Sperre hat ACTA
+nicht gerettet.
+
+🔴 **Die Behebung ist eine ANDERE als in ACTA, und das ist der Punkt.** Dort
+liefen die zwei Listen-Screens nicht durch die Hülle — man konnte sie einfach
+scrollbar machen. **Hier tun es sieben.** Eine `FlatList` in einer `ScrollView`
+verliert ihre Virtualisierung: abgeschrieben wäre die Behebung falsch gewesen.
+
+Stattdessen ist die **Voreinstellung umgedreht** (ACTAs eigene Lehre: *„Eine
+Prop, die Rettung ANBIETET, rettet nur die, die sie setzen"*):
+
+| | vorher | jetzt |
+|---|---|---|
+| ohne Prop | `View` mit `flex: 1` — schneidet ab | `ScrollView` mit `flexGrow: 1` — rettet |
+| Liste/Geste | — | `scrolltSelbst` (7 Stellen) |
+
+Dazu `Anmelden.tsx` einzeln: Er läuft nicht durch `SsScreen` (er IST der
+Torwächter) und ist **der erste Bildschirm, den Apples Prüfer sieht**.
+
+Bewacht von **`npm run pruef-boden`** (13 Häkchen, mit Gegenprobe).
+
+### 2 · Die erste Ablehnung war gar kein Mangel — leere Prüfnotizen ✅ vorbereitet
+
+ACTAs Runde am 14.09. war die Erstentwickler-Routine „Information Needed":
+Zweck, Zielgruppe, Zugang, Video. Kostete ein Video und acht Tage.
+
+**Bei SimplySocial stand `notes` auf LEER.** Jetzt `scripts/pruefnotizen.md`
+(2.785 Zeichen, Grenze 4.000) — was die App ist, was sie NICHT ist (kein
+Dating), wie man hineinkommt, und **wo genau** Melden · Blockieren ·
+Nutzungsbedingungen · Konto-Löschen stecken. ⚠️ Jeder Weg am 2026-09-26 im Code
+nachgeprüft; ein falscher Weg dort ist schlimmer als keine Notiz.
+
+### Die anderen ACTA-Lehren, die hier gelten
+
+- **`asc.py einreichbereit` misst FELDER, nicht Erfolg.** Bei ACTA 10/10 grün,
+  während die App vier Tage abgelehnt war. Der Grund steht NIE in der API — das
+  Resolution Center ist darüber weder les- noch schreibbar. **Er steht in Ians
+  Mail.**
+- **Der PREIS blockiert hart und taucht in keinem Feld auf** (nur als
+  `APP_PRICING_REQUIRED` im 409). Mit unserem Schlüssel nicht setzbar.
+- **„Fertig als Datei" ist nicht „fertig bei Apple".** ACTAs sieben Screenshots
+  lagen im Ordner, bei Apple keines.
+- **Ein sichtbares UI-Element beweist nicht, dass hinten etwas hängt.** ACTAs
+  „Konto löschen" rief ins Leere — die Funktion war nie deployt (Guideline
+  5.1.1(v)). Hier ist sie server­seitig geprüft (171 Häkchen, `98_moderation`).
+- **Ein neuer Build holt die Version aus `REJECTED`** — nicht das Antworten.
+- **Testdaten des Demo-Kontos NICHT aufräumen**, solange Apple prüft: Der
+  Prüfer meldet sich damit an, und die Daten füllen erst seinen Feed.
+
+### Die vier Befehle, die jetzt für Ian bereitliegen
+
+```bash
+npm run asc altersfreigabe -- --wirklich   # 28 Antworten statt 28 Klicks
+npm run asc pruefnotizen   -- --wirklich   # der Text gegen Runde 1
+npm run asc metadaten      -- --wirklich   # Kategorie + Werbe-ID
+npm run asc screenshots    -- --wirklich   # 8 Bilder, 1320×2868
+```
+
+Alle vier **ohne** `--wirklich` als Trockenlauf gefahren und belegt. Sie
+schreiben in Ians Apple-Konto, deshalb tippt er sie (siehe Memory
+`apple-konto-schreiben-gehoert-ian`). Bleiben bei ihm: **Preis**, **Copyright**,
+**Rechtstext**, **Store-Texte** (Projekt 34) und der **Build**.
+
+📄 Für Ian: [`_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md`](_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md)
+
+---
+
 ## Was als Nächstes ansteht
 
 1. **Phase 21 — App Store.** 13+ (Apples neue Altersfrage ist seit Sept. 2026 Pflicht,
@@ -448,11 +533,20 @@ Werte aus einem Ref holen. Jede ANDERE Zahl ist ein Befund, kein Rauschen).
    **21.4, TestFlight, ist seit 2026-09-14 EIN BEFEHL** — `npm run testflight`,
    sechs Schritte von der Signierung bis zum Upload, mit drei Vorprüfungen VOR dem
    20-Minuten-Build (Build-Nummer frei? Schalter auf `supabase`? Schlüssel da?).
-   Er startet ihn selbst: Zwei Schritte fassen den Schlüsselbund an und legen in
-   seinem Apple-Konto ein **Distribution-Zertifikat** an, und das blockt der
-   Auto-Mode. 🔍 **Dabei gefunden:** Build 1 (11.09.) ist bei Apple, aber im Konto ist
-   keine Spur davon — kein Distribution-Zertifikat, kein Profil, `eas build:list`
-   leer. Wie er signiert wurde, ist unbekannt; ab jetzt steht der Weg im Skript.
+   Er startet ihn selbst, weil das Hochladen nach aussen wirkt.
+   🟢 **Berichtigung vom 2026-09-26: Die Signier-Kette ist VOLLSTÄNDIG.** Hier stand
+   „kein Distribution-Zertifikat, kein Profil" — das galt am 14.09. Bei Apple
+   nachgefragt und im Schlüsselbund nachgesehen:
+
+   | | Zustand | gültig bis |
+   |---|---|---|
+   | Distribution-Zertifikat | da, auch im Schlüsselbund (`security find-identity`) | 2027-09-14 |
+   | Profil `SimplySocial App Store` | **ACTIVE**, `IOS_APP_STORE` | 2027-09-14 |
+   | Development-Zertifikat | da | 2027-05-22 |
+
+   Beide tragen das Datum 2026-09-14 — Ians eigener TestFlight-Lauf hat sie
+   angelegt, daher Build 2. **Der Schritt, der den Auto-Mode blockte, fällt beim
+   nächsten Lauf weg;** es bleibt Bauen und Hochladen.
    **Offen: 21.2 (der Rechtstext selbst, wartet auf Ian) und der LAUF von 21.4.**
 2. ~~**Phase 20.6-d — runder Zuschnitt.**~~ ✅ **fertig und am Gerät geprüft**
    (2026-09-13, Durchgang 4: 6 von 6). Nichts mehr offen.
