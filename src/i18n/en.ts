@@ -92,6 +92,31 @@ export const en: Weiter<typeof de> = {
     binDabei: "I'm in",
   },
 
+  // ⚠️ **Von Claude übersetzt, nicht vom lokalen Modell.** `lokal` ist bei diesem
+  // Block viermal in Folge still hängen geblieben (kein Prozess, leere Datei) —
+  // nach der Regel in CLAUDE.md macht die Haupt-KI es dann selbst und sagt es.
+  bild: {
+    // Umgedreht gebaut: Deutsch stellt das Bild voran, Englisch den Handelnden.
+    offenAlle: 'Anyone using {app} can see your photo.',
+    offenTausch: 'If you swap it, the old one is gone everywhere within {min} minutes.',
+    kontoWeg: 'Delete your account and your photo goes with it.',
+    linksAblauf: 'Forwarded links expire after an hour.',
+    // „have plans with you" — nicht „are meeting you": Die Verabredung steht, das
+    // Treffen hat noch nicht stattgefunden. Genau dieser Unterschied ist die App.
+    nurFollower: 'Only people who follow you or have plans with you can see your photo.',
+    andereBuchstaben: 'Everyone else sees your initials.',
+    nurFormate: 'Only JPG, PNG or WebP work.',
+    zuGross: 'That photo is too big — {mb} MB is the limit.',
+    keinZugriff:
+      "Your photos couldn't be opened. Check in Settings whether {app} is allowed to access them.",
+    nichtUmwandelbar:
+      "Your phone couldn't convert this photo. Try another one — this happens with Live Photos and RAW.",
+    nichtVorbereitet: "The photo couldn't be prepared. A smaller one usually helps.",
+    // „Sag Ian Bescheid" bleibt sinngemäss: Es ist eine echte Anweisung an den
+    // Menschen davor, kein Platzhalter — und Ian ist der Betreiber (Entscheidung 112).
+    hochladenUnerwartet: 'The upload failed unexpectedly. Please let Ian know.',
+  },
+
   post: {
     // „host", nicht „poster" — ein `poster` ist auf Englisch ein Plakat.
     posterBestaetigt: 'The host confirmed you',
@@ -116,49 +141,49 @@ export const en: Weiter<typeof de> = {
     // Modell: „Selecting an image is not yet possible … It is already available …"
     // Zweimal „available" und durchweg Beamtendeutsch auf Englisch.
     bildwahlLaeuft:
-      "Picking a photo doesn't work on the phone yet \u2014 that comes with the next app update. It already works in the browser.",
+      "Picking a photo doesn't work on the phone yet — that comes with the next app update. It already works in the browser.",
     deinBezirk: 'Your district',
-    // Modell: „From here, your feed is sorted by outward" \u2014 kein Englisch.
+    // Modell: „From here, your feed is sorted by outward" — kein Englisch.
     bezirkHinweis: 'Your feed sorts outward from here',
     heimatbezirk: 'Your home district',
     blockiert: 'Blocked',
     niemandBlockiert: "You haven't blocked anyone.",
     blockierenWo: "You can block someone from their profile.",
-    // \ud83d\udd34 Modell: „Undo". **Bedeutungsfehler, kein Sprachfehler:** Dieser Knopf
-    // hebt eine BLOCKIERUNG auf (`entblocken()`), er macht nichts r\u00fcckg\u00e4ngig.
-    // „Undo" neben einem Namen in einer Blockierliste h\u00e4tte jeder falsch gelesen.
+    // 🔴 Modell: „Undo". **Bedeutungsfehler, kein Sprachfehler:** Dieser Knopf
+    // hebt eine BLOCKIERUNG auf (`entblocken()`), er macht nichts rückgängig.
+    // „Undo" neben einem Namen in einer Blockierliste hätte jeder falsch gelesen.
     aufheben: 'Unblock',
     // Apples eigene Schreibweise in Store und System.
     nutzungsbedingungen: 'Terms of Use',
     nutzungsbedingungenHinweis: 'The rules here, and the minimum age',
     deinKonto: 'Your account',
-    // „Sign out" und nicht „Log out" \u2014 weil der Anmelde-Bildschirm „Sign in"
-    // sagt (`anmelden.dochAnders`). Zwei W\u00f6rter f\u00fcr dieselbe T\u00fcr w\u00e4ren eines zu viel.
+    // „Sign out" und nicht „Log out" — weil der Anmelde-Bildschirm „Sign in"
+    // sagt (`anmelden.dochAnders`). Zwei Wörter für dieselbe Tür wären eines zu viel.
     abmelden: 'Sign out',
     abmeldenHinweis: 'Back to the {app} sign-in',
     accountLoeschen: 'Delete account',
     accountLoeschenHinweis: 'Your profile, your posts and your chats',
     fuerEntwicklung: 'For development',
-    // Modell: „View building blocks" \u2014 w\u00f6rtlich. Gemeint sind die UI-Bausteine,
-    // und das Wort daf\u00fcr ist im Englischen „components".
+    // Modell: „View building blocks" — wörtlich. Gemeint sind die UI-Bausteine,
+    // und das Wort dafür ist im Englischen „components".
     bausteine: 'View components',
     bausteineHinweis: 'All elements of the app side by side',
     postFassungen: 'Compare post versions',
-    postFassungenHinweis: 'Three drafts side by side \u2014 pick one',
+    postFassungenHinweis: 'Three drafts side by side — pick one',
   },
 
   standort: {
     anTitel: 'From your location',
-    // Modell: „Your feed sorted from where you are" \u2014 falsche Zeitform.
+    // Modell: „Your feed sorted from where you are" — falsche Zeitform.
     anAusgangspunkt: 'Your feed sorts from where you are right now. Nobody sees your location.',
     anBezirk: 'Your district is set automatically. Nobody sees your location.',
     ausTitel: 'Location is off',
-    // Modell: „You declined this \u2014 this is changed in your phone's settings."
-    // Passiv und unpers\u00f6nlich; die App spricht die Person an.
+    // Modell: „You declined this — this is changed in your phone's settings."
+    // Passiv und unpersönlich; die App spricht die Person an.
     verweigert:
-      "You turned this down \u2014 you can change that in your phone's settings. Your feed keeps sorting from your district.",
-    // \ud83d\udd34 Modell: „Location does not exist here". Gemeint ist: **auf dieser
-    // Plattform gibt es keinen Standort** (Browser) \u2014 nicht, dass es den Ort nicht gibt.
+      "You turned this down — you can change that in your phone's settings. Your feed keeps sorting from your district.",
+    // 🔴 Modell: „Location does not exist here". Gemeint ist: **auf dieser
+    // Plattform gibt es keinen Standort** (Browser) — nicht, dass es den Ort nicht gibt.
     unmoeglichTitel: "Location isn't available here",
     unmoeglich: 'Your feed sorts from your district.',
     ausErklaerung:

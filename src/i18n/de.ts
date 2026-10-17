@@ -83,6 +83,35 @@ export const de = {
     binDabei: 'Bin dabei',
   },
 
+  /**
+   * Das Profilbild. Die Sätze gehören `features/social/bild.ts` (harte Regel 88) —
+   * hier steht nur der Wortlaut.
+   *
+   * ⚠️ **`{app}` statt `SimplySocial`.** Hier stand der Name dreimal fest im Text,
+   * und das war ein Verstoss gegen harte Regel 3 („Der Name steht an genau einer
+   * Stelle") — älter als die Übersetzung und von keinem Prüfstand bemerkt. Ian hat
+   * den Satz am 2026-10-17 im Browser auf Deutsch stehen gesehen und gemeldet.
+   * `bild.ts` ist importfrei und kann `BRAND` nicht lesen — den Namen setzt deshalb
+   * der Bildschirm ein.
+   */
+  bild: {
+    offenAlle: 'Dein Bild sehen alle, die {app} benutzen.',
+    offenTausch:
+      'Wenn du es austauschst, ist das alte innerhalb von {min} Minuten überall weg.',
+    kontoWeg: 'Löschst du dein Konto, geht dein Bild mit.',
+    linksAblauf: 'Weitergeleitete Links laufen nach einer Stunde ab.',
+    nurFollower: 'Dein Bild sehen nur Leute, die dir folgen oder mit dir verabredet sind.',
+    andereBuchstaben: 'Alle anderen sehen deine Anfangsbuchstaben.',
+    nurFormate: 'Das geht nur als JPG, PNG oder WebP.',
+    zuGross: 'Das Bild ist zu groß — {mb} MB sind das Höchste.',
+    keinZugriff:
+      'Deine Fotos ließen sich nicht öffnen. Schau in den Einstellungen nach, ob {app} darauf zugreifen darf.',
+    nichtUmwandelbar:
+      'Dieses Foto konnte dein Handy nicht umwandeln. Nimm ein anderes — bei Live Photos und RAW kommt das vor.',
+    nichtVorbereitet: 'Das Foto ließ sich nicht vorbereiten. Meistens hilft ein kleineres.',
+    hochladenUnerwartet: 'Das Hochladen ist an etwas Unerwartetem gescheitert. Sag Ian Bescheid.',
+  },
+
   /** Eine Aktivität einstellen und bestätigt werden. */
   post: {
     posterBestaetigt: 'Der Poster hat dich bestätigt',
@@ -106,9 +135,9 @@ export const de = {
     deinBild: 'Dein Bild',
     bildEntfernen: 'Bild entfernen',
     bildwahlLaeuft:
-      'Ein Bild aussuchen geht am Handy noch nicht \u2014 das kommt mit dem n\u00e4chsten App-Update. Im Browser geht es schon.',
+      'Ein Bild aussuchen geht am Handy noch nicht — das kommt mit dem nächsten App-Update. Im Browser geht es schon.',
     deinBezirk: 'Dein Bezirk',
-    bezirkHinweis: 'Von hier aus sortiert dein Feed nach au\u00dfen',
+    bezirkHinweis: 'Von hier aus sortiert dein Feed nach außen',
     heimatbezirk: 'Dein Heimatbezirk',
     blockiert: 'Blockiert',
     niemandBlockiert: 'Du hast niemanden blockiert.',
@@ -118,18 +147,18 @@ export const de = {
     nutzungsbedingungenHinweis: 'Was hier gilt und ab welchem Alter',
     deinKonto: 'Dein Konto',
     abmelden: 'Abmelden',
-    abmeldenHinweis: 'Zur\u00fcck zum Anmelden von {app}',
-    accountLoeschen: 'Account l\u00f6schen',
+    abmeldenHinweis: 'Zurück zum Anmelden von {app}',
+    accountLoeschen: 'Account löschen',
     accountLoeschenHinweis: 'Dein Profil, deine Posts und deine Chats',
-    fuerEntwicklung: 'F\u00fcr die Entwicklung',
+    fuerEntwicklung: 'Für die Entwicklung',
     bausteine: 'Bausteine anschauen',
     bausteineHinweis: 'Alle Elemente der App nebeneinander',
     postFassungen: 'Post-Fassungen vergleichen',
-    postFassungenHinweis: 'Drei Entw\u00fcrfe nebeneinander \u2014 zum Aussuchen',
+    postFassungenHinweis: 'Drei Entwürfe nebeneinander — zum Aussuchen',
   },
 
   /**
-   * Der Standort. Die S\u00e4tze geh\u00f6ren `features/posts/standort.ts` \u2014 sie stehen hier
+   * Der Standort. Die Sätze gehören `features/posts/standort.ts` — sie stehen hier
    * nur als Wortlaut, die ENTSCHEIDUNG welcher wann gilt bleibt dort.
    */
   standort: {
@@ -139,7 +168,7 @@ export const de = {
     anBezirk: 'Dein Bezirk wird automatisch gesetzt. Niemand sieht deinen Standort.',
     ausTitel: 'Standort ist aus',
     verweigert:
-      'Du hast das abgelehnt \u2014 das \u00e4ndert man in den Einstellungen deines Handys. Dein Feed sortiert weiter ab deinem Bezirk.',
+      'Du hast das abgelehnt — das ändert man in den Einstellungen deines Handys. Dein Feed sortiert weiter ab deinem Bezirk.',
     unmoeglichTitel: 'Standort gibt es hier nicht',
     unmoeglich: 'Dein Feed sortiert ab deinem Bezirk.',
     ausErklaerung:

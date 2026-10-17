@@ -48,7 +48,7 @@ I18N = SRC / 'i18n'
 # erlaubtes Maß an Schlamperei. Wer sie hochsetzt, macht den Wächter wertlos:
 # Genau der Fehler, der ACTAs Build 1 zu Apple geschickt hat, würde dann grün
 # gemeldet. Sinkt sie, wird sie hier nachgezogen — das ist der Fortschritt.
-GRENZE = 284
+GRENZE = 277
 
 JA = NEIN = 0
 
@@ -128,6 +128,49 @@ BRAND_DATEI = SRC / 'config' / 'brand.ts'
 brand = BRAND_DATEI.read_text(encoding='utf-8') if BRAND_DATEI.exists() else ''
 m_brand = re.search(r"claim:\s*'([^']+)'", brand)
 m_de = re.search(r"marke:\s*\{[^}]*?claim:\s*'([^']+)'", de_text, re.S)
+
+# 🔴 **Harte Regel 3: „Der Name `SimplySocial` steht an genau einer Stelle"**
+# (`config/brand.ts`). Am 2026-10-17 **gebrochen vorgefunden, an vier Stellen** —
+# `features/social/bild.ts` dreimal und `config/melden.ts` einmal, alle in Text,
+# den ein Mensch liest. Keine davon war neu; es hatte nur nie jemand nachgesehen.
+#
+# **Gefunden hat es IAN**, nicht dieser Prüfstand: Er hat die englische Oberfläche
+# im Browser aufgemacht und gesagt, „Alle, die SimplySocial verwenden" stehe noch
+# auf Deutsch. Ein fest eingetippter Name überlebt jede Übersetzung — er steht in
+# keinem Wörterbuch, also übersetzt ihn niemand. In der Übersetzung heißt er
+# deshalb `{app}`, und den Wert setzt der Bildschirm ein.
+NAME_ERLAUBT = {
+    pathlib.Path('config') / 'brand.ts',   # die eine erlaubte Stelle
+}
+namensstellen: list[str] = []
+for datei in sorted(SRC.rglob('*.ts*')):
+    if datei.suffix not in ('.ts', '.tsx'):
+        continue
+    rel = datei.relative_to(SRC)
+    if rel in NAME_ERLAUBT or I18N in datei.parents or datei.parent == I18N:
+        continue
+    im_block = False
+    for nr, zeile in enumerate(datei.read_text(encoding='utf-8').splitlines(), 1):
+        blank = zeile.strip()
+        if im_block:
+            if '*/' in zeile:
+                im_block = False
+            continue
+        if '/*' in zeile and '*/' not in zeile:
+            im_block = True
+            continue
+        if blank.startswith(('*', '//', '/*')):
+            continue
+        # Nur in einer Zeichenkette — ein Bündel-Name oder eine URL ist kein Text.
+        if re.search(r"['\"`][^'\"`\n]*SimplySocial[^'\"`\n]*['\"`]", zeile):
+            namensstellen.append(f'{datei.relative_to(WURZEL)}:{nr}  {blank[:55]}')
+
+pruef(f'Der Name steht nur in `config/brand.ts` ({len(namensstellen)} andere Stellen)',
+      not namensstellen,
+      'harte Regel 3 — und ein fest eingetippter Name wird NIE übersetzt, weil er '
+      'in keinem Wörterbuch steht')
+for ort in namensstellen[:5]:
+    print(f'     {ort}')
 
 pruef('`brand.ts` nennt einen Claim', m_brand is not None,
       'eine Textsuche mit null Treffern beweist nichts')

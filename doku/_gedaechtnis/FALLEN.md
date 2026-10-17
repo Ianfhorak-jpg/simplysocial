@@ -2116,3 +2116,26 @@
   existiert. Das tragfähige Maß ist STRUKTURELL: feste Texte an `label=`,
   `placeholder=`, `accessibilityLabel=` (131 beim Start). Es fällt mit jedem
   übersetzten Bildschirm, egal welche Sprache darin stand.
+- **Ein fest eingetippter Produktname wird NIE übersetzt — er steht in keinem
+  Wörterbuch.** Am 2026-10-17 hat **Ian** die englische Oberfläche im Browser
+  aufgemacht und gemeldet, „Alle, die SimplySocial verwenden" stehe noch auf Deutsch.
+  Nachgesehen: Der Name stand an **vier** Stellen fest im sichtbaren Text
+  (`features/social/bild.ts` dreimal, `config/melden.ts` einmal) — ein Verstoss gegen
+  **harte Regel 3** („der Name steht an genau einer Stelle"), älter als die Übersetzung
+  und von keinem Prüfstand bemerkt. In der Übersetzung heisst er `{app}`; den Wert setzt
+  der Bildschirm ein, weil die Regel-Dateien importfrei sind und `BRAND` nicht lesen
+  können. Seither bewacht `pruef-sprache` die Regel, mit Gegenprobe.
+- **`pathlib.write_text()` LEERT die Datei, bevor es scheitert.** Beim Aufräumen von
+  `\uXXXX`-Fluchtfolgen in `i18n/en.ts` hat eine naive Regex die Emoji-Ersatzpaare
+  (`\ud83d\udd34` = 🔴) in einzelne Hälften verwandelt; `write_text` warf
+  `UnicodeEncodeError: surrogates not allowed` — **nach dem Öffnen im Schreibmodus.**
+  Ergebnis: 0 Bytes, 171 Zeilen weg. Gerettet hat es `git checkout`, weil der Stand
+  committet war. ⚠️ **Ersatzpaare zuerst zusammenfassen**, dann die einzelnen
+  Fluchtfolgen auflösen. Und: Eine Umschreibung einer Datei, die nicht committet ist,
+  ist ein Einsatz ohne Netz.
+- **Eine Umbenennung, die einen VERSPRECHENDEN Namen korrigiert, bricht die
+  Prüfstände — und das ist der Beweis, dass sie etwas prüfen.** `bildHuerdeText` →
+  `bildHuerde` (er liefert keinen Text mehr, sondern Schlüssel plus Zahl) hat
+  `pruef-bildwahl` und `80_bilder` an **fünf** Stellen erschlagen, zwei davon erst beim
+  zweiten Lauf, weil der erste Fehler die späteren verdeckte. Wer so etwas umbenennt,
+  fährt die abhängigen Prüfstände **bis sie grün sind**, nicht einmal.

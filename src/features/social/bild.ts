@@ -266,30 +266,63 @@ export function bildPfad(ichId: string, typ: string, zufall: string): string {
  * (harte Regel 17, und der Fall aus Phase 20.1: Der Lösch-Screen versprach seit Phase 7
  * das Gegenteil der Regel).
  */
-export function bildFolgen(): string[] {
+/**
+ * Die Wörterbuch-Schlüssel dieser Datei — **eigene Unions, ohne Import.** Dieselbe
+ * Bauart wie `anmeldeFolgen()`: Vier Prüfstände laden `bild.ts`, zwei davon in
+ * blankem Node, und sie ist importfrei. `t(…)` am Aufruf prüft die Schlüssel.
+ */
+type BildSatz =
+  | 'bild.offenAlle'
+  | 'bild.offenTausch'
+  | 'bild.kontoWeg'
+  | 'bild.linksAblauf'
+  | 'bild.nurFollower'
+  | 'bild.andereBuchstaben';
+type BildHuerde = 'bild.nurFormate' | 'bild.zuGross';
+type BildFehler = 'bild.keinZugriff' | 'bild.nichtUmwandelbar' | 'bild.nichtVorbereitet';
+
+/**
+ * Ein Satz, der noch Zahlen braucht.
+ *
+ * ⚠️ **Die ZAHLEN bleiben hier, nur der Wortlaut ist umgezogen** — harte Regel 17
+ * verlangt genau das: *„die Zahl kommt aus der Konstante, nicht aus dem Text"*.
+ * Gäbe `bildFolgen()` nur den Schlüssel zurück, müsste der Bildschirm
+ * `BILD_CACHE_SEKUNDEN` selbst lesen und selbst durch 60 teilen — und dann stünde
+ * die Rechnung wieder dort, wo sie am 2026-09-12 schon einmal zur Unwahrheit wurde.
+ *
+ * ⚠️ **`{app}` ist NICHT dabei**, und das ist kein Versehen: Diese Datei ist
+ * importfrei und kann `BRAND` nicht lesen. Den Namen setzt der Bildschirm ein.
+ */
+export type BildText = { schluessel: BildSatz; werte?: Record<string, number> };
+export type BildHuerdeText = { schluessel: BildHuerde; werte?: Record<string, number> };
+
+export function bildFolgen(): BildText[] {
   switch (BILD_SICHT) {
     case 'offen':
       return [
-        'Dein Bild sehen alle, die SimplySocial benutzen.',
+        { schluessel: 'bild.offenAlle' },
         // ❌ Hier stand „Wenn du es austauschst, ist das alte sofort weg." Das war
         // falsch und am echten Server gemessen: Die Datei ist sofort weg, das
         // Zwischenlager davor liefert sie aber noch eine Weile aus. Der Satz sagt
         // jetzt die Zahl, statt eine Gewissheit zu behaupten — und die Zahl kommt
         // aus der Konstante, nicht aus dem Text (harte Regel 17).
-        `Wenn du es austauschst, ist das alte innerhalb von ${Math.round(BILD_CACHE_SEKUNDEN / 60)} Minuten überall weg.`,
-        'Löschst du dein Konto, geht dein Bild mit.',
+        {
+          schluessel: 'bild.offenTausch',
+          werte: { min: Math.round(BILD_CACHE_SEKUNDEN / 60) },
+        },
+        { schluessel: 'bild.kontoWeg' },
       ];
     case 'signiert':
       return [
-        'Dein Bild sehen alle, die SimplySocial benutzen.',
-        'Weitergeleitete Links laufen nach einer Stunde ab.',
-        'Löschst du dein Konto, geht dein Bild mit.',
+        { schluessel: 'bild.offenAlle' },
+        { schluessel: 'bild.linksAblauf' },
+        { schluessel: 'bild.kontoWeg' },
       ];
     case 'nah':
       return [
-        'Dein Bild sehen nur Leute, die dir folgen oder mit dir verabredet sind.',
-        'Alle anderen sehen deine Anfangsbuchstaben.',
-        'Löschst du dein Konto, geht dein Bild mit.',
+        { schluessel: 'bild.nurFollower' },
+        { schluessel: 'bild.andereBuchstaben' },
+        { schluessel: 'bild.kontoWeg' },
       ];
   }
 }
@@ -301,11 +334,19 @@ export function bildFolgen(): string[] {
  * Ein 20-MB-SVG ist beides, und „das Format geht nicht" ist die Antwort, die dem
  * Menschen weiterhilft — „zu groß" führt ihn dazu, es kleiner zu machen und noch einmal
  * zu scheitern.
+ *
+ * ⚠️ **Hiess bis zum 2026-10-17 `bildHuerdeText`.** Umbenannt, weil er keinen
+ * Text mehr liefert, sondern einen Schlüssel samt Zahl — und ein Name, der mehr
+ * verspricht als die Funktion hält, wird abgeschaltet statt gelesen (dieselbe
+ * Lehre wie bei `pruef-glas`).
  */
-export function bildHuerdeText(typ: string, bytes: number): string | null {
-  if (!istErlaubterTyp(typ)) return 'Das geht nur als JPG, PNG oder WebP.';
+export function bildHuerde(typ: string, bytes: number): BildHuerdeText | null {
+  if (!istErlaubterTyp(typ)) return { schluessel: 'bild.nurFormate' };
   if (bytes > BILD_MAX_BYTES) {
-    return `Das Bild ist zu groß — ${Math.round(BILD_MAX_BYTES / 1024 / 1024)} MB sind das Höchste.`;
+    return {
+      schluessel: 'bild.zuGross',
+      werte: { mb: Math.round(BILD_MAX_BYTES / 1024 / 1024) },
+    };
   }
   return null;
 }
@@ -339,17 +380,17 @@ export type BildWahlStufe =
   | 'lesen' // das Foto kam zurück, ließ sich aber nicht lesen
   | 'umwandeln'; // gelesen, aber nicht in Bytes zu bringen
 
-export function bildFehlerText(stufe: BildWahlStufe): string {
+export function bildFehlerText(stufe: BildWahlStufe): BildFehler {
   switch (stufe) {
     case 'oeffnen':
-      return 'Deine Fotos ließen sich nicht öffnen. Schau in den Einstellungen nach, ob SimplySocial darauf zugreifen darf.';
+      return 'bild.keinZugriff';
     case 'lesen':
       // Der wahrscheinlichste Fall bei einem modernen iPhone: ein Foto, das nicht
       // einfach ein Bild ist (Live Photo, ProRAW, HDR mit Gain Map). Der Rat ist
       // deshalb „ein anderes" und nicht „nochmal" — nochmal scheitert genauso.
-      return 'Dieses Foto konnte dein Handy nicht umwandeln. Nimm ein anderes — bei Live Photos und RAW kommt das vor.';
+      return 'bild.nichtUmwandelbar';
     case 'umwandeln':
-      return 'Das Foto ließ sich nicht vorbereiten. Meistens hilft ein kleineres.';
+      return 'bild.nichtVorbereitet';
   }
   // Erschöpfend, mit `never` abgeschlossen — dieselbe Technik wie
   // `torwaechterZeigt()` (harte Regel 77): Eine vierte Stufe ist dann ein

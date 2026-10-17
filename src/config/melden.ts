@@ -1,3 +1,4 @@
+import { BRAND } from '@/config/brand';
 import type { ReportReason, ReportTarget } from '@/types/models';
 
 /**
@@ -32,7 +33,9 @@ const POST_GRUENDE: MeldeGrund[] = [
   {
     wert: 'dating',
     label: 'Gemeint als Anmache',
-    erklaerung: 'Liest sich wie eine Dating-Anzeige — dafür ist SimplySocial nicht da',
+    // ⚠️ `BRAND.name`, nicht der Name als Text: harte Regel 3. Hier stand er fest,
+    // bis `pruef-sprache` ihn am 2026-10-17 gefunden hat.
+    erklaerung: `Liest sich wie eine Dating-Anzeige — dafür ist ${BRAND.name} nicht da`,
   },
   { wert: 'fake', label: 'Gibt es so nicht', erklaerung: 'Erfundenes Treffen oder falsche Angaben' },
   {

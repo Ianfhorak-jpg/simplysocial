@@ -31,7 +31,7 @@ import {
 import {
   bildFehlerText,
   bildFolgen,
-  bildHuerdeText,
+  bildHuerde,
   BildWahlFehler,
 } from '@/features/social/bild';
 import { BILDWAHL_LAEUFT, bildWaehlen } from '@/lib/bild-waehlen';
@@ -79,7 +79,11 @@ export default function EinstellungenScreen() {
   // Die Hürde ist ein ZUSTAND und kein `alert`: Der Satz muss neben dem Knopf
   // stehen bleiben, bis jemand es noch einmal versucht — ein Hinweis, der von
   // selbst verschwindet, ist bei „warum geht mein Foto nicht" wertlos.
-  const [bildHuerde, setBildHuerde] = useState<string | null>(null);
+  // ⚠️ **Hiess bis zum 2026-10-17 `bildHuerde` — wie die importierte Funktion.**
+  // Seit die Texte aus dem Wörterbuch kommen, wird `bildHuerde()` hier aufgerufen,
+  // und der Zustand hätte sie BESCHATTET: `bildHuerde(datei.typ, …)` hätte versucht,
+  // einen String aufzurufen. Dieselbe Falle, vor der `i18n/index.ts` für `t` warnt.
+  const [bildHuerdeSatz, setBildHuerdeSatz] = useState<string | null>(null);
   const bildLaeuft = useWartetAuf('profilbildSetzen', ich.id);
 
   // ── Phase 20.6-d: das runde Fenster ──────────────────────────────────────
@@ -114,10 +118,10 @@ export default function EinstellungenScreen() {
       // Die Sätze kommen aus `bild.ts` und nicht von hier (harte Regel 88). Was
       // wirklich passiert ist, trägt der Fehler in seiner `cause` — auf den
       // Bildschirm kommt es nicht (der Fund vom 2026-09-03).
-      setBildHuerde(
-        fehler instanceof BildWahlFehler
-          ? bildFehlerText(fehler.stufe)
-          : bildFehlerText('lesen'),
+      setBildHuerdeSatz(
+        t(fehler instanceof BildWahlFehler ? bildFehlerText(fehler.stufe) : bildFehlerText('lesen'), {
+          app: BRAND.name,
+        }),
       );
       return;
     }
@@ -127,7 +131,7 @@ export default function EinstellungenScreen() {
 
     // Ein neuer Versuch räumt die alte Meldung weg. Ohne diese Zeile stünde nach
     // einem geglückten zweiten Anlauf immer noch der Satz vom ersten da.
-    setBildHuerde(null);
+    setBildHuerdeSatz(null);
 
     // ── Seit 20.6-d gibt es ZWEI Antworten, und der Compiler zählt mit ───────
     // Am Gerät kommt ein Foto zurück, das erst durchs runde Fenster muss; im
@@ -139,7 +143,7 @@ export default function EinstellungenScreen() {
         // Ein Foto ohne Fläche. `zuschnittRechteck()` würde werfen, und der Wurf
         // käme aus dem Render heraus — also aus einer Stelle, an der ihn niemand
         // fängt. Gefragt wird deshalb HIER, bevor das Fenster aufgeht.
-        setBildHuerde(bildFehlerText('lesen'));
+        setBildHuerdeSatz(t(bildFehlerText('lesen'), { app: BRAND.name }));
         return;
       }
       setZuschnitt(wahl.quelle);
@@ -166,10 +170,11 @@ export default function EinstellungenScreen() {
       // Grund ist der Rat selbst: `bildFehlerText('lesen')` sagt „nimm ein
       // anderes" — das kann man im offenen Zuschneide-Fenster gar nicht.
       setZuschnitt(null);
-      setBildHuerde(
-        fehler instanceof BildWahlFehler
-          ? bildFehlerText(fehler.stufe)
-          : bildFehlerText('umwandeln'),
+      setBildHuerdeSatz(
+        t(
+          fehler instanceof BildWahlFehler ? bildFehlerText(fehler.stufe) : bildFehlerText('umwandeln'),
+          { app: BRAND.name },
+        ),
       );
       return;
     } finally {
@@ -195,8 +200,8 @@ export default function EinstellungenScreen() {
     // Vor dem Hochladen fragen, nicht danach: Der Bucket weist dieselben Fälle ab
     // (gemessen in `80_bilder.mjs`), aber erst nach dem Warten und mit einer
     // Meldung auf Englisch. Die Regel steht in `bild.ts`, nicht hier.
-    const huerde = bildHuerdeText(datei.typ, datei.bytes);
-    setBildHuerde(huerde);
+    const huerde = bildHuerde(datei.typ, datei.bytes);
+    setBildHuerdeSatz(huerde && t(huerde.schluessel, huerde.werte));
     if (huerde) return;
 
     // ⚠️ **`schreibVorgang` fängt NICHT alles, und das war der zweite Teil des
@@ -209,7 +214,7 @@ export default function EinstellungenScreen() {
     try {
       await profilbildSetzen(datei);
     } catch {
-      setBildHuerde('Das Hochladen ist an etwas Unerwartetem gescheitert. Sag Ian Bescheid.');
+      setBildHuerdeSatz(t('bild.hochladenUnerwartet'));
     }
   }
 
@@ -287,16 +292,18 @@ export default function EinstellungenScreen() {
           />
         ) : null}
 
-        {bildHuerde ? (
+        {bildHuerdeSatz ? (
           <SsText variant="caption" color={danger.aufGrund}>
-            {bildHuerde}
+            {bildHuerdeSatz}
           </SsText>
         ) : null}
 
         {ich.photoUrl
           ? bildFolgen().map((satz) => (
-              <SsText key={satz} variant="caption" color={colors.inkSoft}>
-                {satz}
+              <SsText key={satz.schluessel} variant="caption" color={colors.inkSoft}>
+                {/* Der Name kommt von HIER, nicht aus `bild.ts` — die Datei ist
+                    importfrei und kennt `BRAND` nicht (harte Regel 3). */}
+                {t(satz.schluessel, { app: BRAND.name, ...satz.werte })}
               </SsText>
             ))
           : null}

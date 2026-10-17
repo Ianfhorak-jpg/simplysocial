@@ -295,10 +295,12 @@ abschnitt('Der Server prüft selbst — nicht nur die App');
   pruefWahr('… und eine zu große Datei ebenso', hoch2.error !== null);
 
   // Die App sagt dazu einen Satz, den ein Mensch versteht — und zwar den über das
-  // FORMAT, wenn beides zutrifft (siehe `bildHuerdeText()`).
+  // FORMAT, wenn beides zutrifft (siehe `bildHuerde()`, bis 2026-10-17
+  // `bildHuerdeText`). Geprüft wird der Schlüssel: Der Wortlaut liegt seit der
+  // Übersetzung im Wörterbuch, die REIHENFOLGE der beiden Hürden liegt weiter hier.
   pruef('… und die App nennt bei beidem zuerst das Format',
-        bild.bildHuerdeText('image/svg+xml', bild.BILD_MAX_BYTES * 4),
-        'Das geht nur als JPG, PNG oder WebP.');
+        bild.bildHuerde('image/svg+xml', bild.BILD_MAX_BYTES * 4)?.schluessel,
+        'bild.nurFormate');
 }
 
 abschnitt('Entfernen');

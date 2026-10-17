@@ -33,7 +33,7 @@ if (!ARBEIT || !WURZEL) {
 const JS = join(ARBEIT, 'js');
 
 const { base64ZuBytes, base64Bytes } = await import(join(JS, 'lib', 'base64.mjs'));
-const { BILD_MAX_BYTES, bildHuerdeText } = await import(join(JS, 'features', 'social', 'bild.mjs'));
+const { BILD_MAX_BYTES, bildHuerde } = await import(join(JS, 'features', 'social', 'bild.mjs'));
 
 let haken = 0;
 let kreuze = 0;
@@ -178,10 +178,18 @@ abschnitt('Die Hürde greift vor dem Dekodieren');
   const b64Laenge = Math.ceil(zuGross / 3) * 4;
   pruef('gerechnete Größe trifft die Grenze',
     base64Bytes('A'.repeat(b64Laenge)) > BILD_MAX_BYTES, true);
-  pruef('und die Hürde sagt es auf Deutsch',
-    bildHuerdeText('image/jpeg', zuGross), 'Das Bild ist zu groß — 5 MB sind das Höchste.');
+  // ⚠️ **Geprüft wird SCHLÜSSEL und ZAHL, nicht der Satz** — seit dem 2026-10-17
+  // gibt `bildHuerde()` (vorher `bildHuerdeText`) einen Wörterbuch-Schlüssel samt
+  // Zahl zurück, weil `bild.ts` importfrei bleiben muss und den Wortlaut deshalb
+  // nicht selbst halten kann. **Die 5 bleibt hier gemessen** — sie ist das, woran
+  // die Entscheidung hängt (harte Regel 17), und genau sie wäre beim Umzug des
+  // Wortlauts beinahe mit ausgewandert.
+  pruef('und die Hürde nennt den richtigen Schlüssel',
+    bildHuerde('image/jpeg', zuGross)?.schluessel, 'bild.zuGross');
+  pruef('… und die Zahl darin ist 5 (MB)',
+    bildHuerde('image/jpeg', zuGross)?.werte?.mb, 5);
   pruef('ein Bild knapp darunter geht durch',
-    bildHuerdeText('image/jpeg', BILD_MAX_BYTES), null);
+    bildHuerde('image/jpeg', BILD_MAX_BYTES), null);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -196,9 +204,9 @@ abschnitt('HEIC — der Grund für `base64: true`');
 // iPhone-Foto eine Absage. Diese zwei Zeilen halten das fest, damit es auffällt,
 // falls jemand `BILD_TYPEN` oder den Zweig später umstellt.
 pruef('image/heic ist NICHT erlaubt — deshalb darf `uri` nicht die Quelle sein',
-  bildHuerdeText('image/heic', 1000), 'Das geht nur als JPG, PNG oder WebP.');
+  bildHuerde('image/heic', 1000)?.schluessel, 'bild.nurFormate');
 pruef('image/jpeg ist erlaubt — und base64 liefert immer JPEG',
-  bildHuerdeText('image/jpeg', 1000), null);
+  bildHuerde('image/jpeg', 1000), null);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  6. DER FUND VOM GERÄT — ES GIBT DORT KEIN `crypto`

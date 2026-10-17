@@ -1112,6 +1112,9 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Eine „importfreie Regel-Datei" verträgt auch kein `import type` — der Grund ist das AUFLÖSEN, nicht die Laufzeit
 - `lokal` hängt an der MENGE (Grenze um 20 Zeilen) und hängt STILL — in Blöcken von ~15 arbeiten
 - Eine Qualitätsmessung, die an der SPRACHE hängt, steht bei echter Arbeit still
+- Ein fest eingetippter Produktname wird NIE übersetzt — er steht in keinem Wörterbuch (harte Regel 3)
+- `pathlib.write_text()` LEERT die Datei, bevor es scheitert — Ersatzpaare zuerst zusammenfassen
+- Eine Umbenennung, die einen VERSPRECHENDEN Namen korrigiert, bricht die Prüfstände — bis sie grün sind fahren
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)
