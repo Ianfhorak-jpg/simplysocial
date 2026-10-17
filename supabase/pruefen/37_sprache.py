@@ -110,6 +110,34 @@ pruef('`de.ts` endet auf `as const`',
       'ohne `as const` gibt es die Punkt-Pfade in index.ts nicht')
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  1b · Der Claim steht zweimal — und muss gleich bleiben
+# ══════════════════════════════════════════════════════════════════════════════
+print('')
+print('── Der doppelte Claim ──')
+
+# ⚠️ **Warum er überhaupt zweimal dasteht**, steht ausführlich an `marke` in
+# `de.ts`: `app/+html.tsx` wird ausgeliefert, BEVOR das JavaScript läuft (harte
+# Regel 21) — dort gibt es kein `t()`, nur eine `<meta description>`. Der Satz
+# muss deshalb auch als gewöhnliche Konstante in `config/brand.ts` existieren.
+#
+# **Eine Doppelung, die niemand bewacht, läuft auseinander.** Wer den Claim in der
+# App ändert und `brand.ts` vergisst, hinterlässt eine Suchmaschinen-Beschreibung,
+# die etwas anderes verspricht als der erste Bildschirm — und merkt es nie, weil
+# die Hülle niemand ansieht, der die App benutzt.
+BRAND_DATEI = SRC / 'config' / 'brand.ts'
+brand = BRAND_DATEI.read_text(encoding='utf-8') if BRAND_DATEI.exists() else ''
+m_brand = re.search(r"claim:\s*'([^']+)'", brand)
+m_de = re.search(r"marke:\s*\{[^}]*?claim:\s*'([^']+)'", de_text, re.S)
+
+pruef('`brand.ts` nennt einen Claim', m_brand is not None,
+      'eine Textsuche mit null Treffern beweist nichts')
+pruef('`de.ts` nennt denselben Claim unter `marke`', m_de is not None)
+if m_brand and m_de:
+    pruef('… und beide sind Zeichen für Zeichen gleich',
+          m_brand.group(1) == m_de.group(1),
+          f'brand.ts: {m_brand.group(1)[:40]!r} · de.ts: {m_de.group(1)[:40]!r}')
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  2 · Deutsche Literale außerhalb von i18n/ — ACTAs teurer Fehler
 # ══════════════════════════════════════════════════════════════════════════════
 print('')

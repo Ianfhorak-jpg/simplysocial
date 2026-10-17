@@ -34,6 +34,15 @@ type Weiter<T> = {
 };
 
 export const en: Weiter<typeof de> = {
+  marke: {
+    // ⚠️ **Markentext — das ist Ians Stimme, nicht meine.** „jetzt Lust haben"
+    // ist im Deutschen beiläufig und auf Englisch schwer zu halten; „up for it
+    // right now" trifft es am nächsten. Es ist der ERSTE Satz, den ein
+    // Apple-Prüfer liest, deshalb steht hier etwas statt einer Lücke — aber er
+    // gehört vorgelegt (wie der Leitsatz in `i18n/WOERTER.md`).
+    claim: 'Find people who are up for it right now.',
+  },
+
   gemein: {
     abbrechen: 'Cancel',
     fertig: 'Done',

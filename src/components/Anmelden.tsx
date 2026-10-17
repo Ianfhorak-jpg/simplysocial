@@ -177,7 +177,7 @@ export function Anmelden() {
           </SsText>
         </SsText>
         <SsText variant="body" center color={colors.inkSoft} style={styles.claim}>
-          {BRAND.claim}
+          {t('marke.claim')}
         </SsText>
 
         {schritt === 'wahl' ? (

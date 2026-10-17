@@ -26,6 +26,21 @@
  */
 
 export const de = {
+  /**
+   * Die Marke in Worten.
+   *
+   * ⚠️ **Der Claim steht ZWEIMAL, und das ist kein Versehen.** Hier für die App —
+   * und in `config/brand.ts` für `app/+html.tsx`, die HTML-Hülle. Die wird
+   * ausgeliefert, **bevor** das JavaScript läuft (harte Regel 21): Dort gibt es
+   * kein `t()`, keine Sprache und keine Wahl, nur eine `<meta description>`.
+   * Zusammenführen geht nicht, ohne die Hülle übersetzbar zu machen — und die
+   * sieht niemand, der die App benutzt, sondern nur Suchmaschinen.
+   * **`npm run pruef-sprache` hält die deutschen Fassungen gleich.**
+   */
+  marke: {
+    claim: 'Finde Leute, die jetzt Lust haben.',
+  },
+
   /** Wörter, die überall vorkommen. */
   gemein: {
     abbrechen: 'Abbrechen',
