@@ -3,6 +3,7 @@ import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { SichtMarke } from './SichtMarke';
 import { SsAvatar, SsIconText, SsText } from './ui';
 
+import { t } from '@/i18n';
 import { alterAmPost } from '@/config/alter';
 import { CATEGORIES } from '@/config/categories';
 import { freiePlaetze, istOffen, type FeedEintrag } from '@/features/posts/hooks';
@@ -107,13 +108,14 @@ export function PostCard({
           Pille und die Zeit stand UNTER dem Titel; zusammengefasst ist es eine Zeile
           weniger und liest sich als ein Satz („Sport, heute um fünf"). */}
       <View style={styles.kopf}>
-        {/* `CATEGORIES[…].label` und NICHT `post.category` — der Schlüssel heißt
-            `food`, das Wort heißt „Essen". Die Wörter stehen an einer Stelle
-            (`config/categories.ts`), damit sie nicht an zwei Orten entstehen; wer
-            hier den Schlüssel nimmt, schreibt englische Brocken in eine deutsche
-            Oberfläche. */}
+        {/* `CATEGORIES[…].labelKey` und NICHT `post.category` — der Schlüssel der
+            KATEGORIE heißt `food`, der Schlüssel des WORTES `kategorie.essen`. Wer
+            hier `post.category` nimmt, schreibt englische Brocken in die Oberfläche.
+            ⚠️ Seit dem 2026-10-17 steht in `CATEGORIES` ein Wörterbuch-Schlüssel
+            statt des Wortes — übersetzt wird beim ZEICHNEN, weil eine modulweite
+            Konstante sonst die Startsprache einfriert (`i18n/index.ts`). */}
         <SsText variant="caption" color={palette.onSoft} style={styles.kategorie}>
-          {CATEGORIES[post.category].label.toUpperCase()}
+          {t(CATEGORIES[post.category].labelKey).toUpperCase()}
         </SsText>
         <SsText variant="caption" color={colors.inkSoft} numberOfLines={1} style={styles.wann}>
           {'·  '}

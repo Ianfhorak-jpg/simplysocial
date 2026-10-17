@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'rea
 import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
 
+import { t } from '@/i18n';
 import { CATEGORIES } from '@/config/categories';
 import { categoryColors, colors, radius, spacing } from '@/theme';
 import type { ActivityCategory } from '@/types/models';
@@ -51,7 +52,7 @@ export function SsChip({ category, label, selected, onPress, style }: SsChipProp
           sonst wäre das Sport-Gelb auf seinem eigenen Hellton wieder unlesbar. */}
       {meta ? <SsIcon name={meta.icon} size={15} color={textFarbe} /> : null}
       <SsText variant="caption" color={textFarbe} numberOfLines={1} style={styles.text}>
-        {meta ? meta.label : label}
+        {meta ? t(meta.labelKey) : label}
       </SsText>
     </View>
   );

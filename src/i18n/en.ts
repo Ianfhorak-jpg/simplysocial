@@ -90,6 +90,74 @@ export const en: Weiter<typeof de> = {
   feed: {
     leerMitFilter: 'Nothing going on with this filter',
     binDabei: "I'm in",
+    zurueckKarte: 'Back to the map',
+    posten: 'Post',
+    etwasPosten: 'Post something',
+    stapelDurch: "That's the whole stack",
+    allesFuerHeute: "That's it for today",
+    // Hier heisst „Rückgängig" WIRKLICH rückgängig — ein Wisch wird zurückgeholt.
+    // (Anders als `einstellungen.aufheben`, wo es eine Blockierung aufhebt.)
+    rueckgaengig: 'Undo',
+    weggewischt: '"{titel}" swiped away',
+    zumFeed: 'Go to feed',
+  },
+
+  filter: {
+    alle: 'All',
+    // Gefiltert wird über eine Spanne von Jahrgängen. „Certain birth years" wäre
+    // wörtlich und unverständlich; in einem Filter liest sich die Altersspanne.
+    bestimmteJahrgaenge: 'Specific age range',
+    alleZuruecksetzen: 'Reset all filters',
+    zuruecksetzen: 'Reset filters',
+  },
+
+  kategorie: {
+    sport: 'Sport',
+    essen: 'Food',
+    lernen: 'Study',
+    kultur: 'Culture',
+    draussen: 'Outdoors',
+    kreativ: 'Creative',
+  },
+
+  niveau: {
+    egal: "Any level",
+    anfaenger: 'Beginner',
+    fortgeschritten: 'Intermediate',
+    sehrGut: 'Advanced',
+  },
+
+  anfragen: {
+    freiVon: '{frei} of {gesamt} spots left',
+    allePlaetzeVergeben: 'All spots taken',
+    vollHinweis:
+      'All spots are taken. The request stays — if someone drops out, you can confirm it.',
+    ohneNachricht: 'Asked without a message.',
+    ablehnen: 'Decline',
+    bestaetigen: 'Confirm',
+    // „Aufnehmen" heisst: jemanden in DEINE Gruppe lassen. Gegenstück zu
+    // „Decline", deshalb „Approve" — nicht „Accept", das steht unten für den
+    // umgekehrten Fall (man nimmt selbst eine Einladung an).
+    aufnehmen: 'Approve',
+    neinDanke: 'No thanks',
+    annehmen: 'Accept',
+    niemandMitmachen: 'Nobody wants in yet',
+    niemandMitmachenHinweis:
+      'When someone taps "I\'m in" on one of your posts, they show up here — and you decide.',
+    nirgendsZugesagt: "You haven't joined anything yet",
+    imFeedWasDabei: "There's bound to be something in the feed.",
+  },
+
+  chat: {
+    gruppen: 'Groups',
+    nochKeinChat: 'No chats yet',
+    nochKeinChatHinweis:
+      'Once someone confirms your request — or you confirm one — the chat shows up here. And if you follow each other, you can message directly: the button for that is on their profile.',
+  },
+
+  profil: {
+    einstellungen: 'Settings',
+    fuss: 'Blocked people · Terms of Use · Delete account',
   },
 
   // ⚠️ **Von Claude übersetzt, nicht vom lokalen Modell.** `lokal` ist bei diesem

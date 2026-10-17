@@ -1115,6 +1115,9 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Ein fest eingetippter Produktname wird NIE übersetzt — er steht in keinem Wörterbuch (harte Regel 3)
 - `pathlib.write_text()` LEERT die Datei, bevor es scheitert — Ersatzpaare zuerst zusammenfassen
 - Eine Umbenennung, die einen VERSPRECHENDEN Namen korrigiert, bricht die Prüfstände — bis sie grün sind fahren
+- `lokal` ist für Übersetzungsblöcke unzuverlässig — 5 von 8 Läufen hingen STILL, je 5+ Minuten
+- `examples` in `categories.ts` war toter Code — und das ganze Wörterbuch landet im Bündel
+- `CATEGORIES`/`LEVEL_LABELS` sind modulweite Konstanten — ein `t()` darin friert die Startsprache EIN
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

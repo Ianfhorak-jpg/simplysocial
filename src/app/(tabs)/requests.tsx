@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, SectionList, StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { SsAvatar, SsButton, SsCard, SsChip, SsIcon, SsIconText, SsScreen, SsSegment, SsText } from '@/components/ui';
 import { getState, useWartetAuf } from '@/features/store';
 import { mitgliederText } from '@/features/groups/gruppe';
@@ -241,7 +242,9 @@ function GruppenKopf({ post }: { post: Post }) {
       <View style={styles.gruppenZeile}>
         <SsChip category={post.category} />
         <SsText variant="caption" color={frei > 0 ? colors.inkSoft : colors.ink}>
-          {frei > 0 ? `${frei} von ${post.spotsTotal} frei` : 'Alle Plätze vergeben'}
+          {frei > 0
+          ? t('anfragen.freiVon', { frei, gesamt: post.spotsTotal })
+          : t('anfragen.allePlaetzeVergeben')}
         </SsText>
       </View>
       <SsText variant="heading" numberOfLines={1}>
@@ -292,7 +295,7 @@ function EingehendeZeile({ eintrag }: { eintrag: AnfrageEintrag }) {
         </View>
       ) : (
         <SsText variant="caption" color={colors.inkSoft}>
-          Ohne Nachricht angefragt.
+          {t('anfragen.ohneNachricht')}
         </SsText>
       )}
 
@@ -302,15 +305,14 @@ function EingehendeZeile({ eintrag }: { eintrag: AnfrageEintrag }) {
           der Screen, warum er gerade nicht geht und was ihn wieder aufmacht. */}
       {voll ? (
         <SsText variant="caption" color={colors.inkSoft}>
-          Alle Plätze sind vergeben. Die Anfrage bleibt stehen — springt jemand ab, kannst
-          du sie bestätigen.
+          {t('anfragen.vollHinweis')}
         </SsText>
       ) : null}
 
       <View style={styles.knopfZeile}>
         <SsButton
           variant="danger"
-          label="Ablehnen"
+          label={t('anfragen.ablehnen')}
           block
           style={styles.knopf}
           onPress={() => void anfrageAblehnen(anfrage.id)}
@@ -318,7 +320,7 @@ function EingehendeZeile({ eintrag }: { eintrag: AnfrageEintrag }) {
         <SsButton
           variant="category"
           category={post.category}
-          label="Bestätigen"
+          label={t('anfragen.bestaetigen')}
           block
           disabled={voll}
           wartet={wartet}
@@ -453,7 +455,7 @@ function GruppenAnfrageZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) {
       <View style={styles.knopfZeile}>
         <SsButton
           variant="danger"
-          label="Ablehnen"
+          label={t('anfragen.ablehnen')}
           block
           style={styles.knopf}
           onPress={() => void beitrittAblehnen(anfrage.id)}
@@ -461,7 +463,7 @@ function GruppenAnfrageZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) {
         <SsButton
           variant="category"
           category={gruppe.category}
-          label="Aufnehmen"
+          label={t('anfragen.aufnehmen')}
           block
           wartet={wartet}
           style={styles.knopf}
@@ -538,7 +540,7 @@ function EinladungZeile({ eintrag }: { eintrag: EinladungEintrag }) {
 
       <View style={styles.knopfZeile}>
         <SsButton
-          label="Nein danke"
+          label={t('anfragen.neinDanke')}
           block
           style={styles.knopf}
           onPress={() => void einladungAblehnen(einladung.id)}
@@ -546,7 +548,7 @@ function EinladungZeile({ eintrag }: { eintrag: EinladungEintrag }) {
         <SsButton
           variant="category"
           category={gruppe.category}
-          label="Annehmen"
+          label={t('anfragen.annehmen')}
           block
           wartet={wartet}
           style={styles.knopf}
@@ -619,11 +621,10 @@ function NochNichts({ art }: { art: 'bekommen' | 'geschickt' }) {
       <View style={styles.leer}>
         <SsIcon name="hand" size={46} color={colors.inkSoft} />
         <SsText variant="heading" center>
-          Noch will niemand mitmachen
+          {t('anfragen.niemandMitmachen')}
         </SsText>
         <SsText variant="body" center color={colors.inkSoft}>
-          Sobald jemand bei einem deiner Posts „Bin dabei“ drückt, steht er hier — und du
-          entscheidest.
+          {t('anfragen.niemandMitmachenHinweis')}
         </SsText>
       </View>
     );
@@ -633,13 +634,13 @@ function NochNichts({ art }: { art: 'bekommen' | 'geschickt' }) {
     <View style={styles.leer}>
       <SsIcon name="auge" size={46} color={colors.inkSoft} />
       <SsText variant="heading" center>
-        Du hast noch nirgends zugesagt
+        {t('anfragen.nirgendsZugesagt')}
       </SsText>
       <SsText variant="body" center color={colors.inkSoft}>
-        Im Feed ist bestimmt was dabei.
+        {t('anfragen.imFeedWasDabei')}
       </SsText>
       <SsButton
-        label="Zum Feed"
+        label={t('feed.zumFeed')}
         icon="haus"
         style={styles.leerKnopf}
         onPress={() => router.push('/')}

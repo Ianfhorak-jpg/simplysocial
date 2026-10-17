@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { Profil } from '@/components/Profil';
 import { SsButton, SsScreen, SsText } from '@/components/ui';
 import { useCurrentUser } from '@/features/social/hooks';
@@ -48,14 +49,14 @@ export default function ProfileScreen() {
         fuss={
           <View style={styles.fuss}>
             <SsButton
-              label="Einstellungen"
+              label={t('profil.einstellungen')}
               icon="regler"
               variant="ghost"
               block
               onPress={() => router.push('/einstellungen')}
             />
             <SsText variant="caption" color={colors.inkSoft} center>
-              Blockierte Personen · Nutzungsbedingungen · Account löschen
+              {t('profil.fuss')}
             </SsText>
           </View>
         }

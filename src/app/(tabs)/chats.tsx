@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, SectionList, StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { SsAvatar, SsButton, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { useChatListe, type ChatEintrag } from '@/features/chat/hooks';
 import { NACHKLANG_TAGE } from '@/features/chat/lifecycle';
@@ -152,7 +153,7 @@ export default function ChatsScreen() {
         <Pressable
           onPress={() => router.push('/gruppen')}
           accessibilityRole="button"
-          accessibilityLabel="Gruppen"
+          accessibilityLabel={t('chat.gruppen')}
           hitSlop={spacing.sm}
           style={({ pressed }) => [styles.gruppenKnopf, pressed && styles.kopfGedrueckt]}>
           <SsIcon name="personen" size={22} color={colors.ink} />
@@ -295,14 +296,12 @@ function NochKeinChat() {
     <View style={styles.leer}>
       <SsIcon name="sprechblase" size={46} color={colors.inkSoft} />
       <SsText variant="heading" center>
-        Noch kein Chat
+        {t('chat.nochKeinChat')}
       </SsText>
       <SsText variant="body" center color={colors.inkSoft}>
-        Sobald jemand deine Anfrage bestätigt — oder du eine bestätigst — steht der Chat
-        dazu hier. Und wenn ihr einander folgt, kannst du direkt schreiben: der Knopf
-        dafür steht auf dem Profil.
+        {t('chat.nochKeinChatHinweis')}
       </SsText>
-      <SsButton label="Zum Feed" icon="haus" style={styles.leerKnopf} onPress={() => router.push('/')} />
+      <SsButton label={t('feed.zumFeed')} icon="haus" style={styles.leerKnopf} onPress={() => router.push('/')} />
     </View>
   );
 }

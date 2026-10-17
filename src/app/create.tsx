@@ -8,6 +8,7 @@ import {
   type ScrollView,
 } from 'react-native';
 
+import { t } from '@/i18n';
 import { DoppelHinweis } from '@/components/DoppelHinweis';
 import { PostCard } from '@/components/PostCard';
 import {
@@ -582,7 +583,7 @@ export default function CreateScreen() {
               {LEVELS.map((l) => (
                 <SsChip
                   key={l}
-                  label={LEVEL_LABELS[l]}
+                  label={t(LEVEL_LABELS[l])}
                   selected={level === l}
                   onPress={() => setLevel(l)}
                 />

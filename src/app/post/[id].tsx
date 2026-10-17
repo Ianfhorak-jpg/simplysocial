@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { useSichtText } from '@/components/SichtMarke';
 import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsIcon, SsInput, SsScreen, SsText } from '@/components/ui';
 import { alterAmDetail } from '@/config/alter';
@@ -294,7 +295,7 @@ export default function PostDetailScreen() {
               leise={!post.meetingPoint}
             />
             <Trenner />
-            <Zeile icon="ziel" label="Können" wert={LEVEL_LABELS[post.level]} />
+            <Zeile icon="ziel" label="Können" wert={t(LEVEL_LABELS[post.level])} />
             {/* Nur, wenn der Verfasser wirklich eingeschränkt hat. Eine Zeile „Für wen:
                 Für alle" wäre an jedem zweiten Post eine Zeile, die nichts sagt — und
                 genau dadurch übersieht man sie dort, wo sie etwas sagt. Dieselbe Regel

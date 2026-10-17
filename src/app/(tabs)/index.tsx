@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { AntwortLeiste } from '@/components/AntwortLeiste';
 import { KartenBlase } from '@/components/KartenBlase';
 import { PostCard } from '@/components/PostCard';
@@ -625,7 +626,7 @@ export default function FeedScreen() {
     return (
       <SsScreen tabScreen keyboard scrolltSelbst contentStyle={styles.seite}>
         <View style={styles.bezirkKopf}>
-          <SsBack label="Zurück zur Karte" onPress={() => setBezirkStapel(false)} />
+          <SsBack label={t('feed.zurueckKarte')} onPress={() => setBezirkStapel(false)} />
           <SsText variant="label" numberOfLines={1} style={styles.bezirkTitel}>
             {bezirkUeberschrift(filter.bezirk, eintraege.length)}
           </SsText>
@@ -645,7 +646,7 @@ export default function FeedScreen() {
                 vielleicht nebenan noch etwas los.
               </SsText>
               <SsButton
-                label="Zurück zur Karte"
+                label={t('feed.zurueckKarte')}
                 icon="karte"
                 variant="ghost"
                 onPress={() => setBezirkStapel(false)}
@@ -821,7 +822,7 @@ function PostenKnopf() {
       onPress={() => router.push('/create')}
       {...druck.griff}
       accessibilityRole="button"
-      accessibilityLabel="Posten"
+      accessibilityLabel={t('feed.posten')}
       // `druck.stil` zuletzt — sonst überschriebe der Style die Animation still.
       style={[styles.posten, druck.stil]}>
       <SsIcon name="stift" size={20} color={accent.onBase} />
@@ -1204,7 +1205,7 @@ function StapelDurch({ filterAktiv }: { filterAktiv: boolean }) {
     <View style={styles.durch}>
       <View style={styles.durchText}>
         <SsText variant="heading">
-          {filterAktiv ? 'Hier ist der Stapel durch' : 'Das war alles für heute'}
+          {t(filterAktiv ? 'feed.stapelDurch' : 'feed.allesFuerHeute')}
         </SsText>
         <SsText variant="caption" color={colors.inkSoft}>
           {filterAktiv
@@ -1215,7 +1216,7 @@ function StapelDurch({ filterAktiv }: { filterAktiv: boolean }) {
       {/* `alignSelf` muss sein: SsButton setzt für schmale Knöpfe selbst
           'flex-start' und schlägt damit das 'alignItems: center' hier. */}
       <SsButton
-        label="Posten"
+        label={t('feed.posten')}
         icon="stift"
         style={styles.durchKnopf}
         onPress={() => router.push('/create')}
@@ -1243,7 +1244,7 @@ function Rueckgaengig({ eintrag, onZurueck }: { eintrag: FeedEintrag; onZurueck:
   return (
     <View style={styles.rueck}>
       <SsText variant="caption" color={colors.bg} numberOfLines={1} style={styles.rueckText}>
-        „{eintrag.post.title}" weggewischt
+        {t('feed.weggewischt', { titel: eintrag.post.title })}
       </SsText>
       <Pressable
         onPress={onZurueck}
@@ -1251,7 +1252,7 @@ function Rueckgaengig({ eintrag, onZurueck }: { eintrag: FeedEintrag; onZurueck:
         hitSlop={spacing.sm}
         style={styles.rueckKnopf}>
         <SsText variant="label" color={colors.bg}>
-          Rückgängig
+          {t('feed.rueckgaengig')}
         </SsText>
       </Pressable>
     </View>
@@ -1696,7 +1697,7 @@ function FilterBereich({
           umbricht, schiebt beim Tippen den ganzen Bereich auseinander. */}
       <FilterGruppe titel="Kategorie">
         <SsChip
-          label="Alle"
+          label={t('filter.alle')}
           selected={filter.kategorie === 'alle'}
           onPress={() => setzen('kategorie', 'alle')}
         />
@@ -1776,7 +1777,7 @@ function FilterBereich({
             onPress={() => setzen('alter', { kind: 'egal' })}
           />
           <SsChip
-            label="Bestimmte Jahrgänge"
+            label={t('filter.bestimmteJahrgaenge')}
             selected={filter.alter.kind === 'spanne'}
             onPress={() =>
               setzen('alter', { kind: 'spanne', ...spanneUmJahrgang(meinJahrgang) })
@@ -1802,7 +1803,7 @@ function FilterBereich({
       {aktiv ? (
         <Pressable onPress={zuruecksetzen} accessibilityRole="button" style={styles.filterZuruecksetzen}>
           <SsText variant="label" color={categoryColors.creative.aufGrund}>
-            Alle Filter zurücksetzen
+            {t('filter.alleZuruecksetzen')}
           </SsText>
         </Pressable>
       ) : null}
@@ -1884,7 +1885,7 @@ function KarteNichtsLos({ zuruecksetzen }: { zuruecksetzen: () => void }) {
       <SsText variant="body" center>Dazu ist gerade nichts da</SsText>
       <Pressable onPress={zuruecksetzen} accessibilityRole="button" style={styles.leerLink}>
         <SsText variant="label" color={categoryColors.creative.aufGrund}>
-          Filter zurücksetzen
+          {t('filter.zuruecksetzen')}
         </SsText>
       </Pressable>
     </SsGlas>
@@ -1918,7 +1919,7 @@ function LeererFeed({
         </SsText>
         <Pressable onPress={zuruecksetzen} accessibilityRole="button" style={styles.leerLink}>
           <SsText variant="label" color={categoryColors.creative.aufGrund}>
-            Filter zurücksetzen
+            {t('filter.zuruecksetzen')}
           </SsText>
         </Pressable>
       </View>
@@ -1937,7 +1938,7 @@ function LeererFeed({
       {/* Der Satz allein wäre eine Aufforderung ohne Weg. Hier ist der leere Feed der
           einzige Ort, an dem der ganze Bildschirm nichts Besseres zu tun hat. */}
       <SsButton
-        label="Etwas posten"
+        label={t('feed.etwasPosten')}
         icon="stift"
         size="lg"
         style={styles.leerKnopf}

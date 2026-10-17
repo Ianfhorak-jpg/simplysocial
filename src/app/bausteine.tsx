@@ -17,6 +17,7 @@ import {
   SsSegment,
   SsText,
 } from '@/components/ui';
+import { t } from '@/i18n';
 import { jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
 import { CATEGORIES } from '@/config/categories';
 import { CATEGORY_ORDER, categoryColors, colors, ecke, spacing } from '@/theme';
@@ -72,7 +73,7 @@ export default function BausteineScreen() {
       <Abschnitt titel="Buttons in den Kategoriefarben">
         <View style={styles.reihe}>
           {CATEGORY_ORDER.map((k) => (
-            <SsButton key={k} label={CATEGORIES[k].label} variant="category" category={k} />
+            <SsButton key={k} label={t(CATEGORIES[k].labelKey)} variant="category" category={k} />
           ))}
         </View>
       </Abschnitt>
@@ -237,7 +238,7 @@ export default function BausteineScreen() {
               <View style={styles.farbname}>
                 <SsIcon name={CATEGORIES[k].icon} size={17} color={p.onSoft} />
                 <SsText variant="label" color={p.onSoft} style={styles.farbnameText}>
-                  {CATEGORIES[k].label}
+                  {t(CATEGORIES[k].labelKey)}
                 </SsText>
               </View>
               <View style={[styles.farbfeld, { backgroundColor: p.soft }]} />

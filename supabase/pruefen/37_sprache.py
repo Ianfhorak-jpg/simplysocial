@@ -48,7 +48,7 @@ I18N = SRC / 'i18n'
 # erlaubtes Maß an Schlamperei. Wer sie hochsetzt, macht den Wächter wertlos:
 # Genau der Fehler, der ACTAs Build 1 zu Apple geschickt hat, würde dann grün
 # gemeldet. Sinkt sie, wird sie hier nachgezogen — das ist der Fortschritt.
-GRENZE = 277
+GRENZE = 257
 
 JA = NEIN = 0
 
@@ -269,7 +269,7 @@ PROPS = re.compile(
 )
 
 # ⚠️ Darf nur FALLEN — dieselbe Abmachung wie bei GRENZE.
-GRENZE_PROPS = 123
+GRENZE_PROPS = 106
 
 fest: list[str] = []
 for datei in sorted(SRC.rglob('*.tsx')):

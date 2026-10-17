@@ -81,6 +81,73 @@ export const de = {
   feed: {
     leerMitFilter: 'Mit diesem Filter ist gerade nichts los',
     binDabei: 'Bin dabei',
+    zurueckKarte: 'Zurück zur Karte',
+    posten: 'Posten',
+    etwasPosten: 'Etwas posten',
+    stapelDurch: 'Hier ist der Stapel durch',
+    allesFuerHeute: 'Das war alles für heute',
+    rueckgaengig: 'Rückgängig',
+    weggewischt: '„{titel}" weggewischt',
+    zumFeed: 'Zum Feed',
+  },
+
+  /** Die Filter über dem Feed. */
+  filter: {
+    alle: 'Alle',
+    bestimmteJahrgaenge: 'Bestimmte Jahrgänge',
+    alleZuruecksetzen: 'Alle Filter zurücksetzen',
+    zuruecksetzen: 'Filter zurücksetzen',
+  },
+
+  /** Die Kategorien. Der Name kommt aus `CATEGORIES` (harte Regel 114). */
+  kategorie: {
+    sport: 'Sport',
+    essen: 'Essen',
+    lernen: 'Lernen',
+    kultur: 'Kultur',
+    draussen: 'Draußen',
+    kreativ: 'Kreativ',
+  },
+
+  /** Das Können-Niveau. `egal` heißt bewusst „egal", nicht „Anfänger". */
+  niveau: {
+    egal: 'Egal, wie gut',
+    anfaenger: 'Anfänger',
+    fortgeschritten: 'Fortgeschritten',
+    sehrGut: 'Sehr gut',
+  },
+
+  /** Anfragen, Beitritte und Einladungen. */
+  anfragen: {
+    freiVon: '{frei} von {gesamt} frei',
+    allePlaetzeVergeben: 'Alle Plätze vergeben',
+    vollHinweis:
+      'Alle Plätze sind vergeben. Die Anfrage bleibt stehen — springt jemand ab, kannst du sie bestätigen.',
+    ohneNachricht: 'Ohne Nachricht angefragt.',
+    ablehnen: 'Ablehnen',
+    bestaetigen: 'Bestätigen',
+    aufnehmen: 'Aufnehmen',
+    neinDanke: 'Nein danke',
+    annehmen: 'Annehmen',
+    niemandMitmachen: 'Noch will niemand mitmachen',
+    niemandMitmachenHinweis:
+      'Sobald jemand bei einem deiner Posts „Bin dabei" drückt, steht er hier — und du entscheidest.',
+    nirgendsZugesagt: 'Du hast noch nirgends zugesagt',
+    imFeedWasDabei: 'Im Feed ist bestimmt was dabei.',
+  },
+
+  /** Die Chat-Liste. */
+  chat: {
+    gruppen: 'Gruppen',
+    nochKeinChat: 'Noch kein Chat',
+    nochKeinChatHinweis:
+      'Sobald jemand deine Anfrage bestätigt — oder du eine bestätigst — steht der Chat dazu hier. Und wenn ihr einander folgt, kannst du direkt schreiben: der Knopf dafür steht auf dem Profil.',
+  },
+
+  /** Das eigene Profil. */
+  profil: {
+    einstellungen: 'Einstellungen',
+    fuss: 'Blockierte Personen · Nutzungsbedingungen · Account löschen',
   },
 
   /**

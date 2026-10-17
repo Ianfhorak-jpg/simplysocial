@@ -2139,3 +2139,23 @@
   `pruef-bildwahl` und `80_bilder` an **fünf** Stellen erschlagen, zwei davon erst beim
   zweiten Lauf, weil der erste Fehler die späteren verdeckte. Wer so etwas umbenennt,
   fährt die abhängigen Prüfstände **bis sie grün sind**, nicht einmal.
+- **`lokal` ist für Übersetzungsblöcke unzuverlässig — 5 von 8 Läufen hingen STILL.**
+  Am 2026-10-17 gemessen: durchgelaufen sind 8 Zeilen (6,3 s), 18 Zeilen (33,6 s),
+  16 und 15 Zeilen (24 s / 23 s). Gehangen haben 31 Zeilen (zweimal), 11 Zeilen und
+  13 kurze Zeilen — **ohne Fehler, ohne Exit-Code, mit leerer Ausgabedatei**, Prozess
+  weg, Ollama bei 0 % CPU. Es ist also weder die Zeilenzahl noch die Länge des
+  Auftrags allein: es ist unzuverlässig. **Jeder Fehlversuch kostet 5+ Minuten
+  Wartezeit**, und damit mehr als die Arbeit selbst. Vorgehen: EIN Versuch je Block,
+  bei Stille sofort selbst übersetzen und es Ian sagen (CLAUDE.md verlangt genau das).
+- **`examples` in `config/categories.ts` war toter Code — sechs Texte, die niemand
+  liest.** Sein eigener Kommentar sagte „für den Erstellen-Screen", und `create.tsx`
+  las ihn nie. Beim Übersetzen gefunden, weil jeder Eintrag Arbeit kostet. ⚠️ Und er
+  wäre nicht nur Arbeit gewesen: **Das ganze Wörterbuch landet im Bündel**, auch
+  unerreichbare Texte — bei ACTAs Apple-Prüfung wurden so Paywall-Wörter
+  nachgewiesen, die kein Bildschirm liest. Übersetzen hätte sie dort verewigt.
+- **`CATEGORIES` und `LEVEL_LABELS` sind modulweite Konstanten — ein `t()` darin
+  friert die Startsprache EIN.** Beide halten jetzt Schlüssel (`labelKey`), übersetzt
+  wird beim Zeichnen. Der Umbau war billig, weil `tsc` alle sechs Verwendungsstellen
+  von `.label` auf einmal genannt hat. **Genau dieser Fehler ist in ACTA passiert**
+  (`i18n/README.md`, zweite Regel) und fällt nur beim Umschalten auf: Alles wechselt,
+  die Kategorien nicht.

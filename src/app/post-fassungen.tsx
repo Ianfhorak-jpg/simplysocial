@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { PostCard } from '@/components/PostCard';
 import { SsAvatar, SsBack, SsScreen, SsText } from '@/components/ui';
 import { CATEGORIES } from '@/config/categories';
@@ -207,7 +208,7 @@ function FassungBand({ eintrag }: { eintrag: FeedEintrag }) {
     <View style={styles.bandKarte}>
       <View style={[styles.band, { backgroundColor: palette.base }]}>
         <SsText variant="label" color={palette.onBase} style={styles.bandWort}>
-          {CATEGORIES[post.category].label.toUpperCase()}
+          {t(CATEGORIES[post.category].labelKey).toUpperCase()}
         </SsText>
         <SsText variant="caption" color={palette.onBase} style={styles.bandZeit}>
           {startOderSeit(post.startsAt)}
@@ -258,7 +259,7 @@ function FassungBunt({ eintrag }: { eintrag: FeedEintrag }) {
     <View style={[styles.buntKarte, { backgroundColor: palette.base }]}>
       <View style={styles.buntKopf}>
         <SsText variant="label" color={auf} style={styles.bandWort}>
-          {CATEGORIES[post.category].label.toUpperCase()}
+          {t(CATEGORIES[post.category].labelKey).toUpperCase()}
         </SsText>
         <SsText variant="caption" color={auf}>
           {startOderSeit(post.startsAt)}
