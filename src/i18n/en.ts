@@ -101,6 +101,59 @@ export const en: Weiter<typeof de> = {
 
   einstellungen: {
     spracheTitel: 'Language',
+    // „photo", nicht „image": Es ist ein Profilbild von einem Menschen.
+    deinBild: 'Your photo',
+    bildEntfernen: 'Remove photo',
+    // Modell: „Selecting an image is not yet possible … It is already available …"
+    // Zweimal „available" und durchweg Beamtendeutsch auf Englisch.
+    bildwahlLaeuft:
+      "Picking a photo doesn't work on the phone yet \u2014 that comes with the next app update. It already works in the browser.",
+    deinBezirk: 'Your district',
+    // Modell: „From here, your feed is sorted by outward" \u2014 kein Englisch.
+    bezirkHinweis: 'Your feed sorts outward from here',
+    heimatbezirk: 'Your home district',
+    blockiert: 'Blocked',
+    niemandBlockiert: "You haven't blocked anyone.",
+    blockierenWo: "You can block someone from their profile.",
+    // \ud83d\udd34 Modell: „Undo". **Bedeutungsfehler, kein Sprachfehler:** Dieser Knopf
+    // hebt eine BLOCKIERUNG auf (`entblocken()`), er macht nichts r\u00fcckg\u00e4ngig.
+    // „Undo" neben einem Namen in einer Blockierliste h\u00e4tte jeder falsch gelesen.
+    aufheben: 'Unblock',
+    // Apples eigene Schreibweise in Store und System.
+    nutzungsbedingungen: 'Terms of Use',
+    nutzungsbedingungenHinweis: 'The rules here, and the minimum age',
+    deinKonto: 'Your account',
+    // „Sign out" und nicht „Log out" \u2014 weil der Anmelde-Bildschirm „Sign in"
+    // sagt (`anmelden.dochAnders`). Zwei W\u00f6rter f\u00fcr dieselbe T\u00fcr w\u00e4ren eines zu viel.
+    abmelden: 'Sign out',
+    abmeldenHinweis: 'Back to the {app} sign-in',
+    accountLoeschen: 'Delete account',
+    accountLoeschenHinweis: 'Your profile, your posts and your chats',
+    fuerEntwicklung: 'For development',
+    // Modell: „View building blocks" \u2014 w\u00f6rtlich. Gemeint sind die UI-Bausteine,
+    // und das Wort daf\u00fcr ist im Englischen „components".
+    bausteine: 'View components',
+    bausteineHinweis: 'All elements of the app side by side',
+    postFassungen: 'Compare post versions',
+    postFassungenHinweis: 'Three drafts side by side \u2014 pick one',
+  },
+
+  standort: {
+    anTitel: 'From your location',
+    // Modell: „Your feed sorted from where you are" \u2014 falsche Zeitform.
+    anAusgangspunkt: 'Your feed sorts from where you are right now. Nobody sees your location.',
+    anBezirk: 'Your district is set automatically. Nobody sees your location.',
+    ausTitel: 'Location is off',
+    // Modell: „You declined this \u2014 this is changed in your phone's settings."
+    // Passiv und unpers\u00f6nlich; die App spricht die Person an.
+    verweigert:
+      "You turned this down \u2014 you can change that in your phone's settings. Your feed keeps sorting from your district.",
+    // \ud83d\udd34 Modell: „Location does not exist here". Gemeint ist: **auf dieser
+    // Plattform gibt es keinen Standort** (Browser) \u2014 nicht, dass es den Ort nicht gibt.
+    unmoeglichTitel: "Location isn't available here",
+    unmoeglich: 'Your feed sorts from your district.',
+    ausErklaerung:
+      'Instead of your district, your feed will sort from where you are right now. Your location is never shown and never saved.',
   },
 
   regeln: {

@@ -166,36 +166,56 @@ export type StandortZustand =
  * dieser Sätze selbst; sonst steht dort eines Tages etwas, das die Regel nicht mehr
  * tut — genau das ist in Phase 17 passiert und stand bis Phase 20.1 im Lösch-Screen.
  */
+/**
+ * Die Wörterbuch-Schlüssel, die diese Datei nennt — **als eigene Unions, ohne
+ * Import.** Dieselbe Bauart wie bei `anmeldeFolgen()`, und aus demselben Grund:
+ * Eine Regel-Datei, die `@/i18n` importiert, zieht React in jeden Prüfstand, der
+ * sie in blankem Node lädt. Geprüft wird das am AUFRUF — `t(titel)` nimmt nur
+ * einen `TSchluessel`, also meldet `tsc` einen erfundenen Schlüssel dort.
+ *
+ * ⚠️ **Die Entscheidung, WELCHER Satz wann gilt, bleibt hier.** Nur der Wortlaut
+ * ist umgezogen. Genau davor warnt der Kopf dieser Funktion seit Phase 17: Der
+ * Screen tippt keinen dieser Sätze selbst — er tippt jetzt auch keinen Schlüssel.
+ */
+type StandortTitel =
+  | 'standort.anTitel'
+  | 'standort.ausTitel'
+  | 'standort.unmoeglichTitel';
+type StandortErklaerung =
+  | 'standort.anAusgangspunkt'
+  | 'standort.anBezirk'
+  | 'standort.verweigert'
+  | 'standort.unmoeglich'
+  | 'standort.ausErklaerung';
+
 export function standortFolgen(zustand: StandortZustand): {
-  titel: string;
-  erklaerung: string;
+  titel: StandortTitel;
+  erklaerung: StandortErklaerung;
 } {
   switch (zustand) {
     case 'an':
       return {
-        titel: 'Von deinem Standort aus',
+        titel: 'standort.anTitel',
         erklaerung:
           STANDORT_ROLLE === 'ausgangspunkt'
-            ? 'Dein Feed sortiert ab da, wo du gerade bist. Niemand sieht deinen Standort.'
-            : 'Dein Bezirk wird automatisch gesetzt. Niemand sieht deinen Standort.',
+            ? 'standort.anAusgangspunkt'
+            : 'standort.anBezirk',
       };
     case 'verweigert':
       return {
-        titel: 'Standort ist aus',
-        erklaerung:
-          'Du hast das abgelehnt — das ändert man in den Einstellungen deines Handys. Dein Feed sortiert weiter ab deinem Bezirk.',
+        titel: 'standort.ausTitel',
+        erklaerung: 'standort.verweigert',
       };
     case 'unmoeglich':
       return {
-        titel: 'Standort gibt es hier nicht',
-        erklaerung: 'Dein Feed sortiert ab deinem Bezirk.',
+        titel: 'standort.unmoeglichTitel',
+        erklaerung: 'standort.unmoeglich',
       };
     case 'aus':
     default:
       return {
-        titel: 'Von deinem Standort aus',
-        erklaerung:
-          'Statt ab deinem Bezirk sortiert der Feed dann ab da, wo du gerade bist. Der Standort wird nirgends angezeigt und nicht gespeichert.',
+        titel: 'standort.anTitel',
+        erklaerung: 'standort.ausErklaerung',
       };
   }
 }

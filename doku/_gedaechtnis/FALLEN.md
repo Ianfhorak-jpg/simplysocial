@@ -2096,12 +2096,16 @@
   (`type AnmeldeTitel = 'anmelden.mitApple' | …`) — die Typsicherheit liegt dann am
   AUFRUF (`t(titel)` nimmt nur einen `TSchluessel`), also eine Datei weiter.
   Seit dem bewacht `npm run pruef-sprache` die Importfreiheit, mit Gegenprobe.
-- **`lokal` hängt an einem LANGEN Auftrag, nicht an langen Daten.** Am 2026-10-17
-  dreimal gemessen: Ein Auftrag mit fünf Sätzen Erklärung lief zweimal über fünf
-  Minuten ohne Ausgabe (kein Prozess mehr, Ollama bei 0 % CPU, Ausgabedatei leer) —
-  derselbe Datensatz mit einem Einzeiler als Auftrag war in 33,6 s fertig. **Den
-  Auftrag kurz halten und den Zusammenhang in die DATEN schreiben**, nicht in die
-  Anweisung.
+- **`lokal` hängt an der MENGE, und die Grenze liegt bei diesem Modell um 20 Zeilen.**
+  🔴 **Berichtigung derselben Falle vom selben Tag** — hier stand zuerst „hängt an einem
+  langen Auftrag, nicht an langen Daten". Das war zu früh geschlossen: Am 2026-10-17
+  lief ein Block mit 18 Zeilen in 33,6 s, ein Block mit **31 Zeilen hing zweimal** (kein
+  Prozess mehr, Ollama bei 0 % CPU, Ausgabedatei leer) — und **in zwei Hälften geteilt
+  liefen dieselben 31 Zeilen in 24 s + 23 s durch.** Ein langer Auftragstext macht es
+  zusätzlich schlechter, aber die Menge ist die eigentliche Grenze. **Also: in Blöcken
+  von ~15 Zeilen arbeiten, Auftrag als Einzeiler, Zusammenhang in die DATEN schreiben.**
+  Und es hängt STILL: kein Fehler, kein Exit-Code, eine leere Datei. Wer auf eine
+  Fehlermeldung wartet, wartet für immer.
 - **Eine Qualitätsmessung, die an der SPRACHE hängt, steht bei echter Arbeit still.**
   Der erste `pruef-sprache` zählte deutsche Texte an Umlauten und ß. Nach dem
   Übersetzen des ganzen Anmelde-Bildschirms (18 Texte) stand die Zahl **unverändert

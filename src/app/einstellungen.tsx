@@ -240,7 +240,7 @@ export default function EinstellungenScreen() {
           niemand gestellt hat. */}
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
-          Dein Bild
+          {t('einstellungen.deinBild')}
         </SsText>
 
         <View style={styles.bildZeile}>
@@ -261,7 +261,7 @@ export default function EinstellungenScreen() {
                   onPress={bildAussuchen}
                 />
                 {ich.photoUrl ? (
-                  <SsButton variant="ghost" label="Bild entfernen" onPress={() => void profilbildEntfernen()} />
+                  <SsButton variant="ghost" label={t('einstellungen.bildEntfernen')} onPress={() => void profilbildEntfernen()} />
                 ) : null}
               </>
             ) : (
@@ -269,8 +269,7 @@ export default function EinstellungenScreen() {
                  Phase 16. Ein Knopf, der nichts tut, sieht aus wie eine App,
                  die die Funktion nicht hat. */
               <SsText variant="caption" color={colors.inkSoft}>
-                Ein Bild aussuchen geht am Handy noch nicht — das kommt mit dem
-                nächsten App-Update. Im Browser geht es schon.
+                {t('einstellungen.bildwahlLaeuft')}
               </SsText>
             )}
           </View>
@@ -325,7 +324,7 @@ export default function EinstellungenScreen() {
 
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
-          Dein Bezirk
+          {t('einstellungen.deinBezirk')}
         </SsText>
 
         <Pressable
@@ -342,7 +341,7 @@ export default function EinstellungenScreen() {
                 Angabe über einen selbst, und niemand käme auf die Idee, dass
                 davon die Reihenfolge des Feeds abhängt. */}
             <SsText variant="caption" color={colors.inkSoft}>
-              Von hier aus sortiert dein Feed nach außen
+              {t('einstellungen.bezirkHinweis')}
             </SsText>
           </View>
           <SsIcon name={bezirkOffen ? 'chevronUnten' : 'chevronRechts'} size={18} color={colors.inkSoft} />
@@ -368,7 +367,7 @@ export default function EinstellungenScreen() {
                 // ab einem Ort, den es nicht gibt.
                 if (istWienerBezirk(plz)) bezirkSetzen(plz);
               }}
-              label="Dein Heimatbezirk"
+              label={t('einstellungen.heimatbezirk')}
             />
           </View>
         ) : null}
@@ -387,7 +386,7 @@ export default function EinstellungenScreen() {
           onPress={() => (standort.zustand === 'an' ? standortAusschalten() : void standortAnschalten())}
           accessibilityRole="switch"
           accessibilityState={{ checked: standort.zustand === 'an' }}
-          accessibilityLabel={`${standortText.titel}. ${standortText.erklaerung}`}
+          accessibilityLabel={`${t(standortText.titel)}. ${t(standortText.erklaerung)}`}
           style={({ pressed }) => [styles.zeile, pressed && styles.zeileGedrueckt]}>
           <View style={styles.zeileIcon}>
             <SsIcon
@@ -407,9 +406,9 @@ export default function EinstellungenScreen() {
             />
           </View>
           <View style={styles.zeileText}>
-            <SsText variant="bodyStrong">{standortText.titel}</SsText>
+            <SsText variant="bodyStrong">{t(standortText.titel)}</SsText>
             <SsText variant="caption" color={colors.inkSoft}>
-              {standortText.erklaerung}
+              {t(standortText.erklaerung)}
             </SsText>
           </View>
           {/* Kein React-Native-`Switch`: Die App hat keinen, und einer allein für
@@ -423,16 +422,16 @@ export default function EinstellungenScreen() {
 
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
-          Blockiert
+          {t('einstellungen.blockiert')}
         </SsText>
 
         {blockierte.length === 0 ? (
           <SsCard>
             <SsText variant="body" color={colors.inkSoft}>
-              Du hast niemanden blockiert.
+              {t('einstellungen.niemandBlockiert')}
             </SsText>
             <SsText variant="caption" color={colors.inkSoft}>
-              Blockieren kannst du auf dem Profil einer Person.
+              {t('einstellungen.blockierenWo')}
             </SsText>
           </SsCard>
         ) : (
@@ -450,7 +449,7 @@ export default function EinstellungenScreen() {
                 </View>
                 {/* „Aufheben" und nicht „Entblocken": Das Wort steht neben einem Namen,
                     und es soll die harmlosere der beiden Richtungen sein. */}
-                <SsButton variant="ghost" label="Aufheben" onPress={() => void entblocken(person.id)} />
+                <SsButton variant="ghost" label={t('einstellungen.aufheben')} onPress={() => void entblocken(person.id)} />
               </View>
             </SsCard>
           ))
@@ -463,8 +462,8 @@ export default function EinstellungenScreen() {
         </SsText>
         <Zeile
           icon="blatt"
-          label="Nutzungsbedingungen"
-          hinweis="Was hier gilt und ab welchem Alter"
+          label={t('einstellungen.nutzungsbedingungen')}
+          hinweis={t('einstellungen.nutzungsbedingungenHinweis')}
           href="/nutzungsbedingungen"
         />
         {/* 🔴 **Die Namensnennung für die Bezirksumrisse — Bedingung der Lizenz
@@ -488,21 +487,21 @@ export default function EinstellungenScreen() {
 
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
-          Dein Konto
+          {t('einstellungen.deinKonto')}
         </SsText>
         {/* Abmelden steht ÜBER dem Löschen und ist kein Vorzimmer davon: Das eine ist
             umkehrbar, das andere nicht. Die Reihenfolge sagt das mit — wer nach dem
             Ausstieg sucht, findet zuerst den, von dem er zurückkommt. */}
         <Zeile
           icon="pfeilRechts"
-          label="Abmelden"
-          hinweis={`Zurück zum Anmelden von ${BRAND.name}`}
+          label={t('einstellungen.abmelden')}
+          hinweis={t('einstellungen.abmeldenHinweis', { app: BRAND.name })}
           onPress={hinaus}
         />
         <Zeile
           icon="muell"
-          label="Account löschen"
-          hinweis="Dein Profil, deine Posts und deine Chats"
+          label={t('einstellungen.accountLoeschen')}
+          hinweis={t('einstellungen.accountLoeschenHinweis')}
           href="/account-loeschen"
           rot
         />
@@ -510,12 +509,12 @@ export default function EinstellungenScreen() {
 
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
-          Für die Entwicklung
+          {t('einstellungen.fuerEntwicklung')}
         </SsText>
         <Zeile
           icon="bausteine"
-          label="Bausteine anschauen"
-          hinweis="Alle Elemente der App nebeneinander"
+          label={t('einstellungen.bausteine')}
+          hinweis={t('einstellungen.bausteineHinweis')}
           href="/bausteine"
         />
         {/* ⚠️ TEMPORÄR (Phase 20.11-b) — fliegt raus, sobald Ian eine Fassung gewählt
@@ -523,8 +522,8 @@ export default function EinstellungenScreen() {
             Entwicklung" ist der Ort für Dinge, die es nur gibt, solange gebaut wird. */}
         <Zeile
           icon="pinsel"
-          label="Post-Fassungen vergleichen"
-          hinweis="Drei Entwürfe nebeneinander — zum Aussuchen"
+          label={t('einstellungen.postFassungen')}
+          hinweis={t('einstellungen.postFassungenHinweis')}
           href="/post-fassungen"
         />
       </View>

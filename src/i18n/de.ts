@@ -88,6 +88,47 @@ export const de = {
   /** Einstellungen. */
   einstellungen: {
     spracheTitel: 'Sprache',
+    deinBild: 'Dein Bild',
+    bildEntfernen: 'Bild entfernen',
+    bildwahlLaeuft:
+      'Ein Bild aussuchen geht am Handy noch nicht \u2014 das kommt mit dem n\u00e4chsten App-Update. Im Browser geht es schon.',
+    deinBezirk: 'Dein Bezirk',
+    bezirkHinweis: 'Von hier aus sortiert dein Feed nach au\u00dfen',
+    heimatbezirk: 'Dein Heimatbezirk',
+    blockiert: 'Blockiert',
+    niemandBlockiert: 'Du hast niemanden blockiert.',
+    blockierenWo: 'Blockieren kannst du auf dem Profil einer Person.',
+    aufheben: 'Aufheben',
+    nutzungsbedingungen: 'Nutzungsbedingungen',
+    nutzungsbedingungenHinweis: 'Was hier gilt und ab welchem Alter',
+    deinKonto: 'Dein Konto',
+    abmelden: 'Abmelden',
+    abmeldenHinweis: 'Zur\u00fcck zum Anmelden von {app}',
+    accountLoeschen: 'Account l\u00f6schen',
+    accountLoeschenHinweis: 'Dein Profil, deine Posts und deine Chats',
+    fuerEntwicklung: 'F\u00fcr die Entwicklung',
+    bausteine: 'Bausteine anschauen',
+    bausteineHinweis: 'Alle Elemente der App nebeneinander',
+    postFassungen: 'Post-Fassungen vergleichen',
+    postFassungenHinweis: 'Drei Entw\u00fcrfe nebeneinander \u2014 zum Aussuchen',
+  },
+
+  /**
+   * Der Standort. Die S\u00e4tze geh\u00f6ren `features/posts/standort.ts` \u2014 sie stehen hier
+   * nur als Wortlaut, die ENTSCHEIDUNG welcher wann gilt bleibt dort.
+   */
+  standort: {
+    anTitel: 'Von deinem Standort aus',
+    anAusgangspunkt:
+      'Dein Feed sortiert ab da, wo du gerade bist. Niemand sieht deinen Standort.',
+    anBezirk: 'Dein Bezirk wird automatisch gesetzt. Niemand sieht deinen Standort.',
+    ausTitel: 'Standort ist aus',
+    verweigert:
+      'Du hast das abgelehnt \u2014 das \u00e4ndert man in den Einstellungen deines Handys. Dein Feed sortiert weiter ab deinem Bezirk.',
+    unmoeglichTitel: 'Standort gibt es hier nicht',
+    unmoeglich: 'Dein Feed sortiert ab deinem Bezirk.',
+    ausErklaerung:
+      'Statt ab deinem Bezirk sortiert der Feed dann ab da, wo du gerade bist. Der Standort wird nirgends angezeigt und nicht gespeichert.',
   },
 
   /** Die Hausregeln. */
