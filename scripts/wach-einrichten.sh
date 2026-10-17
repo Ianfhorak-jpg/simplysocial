@@ -17,6 +17,22 @@ WF=.github/workflows/supabase-wach.yml
 [ -f "$WF" ] || { echo "✗ $WF fehlt"; exit 1; }
 [ "$(git branch --show-current)" = dunkel ] || { echo "✗ Bitte auf Zweig 'dunkel' ausführen"; exit 1; }
 
+# ⚠️ Ein Zweigname mit Leerzeichen bringt JEDES `git push` zu Fall — auch eines,
+# das diesen Zweig gar nicht anfasst. Am 2026-10-17 lag `.git/refs/heads/dunkel 2`
+# dort (ein macOS-Duplikat vom 14.09.), und der Lauf starb mit „bad object
+# refs/heads/dunkel 2", NACHDEM er die Secrets schon gesetzt hatte. Deshalb wird
+# hier VOR allem anderen gefragt — und nicht stillschweigend gelöscht: Was dort
+# liegt, kann der einzige Verweis auf eigene Arbeit sein.
+KAPUTT="$(git for-each-ref --format='%(refname)' 2>&1 >/dev/null | sed -n 's/.*ignoring ref with broken name //p')"
+if [ -n "$KAPUTT" ]; then
+  echo "✗ In .git liegt ein Verweis mit kaputtem Namen:"
+  echo "$KAPUTT" | sed 's/^/    /'
+  echo "  Solange er dort liegt, scheitert jedes 'git push'."
+  echo "  Erst nachsehen, worauf er zeigt — dann wegräumen:"
+  echo "    git log --oneline -1 \"\$(cat '.git/refs/heads/<name>')\""
+  exit 1
+fi
+
 echo "── 1/3 Secrets setzen ──"
 grep '^EXPO_PUBLIC_SUPABASE_URL='      .env | cut -d= -f2- | gh secret set SUPABASE_URL
 grep '^EXPO_PUBLIC_SUPABASE_ANON_KEY=' .env | cut -d= -f2- | gh secret set SUPABASE_ANON_KEY
