@@ -2,8 +2,14 @@
 
 **Stand: 2026-10-17 · heute nochmal bei Apple nachgefragt: 11 von 12, es fehlt nur Build 4**
 
-> Am 17.10. repariert: `npm run asc` lief nach einem Python-Update nicht mehr — geht wieder.
-> Und die Änderungen vom 28.09. waren nicht gesichert — jetzt sind sie es.
+> **Build 4 liegt bei Apple und ist in Ordnung.** Am 17.10. repariert: `npm run asc`
+> lief nach einem Python-Update nicht mehr · die Änderungen vom 28.09. waren nicht
+> gesichert · Xcode baute auf eine Festplatte, die nicht angesteckt war · **deine
+> Supabase war pausiert**, darum ging die Anmeldung nicht. Sie wird jetzt zweimal am Tag
+> automatisch wachgehalten (erster Lauf grün).
+>
+> **Es fehlen noch drei Dinge, alle unten:** Build anhängen · Datenschutz-Etikett ·
+> einreichen.
 
 > Die Fassung vom 26.09. ist überholt: Fünf der sechs Punkte darin hast du
 > inzwischen erledigt. Die alte Datei liegt als Kopie im Zwischenspeicher, falls

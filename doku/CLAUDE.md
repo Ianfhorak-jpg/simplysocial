@@ -78,6 +78,18 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 > rot und grün belegt. Vor dem Build grün: `tsc`, `pruef-alter` 35, `pruef-zustimmung` 28,
 > `pruef-boden` 13, `pruef-plattform` 5, `ANMELDE_QUELLE = supabase`.
 >
+> **Build 4 liegt seit dem 17.10. bei Apple (`VALID`)** und ist jünger als die letzte
+> Änderung an `Nutzungsbedingungen.tsx` — der rote Kasten ist wirklich draußen.
+> Zwei Dinge standen dem im Weg und sind behoben: Xcodes Ablageort zeigte auf eine
+> abgesteckte Festplatte (`ARCHIVE FAILED` nach drei Minuten), und **die echte Supabase
+> war pausiert** — niemand konnte sich anmelden. Seither hält
+> `.github/workflows/supabase-wach.yml` sie wach (auf `main`, Zeitplan aktiv, erster
+> Lauf grün: `HTTP 401` mit `42501` von Postgres selbst).
+>
+> 🔴 **Offen und Ians:** `npm run asc build-anhaengen -- --wirklich` · Privacy-Label ·
+> einreichen. Dazu, nicht blockierend: der iPad-Durchgang (Guideline 4) ist am Mac
+> belegt und mit keinem Bild angesehen.
+>
 > Plan: `~/.claude/plans/hallo-ich-will-bitte-memoized-turing.md`
 
 ## Davor — Zweig `dunkel` (Stand 2026-09-28, abends)
@@ -1095,6 +1107,8 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Ein Wächter, der bei „nichts zu tun" aufhört, beantwortet die falsche Frage
 - Ein Wächter, der eine Zusage an Apple schützt, wird VERENGT — nie gelockert
 - Ein Homebrew-Upgrade zieht `python3` auf eine Version OHNE `jwt` — und eine Prüfung, die Fehler schluckt, meldet dann „frei"
+- Gratis-Supabase pausiert nach ~einer Woche ohne Betrieb — und verliert dabei seine ADRESSE
+- Ein Zweigname mit einem LEERZEICHEN bringt jedes `git push` zu Fall — auch eines, das diesen Zweig nicht anfasst
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

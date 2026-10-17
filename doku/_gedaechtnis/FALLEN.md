@@ -2064,3 +2064,23 @@
   `grep -c` zählt auf leerer Eingabe 0. Seither fängt das Skript die Antwort erst und
   bricht ab, wenn `asc.py` nicht sauber endet (rot und grün belegt). Behebung des Pythons:
   `python3 -m pip install --user --break-system-packages pyjwt cryptography`.
+- **Gratis-Supabase pausiert nach ~einer Woche ohne Betrieb — und verliert dabei seine
+  ADRESSE.** Am 2026-10-17 gemessen: `iwvakdbefwpshzhlhmgj.supabase.co` gab bei drei
+  Namensservern `NXDOMAIN`, `supabase.com` antwortete normal. In der App landet das als
+  „Das hat gerade nicht geklappt" (der `default`-Zweig von `otpFehlerText`) — ein Satz,
+  der ehrlich ist und nichts verrät. **Während einer App-Prüfung ist das eine sichere
+  Ablehnung**: Der Prüfer kommt mit dem Demo-Konto nicht hinein. Seit dem 17.10. hält
+  `.github/workflows/supabase-wach.yml` das Projekt wach. ⚠️ Er fragt ANONYM nach
+  `profiles` und nimmt `42501` („permission denied") als Erfolg — die Antwort kommt von
+  Postgres selbst, also muss die Datenbank laufen. Ein Anklopfen beim Vorbau beweist das
+  nicht. ⚠️ Der Workflow muss auf dem STANDARDZWEIG (`main`) liegen, sonst läuft der
+  Zeitplan nie — auf `dunkel` allein tut er nichts.
+- **Ein Zweigname mit einem LEERZEICHEN bringt jedes `git push` zu Fall — auch eines,
+  das diesen Zweig nicht anfasst.** Am 2026-10-17 lag `.git/refs/heads/dunkel 2` dort,
+  ein macOS-Duplikat vom 14.09. `git branch -a` hatte es als *„warning: ignoring ref with
+  broken name"* gemeldet, und niemand hatte hingesehen. Der Lauf von
+  `wach-einrichten.sh` starb an `fatal: bad object refs/heads/dunkel 2`, **nachdem die
+  Secrets schon gesetzt waren** — die Warnung stand seit vier Wochen über jedem
+  `git branch`. ⚠️ Nicht blind löschen: So eine Datei kann der einzige Verweis auf
+  eigene Arbeit sein (hier nicht — `ef499da` war Vorfahr von `HEAD`, geprüft mit
+  `git merge-base --is-ancestor`).
