@@ -233,10 +233,16 @@ rm -rf "$ARCHIV"
 # ⚠️ Das Protokoll läuft NICHT durch `tail` (Falle aus der Liste) und wird auf
 # ANWESENHEIT von "ARCHIVE SUCCEEDED" geprüft, nicht auf Abwesenheit von "error:"
 # — ein gescheiterter Build hat nicht immer eine `error:`-Zeile.
+# ⚠️ `-derivedDataPath` steht hier fest, weil Xcodes EIGENER Ablageort auf diesem
+# Mac eine externe Festplatte war (`IDECustomDerivedDataLocation`). Am 2026-10-17
+# war sie nicht angesteckt, und der Build starb nach drei Minuten mit „Couldn't
+# create workspace arena folder" — ein Fehler, der nach Rechten klingt und ein
+# fehlendes Laufwerk ist.
 set +e
 xcodebuild -workspace "$PROJEKT/ios/SimplySocial.xcworkspace" \
   -scheme SimplySocial -configuration Release \
   -destination 'generic/platform=iOS' -archivePath "$ARCHIV" \
+  -derivedDataPath "$BAUPLATZ/DerivedData" \
   DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY="Apple Distribution" \
   PROVISIONING_PROFILE_SPECIFIER="$PROFIL_NAME" \
