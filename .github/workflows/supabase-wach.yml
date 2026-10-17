@@ -1,0 +1,57 @@
+# Hält die echte Supabase wach.
+#
+# Im Gratis-Tarif pausiert Supabase ein Projekt nach rund einer Woche ohne Betrieb —
+# und ein pausiertes Projekt verliert sogar seine Adresse (NXDOMAIN). Am 2026-10-17
+# gemessen: Build 4 lag fertig bei Apple, und niemand konnte sich anmelden. Während
+# einer App-Prüfung wäre das eine sichere Ablehnung (der Prüfer kommt nicht hinein).
+#
+# Was gefragt wird: eine Zeile aus `profiles`, als ANONYM. `anon` darf seit 0001 keine
+# Tabelle lesen (`revoke all … from anon`) — die Antwort ist also „permission denied"
+# (42501). Die kommt von POSTGRES selbst, nicht vom Vorbau: Die Datenbank muss dafür
+# laufen und die Anfrage ausführen. Das ist der Betrieb, den Supabase zählt.
+#
+# ⚠️ Zeitgesteuerte Workflows laufen NUR auf dem Standardzweig (`main`). Liegt diese
+#    Datei nur auf einem anderen Zweig, läuft hier nie etwas.
+# ⚠️ GitHub schaltet zeitgesteuerte Workflows nach 60 Tagen ohne Commit im Repo ab
+#    und schickt vorher eine Mail. Dann: Actions → „Supabase wach halten" → Enable.
+# ⚠️ Schlägt ein Lauf fehl, schickt GitHub Ian eine Mail. Das ist gewollt: Dann
+#    schläft der Server schon, und „Restore project" im Supabase-Dashboard hilft.
+
+name: Supabase wach halten
+
+on:
+  schedule:
+    # Zweimal am Tag: GitHub verschiebt oder überspringt Cron-Läufe bei Last
+    # manchmal — mit zwei Läufen bleibt auch dann reichlich Abstand zur Woche.
+    - cron: '17 5,17 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  anstupsen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Datenbank anfragen
+        env:
+          URL: ${{ secrets.SUPABASE_URL }}
+          KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -u
+          [ -n "$URL" ] && [ -n "$KEY" ] || { echo "✗ Secrets SUPABASE_URL / SUPABASE_ANON_KEY fehlen"; exit 1; }
+
+          CODE=$(curl -s -o antwort.json -w '%{http_code}' --max-time 30 \
+            -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
+            "$URL/rest/v1/profiles?select=id&limit=1") || CODE=000
+          echo "HTTP $CODE"
+          head -c 300 antwort.json 2>/dev/null; echo
+
+          # 200 = die Datenbank hat geantwortet (falls anon je lesen darf).
+          # 401/403 mit 42501 = Postgres hat die Anfrage ausgeführt und abgelehnt.
+          # Alles andere — 000 (Adresse weg), 5xx, 540 (pausiert) — heißt: schläft.
+          if [ "$CODE" = 200 ]; then echo "✓ wach"; exit 0; fi
+          if { [ "$CODE" = 401 ] || [ "$CODE" = 403 ]; } && grep -q '42501' antwort.json; then
+            echo "✓ wach (Postgres lehnt anon ab — so gewollt)"; exit 0
+          fi
+          echo "✗ Supabase antwortet nicht wie ein laufendes Projekt."
+          echo "  → supabase.com/dashboard → Projekt → Restore project"
+          exit 1
