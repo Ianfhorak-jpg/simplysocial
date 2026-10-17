@@ -12,8 +12,10 @@ import {
   SsScreen,
   SsText,
 } from '@/components/ui';
+import { SprachWahl } from '@/components/SprachWahl';
 import { BRAND } from '@/config/brand';
 import { abmelden } from '@/features/auth/hooks';
+import { t } from '@/i18n';
 import { entblocken, useBlockierte } from '@/features/safety/hooks';
 import { standortAnschalten, standortAusschalten, useStandortStand } from '@/features/posts/hooks';
 import { standortFolgen } from '@/features/posts/standort';
@@ -305,6 +307,22 @@ export default function EinstellungenScreen() {
           Es ist die einzige Einstellung, die verändert, was man SIEHT: Seit
           Ians Entscheidung 63 sortiert der Feed von hier aus nach außen. Alles
           darunter ist Verwaltung. */}
+      {/* ── Die Sprache ──────────────────────────────────────────────────────────
+          Ians Wunsch vom 2026-10-17. Steht ÜBER dem Bezirk, weil es die
+          Einstellung ist, die am meisten verändert: Sie schreibt jeden Satz der
+          App um. Der Bezirk ändert die Reihenfolge des Feeds, die Sprache ändert
+          alles — nach derselben Überlegung, mit der der Bezirk über der
+          Verwaltung steht.
+
+          ⚠️ Die Überschrift kommt aus `t()`, die zwei Sprachnamen NICHT: In einer
+          Sprachliste nennt sich jede Sprache selbst (Begründung an `SPRACH_WAHL`). */}
+      <View style={styles.block}>
+        <SsText variant="label" color={colors.inkSoft}>
+          {t('einstellungen.spracheTitel')}
+        </SsText>
+        <SprachWahl />
+      </View>
+
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
           Dein Bezirk

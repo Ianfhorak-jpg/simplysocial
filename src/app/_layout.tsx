@@ -22,6 +22,7 @@ import { BRAND } from '@/config/brand';
 import { torwaechterZeigt } from '@/features/auth/anmeldung';
 import { sitzungWiederherstellen, useSitzung } from '@/features/auth/hooks';
 import { datenHolen, useSchreibStand, useSlice, type LadeStand } from '@/features/store';
+import { useSprache, useSpracheLaden } from '@/i18n';
 import { ladeSichtFuer } from '@/data/quelle';
 import { NACHLADEN, realtimeStarten, realtimeStoppen } from '@/data/realtime';
 import { client, LIEST_AUS_SUPABASE } from '@/lib/supabase';
@@ -62,6 +63,11 @@ import { colors } from '@/theme';
  */
 export default function RootLayout() {
   useTabTitel();
+  // Die gemerkte Sprachwahl einmal lesen und anwenden (`i18n/index.ts`). Der Wert
+  // selbst treibt das `key` weiter unten — deshalb MIT Haken, anders als überall
+  // sonst, wo `t()` die richtige Antwort ist.
+  useSpracheLaden();
+  const sprache = useSprache();
   const sitzung = useSitzung();
   // **NICHT `zustand === 'an'`.** Seit 20.3-b1 hat `Sitzung` vier Glieder, und ein
   // Vergleich hier hätte die zwei neuen still in den Anmelde-Zweig fallen lassen —
@@ -102,7 +108,24 @@ export default function RootLayout() {
     <SafeAreaProvider>
       {/* Uhr und Symbole HELL — die App ist dunkel (Ians Entscheidung 84). */}
       <StatusBar style="light" />
-      <View style={styles.app}>
+      {/* ── Das `key` ist der Sprachwechsel ──────────────────────────────────────
+          `t()` in `i18n/index.ts` ist absichtlich NICHT reaktiv — bei ~800 Texten
+          in 39 Dateien wäre ein Haken je Text nicht durchzuhalten. Dass die
+          Oberfläche beim Umschalten trotzdem sofort in der neuen Sprache dasteht,
+          macht allein dieses `key`: Es baut den Baum neu auf, und jedes `t()` liest
+          dabei frisch. Dasselbe Verfahren wie in ACTA (`<Gate key={locale} />`).
+
+          ⚠️ **Es MUSS über dem Torwächter liegen, nicht im `Stack`.** Solange der
+          Torwächter zeigt, gibt es den `Stack` gar nicht (Falle im Register) — ein
+          `key` dort unten hätte den Anmelde-Bildschirm nie erreicht, und genau der
+          ist der erste, den ein Apple-Prüfer sieht.
+
+          ⚠️ **Der Preis ist benannt:** Ein Neuaufbau setzt den Zustand der
+          Bildschirme zurück (Stapel-Position, offene Klappen) und lässt
+          `useEffect`-Haken erneut laufen. Bei einer absichtlichen, seltenen
+          Handlung wie „Sprache umstellen" ist das die harmlosere Seite; die
+          Sitzung selbst hängt nicht daran, sie lebt außerhalb von React. */}
+      <View style={styles.app} key={sprache}>
         {/* ── Die zwei Leisten, und sie liegen ÜBER der Bühne im FLUSS ──────────
             Ians Entscheidung 48: Sie schieben den Inhalt nach unten, statt sich
             darüberzulegen. Bis zum 2026-09-12 abends lag die Schreibfehler-Leiste
