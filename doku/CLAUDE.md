@@ -64,7 +64,111 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
 ---
 
-## 🔴 HIER GEHT ES WEITER — Zweig `dunkel` (2026-09-26)
+## 🔴 HIER GEHT ES WEITER — Stand 2026-10-17
+
+> **Bei Apple gemessen: 11 von 12.** Offen ist allein **„Build an der Version"** —
+> Build 3 hängt dran, trägt aber noch den roten Kasten (Entscheidung 114). Build 4
+> (`app.json` UND `ios/…/Info.plist` sagen 4, bei Apple frei) baut Ian mit
+> `npm run testflight`, danach `npm run asc build-anhaengen -- --wirklich`,
+> Privacy-Label ansehen, in App Store Connect einreichen.
+>
+> Am 17.10. erledigt: die Arbeit vom 28.09. war **nie committet** — jetzt ist sie es.
+> `npm run asc` war kaputt (Homebrew-`python3` 3.15 ohne `jwt`, siehe neue Falle) und
+> `testflight.sh` hätte deswegen blind „Build frei" gemeldet — Wächter eingebaut,
+> rot und grün belegt. Vor dem Build grün: `tsc`, `pruef-alter` 35, `pruef-zustimmung` 28,
+> `pruef-boden` 13, `pruef-plattform` 5, `ANMELDE_QUELLE = supabase`.
+>
+> Plan: `~/.claude/plans/hallo-ich-will-bitte-memoized-turing.md`
+
+## Davor — Zweig `dunkel` (Stand 2026-09-28, abends)
+
+> ### Das Erste, noch vor allem anderen
+>
+> ```bash
+> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
+> npm run asc einreichbereit        # rein lesend, ändert nichts
+> ```
+>
+> **Er zeigt seit dem 2026-09-28 ZWÖLF Punkte statt zehn.** Die zwei neuen sind
+> `supportUrl` und `privacyPolicyUrl` — beide Pflicht bei Apple, beide standen auf
+> `None`, und **beide wurden vorher nie abgefragt.** Der Grund steht als Falle im
+> Register: Apple verteilt die Store-Texte auf zwei Ressourcen, und
+> `privacyPolicyUrl` liegt in der, die das Werkzeug gar nicht kannte.
+>
+> #### Was Ian zwischen dem 26. und 28.09. selbst erledigt hat (bei Apple gemessen)
+>
+> | | |
+> |---|---|
+> | ✅ **Preis** | kostenlos, 175 Länder — die härteste Sperre ist weg |
+> | ✅ Altersfreigabe | 26 von 30 Feldern, Apple errechnet `FOUR_PLUS` |
+> | ✅ Kategorie · Werbe-ID · Prüfinfos · Screenshots | alle grün, Bilder `COMPLETE` |
+>
+> #### ✅ Was am 2026-09-28 gebaut UND abgeschickt wurde
+>
+> | | |
+> |---|---|
+> | `landing/datenschutz.html` | **live** — jede Zeile aus dem Code hergeleitet |
+> | `landing/hilfe.html` | **live** — Bedienwege gegen `pruefnotizen.md` geprüft |
+> | `scripts/storetexte.md` | die Texte, als Datei — gehören Ian, nicht dem Skript |
+> | `asc.py texte` | neu, mit Längen- und Erreichbarkeits-Riegel |
+> | Bei **Apple gesetzt** | Beschreibung · Untertitel · Suchwörter · Werbetext · Copyright · beide Adressen |
+> | `app.json` | Build-Nummer **2 → 3** (Build 2 lag bei Apple schon — `testflight` wäre daran gescheitert) |
+>
+> **Stand der Einreich-Liste: 10 von 12.** Vorher waren sechs Punkte offen.
+>
+> 🔴 **Es bleiben ZWEI, und beide gehören Ian:**
+>
+> | | |
+> |---|---|
+> | **Build an der Version** | `npm run testflight` · 20 Min · fasst den Schlüsselbund an. Die vier Vorprüfungen sind einzeln gemessen und grün |
+> | **Inhaltsrechte** | Rechtsfrage (Wiener Bezirksgrenzen CC BY 4.0 + UGC), nur im Browser |
+>
+> Dazu, außerhalb der Liste: der **Rechtstext** (21.2, kein Apple-Feld) und das
+> **Privacy-Label** (über die API weder les- noch schreibbar).
+>
+> ⚠️ **Der Riegel in `asc texte` ist am roten UND am grünen Fall belegt:** Erster
+> Lauf abgebrochen (Seiten noch nicht gepusht, 404), nach dem Push durchgelaufen
+> (beide 200). Harte Regel 125.
+>
+> 🟢 **Gemessen am 2026-09-28, und es schließt eine Frage, die hier seit Wochen
+> offen stand:** Das Apple-Programm läuft auf **Ian Faye Horak selbst**
+> (`ACCOUNT_HOLDER`), nicht auf einen Elternteil. Unten in „Was auf Ian wartet"
+> stand das Gegenteil als offene Frage. **Ians Entscheidung 112 vom selben Tag:**
+> Er steht auch als Verantwortlicher auf der Datenschutzerklärung, mit E-Mail und
+> ohne Postadresse.
+>
+> 📄 In Ians Sprache: [`_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md`](_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md)
+
+### 🔴 Die eine Sache, die noch NICHT belegt ist
+
+Der iPad-Umbau (Guideline 4, unten ausführlich) ist am Mac vollständig belegt —
+**und am Gerät mit keinem Bild angesehen.** Betroffen sind acht Hüllen: sechs
+Fehlerseiten, `gruppe/[id]` und der Endzustand von `account-loeschen`.
+
+Der Versuch ist an etwas anderem gescheitert (Mac im Ruhebildschirm → Simulator
+ohne Fenster → `tippen.sh` kann nicht klicken, `simctl io screenshot` aber schon;
+steht als Falle im Register). **Wer das nachholt:** `gruppe/[id]` ist der
+Bildschirm, an dem man einen Fehler am ehesten sähe, und er ist per Deep Link
+erreichbar.
+
+⚠️ Der Regressionsvergleich der acht Store-Bilder ist dafür KEIN Ersatz und war
+auch nicht nötig: Alle acht Routen laufen über `scroll` oder `scrolltSelbst`,
+also durch Zweige, die der Umbau nicht anfasst (nachgesehen: `create.tsx`,
+`match.tsx` Hauptzweig, `profile.tsx`).
+
+### Der Zustand, auf den man sich verlassen kann
+
+| | |
+|---|---|
+| `ANMELDE_QUELLE` | **`supabase`** — in beide Richtungen gegengeprüft |
+| Git | sauber, letzter Commit `2c7bfb5` |
+| Store-Bilder | 8 Stück, 1320×2868, in `_FUER_IAN/App-Store-Screenshots/` |
+| Ians iPhone | trägt den Stand vom 2026-09-26 18:50 |
+| Signier-Kette | Zertifikat + Profil gültig bis 2027-09-14 |
+
+---
+
+## Was davor geschah — Zweig `dunkel` (2026-09-26)
 
 > **Diese Sitzung hat drei Dinge getan, und keines war Design:**
 > das Backend gemessen, den App-Store-Stand gemessen, und beide Messgeräte gebaut,
@@ -234,6 +338,20 @@ sondern abgelehnt** — sie werden nur auf ausdrückliche Ansage wieder aufgemac
 auseinandergehen, ob der direkte Sprung sich richtig anfühlt — am Mac ist nichts
 davon belegbar.
 
+### Ians Entscheidungen 112–114 (2026-09-28)
+
+| # | Entscheidung | Stand |
+|---|---|---|
+| **112** | **Ian selbst ist der Verantwortliche** — auf der Datenschutzerklärung, mit E-Mail und **ohne Postadresse**. Deckt sich mit dem gemessenen Apple-Konto (`ACCOUNT_HOLDER`). Die drei Wege waren: er selbst · ein Elternteil · vertagen | ✅ live |
+| **113** | **Inhaltsrechte: `USES_THIRD_PARTY_CONTENT`** — „ja, und wir haben die Rechte". Vorgelegt mit beiden Lesarten (Wiener Bezirksgrenzen CC BY 4.0 + UGC gegen Apples enge Lesart „fremde Musik/Filme"). Gewählt wie bei Entscheidung 78: **untertreiben ist der Fehler, der Apps aus dem Review wirft** | ✅ bei Apple |
+| **114** | **Der rote Kasten „Dieser Teil fehlt noch" kommt RAUS** — und ein neuer Build damit. Er sagte *„bevor die App über den Freundeskreis hinausgeht"* auf genau dem Screen, den ein Guideline-1.2-Prüfer öffnet. Ersetzt durch Belegbares, nicht durch erfundenen Rechtstext | ✅ Code, ⬜ Build 4 |
+
+🔴 **Die HAFTUNG bleibt offen** — von den vier Punkten des Kastens ist einer erledigt
+(DSGVO, steht jetzt im Netz), zwei sind beantwortet (Alter, Betreiber), und *„wer
+haftet, wenn bei einem Treffen etwas passiert"* gehört weiter jemandem vorgelegt, der
+sich auskennt. Sie steht in `_FUER_IAN/OFFENE_SACHEN.md` — nur nicht mehr als roter
+Kasten im Screen, weil ein Reviewer daraus etwas anderes liest als ein Gründer.
+
 ### Ians Entscheidungen 101–104 (2026-09-20, nachts)
 
 | # | Entscheidung | Stand |
@@ -401,7 +519,7 @@ selbst verschoben hatte (dann zentriert die App absichtlich nicht zurück).
 | `npm run pruef-etikett` | 12 | nichts |
 | `npm run pruef-demo` | **32** | nichts (Wegwerf-DB) |
 | `npm run pruef-demoregel` | **29** | nichts |
-| `npm run pruef-alter` | **32** | nichts (seit 20.9 auch die Tabelle in `asc.py`) |
+| `npm run pruef-alter` | **35** | nichts (seit 28.9 auch der verengte Webzugriff-Wächter) |
 | `npm run pruef-zustimmung` | **28** | nichts |
 | `npm run pruef-glas` | **33** | nichts (bewacht das **Messgerät**, nicht die App — siehe oben) |
 | `npm run pruef-farben` | **79** | nichts |
@@ -567,10 +685,10 @@ schreiben in Ians Apple-Konto, deshalb tippt er sie (siehe Memory
 | 🔑 **Management-Token widerrufen** — darf alles im Supabase-Konto, wird nie wieder gebraucht. **Am 14.09. nachgesehen: `~/.simplysocial/mgmt-token` existiert nicht mehr** — entweder schon erledigt oder nie abgelegt. Im Dashboard nachsehen | `supabase.com/dashboard/account/tokens` → Revoke | nein |
 | **Der Knopf unter dem Vollbild-Kasten** — „Nochmal versuchen" oder nichts | PLAN.md 5b, 20.9 | nein |
 | **`meldungLage()` bei ZU SPÄT bearbeitet** | `TODO(Ian)`, PLAN.md 6 Punkt 60 | nein |
-| **Apple-Programm auf wessen Namen?** — mit 16 üblicherweise über einen Elternteil; daran hängen Anbietername, Verträge und der Sign-in-Schlüssel | `_FUER_IAN/OFFENE_SACHEN.md` | später teuer |
+| 🟢 ~~**Apple-Programm auf wessen Namen?**~~ **BEANTWORTET am 2026-09-28** — bei Apple abgefragt, nicht geraten: Das Programm läuft auf **Ian Faye Horak selbst** (`ACCOUNT_HOLDER`, `ADMIN`). Hier stand „mit 16 üblicherweise über einen Elternteil" — das war eine Annahme, keine Messung. ⚠️ Die RECHTLICHE Frage, ob das so bleiben soll, ist damit nicht beantwortet, nur die tatsächliche | `_FUER_IAN/OFFENE_SACHEN.md` | nicht mehr |
 | 🟢 **Die Altersfreigabe schicken — EIN BEFEHL** (seit 26.09.): `npm run asc altersfreigabe -- --wirklich`. 24 Felder gehen von `null` auf einen Wert; der Trockenlauf ohne `--wirklich` ist gelaufen und steht. Zwei Urteilsfragen (Alkohol, Wellness) liegen bei Ian und sind je eine Zeile | `_FUER_IAN/ALTERSFREIGABE.md` | für Phase 21 ja |
 | 🔑 **`sudo npm run tunnel`** — einmal pro Mac-Neustart, dann kann ich mir mit `npm run knipsen` selbst Bilder vom iPhone holen. Ohne ihn endet jede Design-Runde wieder mit „schick mir bitte einen Screenshot", und die Store-Screenshots (bei Apple liegt KEINES) sind blockiert | `scripts/knipsen.sh` | für die Screenshots ja |
-| 🔴 **Preis auf kostenlos setzen** — die HÄRTESTE Sperre. Apple nimmt die App ohne Preis nicht an (`APP_PRICING_REQUIRED`), und unser API-Schlüssel darf nicht an Preise (Admin-/Finanzrechte). Nur in der Weboberfläche | `_FUER_IAN/APP_STORE_STAND.md` | **ja, hart** |
+| 🟢 ~~**Preis auf kostenlos setzen**~~ ✅ **ERLEDIGT von Ian** — am 2026-09-28 gemessen: kostenlos (0.0) in 175 Ländern. Das war die härteste Sperre (`APP_PRICING_REQUIRED`), und sie ist weg | `_FUER_IAN/APP_STORE_STAND.md` | nicht mehr |
 | **Rechtstext für die Nutzungsbedingungen** — kein Text, den Claude erfinden darf. **Das Häkchen dafür steht seit 14.09.**, es wartet nur noch auf den Text | `_FUER_IAN/OFFENE_SACHEN.md` Punkt 1 | für Phase 21 ja |
 | **Was passiert, wenn sich der Rechtstext ÄNDERT** — alle neu fragen, nur bei Wesentlichem, oder gar nicht. Vertagbar, ohne etwas zu verlieren (die Fassung wird schon geschrieben), aber am Tag des Rechtstexts fällig | PLAN.md 6, Punkt 67 · `TODO(Ian)` in `zustimmung.ts` | nein |
 | **Landing-Page-Farbe** — Olivgrün, Weinrot oder Türkis, dazu bunt vs. Leitfarbe | `landing-vorschau/LIESMICH.md`, OFFENE_SACHEN 4b | nein |
@@ -730,11 +848,21 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 122. Wie genau die Bezirksgrenzen sind, steht in `bezirke-bauen.py` — und ein grobes RASTER spart NICHTS
 123. Ob die Karte Zahlen zeigt, steht in `ZAHLEN_AN` — und ohne sie trägt die FARBE die Grenze „leer / nicht leer"
 124. Welcher EINE Bezirk gewählt ist, sagt `gewaehlterBezirk()` — nie eine zweite Ableitung
+125. Was der App Store an TEXT zeigt, steht in `scripts/storetexte.md` — und jede ADRESSE darin wird angerufen, bevor sie zu Apple geht
 ## Fallen — Index
 
-> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 213 Stück, jede schon
+> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 230 Stück, jede schon
 > einmal einen Abend gekostet — die meisten stammen aus ACTA (`17_Tennis_Optimma`), der
 > Rest aus diesem Projekt. Hier steht nur der Titel; **die Diagnose steht im Volltext.**
+>
+> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-09-28). Hier stand 213,
+> gezählt wurden 226 — *eine Warnung mit einer ZAHL darin veraltet genauso still wie
+> das, wovor sie warnt.* Die Messstelle, damit die nächste Zahl nicht wieder geraten
+> wird:
+>
+> ```bash
+> python3 -c "s=open('CLAUDE.md',encoding='utf-8').read(); i=s.index('## Fallen — Index'); r=s[i:]; print(sum(1 for z in r[:r.index(chr(10)+'---'+chr(10))].splitlines() if z.startswith('- ')))"
+> ```
 
 - Große Display-Fonts clippen auf iOS
 - SafeArea auf Tab-Screens:
@@ -956,6 +1084,17 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - `tsc` löst `@/lib/tabs` IMMER auf die Web-Datei auf — eine `.native`-Fassung, die etwas WEGLÄSST, ist am Mac unsichtbar
 - Die `Info.plist` im gebauten Bündel ist kein Anker für „wann wurde gebaut"
 - „Build 2 · VALID" beantwortet nicht, ob der Build an der VERSION hängt
+- Der Ruhebildschirm nimmt dem Simulator sein FENSTER — und eine Helligkeitsmessung merkt das nicht
+- `pgrep -f "<App>.app/<App>"` findet die App auf JEDEM laufenden Simulator
+- Eine Prop, die Rettung ANBIETET, rettet nur die, die sie setzen
+- Apple verteilt die Store-Texte auf ZWEI Ressourcen, und eine davon überlebt jede Version
+- Eine tote Adresse im Store-Eintrag ist schlimmer als ein leeres Feld
+- Eine Landing-Page, die einen PROTOTYP bewirbt, ist kein Support-Link
+- Ein `pkill -f` mit breitem Muster erwischt fremde Prozesse — ein Kommentar ist kein Riegel
+- Ein Chrome-Screenshot unter ~500 px Breite ist ein AUSSCHNITT, kein Rendering in dieser Breite
+- Ein Wächter, der bei „nichts zu tun" aufhört, beantwortet die falsche Frage
+- Ein Wächter, der eine Zusage an Apple schützt, wird VERENGT — nie gelockert
+- Ein Homebrew-Upgrade zieht `python3` auf eine Version OHNE `jwt` — und eine Prüfung, die Fehler schluckt, meldet dann „frei"
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

@@ -20,4 +20,50 @@ export const BRAND = {
 
   /** Die Stadt, für die v1 gebaut ist. Steht im Feed-Header und in leeren Zuständen. */
   city: 'Wien',
+
+  /**
+   * Das Rechtliche — seit dem 2026-09-28, und jede Zeile ist gemessen oder Ians
+   * Entscheidung, keine davon erfunden.
+   *
+   * ⚠️ **Die zwei Adressen stehen AUCH in `scripts/storetexte.md`** und von dort
+   * im App-Store-Eintrag. Das ist eine Doppelung, die man kennen muss: Wer eine
+   * davon umbenennt, benennt sie an BEIDEN Stellen um — sonst zeigt die App
+   * woandershin als der Store, und ein toter Link ist ein Ablehnungsgrund
+   * (Guideline 1.5). Zusammengeführt sind sie nicht, weil eine `.md`-Datei für
+   * Apple und ein TypeScript-Modul für die App keine gemeinsame Quelle haben,
+   * die ohne Bauschritt auskommt.
+   */
+  legal: {
+    /**
+     * Der rechtliche Betreiber. Am 2026-09-28 bei Apple abgefragt, nicht geraten:
+     * Das Entwicklerprogramm läuft auf diese Person (`ACCOUNT_HOLDER`, `ADMIN`).
+     * ⚠️ Ändert sich das Apple-Konto, ändert sich DIESE Zeile mit — und das
+     * `copyright` in `scripts/storetexte.md` ebenso.
+     */
+    betreiber: 'Ian Faye Horak',
+    kontakt: 'ian.fhorak@gmail.com',
+
+    /** Die Datenschutzerklärung. Steht bei Apple als `privacyPolicyUrl`. */
+    datenschutzUrl: 'https://ianfhorak-jpg.github.io/simplysocial-landing/datenschutz.html',
+    /** Hilfe und Kontakt. Steht bei Apple als `supportUrl`. */
+    hilfeUrl: 'https://ianfhorak-jpg.github.io/simplysocial-landing/hilfe.html',
+
+    /**
+     * Apples Standard-Lizenzvertrag. **Das ist kein Notbehelf, sondern der
+     * vorgesehene Weg:** Apple verlangt eine EULA und stellt für alle, die keine
+     * eigene haben, diese hier — sie gilt automatisch, wenn man keine andere
+     * angibt. Sie zu verlinken behauptet also nichts, was nicht ohnehin gälte.
+     * ⚠️ Sie ersetzt NICHT die eigenen Hausregeln (die sechs Regeln im Screen)
+     * und nicht die Datenschutzerklärung.
+     */
+    eulaUrl: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+
+    /**
+     * Ab wann man mitmachen darf. **13** ist keine Wahl, sondern folgt aus Apples
+     * Altersfreigabe (Phase 21.1). In Österreich braucht man bis zum vollendeten
+     * 14. Lebensjahr die Zustimmung der Eltern, damit Daten verarbeitet werden
+     * dürfen (§ 4 Abs. 4 DSG) — deshalb steht beides im Screen, nicht nur die 13.
+     */
+    mindestalter: 13,
+  },
 } as const;

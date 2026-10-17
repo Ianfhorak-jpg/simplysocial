@@ -6939,6 +6939,66 @@ sieben stille Tage nicht mehr vorkommen. Das ist ein gutes Problem.
 
 ---
 
+#### 21.7 — Die zwei Pflicht-Adressen und die Store-Texte ✅ *(gebaut am 2026-09-28)*
+
+🔴 **Der Befund, der diesen Abschnitt nötig machte:** `asc.py einreichbereit` meldete
+vier offene Punkte. Es waren **sechs**. `supportUrl` und `privacyPolicyUrl` sind bei
+Apple Pflicht, standen beide auf `None` — und **wurden nie abgefragt.**
+
+Der Grund ist nicht Nachlässigkeit, sondern die Bauart der API: Apple verteilt die
+Texte auf zwei Ressourcen, und `privacyPolicyUrl` liegt in der, die das Werkzeug gar
+nicht kannte (`appInfoLocalizations`). *Ein Prüfstand, der eine Ressource nicht abruft,
+meldet deren Felder nie als fehlend — er meldet grün, weil er nicht hinsieht.* Dieselbe
+Sorte Befund wie am 2026-09-26: **keine falsche Behauptung, sondern eine ungestellte
+Frage.**
+
+**Was gebaut wurde**
+
+| | |
+|---|---|
+| `landing/datenschutz.html` | DSGVO-Erklärung. Jede Angabe aus dem Code hergeleitet — dieselben acht Datensorten wie im Etikett (21.3), plus was `konto_loeschen()` (0003) wirklich tut |
+| `landing/hilfe.html` | Support-Seite. Die Bedienwege sind gegen `scripts/pruefnotizen.md` geprüft, nicht ausgedacht |
+| `landing/unterseite.css` | gemeinsamer Stil beider Seiten |
+| `scripts/storetexte.md` | Beschreibung · Untertitel · Suchwörter · Werbetext · Copyright · beide Adressen |
+| `asc.py texte` | schickt sie, mit zwei Vorprüfungen |
+| `asc.py einreichbereit` | **zehn → zwölf Punkte** |
+
+**Drei Dinge, die dabei gefunden wurden und keine Zeile Code sind**
+
+1. 🟢 **Das Apple-Programm läuft auf Ian selbst** (`ACCOUNT_HOLDER`), nicht auf einen
+   Elternteil. Stand in `CLAUDE.md` seit Wochen als offene Frage, war aber mit einer
+   Abfrage zu beantworten. **Ians Entscheidung 112:** Er steht auch als
+   Verantwortlicher auf der Datenschutzerklärung, mit E-Mail, ohne Postadresse.
+2. 🔴 **Die Landing-Page nennt die App siebenmal einen „Prototyp"**, einmal
+   ausdrücklich *„keine fertige App"*. Deshalb zeigen beide Adressen auf eigene
+   Unterseiten und NICHT auf die Startseite. **Der Satz in der Fußzeile ist weiter
+   da und wird spätestens am Tag der Freigabe zum Problem — er gehört Ian.**
+3. 🔴 **Am Handy lief der Text über den rechten Rand** und wurde mitten im Wort
+   gekappt: deutsche Komposita und `privaterelay.appleid.com` sind breiter als die
+   358-px-Spalte, und `overflow-x: hidden` auf dem `body` (aus `stil.css`) machte aus
+   dem Überlauf einen **stillen Schnitt** statt einer Bildlaufleiste. *Der Fehler
+   versteckt genau das Symptom, das ihn verraten würde.* Behoben mit
+   `overflow-wrap: break-word` + `hyphens: auto`.
+   ⚠️ **Gefunden am Bild, nicht am Code** — am Mac war nichts davon zu sehen.
+
+**Was daran Ian gehört**
+
+```bash
+cd landing && git add -A && git commit -m "…" && git push   # 1. ins Netz
+# 1–2 Minuten warten (GitHub Pages)
+cd ../simplysocial && npm run asc texte -- --wirklich        # 2. zu Apple
+```
+
+🔴 **Die Reihenfolge ist erzwungen, nicht empfohlen.** `asc texte` ruft jede Adresse
+auf und sendet **nichts**, wenn eine nicht mit 200 antwortet oder das Wort „Prototyp"
+enthält (harte Regel 125). Der erste Lauf am 28.09. ist genau so abgebrochen — der
+Riegel ist am roten Fall belegt, nicht nur gebaut.
+
+**Offen bleibt in Phase 21:** der Rechtstext (21.2), die Inhaltsrechte (Rechtsfrage),
+das Datenschutz-Etikett (über die API nicht prüfbar) und der Build (21.4).
+
+---
+
 ## 6. Ian schreibt selbst
 
 Stellen mit echten Trade-offs, an denen Ians Meinung das Produkt formt. Jeweils

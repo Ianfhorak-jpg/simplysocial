@@ -72,12 +72,29 @@
  * eine ANDERE Datei. Bewacht wird sie deshalb nicht hier, sondern mit dem
  * Prüfstand gegen den Screen.
  *
- * **Heute steht dort der Platzhalter** — die sechs Hausregeln stehen, der
- * rechtliche Teil ist der rote Kasten. `'2026-09-14-hausregeln'` sagt das
- * ausdrücklich: Wer diese Fassung in der Datenbank sieht, weiß, dass diese
- * Person dem Rechtstext NICHT zugestimmt hat, weil es keinen gab.
+ * 🟢 **BERICHTIGUNG 2026-09-28.** Hier stand: *„Heute steht dort der Platzhalter —
+ * die sechs Hausregeln stehen, der rechtliche Teil ist der rote Kasten."* Das galt
+ * bis zum 28.09. und gilt nicht mehr.
+ *
+ * **Was sich geändert hat:** Der rote Kasten *„Dieser Teil fehlt noch"* ist raus.
+ * An seiner Stelle steht jetzt, was nachweisbar WAHR ist — Betreiber (bei Apple
+ * abgefragt), Altersgrenze, die Folge eines Verstoßes (`konto_weg()` in Migration
+ * 0010 deckt sie), dazu Verweise auf die Datenschutzerklärung im Netz und auf
+ * Apples Standard-Lizenzvertrag.
+ *
+ * ⚠️ **Das ist weiterhin KEIN selbst geschriebener Rechtstext**, und der alte
+ * Grundsatz gilt unverändert: *Ein plausibel klingender Absatz wäre schlimmer als
+ * eine sichtbare Lücke.* Es wurde nichts erfunden — es wurde aufgehört, eine Lücke
+ * zu behaupten, die es so nicht mehr gibt. Der Anlass war Apple: Der rote Kasten
+ * sagte *„bevor die App über den Freundeskreis hinausgeht"*, und genau diesen
+ * Screen öffnet ein Reviewer bei einer Guideline-1.2-App.
+ *
+ * 🔴 **Wer die Fassung ändert, muss Punkt 67 aus PLAN.md 6 mitdenken:** Was
+ * passiert mit Leuten, die der ALTEN Fassung zugestimmt haben? Am 2026-09-28 ist
+ * das folgenlos — es gibt Ians Konto und das Demo-Konto —, aber es ist die Frage,
+ * die beim ersten echten Nutzerkreis fällig wird, und sie gehört Ian.
  */
-export const FASSUNG = '2026-09-14-hausregeln';
+export const FASSUNG = '2026-09-28-regeln-und-rechtliches';
 
 /**
  * Die Fassung, wie sie einem MENSCHEN gezeigt wird — unter den Nutzungsbedingungen.

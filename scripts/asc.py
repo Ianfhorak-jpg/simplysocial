@@ -367,9 +367,32 @@ def einreichbereit(token, app):
     # ACTAs `build-verknuepfen` schon einmal gemacht hat. Es braucht vorher
     # `npm run testflight`, und das fasst Ians Schlüsselbund an.
     b = hole(f"appStoreVersions/{v['id']}/build", token).get('data')
-    zeile('Build an der Version', bool(b),
-          f"Build {b['attributes']['version']}" if b else
-          'KEINER — Einreichen gesperrt. Braucht einen NEUEN Build, nicht den alten',
+    # 🔴 „Hängt ein Build dran" ist NICHT dieselbe Frage wie „ist er aktuell".
+    # Am 2026-09-28 hing Build 3 an der Version, und eine Viertelstunde später war
+    # er veraltet, weil `Nutzungsbedingungen.tsx` geändert wurde. Diese Liste hätte
+    # weiter ✓ gemeldet — dieselbe Sorte Lücke wie bei `build-anhaengen`, und
+    # dieselbe Lehre: *Ein Häkchen, das eine ÄHNLICHE Frage beantwortet, ist kein
+    # Häkchen.*
+    build_alt, build_grund = False, ''
+    if b:
+        import datetime as _dt, pathlib as _pl
+        _hoch = _dt.datetime.fromisoformat(
+            b['attributes']['uploadedDate'].replace('Z', '+00:00'))
+        _datei, _zeit = None, 0.0
+        for _d in _pl.Path('src').rglob('*'):
+            if _d.is_file() and _d.suffix in ('.ts', '.tsx', '.js', '.jsx', '.json'):
+                _m = _d.stat().st_mtime
+                if _m > _zeit:
+                    _zeit, _datei = _m, _d
+        _quelle = _dt.datetime.fromtimestamp(_zeit, _dt.timezone.utc)
+        if _quelle > _hoch:
+            build_alt = True
+            build_grund = (f"Build {b['attributes']['version']} hängt dran, ist aber "
+                           f"VERALTET — {_datei} wurde danach geändert")
+    zeile('Build an der Version', bool(b) and not build_alt,
+          build_grund if build_alt else
+          (f"Build {b['attributes']['version']}" if b else
+           'KEINER — Einreichen gesperrt. Braucht einen NEUEN Build, nicht den alten'),
           '🧑 npm run testflight')
 
     rd = hole(f"appStoreVersions/{v['id']}/appStoreReviewDetail", token).get('data')
@@ -425,6 +448,36 @@ def einreichbereit(token, app):
     zeile('Store-Texte', not fehlend and bool(lok),
           f"{len(lok)} Sprachen vollständig" if lok and not fehlend
           else f"unvollständig: {fehlend or 'keine Sprache angelegt'}", '🧑')
+
+    # 🔴 Am 2026-09-28 dazugekommen, und der Grund ist derselbe wie am 26.09. beim
+    # ganzen Store-Eintrag: Es hat nie jemand gefragt. Die Zeile darüber prüfte
+    # `description` und `keywords` — beides steckt in appStoreVersionLocalizations.
+    # Apple verlangt aber ZWEI weitere Pflichtfelder, und eines davon liegt in einer
+    # ANDEREN Ressource:
+    #
+    #   supportUrl        appStoreVersionLocalizations  (hängt an der Version)
+    #   privacyPolicyUrl  appInfoLocalizations          (hängt an der APP)
+    #
+    # Ein Werkzeug, das appInfoLocalizations gar nicht abruft, kann deren Felder auch
+    # nie als fehlend melden. Beide standen am 2026-09-28 auf None.
+    # ⚠️ Eine URL, die 404 liefert, ist SCHLIMMER als keine: Apple klickt sie an
+    # (Guideline 1.5), und ein toter Link ist eine Ablehnung mit Ansage.
+    ohne_support = [l['attributes']['locale'] for l in lok
+                    if not l['attributes'].get('supportUrl')]
+    zeile('Support-URL', not ohne_support and bool(lok),
+          next((l['attributes']['supportUrl'] for l in lok
+                if l['attributes'].get('supportUrl')), None)
+          or f"FEHLT ({ohne_support or 'keine Sprache angelegt'}) — Apple verlangt sie",
+          '🧑 npm run asc texte -- --wirklich')
+
+    ilok = hole(f"appInfos/{info['id']}/appInfoLocalizations", token)['data']
+    ohne_dsgvo = [l['attributes']['locale'] for l in ilok
+                  if not l['attributes'].get('privacyPolicyUrl')]
+    zeile('Datenschutz-URL', not ohne_dsgvo and bool(ilok),
+          next((l['attributes']['privacyPolicyUrl'] for l in ilok
+                if l['attributes'].get('privacyPolicyUrl')), None)
+          or f"FEHLT ({ohne_dsgvo or 'keine Sprache angelegt'}) — Pflicht bei jeder App mit Konto",
+          '🧑 npm run asc texte -- --wirklich')
 
     # „Hochgeladen" und „von Apple abgenommen" sind ZWEI Zustände. Ein Bild im
     # falschen Format nimmt der PUT klaglos an und fällt erst im
@@ -781,12 +834,27 @@ def metadaten(token, app, wirklich):
     # sobald eines dazukommt. Dieselbe Tatsache trägt schon das Datenschutz-
     # Etikett und die Altersfreigabe.
     SOLL_IDFA = False
-    # ⚠️ NICHT gesetzt, und das ist Absicht: Apples Frage nach Inhaltsrechten ist
-    # eine RECHTSfrage („enthält die App Inhalte Dritter, und habt ihr die
-    # Rechte daran?"). Hier hängen zwei Dinge dran, über die nur Ian entscheidet:
-    # die Bezirksgrenzen der Stadt Wien (CC BY 4.0, Nennung in Einstellungen →
-    # Rechtliches) und alles, was Menschen selbst hochladen. Das gehört in
-    # dieselbe Schublade wie Preis und Copyright.
+    # 🟢 BERICHTIGUNG 2026-09-28. Hier stand: „NICHT gesetzt, und das ist Absicht"
+    # — weil es eine RECHTSfrage ist und keine Ableitung aus dem Code. Die
+    # Einordnung war richtig und bleibt es; was fehlte, war Ians Antwort.
+    #
+    # **Ians Entscheidung 113 (2026-09-28): `USES_THIRD_PARTY_CONTENT`** — „ja,
+    # und wir haben die Rechte". Vorgelegt mit beiden Lesarten:
+    #
+    #   dafür  Die Bezirksgrenzen sind Daten der Stadt Wien (CC BY 4.0, Nennung
+    #          steht in Einstellungen → Rechtliches). Dazu alles, was Menschen
+    #          selbst hochladen.
+    #   dagegen Liest man Apples Frage eng (fremde Musik, Filme, Bilder aus dem
+    #          Netz), hat die App davon nichts.
+    #
+    # Gewählt wurde die weite Lesart, aus demselben Grund wie beim Bezirk im
+    # Datenschutz-Etikett (Entscheidung 78): **Untertreiben ist der Fehler, der
+    # Apps aus dem Review wirft; übertreiben nicht.**
+    #
+    # ⚠️ Es bleibt eine Rechtsfrage — dieser Wert steht hier, weil Ian ihn
+    # entschieden hat, NICHT weil das Skript ihn herleiten könnte. Wer die
+    # Bezirksdaten austauscht oder die Nennung entfernt, fasst auch diese Zeile an.
+    SOLL_RECHTE = 'USES_THIRD_PARTY_CONTENT'
     print("Stand bei Apple:")
     print(f"  Kategorie       {prim or '—'}{' + ' + sek if sek else ''}")
     print(f"  Werbe-ID (IDFA) {idfa!r}")
@@ -797,6 +865,8 @@ def metadaten(token, app, wirklich):
         tun.append(('Kategorie', prim, SOLL_KAT))
     if idfa is not SOLL_IDFA:
         tun.append(('Werbe-ID', idfa, SOLL_IDFA))
+    if cr != SOLL_RECHTE:
+        tun.append(('Inhaltsrechte', cr, SOLL_RECHTE))
     if not tun:
         print("\n✓ Beides steht schon richtig.")
         return
@@ -815,16 +885,351 @@ def metadaten(token, app, wirklich):
                           {'data': {'type': 'appInfos', 'id': info['id'],
                                     'relationships': {'primaryCategory': {
                                         'data': {'type': 'appCategories', 'id': soll}}}}}, token)
-        else:
+        elif name == 'Werbe-ID':
             ok, r = sende('PATCH', f"appStoreVersions/{v['id']}",
                           {'data': {'type': 'appStoreVersions', 'id': v['id'],
                                     'attributes': {'usesIdfa': soll}}}, token)
+        elif name == 'Inhaltsrechte':
+            # Hängt an der APP, nicht an der Version — wie `privacyPolicyUrl`.
+            ok, r = sende('PATCH', f"apps/{app['id']}",
+                          {'data': {'type': 'apps', 'id': app['id'],
+                                    'attributes': {'contentRightsDeclaration': soll}}}, token)
+        else:
+            # 🔴 Hier stand bis zum 2026-09-28 ein blankes `else`, das für ALLES
+            # ausser der Kategorie `usesIdfa` gesetzt hat. Das war richtig, solange
+            # es genau zwei Fälle gab — und wäre beim dritten still falsch
+            # gewesen: Der PATCH ginge durch und setzte die FALSCHE Eigenschaft.
+            # *Ein `else` trägt die Annahme „alles Übrige ist der andere Fall".*
+            raise SystemExit(f"✗ Unbekanntes Feld {name!r} in `tun` — "
+                             f"kein Sendeweg dafür. Nichts weiter gesendet.")
         print(f"  {'✓' if ok else '✗'} {name}" + ('' if ok else f": {r}"))
 
     # Zurücklesen statt der Erfolgsmeldung glauben.
     prim2, _ = kategorien(token, app)
     idfa2 = offene_version(token, app)['attributes'].get('usesIdfa')
-    print(f"\n  zurückgelesen: Kategorie {prim2} · Werbe-ID {idfa2!r}")
+    cr2 = hole(f"apps/{app['id']}", token)['data']['attributes'].get('contentRightsDeclaration')
+    print(f"\n  zurückgelesen: Kategorie {prim2} · Werbe-ID {idfa2!r} · Inhaltsrechte {cr2}")
+
+
+# ── Die Store-Texte ───────────────────────────────────────────────────────────
+#  Apples Grenzen. Ein Zeichen zu viel, und der PATCH scheitert mit einer Meldung,
+#  die das Feld nicht nennt — deshalb wird VOR dem Senden gezählt.
+TEXT_GRENZEN = {
+    'subtitle': 30, 'keywords': 100, 'promotionalText': 170,
+    'description': 4000, 'supportUrl': 255, 'privacyPolicyUrl': 255,
+    'marketingUrl': 255, 'whatsNew': 4000, 'copyright': 200,
+}
+
+# Welches Feld bei Apple WO hängt. Das ist der Grund, warum `privacyPolicyUrl` bis
+# zum 2026-09-28 niemandem gefehlt hat: Es liegt nicht an der Version, sondern an
+# der App, und wer nur appStoreVersionLocalizations abfragt, sieht es nie.
+FELD_ORT = {
+    'description': 'version', 'keywords': 'version', 'promotionalText': 'version',
+    'supportUrl': 'version', 'marketingUrl': 'version', 'whatsNew': 'version',
+    'subtitle': 'info', 'privacyPolicyUrl': 'info',
+    # Sonderfall: hängt weder an einer Übersetzung noch an der App, sondern an der
+    # VERSION selbst — ein Feld, keine Liste. Es steht trotzdem hier und nicht in
+    # `metadaten`, weil es eine ANGABE ist wie die Texte, keine Ableitung aus dem
+    # Code. Wer es ändert, ändert, wer rechtlich hinter der App steht.
+    'copyright': 'version_selbst',
+}
+
+
+def lies_storetexte(pfad='scripts/storetexte.md'):
+    """Liest `storetexte.md`. Jede `## feld`-Überschrift ist ein Feld bei Apple.
+
+    Die Datei ist bewusst Markdown und nicht Python: Der Text gehört Ian, und er
+    muss ihn ändern können, ohne ein Skript anzufassen (dasselbe wie bei
+    `pruefnotizen.md`). Kommentare `<!-- … -->` sind Notizen an ihn und gehen NICHT
+    mit — sonst stünde die Begründung im App Store.
+    """
+    roh = open(pfad, encoding='utf-8').read()
+    if '---' not in roh:
+        raise SystemExit(f"✗ {pfad}: kein `---` — wo hört der Vorspann auf?")
+    felder = {}
+    for block in re.split(r'^## ', roh.split('---', 1)[1], flags=re.M)[1:]:
+        name, _, rest = block.partition('\n')
+        name = name.strip()
+        text = re.sub(r'<!--.*?-->', '', rest, flags=re.S).strip()
+        if name not in FELD_ORT:
+            raise SystemExit(f"✗ {pfad}: `## {name}` kennt Apple nicht. "
+                             f"Erlaubt: {', '.join(sorted(FELD_ORT))}")
+        if not text:
+            raise SystemExit(f"✗ {pfad}: `## {name}` ist leer.")
+        felder[name] = text
+    return felder
+
+
+def url_lebt(url, timeout=20):
+    """Antwortet die Adresse mit 200? Gibt (ok, auskunft) zurück.
+
+    ⚠️ Das ist KEIN Luxus und keine Höflichkeit gegenüber Apple. Ein leeres Feld
+    blockiert die Einreichung sofort und sichtbar; eine URL, die ins Leere zeigt,
+    kommt durch JEDE Prüfung durch und fällt erst dem Reviewer auf — dann kostet
+    sie eine Ablehnung und Tage. Guideline 1.5 nennt genau das.
+    ⚠️ GitHub Pages braucht nach einem `git push` ein bis zwei Minuten. Ein 404
+    heisst hier also entweder „nie hochgeladen" oder „gerade erst" — die Meldung
+    sagt das, statt nur die Zahl zu drucken.
+    """
+    req = urllib.request.Request(url, method='GET', headers={'User-Agent': 'asc.py'})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            roh = r.read(4000).decode('utf-8', 'replace')
+            # Eine Seite, die antwortet, aber die App als unfertig bezeichnet, ist
+            # schlimmer als keine: Apple weist Apps zurück, die sich als Beta
+            # ausgeben. Am 2026-09-14 stand genau dieser Satz schon einmal im JSX
+            # der Nutzungsbedingungen.
+            schlimm = [w for w in ('Prototyp', 'prototype', 'Beta-Version',
+                                   'noch nicht öffentlich', 'coming soon')
+                       if w.lower() in roh.lower()]
+            if schlimm:
+                return False, f"HTTP {r.status}, aber die Seite sagt {schlimm} — Apple liest das"
+            return r.status == 200, f"HTTP {r.status}"
+    except urllib.error.HTTPError as e:
+        extra = " (frisch gepusht? GitHub Pages braucht 1–2 Minuten)" if e.code == 404 else ""
+        return False, f"HTTP {e.code}{extra}"
+    except Exception as e:
+        return False, f"nicht erreichbar: {e}"
+
+
+def build_anhaengen(token, app, wirklich):
+    """Hängt den neuesten Build an die offene Version — mit dem Wächter, der zählt.
+
+    ── Warum es diesen Befehl bis zum 2026-09-28 NICHT gab ───────────────────
+    Hier stand: *„Zuständigkeit 🧑, obwohl ein PATCH das technisch könnte."* Der
+    Grund war nicht die API, sondern der Zustand: Der jüngste Build war der vom
+    14.09. und kannte die Entscheidungen 90–110 nicht. **Einen veralteten Build
+    anzuhängen und „erledigt" zu melden ist genau der Fehler, den ACTAs
+    `build-verknuepfen` schon einmal gemacht hat.**
+
+    Die Bedingung ist seit Build 3 erfüllt — also gibt es den Befehl, aber mit dem
+    Wächter, der die alte Sorge trägt statt sie zu vergessen.
+
+    ── Der Wächter misst DREI Dinge, und nur das dritte ist scharf ───────────
+      1. Ist es der höchste Build?   — verhindert den Griff zum falschen
+      2. Ist er VALID?               — PROCESSING lässt sich nicht anhängen
+      3. Ist er JÜNGER als der Quelltext?  ← der eigentliche Test
+
+    ⚠️ **Punkt 3 ist der, den eine Nummer nie verrät.** Man kann bauen, danach am
+    Code weiterarbeiten und den Build trotzdem anhängen — die Nummer ist dann immer
+    noch die höchste, und der Build trägt den Code von vorher. Verglichen wird
+    Apples `uploadedDate` mit der jüngsten Änderung in `src/`.
+    """
+    import datetime, pathlib
+
+    v = offene_version(token, app)
+    if not v:
+        print("✗ Keine bearbeitbare Version.")
+        return
+
+    dran = hole(f"appStoreVersions/{v['id']}/build", token).get('data')
+    builds = hole(f"builds?filter[app]={app['id']}&sort=-version&limit=5", token)['data']
+    if not builds:
+        print("✗ Bei Apple liegt gar kein Build.")
+        return
+
+    # Apple sortiert `version` als TEXT — "10" käme vor "9". Deshalb selbst
+    # numerisch sortieren, sobald es zweistellig wird.
+    def nr(b):
+        try:    return int(b['attributes']['version'])
+        except (TypeError, ValueError): return -1
+    builds.sort(key=nr, reverse=True)
+    neuster = builds[0]
+    na = neuster['attributes']
+
+    print(f"Version {v['attributes']['versionString']} "
+          f"({v['attributes'].get('appVersionState')})")
+    print(f"  Build daran:  {dran['attributes']['version'] if dran else 'KEINER'}")
+    print(f"  Neuster Build: {na['version']} · {na.get('processingState')} "
+          f"· hochgeladen {na.get('uploadedDate')}\n")
+
+    # 🔴 Die Frische-Prüfung steht VOR der Abkürzung „hängt schon dran", und das
+    # ist der Unterschied zwischen zwei Fragen:
+    #
+    #     „Muss ich etwas ändern?"   — darauf antwortet „hängt schon dran"
+    #     „Ist der Zustand richtig?" — dafür ist dieser Befehl gebaut
+    #
+    # Am 2026-09-28 stand die Prüfung dahinter, und der Fall trat innerhalb einer
+    # Stunde ein: Build 3 hing an der Version, danach wurde der rote Kasten aus
+    # `Nutzungsbedingungen.tsx` entfernt — der angehängte Build war ab da veraltet,
+    # und das Werkzeug meldete „Nichts zu tun". *Ein Wächter, der bei „nichts zu
+    # tun" aufhört, ist keiner.*
+    hoch = datetime.datetime.fromisoformat(na['uploadedDate'].replace('Z', '+00:00'))
+    neuste_datei, neuste_zeit = None, 0.0
+    for d in pathlib.Path('src').rglob('*'):
+        if d.is_file() and d.suffix in ('.ts', '.tsx', '.js', '.jsx', '.json'):
+            m = d.stat().st_mtime
+            if m > neuste_zeit:
+                neuste_zeit, neuste_datei = m, d
+    quelle = datetime.datetime.fromtimestamp(neuste_zeit, datetime.timezone.utc)
+    veraltet = quelle > hoch
+
+    if dran and dran['id'] == neuster['id']:
+        if not veraltet:
+            print(f"✓ Build {na['version']} hängt an der Version und ist aktuell.")
+            return
+        minuten = (quelle - hoch).total_seconds() / 60
+        print(f"⚠️  Build {na['version']} hängt an der Version — aber er ist VERALTET.")
+        print(f"    {neuste_datei} wurde {minuten:.0f} Minuten NACH dem Bauen geändert.")
+        print(f"    Quelltext: {quelle.astimezone():%Y-%m-%d %H:%M} · "
+              f"Build: {hoch.astimezone():%Y-%m-%d %H:%M}")
+        print("\n    Einreichen würde eine App verschicken, die diesen Stand nicht hat.")
+        print("    → npm run testflight   (baut neu), danach diesen Befehl nochmal.")
+        return
+
+    # ── Wächter 2: VALID? ────────────────────────────────────────────────────
+    if na.get('processingState') != 'VALID':
+        print(f"✗ Build {na['version']} ist {na.get('processingState')}, nicht VALID.")
+        print("  Apple verarbeitet ihn noch (5–30 Min). Später nochmal.")
+        return
+
+    # ── Wächter 3: trägt er den Code von heute? ──────────────────────────────
+    print(f"  Quelltext zuletzt geändert: {quelle.astimezone():%Y-%m-%d %H:%M} "
+          f"({neuste_datei})")
+    print(f"  Build hochgeladen:          {hoch.astimezone():%Y-%m-%d %H:%M}")
+
+    if veraltet:
+        minuten = (quelle - hoch).total_seconds() / 60
+        print(f"\n✗ Der Quelltext ist {minuten:.0f} Minuten JÜNGER als der Build.")
+        print(f"  {neuste_datei} wurde nach dem Bauen geändert — dieser Build trägt")
+        print("  diese Änderung NICHT. Anhängen würde eine App einreichen, die es")
+        print("  so nirgends gibt.")
+        print("\n  Entweder neu bauen (npm run testflight) oder, wenn die Änderung")
+        print("  egal ist (z.B. nur ein Kommentar), mit --trotzdem anhängen.")
+        if '--trotzdem' not in sys.argv:
+            return
+        print("\n  ⚠️ --trotzdem gesetzt — es wird angehängt.")
+    else:
+        print(f"  ✓ Der Build ist jünger als der Quelltext.")
+
+    if not wirklich:
+        print(f"\nTROCKENLAUF. Es würde Build {na['version']} an Version "
+              f"{v['attributes']['versionString']} gehängt.")
+        print("  Senden:  npm run asc build-anhaengen -- --wirklich")
+        return
+
+    ok, r = sende('PATCH', f"appStoreVersions/{v['id']}/relationships/build",
+                  {'data': {'type': 'builds', 'id': neuster['id']}}, token)
+    if not ok:
+        print(f"\n✗ Apple sagt nein:\n{r}")
+        return
+
+    # Zurückfragen statt dem 204 glauben — dieselbe Regel wie bei den Screenshots:
+    # „geschickt" ist nicht „angekommen".
+    nach = hole(f"appStoreVersions/{v['id']}/build", token).get('data')
+    if nach and nach['id'] == neuster['id']:
+        print(f"\n✓ Build {na['version']} hängt jetzt an Version "
+              f"{v['attributes']['versionString']}.")
+        print("  Gegenprobe: npm run asc einreichbereit")
+    else:
+        print(f"\n⚠️ PATCH ging durch, aber die Rückfrage zeigt: "
+              f"{nach['attributes']['version'] if nach else 'KEINER'}")
+
+
+def texte(token, app, wirklich):
+    """Schickt die Store-Texte aus `storetexte.md` zu Apple.
+
+    ── Warum dieser Befehl zwei Ressourcen anfasst ────────────────────────────
+    Apple verteilt die Texte auf zwei Stellen, und das ist keine Kleinigkeit:
+
+        appStoreVersionLocalizations   description, keywords, supportUrl, …
+                                       hängt an DIESER Version
+        appInfoLocalizations           subtitle, privacyPolicyUrl
+                                       hängt an der APP, überlebt jede Version
+
+    Wer nur die erste kennt, hält `privacyPolicyUrl` für gesetzt, weil er es nie
+    abgefragt hat. Genau so stand es hier bis zum 2026-09-28 (siehe
+    `einreichbereit`).
+    """
+    v = offene_version(token, app)
+    info = app_info(token, app)
+    if not v or not info:
+        print("✗ Keine bearbeitbare Version.")
+        return
+
+    felder = lies_storetexte()
+
+    # ── Vorprüfung 1: die Längen ──────────────────────────────────────────────
+    print("Längen:")
+    zu_lang = []
+    for name, text in sorted(felder.items()):
+        g = TEXT_GRENZEN[name]
+        ok = len(text) <= g
+        print(f"  {'✓' if ok else '✗'} {name:<18} {len(text):>5} / {g}")
+        if not ok:
+            zu_lang.append(name)
+    if zu_lang:
+        print(f"\n✗ Zu lang: {zu_lang}. Apple nennt im Fehler das Feld NICHT — "
+              f"deshalb hört es hier auf.")
+        return
+
+    # ── Vorprüfung 2: leben die Adressen? ─────────────────────────────────────
+    urls = {n: t for n, t in felder.items() if t.startswith('http')}
+    if urls:
+        print("\nAdressen:")
+        tot = []
+        for name, u in sorted(urls.items()):
+            ok, auskunft = url_lebt(u)
+            print(f"  {'✓' if ok else '✗'} {name:<18} {auskunft}  {u}")
+            if not ok:
+                tot.append(name)
+        if tot:
+            print(f"\n✗ {tot} antwortet nicht. NICHTS wurde gesendet.")
+            print("  Eine tote Adresse im Store-Eintrag ist schlimmer als ein leeres")
+            print("  Feld: Sie kommt durch jede Prüfung und fällt erst dem Reviewer auf.")
+            return
+
+    # ── Senden ────────────────────────────────────────────────────────────────
+    vl = hole(f"appStoreVersions/{v['id']}/appStoreVersionLocalizations", token)['data']
+    il = hole(f"appInfos/{info['id']}/appInfoLocalizations", token)['data']
+    ziele = {'version': vl, 'info': il}
+    typ = {'version': 'appStoreVersionLocalizations', 'info': 'appInfoLocalizations'}
+
+    print()
+    if not wirklich:
+        print("TROCKENLAUF — es wird nichts geschrieben. Mit `-- --wirklich` senden.\n")
+
+    # Das Copyright sitzt an der Version selbst, nicht an einer Übersetzung.
+    if 'copyright' in felder:
+        ist = v['attributes'].get('copyright')
+        soll = felder['copyright']
+        if ist == soll:
+            print(f"  = copyright: steht schon auf {soll!r}")
+        else:
+            print(f"  {'→' if wirklich else '·'} copyright  "
+                  f"{ist or 'leer'} → {soll!r}")
+            if wirklich:
+                ok, r = sende('PATCH', f"appStoreVersions/{v['id']}",
+                              {'data': {'type': 'appStoreVersions', 'id': v['id'],
+                                        'attributes': {'copyright': soll}}}, token)
+                print(f"    {'✓ gesetzt' if ok else '✗ ' + str(r)}")
+
+    for ort in ('version', 'info'):
+        meine = {n: t for n, t in felder.items() if FELD_ORT[n] == ort}
+        if not meine:
+            continue
+        for lokal in ziele[ort]:
+            loc = lokal['attributes']['locale']
+            aenderungen = {n: t for n, t in meine.items()
+                           if (lokal['attributes'].get(n) or '') != t}
+            if not aenderungen:
+                print(f"  = {loc} ({ort}): steht schon so")
+                continue
+            for n in sorted(aenderungen):
+                vorher = lokal['attributes'].get(n)
+                kurz = (aenderungen[n][:60] + '…') if len(aenderungen[n]) > 60 else aenderungen[n]
+                print(f"  {'→' if wirklich else '·'} {loc} {n:<18} "
+                      f"{'leer' if not vorher else str(len(vorher)) + ' Zeichen'} → {kurz!r}")
+            if wirklich:
+                ok, r = sende('PATCH', f"{typ[ort]}/{lokal['id']}",
+                              {'data': {'type': typ[ort], 'id': lokal['id'],
+                                        'attributes': aenderungen}}, token)
+                print(f"    {'✓ gesetzt' if ok else '✗ ' + str(r)}")
+
+    if wirklich:
+        print("\nGegenprobe: `npm run asc einreichbereit`")
+    else:
+        print("\nNichts geschrieben. Zum Senden:  npm run asc texte -- --wirklich")
 
 
 def pruefnotizen(token, app, wirklich):
@@ -1119,6 +1524,16 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == 'pruefnotizen':
         print()
         pruefnotizen(t, app, '--wirklich' in sys.argv)
+        return
+
+    if len(sys.argv) > 1 and sys.argv[1] == 'texte':
+        print()
+        texte(t, app, '--wirklich' in sys.argv)
+        return
+
+    if len(sys.argv) > 1 and sys.argv[1] == 'build-anhaengen':
+        print()
+        build_anhaengen(t, app, '--wirklich' in sys.argv)
         return
 
     if len(sys.argv) > 1 and sys.argv[1] == 'screenshots':

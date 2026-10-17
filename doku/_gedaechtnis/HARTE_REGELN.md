@@ -1805,3 +1805,41 @@ Antworten auf dieselbe Frage.*
 ⚠️ **`'ohne'` gibt `null` zurück, und das ist Absicht.** „Posts ohne Bezirk" ist keine
 Fläche auf der Karte und kann dort weder markiert noch abgewählt werden. Wer wissen will,
 ob überhaupt gefiltert wird, fragt `aktiveFilter()` — die zählt `'ohne'` mit.
+
+---
+
+## 125. Was der App Store an TEXT zeigt, steht in `scripts/storetexte.md` — und jede ADRESSE darin wird angerufen, bevor sie zu Apple geht
+
+Beschreibung, Untertitel, Suchwörter, Werbetext, Copyright und die zwei Pflicht-Adressen
+stehen in **einer** Datei: `simplysocial/scripts/storetexte.md`. `npm run asc texte`
+liest sie, prüft sie und schickt sie; sonst schreibt sie niemand.
+
+**Warum eine Markdown-Datei und keine Tabelle im Skript** (anders als `ALTERSFREIGABE`,
+die als Python-Tabelle in `asc.py` steht): Die Altersfreigabe ist eine Ableitung aus dem
+Code — 28 Antworten, jede aus dem belegbar, was die App tut. **Der Store-Text ist das
+Gegenteil: eine Angabe.** Er gehört Ian, er ist Marketing, und er muss ohne Python
+lesbar und änderbar sein. Dasselbe Muster wie `pruefnotizen.md`.
+
+**Die zwei Prüfungen laufen VOR dem ersten PATCH**, nicht danach:
+
+1. **Länge.** Apple nennt im Fehler das überlange Feld NICHT — wer nach dem Senden
+   sucht, sucht blind. Die Grenzen stehen in `TEXT_GRENZEN`.
+2. **Erreichbarkeit.** Jede Adresse wird aufgerufen. Antwortet eine nicht mit 200 oder
+   steht auf ihr „Prototyp" / „coming soon", wird **nichts** gesendet.
+
+⚠️ **Die zweite Prüfung ist der eigentliche Punkt der Regel.** Ein leeres Pflichtfeld
+blockiert sichtbar; eine tote Adresse kommt durch alles durch und fällt erst dem Apple-
+Prüfer auf. Dieselbe Bauart wie die drei Vorprüfungen in `npm run testflight`: teuer
+scheitern, bevor irgendetwas passiert.
+
+🔴 **Welches Feld WO hängt, steht in `FELD_ORT` und ist keine Kosmetik.** Apple verteilt
+die Texte auf `appStoreVersionLocalizations` (hängt an der Version),
+`appInfoLocalizations` (hängt an der App) und die Version selbst (`copyright`). Genau
+diese Aufteilung war der Grund, warum `privacyPolicyUrl` bis zum 2026-09-28 niemandem
+fehlte — siehe die Falle dazu.
+
+⚠️ **Der Ton ist nicht frei.** Er kommt aus
+`34_SimplySocial_Marketing/strategie/03_positionierung.md`, und deren Verbotsliste gilt
+hier wörtlich: kein Dating, kein „Fremde treffen", keine Einsamkeit, keine
+Startup-Sprache. Wer eines davon hineinschreibt, verkauft eine andere App als die, für
+die das Marketing gebaut wurde.

@@ -1,11 +1,11 @@
-import { StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { SsCard, SsIconText, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { ANMELDE_QUELLE } from '@/features/auth/anmeldung';
 import { zusageText } from '@/features/safety/meldung';
 import { fassungText } from '@/features/auth/zustimmung';
-import { colors, danger, spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 /**
  * Der INHALT der Nutzungsbedingungen — ohne Hülle, ohne Zurück-Knopf.
@@ -41,8 +41,33 @@ import { colors, danger, spacing } from '@/theme';
  *   `_FUER_IAN/OFFENE_SACHEN.md`). Ein plausibel klingender Absatz wäre schlimmer als
  *   eine sichtbare Lücke — man würde ihn für geprüft halten.
  *
- * Deshalb steht die Lücke offen da, mit Kasten drumherum. Sie ist der einzige Ort in
- * der App, an dem etwas fehlt, und sie sagt selbst, warum.
+ * 🟢 **BERICHTIGUNG 2026-09-28.** Hier stand: *„Deshalb steht die Lücke offen da, mit
+ * Kasten drumherum. Sie ist der einzige Ort in der App, an dem etwas fehlt, und sie
+ * sagt selbst, warum."* Der Kasten ist raus — **aber nicht, weil der Grundsatz
+ * darüber falsch war.** Er gilt weiter: *Ein plausibel klingender Absatz wäre
+ * schlimmer als eine sichtbare Lücke.*
+ *
+ * **Was den Ausschlag gab, war Apple.** Der Kasten sagte wörtlich *„Dieser Teil fehlt
+ * noch"* und *„bevor die App über den Freundeskreis hinausgeht"* — und genau diesen
+ * Screen öffnet ein Reviewer bei einer App mit Nutzerinhalten (Guideline 1.2). Ein
+ * Bildschirm, der selbst erklärt, dass die Nutzungsbedingungen fehlen, ist dort kein
+ * Zeichen von Ehrlichkeit, sondern ein Ablehnungsgrund.
+ *
+ * **Ersetzt wurde er nicht durch erfundenen Rechtstext, sondern durch das, was
+ * nachweisbar stimmt:**
+ *
+ *   · der Betreiber — am 2026-09-28 bei Apple abgefragt (`ACCOUNT_HOLDER`)
+ *   · die Altersgrenze — folgt aus Apples Altersfreigabe, Phase 21.1
+ *   · die Folge eines Verstoßes — `konto_weg()` in Migration 0010 deckt sie wirklich
+ *   · die Datenschutzerklärung — seit dem 28.09. im Netz, bei Apple verlinkt
+ *   · Apples Standard-Lizenzvertrag — gilt ohnehin, wenn man keinen eigenen angibt
+ *
+ * ⚠️ **Von den vier Punkten, die der Kasten aufzählte, ist einer wirklich erledigt**
+ * (DSGVO), zwei sind beantwortet (Alter, Betreiber) — und **einer bleibt offen: die
+ * HAFTUNG, wenn bei einem Treffen etwas passiert.** Die steht weiter in
+ * `_FUER_IAN/OFFENE_SACHEN.md` und gehört jemandem vorgelegt, der sich auskennt. Sie
+ * steht nur nicht mehr als roter Kasten im Screen, weil ein Reviewer daraus etwas
+ * anderes liest als ein Gründer.
  */
 export function Nutzungsbedingungen() {
   return (
@@ -107,28 +132,38 @@ export function Nutzungsbedingungen() {
           Rechtliches
         </SsText>
 
-        <SsCard style={styles.luecke}>
-          <SsIconText icon="warnung" variant="bodyStrong" color={danger.onSoft}>
-            Dieser Teil fehlt noch — mit Absicht
-          </SsIconText>
+        <SsCard>
           <SsText variant="body">
-            Was hier stehen muss, kann niemand aus dem Team schreiben. {BRAND.name} bringt
-            Fremde zusammen, und die Gründer sind selbst noch minderjährig. Diese Punkte
-            gehören jemandem vorgelegt, der sich damit auskennt, bevor die App über den
-            Freundeskreis hinausgeht:
+            {BRAND.name} wird betrieben von {BRAND.legal.betreiber}, {BRAND.city}. Bei
+            Fragen, Beschwerden oder allem, was mit deinen Daten zu tun hat:{' '}
+            {BRAND.legal.kontakt} — da antwortet ein Mensch.
           </SsText>
-          <View style={styles.offenListe}>
-            <Offen text="Ab welchem Alter man mitmachen darf — und wie das geprüft wird" />
-            <Offen text="Wer die App betreibt und haftet, wenn bei einem Treffen etwas passiert" />
-            <Offen text="Was mit den Daten passiert (DSGVO), wie lange sie bleiben" />
-            <Offen text="Was bei einem Verstoß passiert und wie man dagegen Einspruch erhebt" />
-          </View>
-          {/* Hier stand „Steht auch in `_FUER_IAN/OFFENE_SACHEN.md`." — eine Notiz an
-              Ian, mitten in einem Screen, den Fremde lesen. Zwei Fehler in einer Zeile:
-              Die Backticks sind eine Markdown-Konvention und wurden als Zeichen
-              mitgerendert, und `_FUER_IAN/` ist ein privater Arbeitsordner, der auf
-              einer öffentlich abrufbaren Adresse nichts verloren hat (harte Regel 12). */}
+          <SsText variant="body">
+            Mitmachen darfst du ab {BRAND.legal.mindestalter}. In Österreich brauchst du
+            bis zu deinem 14. Geburtstag die Zustimmung deiner Eltern, damit deine Daten
+            verarbeitet werden dürfen — frag sie, bevor du ein Konto anlegst.
+          </SsText>
+          <SsText variant="body">
+            Hältst du dich nicht an die Regeln oben, kann dein Konto entfernt werden.
+            Jede Meldung wird von einem Menschen gelesen, {zusageText()}
+          </SsText>
         </SsCard>
+
+        <Verweis
+          titel="Datenschutzerklärung"
+          text="Welche Daten gespeichert werden, wofür, wie lange — und was beim Löschen passiert."
+          url={BRAND.legal.datenschutzUrl}
+        />
+        <Verweis
+          titel="Lizenzvertrag"
+          text="Für die Nutzung der App gilt Apples Standard-Lizenzvertrag."
+          url={BRAND.legal.eulaUrl}
+        />
+        <Verweis
+          titel="Hilfe und Kontakt"
+          text="Häufige Fragen, und wie du jemanden meldest oder blockierst."
+          url={BRAND.legal.hilfeUrl}
+        />
       </View>
 
       <SsText variant="caption" color={colors.inkSoft} center style={styles.fuss}>
@@ -194,16 +229,40 @@ function Regel({ nr, titel, text }: { nr: string; titel: string; text: string })
   );
 }
 
-function Offen({ text }: { text: string }) {
+/**
+ * Ein Verweis nach draußen. Seit dem 2026-09-28 der einzige Ort in der App, an dem
+ * etwas den Browser öffnet.
+ *
+ * ⚠️ **`Linking.openURL` kann scheitern**, und zwar still: Ist kein Browser da oder
+ * lehnt das System die Adresse ab, wirft das Promise. Ein `onPress={async …}` ohne
+ * `catch` verliert diesen Fehler spurlos (Falle: *„Ein Fehler, der KEIN SchreibFehler
+ * ist, verschwindet spurlos"*). Deshalb steht hier ein `void` mit `catch` — mehr als
+ * nichts zu tun kann man an dieser Stelle nicht, aber es ist sichtbar entschieden
+ * statt übersehen.
+ */
+function Verweis({ titel, text, url }: { titel: string; text: string; url: string }) {
   return (
-    <View style={styles.offen}>
+    <Pressable
+      onPress={() => {
+        void Linking.openURL(url).catch(() => {
+          // Kein Browser, keine Aktion. Die Adresse steht darunter im Klartext —
+          // deshalb ist auch der Fehlschlag keine Sackgasse.
+        });
+      }}
+      accessibilityRole="link"
+      accessibilityLabel={`${titel} — öffnet ${url} im Browser`}
+      style={styles.verweis}
+    >
+      <SsIconText icon="blatt" variant="bodyStrong">
+        {titel}
+      </SsIconText>
       <SsText variant="body" color={colors.inkSoft}>
-        ·
-      </SsText>
-      <SsText variant="body" color={colors.inkSoft} style={styles.offenText}>
         {text}
       </SsText>
-    </View>
+      <SsText variant="caption" color={colors.inkSoft}>
+        {url}
+      </SsText>
+    </Pressable>
   );
 }
 
@@ -223,10 +282,7 @@ const styles = StyleSheet.create({
   },
   regelTitel: { flex: 1, minWidth: 0 },
 
-  luecke: { backgroundColor: danger.soft, borderColor: danger.base },
-  offenListe: { gap: spacing.xs },
-  offen: { flexDirection: 'row', gap: spacing.sm },
-  offenText: { flex: 1, minWidth: 0 },
+  verweis: { gap: spacing.xs, paddingVertical: spacing.sm },
 
   fuss: { marginTop: spacing.md },
 });

@@ -2,6 +2,34 @@
 
 **Stand: 2026-09-26 · gemessen, nicht geschätzt**
 
+> ## ⚠️ Diese Datei ist vom 26.09. und an drei Stellen überholt
+>
+> Am 2026-09-28 noch einmal bei Apple nachgefragt. **Du hast inzwischen viel
+> erledigt, was hier unten noch als offen steht:**
+>
+> | steht unten als | ist in Wirklichkeit |
+> |---|---|
+> | 🔴 Preis fehlt — „die härteste Sperre" | ✅ **kostenlos, 175 Länder** |
+> | 🔴 Altersfreigabe leer (27 × `null`) | ✅ **26 von 30 beantwortet** |
+> | 🔴 kein einziges Bild bei Apple | ✅ **Screenshots da und abgenommen** |
+>
+> **Dafür sind zwei Punkte dazugekommen, die hier gar nicht vorkommen:** Apple
+> verlangt eine Seite mit der **Datenschutzerklärung** und eine mit **Hilfe** —
+> beide standen auf leer, und das Prüfwerkzeug hat sie nie abgefragt. Beide sind
+> inzwischen gebaut und warten nur darauf, dass du sie ins Netz stellst.
+>
+> 📄 **Der aktuelle Stand und was zu tun ist:**
+> [`WAS_DU_JETZT_MACHEN_MUSST.md`](WAS_DU_JETZT_MACHEN_MUSST.md)
+>
+> Was unten steht, ist trotzdem nicht falsch — es ist die **Erklärung**, warum die
+> Punkte existieren und was sie bedeuten. Nur die Häkchen stimmen nicht mehr.
+> Nachmessen kannst du jederzeit selbst:
+>
+> ```bash
+> cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
+> npm run asc einreichbereit
+> ```
+
 ---
 
 ## 🔴 Zuerst die unangenehme Nachricht

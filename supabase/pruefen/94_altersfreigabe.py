@@ -85,9 +85,64 @@ with tempfile.TemporaryDirectory() as tmp:
 
 print('')
 print('── 1. „Uneingeschränkter Webzugriff: NEIN" ─────────────────────────────')
-web = sucht(['openURL', 'Linking.', 'WebBrowser.', 'openBrowserAsync'], quelle)
-pruef('Der Quellcode öffnet keine fremden Adressen',
-      not web, '; '.join(web[:3]))
+# 🔴 VERENGT am 2026-09-28 — und das ist ausdrücklich KEINE Lockerung.
+#
+# Bis dahin galt: `openURL` · `Linking.` · `WebBrowser.` · `openBrowserAsync`
+# nirgends. Das war richtig, solange die App keine einzige Adresse öffnete. Seit
+# der Rechtliches-Block im Zustimmungs-Screen auf die Datenschutzerklärung, Apples
+# Standard-Lizenzvertrag und die Hilfe-Seite verweist, stimmt es nicht mehr.
+#
+# ── Warum die Antwort „NEIN" trotzdem richtig bleibt ────────────────────────
+# Apples Beschreibung von *Unrestricted Web Access*: „users can navigate to any
+# webpage WITHIN THE APP or freely browse the web, and may include embedded
+# browser functionality". Gemeint ist ein Browser IN der App.
+#
+#   `Linking.openURL(feste_adresse)`  verlässt die App und übergibt an Safari.
+#                                     Kein eingebetteter Browser, keine freie
+#                                     Navigation — man kommt an genau EINE Seite.
+#   `WebBrowser.openBrowserAsync`     öffnet einen Browser INNERHALB der App
+#                                     (SFSafariViewController). Das ist der Fall,
+#                                     den Apple meint.
+#
+# Deshalb bleibt das zweite absolut verboten, und das erste wird eng erlaubt.
+#
+# ⚠️ **Eng heißt eng, sonst wäre der Wächter abgeschafft statt verengt:**
+#   1. nur in DIESER einen Datei,
+#   2. nur mit Adressen aus `BRAND.legal` — keine Literale, keine Nutzereingabe.
+# Eine Adresse aus einem Post oder Profil wäre genau der Fall, den die Zusage an
+# Apple ausschließt, und sie bliebe hier rot.
+WEB_DATEI = 'src/components/Nutzungsbedingungen.tsx'
+
+# Das absolute Verbot zuerst: ein Browser IN der App, überall.
+eingebettet = sucht(['WebBrowser.', 'openBrowserAsync'], quelle)
+pruef('Kein eingebetteter Browser (das ist, was Apple „unrestricted" nennt)',
+      not eingebettet, '; '.join(eingebettet[:3]))
+
+# Und nun das eng Erlaubte.
+raus = sucht(['openURL', 'Linking.'], quelle)
+fremde = [t for t in raus if WEB_DATEI not in t]
+pruef(f'`openURL` steht NUR in {WEB_DATEI}',
+      not fremde, '; '.join(fremde[:3]))
+
+_wb = (WURZEL / WEB_DATEI).read_text(encoding='utf-8')
+_wb_code = '\n'.join(z for z in _wb.splitlines()
+                     if not z.lstrip().startswith(('*', '//', '/*')))
+pruef('… und öffnet nur Adressen aus BRAND.legal, keine Literale',
+      'BRAND.legal' in _wb_code and 'openURL(\'http' not in _wb_code
+      and 'openURL("http' not in _wb_code)
+
+# Gegenprobe: Würde eine eingeschmuggelte fremde Adresse auffallen? Ohne sie ist
+# „0 Treffer" nur die Abwesenheit eines Beweises (Falle: *„Eine Textsuche mit NULL
+# Treffern beweist nichts"*).
+_probe = WURZEL / 'src' / '_wegwerf_webzugriff.tsx'
+try:
+    _probe.write_text("import { Linking } from 'react-native';\n"
+                      "export const x = () => Linking.openURL('https://example.com');\n")
+    _gegen = [t for t in sucht(['openURL', 'Linking.'], quelle) if WEB_DATEI not in t]
+    pruef('Gegenprobe: eine Adresse in einer ANDEREN Datei wird rot',
+          len(_gegen) >= 1, f'{len(_gegen)} Treffer')
+finally:
+    _probe.unlink(missing_ok=True)
 pruef('Das Dokument sagt bei Webzugriff NEIN',
       re.search(r'Uneingeschränkter Webzugriff\s*\|\s*\*\*NEIN\*\*', text) is not None)
 

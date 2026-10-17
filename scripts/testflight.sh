@@ -81,7 +81,18 @@ echo "✓ Version $VERSION, Build $BUILDNR"
 # Eine Build-Nummer, die es bei Apple schon gibt, wird NACH dem Upload abgelehnt —
 # also nach zwanzig Minuten Bauzeit. Deshalb wird vorher gefragt.
 echo -n "… frage App Store Connect nach vorhandenen Builds … "
-SCHON="$(cd "$PROJEKT" && python3 scripts/asc.py builds 2>/dev/null | grep -c "^  Build $BUILDNR " || true)"
+# ⚠️ Die Antwort wird ERST gefangen, dann gezählt. Vorher lief `asc.py` direkt in
+# `grep -c … || true` — als am 2026-10-17 ein Homebrew-Upgrade `python3` auf 3.15
+# ohne `jwt` gezogen hatte, starb `asc.py` beim Import, `grep` zählte 0, und die
+# Prüfung meldete „frei", ohne Apple je gefragt zu haben.
+if ! BUILDS="$(cd "$PROJEKT" && python3 scripts/asc.py builds 2>&1)"; then
+  echo
+  echo "✗ App Store Connect liess sich nicht fragen — die Prüfung wäre blind."
+  echo "$BUILDS" | tail -3 | sed 's/^/    /'
+  echo "  Fehlt 'jwt': python3 -m pip install --user --break-system-packages pyjwt cryptography"
+  exit 1
+fi
+SCHON="$(echo "$BUILDS" | grep -c "^  Build $BUILDNR " || true)"
 if [ "${SCHON:-0}" != "0" ]; then
   echo
   echo "✗ Build $BUILDNR gibt es bei Apple schon."

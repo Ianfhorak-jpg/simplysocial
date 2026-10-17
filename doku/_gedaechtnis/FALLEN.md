@@ -1898,4 +1898,169 @@
   Wächter"*: Die Liste war nie falsch, sie war nur eine Antwort auf etwas anderes.
   Seither gibt es `npm run asc einreichbereit`, und der fragt die zehn Punkte, die
   Apple wirklich verlangt.
+- **Der Ruhebildschirm nimmt dem Simulator sein FENSTER — und eine
+  Helligkeitsmessung merkt das NICHT.** Am 2026-09-26 nachts acht Store-Bilder
+  hintereinander mit einem Vorhang darüber produziert, ohne eine einzige
+  Fehlermeldung. Der Mac war in den Ruhebildschirm gegangen; `System Events`
+  meldete für den Simulator **0 Fenster**, `tippen.sh` konnte nicht klicken —
+  und `xcrun simctl io screenshot` lief munter weiter, weil es aus dem
+  Simulator-PROZESS zeichnet und nicht vom Fenster.
+  ⚠️ **Die naheliegende Prüfung ist die falsche:** Ein `screencapture` des Macs
+  ergab eine mittlere Helligkeit von 37 — der Ruhebildschirm ist selbst hell, mit
+  Uhr und Foto. „Der Schirm ist an" war wahr und beantwortete die falsche Frage.
+  Gefragt gehört die **Fensterzahl**, denn das ist die Bedingung, auf die es
+  ankommt: kein Fenster, kein Klick. Schwester der Falle *„Ein schlafender
+  Mac-Bildschirm nimmt dem Simulator sein FENSTER"*, nur mit Licht — und deshalb
+  schwerer zu sehen.
+  ⚠️ Verschärft wurde es dadurch, dass `vorhang-weg.py` den Fehlschlag von
+  `tippen.sh` mit `capture_output=True` verschluckte und viermal ins Leere tippte.
+  *Ein Schritt, dessen Fehlermeldung ins Nichts geht, ist kein Schritt, sondern
+  eine Annahme.*
+- **`pgrep -f "<App>.app/<App>"` findet die App auf JEDEM laufenden Simulator.**
+  Am 2026-09-26 brachen acht `schirm.sh`-Läufe hintereinander mit *„Die App läuft
+  nach 10 s immer noch"* ab. Die Meldung war wahr und nicht die ganze Wahrheit:
+  Der Prozess lief wirklich — auf einem iPad-Simulator, der für einen ganz anderen
+  Test daneben lief. Der Gerätepfad steht im Prozessnamen
+  (`…/Devices/<UDID>/data/Containers/…`), also gehört er in die Suche.
+  ⚠️ Solche Skripte werden geschrieben, wenn genau EIN Simulator läuft — und sie
+  sind ab dem Tag falsch, an dem ein zweiter dazukommt.
+- **Eine Prop, die Rettung ANBIETET, rettet nur die, die sie setzen.** (Aus ACTA,
+  Projekt 17, bezahlt mit Apples Guideline-4-Ablehnung vom 2026-09-22.) Dort
+  setzten 23 Screens `scroll` und 8 nicht; die 8 schnitten auf einem iPad in einem
+  verkleinerten Fenster ihren Inhalt ab, Knöpfe unerreichbar. **Die Behebung ist
+  nicht, die Prop nachzutragen, sondern die VOREINSTELLUNG umzudrehen:** gerettet
+  von selbst, Ausnahme nur dort, wo es einen Grund gibt.
+  ⚠️ Und die Behebung eines anderen Projekts NICHT abschreiben: In ACTA liefen die
+  Listen-Screens nicht durch die Hülle, in SimplySocial sieben davon schon. Die
+  dortige Fassung hätte hier sieben `FlatList` in eine `ScrollView` gesteckt.
 
+- **Apple verteilt die Store-Texte auf ZWEI Ressourcen, und eine davon überlebt
+  jede Version.** Am 2026-09-28 meldete `asc.py einreichbereit` vier offene
+  Punkte; es waren sechs. `supportUrl` und `privacyPolicyUrl` sind bei Apple
+  Pflicht, standen beide auf `None` — und **keines von beiden wurde je abgefragt.**
+  Der Grund ist die Aufteilung:
+
+      appStoreVersionLocalizations   description, keywords, supportUrl, whatsNew
+                                     hängt an DIESER Version
+      appInfoLocalizations           subtitle, privacyPolicyUrl, name
+                                     hängt an der APP
+
+  Das Werkzeug kannte nur die erste und prüfte darin auch nur zwei Felder.
+  ⚠️ Das ist dieselbe Sorte Befund wie am 2026-09-26, als der halbe Store-Eintrag
+  leer war: *keine falsche Behauptung, sondern eine ungestellte Frage.* Ein
+  Prüfstand, der eine Ressource gar nicht abruft, meldet deren Felder nie als
+  fehlend — er meldet grün, weil er nicht hinsieht.
+- **Eine tote Adresse im Store-Eintrag ist schlimmer als ein leeres Feld.** Ein
+  leeres Pflichtfeld blockiert die Einreichung sofort und sichtbar; eine URL, die
+  404 liefert, kommt durch JEDE Prüfung durch — bei Apple UND hier — und fällt
+  erst dem Reviewer auf (Guideline 1.5). Dann kostet sie eine Ablehnung und Tage.
+  **Deshalb ruft `asc.py texte` jede Adresse an, bevor er irgendetwas sendet**,
+  und bricht ab, wenn eine nicht antwortet. Erster Lauf am 2026-09-28: genau so
+  abgebrochen, weil die Seiten noch nicht gepusht waren.
+  ⚠️ **Der Riegel prüft nicht nur den Statuscode, sondern auch den INHALT.** Eine
+  Seite, die mit 200 antwortet und dabei „Prototyp" oder „coming soon" sagt, ist
+  auch eine Ablehnung — Apple weist Apps zurück, die sich als Beta ausgeben. Am
+  2026-09-14 stand genau dieser Satz schon einmal im JSX der Nutzungsbedingungen,
+  und die Landing-Page sagt ihn bis heute siebenmal.
+- **Eine Landing-Page, die einen PROTOTYP bewirbt, ist kein Support-Link.** Die
+  Startseite in `landing/` nennt die App siebenmal einen Prototyp und einmal
+  ausdrücklich *„keine fertige App"*. Deshalb zeigen `supportUrl` und
+  `privacyPolicyUrl` seit dem 2026-09-28 auf `hilfe.html` und `datenschutz.html`
+  — eigene Seiten ohne dieses Wort — und NICHT auf die Startseite.
+  ⚠️ Ein Anker (`#datenschutz`) hätte dasselbe Problem: Apple ruft die Adresse
+  direkt auf und erwartet dort die Erklärung, nicht eine Marketing-Seite, auf der
+  man erst scrollen muss.
+- **Ein `pkill -f` mit breitem Muster erwischt fremde Prozesse — auch die, die man
+  gerade ausdrücklich schonen wollte.** Am 2026-09-28 lief
+  `pkill -f "ms-playwright-mcp"` mit dem Kommentar *„NICHT: das ist Ians Browser"*
+  daneben — und hat genau ihn beendet. **Ein Kommentar ist kein Riegel.** Der
+  Befehl stand in einer Aufräumzeile für die EIGENEN Chrome-Instanzen; die zwei
+  Muster überlappten, weil beide unter `ms-playwright-mcp`/Chrome liefen.
+  ⚠️ Der Schaden war klein, aber nur aus Glück: Das Profil (193 MB, Cookies,
+  Anmeldungen) liegt auf der Platte und überlebt das Beenden — **im Prozess steckt
+  nur der laufende Zustand.** Wäre dort ein ausgefülltes Formular oder eine
+  Sitzung ohne Cookie gewesen, wäre sie weg.
+  **Die Lehre:** Vor jedem `pkill` erst `pgrep -fl <muster>` laufen lassen und
+  ANSEHEN, was getroffen würde. Und das eigene Wegwerf-Profil so benennen, dass es
+  sich vom fremden unterscheidet — nicht darauf bauen, dass das Muster eng genug
+  ist. Steht direkt neben der Falle *„Ein Playwright-Lock ist NICHT immer
+  verwaist"*, die am selben Tag noch richtig beachtet worden war: Der Lock wurde
+  geprüft und in Ruhe gelassen — und zwanzig Minuten später schoss ein Aufräum-
+  Einzeiler denselben Browser ab.
+- **Ein Chrome-`--headless --screenshot` mit `--window-size` unter ~500 px liefert
+  einen AUSSCHNITT, kein Rendering in dieser Breite.** Am 2026-09-28 zeigten zwei
+  PNGs mit `--window-size=390` durchgehend Text, der bis an den rechten Bildrand
+  lief und mitten im Wort abbrach — ein Fehler, der nicht existierte. Chrome
+  rendert mit einer Mindestbreite (hier 500) und beschneidet das Bild danach auf
+  die angeforderte Breite. Der Text stand also bei 16…483 und das Bild endete bei
+  390.
+  ⚠️ **Der Beleg steckt in der Zeilenbreite, nicht im Augenschein:** Text von x=16
+  bis x=389 ist 374 px breit — aber der Container erlaubt bei 390 px Viewport nur
+  358 px (`390 − 2 × 16` Polsterung). *Eine Zeile kann nicht breiter sein als ihr
+  Container* — wer das nachrechnet, hat den Befund in einer Minute statt in einer
+  Stunde. Gegenprobe bei `--window-size=500`: Rand rechts exakt 16 px.
+  🔴 **Dieselbe Sache hat die DOM-Messung schon verraten und es wurde überlesen:**
+  `--dump-dom` mit `--window-size=390` meldete `viewport=500`. Das war der Hinweis,
+  eine halbe Stunde bevor er verstanden wurde.
+  ⚠️ Und: `auge` hat richtig berichtet, was im Bild war. *Ein Screenshot beantwortet
+  nicht, was man ihn fragt* — die Frage war „stimmt die Seite", gemessen wurde „was
+  ist im PNG".
+  **Die Messstelle, die es entscheidet** — ein `iframe` erzwingt die Breite, die
+  `--window-size` nicht hergibt, und `getClientRects()` misst den TEXT statt den
+  Kasten:
+
+  ```html
+  <iframe id="f" src="SEITE.html" style="width:390px;height:900px;border:0"></iframe>
+  <script>document.getElementById('f').addEventListener('load', () => setTimeout(() => {
+    const d = document.getElementById('f').contentDocument, vw = d.documentElement.clientWidth;
+    let max = 0;
+    d.querySelectorAll('p,li,td,h1,h2,h3').forEach(el => {
+      const r = d.createRange(); r.selectNodeContents(el);
+      for (const b of r.getClientRects()) if (b.right > max) max = b.right;
+    });
+    document.title = 'rand=' + (vw - max).toFixed(1);
+  }, 600));</script>
+  ```
+
+  Ergebnis am 2026-09-28: `iframe-viewport=390 · rechter-abstand=16.1px ·
+  scrollWidth=390`. Die Seite war die ganze Zeit in Ordnung.
+- **Ein Wächter, der bei „nichts zu tun" aufhört, beantwortet die falsche Frage.**
+  `asc.py build-anhaengen` prüfte am 2026-09-28 die Frische eines Builds erst,
+  NACHDEM er festgestellt hatte, dass der neueste schon an der Version hängt — und
+  meldete in dem Fall „✓ hängt bereits an, nichts zu tun". Eine Viertelstunde
+  später war genau das falsch: Build 3 hing dran, danach wurde
+  `Nutzungsbedingungen.tsx` geändert, und das Werkzeug meldete weiter grün.
+  ⚠️ **Es sind zwei verschiedene Fragen**, und nur die zweite ist die, für die so
+  ein Befehl gebaut wird:
+
+      „Muss ich etwas ändern?"    ← darauf antwortet „hängt schon dran"
+      „Ist der Zustand richtig?"  ← dafür ist der Wächter da
+
+  Die Behebung ist eine Reihenfolge, kein neuer Code: Die Frische-Prüfung gehört
+  VOR die Abkürzung. Dieselbe Lücke steckte in `einreichbereit`, wo das Häkchen
+  „Build an der Version" nur fragte, OB einer dranhängt.
+- **Ein Wächter, der eine Zusage an Apple schützt, wird VERENGT — nie gelockert.**
+  `94_altersfreigabe.py` verbot `openURL` überall, weil die Altersfreigabe
+  „Uneingeschränkter Webzugriff: NEIN" behauptet. Am 2026-09-28 brauchte der
+  Rechtliches-Block drei Verweise (Datenschutz, EULA, Hilfe) — der Wächter wurde
+  rot, zu Recht.
+  **Nicht gemacht:** die Zeile auskommentieren oder die Suchwörter streichen.
+  **Gemacht:** Apples Definition nachgeschlagen (*„navigate to any webpage WITHIN
+  THE APP … embedded browser functionality"*) und danach getrennt:
+
+      WebBrowser. / openBrowserAsync   Browser IN der App → bleibt absolut verboten
+      Linking.openURL(feste Adresse)   verlässt die App → eng erlaubt
+
+  Eng heißt: nur in EINER Datei, nur mit Adressen aus `BRAND.legal`, mit
+  Gegenprobe, die eine eingeschmuggelte Fremdadresse rot macht. **Der Wächter hat
+  danach 35 Häkchen statt 32** — er prüft mehr als vorher, nicht weniger.
+  ⚠️ Das ist der Unterschied zur Falle *„Ein Wächter, der die eigene BEGRÜNDUNG
+  für den Verstoß hält, wird abgeschaltet statt gelesen"*: Hier war die Begründung
+  richtig und nur ihre Umsetzung zu grob.
+- **Ein Homebrew-Upgrade zieht `python3` auf eine Version OHNE `jwt` — und eine Prüfung,
+  die Fehler mit `2>/dev/null … || true` schluckt, meldet dann „frei".** Am 2026-10-17
+  gemessen: `python3` war 3.15, `jwt` lag nur bei 3.14. `npm run asc` starb beim Import,
+  und `testflight.sh` hätte „Build N ist frei" gedruckt, ohne Apple je gefragt zu haben —
+  `grep -c` zählt auf leerer Eingabe 0. Seither fängt das Skript die Antwort erst und
+  bricht ab, wenn `asc.py` nicht sauber endet (rot und grün belegt). Behebung des Pythons:
+  `python3 -m pip install --user --break-system-packages pyjwt cryptography`.
