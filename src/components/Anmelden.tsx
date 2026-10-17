@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { SsButton, SsInput, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import {
@@ -115,8 +116,12 @@ export function Anmelden() {
     }
   }
 
+  // ⚠️ **Ein echtes Prädikat, nicht `filter(Boolean)`.** Seit `anmeldeFolgen()`
+  // Schlüssel liefert, ist der leere Hinweis ein `''` im Typ — und `filter(Boolean)`
+  // verengt in TypeScript nichts, `t('')` wäre also ein Typfehler. Der Compiler hat
+  // das sofort gemeldet; die Verengung steht deshalb hier, wo sie hingehört.
   const hinweise = [...new Set(ANMELDE_WEGE.map((weg) => anmeldeFolgen(weg, lage).hinweis))].filter(
-    Boolean,
+    (satz): satz is Exclude<typeof satz, ''> => satz !== '',
   );
 
   return (
@@ -184,7 +189,7 @@ export function Anmelden() {
                 return (
                   <SsButton
                     key={weg}
-                    label={wartet ? 'Einen Moment …' : titel}
+                    label={wartet ? t('anmelden.momentBitte') : t(titel)}
                     block
                     size="lg"
                     // `laeuft` sperrt ALLE drei, nicht nur den laufenden: Während
@@ -213,7 +218,7 @@ export function Anmelden() {
                 niemanden beschäftigt — harte Regel 63. */}
             {hinweise.map((satz) => (
               <SsText key={satz} variant="caption" center color={colors.inkSoft}>
-                {satz}
+                {t(satz)}
               </SsText>
             ))}
           </>
@@ -233,13 +238,13 @@ export function Anmelden() {
         {ANMELDE_QUELLE === 'attrappe' && schritt === 'wahl' ? (
           <View style={styles.attrappe}>
             <SsButton
-              label="Weiter als Ian"
+              label={t('anmelden.weiterAlsIan')}
               variant="ghost"
               block
               onPress={attrappeAnmelden}
             />
             <SsText variant="caption" center color={colors.inkSoft}>
-              Im Prototyp gibt es keine Konten — das ist der einzige Weg hinein.
+              {t('anmelden.attrappeHinweis')}
             </SsText>
           </View>
         ) : null}
@@ -388,16 +393,16 @@ function EmailWeg({
       {schritt === 'email' ? (
         <>
           <SsInput
-            label="Deine E-Mail"
+            label={t('anmelden.emailFeld')}
             value={email}
             onChangeText={setEmail}
-            placeholder="du@beispiel.at"
+            placeholder={t('anmelden.emailPlatzhalter')}
             keyboardType="email-address"
             autoFocus
             onSubmitEditing={() => void schicken()}
           />
           <SsButton
-            label={laeuft ? 'Wird geschickt …' : 'Code schicken'}
+            label={t(laeuft ? 'anmelden.wirdGeschickt' : 'anmelden.codeSchicken')}
             block
             size="lg"
             disabled={laeuft || email.trim().length === 0}
@@ -439,10 +444,10 @@ function EmailWeg({
       ) : (
         <>
           <SsText variant="caption" center color={colors.inkSoft}>
-            Wir haben dir eine Zahl an {email.trim()} geschickt.
+            {t('anmelden.codeGeschickt', { email: email.trim() })}
           </SsText>
           <SsInput
-            label="Die Zahl aus der Mail"
+            label={t('anmelden.codeFeld')}
             value={code}
             // Nur Ziffern, und NICHT abgeschnitten: `maxLength` steht auf dem, was
             // Supabase höchstens schicken kann (CODE_MAX), nicht auf dem, was wir
@@ -450,14 +455,14 @@ function EmailWeg({
             // Mail gern ein Leerzeichen mitkommt — und ein unsichtbares Zeichen im
             // Code ist genau die Sorte Fehler, die als „Code falsch" erscheint.
             onChangeText={(wert) => setCode(wert.replace(/\D/g, ''))}
-            placeholder="123456"
+            placeholder={t('anmelden.codePlatzhalter')}
             keyboardType="number-pad"
             maxLength={CODE_MAX}
             autoFocus
             onSubmitEditing={() => void pruefen()}
           />
           <SsButton
-            label={laeuft ? 'Einen Moment …' : 'Weiter'}
+            label={t(laeuft ? 'anmelden.momentBitte' : 'anmelden.weiter')}
             block
             size="lg"
             disabled={laeuft || code.trim().length < CODE_MIN}
@@ -478,7 +483,7 @@ function EmailWeg({
           vertippt, landet im Passwort-Schritt eines Kontos, das er nicht meint,
           und ohne diesen Knopf säße ausgerechnet der Reviewer fest. */}
       <SsButton
-        label={schritt === 'email' ? 'Doch anders anmelden' : 'Andere Adresse'}
+        label={t(schritt === 'email' ? 'anmelden.dochAnders' : 'anmelden.andereAdresse')}
         variant="ghost"
         block
         onPress={() => {

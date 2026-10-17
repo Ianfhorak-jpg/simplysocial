@@ -2084,3 +2084,31 @@
   `git branch`. ⚠️ Nicht blind löschen: So eine Datei kann der einzige Verweis auf
   eigene Arbeit sein (hier nicht — `ef499da` war Vorfahr von `HEAD`, geprüft mit
   `git merge-base --is-ancestor`).
+- **Eine „importfreie Regel-Datei" verträgt auch kein `import type` — der Grund ist
+  nicht die Laufzeit, sondern das AUFLÖSEN.** `features/auth/anmeldung.ts` sagt in
+  zwei eigenen Köpfen, dass sie importfrei ist, und acht Prüfstände leben davon. Am
+  2026-10-17 bekam sie beim Übersetzen erst `import { t }` (hätte über `@/i18n`
+  React in blankes Node gezogen) und dann `import type { TSchluessel }` — der starb
+  an `TS2307: Cannot find module '@/i18n'`, weil `96_anbieter.sh` die Datei EINZELN
+  in einen Wegwerf-Ordner kopiert und mit eigener `tsconfig.json` übersetzt, die den
+  `@/`-Kurznamen nicht kennt. Ein `import type` verschwindet erst beim Übersetzen;
+  aufgelöst werden muss er vorher. **Der Ausweg war ein eigener Union im File**
+  (`type AnmeldeTitel = 'anmelden.mitApple' | …`) — die Typsicherheit liegt dann am
+  AUFRUF (`t(titel)` nimmt nur einen `TSchluessel`), also eine Datei weiter.
+  Seit dem bewacht `npm run pruef-sprache` die Importfreiheit, mit Gegenprobe.
+- **`lokal` hängt an einem LANGEN Auftrag, nicht an langen Daten.** Am 2026-10-17
+  dreimal gemessen: Ein Auftrag mit fünf Sätzen Erklärung lief zweimal über fünf
+  Minuten ohne Ausgabe (kein Prozess mehr, Ollama bei 0 % CPU, Ausgabedatei leer) —
+  derselbe Datensatz mit einem Einzeiler als Auftrag war in 33,6 s fertig. **Den
+  Auftrag kurz halten und den Zusammenhang in die DATEN schreiben**, nicht in die
+  Anweisung.
+- **Eine Qualitätsmessung, die an der SPRACHE hängt, steht bei echter Arbeit still.**
+  Der erste `pruef-sprache` zählte deutsche Texte an Umlauten und ß. Nach dem
+  Übersetzen des ganzen Anmelde-Bildschirms (18 Texte) stand die Zahl **unverändert
+  auf 291** — kein einziger dieser Sätze trägt einen Umlaut („Einen Moment", „Code
+  schicken"). Dazu kam: Die erste Fassung suchte nur in Anführungszeichen und
+  übersah damit **90 von 291** Treffern, weil ein JSX-Textknoten ohne steht — und
+  genau so war ACTAs `DEIN COACH` geschrieben, der Fehler, gegen den der Prüfstand
+  existiert. Das tragfähige Maß ist STRUKTURELL: feste Texte an `label=`,
+  `placeholder=`, `accessibilityLabel=` (131 beim Start). Es fällt mit jedem
+  übersetzten Bildschirm, egal welche Sprache darin stand.

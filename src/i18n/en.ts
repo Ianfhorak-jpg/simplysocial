@@ -43,6 +43,41 @@ export const en: Weiter<typeof de> = {
     verstanden: 'Got it',
   },
 
+  anmelden: {
+    momentBitte: 'One moment …',
+    // Apples eigene Wortwahl. „Continue with Apple" ist eine der vom
+    // Sign-in-with-Apple-Leitfaden erlaubten Beschriftungen — eine freie
+    // Übersetzung wäre hier ein Markenverstoß, kein Geschmack.
+    mitApple: 'Continue with Apple',
+    mitGoogle: 'Continue with Google',
+    // Modell: „With email code" — als Knopf holprig, weil ihm das Verb fehlt.
+    mitEmailCode: 'Use an email code',
+    emailHinweis: "We'll send you a number, not a password.",
+    nurAmHandy: 'Only works in the phone app.',
+    // Modell: „Comes with the account — without function in the prototype."
+    // Deutsche Wortstellung, und „without function" ist kein Englisch.
+    ohneKonto: 'Comes with accounts — not working in the prototype yet.',
+    weiterAlsIan: 'Continue as Ian',
+    attrappeHinweis: 'There are no accounts in the prototype — this is the only way in.',
+    emailFeld: 'Your email',
+    // Die Endung bleibt `.at`: Die App ist für Wien, und ein Beispiel soll
+    // aussehen wie die Adressen der Leute, die es lesen.
+    emailPlatzhalter: 'you@example.at',
+    codeSchicken: 'Send code',
+    wirdGeschickt: 'Sending …',
+    // Modell: „We sent you a number to {email}" — „send someone something TO
+    // an address" geht im Englischen nicht zusammen.
+    codeGeschickt: "We've sent a number to {email}.",
+    codeFeld: 'The number from the email',
+    codePlatzhalter: '123456',
+    // **Nicht `gemein.weiter` („Next").** Hier ist es ein Absenden-Knopf, kein
+    // Schritt in einer Folge — dasselbe deutsche Wort, zwei englische.
+    weiter: 'Continue',
+    // Modell: „Log in differently". Verständlich, aber kein Satz, den jemand sagt.
+    dochAnders: 'Sign in another way',
+    andereAdresse: 'Another address',
+  },
+
   feed: {
     leerMitFilter: 'Nothing going on with this filter',
     binDabei: "I'm in",

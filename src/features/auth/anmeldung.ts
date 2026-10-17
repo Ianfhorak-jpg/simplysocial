@@ -415,39 +415,75 @@ export function anbieterFehlerText(code: string): string | null {
  * Kopf). Dasselbe Muster wie `schreibHuerdeText()` in `chat/direkt.ts`: Steht der
  * Knopf nicht da, steht ein Satz da.
  */
+/**
+ * Die Wörterbuch-Schlüssel, die diese Datei nennt — **als eigener Union, ohne
+ * jeden Import.**
+ *
+ * 🔴 **Auch `import type { TSchluessel }` war hier zu viel, und das ist gemessen.**
+ * Der zweite Anlauf hat ihn eingebaut, und `npm run pruef-anbieter` starb an
+ * `TS2307: Cannot find module '@/i18n'`: Der Prüfstand kopiert diese Datei
+ * EINZELN in einen Wegwerf-Ordner und übersetzt sie dort mit eigener
+ * `tsconfig.json` — die kennt den `@/`-Kurznamen nicht, und soll ihn nicht kennen.
+ * Die Zusage „importfreie Regel-Datei" in den Köpfen oben ist also wörtlich zu
+ * nehmen: **null Importe, auch keine, die nach dem Übersetzen verschwinden.**
+ *
+ * ⚠️ **Geprüft wird das trotzdem, nur woanders:** `t(titel)` in `Anmelden.tsx`
+ * nimmt nur einen `TSchluessel`. Steht hier ein Schlüssel, den es im Wörterbuch
+ * nicht gibt, ist dieser Union kein Untertyp mehr — und `tsc` meldet es **dort**.
+ * Die Sicherheit ist also nicht weg, sie ist nur eine Datei weiter.
+ */
+type AnmeldeTitel = 'anmelden.mitApple' | 'anmelden.mitGoogle' | 'anmelden.mitEmailCode';
+type AnmeldeHinweis = 'anmelden.ohneKonto' | 'anmelden.nurAmHandy' | 'anmelden.emailHinweis';
+
+/**
+ * ⚠️ **Gibt SCHLÜSSEL zurück, keine Sätze** — seit der Übersetzung am 2026-10-17.
+ *
+ * Der erste Anlauf rief hier `t()` auf. **Das war falsch, und die Datei sagt es
+ * selbst zweimal:** Sie ist eine *importfreie* Regel-Datei, und genau deshalb
+ * messen `npm run pruef-anbieter` und sieben weitere Prüfstände sie in blankem
+ * Node. Ein Import von `@/i18n` zöge React und `react-native` herein und hätte
+ * alle acht erschlagen — *ein neuer Import in einer Regel-Datei bricht JEDEN
+ * Prüfstand, der sie lädt* (FALLEN.md).
+ *
+ * `import type` dagegen ist nach dem Übersetzen weg und kostet nichts. Den Satz
+ * holt der Bildschirm mit `t(titel)`. Dass die Entdoppelung dabei weiter
+ * funktioniert (Ians Entscheidung 50), ist geprüft: Gleiche Lage → gleicher
+ * Schlüssel → `new Set` fasst sie genauso zusammen wie vorher die Sätze.
+ */
 export function anmeldeFolgen(
   weg: AnmeldeWeg,
   lage: AnbieterLage,
 ): {
-  titel: string;
-  hinweis: string;
+  titel: AnmeldeTitel;
+  /** Leer heißt: dieser Weg bringt keinen Hinweis mit — der Bildschirm filtert es weg. */
+  hinweis: AnmeldeHinweis | '';
   bereit: boolean;
 } {
   const quelleSteht = ANMELDE_QUELLE !== 'attrappe';
   // Ohne Konto sagen alle drei dasselbe, und der Bildschirm zeigt den Satz
   // deshalb EINMAL unter der ganzen Gruppe (Ians Entscheidung 50).
-  const ohneKonto = 'Kommt mit dem Konto — im Prototyp noch ohne Funktion.';
+  const ohneKonto = 'anmelden.ohneKonto' as const;
   // Der leere Satz ist kein Platzhalter: Ein fertiger Weg BRINGT keinen Hinweis
   // mit, und der Bildschirm filtert Leeres weg. Harte Regel 63 — wegräumen, was
   // für die Entscheidung hier nicht nötig ist.
-  const fertig = '';
+  const fertig = '' as const;
 
-  function anbieter(titel: string, kann: boolean) {
+  function anbieter(titel: AnmeldeTitel, kann: boolean) {
     if (!quelleSteht) return { titel, hinweis: ohneKonto, bereit: false };
-    if (!kann) return { titel, hinweis: 'Geht nur in der App am Handy.', bereit: false };
+    if (!kann) return { titel, hinweis: 'anmelden.nurAmHandy' as const, bereit: false };
     return { titel, hinweis: fertig, bereit: true };
   }
 
   switch (weg) {
     case 'apple':
-      return anbieter('Weiter mit Apple', lage.apple);
+      return anbieter('anmelden.mitApple', lage.apple);
     case 'google':
-      return anbieter('Weiter mit Google', lage.google);
+      return anbieter('anmelden.mitGoogle', lage.google);
     case 'email-code':
     default:
       return {
-        titel: 'Mit E-Mail-Code',
-        hinweis: quelleSteht ? 'Wir schicken dir eine Zahl, kein Passwort.' : ohneKonto,
+        titel: 'anmelden.mitEmailCode',
+        hinweis: quelleSteht ? ('anmelden.emailHinweis' as const) : ohneKonto,
         bereit: quelleSteht,
       };
   }

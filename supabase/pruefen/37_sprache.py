@@ -48,7 +48,7 @@ I18N = SRC / 'i18n'
 # erlaubtes Maß an Schlamperei. Wer sie hochsetzt, macht den Wächter wertlos:
 # Genau der Fehler, der ACTAs Build 1 zu Apple geschickt hat, würde dann grün
 # gemeldet. Sinkt sie, wird sie hier nachgezogen — das ist der Fortschritt.
-GRENZE = 201
+GRENZE = 291
 
 JA = NEIN = 0
 
@@ -115,12 +115,25 @@ pruef('`de.ts` endet auf `as const`',
 print('')
 print('── Deutsche Texte, die das Wörterbuch umgehen ──')
 
-# Ein deutsches Textliteral erkennt man nicht am Wort, sondern an den Zeichen, die
-# es im Englischen nicht gibt — Umlaute und ß. **Das findet nicht alles** („Bin
-# dabei" hat keinen Umlaut) und soll es nicht: Ein Wächter, der RÄT, welcher Satz
-# deutsch ist, meldet Fehlalarme und wird abgeschaltet statt gelesen. Er findet
-# die sichere Teilmenge, und die ist groß genug, um Verschlechterung zu sehen.
-DEUTSCH = re.compile(r'[\'"`][^\'"`\n]*[äöüÄÖÜß][^\'"`\n]*[\'"`]')
+# Ein deutscher Text verrät sich nicht am Wort, sondern an den Zeichen, die es im
+# Englischen nicht gibt — Umlaute und ß. **Das findet nicht alles** („Bin dabei"
+# hat keinen Umlaut) und soll es nicht: Ein Wächter, der RÄT, welcher Satz deutsch
+# ist, meldet Fehlalarme und wird abgeschaltet statt gelesen. Er findet die sichere
+# Teilmenge, und die ist groß genug, um Verschlechterung zu sehen.
+#
+# 🔴 **Gesucht wird die ganze ZEILE, nicht nur die Anführungszeichen — und das ist
+# der Unterschied zwischen einem Wächter und keinem.** Der erste Anlauf suchte
+# `'…äöü…'`, also nur Literale in Anführungszeichen. Am 2026-10-17 beim ersten
+# echten Einsatz gemessen: **201 Treffer in Anführungszeichen, 90 OHNE** — ein
+# Drittel übersehen. Ein JSX-Textknoten steht nämlich ohne:
+#
+#     <SsText>Im Prototyp gibt es keine Konten …</SsText>
+#
+# **Und genau so war ACTAs `DEIN COACH` geschrieben**, der Fehler, gegen den dieser
+# Prüfstand überhaupt existiert. Er hätte ihn nicht gefunden. *Ein Wächter, der
+# eine ÄHNLICHE Frage stellt, ist kein Wächter* — hier zum dritten Mal in derselben
+# Datei, und diesmal hätte es den Zweck der Datei verfehlt.
+DEUTSCH = re.compile(r'[äöüÄÖÜß]')
 
 treffer: list[tuple[str, int, str]] = []
 for datei in sorted(SRC.rglob('*.ts*')):
@@ -147,9 +160,8 @@ for datei in sorted(SRC.rglob('*.ts*')):
             continue
         if blank.startswith(('*', '//', '/*', '#')):
             continue
-        fund = DEUTSCH.search(zeile)
-        if fund:
-            treffer.append((str(datei.relative_to(WURZEL)), nr, fund.group(0)[:50]))
+        if DEUTSCH.search(zeile):
+            treffer.append((str(datei.relative_to(WURZEL)), nr, blank[:60]))
 
 pruef(f'Deutsche Literale außerhalb von i18n/: {len(treffer)} (Grenze {GRENZE})',
       len(treffer) <= GRENZE,
@@ -161,6 +173,62 @@ for ort, nr, was in treffer[:5]:
     print(f'     {ort}:{nr}  {was}')
 if len(treffer) > 5:
     print(f'     … und {len(treffer) - 5} weitere')
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  2b · Feste Texte in UI-Eigenschaften — das SPRACHUNABHÄNGIGE Maß
+# ══════════════════════════════════════════════════════════════════════════════
+print('')
+print('── Feste Texte in UI-Eigenschaften ──')
+
+# 🔴 **Warum es diese zweite Messung überhaupt gibt, und sie ist die bessere.**
+# Am 2026-10-17 wurde der ganze Anmelde-Bildschirm übersetzt — 18 Texte, alle raus
+# aus dem JSX und ins Wörterbuch. **Die Umlaut-Zahl oben hat sich dabei um NULL
+# bewegt**, weil kein einziger dieser Sätze einen Umlaut trägt („Einen Moment",
+# „Weiter als Ian", „Code schicken"). Eine Messung, die bei echter Arbeit
+# stillsteht, zeigt keinen Fortschritt und findet auch keinen Rückschritt.
+#
+# Diese hier fragt nicht nach der SPRACHE, sondern nach der FORM: Steht in
+# `label=`, `placeholder=` oder `accessibilityLabel=` ein fester Text statt eines
+# `t(…)`? Das ist unabhängig davon, welche Sprache er hat — und deshalb fällt die
+# Zahl mit jedem übersetzten Bildschirm. **Die beiden Messungen ergänzen sich:**
+# Die Umlaut-Suche findet deutsche Prosa zwischen JSX-Klammern, diese hier findet
+# jeden festen Text an einer Eigenschaft, die man liest.
+PROPS = re.compile(
+    r'\b(label|placeholder|title|accessibilityLabel|accessibilityHint)=(["\'])([^"\'\n]{2,})\2'
+)
+
+# ⚠️ Darf nur FALLEN — dieselbe Abmachung wie bei GRENZE.
+GRENZE_PROPS = 131
+
+fest: list[str] = []
+for datei in sorted(SRC.rglob('*.tsx')):
+    if I18N in datei.parents or datei.parent == I18N:
+        continue
+    im_block = False
+    for nr, zeile in enumerate(datei.read_text(encoding='utf-8').splitlines(), 1):
+        blank = zeile.strip()
+        if im_block:
+            if '*/' in zeile:
+                im_block = False
+            continue
+        if '/*' in zeile and '*/' not in zeile:
+            im_block = True
+            continue
+        if blank.startswith(('*', '//', '/*')):
+            continue
+        for m in PROPS.finditer(zeile):
+            fest.append(f'{datei.relative_to(WURZEL)}:{nr}  {m.group(1)}="{m.group(3)[:40]}"')
+
+pruef(f'Feste Texte in UI-Eigenschaften: {len(fest)} (Grenze {GRENZE_PROPS})',
+      len(fest) <= GRENZE_PROPS,
+      'die Zahl darf nur FALLEN — steht sie höher, hat ein Bildschirm einen festen '
+      'Text an einer Stelle bekommen, die jemand liest')
+if len(fest) < GRENZE_PROPS:
+    print(f'     → die Grenze kann auf {len(fest)} nachgezogen werden')
+for ort in fest[:5]:
+    print(f'     {ort}')
+if len(fest) > 5:
+    print(f'     … und {len(fest) - 5} weitere')
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  3 · Modulweite Listen mit t() — sie frieren die Startsprache ein
@@ -220,6 +288,48 @@ pruef('Kein `t` wird in einer Datei beschattet, die `t()` importiert',
       'das überdeckt das importierte t() und stürzt zur LAUFZEIT ab — tsc sieht es nicht')
 for ort in schatten[:5]:
     print(f'     {ort}')
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  4b · Die importfreien Regel-Dateien bleiben importfrei
+# ══════════════════════════════════════════════════════════════════════════════
+print('')
+print('── Importfreie Regel-Dateien ──')
+
+# 🔴 **Dieser Wächter hätte einen Fehler gefunden, den ich zweimal gemacht habe.**
+# Am 2026-10-17 bekam `features/auth/anmeldung.ts` beim Übersetzen erst ein
+# `import { t }`, dann ein `import type { TSchluessel }`. Beide waren falsch:
+#
+#   · Das erste hätte über `@/i18n` React und `react-native` in eine Datei
+#     gezogen, die ACHT Prüfstände in blankem Node laden.
+#   · Das zweite starb an `TS2307: Cannot find module '@/i18n'` —
+#     `96_anbieter.sh` kopiert die Datei EINZELN in einen Wegwerf-Ordner und
+#     übersetzt sie mit eigener `tsconfig.json`, die den `@/`-Kurznamen nicht
+#     kennt. Ein `import type` verschwindet erst beim Übersetzen; aufgelöst
+#     werden muss er vorher.
+#
+# **Die Datei sagt ihre Zusage zweimal in ihren eigenen Köpfen** („importfreie
+# Regel-Datei") — und ein Kommentar ist kein Riegel. Jetzt ist einer da.
+#
+# ⚠️ Gezählt werden `import`-Zeilen, auch `import type`. Genau das ist die Frage:
+# Nicht „kostet es zur Laufzeit was", sondern „muss jemand es auflösen können".
+IMPORTFREI = [
+    pathlib.Path('features') / 'auth' / 'anmeldung.ts',
+]
+for rel in IMPORTFREI:
+    datei = SRC / rel
+    if not datei.exists():
+        pruef(f'`{rel}` ist gefunden', False, 'umbenannt? dann prüft hier nichts etwas')
+        continue
+    zeilen = [
+        z for z in datei.read_text(encoding='utf-8').splitlines()
+        if re.match(r'^import\b', z.strip())
+    ]
+    pruef(f'`{rel}` hat keinen einzigen Import ({len(zeilen)} gefunden)',
+          not zeilen,
+          'acht Prüfstände laden diese Datei in blankem Node oder übersetzen sie '
+          'einzeln ohne @/-Kurznamen — jeder Import erschlägt sie')
+    for z in zeilen[:3]:
+        print(f'     {z.strip()[:70]}')
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  5 · Dass der Wechsel überhaupt ankommt

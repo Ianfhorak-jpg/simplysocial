@@ -1109,6 +1109,9 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Ein Homebrew-Upgrade zieht `python3` auf eine Version OHNE `jwt` — und eine Prüfung, die Fehler schluckt, meldet dann „frei"
 - Gratis-Supabase pausiert nach ~einer Woche ohne Betrieb — und verliert dabei seine ADRESSE
 - Ein Zweigname mit einem LEERZEICHEN bringt jedes `git push` zu Fall — auch eines, das diesen Zweig nicht anfasst
+- Eine „importfreie Regel-Datei" verträgt auch kein `import type` — der Grund ist das AUFLÖSEN, nicht die Laufzeit
+- `lokal` hängt an einem LANGEN Auftrag, nicht an langen Daten — Zusammenhang in die Daten, nicht in die Anweisung
+- Eine Qualitätsmessung, die an der SPRACHE hängt, steht bei echter Arbeit still
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

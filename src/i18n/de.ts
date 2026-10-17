@@ -36,6 +36,32 @@ export const de = {
     verstanden: 'Verstanden',
   },
 
+  /**
+   * Der Anmelde-Bildschirm. **Der erste, den ein Apple-Prüfer sieht** — und der
+   * einzige, der nicht durch `SsScreen` läuft, weil er selbst der Torwächter ist.
+   */
+  anmelden: {
+    momentBitte: 'Einen Moment …',
+    mitApple: 'Weiter mit Apple',
+    mitGoogle: 'Weiter mit Google',
+    mitEmailCode: 'Mit E-Mail-Code',
+    emailHinweis: 'Wir schicken dir eine Zahl, kein Passwort.',
+    nurAmHandy: 'Geht nur in der App am Handy.',
+    ohneKonto: 'Kommt mit dem Konto — im Prototyp noch ohne Funktion.',
+    weiterAlsIan: 'Weiter als Ian',
+    attrappeHinweis: 'Im Prototyp gibt es keine Konten — das ist der einzige Weg hinein.',
+    emailFeld: 'Deine E-Mail',
+    emailPlatzhalter: 'du@beispiel.at',
+    codeSchicken: 'Code schicken',
+    wirdGeschickt: 'Wird geschickt …',
+    codeGeschickt: 'Wir haben dir eine Zahl an {email} geschickt.',
+    codeFeld: 'Die Zahl aus der Mail',
+    codePlatzhalter: '123456',
+    weiter: 'Weiter',
+    dochAnders: 'Doch anders anmelden',
+    andereAdresse: 'Andere Adresse',
+  },
+
   /** Der Feed und der Wischstapel. */
   feed: {
     leerMitFilter: 'Mit diesem Filter ist gerade nichts los',

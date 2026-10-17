@@ -46,9 +46,17 @@ console.log('\n── HEUTE (attrappe): kein Weg ist bereit, und alle sagen dass
 for (const lage of [WEB, GERAET]) {
   const name = lage.apple ? 'Gerät' : 'Web';
   for (const weg of attrappe.ANMELDE_WEGE) {
+    // ⚠️ **Geprüft wird der SCHLÜSSEL, nicht der Satz** — seit der Übersetzung
+    // am 2026-10-17 gibt `anmeldeFolgen()` Wörterbuch-Schlüssel zurück (die
+    // Begründung steht an der Funktion: diese Datei muss importfrei bleiben,
+    // sonst läuft dieser Prüfstand hier gar nicht). **Dieser Prüfstand hat die
+    // Änderung selbst gemeldet** — neun Kreuze, jedes mit dem Schlüssel im Ist.
+    // Was er damit sichert, ist unverändert: WELCHE Auskunft bei welcher Lage
+    // kommt. Dass hinter dem Schlüssel ein Satz steht, hält `en.ts`/`de.ts` mit
+    // `tsc`; dass er in der Oberfläche landet, hält `npm run pruef-sprache`.
     const { bereit, hinweis } = attrappe.anmeldeFolgen(weg, lage);
     pruef(`${name}/${weg}: nicht bereit`, bereit, false);
-    pruef(`${name}/${weg}: „kommt mit dem Konto"`, hinweis, 'Kommt mit dem Konto — im Prototyp noch ohne Funktion.');
+    pruef(`${name}/${weg}: „kommt mit dem Konto"`, hinweis, 'anmelden.ohneKonto');
   }
 }
 {
@@ -79,10 +87,10 @@ console.log('\n── Ein Knopf, der nicht kann, SAGT warum ──');
 // bringt keinen Hinweis mit — sonst stünde auf dem Anmelde-Bildschirm dauerhaft
 // ein Satz über etwas, das gerade niemanden beschäftigt (harte Regel 63).
 for (const weg of ['apple', 'google']) {
-  pruef(`Web/${weg}: sagt, dass es nur am Handy geht`, supabase.anmeldeFolgen(weg, WEB).hinweis, 'Geht nur in der App am Handy.');
+  pruef(`Web/${weg}: sagt, dass es nur am Handy geht`, supabase.anmeldeFolgen(weg, WEB).hinweis, 'anmelden.nurAmHandy');
   pruef(`Gerät/${weg}: sagt GAR NICHTS mehr`, supabase.anmeldeFolgen(weg, GERAET).hinweis, '');
 }
-pruef('Gerät/email-code erklärt den Code', supabase.anmeldeFolgen('email-code', GERAET).hinweis, 'Wir schicken dir eine Zahl, kein Passwort.');
+pruef('Gerät/email-code erklärt den Code', supabase.anmeldeFolgen('email-code', GERAET).hinweis, 'anmelden.emailHinweis');
 
 console.log('\n── Ein ABBRUCH ist kein Fehler — und muss SCHWEIGEN ──');
 // Die wichtigste einzelne Zusage dieser Datei. Wer den Apple-Dialog wegwischt,
