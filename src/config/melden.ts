@@ -1,4 +1,3 @@
-import { BRAND } from '@/config/brand';
 import type { ReportReason, ReportTarget } from '@/types/models';
 
 /**
@@ -16,55 +15,91 @@ import type { ReportReason, ReportTarget } from '@/types/models';
  * Meldung eine Entscheidung statt eines Ratespiels — und er ist das Einzige, was
  * später verhindert, dass jemand einen Post meldet, weil ihm die Uhrzeit nicht passt.
  */
+/**
+ * Die Wörterbuch-Schlüssel der Melde-Gründe — **eigene Unions, ohne Import.**
+ *
+ * 🔴 **Warum kein `t()` in den Listen unten:** `POST_GRUENDE` und `PERSON_GRUENDE`
+ * sind MODULWEITE Konstanten. Sie werden einmal ausgewertet, wenn die Datei
+ * geladen wird — ein `t()` darin hielte für immer die Sprache beim App-Start.
+ * Dieselbe Falle wie bei `CATEGORIES` (`i18n/index.ts`, zweite Regel).
+ *
+ * ⚠️ **`spam` und `fake` haben je ZIEL eine andere Erklärung** (ein Post verkauft
+ * etwas, eine Person schreibt nur Werbung). Deshalb `spamPost`/`spamPerson` und
+ * nicht ein Schlüssel für beide.
+ */
+type MeldeTitel =
+  | 'meldegrund.spamTitel'
+  | 'meldegrund.inhaltTitel'
+  | 'meldegrund.datingPostTitel'
+  | 'meldegrund.datingPersonTitel'
+  | 'meldegrund.fakePostTitel'
+  | 'meldegrund.fakePersonTitel'
+  | 'meldegrund.gefahrTitel'
+  | 'meldegrund.unsicherTitel'
+  | 'meldegrund.belaestigungTitel'
+  | 'meldegrund.anderesTitel';
+type MeldeErklaerung =
+  | 'meldegrund.spamPost'
+  | 'meldegrund.spamPerson'
+  | 'meldegrund.inhaltText'
+  | 'meldegrund.datingPostText'
+  | 'meldegrund.datingPersonText'
+  | 'meldegrund.fakePostText'
+  | 'meldegrund.fakePersonText'
+  | 'meldegrund.gefahrText'
+  | 'meldegrund.unsicherText'
+  | 'meldegrund.belaestigungText'
+  | 'meldegrund.anderesText';
+
 export interface MeldeGrund {
   wert: ReportReason;
-  label: string;
+  label: MeldeTitel;
   /** Ein Halbsatz darunter — wann dieser Grund gemeint ist. */
-  erklaerung: string;
+  erklaerung: MeldeErklaerung;
 }
 
 const POST_GRUENDE: MeldeGrund[] = [
-  { wert: 'spam', label: 'Spam oder Werbung', erklaerung: 'Verkauft etwas oder wirbt für etwas' },
+  { wert: 'spam', label: 'meldegrund.spamTitel', erklaerung: 'meldegrund.spamPost' },
   {
     wert: 'unangemessen',
-    label: 'Unangemessener Inhalt',
-    erklaerung: 'Beleidigend, verstörend oder für hier zu heftig',
+    label: 'meldegrund.inhaltTitel',
+    erklaerung: 'meldegrund.inhaltText',
   },
   {
     wert: 'dating',
-    label: 'Gemeint als Anmache',
-    // ⚠️ `BRAND.name`, nicht der Name als Text: harte Regel 3. Hier stand er fest,
-    // bis `pruef-sprache` ihn am 2026-10-17 gefunden hat.
-    erklaerung: `Liest sich wie eine Dating-Anzeige — dafür ist ${BRAND.name} nicht da`,
+    label: 'meldegrund.datingPostTitel',
+    // ⚠️ Der Name steckt jetzt im Wörterbuch-Text als `{app}`, den der Bildschirm
+    // einsetzt — harte Regel 3, und `BRAND` wird hier nicht mehr gebraucht.
+    erklaerung: 'meldegrund.datingPostText',
   },
-  { wert: 'fake', label: 'Gibt es so nicht', erklaerung: 'Erfundenes Treffen oder falsche Angaben' },
+  { wert: 'fake', label: 'meldegrund.fakePostTitel', erklaerung: 'meldegrund.fakePostText' },
   {
     wert: 'gefahr',
-    label: 'Könnte gefährlich werden',
-    erklaerung: 'Ort, Uhrzeit oder Vorhaben sind unsicher',
+    label: 'meldegrund.gefahrTitel',
+    erklaerung: 'meldegrund.gefahrText',
   },
-  { wert: 'anderes', label: 'Etwas anderes', erklaerung: 'Passt in keinen der Punkte oben' },
+  { wert: 'anderes', label: 'meldegrund.anderesTitel', erklaerung: 'meldegrund.anderesText' },
 ];
 
 const USER_GRUENDE: MeldeGrund[] = [
   {
     wert: 'belaestigung',
-    label: 'Belästigt mich',
-    erklaerung: 'Bedrängt, beleidigt oder hört nicht auf zu schreiben',
+    label: 'meldegrund.belaestigungTitel',
+    erklaerung: 'meldegrund.belaestigungText',
   },
   {
     wert: 'dating',
-    label: 'Macht mich an',
-    erklaerung: 'Behandelt die App wie eine Dating-App',
+    label: 'meldegrund.datingPersonTitel',
+    erklaerung: 'meldegrund.datingPersonText',
   },
-  { wert: 'spam', label: 'Spam oder Werbung', erklaerung: 'Schreibt oder postet nur Werbung' },
-  { wert: 'fake', label: 'Fake-Profil', erklaerung: 'Ist offensichtlich nicht, wer da steht' },
+  { wert: 'spam', label: 'meldegrund.spamTitel', erklaerung: 'meldegrund.spamPerson' },
+  { wert: 'fake', label: 'meldegrund.fakePersonTitel', erklaerung: 'meldegrund.fakePersonText' },
   {
     wert: 'gefahr',
-    label: 'Ich fühle mich unsicher',
-    erklaerung: 'Verhalten, bei dem jemand zu Schaden kommen könnte',
+    label: 'meldegrund.unsicherTitel',
+    erklaerung: 'meldegrund.unsicherText',
   },
-  { wert: 'anderes', label: 'Etwas anderes', erklaerung: 'Passt in keinen der Punkte oben' },
+  { wert: 'anderes', label: 'meldegrund.anderesTitel', erklaerung: 'meldegrund.anderesText' },
 ];
 
 export const MELDE_GRUENDE: Record<ReportTarget, MeldeGrund[]> = {

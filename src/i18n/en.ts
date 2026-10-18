@@ -258,7 +258,112 @@ export const en: Weiter<typeof de> = {
       'Instead of your district, your feed will sort from where you are right now. Your location is never shown and never saved.',
   },
 
+  // 🔴 **WÖRTLICH TREU übersetzt, nicht neu formuliert.** Das ist der Bildschirm,
+  // den ein Guideline-1.2-Prüfer öffnet, und die Regeln sind eine Zusage in Ians
+  // Namen. Keine Glättung, keine Zusätze — und ausdrücklich KEINE Vorrang-Klausel.
   regeln: {
+    titel: 'Terms of Use',
+    einleitung:
+      '{app} is for meeting people who are up for the same thing right now. A few rules keep that working.',
+    wasGilt: 'The rules here',
+    rechtliches: 'Legal',
     keinDating: "This isn't a dating app",
+    keinDatingText:
+      'Use {app} as a dating app and you\'re out. That\'s not a matter of taste — it\'s why the app exists: you should be able to tap "I\'m in" without wondering what someone meant by it.',
+    duBistDu: 'Be yourself',
+    duBistDuText:
+      'Real name, real age, real photo. Anyone pretending to be someone else makes every meet-up they join unsafe.',
+    // „Zusagen gelten" wörtlich wäre „commitments apply" — richtig und tot.
+    zusagenGelten: 'A yes is a yes',
+    zusagenGeltenText:
+      "If you've confirmed, you show up — or you cancel in the chat in good time. Not showing up is the one thing that can really break this app.",
+    keineWerbung: 'No advertising',
+    keineWerbungText:
+      "Posts are plans, not ads. Don't sell anything, don't promote anything, don't recruit anyone.",
+    oeffentlichTreffen: 'Meet in public the first time',
+    oeffentlichTreffenText:
+      "The first time, pick somewhere with other people around. Tell someone where you're going. That's not a rule, it's the advice anyone would give you.",
+    meldenStattStreiten: "Report, don't argue",
+    meldenStattStreitenText:
+      'If someone behaves badly: report and block. The other person is told about neither. {zusage}',
+    betreiber:
+      '{app} is run by {betreiber}, {stadt}. For questions, complaints or anything to do with your data: {kontakt} — a human answers.',
+    // ⚠️ Die österreichische Rechtslage bleibt benannt wie sie ist. „14. Geburtstag"
+    // ist kein runder Satz auf Englisch, aber eine Glättung wäre hier eine
+    // inhaltliche Änderung.
+    alter:
+      "You can join from age {alter}. In Austria, until your 14th birthday you need your parents' consent for your data to be processed — ask them before you create an account.",
+    regelbruch:
+      "If you don't follow the rules above, your account can be removed. Every report is read by a human, {zusage}",
+    datenschutzTitel: 'Privacy Policy',
+    datenschutzText:
+      'What data is stored, what for, how long — and what happens when you delete.',
+    // Britisches „licence", weil der Rest der App britisch schreibt
+    // („behaviour" unten) — eine App für Wien ist näher an britischem Englisch.
+    lizenzTitel: 'Licence agreement',
+    lizenzText: "Apple's standard licence agreement applies to use of this app.",
+    hilfeTitel: 'Help and contact',
+    hilfeText: 'Common questions, and how to report or block someone.',
+    prototypFassung: 'Prototype, not public yet',
+    oeffnetImBrowser: '{titel} — opens {url} in the browser',
+  },
+
+  zusage: {
+    text:
+      "We look at every report. If it's about danger or harassment, within {dringend} hours — for everything else within {gewoehnlich} hours.",
+  },
+
+  melden: {
+    wasIstLos: "What's going on?",
+    nochEtwas: 'Anything to add?',
+    wasGenau: 'What exactly happened',
+    melden: 'Report',
+    personErfaehrtNicht: "The person won't be told you reported them.",
+    verfasserErfaehrtNicht: "Whoever posted it won't be told you reported it.",
+    schonGemeldet: "You've already reported this",
+    dankeAngekommen: 'Thanks, we got it',
+    zweiteMeldung: 'A second report changes nothing. Your first one is on file.',
+    schauenAn: "We'll look into it. You won't get a reply about it.",
+    aendertNichts:
+      "Reporting on its own doesn't stop you seeing each other. If you'd rather not:",
+    personBlockieren: 'Block this person',
+    zurueckZumFeed: 'Back to the feed',
+  },
+
+  meldegrund: {
+    spamTitel: 'Spam or advertising',
+    spamPost: 'Selling or promoting something',
+    spamPerson: 'Only messages or posts ads',
+    inhaltTitel: 'Inappropriate content',
+    inhaltText: 'Offensive, disturbing or too much for here',
+    datingPostTitel: 'Meant as a pick-up',
+    datingPostText: "Reads like a dating ad — that's not what {app} is for",
+    datingPersonTitel: 'Hitting on me',
+    datingPersonText: 'Treating the app like a dating app',
+    fakePostTitel: 'Not a real thing',
+    fakePostText: 'Made-up meet-up or false details',
+    fakePersonTitel: 'Fake profile',
+    fakePersonText: "Clearly isn't who they say they are",
+    gefahrTitel: 'Could get dangerous',
+    gefahrText: "The place, time or plan isn't safe",
+    belaestigungTitel: 'Harassing me',
+    belaestigungText: "Pressuring, insulting or won't stop messaging",
+    unsicherTitel: 'I feel unsafe',
+    unsicherText: 'Behaviour that could get someone hurt',
+    anderesTitel: 'Something else',
+    anderesText: "Doesn't fit any of the above",
+  },
+
+  loeschen: {
+    hierWaereSchluss: 'This would be the end',
+    prototypNichts:
+      "In real use your account would now be gone and you'd be signed out. There are no accounts in the prototype — nothing has been deleted.",
+    duBist:
+      "You're {name} ({handle}). Deleting your account is final — there's no way back.",
+    wirklich: 'Really delete?',
+    nichtRueckgaengig:
+      "This can't be undone. Your {app} account and everything above is gone afterwards.",
+    jaEndgueltig: 'Yes, delete my account for good',
+    dochNicht: 'Never mind',
   },
 };

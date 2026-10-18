@@ -1118,6 +1118,8 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - `lokal` ist für Übersetzungsblöcke unzuverlässig — 5 von 8 Läufen hingen STILL, je 5+ Minuten
 - `examples` in `categories.ts` war toter Code — und das ganze Wörterbuch landet im Bündel
 - `CATEGORIES`/`LEVEL_LABELS` sind modulweite Konstanten — ein `t()` darin friert die Startsprache EIN
+- Ein Wächter, der eine Apple-Zusage trägt, geht beim Übersetzen rot — und wird dann VERENGT, nicht nachgezogen
+- Ein eigener Union-Typ für Schlüssel ist eine Zusage, die man einlösen muss — `tsc` meldet es am AUFRUF
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

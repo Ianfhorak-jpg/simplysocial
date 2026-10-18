@@ -102,12 +102,23 @@ export function fristEndeAm(erstelltAm: string, grund: ReportReason): string {
  * steht. Er nennt die Zahlen, statt sie zu umschreiben: „zeitnah" ist genau die
  * Formulierung, die Möglichkeit D war.
  */
-export function zusageText(): string {
-  return (
-    `Wir sehen uns jede Meldung an. Geht es um Gefahr oder Belästigung, ` +
-    `innerhalb von ${FRIST_STUNDEN.dringend} Stunden — bei allem anderen ` +
-    `innerhalb von ${FRIST_STUNDEN.gewoehnlich} Stunden.`
-  );
+/**
+ * ⚠️ **Gibt SCHLÜSSEL und ZAHLEN zurück, keinen Satz** — seit der Übersetzung am
+ * 2026-10-18. Der Wortlaut liegt im Wörterbuch (`i18n`, `zusage.text`), **die
+ * FRISTEN bleiben hier** (harte Regel 100): Ians Entscheidung 59 steht in
+ * `FRIST_STUNDEN`, und von dort nimmt sie auch `npm run meldungen`. Wäre die Zahl
+ * mit dem Satz ausgewandert, hätte die App eine Frist versprechen können, die das
+ * Werkzeug am Mac nicht mehr einhält — genau der Fehler, vor dem der Kommentar in
+ * `Nutzungsbedingungen.tsx` seit Phase 7 warnt.
+ *
+ * Kein Import von `@/i18n`: Diese Datei ist eine Regel-Datei, und der Schlüssel
+ * wird am AUFRUF geprüft (`t(...)` nimmt nur einen `TSchluessel`).
+ */
+export function zusageText(): { schluessel: 'zusage.text'; werte: Record<string, number> } {
+  return {
+    schluessel: 'zusage.text',
+    werte: { dringend: FRIST_STUNDEN.dringend, gewoehnlich: FRIST_STUNDEN.gewoehnlich },
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

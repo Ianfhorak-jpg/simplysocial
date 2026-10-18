@@ -163,12 +163,41 @@ console.log('── 5. Kein „Prototyp" im Build, der zu Apple geht ───�
 const bedingungen = ohneKommentare(quelle('src/components/Nutzungsbedingungen.tsx'));
 pruef(/ANMELDE_QUELLE === 'attrappe'/.test(bedingungen),
   'Die Fußzeile hängt am Schalter und steht nicht fest im JSX');
-// Die schärfere Frage: Steht „Prototyp" IRGENDWO im laufenden Code ausser in
-// der einen Verzweigung? Gezählt wird, nicht gefühlt — und zwar ohne Kommentare,
-// sonst zählte die Begründung als Verstoß.
+// Die schärfere Frage: Steht „Prototyp" IRGENDWO im laufenden Code? Gezählt wird,
+// nicht gefühlt — und zwar ohne Kommentare, sonst zählte die Begründung als Verstoß.
+//
+// ⚠️ **Hier stand bis zum 2026-10-18 `=== 1`**, weil der Satz damals als Literal
+// in der Verzweigung stand. Mit der Übersetzung ist er ins Wörterbuch gezogen, und
+// der Wächter ging rot — zu Recht, denn die Bedeutung hat sich geändert.
+// **Nachgezogen wurde VERENGT, nicht gelockert** (Falle: *ein Wächter, der eine
+// Zusage an Apple schützt, wird verengt*): Im Bildschirm darf das Wort jetzt
+// GARNICHT mehr stehen (0 statt 1), und dafür wird zusätzlich geprüft, dass die
+// Verzweigung nicht ins Leere zeigt.
 const prototypStellen = (bedingungen.match(/Prototyp/g) ?? []).length;
-pruef(prototypStellen === 1,
-  `„Prototyp" steht im Code genau EINMAL, in der Verzweigung (gefunden: ${prototypStellen})`);
+pruef(prototypStellen === 0,
+  `„Prototyp" steht im laufenden Code des Bildschirms GARNICHT (gefunden: ${prototypStellen})`);
+// Die Verzweigung muss den Prototyp-Schlüssel wählen. Ohne diese Prüfung wäre die
+// Null oben auch dann grün, wenn jemand den ganzen Zweig gelöscht hätte — und dann
+// stünde im Prototyp die echte Fassungsnummer, also eine Zusage, die nicht gilt.
+pruef(/t\('regeln\.prototypFassung'\)/.test(bedingungen),
+  'Die Verzweigung wählt den Prototyp-Schlüssel und zeigt nicht ins Leere');
+// Und der Schlüssel muss in BEIDEN Wörterbüchern einen Text haben. `tsc` deckt das
+// ab; hier steht es, weil dieser Prüfstand die Apple-Zusage trägt und nicht davon
+// abhängen soll, dass jemand den Typecheck laufen lässt.
+for (const [datei, wort] of [['src/i18n/de.ts', 'Prototyp'], ['src/i18n/en.ts', 'Prototype']]) {
+  const woerter = quelle(datei);
+  pruef(new RegExp(`prototypFassung: '[^']*${wort}`).test(woerter),
+    `${datei} gibt dem Prototyp-Schlüssel einen Text`);
+}
+// 🔴 **Die Zahl im WÖRTERBUCH ist festgenagelt, nicht nur die im Bildschirm.**
+// Das ganze Wörterbuch landet im Bündel, auch unerreichbare Texte (ACTAs
+// Paywall-Fund). Heute nennen vier Einträge den Prototyp, alle auf Pfaden, die nur
+// mit `ANMELDE_QUELLE === 'attrappe'` erreichbar sind — dieselben Sätze standen
+// vorher als Literale in denselben Bildschirmen, es ist also kein Rückschritt.
+// **Ein FÜNFTER wäre einer**, und genau das meldet diese Zeile.
+const prototypImWoerterbuch = (quelle('src/i18n/de.ts').match(/Prototyp/g) ?? []).length;
+pruef(prototypImWoerterbuch <= 4,
+  `Höchstens vier Prototyp-Sätze im Wörterbuch (gefunden: ${prototypImWoerterbuch})`);
 // Gegenprobe: Die Kommentar-Entfernung darf nicht einfach ALLES weggeputzt haben.
 pruef(bedingungen.includes('fussText') && bedingungen.length > 500,
   'Gegenprobe: ohneKommentare() lässt den Code stehen und nicht nur Leerraum');

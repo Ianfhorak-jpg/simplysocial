@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { loeschFolgen } from '@/features/safety/konto';
@@ -72,13 +73,12 @@ export default function AccountLoeschenScreen() {
             einzige Stelle der App, an der das Icon ein Ende meint und keinen Weg. */}
         <SsIcon name="kreuzKreis" size={52} color={colors.inkSoft} />
         <SsText variant="heading" center>
-          Hier wäre Schluss
+          {t('loeschen.hierWaereSchluss')}
         </SsText>
         <SsText variant="body" center color={colors.inkSoft}>
-          Im echten Betrieb wäre dein Konto jetzt weg und du wärst abgemeldet. Im
-          Prototyp gibt es noch keine Konten — es ist nichts gelöscht worden.
+          {t('loeschen.prototypNichts')}
         </SsText>
-        <SsButton label="Zurück zum Feed" onPress={() => router.replace('/')} />
+        <SsButton label={t('melden.zurueckZumFeed')} onPress={() => router.replace('/')} />
       </SsScreen>
     );
   }
@@ -87,10 +87,9 @@ export default function AccountLoeschenScreen() {
     <SsScreen scroll contentStyle={styles.seite}>
       <SsBack />
 
-      <SsText variant="title">Account löschen</SsText>
+      <SsText variant="title">{t('einstellungen.accountLoeschen')}</SsText>
       <SsText variant="body" color={colors.inkSoft}>
-        Du bist {ich.displayName} ({handleText(ich.handle)}). Wenn du dein Konto löschst, ist das
-        endgültig — es gibt keinen Weg zurück.
+        {t('loeschen.duBist', { name: ich.displayName, handle: handleText(ich.handle) })}
       </SsText>
 
       <View style={styles.block}>
@@ -137,7 +136,7 @@ export default function AccountLoeschenScreen() {
         <View style={styles.aktion}>
           <SsButton
             variant="danger"
-            label="Account löschen"
+            label={t('einstellungen.accountLoeschen')}
             icon="muell"
             block
             size="lg"
@@ -151,11 +150,10 @@ export default function AccountLoeschenScreen() {
         <View style={styles.aktion}>
           <SsCard style={styles.warnung}>
             <SsText variant="bodyStrong" color={danger.onSoft}>
-              Wirklich löschen?
+              {t('loeschen.wirklich')}
             </SsText>
             <SsText variant="body">
-              Das lässt sich nicht rückgängig machen. Dein Konto bei {BRAND.name} und
-              alles oben ist danach weg.
+              {t('loeschen.nichtRueckgaengig', { app: BRAND.name })}
             </SsText>
           </SsCard>
           {/* Der zerstörerische Knopf ist hier der Umriss und „Doch nicht" der gefüllte:
@@ -163,7 +161,7 @@ export default function AccountLoeschenScreen() {
               Dieselbe Haltung wie bei „Ablehnen" neben „Bestätigen" in Phase 4. */}
           <SsButton
             variant="danger"
-            label="Ja, Konto endgültig löschen"
+            label={t('loeschen.jaEndgueltig')}
             block
             size="lg"
             wartet={wartet}
@@ -174,7 +172,7 @@ export default function AccountLoeschenScreen() {
               Bildschirm spränge unter der Hand, und zwar genau in dem Augenblick,
               in dem jemand vielleicht doch noch danach greift. */}
           <SsButton
-            label="Doch nicht"
+            label={t('loeschen.dochNicht')}
             block
             disabled={wartet}
             onPress={() => setSchritt('info')}

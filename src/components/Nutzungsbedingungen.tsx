@@ -4,6 +4,7 @@ import { SsCard, SsIconText, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { ANMELDE_QUELLE } from '@/features/auth/anmeldung';
 import { zusageText } from '@/features/safety/meldung';
+import { t } from '@/i18n';
 import { fassungText } from '@/features/auth/zustimmung';
 import { colors, spacing } from '@/theme';
 
@@ -69,44 +70,57 @@ import { colors, spacing } from '@/theme';
  * steht nur nicht mehr als roter Kasten im Screen, weil ein Reviewer daraus etwas
  * anderes liest als ein Gründer.
  */
+/**
+ * Die Moderations-Zusage als fertiger Satz.
+ *
+ * ⚠️ `zusageText()` gibt seit dem 2026-10-18 Schlüssel UND Fristen zurück, keinen
+ * Satz — die Zahlen bleiben in `features/safety/meldung.ts` (harte Regel 100).
+ * Hier wird beides zusammengesetzt, und zwar an EINER Stelle: Der Satz steckt in
+ * zwei Regeln, und zweimal dasselbe zu schreiben ist zweimal die Gelegenheit,
+ * es verschieden zu schreiben.
+ */
+function zusageSatz(): string {
+  const { schluessel, werte } = zusageText();
+  return t(schluessel, werte);
+}
+
 export function Nutzungsbedingungen() {
   return (
     <>
-      <SsText variant="title">Nutzungsbedingungen</SsText>
+      <SsText variant="title">{t('regeln.titel')}</SsText>
       <SsText variant="body" color={colors.inkSoft}>
-        {BRAND.name} ist dafür da, Leute zu treffen, die gerade dasselbe vorhaben. Damit
-        das funktioniert, gelten ein paar Regeln.
+        {t('regeln.einleitung', { app: BRAND.name })}
       </SsText>
 
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
-          Was hier gilt
+          {t('regeln.wasGilt')}
         </SsText>
 
         <Regel
           nr="1"
-          titel="Das hier ist kein Dating"
-          text={`Wer ${BRAND.name} als Dating-App benutzt, fliegt raus. Das ist keine Geschmacksfrage, sondern der Grund, warum die App existiert — man soll „Bin dabei" drücken können, ohne sich zu fragen, was gemeint ist.`}
+          titel={t('regeln.keinDating')}
+          text={t('regeln.keinDatingText', { app: BRAND.name })}
         />
         <Regel
           nr="2"
-          titel="Du bist du"
-          text="Echter Name, echtes Alter, echtes Bild. Wer sich für jemand anderen ausgibt, macht jedes Treffen unsicher, an dem er teilnimmt."
+          titel={t('regeln.duBistDu')}
+          text={t('regeln.duBistDuText')}
         />
         <Regel
           nr="3"
-          titel="Zusagen gelten"
-          text="Wenn du bestätigt hast, kommst du — oder du sagst rechtzeitig im Chat ab. Nicht aufzutauchen ist das Einzige, was diese App wirklich kaputt machen kann."
+          titel={t('regeln.zusagenGelten')}
+          text={t('regeln.zusagenGeltenText')}
         />
         <Regel
           nr="4"
-          titel="Keine Werbung"
-          text="Posts sind Verabredungen, keine Anzeigen. Nichts verkaufen, nichts bewerben, niemanden anwerben."
+          titel={t('regeln.keineWerbung')}
+          text={t('regeln.keineWerbungText')}
         />
         <Regel
           nr="5"
-          titel="Triff dich zuerst öffentlich"
-          text="Beim ersten Mal an einem Ort, an dem andere Leute sind. Sag jemandem, wo du hingehst. Das ist keine Vorschrift, sondern der Rat, den dir jeder geben würde."
+          titel={t('regeln.oeffentlichTreffen')}
+          text={t('regeln.oeffentlichTreffenText')}
         />
         {/*
           Der zweite Satz kommt aus `features/safety/meldung.ts` und ist NICHT hier
@@ -122,46 +136,46 @@ export function Nutzungsbedingungen() {
         */}
         <Regel
           nr="6"
-          titel="Melden statt streiten"
-          text={`Wenn jemand sich danebenbenimmt: melden und blockieren. Beides erfährt die andere Person nicht. ${zusageText()}`}
+          titel={t('regeln.meldenStattStreiten')}
+          text={t('regeln.meldenStattStreitenText', { zusage: zusageSatz() })}
         />
       </View>
 
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
-          Rechtliches
+          {t('regeln.rechtliches')}
         </SsText>
 
         <SsCard>
           <SsText variant="body">
-            {BRAND.name} wird betrieben von {BRAND.legal.betreiber}, {BRAND.city}. Bei
-            Fragen, Beschwerden oder allem, was mit deinen Daten zu tun hat:{' '}
-            {BRAND.legal.kontakt} — da antwortet ein Mensch.
+            {t('regeln.betreiber', {
+              app: BRAND.name,
+              betreiber: BRAND.legal.betreiber,
+              stadt: BRAND.city,
+              kontakt: BRAND.legal.kontakt,
+            })}
           </SsText>
           <SsText variant="body">
-            Mitmachen darfst du ab {BRAND.legal.mindestalter}. In Österreich brauchst du
-            bis zu deinem 14. Geburtstag die Zustimmung deiner Eltern, damit deine Daten
-            verarbeitet werden dürfen — frag sie, bevor du ein Konto anlegst.
+            {t('regeln.alter', { alter: BRAND.legal.mindestalter })}
           </SsText>
           <SsText variant="body">
-            Hältst du dich nicht an die Regeln oben, kann dein Konto entfernt werden.
-            Jede Meldung wird von einem Menschen gelesen, {zusageText()}
+            {t('regeln.regelbruch', { zusage: zusageSatz() })}
           </SsText>
         </SsCard>
 
         <Verweis
-          titel="Datenschutzerklärung"
-          text="Welche Daten gespeichert werden, wofür, wie lange — und was beim Löschen passiert."
+          titel={t('regeln.datenschutzTitel')}
+          text={t('regeln.datenschutzText')}
           url={BRAND.legal.datenschutzUrl}
         />
         <Verweis
-          titel="Lizenzvertrag"
-          text="Für die Nutzung der App gilt Apples Standard-Lizenzvertrag."
+          titel={t('regeln.lizenzTitel')}
+          text={t('regeln.lizenzText')}
           url={BRAND.legal.eulaUrl}
         />
         <Verweis
-          titel="Hilfe und Kontakt"
-          text="Häufige Fragen, und wie du jemanden meldest oder blockierst."
+          titel={t('regeln.hilfeTitel')}
+          text={t('regeln.hilfeText')}
           url={BRAND.legal.hilfeUrl}
         />
       </View>
@@ -199,7 +213,7 @@ export function Nutzungsbedingungen() {
  * schreibt.
  */
 function fussText(): string {
-  return ANMELDE_QUELLE === 'attrappe' ? 'Prototyp, noch nicht öffentlich' : fassungText();
+  return ANMELDE_QUELLE === 'attrappe' ? t('regeln.prototypFassung') : fassungText();
 }
 
 /**
@@ -250,7 +264,7 @@ function Verweis({ titel, text, url }: { titel: string; text: string; url: strin
         });
       }}
       accessibilityRole="link"
-      accessibilityLabel={`${titel} — öffnet ${url} im Browser`}
+      accessibilityLabel={t('regeln.oeffnetImBrowser', { titel, url })}
       style={styles.verweis}
     >
       <SsIconText icon="blatt" variant="bodyStrong">

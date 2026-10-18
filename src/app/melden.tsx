@@ -2,6 +2,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { BRAND } from '@/config/brand';
+import { t } from '@/i18n';
 import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsIcon, SsInput, SsScreen, SsText } from '@/components/ui';
 import { MELDE_GRUENDE, MELDE_TITEL, type MeldeGrund } from '@/config/melden';
 import { usePost } from '@/features/posts/hooks';
@@ -104,7 +106,7 @@ export default function MeldenScreen() {
         <>
           <View style={styles.block}>
             <SsText variant="label" color={colors.inkSoft}>
-              Was ist los?
+              {t('melden.wasIstLos')}
             </SsText>
             {MELDE_GRUENDE[targetType].map((g) => (
               <GrundZeile
@@ -117,11 +119,11 @@ export default function MeldenScreen() {
           </View>
 
           <SsInput
-            label="Noch etwas dazu?"
+            label={t('melden.nochEtwas')}
             hint="Freiwillig"
             value={notiz}
             onChangeText={setNotiz}
-            placeholder="Was genau passiert ist"
+            placeholder={t('melden.wasGenau')}
             multiline
             maxLength={300}
           />
@@ -131,7 +133,7 @@ export default function MeldenScreen() {
               alles darüber — und man drückt daneben. */}
           <SsButton
             variant="danger"
-            label="Melden"
+            label={t('melden.melden')}
             icon="fahne"
             block
             size="lg"
@@ -145,8 +147,8 @@ export default function MeldenScreen() {
 
           <SsText variant="caption" color={colors.inkSoft} center>
             {targetType === 'user'
-              ? 'Die Person erfährt nicht, dass du sie gemeldet hast.'
-              : 'Der Verfasser erfährt nicht, dass du den Post gemeldet hast.'}
+              ? t('melden.personErfaehrtNicht')
+              : t('melden.verfasserErfaehrtNicht')}
           </SsText>
         </>
       )}
@@ -185,7 +187,7 @@ function GrundZeile({
           {grund.label}
         </SsText>
         <SsText variant="caption" color={colors.inkSoft}>
-          {grund.erklaerung}
+          {t(grund.erklaerung, { app: BRAND.name })}
         </SsText>
       </View>
       <View style={[styles.kreis, gewaehlt && styles.kreisGewaehlt]}>
@@ -221,12 +223,12 @@ function Danke({
         </View>
         <View style={styles.dankeText}>
           <SsText variant="bodyStrong">
-            {erneut ? 'Das hast du schon gemeldet' : 'Danke, das ist angekommen'}
+            {t(erneut ? 'melden.schonGemeldet' : 'melden.dankeAngekommen')}
           </SsText>
           <SsText variant="caption" color={colors.inkSoft}>
             {erneut
-              ? 'Eine zweite Meldung ändert nichts. Deine erste liegt vor.'
-              : 'Wir schauen uns das an. Eine Rückmeldung darauf gibt es nicht.'}
+              ? t('melden.zweiteMeldung')
+              : t('melden.schauenAn')}
           </SsText>
         </View>
       </View>
@@ -236,12 +238,11 @@ function Danke({
       {targetType === 'user' && personId && !schonBlockiert ? (
         <>
           <SsText variant="caption" color={colors.inkSoft}>
-            Melden allein ändert nichts daran, dass ihr euch weiter seht. Wenn du das
-            nicht willst:
+            {t('melden.aendertNichts')}
           </SsText>
           <SsButton
             variant="danger"
-            label="Person blockieren"
+            label={t('melden.personBlockieren')}
             icon="verboten"
             block
             onPress={() => router.replace({ pathname: '/user/[id]', params: { id: personId } })}
@@ -249,7 +250,7 @@ function Danke({
         </>
       ) : null}
 
-      <SsButton label="Fertig" block onPress={() => router.back()} />
+      <SsButton label={t('gemein.fertig')} block onPress={() => router.back()} />
     </View>
   );
 }
@@ -266,7 +267,7 @@ function NichtGefunden({ eigenes }: { eigenes?: boolean }) {
           ? 'Eigene Posts und sich selbst kann man nicht melden.'
           : 'Vielleicht ist es inzwischen verschwunden.'}
       </SsText>
-      <SsButton label="Zurück zum Feed" onPress={() => router.replace('/')} />
+      <SsButton label={t('melden.zurueckZumFeed')} onPress={() => router.replace('/')} />
     </SsScreen>
   );
 }

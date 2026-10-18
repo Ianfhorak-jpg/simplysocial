@@ -2159,3 +2159,19 @@
   von `.label` auf einmal genannt hat. **Genau dieser Fehler ist in ACTA passiert**
   (`i18n/README.md`, zweite Regel) und fällt nur beim Umschalten auf: Alles wechselt,
   die Kategorien nicht.
+- **Ein Wächter, der eine Apple-Zusage trägt, geht beim Übersetzen rot — und wird dann
+  VERENGT, nicht nachgezogen.** `pruef-zustimmung` prüfte, dass „Prototyp" im Code von
+  `Nutzungsbedingungen.tsx` **genau einmal** steht, in der `ANMELDE_QUELLE`-Verzweigung
+  (Apple weist Apps zurück, die sich als Beta ausgeben). Am 2026-10-18 zog der Satz ins
+  Wörterbuch, und der Wächter meldete `gefunden: 0` — richtig, die Bedeutung hatte sich
+  geändert. Die bequeme Behebung wäre `=== 0` gewesen; **die richtige war vier Prüfungen
+  statt einer:** 0 im Bildschirm · die Verzweigung wählt wirklich
+  `t('regeln.prototypFassung')` (sonst wäre die Null auch bei gelöschtem Zweig grün, und
+  im Prototyp stünde die echte Fassungsnummer) · beide Wörterbücher geben dem Schlüssel
+  einen Text · und die Zahl der Prototyp-Sätze **im Wörterbuch** ist auf vier festgenagelt,
+  weil das ganze Wörterbuch im Bündel landet. 28 → 32 Häkchen, beide Gegenproben rot.
+- **Ein eigener Union-Typ für Schlüssel ist eine Zusage, die man einlösen muss.** Beim
+  Umbau von `config/melden.ts` standen `meldegrund.belaestigungTitel` und `…Text` im
+  Union, aber in keinem der beiden Wörterbücher. **`tsc` hat es am AUFRUF gemeldet**
+  (`t(grund.erklaerung)` nimmt nur einen `TSchluessel`), nicht an der Definition — die
+  Sicherheit liegt bei diesem Muster eine Datei weiter, und genau dort greift sie auch.

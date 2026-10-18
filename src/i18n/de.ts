@@ -242,8 +242,125 @@ export const de = {
       'Statt ab deinem Bezirk sortiert der Feed dann ab da, wo du gerade bist. Der Standort wird nirgends angezeigt und nicht gespeichert.',
   },
 
-  /** Die Hausregeln. */
+  /**
+   * Der Rechtstext — Nutzungsbedingungen, Hausregeln, Rechtliches.
+   *
+   * 🔴 **Das ist der Bildschirm, den ein Guideline-1.2-Prüfer öffnet**, und die
+   * Regeln darin sind eine Zusage in Ians Namen. Die deutschen Sätze sind
+   * unverändert; die englischen sind WÖRTLICH TREU übersetzt und nicht neu
+   * formuliert. **Eine Vorrang-Klausel („im Zweifel gilt die deutsche Fassung")
+   * steht hier absichtlich NICHT** — das wäre eine Rechtsaussage, und die darf
+   * Claude nicht erfinden (`_FUER_IAN/OFFENE_SACHEN.md`, Punkt 1).
+   * ⚠️ Ian gehört vorgelegt, dass die Regeln jetzt auch auf Englisch gelten.
+   */
   regeln: {
+    titel: 'Nutzungsbedingungen',
+    einleitung:
+      '{app} ist dafür da, Leute zu treffen, die gerade dasselbe vorhaben. Damit das funktioniert, gelten ein paar Regeln.',
+    wasGilt: 'Was hier gilt',
+    rechtliches: 'Rechtliches',
     keinDating: 'Das hier ist kein Dating',
+    keinDatingText:
+      'Wer {app} als Dating-App benutzt, fliegt raus. Das ist keine Geschmacksfrage, sondern der Grund, warum die App existiert — man soll „Bin dabei" drücken können, ohne sich zu fragen, was gemeint ist.',
+    duBistDu: 'Du bist du',
+    duBistDuText:
+      'Echter Name, echtes Alter, echtes Bild. Wer sich für jemand anderen ausgibt, macht jedes Treffen unsicher, an dem er teilnimmt.',
+    zusagenGelten: 'Zusagen gelten',
+    zusagenGeltenText:
+      'Wenn du bestätigt hast, kommst du — oder du sagst rechtzeitig im Chat ab. Nicht aufzutauchen ist das Einzige, was diese App wirklich kaputt machen kann.',
+    keineWerbung: 'Keine Werbung',
+    keineWerbungText:
+      'Posts sind Verabredungen, keine Anzeigen. Nichts verkaufen, nichts bewerben, niemanden anwerben.',
+    oeffentlichTreffen: 'Triff dich zuerst öffentlich',
+    oeffentlichTreffenText:
+      'Beim ersten Mal an einem Ort, an dem andere Leute sind. Sag jemandem, wo du hingehst. Das ist keine Vorschrift, sondern der Rat, den dir jeder geben würde.',
+    meldenStattStreiten: 'Melden statt streiten',
+    meldenStattStreitenText:
+      'Wenn jemand sich danebenbenimmt: melden und blockieren. Beides erfährt die andere Person nicht. {zusage}',
+    betreiber:
+      '{app} wird betrieben von {betreiber}, {stadt}. Bei Fragen, Beschwerden oder allem, was mit deinen Daten zu tun hat: {kontakt} — da antwortet ein Mensch.',
+    alter:
+      'Mitmachen darfst du ab {alter}. In Österreich brauchst du bis zu deinem 14. Geburtstag die Zustimmung deiner Eltern, damit deine Daten verarbeitet werden dürfen — frag sie, bevor du ein Konto anlegst.',
+    regelbruch:
+      'Hältst du dich nicht an die Regeln oben, kann dein Konto entfernt werden. Jede Meldung wird von einem Menschen gelesen, {zusage}',
+    datenschutzTitel: 'Datenschutzerklärung',
+    datenschutzText:
+      'Welche Daten gespeichert werden, wofür, wie lange — und was beim Löschen passiert.',
+    lizenzTitel: 'Lizenzvertrag',
+    lizenzText: 'Für die Nutzung der App gilt Apples Standard-Lizenzvertrag.',
+    hilfeTitel: 'Hilfe und Kontakt',
+    hilfeText: 'Häufige Fragen, und wie du jemanden meldest oder blockierst.',
+    prototypFassung: 'Prototyp, noch nicht öffentlich',
+    oeffnetImBrowser: '{titel} — öffnet {url} im Browser',
+  },
+
+  /**
+   * Die Moderations-Zusage. Gehört `features/safety/meldung.ts` (harte Regel 100) —
+   * **die FRISTEN bleiben dort**, hier steht nur der Wortlaut drumherum.
+   */
+  zusage: {
+    text:
+      'Wir sehen uns jede Meldung an. Geht es um Gefahr oder Belästigung, innerhalb von {dringend} Stunden — bei allem anderen innerhalb von {gewoehnlich} Stunden.',
+  },
+
+  /** Der Melde-Bildschirm. */
+  melden: {
+    wasIstLos: 'Was ist los?',
+    nochEtwas: 'Noch etwas dazu?',
+    wasGenau: 'Was genau passiert ist',
+    melden: 'Melden',
+    personErfaehrtNicht: 'Die Person erfährt nicht, dass du sie gemeldet hast.',
+    verfasserErfaehrtNicht: 'Der Verfasser erfährt nicht, dass du den Post gemeldet hast.',
+    schonGemeldet: 'Das hast du schon gemeldet',
+    dankeAngekommen: 'Danke, das ist angekommen',
+    zweiteMeldung: 'Eine zweite Meldung ändert nichts. Deine erste liegt vor.',
+    schauenAn: 'Wir schauen uns das an. Eine Rückmeldung darauf gibt es nicht.',
+    aendertNichts:
+      'Melden allein ändert nichts daran, dass ihr euch weiter seht. Wenn du das nicht willst:',
+    personBlockieren: 'Person blockieren',
+    zurueckZumFeed: 'Zurück zum Feed',
+  },
+
+  /**
+   * Die Melde-Gründe. Gehören `config/melden.ts` — **welcher Grund bei welchem
+   * Ziel steht, bleibt dort.** ⚠️ `spam` und `fake` haben je Ziel eine ANDERE
+   * Erklärung; deshalb zwei Schlüssel, nicht einer.
+   */
+  meldegrund: {
+    spamTitel: 'Spam oder Werbung',
+    spamPost: 'Verkauft etwas oder wirbt für etwas',
+    spamPerson: 'Schreibt oder postet nur Werbung',
+    inhaltTitel: 'Unangemessener Inhalt',
+    inhaltText: 'Beleidigend, verstörend oder für hier zu heftig',
+    datingPostTitel: 'Gemeint als Anmache',
+    datingPostText: 'Liest sich wie eine Dating-Anzeige — dafür ist {app} nicht da',
+    datingPersonTitel: 'Macht mich an',
+    datingPersonText: 'Behandelt die App wie eine Dating-App',
+    fakePostTitel: 'Gibt es so nicht',
+    fakePostText: 'Erfundenes Treffen oder falsche Angaben',
+    fakePersonTitel: 'Fake-Profil',
+    fakePersonText: 'Ist offensichtlich nicht, wer da steht',
+    gefahrTitel: 'Könnte gefährlich werden',
+    gefahrText: 'Ort, Uhrzeit oder Vorhaben sind unsicher',
+    belaestigungTitel: 'Belästigt mich',
+    belaestigungText: 'Bedrängt, beleidigt oder hört nicht auf zu schreiben',
+    unsicherTitel: 'Ich fühle mich unsicher',
+    unsicherText: 'Verhalten, bei dem jemand zu Schaden kommen könnte',
+    anderesTitel: 'Etwas anderes',
+    anderesText: 'Passt in keinen der Punkte oben',
+  },
+
+  /** Konto löschen — Guideline 5.1.1(v), der Prüfer sucht das gezielt. */
+  loeschen: {
+    hierWaereSchluss: 'Hier wäre Schluss',
+    prototypNichts:
+      'Im echten Betrieb wäre dein Konto jetzt weg und du wärst abgemeldet. Im Prototyp gibt es noch keine Konten — es ist nichts gelöscht worden.',
+    duBist:
+      'Du bist {name} ({handle}). Wenn du dein Konto löschst, ist das endgültig — es gibt keinen Weg zurück.',
+    wirklich: 'Wirklich löschen?',
+    nichtRueckgaengig:
+      'Das lässt sich nicht rückgängig machen. Dein Konto bei {app} und alles oben ist danach weg.',
+    jaEndgueltig: 'Ja, Konto endgültig löschen',
+    dochNicht: 'Doch nicht',
   },
 } as const;
