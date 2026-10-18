@@ -5,12 +5,26 @@
  * Diese Übersetzung passiert an genau einer Stelle — sonst schreibt jeder Screen sein
  * eigenes Format und die App wirkt zusammengestückelt.
  *
- * Bewusst ohne `Intl.RelativeTimeFormat` und ohne Bibliothek: die Ausgabe soll auf
- * jedem Gerät identisch sein. `Intl` richtet sich nach der Sprache des Geräts — ein
- * Handy auf Englisch würde "Today" schreiben, mitten in einer deutschen App.
+ * Bewusst ohne `Intl.RelativeTimeFormat` und ohne Bibliothek — **und seit der
+ * englischen Fassung gilt die Begründung erst recht:** `Intl` richtet sich nach der
+ * Sprache des GERÄTS, die App hat aber eine eigene, die man in den Einstellungen
+ * umstellt. Ein deutsches iPhone mit englischer Oberfläche bekäme von `Intl`
+ * deutsche Zeitangaben mitten in englische Sätze. Die Wahl in der App muss gewinnen.
+ *
+ * ── Wo die Wörter herkommen ──────────────────────────────────────────────────
+ * Die WÖRTER stehen im Wörterbuch (`i18n/de.ts` · `en.ts`, Bereich `zeit`), die
+ * LISTEN (Wochentage, Monate) und die Datumsschreibweise in `i18n/datum.ts` —
+ * Blätter im Wörterbuch müssen Strings sein. Hier steht nur die Rechnung: welcher
+ * Fall gilt, und was zusammengesetzt wird.
+ *
+ * ⚠️ **Die Reihenfolge „Tageswort, dann Uhrzeit" ist hier fest verdrahtet**
+ * (`${t('zeit.heute')} ${zeit}`) und stimmt für Deutsch und Englisch. Käme eine
+ * Sprache dazu, die das anders macht, müssten aus den drei Tageswörtern
+ * Satzvorlagen mit `{zeit}` werden — wie bei `zeit.seit`, das genau deshalb eine ist.
  */
+import { t } from '@/i18n';
+import { datumKurz, wochentag } from '@/i18n/datum';
 
-const WOCHENTAGE = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'] as const;
 const MS_PRO_TAG = 86_400_000;
 
 /** Mitternacht des Tages, in dem `d` liegt. */
@@ -51,11 +65,11 @@ export function startText(iso: string, jetzt: Date = new Date()): string {
   const zeit = uhrzeit(iso);
   const d = new Date(iso);
 
-  if (tage === 0) return `Heute ${zeit}`;
-  if (tage === 1) return `Morgen ${zeit}`;
-  if (tage === -1) return `Gestern ${zeit}`;
-  if (tage > 1 && tage < 7) return `${WOCHENTAGE[d.getDay()]} ${zeit}`;
-  return `${WOCHENTAGE[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}. ${zeit}`;
+  if (tage === 0) return `${t('zeit.heute')} ${zeit}`;
+  if (tage === 1) return `${t('zeit.morgen')} ${zeit}`;
+  if (tage === -1) return `${t('zeit.gestern')} ${zeit}`;
+  if (tage > 1 && tage < 7) return `${wochentag(d)} ${zeit}`;
+  return `${wochentag(d)}, ${datumKurz(d)} ${zeit}`;
 }
 
 /**
@@ -70,7 +84,7 @@ export function startText(iso: string, jetzt: Date = new Date()): string {
  */
 export function startOderSeit(iso: string, jetzt: Date = new Date()): string {
   if (!istVorbei(iso, jetzt) || tageEntfernt(iso, jetzt) !== 0) return startText(iso, jetzt);
-  return `Seit ${uhrzeit(iso)}`;
+  return t('zeit.seit', { zeit: uhrzeit(iso) });
 }
 
 /**
@@ -91,20 +105,22 @@ export function startOderSeit(iso: string, jetzt: Date = new Date()): string {
  */
 export function kurzStart(iso: string, jetzt: Date = new Date()): string {
   if (tageEntfernt(iso, jetzt) === 0) {
-    return istVorbei(iso, jetzt) ? `seit ${uhrzeit(iso)}` : uhrzeit(iso);
+    return istVorbei(iso, jetzt)
+      ? t('zeit.seitKlein', { zeit: uhrzeit(iso) })
+      : uhrzeit(iso);
   }
-  return `${WOCHENTAGE[new Date(iso).getDay()]} ${uhrzeit(iso)}`;
+  return `${wochentag(new Date(iso))} ${uhrzeit(iso)}`;
 }
 
 /** Kurzform ohne Uhrzeit für enge Stellen: "Heute" · "Morgen" · "Do". */
 export function tagText(iso: string, jetzt: Date = new Date()): string {
   const tage = tageEntfernt(iso, jetzt);
-  if (tage === 0) return 'Heute';
-  if (tage === 1) return 'Morgen';
-  if (tage === -1) return 'Gestern';
+  if (tage === 0) return t('zeit.heute');
+  if (tage === 1) return t('zeit.morgen');
+  if (tage === -1) return t('zeit.gestern');
   const d = new Date(iso);
-  if (tage > 1 && tage < 7) return WOCHENTAGE[d.getDay()];
-  return `${d.getDate()}.${d.getMonth() + 1}.`;
+  if (tage > 1 && tage < 7) return wochentag(d);
+  return datumKurz(d);
 }
 
 /** Liegt der Zeitpunkt in der Vergangenheit? */
@@ -113,17 +129,23 @@ export function istVorbei(iso: string, jetzt: Date = new Date()): boolean {
 }
 
 /**
- * Wie lange etwas her ist: "gerade eben" · "vor 20 Min." · "vor 3 Std." · "vor 2 Tagen".
+ * Wie lange etwas her ist: "gerade eben" · "vor 20 Min." · "vor 3 Std." · "vor 2 Tagen"
+ * — auf Englisch "just now" · "20 min ago" · "3 hours ago" · "2 days ago".
  * Für `createdAt` an Anfragen und Chat-Nachrichten.
  */
 export function vergangen(iso: string, jetzt: Date = new Date()): string {
   const minuten = Math.floor((jetzt.getTime() - new Date(iso).getTime()) / 60_000);
-  if (minuten < 2) return 'gerade eben';
-  if (minuten < 60) return `vor ${minuten} Min.`;
+  if (minuten < 2) return t('zeit.geradeEben');
+  // **Hier ist n immer ≥ 2** — die Zeile darüber hat die Einzahl schon
+  // abgefangen. Deshalb gibt es zu `zeit.vorMin` als einzigem der drei
+  // Abstände keine Einzahl-Fassung.
+  if (minuten < 60) return t('zeit.vorMin', { n: minuten });
   const stunden = Math.floor(minuten / 60);
-  if (stunden < 24) return `vor ${stunden} Std.`;
+  if (stunden < 24) {
+    return stunden === 1 ? t('zeit.vorStunde') : t('zeit.vorStunden', { n: stunden });
+  }
   const tage = Math.floor(stunden / 24);
-  return tage === 1 ? 'gestern' : `vor ${tage} Tagen`;
+  return tage === 1 ? t('zeit.vorEinemTag') : t('zeit.vorTagen', { n: tage });
 }
 
 /**

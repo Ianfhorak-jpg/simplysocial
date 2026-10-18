@@ -130,20 +130,26 @@ export function istDemoZugang(eingabe: string): boolean {
  * Derselbe Grund wie bei `anbieterFehlerText()` neben `codeFehlerText()`
  * (Phase 20.3-b2): zwei Wege, zwei Fehlerfamilien, zwei Sätze.
  */
-export function passwortFehlerText(code: string): string {
+export function passwortFehlerText(
+  code: string,
+):
+  | 'anmelden.mailOderPasswort'
+  | 'anmelden.zuSchnell'
+  | 'anmelden.kontoNichtBestaetigt'
+  | 'anmelden.ginNichtNetz' {
   switch (code) {
     case 'invalid_credentials':
-      return 'E-Mail oder Passwort stimmt nicht.';
+      return 'anmelden.mailOderPasswort';
     case 'over_request_rate_limit':
-      return 'Gerade ging es zu schnell hintereinander. Probier es in ein paar Minuten.';
+      return 'anmelden.zuSchnell';
     case 'email_not_confirmed':
       // Kann nur eintreten, wenn `anlegen.sh` das Konto OHNE `email_confirmed_at`
       // angelegt hat — und dann hilft kein Satz an den Reviewer, sondern nur ein
       // erneuter Lauf des Skripts. Er steht trotzdem da, weil ein unbeantworteter
       // Code auf dem Bildschirm als „Das hat gerade nicht geklappt" landet und
       // damit nach einem Netzproblem aussieht (harte Regel 57 für den Menschen).
-      return 'Dieses Konto ist noch nicht bestätigt.';
+      return 'anmelden.kontoNichtBestaetigt';
     default:
-      return 'Das hat gerade nicht geklappt. Prüf dein Netz und probier es noch einmal.';
+      return 'anmelden.ginNichtNetz';
   }
 }

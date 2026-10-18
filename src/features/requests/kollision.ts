@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { istVorbei, startText, uhrzeit } from '@/lib/zeit';
 import type { Post } from '@/types/models';
 
@@ -217,20 +218,28 @@ export function doppelHinweisText(kollisionen: Termin[]): string | undefined {
   const erster = kollisionen[0];
   if (!erster) return undefined;
 
+  // ⚠️ **`.toLowerCase()` bleibt und trägt in beiden Sprachen**: `startText()`
+  // liefert „Heute 18:30" / „Today 18:30", und mitten im Satz schreibt man beide
+  // klein. Was NICHT klein wird, ist ein Wochentag — „Do"/„Thu" stehen im
+  // Deutschen groß. Dieser Zweig trifft aber nur Zeitpunkte von HEUTE und
+  // MORGEN, denn eine Terminüberschneidung gibt es nur am selben Tag.
   const wann = istVorbei(erster.post.startsAt)
-    ? `seit ${uhrzeit(erster.post.startsAt)}`
+    ? t('zeit.seitKlein', { zeit: uhrzeit(erster.post.startsAt) })
     : startText(erster.post.startsAt).toLowerCase();
 
-  const satz =
-    erster.rolle === 'gastgeber'
-      ? `Du hast „${erster.post.title}“ ${wann} selbst gepostet.`
-      : `Du bist ${wann} schon bei „${erster.post.title}“.`;
+  const satz = t(
+    erster.rolle === 'gastgeber' ? 'doppelt.selbstGepostet' : 'doppelt.schonDabei',
+    { titel: erster.post.title, wann },
+  );
 
   // Mehr als zwei nennt niemand namentlich — die Zahl reicht, und der Hinweis
   // bleibt einzeilig.
   if (kollisionen.length > 1) {
     const rest = kollisionen.length - 1;
-    return `${satz} Und ${rest === 1 ? 'noch etwas' : `noch ${rest} Sachen`} um die Zeit.`;
+    // Vierter Mehrzahl-Fall: zwei Schlüssel, Verzweigung hier.
+    return rest === 1
+      ? t('doppelt.undNochEtwas', { satz })
+      : t('doppelt.undNochMehrere', { satz, anzahl: rest });
   }
   return satz;
 }

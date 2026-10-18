@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { t, tSatz } from '@/i18n';
+import { t, tSatz, type TSchluessel } from '@/i18n';
 import { SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { loeschFolgen } from '@/features/safety/konto';
@@ -97,19 +97,32 @@ export default function AccountLoeschenScreen() {
           {t('klein.dasVerschwindet')}
         </SsText>
         <SsCard>
-          <Zahl wert={spuren.posts} einzahl="Post" mehrzahl="Posts" zusatz="auch abgelaufene" />
-          <Zahl wert={spuren.chats} einzahl="Chat" mehrzahl="Chats" zusatz="mit allen Nachrichten" />
+          <Zahl
+            wert={spuren.posts}
+            einzahl="loeschen.einPost"
+            mehrzahl="loeschen.mehrerePosts"
+            zusatz={t('loeschen.postsZusatz')}
+          />
+          <Zahl
+            wert={spuren.chats}
+            einzahl="loeschen.einChat"
+            mehrzahl="loeschen.mehrereChats"
+            zusatz={t('loeschen.chatsZusatz')}
+          />
           <Zahl
             wert={spuren.anfragen}
-            einzahl="Anfrage"
-            mehrzahl="Anfragen"
-            zusatz="die du geschickt hast"
+            einzahl="loeschen.eineAnfrage"
+            mehrzahl="loeschen.mehrereAnfragen"
+            zusatz={t('loeschen.anfragenZusatz')}
           />
           <Zahl
             wert={spuren.follower + spuren.folgt}
-            einzahl="Verbindung"
-            mehrzahl="Verbindungen"
-            zusatz={`${spuren.follower} Follower · du folgst ${spuren.folgt}`}
+            einzahl="loeschen.eineVerbindung"
+            mehrzahl="loeschen.mehrereVerbindungen"
+            zusatz={t('loeschen.verbindungenZusatz', {
+              follower: spuren.follower,
+              folgt: spuren.folgt,
+            })}
           />
         </SsCard>
       </View>
@@ -197,14 +210,16 @@ function Zahl({
   zusatz,
 }: {
   wert: number;
-  einzahl: string;
-  mehrzahl: string;
+  /** Schlüssel, nicht Satz — die Verzweigung passiert beim Zeichnen. */
+  einzahl: TSchluessel;
+  mehrzahl: TSchluessel;
+  /** Schon übersetzt, weil zwei der vier Zusätze Zahlen einsetzen. */
   zusatz: string;
 }) {
   return (
     <View style={styles.zahl}>
       <SsText variant="bodyStrong">
-        {wert} {wert === 1 ? einzahl : mehrzahl}
+        {wert} {t(wert === 1 ? einzahl : mehrzahl)}
       </SsText>
       <SsText variant="caption" color={colors.inkSoft}>
         {zusatz}

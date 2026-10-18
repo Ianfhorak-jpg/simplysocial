@@ -260,12 +260,10 @@ function NichtGefunden({ eigenes }: { eigenes?: boolean }) {
     <SsScreen contentStyle={styles.fehlerSeite}>
       <SsIcon name="frage" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
-        {eigenes ? 'Das ist von dir' : 'Das gibt es nicht'}
+        {t(eigenes ? 'melden.vonDir' : 'melden.gibtEsNicht')}
       </SsText>
       <SsText variant="body" center color={colors.inkSoft}>
-        {eigenes
-          ? 'Eigene Posts und sich selbst kann man nicht melden.'
-          : 'Vielleicht ist es inzwischen verschwunden.'}
+        {t(eigenes ? 'melden.eigenesNichtMelden' : 'melden.vielleichtWeg')}
       </SsText>
       <SsButton label={t('melden.zurueckZumFeed')} onPress={() => router.replace('/')} />
     </SsScreen>

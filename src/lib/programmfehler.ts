@@ -68,7 +68,7 @@ export const PROGRAMM_CODE = 'app/programmfehler';
  * Und er ist KURZ, weil die Leiste seit Entscheidung 48 den Bildschirm schiebt:
  * Jede Zeile kostet echten Platz vor dem, weswegen jemand gekommen ist.
  */
-export const PROGRAMM_TEXT = 'Da ist etwas schiefgegangen, das nicht an dir liegt.';
+export const PROGRAMM_TEXT = 'fehler.programmText' as const;
 
 /** Ist dieser Fehler ein Fehler der APP — und keine Absage des Servers? */
 export function istProgrammFehler(code: string): boolean {
@@ -87,9 +87,8 @@ export function istProgrammFehler(code: string): boolean {
  * das, weswegen jemand gekommen ist — dort kostet jede Zeile echten Platz; vor
  * einem Kasten steht nichts, und ein Titel allein ließe jemanden ratlos zurück.
  */
-export const PROGRAMM_TITEL = 'Da ist etwas schiefgegangen';
-export const PROGRAMM_ERKLAERUNG =
-  'Es liegt nicht an dir und nicht an deinem Netz — der Fehler steckt in der App selbst.';
+export const PROGRAMM_TITEL = 'fehler.programmTitel' as const;
+export const PROGRAMM_ERKLAERUNG = 'fehler.programmErklaerung' as const;
 
 /**
  * Der Knopf unter dem Kasten und neben der Zeile.
@@ -111,7 +110,7 @@ export const PROGRAMM_ERKLAERUNG =
  * gar kein Knopf wäre ein Bildschirm, den man nur durch Neustarten verlässt.
  * **Ein nutzloser Knopf ist besser als eine Sackgasse.**
  */
-export const PROGRAMM_KNOPF_LADEN = 'Nochmal versuchen';
+export const PROGRAMM_KNOPF_LADEN = 'fehler.nochmalVersuchen' as const;
 
 /**
  * Was als „Tabelle" in einem `LadeFehler` steht, wenn es gar keine gab.

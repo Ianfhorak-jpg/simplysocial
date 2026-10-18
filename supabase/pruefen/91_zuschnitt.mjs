@@ -10,8 +10,24 @@
 //  Ob sich die Geste am Handy richtig ANFÜHLT, beantwortet kein Node. Geprüft ist
 //  die Rechnung dahinter. Das Gefühl gehört in den Gerätedurchgang.
 // ═══════════════════════════════════════════════════════════════════════════════
+import { readFileSync } from 'node:fs';
+
 const A = process.env.ARBEIT;
 const Z = await import(`${A}/js/features/social/zuschnitt.mjs`);
+
+/**
+ * Den Satz zu einem Schlüssel aus einem Wörterbuch holen — als TEXT gelesen.
+ *
+ * ⚠️ **Nicht importiert, sondern gegrept**, und das ist kein Umweg: `de.ts` zu
+ * importieren zöge über `i18n/index.ts` React in einen Prüfstand, der in blankem
+ * Node läuft. Dieselbe Entscheidung wie in `37_sprache.py`.
+ */
+function satzAus(sprache, schluessel) {
+  const quelle = readFileSync(`${process.env.WOERTER}/${sprache}.ts`, 'utf8');
+  const name = schluessel.split('.').pop();
+  const treffer = quelle.match(new RegExp(`\\b${name}:\\s*(['"\`])((?:[^'"\`\\\\]|\\\\.)*)\\1`));
+  return treffer ? treffer[2] : null;
+}
 
 let ok = 0;
 let weg = 0;
@@ -202,12 +218,35 @@ pruef('ein gewöhnliches Foto schon', Z.istZuschneidbar(HOCHKANT), true);
 abschnitt('Die Sätze sind in Ians Sprache');
 const folgen = Z.zuschnittFolgen();
 pruef('es sind zwei', folgen.length, 2);
-// Derselbe Maßstab wie bei `bildFolgen()`: Was auf dem Schirm steht, darf nicht
-// nach Werkstatt klingen (der Fund vom 2026-09-03).
-for (const wort of ['px', 'Pixel', 'JPEG', 'Zoom', 'crop']) {
-  pruef(`kein „${wort}" auf dem Bildschirm`, folgen.some((f) => f.includes(wort)), false);
+
+// 🔴 **Seit dem 2026-10-18 gibt die Regel-Datei SCHLÜSSEL heraus, keine Sätze.**
+// Der Prüfstand ist deshalb VERENGT worden und nicht nachgezogen: Er liest die
+// Sätze jetzt aus BEIDEN Wörterbüchern und stellt dieselbe Frage zweimal. Vorher
+// deckte er nur Deutsch ab — ein englischer Satz voller Werkstattwörter wäre ihm
+// entgangen. *Ein Wächter, der eine Apple-Zusage trägt, wird verengt, nie
+// gelockert* (FALLEN.md).
+pruef('… und es sind Schlüssel, keine Sätze',
+  folgen.every((f) => /^zuschnitt\.\w+$/.test(f)), true);
+
+for (const sprache of ['de', 'en']) {
+  const saetze = folgen.map((f) => satzAus(sprache, f));
+  // Gegenprobe gegen sich selbst: Findet die Textsuche überhaupt etwas? Bei
+  // `null` liefen alle Prüfungen darunter grün durch, ohne etwas zu messen.
+  pruef(`[${sprache}] beide Sätze stehen im Wörterbuch`,
+    saetze.every((s) => typeof s === 'string' && s.length > 10), true);
+  // Derselbe Maßstab wie bei `bildFolgen()`: Was auf dem Schirm steht, darf nicht
+  // nach Werkstatt klingen (der Fund vom 2026-09-03).
+  for (const wort of ['px', 'Pixel', 'JPEG', 'Zoom', 'crop']) {
+    pruef(`[${sprache}] kein „${wort}" auf dem Bildschirm`,
+      saetze.some((s) => (s ?? '').includes(wort)), false);
+  }
 }
-pruef('… und gesagt wird, dass der Rest weg ist', folgen.some((f) => f.includes('weg')), true);
+// Die Zusage selbst, je Sprache mit IHREM Wort: Es muss dastehen, dass der Rest
+// verloren geht — das ist die Auskunft, nicht die Formulierung.
+pruef('… und auf Deutsch steht, dass der Rest weg ist',
+  folgen.map((f) => satzAus('de', f)).some((s) => (s ?? '').includes('weg')), true);
+pruef('… und auf Englisch auch',
+  folgen.map((f) => satzAus('en', f)).some((s) => (s ?? '').includes('gone')), true);
 
 console.log(`\n  ${ok} Häkchen, ${weg} Kreuze\n`);
 process.exit(weg === 0 ? 0 : 1);

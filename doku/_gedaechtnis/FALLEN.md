@@ -2244,3 +2244,41 @@
   Zahlen: 28 → 34, 47 → 48, 13 → 15. ⚠️ **Wer übersetzt, fährt danach ALLE Prüfstände**
   — die vier hätten sonst reihum beim nächsten Thema zugeschlagen und wie Rauschen
   ausgesehen.
+- 🔴 **Zwei Messungen, die BEIDE auf ihrer Grenze stehen, können gemeinsam 45 deutsche
+  Sätze übersehen — und melden dabei grün.** Am 2026-10-18 sagte `pruef-sprache`
+  *„24 Häkchen, 0 Kreuze"*, `tsc` war sauber, und in der englischen Oberfläche standen
+  weiter „Du bist dabei" (Anfragen-Tab), „Was du vorhast" (Profil), „Es fehlt noch was"
+  (Posten) und der ganze Fehlertext-Apparat der Datenschicht. Keine der beiden Messungen
+  KONNTE sie sehen: Die Umlaut-Suche findet nur Sätze mit `äöüß`, die
+  Eigenschafts-Suche nur `label=`/`placeholder=`. Ein JSX-Textknoten ohne Umlaut fällt
+  durch beide Raster — **und genau so war ACTAs `DEIN COACH` geschrieben, der Fehler,
+  gegen den die Datei überhaupt gebaut ist.** Gefunden mit einer DRITTEN Frage: deutsche
+  FUNKTIONSWÖRTER (`du`, `nicht`, `noch`, `dabei`), zwei davon in einer Zeile. Sie steht
+  seither als Abschnitt 2d im Prüfstand (Grenze 1, Gegenprobe am eingesetzten Satz rot
+  gesehen). **Die Lehre ist nicht „die Regex war zu eng", sondern: Solange eine Zahl auf
+  ihrer Grenze steht, weiß man nur, dass sie nicht GESTIEGEN ist — nicht, dass sie alles
+  zählt.**
+- 🔴 **Ein Wächter, der Schlüssel-Träger an `const x = fn()` erkennt, sieht eine
+  DESTRUKTURIERUNG nicht — und genau so war der echte Fehler geschrieben.**
+  `ladeFehlerFolgen()` gab schon `'laden.keineVerbindung'` zurück, `LadeSchirm.tsx`
+  holte es mit `const { titel, text, knopf } = ladeFehlerFolgen(fehler)` und zeichnete
+  `{titel}`. Auf dem Fehlerbildschirm stand damit der SCHLÜSSEL. Abschnitt 2c von
+  `37_sprache.py` las nur `const NAME =`; nach `const` stand hier aber eine Klammer.
+  ⚠️ **Die Erweiterung meldete sofort einen Fehlalarm mit:** Die Deklarationszeile
+  selbst trägt das Muster `{ knopf }` und sah aus wie eine Anzeige — *ein Wächter, der
+  die eigene Quelle für den Verstoß hält*. Behebung: Zeilen, die mit `const`/`let`
+  anfangen, sind keine Anzeige. Danach fand er eine ZWEITE, bis dahin unbekannte Stelle
+  (`LadeZeile`, dieselbe Datei).
+- **`pod install` stirbt an einer ASCII-8BIT-Umgebung, und die Meldung zeigt auf Unicode
+  statt auf die Umgebung.** `Unicode Normalization not appropriate for ASCII-8BIT
+  (Encoding::CompatibilityError)` aus `cocoapods/config.rb:167` heißt nicht, dass ein
+  Pfad kaputt ist — es heißt, dass die Shell keine UTF-8-Locale gesetzt hat. Behebung:
+  `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install`. Dieselbe Familie wie *„Ein
+  Homebrew-Upgrade zieht `python3` auf eine Version OHNE `jwt`"*: Das Werkzeug ist
+  unverändert, die Umgebung darunter nicht.
+- **Ein Ersetzungs-Helfer, der je DATEI schreibt, hinterlässt beim Abbruch die Hälfte.**
+  Beim Eintragen neuer Schlüssel in `de.ts` und `en.ts` schlug der zweite Aufruf fehl
+  (ein Anführungszeichen war typografisch) — `de.ts` war da schon geschrieben. Der
+  zweite Anlauf fand seinen Anker dann nicht mehr und sah nach einem ganz anderen
+  Fehler aus. Es ist dieselbe Falle wie *„`pathlib.write_text()` LEERT die Datei, bevor
+  es scheitert"*, nur über mehrere Dateien: **Erst ALLE Treffer prüfen, dann schreiben.**

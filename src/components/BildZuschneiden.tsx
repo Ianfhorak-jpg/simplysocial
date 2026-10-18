@@ -227,7 +227,7 @@ export function BildZuschneiden({ quelle, wartet, onAbbrechen, onUebernehmen }: 
         <View style={styles.saetze}>
           {zuschnittFolgen().map((satz) => (
             <SsText key={satz} variant="caption" color={colors.inkSoft} center>
-              {satz}
+              {t(satz)}
             </SsText>
           ))}
         </View>

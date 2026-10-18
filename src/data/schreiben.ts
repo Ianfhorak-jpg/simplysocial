@@ -325,8 +325,13 @@ export class SchreibFehler extends Error {
      * ⚠️ Was hier steht, LIEST EIN MENSCH. Kein Tabellenname, kein Code, kein Pfad
      * (der Fund vom 2026-09-03). Und kurz: Seit Entscheidung 48 schiebt die Leiste
      * den Bildschirm, also kostet jede Zeile echten Platz.
+     *
+     * ⚠️ **Ein SCHLÜSSEL, kein Satz** — und absichtlich kein `TSchluessel`: Diese
+     * Datei bleibt importfrei (`70_schreiben.sh` lädt sie in blankem Node). Der
+     * eine Fall steht deshalb wörtlich im Typ; käme ein zweiter dazu, ist das
+     * hier eine Zeile und am Aufrufer ein `tsc`-Fehler.
      */
-    readonly zusatz?: string,
+    readonly zusatz?: 'fehler.bildSchonWeg',
   ) {
     super(`Schreiben "${aktion}" ging nicht durch (${code}): ${grund}`);
     this.name = 'SchreibFehler';
@@ -347,8 +352,13 @@ export class SchreibFehler extends Error {
  * Konsole.
  */
 export function schreibFehlerFolgen(fehler: SchreibFehler): {
-  text: string;
-  knopf: string;
+  /** ⚠️ Schlüssel, keine Sätze — `SchreibFehler.tsx` wickelt sie in `t()`. */
+  text:
+    | 'fehler.programmText'
+    | 'fehler.nichtMehrAngemeldet'
+    | 'fehler.schonGeklappt'
+    | 'fehler.nichtGeklapptNetz';
+  knopf: 'fehler.allesKlar' | 'fehler.anmelden' | 'fehler.nochmalKurz';
   /** `true`, wenn ein neuer Versuch die Lage gar nicht ändern kann. */
   anmeldenNoetig: boolean;
 } {
@@ -371,12 +381,12 @@ export function schreibFehlerFolgen(fehler: SchreibFehler): {
   // Grund, aus dem `anmeldenNoetig` existiert (harte Regel 76): Ein Knopf, der
   // erkennbar nichts ändert, ist eine Schleife, die wie ein Defekt aussieht.
   if (istProgrammFehler(fehler.code)) {
-    return { text: PROGRAMM_TEXT, knopf: 'Alles klar', anmeldenNoetig: false };
+    return { text: PROGRAMM_TEXT, knopf: 'fehler.allesKlar', anmeldenNoetig: false };
   }
   if (fehler.code === '42501' || fehler.code === 'PGRST301') {
     return {
-      text: 'Du bist nicht mehr angemeldet.',
-      knopf: 'Anmelden',
+      text: 'fehler.nichtMehrAngemeldet',
+      knopf: 'fehler.anmelden',
       anmeldenNoetig: true,
     };
   }
@@ -386,14 +396,14 @@ export function schreibFehlerFolgen(fehler: SchreibFehler): {
   // er trotzdem hier, ist „nochmal" der falsche Rat.
   if (fehler.code === '23505') {
     return {
-      text: 'Das hat schon geklappt.',
-      knopf: 'Alles klar',
+      text: 'fehler.schonGeklappt',
+      knopf: 'fehler.allesKlar',
       anmeldenNoetig: false,
     };
   }
   return {
-    text: 'Das hat nicht geklappt — meistens liegt es am Netz.',
-    knopf: 'Nochmal',
+    text: 'fehler.nichtGeklapptNetz',
+    knopf: 'fehler.nochmalKurz',
     anmeldenNoetig: false,
   };
 }

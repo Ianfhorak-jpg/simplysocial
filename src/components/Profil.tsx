@@ -148,7 +148,9 @@ export function Profil({
 
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
-          {binIch ? 'Was du vorhast' : `Was ${person.displayName} vorhat`}
+          {binIch
+            ? t('profil.wasDuVorhast')
+            : t('profil.wasVorhat', { name: person.displayName })}
         </SsText>
 
         {eintraege.length > 0 ? (
@@ -164,8 +166,8 @@ export function Profil({
         ) : (
           <SsText variant="body" color={colors.inkSoft}>
             {binIch
-              ? 'Du hast gerade nichts geplant. Was hier steht, verschwindet mit dem Tag — wie im Feed.'
-              : `${person.displayName} hat gerade nichts geplant.`}
+              ? t('profil.nichtsGeplant')
+              : t('profil.nichtsGeplantAndere', { name: person.displayName })}
           </SsText>
         )}
 

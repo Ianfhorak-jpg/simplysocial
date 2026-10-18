@@ -387,21 +387,28 @@ export class AnbieterFehler extends Error {
  * Netzausfall (Ians Entscheidung 43): ein Satz, der lügt. `null` ist deshalb ein
  * gültiges Ergebnis und kein Versäumnis.
  */
-export function anbieterFehlerText(code: string): string | null {
+export function anbieterFehlerText(
+  code: string,
+):
+  | 'anmelden.nurInApp'
+  | 'anmelden.wegNichtEingerichtet'
+  | 'anmelden.anbieterNichts'
+  | 'anmelden.ginNichtNetz'
+  | null {
   switch (code) {
     case 'abgebrochen':
       return null;
     case 'nicht-hier':
-      return 'Das geht nur in der App am Handy. Nimm hier die E-Mail.';
+      return 'anmelden.nurInApp';
     case 'kein-zugang':
       // Die Client-ID fehlt in `.env`. Für den Menschen davor ist das dasselbe
       // wie „geht gerade nicht" — der Grund steht in der Konsole, nicht hier
       // (der Fund vom 2026-09-03: Entwickler-Notizen in JSX-Text sind öffentlich).
-      return 'Dieser Weg ist gerade nicht eingerichtet. Nimm die E-Mail.';
+      return 'anmelden.wegNichtEingerichtet';
     case 'kein-ausweis':
-      return 'Der Anbieter hat nichts zurückgeschickt. Probier es noch einmal.';
+      return 'anmelden.anbieterNichts';
     default:
-      return 'Das hat gerade nicht geklappt. Prüf dein Netz und probier es noch einmal.';
+      return 'anmelden.ginNichtNetz';
   }
 }
 
@@ -531,22 +538,29 @@ export const CODE_MAX = 10;
  * Der `code` selbst kommt NIE auf den Bildschirm (die Lehre vom 2026-09-03) — er
  * steht in der Konsole, weil `KontoFehler` ihn trägt.
  */
-export function codeFehlerText(code: string): string {
+export function codeFehlerText(
+  code: string,
+):
+  | 'anmelden.codeFalsch'
+  | 'anmelden.zuSchnell'
+  | 'anmelden.adresseFalsch'
+  | 'anmelden.kontenZu'
+  | 'anmelden.ginNichtNetz' {
   switch (code) {
     case 'otp_expired':
-      return 'Der Code stimmt nicht oder ist abgelaufen. Fordere einen neuen an.';
+      return 'anmelden.codeFalsch';
     case 'over_email_send_rate_limit':
     case 'over_request_rate_limit':
       // Die Freigrenze von Supabase liegt bei wenigen Mails je Stunde. Das ist kein
       // Fehler, sondern eine Grenze — und sie gehört als solche dagestanden, sonst
       // tippt jemand zehnmal auf einen Knopf, der nichts mehr tun darf.
-      return 'Gerade ging es zu schnell hintereinander. Probier es in ein paar Minuten.';
+      return 'anmelden.zuSchnell';
     case 'email_address_invalid':
     case 'validation_failed':
-      return 'Die Adresse sieht nicht richtig aus.';
+      return 'anmelden.adresseFalsch';
     case 'signup_disabled':
-      return 'Neue Konten sind gerade zu.';
+      return 'anmelden.kontenZu';
     default:
-      return 'Das hat gerade nicht geklappt. Prüf dein Netz und probier es noch einmal.';
+      return 'anmelden.ginNichtNetz';
   }
 }

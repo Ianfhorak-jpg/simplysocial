@@ -133,7 +133,7 @@ export default function GruppeScreen() {
       <SsCard category={gruppe.category}>
         <View style={styles.kopf}>
           <SsChip category={gruppe.category} />
-          {drin ? <SsIconText icon="haken">Du bist dabei</SsIconText> : null}
+          {drin ? <SsIconText icon="haken">{t('stand.dabei')}</SsIconText> : null}
         </View>
 
         <SsText variant="title">{gruppe.name}</SsText>
@@ -159,7 +159,9 @@ export default function GruppeScreen() {
             Grund für die erste Regel fällt weg, das Leck der zweiten bleibt. */}
         {gruender && (drin || gruppe.offen) ? (
           <SsText variant="caption" color={colors.inkSoft}>
-            {meine ? 'Du hast sie aufgemacht.' : `Aufgemacht von ${gruender.displayName}.`}
+            {meine
+              ? t('gruppe.duHastSieAufgemacht')
+              : t('gruppe.aufgemachtVon', { name: gruender.displayName })}
           </SsText>
         ) : null}
       </SsCard>
@@ -167,7 +169,7 @@ export default function GruppeScreen() {
       {drin ? (
         <>
           <View style={styles.block}>
-            <SsText variant="label">Wer dabei ist</SsText>
+            <SsText variant="label">{t('gruppe.werDabeiIst')}</SsText>
             {/* Blockierte Personen stehen hier MIT drin — anders als im Feed und im
                 Anfragen-Tab. Der Unterschied: Dort geht es um Inhalt und Kontakt,
                 hier um eine Tatsache über die Gruppe. Würde die App sie herausnehmen,
@@ -186,7 +188,7 @@ export default function GruppeScreen() {
             <View style={styles.block}>
               {laedtEin ? (
                 <>
-                  <SsText variant="label">Wen willst du holen?</SsText>
+                  <SsText variant="label">{t('gruppe.wenHolen')}</SsText>
                   {einladbare.length === 0 ? (
                     <SsText variant="caption" color={colors.inkSoft}>
                       {t('gruppenliste.niemandEinladbar')}
@@ -359,14 +361,16 @@ function Aussenseite({
     return (
       <View style={styles.block}>
         <SsIconText icon="funken">
-          {einladerName ? `${einladerName} hat dich eingeladen` : 'Du bist eingeladen'}
+          {einladerName
+            ? t('gruppe.hatDichEingeladen', { name: einladerName })
+            : t('gruppenliste.duBistEingeladen')}
         </SsIconText>
         <SsText variant="caption" color={colors.inkSoft}>
           {angefragt
             ? // Der Fall aus `data/mock.ts` (gr3 + gi1): Man hat angefragt UND
               // wird eingeladen. Der Satz sagt, was mit der Anfrage passiert —
               // sonst sucht man sie hinterher im Anfragen-Tab.
-              'Du hattest hier auch angefragt. Nimmst du an, erledigt sich das damit.'
+              t('gruppe.auchAngefragt')
             : t('gruppe.einladungSofortDabei')}
         </SsText>
         <SsButton

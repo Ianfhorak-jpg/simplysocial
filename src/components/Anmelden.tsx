@@ -111,7 +111,10 @@ export function Anmelden() {
       // etwas schiefgegangen (Ians Entscheidung 43, dieselbe Familie).
       const code = f instanceof AnbieterFehler ? f.code : 'unbekannt';
       console.warn(String(f));
-      setFehler(anbieterFehlerText(code));
+      // ⚠️ `anbieterFehlerText` gibt einen SCHLÜSSEL heraus (oder `null` beim
+      // Abbruch) — ungewickelt stünde `anmelden.nurInApp` auf dem Schirm.
+      const schluessel = anbieterFehlerText(code);
+      setFehler(schluessel && t(schluessel));
       setLaeuft(null);
     }
   }
@@ -286,11 +289,11 @@ function EmailWeg({
   function melden(f: unknown) {
     if (f instanceof KontoFehler) {
       console.warn(f.message);
-      setFehler(codeFehlerText(f.code));
+      setFehler(t(codeFehlerText(f.code)));
       return;
     }
     console.warn(String(f));
-    setFehler(codeFehlerText('unbekannt'));
+    setFehler(t(codeFehlerText('unbekannt')));
   }
 
   /**
@@ -365,10 +368,10 @@ function EmailWeg({
       // ist der Apple-Reviewer.
       if (f instanceof KontoFehler) {
         console.warn(f.message);
-        setFehler(passwortFehlerText(f.code));
+        setFehler(t(passwortFehlerText(f.code)));
       } else {
         console.warn(String(f));
-        setFehler(passwortFehlerText('unbekannt'));
+        setFehler(t(passwortFehlerText('unbekannt')));
       }
       setLaeuft(false);
     }

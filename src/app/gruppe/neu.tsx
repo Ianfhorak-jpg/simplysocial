@@ -62,10 +62,11 @@ export default function GruppeNeuScreen() {
 
   const fehler = {
     // Drei Zeichen, wie beim Post-Titel. „TT" wäre für die anderen nicht zu deuten.
-    name: nameSauber.length >= 3 ? '' : 'Ein Name, an dem man die Gruppe erkennt.',
+    name: nameSauber.length >= 3 ? '' : t('gruppe.nameFehler'),
     // Der Bezirk ist freiwillig — Ians Entscheidung vom 2026-09-02 gilt hier genauso
     // wie am Post: Eine Kinogruppe ist in keinem Bezirk zu Hause.
-    bezirk: bezirkLeer || istWienerBezirk(bezirk) ? '' : 'Vier Ziffern, z. B. 1070 — oder leer lassen.',
+    bezirk:
+      bezirkLeer || istWienerBezirk(bezirk) ? '' : t('gruppe.bezirkFehler'),
   };
   const allesOk = Object.values(fehler).every((f) => f === '');
   const zeigen = (feld: keyof typeof fehler) => (geprueft ? fehler[feld] : '');

@@ -245,7 +245,15 @@ export function gehoertInDenStapel(post: Post, ctx: StapelKontext): boolean {
  * schreibt Lea weiter „Cool, freut mich! 🎾". Das ist keine Oberfläche, das ist
  * jemand, der schreibt.
  */
-export function grussVorschlag(anzeigename: string): string {
+export function grussVorschlag(anzeigename: string): {
+  schluessel: 'feed.grussMitName' | 'feed.gruss';
+  werte?: { name: string };
+} {
   const vorname = anzeigename.trim().split(' ')[0];
-  return vorname ? `Hey ${vorname}! Bin dabei` : 'Hey! Bin dabei';
+  // Schlüssel statt Satz, wie in den anderen Regel-Dateien: Diese Datei hat
+  // bisher NUR Typ-Importe, und das soll so bleiben (der Ring mit `hooks.ts`
+  // steht unten begründet).
+  return vorname
+    ? { schluessel: 'feed.grussMitName', werte: { name: vorname } }
+    : { schluessel: 'feed.gruss' };
 }

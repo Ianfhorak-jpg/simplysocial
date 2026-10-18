@@ -18,6 +18,10 @@
 set -e
 HIER="$(cd "$(dirname "$0")" && pwd)"
 WURZEL="$(cd "$HIER/../.." && pwd)"
+# Die Wörterbücher — seit dem 2026-10-18 gibt `zuschnittFolgen()` SCHLÜSSEL
+# heraus, und der Prüfstand muss die Sätze dahinter lesen können. Immer die
+# ECHTEN: Die Gegenproben ändern `zuschnitt.ts`, nie das Wörterbuch.
+export WOERTER="$WURZEL/src/i18n"
 ARBEIT="$(mktemp -d)"
 trap 'rm -rf "$ARBEIT"' EXIT
 

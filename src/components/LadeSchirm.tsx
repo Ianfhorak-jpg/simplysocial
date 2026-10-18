@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { SsButton, SsIcon, SsText } from '@/components/ui';
 import type { LadeFehler } from '@/data/laden';
 import { ladeFehlerFolgen, ladeZeileFolgen } from '@/data/quelle';
@@ -66,21 +67,21 @@ export function LadeSchirm({ fehler, nochmal }: { fehler: LadeFehler; nochmal: (
           <SsIcon name="warnung" size={32} color={colors.inkSoft} />
         </View>
         <SsText variant="heading" center>
-          {titel}
+          {t(titel)}
         </SsText>
         {/* Kein Tabellenname, kein Fehlercode, kein Pfad. Der `code` steht in der
             Konsole (`LadeFehler` trägt ihn) — am 2026-09-03 stand eine
             Entwickler-Notiz im gerenderten Text der Nutzungsbedingungen, auf einer
             öffentlich abrufbaren Adresse. */}
         <SsText variant="body" center color={colors.inkSoft}>
-          {text}
+          {t(text)}
         </SsText>
         {/* `abmelden()` und nicht `nochmal`: Danach zeichnet der Torwächter in
             `app/_layout.tsx` den Anmelde-Bildschirm, und es leert nebenbei den
             Zwischenspeicher — fremde Daten liegen nach einer abgelaufenen Sitzung
             sonst weiter im Speicher. */}
         <SsButton
-          label={knopf}
+          label={t(knopf)}
           block
           size="lg"
           onPress={anmeldenNoetig ? abmelden : nochmal}
@@ -127,9 +128,9 @@ export function LadeZeile({ fehler, nochmal }: { fehler: LadeFehler; nochmal: ()
         {/* Nicht rot — siehe die Begründung am Kasten oben. */}
         <SsIcon name="warnung" size={16} color={colors.inkSoft} />
         <SsText variant="caption" color={colors.inkSoft} style={styles.zeilenText}>
-          {text}
+          {t(text)}
         </SsText>
-        <SsButton label={knopf} variant="ghost" onPress={anmeldenNoetig ? abmelden : nochmal} />
+        <SsButton label={t(knopf)} variant="ghost" onPress={anmeldenNoetig ? abmelden : nochmal} />
       </View>
     </View>
   );

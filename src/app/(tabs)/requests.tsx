@@ -28,6 +28,7 @@ import {
 import { ortText } from '@/lib/bezirk';
 import { startOderSeit, vergangen } from '@/lib/zeit';
 import { colors, ecke, spacing } from '@/theme';
+import type { TSchluessel } from '@/i18n';
 import type { IconName } from '@/theme/icons';
 import type { Group, Post, RequestStatus } from '@/types/models';
 import { handleText } from '@/lib/handle';
@@ -369,7 +370,7 @@ function GesendeteZeile({ eintrag }: { eintrag: AnfrageEintrag }) {
           {post.title}
         </SsText>
         <SsIconText icon={stand.icon} color={stand.stark ? colors.ink : colors.inkSoft}>
-          {stand.text}
+          {t(stand.text)}
         </SsIconText>
       </View>
       <SsText variant="caption" color={colors.inkSoft}>
@@ -573,7 +574,7 @@ function GesendeteGruppenZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) 
           {gruppe.name}
         </SsText>
         <SsIconText icon={stand.icon} color={stand.stark ? colors.ink : colors.inkSoft}>
-          {stand.text}
+          {t(stand.text)}
         </SsIconText>
       </View>
       <SsText variant="caption" color={colors.inkSoft}>
@@ -594,10 +595,13 @@ function GesendeteGruppenZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) 
  * einer Gruppe — dort ist man dabei, hier ist man DRIN, und zwar dauerhaft.
  */
 const GRUPPEN_STAND = {
-  pending: { icon: 'uhr', text: 'Wartet', stark: false },
-  accepted: { icon: 'personen', text: 'Du bist drin', stark: true },
-  declined: { icon: 'kreuzKreis', text: 'Diesmal nicht', stark: false },
-} as const satisfies Record<RequestStatus, { icon: IconName; text: string; stark: boolean }>;
+  pending: { icon: 'uhr', text: 'stand.wartet', stark: false },
+  accepted: { icon: 'personen', text: 'stand.drin', stark: true },
+  declined: { icon: 'kreuzKreis', text: 'stand.abgelehnt', stark: false },
+} as const satisfies Record<
+  RequestStatus,
+  { icon: IconName; text: TSchluessel; stark: boolean }
+>;
 
 /**
  * Die drei Ausgänge einer Anfrage in drei Worten — an einer Stelle, nicht im JSX
@@ -605,10 +609,13 @@ const GRUPPEN_STAND = {
  * dunkel dastehen, während die beiden anderen grau bleiben (`stark`).
  */
 const STAND = {
-  pending: { icon: 'uhr', text: 'Wartet', stark: false },
-  accepted: { icon: 'funken', text: 'Du bist dabei', stark: true },
-  declined: { icon: 'kreuzKreis', text: 'Diesmal nicht', stark: false },
-} as const satisfies Record<RequestStatus, { icon: IconName; text: string; stark: boolean }>;
+  pending: { icon: 'uhr', text: 'stand.wartet', stark: false },
+  accepted: { icon: 'funken', text: 'stand.dabei', stark: true },
+  declined: { icon: 'kreuzKreis', text: 'stand.abgelehnt', stark: false },
+} as const satisfies Record<
+  RequestStatus,
+  { icon: IconName; text: TSchluessel; stark: boolean }
+>;
 
 /**
  * Zwei leere Zustände, weil es zwei verschiedene Situationen sind — dieselbe

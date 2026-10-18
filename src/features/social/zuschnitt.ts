@@ -357,9 +357,9 @@ export function zuschnittZoomen(
  * demselben Grund wie `bildFolgen()` in `bild.ts` (harte Regel 88): Sonst verspricht
  * irgendwann ein Screen etwas, das die Regel nicht mehr tut.
  */
-export function zuschnittFolgen(): string[] {
-  return [
-    'Schieb und zieh das Foto, bis im Kreis steht, was du willst.',
-    'Gespeichert wird nur, was im Kreis liegt — der Rest ist weg.',
-  ];
+export function zuschnittFolgen(): ('zuschnitt.schiebUndZieh' | 'zuschnitt.nurImKreis')[] {
+  // Schlüssel, keine Sätze: `91_zuschnitt.sh` kopiert diese Datei EINZELN in einen
+  // Wegwerf-Ordner und übersetzt sie ohne den `@/`-Kurznamen — ein Import, auch
+  // ein `import type`, erschlägt den Prüfstand.
+  return ['zuschnitt.schiebUndZieh', 'zuschnitt.nurImKreis'];
 }

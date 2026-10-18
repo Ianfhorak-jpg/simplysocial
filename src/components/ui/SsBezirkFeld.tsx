@@ -36,7 +36,7 @@ import { colors, spacing, status } from '@/theme';
 export function SsBezirkFeld({
   wert,
   setzen,
-  label = 'Wo wohnst du?',
+  label,
   hinweis,
   fehler,
 }: {
@@ -54,7 +54,10 @@ export function SsBezirkFeld({
 
   return (
     <View style={styles.block}>
-      <SsText variant="label">{label}</SsText>
+      {/* Der Standardtext steht HIER und nicht am Parameter: Ein Standardwert
+          in der Signatur wird zwar bei jedem Aufruf neu berechnet, aber `t()`
+          gehört in den Render — so liest es jeder, der die Datei aufmacht. */}
+      <SsText variant="label">{label ?? t('erstesKonto.woWohnstDu')}</SsText>
       {hinweis ? (
         <SsText variant="caption" color={colors.inkSoft}>
           {hinweis}

@@ -262,9 +262,9 @@ export const BILD_ZUERST = true;
  *   (`safety/hooks.ts`), und zwar VOR dem Entfernen: Danach steht dort in jedem
  *   Fall `null`.
  */
-export function loeschFehlerText(bildSchonWeg: boolean): string | null {
+export function loeschFehlerText(bildSchonWeg: boolean): 'fehler.bildSchonWeg' | null {
   if (!bildSchonWeg) return null;
   // Zwei kurze Hauptsätze statt eines langen: Der erste beruhigt, der zweite nennt
   // den Schaden. Andersherum liest man die Beruhigung erst nach dem Schreck.
-  return 'Dein Konto ist noch da — dein Profilbild ist aber schon entfernt.';
+  return 'fehler.bildSchonWeg';
 }

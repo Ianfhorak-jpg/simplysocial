@@ -59,6 +59,63 @@ export const de = {
     zurueck: 'Zurück',
     nochmal: 'Nochmal versuchen',
     verstanden: 'Verstanden',
+    /** Das Wort, das zwei Aufzählungsglieder verbindet. */
+    und: 'und',
+  },
+
+  /**
+   * Die drei Ausgänge einer Anfrage, in drei Worten.
+   *
+   * ⚠️ **„Du bist dabei" und „Du bist drin" sind NICHT dasselbe**, und deshalb
+   * stehen sie zweimal da: Bei einer Aktivität ist man einmal dabei, in einer
+   * Gruppe ist man drin — dauerhaft. Die Begründung steht an `GRUPPEN_STAND` in
+   * `app/(tabs)/requests.tsx`, und auf Englisch trägt erst „You're a member" sie
+   * weiter.
+   */
+  stand: {
+    wartet: 'Wartet',
+    dabei: 'Du bist dabei',
+    drin: 'Du bist drin',
+    abgelehnt: 'Diesmal nicht',
+  },
+
+  /**
+   * Zeitangaben, wie ein Mensch sie liest. Zusammengesetzt wird in
+   * `lib/zeit.ts`, die Listen (Wochentage, Monate) stehen in `i18n/datum.ts` —
+   * Blätter hier müssen Strings sein.
+   *
+   * ⚠️ **„Heute" und die Uhrzeit sind ZWEI Teile, nicht ein Satz mit
+   * Platzhalter.** In beiden Sprachen steht die Uhrzeit hinter dem Tageswort
+   * („Heute 18:30" · „Today 18:30"), und `startText()` fügt sie mit einem
+   * Leerzeichen an. Dieselben drei Wörter braucht `tagText()` OHNE Uhrzeit für
+   * enge Stellen — als Satzvorlage wären es sechs Schlüssel für drei Wörter.
+   *
+   * 🔴 **Mehrzahl steht als zwei Schlüssel da, nicht als `{n}` in einem Satz.**
+   * Das ist die Falle, die in diesem Projekt sechsmal zugeschlagen hat. Wo nur
+   * EIN Schlüssel steht, ist die Einzahl nachweislich unerreichbar, und der
+   * Grund steht daneben — ein Text, den kein Bildschirm liest, landet trotzdem
+   * im Bündel (siehe Kopf dieser Datei).
+   */
+  zeit: {
+    heute: 'Heute',
+    morgen: 'Morgen',
+    gestern: 'Gestern',
+    /** Ein Post, der heute schon läuft — groß, weil die Zeile damit anfängt. */
+    seit: 'Seit {zeit}',
+    /** Dasselbe in der Karten-Blase, wo es hinter dem Titel steht. */
+    seitKlein: 'seit {zeit}',
+    geradeEben: 'gerade eben',
+    /**
+     * **Einzahl gibt es nicht, und das ist gerechnet, nicht geschätzt:**
+     * `vergangen()` antwortet unter zwei Minuten „gerade eben", der Zweig hier
+     * beginnt also bei n = 2.
+     */
+    vorMin: 'vor {n} Min.',
+    vorStunde: 'vor 1 Std.',
+    vorStunden: 'vor {n} Std.',
+    /** Die Einzahl von „vor {n} Tagen" ist ein eigenes Wort. */
+    vorEinemTag: 'gestern',
+    vorTagen: 'vor {n} Tagen',
   },
 
   /**
@@ -67,6 +124,24 @@ export const de = {
    */
   anmelden: {
     momentBitte: 'Einen Moment …',
+    /**
+     * Die Fehlersätze der Anmeldung.
+     *
+     * ⚠️ **`ginNichtNetz` steht in DREI Funktionen** (`anbieterFehlerText`,
+     * `codeFehlerText`, `passwortFehlerText`) und `zuSchnell` in zweien — das
+     * ist Absicht: Dieselbe Lage, derselbe Satz. Ein zweiter Schlüssel mit
+     * demselben Wortlaut liefe beim nächsten Umformulieren auseinander.
+     */
+    nurInApp: 'Das geht nur in der App am Handy. Nimm hier die E-Mail.',
+    wegNichtEingerichtet: 'Dieser Weg ist gerade nicht eingerichtet. Nimm die E-Mail.',
+    anbieterNichts: 'Der Anbieter hat nichts zurückgeschickt. Probier es noch einmal.',
+    ginNichtNetz: 'Das hat gerade nicht geklappt. Prüf dein Netz und probier es noch einmal.',
+    codeFalsch: 'Der Code stimmt nicht oder ist abgelaufen. Fordere einen neuen an.',
+    zuSchnell: 'Gerade ging es zu schnell hintereinander. Probier es in ein paar Minuten.',
+    adresseFalsch: 'Die Adresse sieht nicht richtig aus.',
+    kontenZu: 'Neue Konten sind gerade zu.',
+    mailOderPasswort: 'E-Mail oder Passwort stimmt nicht.',
+    kontoNichtBestaetigt: 'Dieses Konto ist noch nicht bestätigt.',
     mitApple: 'Weiter mit Apple',
     mitGoogle: 'Weiter mit Google',
     mitEmailCode: 'Mit E-Mail-Code',
@@ -99,6 +174,14 @@ export const de = {
     rueckgaengig: 'Rückgängig',
     weggewischt: '„{titel}" weggewischt',
     zumFeed: 'Zum Feed',
+    stapelDurchFilter: 'Mit einem anderen Filter liegen vielleicht noch Karten da.',
+    stapelDurchAlles: 'Alles, was du gesehen hast, steht unten weiter in der Liste.',
+    nichtsDa: 'Dazu ist gerade nichts da',
+    nichtsDaFilter: 'Mit einem anderen Filter findest du vielleicht mehr.',
+    nochNichtsLos: 'Noch nichts los in deinem Feed',
+    posteSelbst: 'Poste doch selbst was — irgendwer hat immer Zeit.',
+    grussMitName: 'Hey {name}! Bin dabei',
+    gruss: 'Hey! Bin dabei',
   },
 
   /** Die Filter über dem Feed. */
@@ -180,7 +263,15 @@ export const de = {
     privatHinweisNeu:
       'Die Gruppe steht in keiner Liste. Hinein kommt nur, wen jemand von drinnen einlädt.',
     gruppeErstellen: 'Gruppe erstellen',
+    nameFehler: 'Ein Name, an dem man die Gruppe erkennt.',
+    bezirkFehler: 'Vier Ziffern, z. B. 1070 — oder leer lassen.',
     /** ⚠️ Einzahl und Mehrzahl sind ZWEI Schlüssel (`mitgliederText`). */
+    werDabeiIst: 'Wer dabei ist',
+    wenHolen: 'Wen willst du holen?',
+    duHastSieAufgemacht: 'Du hast sie aufgemacht.',
+    aufgemachtVon: 'Aufgemacht von {name}.',
+    hatDichEingeladen: '{name} hat dich eingeladen',
+    auchAngefragt: 'Du hattest hier auch angefragt. Nimmst du an, erledigt sich das damit.',
     einMitglied: '1 Mitglied',
     mehrereMitglieder: '{anzahl} Mitglieder',
   },
@@ -255,6 +346,14 @@ export const de = {
     bezirkGrund: 'Danach sortieren wir, was in deiner Nähe los ist.',
     haekchenFehlt: 'Setz noch das Häkchen, dann geht es los.',
     passwort: 'Passwort',
+    fastGeschafft: 'Fast geschafft',
+    dreiSachen: 'Drei Sachen, dann bist du drin.',
+    losGehts: "Los geht's",
+    deinVorname: 'Dein Vorname',
+    woWohnstDu: 'Wo wohnst du?',
+    welcherJahrgang: 'Welcher Jahrgang?',
+    jahrgangOffen: 'Steht offen an deinem Profil.',
+    ginNichtNochmal: 'Das hat gerade nicht geklappt. Probier es noch einmal.',
   },
 
   /** Die Antwortleiste unter einem Post. */
@@ -266,6 +365,8 @@ export const de = {
 
   /** Der Bild-Zuschnitt. */
   zuschnitt: {
+    schiebUndZieh: 'Schieb und zieh das Foto, bis im Kreis steht, was du willst.',
+    nurImKreis: 'Gespeichert wird nur, was im Kreis liegt — der Rest ist weg.',
     ausschnittWaehlen: 'Ausschnitt wählen',
     uebernehmen: 'Übernehmen',
   },
@@ -292,6 +393,8 @@ export const de = {
       'Du kannst Leute einladen, denen du folgst oder die dir folgen. Im Moment ist das niemand — folg jemandem, dann steht er hier.',
     gruppeLeer:
       'Gerade nichts. Diese Posts stehen auch im normalen Feed — hier siehst du sie nur beisammen.',
+    titel: 'Gruppen',
+    angefragt: 'Angefragt',
     duBistEingeladen: 'Du bist eingeladen',
     ausGruppeGeholt:
       'Jemand aus einer Gruppe hat dich geholt. Nimmst du an, bist du sofort dabei.',
@@ -386,6 +489,51 @@ export const de = {
       'Alle Namen, Posts und Chats sind erfunden. Es gibt keinen Login — du bist gerade Ian. Neuladen setzt alles zurück.',
   },
 
+  /**
+   * Was dasteht, wenn etwas schiefgeht — Laden, Schreiben, Programmfehler.
+   *
+   * 🔴 **Diese Sätze standen bis zum 2026-10-18 fest in `data/quelle.ts`,
+   * `data/schreiben.ts` und `lib/programmfehler.ts`** — drei Dateien, die
+   * importfrei bleiben müssen (Prüfstände laden sie in blankem Node). Sie geben
+   * jetzt SCHLÜSSEL heraus, und der Bildschirm wickelt sie in `t()`.
+   *
+   * ⚠️ Dabei kam ein echter Fehler heraus: `ladeFehlerFolgen()` gab schon
+   * `'laden.keineVerbindung'` zurück, `LadeSchirm` zeichnete es aber ungewickelt
+   * — auf dem Schirm stand der SCHLÜSSEL. Genau die Fehlerart aus Abschnitt 2c
+   * von `pruef-sprache`, nur aus einer Quelle, die der Wächter nicht kannte.
+   */
+  fehler: {
+    nichtMehrAngemeldet: 'Du bist nicht mehr angemeldet.',
+    nichtMehrAngemeldetTitel: 'Du bist nicht mehr angemeldet',
+    nochmalAnmelden: 'Melde dich noch einmal an, dann ist alles wieder da.',
+    anmelden: 'Anmelden',
+    keinNetzLetzterStand: 'Kein Netz — du siehst den letzten Stand.',
+    nochmalKurz: 'Nochmal',
+    allesKlar: 'Alles klar',
+    nochmalVersuchen: 'Nochmal versuchen',
+    schonGeklappt: 'Das hat schon geklappt.',
+    nichtGeklapptNetz: 'Das hat nicht geklappt — meistens liegt es am Netz.',
+    bildSchonWeg: 'Dein Konto ist noch da — dein Profilbild ist aber schon entfernt.',
+    programmText: 'Da ist etwas schiefgegangen, das nicht an dir liegt.',
+    programmTitel: 'Da ist etwas schiefgegangen',
+    programmErklaerung:
+      'Es liegt nicht an dir und nicht an deinem Netz — der Fehler steckt in der App selbst.',
+  },
+
+  /**
+   * Der Hinweis über dem Zusagen-Knopf, wenn man zur selben Zeit schon etwas hat.
+   *
+   * ⚠️ **Die Anführungszeichen stehen im Satz, nicht im Code** — Deutsch setzt
+   * „so", Englisch “so”. Ein festes Zeichenpaar im Code wäre in einer der beiden
+   * Sprachen falsch, und das sieht niemand beim Übersetzen.
+   */
+  doppelt: {
+    selbstGepostet: 'Du hast „{titel}“ {wann} selbst gepostet.',
+    schonDabei: 'Du bist {wann} schon bei „{titel}“.',
+    undNochEtwas: '{satz} Und noch etwas um die Zeit.',
+    undNochMehrere: '{satz} Und noch {anzahl} Sachen um die Zeit.',
+  },
+
   /** Die Chat-Liste. */
   chat: {
     gruppen: 'Gruppen',
@@ -441,6 +589,7 @@ export const de = {
 
   /** Der Chat-Bildschirm selbst. */
   chatraum: {
+    treffpunktOffen: 'Treffpunkt noch offen',
     senden: 'Senden',
     verabredetTitel: 'Ihr seid verabredet',
     nochNichtsGeschrieben:
@@ -452,6 +601,13 @@ export const de = {
 
   /** Das eigene Profil. */
   profil: {
+    wasDuVorhast: 'Was du vorhast',
+    wasVorhat: 'Was {name} vorhat',
+    nichtsGeplant:
+      'Du hast gerade nichts geplant. Was hier steht, verschwindet mit dem Tag — wie im Feed.',
+    nichtsGeplantAndere: '{name} hat gerade nichts geplant.',
+    nochKeineFollower: 'Noch keine Follower.',
+    folgtNochNiemandem: 'Folgt noch niemandem.',
     einstellungen: 'Einstellungen',
     fuss: 'Blockierte Personen · Nutzungsbedingungen · Account löschen',
   },
@@ -490,7 +646,24 @@ export const de = {
     kategorieFehler: 'Wähle aus, worum es geht.',
     titelFehler: 'Ein paar Wörter, damit man weiß, was los ist.',
     sichtFehler: 'Wähle die Gruppe aus, für die der Post gedacht ist.',
+    wasHastDuVor: 'Was hast du vor?',
     worumGehtEs: 'Worum geht es?',
+    titelInVorschau: 'Dein Titel steht hier',
+    /**
+     * Der Satz über dem Knopf, wenn Felder fehlen.
+     *
+     * ⚠️ **Die Feldnamen tragen die Präposition mit** („bei der Uhrzeit",
+     * „at the time"), weil aus zwei Namen ohne Sonderfall ein Satz wird. Im
+     * Deutschen ist es der Dativ, im Englischen „at the …" — in beiden Sprachen
+     * gehört die Präposition zum NAMEN, nicht zur Vorlage.
+     */
+    fehltNochRot: 'Es fehlt noch was — die roten Stellen.',
+    schauNochMal: 'Schau noch mal {felder}.',
+    feldKategorie: 'bei der Kategorie',
+    feldTitel: 'beim Titel',
+    feldBezirk: 'beim Bezirk',
+    feldZeit: 'bei der Uhrzeit',
+    feldSicht: 'bei der Gruppe',
     titel: 'Titel',
     titelPlatzhalter: 'Tennis spielen',
     wann: 'Wann?',
@@ -700,6 +873,10 @@ export const de = {
 
   /** Der Melde-Bildschirm. */
   melden: {
+    vonDir: 'Das ist von dir',
+    gibtEsNicht: 'Das gibt es nicht',
+    eigenesNichtMelden: 'Eigene Posts und sich selbst kann man nicht melden.',
+    vielleichtWeg: 'Vielleicht ist es inzwischen verschwunden.',
     wasIstLos: 'Was ist los?',
     nochEtwas: 'Noch etwas dazu?',
     wasGenau: 'Was genau passiert ist',
@@ -747,6 +924,25 @@ export const de = {
 
   /** Konto löschen — Guideline 5.1.1(v), der Prüfer sucht das gezielt. */
   loeschen: {
+    /**
+     * Die vier Zeilen, die zeigen, was verschwindet.
+     *
+     * ⚠️ **Einzahl und Mehrzahl sind je zwei Schlüssel** — und hier ist die
+     * Einzahl wirklich erreichbar (ein Post, ein Chat). Englisch braucht dazu
+     * nicht nur ein `s`: „1 connection" gegen „2 connections".
+     */
+    einPost: 'Post',
+    mehrerePosts: 'Posts',
+    postsZusatz: 'auch abgelaufene',
+    einChat: 'Chat',
+    mehrereChats: 'Chats',
+    chatsZusatz: 'mit allen Nachrichten',
+    eineAnfrage: 'Anfrage',
+    mehrereAnfragen: 'Anfragen',
+    anfragenZusatz: 'die du geschickt hast',
+    eineVerbindung: 'Verbindung',
+    mehrereVerbindungen: 'Verbindungen',
+    verbindungenZusatz: '{follower} Follower · du folgst {folgt}',
     hierWaereSchluss: 'Hier wäre Schluss',
     prototypNichts:
       'Im echten Betrieb wäre dein Konto jetzt weg und du wärst abgemeldet. Im Prototyp gibt es noch keine Konten — es ist nichts gelöscht worden.',

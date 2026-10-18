@@ -223,32 +223,38 @@ export function naechsterHandle(versuch: string, nummer: number): string {
 export const HANDLE_VERSUCHE = 20;
 
 /**
- * Die Sätze auf dem Bildschirm — an EINER Stelle, wie `blockFolgen()`.
+ * Die SCHLÜSSEL der Sätze auf dem Bildschirm — an EINER Stelle, wie `blockFolgen()`.
+ *
+ * ⚠️ **Hier stehen Schlüssel und keine Sätze**, weil diese Datei importfrei bleiben
+ * muss: Drei Prüfstände laden sie in blankem Node (`60_konto`, `93_demoregel`,
+ * `95_zustimmung`), und `@/i18n` zöge React hinein. Der Bildschirm wickelt jeden
+ * Wert in `t()` — **ungewickelt stünde `erstesKonto.fastGeschafft` auf dem Schirm**,
+ * und kein Compiler merkt das (`npm run pruef-sprache`, Abschnitt 2c).
  *
  * Der Titel sagt ausdrücklich NICHT „Profil anlegen". Wer gerade seinen Code
  * eingetippt hat, ist in seinem Kopf schon drin; ein Bildschirm, der wie ein
  * zweiter Anmeldevorgang aussieht, macht aus einem Schritt gefühlt zwei.
  */
 export function kontoFolgen(): {
-  titel: string;
-  unterzeile: string;
-  knopf: string;
-  namePlatzhalter: string;
-  bezirkTitel: string;
-  jahrgangTitel: string;
-  jahrgangHinweis: string;
+  titel: 'erstesKonto.fastGeschafft';
+  unterzeile: 'erstesKonto.dreiSachen';
+  knopf: 'erstesKonto.losGehts';
+  namePlatzhalter: 'erstesKonto.deinVorname';
+  bezirkTitel: 'erstesKonto.woWohnstDu';
+  jahrgangTitel: 'erstesKonto.welcherJahrgang';
+  jahrgangHinweis: 'erstesKonto.jahrgangOffen';
 } {
   return {
-    titel: 'Fast geschafft',
-    unterzeile: 'Drei Sachen, dann bist du drin.',
-    knopf: "Los geht's",
-    namePlatzhalter: 'Dein Vorname',
-    bezirkTitel: 'Wo wohnst du?',
+    titel: 'erstesKonto.fastGeschafft',
+    unterzeile: 'erstesKonto.dreiSachen',
+    knopf: 'erstesKonto.losGehts',
+    namePlatzhalter: 'erstesKonto.deinVorname',
+    bezirkTitel: 'erstesKonto.woWohnstDu',
     // Der Bezirk bekommt den Grund dazugeschrieben, die anderen beiden nicht: Er
     // ist das einzige der drei Felder, dessen Wirkung man nicht errät — seit
     // Entscheidung 63 sortiert er den ganzen Feed.
-    jahrgangTitel: 'Welcher Jahrgang?',
-    jahrgangHinweis: 'Steht offen an deinem Profil.',
+    jahrgangTitel: 'erstesKonto.welcherJahrgang',
+    jahrgangHinweis: 'erstesKonto.jahrgangOffen',
   };
 }
 

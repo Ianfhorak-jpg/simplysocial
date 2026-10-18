@@ -233,8 +233,9 @@ export function stehtSchonEtwas(zustand: LadeZustand): boolean {
  * `code` steht im `LadeFehler` und gehört in die Konsole.
  */
 export function ladeZeileFolgen(fehler: LadeFehler): {
-  text: string;
-  knopf: string;
+  /** ⚠️ Schlüssel, keine Sätze — `LadeZeile` wickelt sie in `t()`. */
+  text: 'fehler.programmText' | 'fehler.nichtMehrAngemeldet' | 'fehler.keinNetzLetzterStand';
+  knopf: 'fehler.nochmalVersuchen' | 'fehler.anmelden' | 'fehler.nochmalKurz';
 } {
   // Dieselbe Unterscheidung wie in `ladeFehlerFolgen()`: Eine abgelaufene Anmeldung
   // ist kein Netzproblem, und „Nochmal versuchen" wäre dort eine Schleife.
@@ -244,9 +245,9 @@ export function ladeZeileFolgen(fehler: LadeFehler): {
     return { text: PROGRAMM_TEXT, knopf: PROGRAMM_KNOPF_LADEN };
   }
   if (fehler.code === '42501' || fehler.code === 'PGRST301') {
-    return { text: 'Du bist nicht mehr angemeldet.', knopf: 'Anmelden' };
+    return { text: 'fehler.nichtMehrAngemeldet', knopf: 'fehler.anmelden' };
   }
-  return { text: 'Kein Netz — du siehst den letzten Stand.', knopf: 'Nochmal' };
+  return { text: 'fehler.keinNetzLetzterStand', knopf: 'fehler.nochmalKurz' };
 }
 
 /**
@@ -264,9 +265,14 @@ export function ladeZeileFolgen(fehler: LadeFehler): {
  * davor statt für den Prüfstand.
  */
 export function ladeFehlerFolgen(fehler: LadeFehler): {
-  titel: string;
-  text: string;
-  knopf: string;
+  /**
+   * ⚠️ **Schlüssel, keine Sätze** — `LadeSchirm` wickelt sie in `t()`.
+   * Bis zum 2026-10-18 war das halb so: `titel` war schon ein Schlüssel,
+   * `knopf` noch ein Satz, und der Bildschirm zeichnete beides ungewickelt.
+   */
+  titel: 'fehler.programmTitel' | 'fehler.nichtMehrAngemeldetTitel' | 'laden.keineVerbindung';
+  text: 'fehler.programmErklaerung' | 'fehler.nochmalAnmelden' | 'klein.netzFehler';
+  knopf: 'fehler.nochmalVersuchen' | 'fehler.anmelden';
   /** `true`, wenn ein neuer Versuch die Lage gar nicht ändern kann. */
   anmeldenNoetig: boolean;
 } {
@@ -283,16 +289,16 @@ export function ladeFehlerFolgen(fehler: LadeFehler): {
   }
   if (fehler.code === '42501' || fehler.code === 'PGRST301') {
     return {
-      titel: 'Du bist nicht mehr angemeldet',
-      text: 'Melde dich noch einmal an, dann ist alles wieder da.',
-      knopf: 'Anmelden',
+      titel: 'fehler.nichtMehrAngemeldetTitel',
+      text: 'fehler.nochmalAnmelden',
+      knopf: 'fehler.anmelden',
       anmeldenNoetig: true,
     };
   }
   return {
     titel: 'laden.keineVerbindung',
     text: 'klein.netzFehler',
-    knopf: 'Nochmal versuchen',
+    knopf: 'fehler.nochmalVersuchen',
     anmeldenNoetig: false,
   };
 }

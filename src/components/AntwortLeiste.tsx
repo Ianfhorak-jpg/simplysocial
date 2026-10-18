@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DoppelHinweis } from './DoppelHinweis';
 import { SsAvatar, SsButton, SsInput, SsText } from './ui';
 
-import { t } from '@/i18n';
+import { t, tSatz } from '@/i18n';
 import type { FeedEintrag } from '@/features/posts/hooks';
 import { grussVorschlag } from '@/features/posts/wisch';
 import { useKollisionen } from '@/features/requests/hooks';
@@ -42,7 +42,7 @@ export interface AntwortLeisteProps {
 
 export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteProps) {
   const { post, author } = eintrag;
-  const [text, setText] = useState(() => grussVorschlag(author.displayName));
+  const [text, setText] = useState(() => tSatz(grussVorschlag(author.displayName)));
   /**
    * 🔴 **Die Leiste lag unter der Tab-Kapsel** — Ians Befund vom 2026-09-20:
    * *„wenn man nach rechts wischt, dann ist dieses Feld, was von unten raufkommt,

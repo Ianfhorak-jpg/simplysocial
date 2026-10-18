@@ -12,13 +12,39 @@
 
 ## In einem Satz
 
-**Es fehlen drei Dinge, und zwei davon mache ich.**
+**Meine zwei Sachen sind fertig. Jetzt bist du dran — aber lies bitte den Kasten
+darunter, da ist etwas aufgetaucht.**
 
 | | wer | was |
 |---|---|---|
-| 1 | ich | Die **Zeitangaben** übersetzen („Heute 18:30", „vor 2 Tagen", „Mo") — der letzte Teil, der in einer englischen App auffällt |
-| 2 | ich | Ein **Baustein nachinstallieren**, damit die App die iPhone-Sprache von selbst erkennt. Ohne ihn zeigt sie immer Deutsch |
+| 1 | ich ✅ | Die **Zeitangaben** übersetzt („Heute 18:30" → „Today 18:30", „vor 2 Tagen" → „2 days ago", „Mo" → „Mon") |
+| 2 | ich ✅ | Den **Baustein nachinstalliert**, der die iPhone-Sprache erkennt. Ab Build 5 stellt sich die App von selbst auf Englisch, wenn dein iPhone Englisch spricht |
 | 3 | **du** | **Build 5 bauen und einreichen** |
+
+---
+
+## 🔴 Dabei ist etwas herausgekommen, das du wissen solltest
+
+**Die App war noch nicht so englisch, wie hier stand.** Nachdem ich die Zeitangaben
+fertig hatte, habe ich nachgemessen — und es standen noch **rund 45 deutsche Sätze**
+in der englischen Oberfläche. Zum Beispiel „Du bist dabei" im Anfragen-Tab, „Was du
+vorhast" auf dem Profil und alles, was die App sagt, wenn etwas schiefgeht.
+
+**Warum das niemandem auffiel:** Die automatische Prüfung meldete grün. Sie sucht
+deutsche Sätze an den Umlauten — und „Du bist dabei" hat keinen. Sie konnte diese
+Sätze gar nicht sehen.
+
+**Erledigt:** Alle 45 sind übersetzt, und die Prüfung kann die Lücke jetzt sehen
+(sie sucht zusätzlich nach deutschen Wörtern wie „du", „nicht", „noch").
+
+**Nebenbei gefunden und behoben:** Auf dem Fehlerbildschirm („keine Verbindung")
+stand ein Stück Programmiersprache statt eines Satzes — `laden.keineVerbindung`.
+Das ist in Build 4 drin und ab Build 5 weg.
+
+⚠️ **Was ich NICHT prüfen konnte:** wie es am Gerät aussieht. Dafür hätte ich einen
+Schalter umlegen müssen, den ich nicht anfassen darf (er entscheidet, ob die App an
+die echten Daten geht). **Deshalb ist dein Durchgang am Handy diesmal wichtiger als
+sonst:** Sprache auf English stellen und einmal durch alle Tabs.
 
 ⚠️ **Build 4 liegt bei Apple und ist jetzt veraltet.** Nicht weil etwas kaputt ist —
 sondern weil die Übersetzung danach kam. Er würde eine App verschicken, die nur

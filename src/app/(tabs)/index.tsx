@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { t } from '@/i18n';
+import { t, tSatz } from '@/i18n';
 import { AntwortLeiste } from '@/components/AntwortLeiste';
 import { KartenBlase } from '@/components/KartenBlase';
 import { PostCard } from '@/components/PostCard';
@@ -365,7 +365,7 @@ export default function FeedScreen() {
     }
 
     if (WISCH_WIRKUNG.rechts === 'sofort') {
-      anfrageSenden(eintrag.post.id, grussVorschlag(eintrag.author.displayName));
+      anfrageSenden(eintrag.post.id, tSatz(grussVorschlag(eintrag.author.displayName)));
       return;
     }
     if (WISCH_WIRKUNG.rechts === 'detail') {
@@ -1207,9 +1207,7 @@ function StapelDurch({ filterAktiv }: { filterAktiv: boolean }) {
           {t(filterAktiv ? 'feed.stapelDurch' : 'feed.allesFuerHeute')}
         </SsText>
         <SsText variant="caption" color={colors.inkSoft}>
-          {filterAktiv
-            ? 'Mit einem anderen Filter liegen vielleicht noch Karten da.'
-            : 'Alles, was du gesehen hast, steht unten weiter in der Liste.'}
+          {t(filterAktiv ? 'feed.stapelDurchFilter' : 'feed.stapelDurchAlles')}
         </SsText>
       </View>
       {/* `alignSelf` muss sein: SsButton setzt für schmale Knöpfe selbst
@@ -1881,7 +1879,7 @@ function FilterGruppe({
 function KarteNichtsLos({ zuruecksetzen }: { zuruecksetzen: () => void }) {
   return (
     <SsGlas schwebt style={styles.nichtsLosGlas}>
-      <SsText variant="body" center>Dazu ist gerade nichts da</SsText>
+      <SsText variant="body" center>{t('feed.nichtsDa')}</SsText>
       <Pressable onPress={zuruecksetzen} accessibilityRole="button" style={styles.leerLink}>
         <SsText variant="label" color={categoryColors.creative.aufGrund}>
           {t('filter.zuruecksetzen')}
@@ -1911,10 +1909,10 @@ function LeererFeed({
       <View style={styles.leer}>
         <SsIcon name="lupe" size={46} color={colors.inkSoft} />
         <SsText variant="heading" center>
-          Dazu ist gerade nichts da
+          {t('feed.nichtsDa')}
         </SsText>
         <SsText variant="body" center color={colors.inkSoft}>
-          Mit einem anderen Filter findest du vielleicht mehr.
+          {t('feed.nichtsDaFilter')}
         </SsText>
         <Pressable onPress={zuruecksetzen} accessibilityRole="button" style={styles.leerLink}>
           <SsText variant="label" color={categoryColors.creative.aufGrund}>
@@ -1929,10 +1927,10 @@ function LeererFeed({
     <View style={styles.leer}>
       <SsIcon name="spross" size={46} color={colors.inkSoft} />
       <SsText variant="heading" center>
-        Noch nichts los in deinem Feed
+        {t('feed.nochNichtsLos')}
       </SsText>
       <SsText variant="body" center color={colors.inkSoft}>
-        Poste doch selbst was — irgendwer hat immer Zeit.
+        {t('feed.posteSelbst')}
       </SsText>
       {/* Der Satz allein wäre eine Aufforderung ohne Weg. Hier ist der leere Feed der
           einzige Ort, an dem der ganze Bildschirm nichts Besseres zu tun hat. */}

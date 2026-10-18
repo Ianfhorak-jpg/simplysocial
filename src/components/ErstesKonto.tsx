@@ -123,7 +123,7 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
       // vom 2026-09-03 (Entwickler-Notizen in JSX-Text sind öffentlich), und
       // `data/quelle.ts` sagt dasselbe für das Lesen.
       console.warn(f instanceof KontoFehler ? f.message : String(f));
-      setFehler('Das hat gerade nicht geklappt. Probier es noch einmal.');
+      setFehler(t('erstesKonto.ginNichtNochmal'));
       setLaeuft(false);
     }
   }
@@ -173,16 +173,16 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
       ]}
       keyboardShouldPersistTaps="handled">
       <View style={styles.kasten}>
-        <SsText variant="title">{texte.titel}</SsText>
+        <SsText variant="title">{t(texte.titel)}</SsText>
         <SsText variant="body" color={colors.inkSoft} style={styles.unterzeile}>
-          {texte.unterzeile}
+          {t(texte.unterzeile)}
         </SsText>
 
         <SsInput
           label={t('erstesKonto.wieHeisstDu')}
           value={name}
           onChangeText={setName}
-          placeholder={texte.namePlatzhalter}
+          placeholder={t(texte.namePlatzhalter)}
           error={gezeigt && maengel.name ? tSatz(maengel.name) : undefined}
         />
         {/* Der abgeleitete @-Name steht unter dem Feld und nicht darin: Was man
@@ -201,7 +201,7 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
         <SsBezirkFeld
           wert={bezirk}
           setzen={setBezirk}
-          label={texte.bezirkTitel}
+          label={t(texte.bezirkTitel)}
           hinweis={t(BEZIRK_GRUND)}
           fehler={gezeigt && maengel.bezirk ? tSatz(maengel.bezirk) : undefined}
         />
@@ -211,9 +211,9 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
             Titel, und „Welcher Jahrgang?" brach dadurch auf 360 px in zwei Zeilen um.
             Zwei Muster für dieselbe Sache auf einem Bildschirm sind genau das, was
             Ian am 2026-09-05 mit „noch nicht ganz übersichtlich" gemeint hat. */}
-        <SsText variant="label">{texte.jahrgangTitel}</SsText>
+        <SsText variant="label">{t(texte.jahrgangTitel)}</SsText>
         <SsText variant="caption" color={colors.inkSoft} style={styles.grund}>
-          {texte.jahrgangHinweis}
+          {t(texte.jahrgangHinweis)}
         </SsText>
         <SsInput
           value={jahrgang}
@@ -249,7 +249,7 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
         ) : null}
 
         <SsButton
-          label={laeuft ? 'Einen Moment …' : texte.knopf}
+          label={laeuft ? t('anmelden.momentBitte') : t(texte.knopf)}
           block
           size="lg"
           disabled={laeuft}

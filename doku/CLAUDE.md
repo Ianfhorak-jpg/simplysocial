@@ -64,7 +64,80 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
 ---
 
-## 🔴 HIER GEHT ES WEITER — Stand 2026-10-18
+## 🔴 HIER GEHT ES WEITER — Stand 2026-10-18, abends
+
+> ## Die App spricht Englisch. Jetzt wirklich — und das ist eine Berichtigung.
+>
+> **Vollständiger Plan:** `~/.claude/plans/hallo-ich-will-bitte-memoized-turing.md`.
+> Zweig `dunkel`.
+>
+> ### 🔴 Der Befund, der den Plan überholt hat
+>
+> Der Plan sagte, es fehle nur `lib/zeit.ts`. **Das stimmte nicht.** Nach dem
+> Übersetzen von `zeit.ts` standen in der englischen Oberfläche weiter **rund 45
+> deutsche Sätze** — im Anfragen-Tab („Du bist dabei"), im Profil („Was du vorhast"),
+> im Feed, beim Posten, in den Gruppen, beim Melden und im ganzen Fehlertext-Apparat
+> der Datenschicht.
+>
+> **Warum es niemandem auffiel, und das ist die eigentliche Lehre:** `pruef-sprache`
+> meldete 24 Häkchen und `tsc` war sauber. Seine zwei Messungen KONNTEN die Sätze
+> nicht sehen — die eine sucht Umlaute („Du bist dabei" hat keinen), die andere feste
+> Texte an `label=`/`placeholder=` (das hier sind JSX-Textknoten und Tabellen).
+> *Solange eine Zahl auf ihrer Grenze steht, weiß man nur, dass sie nicht GESTIEGEN
+> ist — nicht, dass sie alles zählt.*
+>
+> ### 🔴 Und ein echter Fehler, den Build 4 trägt
+>
+> `ladeFehlerFolgen()` gab bereits einen Schlüssel zurück, `LadeSchirm.tsx` zeichnete
+> ihn **ungewickelt**: Auf dem Ladefehler-Bildschirm stand `laden.keineVerbindung`
+> statt „Keine Verbindung". Dieselbe Stelle gab es ein zweites Mal in `LadeZeile`.
+> Beide sind behoben — gefunden hat sie der erweiterte Wächter, nicht ein Mensch.
+>
+> ### Was diese Sitzung getan hat
+>
+> | | |
+> |---|---|
+> | `lib/zeit.ts` + neues `i18n/datum.ts` | Wochentage und Monate als LISTE neben dem Wörterbuch (ACTAs Muster), englisches Datum „15 Sep" statt „15.9." — zweideutig wäre es sonst |
+> | **`expo-localization` installiert** | `npx expo install` + `pod install`, in `app.json` eingetragen. ⚠️ **KEIN `prebuild`** — die Signatur-Zeilen stehen unangetastet (`DEVELOPMENT_TEAM` nachgesehen) |
+> | **Zweite Übersetzungsrunde** | 20 Dateien, ~45 Sätze. Die importfreien Regel-Dateien geben jetzt SCHLÜSSEL heraus (`quelle.ts`, `schreiben.ts`, `programmfehler.ts`, `anmeldung.ts`, `demo.ts`, `auth/konto.ts`, `safety/konto.ts`, `zuschnitt.ts`, `wisch.ts`) |
+> | **Der Wächter kann die Lücke jetzt sehen** | `pruef-sprache` **24 → 26**: neue Messung „deutsche Sätze ohne Umlaut" (Funktionswörter, Grenze 1) und Abschnitt 2c liest auch Destrukturierungen. Beide mit Gegenprobe rot gesehen |
+> | `pruef-zuschnitt` **47 → 56** | VERENGT, nicht nachgezogen: Er liest die Sätze jetzt aus BEIDEN Wörterbüchern statt nur aus dem deutschen |
+>
+> ### Gemessen, alles grün
+>
+> ```
+> tsc sauber · expo lint 88 (unverändert) · Wörterbuch 516/516
+> pruef-sprache 26 · pruef-zuschnitt 56 · pruef-alter 35 · pruef-zustimmung 34
+> pruef-kopf 48 · pruef-nennung 15 · pruef-anbieter 48 · pruef-bildwahl 48
+> pruef-farben 79 · pruef-boden 13 · pruef-glas 33 · pruef-sitzung 29
+> pruef-demoregel 29 · pruef-plattform 5 · pruef-etikett 12 · pruef-programmfehler ✓
+> deutsche Literale 115 → 108 · feste UI-Texte 21 → 20
+> ```
+>
+> ⚠️ **`pruef-alter` ging rot und hat damit seine Arbeit getan:** Er bewacht die ZAHL
+> der Abhängigkeiten, und `expo-localization` war eine mehr. Geprüft und in
+> `_FUER_IAN/ALTERSFREIGABE.md` nachgetragen: Es liest nur die eingestellte Sprache und
+> schickt nichts — am Datenschutz-Etikett ändert sich nichts.
+>
+> ### 🔴 Was NICHT belegt ist
+>
+> **Kein Lauf im Browser und keiner am Gerät.** Dafür müsste `ANMELDE_QUELLE` kurz auf
+> `'attrappe'` stehen, und das Umlegen hat der Auto-Mode geblockt — zu Recht, der Wert
+> ist bewacht (harte Regel 96). Was trägt: `en.ts` ist `Weiter<typeof de>` und jeder
+> Schlüssel ist ein `TSchluessel`, also meldet `tsc` jeden fehlenden Text und jeden
+> Tippfehler. Was NICHT trägt: ob ein Satz am Gerät umbricht oder komisch klingt.
+>
+> ### Was jetzt ansteht — und es gehört Ian
+>
+> | | wer | |
+> |---|---|---|
+> | **Build 5** | **Ian** | Build-Nummer 4 → 5 in `app.json` **und** `ios/SimplySocial/Info.plist`, dann `npm run testflight` |
+> | **Durchgang am Gerät** | **Ian** | Einstellungen → Sprache auf English, dann durch alle Tabs. Ein deutsches Wort dort ist der Fehler, der ACTA zu Apple ging |
+> | Build anhängen · Privacy-Label · einreichen | **Ian** | `npm run asc build-anhaengen -- --wirklich`, dann `npm run asc einreichbereit` (muss 12 von 12 zeigen) |
+>
+> 📄 In Ians Sprache: [`_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md`](_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md)
+
+## Davor — Stand 2026-10-18, mittags
 
 > ## Die App spricht Englisch. Es fehlen drei Dinge.
 >
@@ -914,14 +987,14 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 125. Was der App Store an TEXT zeigt, steht in `scripts/storetexte.md` — und jede ADRESSE darin wird angerufen, bevor sie zu Apple geht
 ## Fallen — Index
 
-> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 230 Stück, jede schon
+> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 255 Stück, jede schon
 > einmal einen Abend gekostet — die meisten stammen aus ACTA (`17_Tennis_Optimma`), der
 > Rest aus diesem Projekt. Hier steht nur der Titel; **die Diagnose steht im Volltext.**
 >
-> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-09-28). Hier stand 213,
-> gezählt wurden 226 — *eine Warnung mit einer ZAHL darin veraltet genauso still wie
-> das, wovor sie warnt.* Die Messstelle, damit die nächste Zahl nicht wieder geraten
-> wird:
+> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-10-18: **255**; am
+> 2026-09-28 standen hier 213 bei 226 gezählten) — *eine Warnung mit einer ZAHL darin
+> veraltet genauso still wie das, wovor sie warnt.* Die Messstelle, damit die nächste
+> Zahl nicht wieder geraten wird:
 >
 > ```bash
 > python3 -c "s=open('CLAUDE.md',encoding='utf-8').read(); i=s.index('## Fallen — Index'); r=s[i:]; print(sum(1 for z in r[:r.index(chr(10)+'---'+chr(10))].splitlines() if z.startswith('- ')))"
@@ -1178,6 +1251,10 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Eine gelöschte Hilfsfunktion hinterlässt Kommentare, die auf sie verweisen — nach dem NAMEN suchen
 - Eine Ersetzung „erster Treffer" landet im KOMMENTAR — in Dateien mit langen Köpfen nach ZEILE ersetzen
 - Jeder Wächter mit einem deutschen SATZ als Anker geht beim Übersetzen rot — alle Prüfstände danach fahren
+- Zwei Messungen, die BEIDE auf ihrer Grenze stehen, können gemeinsam 45 deutsche Sätze übersehen
+- Ein Wächter, der Schlüssel-Träger an `const x = fn()` erkennt, sieht eine DESTRUKTURIERUNG nicht
+- `pod install` stirbt an einer ASCII-8BIT-Umgebung, und die Meldung zeigt auf Unicode statt auf die Umgebung
+- Ein Ersetzungs-Helfer, der je DATEI schreibt, hinterlässt beim Abbruch die Hälfte
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

@@ -48,7 +48,7 @@ I18N = SRC / 'i18n'
 # erlaubtes Maß an Schlamperei. Wer sie hochsetzt, macht den Wächter wertlos:
 # Genau der Fehler, der ACTAs Build 1 zu Apple geschickt hat, würde dann grün
 # gemeldet. Sinkt sie, wird sie hier nachgezogen — das ist der Fortschritt.
-GRENZE = 115
+GRENZE = 108
 
 JA = NEIN = 0
 
@@ -282,7 +282,7 @@ PROPS = re.compile(
 )
 
 # ⚠️ Darf nur FALLEN — dieselbe Abmachung wie bei GRENZE.
-GRENZE_PROPS = 21
+GRENZE_PROPS = 20
 
 fest: list[str] = []
 for datei in sorted(SRC.rglob('*.tsx')):
@@ -315,6 +315,143 @@ if len(fest) > 5:
     print(f'     … und {len(fest) - 5} weitere')
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  2d · Deutsche SÄTZE ohne Umlaut — die Lücke, die zwei Messungen offen ließen
+# ══════════════════════════════════════════════════════════════════════════════
+print('')
+print('── Deutsche Sätze ohne Umlaut ──')
+
+# 🔴 **Warum es eine DRITTE Messung braucht, und wie sie gefunden wurde.**
+# Am 2026-10-18 standen beide Zahlen oben auf ihrer Grenze und `pruef-sprache`
+# meldete 24 Häkchen — während in der englischen Oberfläche weiter rund 45
+# deutsche Sätze standen. Keine der beiden Messungen konnte sie sehen:
+#
+#   · Die **Umlaut-Suche** (2) findet „Du bist dabei" nicht — kein Umlaut.
+#   · Die **Eigenschafts-Suche** (2b) findet es nicht — es steht nicht an
+#     `label=`, sondern als JSX-Textknoten oder in einer Tabelle.
+#
+# Gefunden wurden sie, indem nach deutschen FUNKTIONSWÖRTERN gesucht wurde
+# („du", „nicht", „noch", „dabei"). Die stehen in fast jedem deutschen Satz und
+# in keinem englischen. Zwei davon in einer Zeile sind kein Zufall mehr.
+#
+# ⚠️ **Zwei Wörter, nicht eines** — und das ist gemessen: Bei einem Wort meldet
+# `die`, `was` oder `man` jede zweite Zeile Code (`const die = …` gibt es nicht,
+# aber `data.filter(...)` enthält `der` als Teilwort). Deshalb wird vor der Suche
+# jeder Bezeichner weggeworfen, der wie Code aussieht, und erst der Rest gezählt.
+#
+# ⚠️ **Was er NICHT findet**, und das gehört dazu: einen kurzen deutschen Satz
+# ohne Funktionswörter („Wartet", „Angefragt"). Dafür gibt es 2b. *Ein Wächter,
+# der eine ÄHNLICHE Frage stellt, ist kein Wächter* — diese drei stellen drei
+# verschiedene, und keine ersetzt eine andere.
+DEUTSCHE_WOERTER = re.compile(
+    r'(?<![\w/@.])(Du|du|Dein|dein|Deine|deine|Dich|dich|nicht|noch|schon|und|oder'
+    r'|wenn|wer|Wer|was|Was|hier|Hier|wird|sind|hast|bist|keine|kein|etwas|selbst'
+    r'|jetzt|dabei|der|die|das|ein|eine|einen|mit|von|zum|zur|auf|aus|für|bei'
+    r'|gerade|alle|alles|man|sich|dann|auch)(?![\w])'
+)
+LITERAL = re.compile(r"""(['"`])((?:[^'"`\\\n]|\\.){5,}?)\1""")
+# Ein JSX-Textknoten: eine Zeile, die mit einem Großbuchstaben anfängt und weder
+# Klammern noch Zuweisungen trägt — also kein Code sein kann.
+JSX_TEXT = re.compile(r'^[A-ZÄÖÜ][^<>{}=]{10,}$')
+
+# ⚠️ **Diese drei Dateien sind bewusst NICHT übersetzt** (Entscheidung vom
+# 2026-10-18): `bausteine.tsx` und `post-fassungen.tsx` sind Werkzeuge für die
+# Entwicklung, `mock.ts` sind die Fake-Daten des Prototyps. Kein Nutzer der
+# echten App liest einen dieser Texte — und **das ganze Wörterbuch landet im
+# Bündel**, also wäre ihre Übersetzung reines Gewicht.
+NICHT_UEBERSETZT = {
+    pathlib.Path('app') / 'bausteine.tsx',
+    pathlib.Path('data') / 'mock.ts',
+    pathlib.Path('app') / 'post-fassungen.tsx',
+    # 🔴 **`brand.ts` ist die begründete Ausnahme.** Claim und Pitch stehen dort
+    # auf Deutsch, weil `app/+html.tsx` sie VOR dem JavaScript ausliefert (harte
+    # Regel 21) — dort gibt es kein `t()`. Unbewacht ist das trotzdem nicht: Der
+    # Abschnitt 1b oben hält `brand.ts` Zeichen für Zeichen gleich mit
+    # `de.marke.claim`, und DIE Fassung ist übersetzt.
+    pathlib.Path('config') / 'brand.ts',
+}
+
+# Was in die KONSOLE geht, bleibt deutsch — und muss es bleiben: Ein geworfener
+# Fehler ist eine Nachricht an den Entwickler, nicht an den Nutzer. Harte Regel 76
+# verbietet umgekehrt, dass so ein Text je auf den Bildschirm kommt.
+#
+# ⚠️ **Drei Zeilen Nachlauf**, weil ein `throw new Fehler(` seine Sätze oft erst
+# in der zweiten oder dritten Zeile trägt. Mehr wäre zu großzügig: Dann verschwände
+# ein echter Satz, der zufällig unter einem `console.warn` steht.
+NUR_KONSOLE = re.compile(r'\bthrow\b|\bconsole\.|\bsuper\(|new Error\(')
+
+# ⚠️ Darf nur FALLEN — dieselbe Abmachung wie bei GRENZE.
+# **Der eine erlaubte Treffer ist `PROGRAMM_TABELLE`** in `lib/programmfehler.ts`:
+# „(keine — die App selbst)" steht als Tabellenname in einem `LadeFehler` und geht
+# in die Konsole. Harte Regel 76 verbietet ausdrücklich, dass ein Tabellenname je
+# auf den Bildschirm kommt — er ist damit kein Oberflächentext. Er steht nicht in
+# einem `throw`, deshalb fängt ihn der Konsolen-Filter unten nicht.
+GRENZE_SAETZE = 1
+
+saetze: list[str] = []
+for datei in sorted(SRC.rglob('*.ts*')):
+    if datei.suffix not in ('.ts', '.tsx'):
+        continue
+    rel = datei.relative_to(SRC)
+    if I18N in datei.parents or datei.parent == I18N or rel in NICHT_UEBERSETZT:
+        continue
+    im_block = False
+    letzte: list[str] = []
+    for nr, roh in enumerate(datei.read_text(encoding='utf-8').splitlines(), 1):
+        blank = roh.strip()
+        if im_block:
+            if '*/' in roh:
+                im_block = False
+            continue
+        if '/*' in roh and '*/' not in roh:
+            im_block = True
+            continue
+        if blank.startswith(('*', '//', '/*')):
+            continue
+        letzte = (letzte + [blank])[-4:]
+        if any(NUR_KONSOLE.search(z) for z in letzte):
+            continue
+        getroffen = False
+        for m in LITERAL.finditer(roh):
+            inhalt = m.group(2)
+            if ' ' not in inhalt or inhalt.startswith(('@/', 'http', './')):
+                continue
+            if len(DEUTSCHE_WOERTER.findall(inhalt)) >= 2:
+                getroffen = True
+                break
+        if not getroffen and JSX_TEXT.match(blank):
+            getroffen = len(DEUTSCHE_WOERTER.findall(blank)) >= 2
+        if getroffen:
+            saetze.append(f'{datei.relative_to(WURZEL)}:{nr}  {blank[:60]}')
+
+pruef(f'Deutsche Sätze ohne Umlaut: {len(saetze)} (Grenze {GRENZE_SAETZE})',
+      len(saetze) <= GRENZE_SAETZE,
+      'die Zahl darf nur FALLEN — ein deutscher Satz in der englischen Oberfläche '
+      'ist genau der Fehler, der ACTAs Build 1 zu Apple geschickt hat')
+if len(saetze) < GRENZE_SAETZE:
+    print(f'     → die Grenze kann auf {len(saetze)} nachgezogen werden')
+for ort in saetze[:6]:
+    print(f'     {ort}')
+if len(saetze) > 6:
+    print(f'     … und {len(saetze) - 6} weitere')
+
+# Gegenprobe gegen sich selbst: Findet der Ausdruck überhaupt deutsche Sätze?
+# Bei NULL Treffern in einer Datei, die GARANTIERT deutsch ist, misst er nichts.
+# `data/mock.ts` ist dafür der richtige Zeuge: bewusst deutsch, und bleibt es.
+zeuge = SRC / 'data' / 'mock.ts'
+zeugen_treffer = 0
+if zeuge.exists():
+    for roh in zeuge.read_text(encoding='utf-8').splitlines():
+        for m in LITERAL.finditer(roh):
+            if len(DEUTSCHE_WOERTER.findall(m.group(2))) >= 2:
+                zeugen_treffer += 1
+                break
+pruef(f'Die Suche findet deutsche Sätze überhaupt (in mock.ts: {zeugen_treffer})',
+      zeugen_treffer >= 10,
+      'eine Textsuche mit null Treffern beweist nichts — ohne diese Gegenprobe wäre '
+      'eine kaputte Regex nicht von einer sauberen Oberfläche zu unterscheiden')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  2c · Ein Schlüssel, der ungewickelt im JSX landet
 # ══════════════════════════════════════════════════════════════════════════════
 print('')
@@ -339,10 +476,18 @@ print('── Schlüssel, die ohne `t()` angezeigt würden ──')
 #
 # Gefragt wird jetzt: Welche Namen tragen einen Schlüssel — aus `const x = fn()`
 # oder aus `.map((x) => …)` — und wird jeder davon in `{…}` gewickelt angezeigt?
+# 🔴 **Am 2026-10-18 um NEUN Quellen erweitert — und zwei davon waren bereits
+# falsch gezeichnet.** `ladeFehlerFolgen()` gab schon `'laden.keineVerbindung'`
+# zurück, `LadeSchirm` zeichnete es ungewickelt: Auf dem Fehlerbildschirm stand
+# der SCHLÜSSEL. *Eine Prüfung, die eine Quelle nicht kennt, prüft sie nicht* —
+# wer eine Funktion auf Schlüssel umstellt, trägt sie hier ein.
 SCHLUESSEL_QUELLEN = [
     'beitrittHuerdeText', 'privatHinweis', 'blockFolgen', 'austrittFolgen',
     'bildFolgen', 'bildHuerde', 'bildFehlerText', 'standortFolgen',
     'mitgliederText', 'zusageText',
+    'ladeFehlerFolgen', 'schreibFehlerFolgen', 'kontoFolgen', 'zuschnittFolgen',
+    'anbieterFehlerText', 'codeFehlerText', 'passwortFehlerText',
+    'loeschFehlerText', 'grussVorschlag',
 ]
 QUELLEN_RE = '|'.join(SCHLUESSEL_QUELLEN)
 
@@ -379,6 +524,16 @@ for datei in sorted(SRC.rglob('*.tsx')):
     # `const huerde = beitrittHuerdeText(...)`
     for m in re.finditer(rf'\b(?:const|let)\s+(\w+)\s*=\s*(?:{QUELLEN_RE})\(', ganz):
         traeger.add(m.group(1))
+    # 🔴 `const { titel, text, knopf } = ladeFehlerFolgen(fehler)` — **genau so
+    # war der Fehler vom 2026-10-18 geschrieben**, und der Ausdruck darüber sieht
+    # ihn nicht: Nach `const` steht dort keine Variable, sondern eine Klammer.
+    # Jeder Name aus der Klammer trägt einen Schlüssel.
+    for m in re.finditer(rf'\b(?:const|let)\s+\{{([^}}]+)\}}\s*=\s*(?:{QUELLEN_RE})\(', ganz):
+        for stueck in m.group(1).split(','):
+            # `{ titel, text: satz }` — der NAME in dieser Datei steht rechts.
+            name = stueck.split(':')[-1].strip()
+            if re.fullmatch(r'\w+', name):
+                traeger.add(name)
     # `blockFolgen().map((satz) => …)` — der Schleifenname trägt ihn
     for m in re.finditer(rf'(?:{QUELLEN_RE})\([^)]*\)\s*\.map\(\s*\(?(\w+)', ganz):
         traeger.add(m.group(1))
@@ -392,6 +547,13 @@ for datei in sorted(SRC.rglob('*.tsx')):
         # auf dem Schirm. Der erste Anlauf hat vier solche Stellen gemeldet — alle
         # vier richtig gebaut.
         for nr, roh in zeilen:
+            # ⚠️ **Die Deklaration ist keine Anzeige.** `const { knopf } = fn()`
+            # trägt dasselbe Muster wie `{knopf}` im JSX — seit die
+            # Destrukturierung oben mitgelesen wird, meldete sich jede
+            # Deklarationszeile selbst. *Ein Wächter, der eine ÄHNLICHE Frage
+            # stellt, ist kein Wächter*, und hier war es die eigene Quelle.
+            if re.match(r'^\s*(?:const|let|var)\b', roh):
+                continue
             for m in re.finditer(rf'(\w+=)?\{{\s*{name}(\.\w+)?\s*\}}', roh):
                 if m.group(1) in ('key=', 'accessibilityLabel='):
                     continue

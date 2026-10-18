@@ -53,10 +53,47 @@ export const en: Weiter<typeof de> = {
     zurueck: 'Back',
     nochmal: 'Try again',
     verstanden: 'Got it',
+    und: 'and',
+  },
+
+  stand: {
+    wartet: 'Pending',
+    dabei: "You're in",
+    // Nicht dasselbe Wort wie oben: Eine Gruppe verlässt man wieder, eine
+    // Zusage läuft ab. „Member" trägt die Dauer, die „in" nicht hat.
+    drin: "You're a member",
+    abgelehnt: 'Not this time',
+  },
+
+  zeit: {
+    heute: 'Today',
+    morgen: 'Tomorrow',
+    gestern: 'Yesterday',
+    seit: 'Since {zeit}',
+    seitKlein: 'since {zeit}',
+    geradeEben: 'just now',
+    // „min" bleibt abgekürzt wie im Deutschen — die Angabe steht in engen
+    // Zeilen neben einem Namen. „hour" wird ausgeschrieben, weil „1 hr" in
+    // einem Fließtext wie eine Maßeinheit aussieht, nicht wie eine Zeitangabe.
+    vorMin: '{n} min ago',
+    vorStunde: '1 hour ago',
+    vorStunden: '{n} hours ago',
+    vorEinemTag: 'yesterday',
+    vorTagen: '{n} days ago',
   },
 
   anmelden: {
     momentBitte: 'One moment …',
+    nurInApp: 'That only works in the phone app. Use email here.',
+    wegNichtEingerichtet: "This way isn't set up right now. Use email.",
+    anbieterNichts: "The provider didn't send anything back. Give it another try.",
+    ginNichtNetz: "That didn't work just now. Check your connection and try again.",
+    codeFalsch: "That code is wrong or expired. Request a new one.",
+    zuSchnell: 'That was a bit too fast. Try again in a few minutes.',
+    adresseFalsch: "That address doesn't look right.",
+    kontenZu: 'New accounts are closed right now.',
+    mailOderPasswort: "Email or password isn't right.",
+    kontoNichtBestaetigt: "This account hasn't been confirmed yet.",
     // Apples eigene Wortwahl. „Continue with Apple" ist eine der vom
     // Sign-in-with-Apple-Leitfaden erlaubten Beschriftungen — eine freie
     // Übersetzung wäre hier ein Markenverstoß, kein Geschmack.
@@ -103,6 +140,15 @@ export const en: Weiter<typeof de> = {
     rueckgaengig: 'Undo',
     weggewischt: '"{titel}" swiped away',
     zumFeed: 'Go to feed',
+    stapelDurchFilter: 'With a different filter there may be more cards waiting.',
+    stapelDurchAlles: "Everything you've seen is still in the list below.",
+    nichtsDa: 'Nothing for that right now',
+    nichtsDaFilter: 'A different filter might turn up more.',
+    nochNichtsLos: 'Nothing in your feed yet',
+    posteSelbst: 'Post something yourself — someone always has time.',
+    // „I'm in" ist Ians Wort für „Bin dabei" (WOERTER.md) — hier mit Gruß davor.
+    grussMitName: "Hey {name}! I'm in",
+    gruss: "Hey! I'm in",
   },
 
   filter: {
@@ -188,7 +234,15 @@ export const en: Weiter<typeof de> = {
     offenHinweis: 'The group is listed. Anyone who wants in asks — you confirm.',
     privatHinweisNeu:
       "The group isn't listed. The only way in is an invite from someone inside.",
+    nameFehler: 'A name people will recognise the group by.',
+    bezirkFehler: 'Four digits, e.g. 1070 — or leave it empty.',
     gruppeErstellen: 'Create group',
+    werDabeiIst: "Who's in",
+    wenHolen: 'Who do you want to bring in?',
+    duHastSieAufgemacht: 'You started it.',
+    aufgemachtVon: 'Started by {name}.',
+    hatDichEingeladen: '{name} invited you',
+    auchAngefragt: "You also asked to join. If you accept, that takes care of it.",
     einMitglied: '1 member',
     mehrereMitglieder: '{anzahl} members',
   },
@@ -256,6 +310,14 @@ export const en: Weiter<typeof de> = {
     bezirkGrund: "We use it to sort what's going on near you.",
     haekchenFehlt: 'Just tick the box and off we go.',
     passwort: 'Password',
+    fastGeschafft: 'Almost there',
+    dreiSachen: "Three things and you're in.",
+    losGehts: "Let's go",
+    deinVorname: 'Your first name',
+    woWohnstDu: 'Where do you live?',
+    welcherJahrgang: 'Which year were you born?',
+    jahrgangOffen: 'Shown openly on your profile.',
+    ginNichtNochmal: "That didn't work just now. Give it another try.",
   },
 
   antwort: {
@@ -265,6 +327,8 @@ export const en: Weiter<typeof de> = {
   },
 
   zuschnitt: {
+    schiebUndZieh: 'Drag and pinch the photo until the circle shows what you want.',
+    nurImKreis: 'Only what sits inside the circle is saved — the rest is gone.',
     ausschnittWaehlen: 'Choose the crop',
     uebernehmen: 'Use this',
   },
@@ -287,6 +351,8 @@ export const en: Weiter<typeof de> = {
       "You can invite people you follow or who follow you. Right now that's nobody — follow someone and they'll show up here.",
     gruppeLeer:
       "Nothing right now. These posts also appear in the normal feed — here you just see them together.",
+    titel: 'Groups',
+    angefragt: 'Requested',
     duBistEingeladen: "You're invited",
     ausGruppeGeholt:
       "Someone from a group brought you in. Accept and you're in right away.",
@@ -366,6 +432,31 @@ export const en: Weiter<typeof de> = {
       "All names, posts and chats are made up. There's no login — right now you're Ian. Reloading resets everything.",
   },
 
+  fehler: {
+    nichtMehrAngemeldet: "You're signed out.",
+    nichtMehrAngemeldetTitel: "You're signed out",
+    nochmalAnmelden: 'Sign in again and everything is back.',
+    anmelden: 'Sign in',
+    keinNetzLetzterStand: "No connection — you're seeing the last state.",
+    nochmalKurz: 'Retry',
+    allesKlar: 'Got it',
+    nochmalVersuchen: 'Try again',
+    schonGeklappt: 'That already worked.',
+    nichtGeklapptNetz: "That didn't work — usually it's the connection.",
+    bildSchonWeg: 'Your account is still there — but your profile picture is already gone.',
+    programmText: "Something went wrong, and it's not on you.",
+    programmTitel: 'Something went wrong',
+    programmErklaerung:
+      "It's not you and it's not your connection — the bug is in the app itself.",
+  },
+
+  doppelt: {
+    selbstGepostet: 'You posted “{titel}” {wann} yourself.',
+    schonDabei: 'You’re already in for “{titel}” {wann}.',
+    undNochEtwas: '{satz} And something else around then.',
+    undNochMehrere: '{satz} And {anzahl} other things around then.',
+  },
+
   chat: {
     gruppen: 'Groups',
     nochKeinChat: 'No chats yet',
@@ -409,6 +500,7 @@ export const en: Weiter<typeof de> = {
   },
 
   chatraum: {
+    treffpunktOffen: 'Meeting point still open',
     senden: 'Send',
     verabredetTitel: "You're set",
     nochNichtsGeschrieben:
@@ -419,6 +511,13 @@ export const en: Weiter<typeof de> = {
   },
 
   profil: {
+    wasDuVorhast: "What you're up to",
+    wasVorhat: "What {name} is up to",
+    nichtsGeplant:
+      "You haven't planned anything right now. What shows up here goes away with the day — just like the feed.",
+    nichtsGeplantAndere: "{name} hasn't planned anything right now.",
+    nochKeineFollower: 'No followers yet.',
+    folgtNochNiemandem: 'Not following anyone yet.',
     einstellungen: 'Settings',
     fuss: 'Blocked people · Terms of Use · Delete account',
   },
@@ -452,6 +551,7 @@ export const en: Weiter<typeof de> = {
     kategorieFehler: "Pick what it's about.",
     titelFehler: "A few words so people know what's up.",
     sichtFehler: 'Pick the group this post is for.',
+    wasHastDuVor: "What are you up to?",
     worumGehtEs: "What's it about?",
     titel: 'Title',
     titelPlatzhalter: 'Playing tennis',
@@ -477,6 +577,14 @@ export const en: Weiter<typeof de> = {
     werSollSehen: 'Who should see it?',
     gruppeSpaeter: "Once you're in a group, you can post just for them here.",
     wieLange: 'Visible for how long?',
+    titelInVorschau: 'Your title goes here',
+    fehltNochRot: "Something's missing — the red bits.",
+    schauNochMal: 'Take another look {felder}.',
+    feldKategorie: 'at the category',
+    feldTitel: 'at the title',
+    feldBezirk: 'at the district',
+    feldZeit: 'at the time',
+    feldSicht: 'at the group',
     vorschauLeer: 'Pick a category below and your card shows up here.',
     obenInVorschau: 'Time, district, spots — in the preview above',
     bezirkFehlt: 'Which district?',
@@ -666,6 +774,10 @@ export const en: Weiter<typeof de> = {
   },
 
   melden: {
+    vonDir: "That's yours",
+    gibtEsNicht: "That doesn't exist",
+    eigenesNichtMelden: "You can't report your own posts or yourself.",
+    vielleichtWeg: "Maybe it's gone by now.",
     wasIstLos: "What's going on?",
     nochEtwas: 'Anything to add?',
     wasGenau: 'What exactly happened',
@@ -707,6 +819,18 @@ export const en: Weiter<typeof de> = {
   },
 
   loeschen: {
+    einPost: 'post',
+    mehrerePosts: 'posts',
+    postsZusatz: 'including expired ones',
+    einChat: 'chat',
+    mehrereChats: 'chats',
+    chatsZusatz: 'with every message',
+    eineAnfrage: 'request',
+    mehrereAnfragen: 'requests',
+    anfragenZusatz: 'the ones you sent',
+    eineVerbindung: 'connection',
+    mehrereVerbindungen: 'connections',
+    verbindungenZusatz: '{follower} followers · you follow {folgt}',
     hierWaereSchluss: 'This would be the end',
     prototypNichts:
       "In real use your account would now be gone and you'd be signed out. There are no accounts in the prototype — nothing has been deleted.",

@@ -66,7 +66,7 @@ export function FolgeListeScreen({ userId, art }: { userId: string | undefined; 
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <SsText variant="body" color={colors.inkSoft} center style={styles.leer}>
-            {art === 'follower' ? 'Noch keine Follower.' : 'Folgt noch niemandem.'}
+            {t(art === 'follower' ? 'profil.nochKeineFollower' : 'profil.folgtNochNiemandem')}
           </SsText>
         }
       />

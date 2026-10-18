@@ -223,7 +223,7 @@ function PostKopf({ post, name }: { post: Post; name: string }) {
           Angabe (wann, wo) vom Treffpunkt, der sich noch ändern kann. */}
       <SsIconText icon="fahne" numberOfLines={1}>
         {`${startOderSeit(post.startsAt)}   ·   ${ortText(post.district)}   ·   ${
-          post.meetingPoint ?? 'Treffpunkt noch offen'
+          post.meetingPoint ?? t('chatraum.treffpunktOffen')
         }`}
       </SsIconText>
     </Pressable>

@@ -8,7 +8,7 @@ import {
   type ScrollView,
 } from 'react-native';
 
-import { t } from '@/i18n';
+import { t, type TSchluessel } from '@/i18n';
 import { DoppelHinweis } from '@/components/DoppelHinweis';
 import { PostCard } from '@/components/PostCard';
 import {
@@ -223,12 +223,12 @@ type Feldname = 'kategorie' | 'titel' | 'bezirk' | 'zeit' | 'sicht';
  * bei zwei Fehlern ohne Sonderfall ein ganzer Satz wird: „Schau noch mal beim Titel und
  * bei der Uhrzeit."
  */
-const FELD_IM_SATZ: Record<Feldname, string> = {
-  kategorie: 'bei der Kategorie',
-  titel: 'beim Titel',
-  bezirk: 'beim Bezirk',
-  zeit: 'bei der Uhrzeit',
-  sicht: 'bei der Gruppe',
+const FELD_IM_SATZ: Record<Feldname, TSchluessel> = {
+  kategorie: 'erstellen.feldKategorie',
+  titel: 'erstellen.feldTitel',
+  bezirk: 'erstellen.feldBezirk',
+  zeit: 'erstellen.feldZeit',
+  sicht: 'erstellen.feldSicht',
 };
 
 /**
@@ -452,7 +452,7 @@ export default function CreateScreen() {
     <SsScreen scroll keyboard scrollRef={scrollRef} contentStyle={styles.seite}>
       <SsBack />
 
-      <SsText variant="title">Was hast du vor?</SsText>
+      <SsText variant="title">{t('erstellen.wasHastDuVor')}</SsText>
 
       <Vorschau
         eintrag={
@@ -462,7 +462,7 @@ export default function CreateScreen() {
                   id: 'vorschau',
                   authorId: ich.id,
                   category: kategorie,
-                  title: titelSauber || 'Dein Titel steht hier',
+                  title: titelSauber || t('erstellen.titelInVorschau'),
                   // Leerst du das Feld, steht hier "Wien" — nicht heimlich dein
                   // Profilbezirk. Vorher stand da `: ich.district`, und die Vorschau
                   // zeigte damit einen Bezirk, den der Post nie bekommen haette.
@@ -942,11 +942,15 @@ function zeitVorschlag(jetzt: Date = new Date()): { tage: number; minuten: numbe
  * dem Sprung steht man ohnehin schon bei der ersten.
  */
 function fehlerSatz(fehler: Record<Feldname, string>): string {
-  const allgemein = 'Es fehlt noch was — die roten Stellen.';
+  const allgemein = t('erstellen.fehltNochRot');
   if (FEHLER_ANTWORT === 'nur-springen') return allgemein;
   const offen = (Object.keys(fehler) as Feldname[]).filter((f) => fehler[f] !== '');
   if (offen.length === 0 || offen.length > 2) return allgemein;
-  return `Schau noch mal ${offen.map((f) => FELD_IM_SATZ[f]).join(' und ')}.`;
+  // ⚠️ Das Verbindungswort kommt aus dem Wörterbuch — ein festes „und" wäre
+  // genau die Art Wort, die eine Übersetzung überlebt, ohne aufzufallen.
+  return t('erstellen.schauNochMal', {
+    felder: offen.map((f) => t(FELD_IM_SATZ[f])).join(` ${t('gemein.und')} `),
+  });
 }
 
 function zeitFehler(roh: string, startsAt: string | null): string {

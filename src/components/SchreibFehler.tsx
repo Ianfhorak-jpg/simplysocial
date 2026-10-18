@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { SsButton, SsIcon, SsText } from '@/components/ui';
 import { schreibFehlerFolgen, type SchreibFehler as SchreibFehlerTyp } from '@/data/schreiben';
 import { abmelden } from '@/features/auth/hooks';
@@ -56,7 +57,7 @@ export function SchreibFehlerLeiste({ fehler }: { fehler: SchreibFehlerTyp }) {
         <SsIcon name="warnung" size={18} color={colors.inkSoft} />
         {/* Kein Fehlercode, kein Tabellenname (der Fund vom 2026-09-03). */}
         <View style={styles.text}>
-          <SsText variant="caption">{text}</SsText>
+          <SsText variant="caption">{t(text)}</SsText>
           {/* Ians Entscheidung 53: Wenn der Vorgang schon etwas angerichtet hat,
               steht das hier — und nur dann. Der Zusatz kommt aus dem Fehler und
               nicht aus `schreibFehlerFolgen()`, weil er nicht am CODE hängt,
@@ -64,12 +65,12 @@ export function SchreibFehlerLeiste({ fehler }: { fehler: SchreibFehlerTyp }) {
               (das Profilbild beim Kontolöschen). */}
           {fehler.zusatz ? (
             <SsText variant="caption" color={colors.inkSoft}>
-              {fehler.zusatz}
+              {t(fehler.zusatz)}
             </SsText>
           ) : null}
         </View>
         <SsButton
-          label={knopf}
+          label={t(knopf)}
           variant="ghost"
           onPress={anmeldenNoetig ? abmelden : schreibFehlerWeg}
         />
