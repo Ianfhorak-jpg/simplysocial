@@ -64,7 +64,58 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
 ---
 
-## 🔴 HIER GEHT ES WEITER — Stand 2026-10-17
+## 🔴 HIER GEHT ES WEITER — Stand 2026-10-18
+
+> ## Die App spricht Englisch. Es fehlen drei Dinge.
+>
+> **Vollständiger Plan mit allen Zahlen und Fallen:**
+> `~/.claude/plans/hallo-ich-will-bitte-memoized-turing.md` — **zuerst lesen.**
+> Letzter Commit `0718422`, alles gepusht, Zweig `dunkel`.
+>
+> ### Was fehlt
+>
+> | | wer | |
+> |---|---|---|
+> | **`lib/zeit.ts` übersetzen** | Claude | Der letzte Teil, der auffällt: „Heute 18:30", „vor 2 Tagen", „Mo", „18.10." sind noch deutsch. Braucht ein eigenes `dates.ts` wie ACTA (Wochentage sind eine LISTE, nicht Strings) und den siebten Mehrzahl-Fall |
+> | 🔴 **`expo-localization` installieren** | Claude | **Nicht installiert, am 18.10. nachgesehen.** Ohne das Modul gilt IMMER Deutsch — die automatische Erkennung ist tot. `npx expo install expo-localization`, danach `pod install` (⚠️ KEIN `prebuild`, das wirft die Signatur weg) |
+> | **Build 5 + einreichen** | **Ian** | Build-Nummer 4 → 5 in `app.json` UND `ios/SimplySocial/Info.plist`, dann `npm run testflight` |
+>
+> ### Bei Apple gemessen (2026-10-18): 11 von 12
+>
+> Offen ist allein **„Build an der Version"**: Build 4 hängt dran (Ian hat ihn am 17.10.
+> angehängt), ist aber **VERALTET** — die Übersetzung kam danach. Alles andere steht:
+> Preis, Altersfreigabe, Texte, Adressen, Screenshots, Inhaltsrechte, Prüfinfos.
+> Das Privacy-Label ist über die API nicht lesbar und bleibt ein `?`.
+>
+> ### Die Übersetzung in Zahlen
+>
+> | | |
+> |---|---|
+> | `npm run pruef-sprache` | **24 Häkchen**, jede mit Gegenprobe |
+> | feste Texte in UI-Eigenschaften | 131 → **21** |
+> | deutsche Literale | 291 → **115** |
+> | Vollständigkeitsbeweis | `en.ts` ist `Weiter<typeof de>` → **`tsc` meldet jeden fehlenden Schlüssel** |
+>
+> Die restlichen Zahlen sind fast nur `bausteine.tsx`, `data/mock.ts` und
+> `post-fassungen.tsx` — **bewusst nicht übersetzt**, 110 Texte, die kein Nutzer sieht,
+> und das ganze Wörterbuch landet im Bündel.
+>
+> ### 🔴 Vier Prüfstände gingen beim Übersetzen rot — und wurden VERENGT
+>
+> Sie benutzten einen deutschen SATZ als Anker. `pruef-zustimmung` 28 → **34**,
+> `pruef-kopf` 47 → **48**, `pruef-nennung` 13 → **15**. Der Häkchen-Wächter prüft jetzt
+> BEIDE Wörterbücher; vorher deckte er nur Deutsch ab. **Wer übersetzt, fährt danach ALLE
+> Prüfstände** — sonst schlagen sie reihum beim nächsten Thema zu und sehen wie Rauschen aus.
+>
+> ### Was Ian vorgelegt gehört
+>
+> 🔴 **Die sechs Hausregeln gelten jetzt auch auf Englisch** — wörtlich treu übersetzt,
+> und eine Vorrang-Klausel steht absichtlich NICHT da (das wäre eine Rechtsaussage).
+> In `src/i18n/WOERTER.md` stand dazu ein offenes Häkchen.
+>
+> 📄 In Ians Sprache: [`_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md`](_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md)
+
+## Davor — Stand 2026-10-17
 
 > **Bei Apple gemessen: 11 von 12.** Offen ist allein **„Build an der Version"** —
 > Build 3 hängt dran, trägt aber noch den roten Kasten (Entscheidung 114). Build 4
