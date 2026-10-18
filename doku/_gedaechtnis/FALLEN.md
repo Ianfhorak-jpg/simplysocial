@@ -2224,3 +2224,23 @@
   und `expo lint` sagen dazu nichts. Gefunden nur, weil ein `grep` nach dem Namen noch
   einen Treffer hatte — **nach dem Löschen einer Funktion immer nach ihrem NAMEN
   suchen, nicht nur nach ihren Aufrufen.**
+- 🔴 **Eine Ersetzung „erster Treffer" landet im KOMMENTAR, und der echte Text bleibt
+  stehen.** Beim Übersetzen von „Ganz Wien" in `SsWienKarte.tsx` und
+  `SsAppleKarte.native.tsx` traf `str.replace(alt, neu, 1)` den ersten Treffer — und der
+  stand in einem JSDoc-Kopf (*„Wo Lizenzzeile und „Ganz Wien" sitzen…"*). Ergebnis: ein
+  zerschossener Kommentar, ein unverändertes JSX und ein `t`-Import, den niemand
+  benutzt. **Gefunden hat es `expo lint`** (88 → 89, zwei Mal „`t` is defined but never
+  used") — `tsc` war sauber, der Prüfstand grün. Es ist dieselbe Falle wie *„ein `sed`
+  auf einen Wert trifft auch den KOMMENTAR daneben"*, nur eine Ebene höher: Wer in einer
+  Datei mit langen Köpfen einen SICHTBAREN Text ersetzt, ersetzt ihn nach ZEILE, nicht
+  nach erstem Treffer.
+- **Jeder Wächter, der einen deutschen SATZ als Anker benutzt, geht beim Übersetzen rot
+  — und zwar erst beim Lauf, nicht beim Schreiben.** Am 2026-10-18 waren es vier an
+  einem Tag: `pruef-zustimmung` (Prototyp-Satz, Häkchen-Satz), `pruef-kopf`
+  (Fußnoten-Gegenprobe), `pruef-nennung` (Block-Überschrift „Rechtliches"). **Alle vier
+  haben zu Recht gemeldet** — die Bedeutung hatte sich geändert. Und alle vier wurden
+  VERENGT statt nachgezogen: aus einer Tatsache wurden zwei bis vier (Schlüssel steht da
+  UND hat in BEIDEN Wörterbüchern einen Text UND die Verzweigung zeigt nicht ins Leere).
+  Zahlen: 28 → 34, 47 → 48, 13 → 15. ⚠️ **Wer übersetzt, fährt danach ALLE Prüfstände**
+  — die vier hätten sonst reihum beim nächsten Thema zugeschlagen und wie Rauschen
+  ausgesehen.

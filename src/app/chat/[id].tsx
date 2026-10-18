@@ -155,11 +155,10 @@ export default function ChatScreen() {
       {blockiert ? (
         <View style={styles.gesperrt}>
           <SsIconText icon="verboten" variant="bodyStrong" color={colors.ink} center>
-            Hier kann niemand mehr schreiben
+            {t('chatGesperrt.niemandSchreiben')}
           </SsIconText>
           <SsText variant="caption" center color={colors.inkSoft}>
-            Zwischen euch steht eine Blockierung. Was ihr geschrieben habt, bleibt
-            lesbar.
+            {t('chatGesperrt.blockierungDazwischen')}
           </SsText>
         </View>
       ) : (

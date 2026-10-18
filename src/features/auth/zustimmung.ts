@@ -154,8 +154,10 @@ export function darfAnlegen(zugestimmt: boolean): boolean {
  * Der Satz sagt NICHT „du musst" — er sagt, was zu tun ist. Wer gerade drei
  * Felder ausgefüllt hat, will weiter und nicht belehrt werden.
  */
-export function zustimmungFehltText(zugestimmt: boolean): string | null {
-  return darfAnlegen(zugestimmt) ? null : 'Setz noch das Häkchen, dann geht es los.';
+export function zustimmungFehltText(
+  zugestimmt: boolean,
+): 'erstesKonto.haekchenFehlt' | null {
+  return darfAnlegen(zugestimmt) ? null : ('erstesKonto.haekchenFehlt' as const);
 }
 
 /**

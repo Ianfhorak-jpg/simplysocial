@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { t } from '@/i18n';
+import { t, tSatz } from '@/i18n';
 import { SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { loeschFolgen } from '@/features/safety/konto';
@@ -94,7 +94,7 @@ export default function AccountLoeschenScreen() {
 
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
-          Das verschwindet
+          {t('klein.dasVerschwindet')}
         </SsText>
         <SsCard>
           <Zahl wert={spuren.posts} einzahl="Post" mehrzahl="Posts" zusatz="auch abgelaufene" />
@@ -126,8 +126,8 @@ export default function AccountLoeschenScreen() {
       <SsCard>
         <SsText variant="bodyStrong">Was die anderen merken</SsText>
         {loeschFolgen(spuren.gruppenAlsGruender, spuren.nachfolgerName).map((satz) => (
-          <SsText key={satz} variant="body" color={colors.inkSoft}>
-            {satz}
+          <SsText key={satz.schluessel} variant="body" color={colors.inkSoft}>
+            {tSatz(satz)}
           </SsText>
         ))}
       </SsCard>
@@ -143,7 +143,7 @@ export default function AccountLoeschenScreen() {
             onPress={() => setSchritt('sicher')}
           />
           <SsText variant="caption" color={colors.inkSoft} center>
-            Du wirst noch einmal gefragt.
+            {t('klein.nochEinmalGefragt')}
           </SsText>
         </View>
       ) : (

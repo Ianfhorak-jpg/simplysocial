@@ -1,5 +1,6 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { t } from '@/i18n';
 import { useMeineEinladungen, useOffeneGruppenAnfragen } from '@/features/groups/hooks';
 import { useOffeneAnfragen } from '@/features/requests/hooks';
 import { colors, status } from '@/theme';
@@ -114,7 +115,7 @@ export default function TabsLayoutNative() {
       // frei wählbar wie auf Web. Welcher es wird, steht in `theme/colors.ts`
       // bei `status.hinweis` — diese Zeile bleibt gleich.
       badgeBackgroundColor={status.hinweis}>
-      <NativeTabs.Trigger name="index" accessibilityLabel="Start">
+      <NativeTabs.Trigger name="index" accessibilityLabel={t('tabs.start')}>
         {/* Entscheidung 62: keine Wörter in der Kapsel. Das Label bleibt als
             Text erhalten (Screenreader, Fenstertitel) und wird nur nicht
             gezeichnet — anders als beim Weglassen, das ihm den Namen nähme. */}
@@ -170,12 +171,12 @@ export default function TabsLayoutNative() {
         </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="chats" accessibilityLabel="Chats">
+      <NativeTabs.Trigger name="chats" accessibilityLabel={t('tabs.chats')}>
         <NativeTabs.Trigger.Label hidden>Chats</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'bubble.left', selected: 'bubble.left.fill' }} />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="profile" accessibilityLabel="Profil">
+      <NativeTabs.Trigger name="profile" accessibilityLabel={t('tabs.profil')}>
         <NativeTabs.Trigger.Label hidden>Profil</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'person', selected: 'person.fill' }} />
       </NativeTabs.Trigger>

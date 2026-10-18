@@ -29,6 +29,7 @@ import {
   SCHWUNG,
   type WischRichtung,
 } from '@/features/posts/wisch';
+import { t } from '@/i18n';
 import { haptik } from '@/lib/haptik';
 import { colors, ecke, spacing, useDruck, type CategoryPalette } from '@/theme';
 
@@ -495,13 +496,13 @@ export const WischKarte = forwardRef<WischKarteHandle, WischKarteProps>(function
           sehen. */}
       <Stempel
         deckkraft={stempelRechts}
-        text="Bin dabei"
+        text={t('feed.binDabei')}
         farbe={palette.base}
         style={[styles.stempelLinks, { transform: [{ rotate: '-12deg' }] }]}
       />
       <Stempel
         deckkraft={stempelLinks}
-        text="Weg"
+        text={t('stapel.weg')}
         farbe={colors.inkSoft}
         style={[styles.stempelRechts, { transform: [{ rotate: '12deg' }] }]}
       />

@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { SsInput } from './SsInput';
 import { SsText } from './SsText';
+import { t } from '@/i18n';
 import { BEZIRKS_LISTE, istWienerBezirk } from '@/lib/bezirk';
 import { colors, spacing, status } from '@/theme';
 
@@ -64,8 +65,9 @@ export function SsBezirkFeld({
         // Nur Ziffern. Beim Tippen auf einem Handy rutscht sonst leicht ein
         // Leerzeichen mit, und ein unsichtbares Zeichen lässt `istWienerBezirk`
         // scheitern, ohne dass man sieht, warum — dieselbe Falle wie beim Code.
-        onChangeText={(t) => setzen(t.replace(/\D/g, '').slice(0, 4))}
-        placeholder="1220"
+        // ⚠️ `wert`, nicht `t` — sonst überdeckt der Parameter das importierte `t()`.
+        onChangeText={(wert) => setzen(wert.replace(/\D/g, '').slice(0, 4))}
+        placeholder={t('klein.bezirkPlatzhalter')}
         keyboardType="number-pad"
         maxLength={4}
         error={fehler}
@@ -79,7 +81,7 @@ export function SsBezirkFeld({
         </SsText>
       ) : fertig && !gueltig ? (
         <SsText variant="caption" color={status.danger}>
-          Den Bezirk gibt es in Wien nicht.
+          {t('klein.bezirkGibtEsNicht', { stadt: t('marke.stadt') })}
         </SsText>
       ) : null}
     </View>

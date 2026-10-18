@@ -10,6 +10,7 @@ import {
   type FolgeListe as Art,
 } from '@/features/social/hooks';
 import { colors, spacing } from '@/theme';
+import { t } from '@/i18n';
 import type { User } from '@/types/models';
 import { handleText } from '@/lib/handle';
 
@@ -114,7 +115,7 @@ function NichtGefunden() {
     <SsScreen contentStyle={styles.fehlerSeite}>
       <SsIcon name="frage" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
-        Diese Person gibt es nicht
+        {t('person.gibtEsNicht')}
       </SsText>
     </SsScreen>
   );

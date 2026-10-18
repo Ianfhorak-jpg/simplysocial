@@ -290,8 +290,8 @@ export function ladeFehlerFolgen(fehler: LadeFehler): {
     };
   }
   return {
-    titel: 'Keine Verbindung',
-    text: 'Wir kommen gerade nicht an deine Aktivitäten. Das liegt meistens am Netz.',
+    titel: 'laden.keineVerbindung',
+    text: 'klein.netzFehler',
     knopf: 'Nochmal versuchen',
     anmeldenNoetig: false,
   };

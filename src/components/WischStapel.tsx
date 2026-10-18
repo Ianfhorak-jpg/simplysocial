@@ -13,6 +13,7 @@ import { PostCard } from './PostCard';
 import { WischKarte, type WischKarteHandle } from './WischKarte';
 import { SsButton, SsCard, SsIcon, SsText } from './ui';
 
+import { t } from '@/i18n';
 import { merkerGesehen, merkerSetzen } from '@/lib/merker';
 import { useTabUeberdeckung } from '@/lib/tabs';
 
@@ -186,7 +187,7 @@ export function WischStapel({
       <View style={styles.knoepfe}>
         <SsButton
           variant="ghost"
-          label="Weg"
+          label={t('stapel.weg')}
           icon="kreuz"
           onPress={() => obenRef.current?.wegwerfen('links')}
         />
@@ -194,13 +195,13 @@ export function WischStapel({
           <SsButton
             variant="category"
             category={oben.eintrag.post.category}
-            label="Bin dabei"
+            label={t('feed.binDabei')}
             icon="hand"
             onPress={() => obenRef.current?.wegwerfen('rechts')}
           />
         ) : (
           <SsButton
-            label="Verstanden"
+            label={t('gemein.verstanden')}
             icon="daumen"
             onPress={() => obenRef.current?.wegwerfen('rechts')}
           />
@@ -230,7 +231,7 @@ export function WischStapel({
       <View style={[styles.fussnote, { marginBottom: tabUeberdeckung }]}>
         {fussnote ?? (
           <SsText variant="caption" center color={colors.inkSoft}>
-            Oder die Karte einfach zur Seite schieben.
+            {t('stapel.oderSchieben')}
           </SsText>
         )}
       </View>
@@ -314,12 +315,11 @@ function Blatt({ children }: { children: ReactNode }) {
 function AnleitungsKarte() {
   return (
     <SsCard>
-      <SsText variant="heading">So funktioniert der Stapel</SsText>
-      <Zeile pfeil="pfeilLinks" text="Nach links, wenn es nichts für dich ist." />
-      <Zeile pfeil="pfeilRechts" text="Nach rechts, wenn du mitwillst." />
+      <SsText variant="heading">{t('stapel.soFunktioniert')}</SsText>
+      <Zeile pfeil="pfeilLinks" text={t('stapel.nachLinks')} />
+      <Zeile pfeil="pfeilRechts" text={t('stapel.nachRechts')} />
       <SsText variant="caption" color={colors.inkSoft}>
-        Probier es gleich mit dieser Karte aus. Der Verfasser entscheidet danach, wer
-        mitkommt — bis dahin passiert nichts.
+        {t('stapel.probierAus')}
       </SsText>
     </SsCard>
   );

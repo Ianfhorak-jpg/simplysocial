@@ -100,53 +100,64 @@ export const LOESCH_WIRKUNG: LoeschWirkung = { inhalte: 'weg', gruppen: 'vererbt
  * er weiß, WER gerade davorsteht; welche Sätze daraus werden, entscheidet diese
  * Datei.
  */
+/**
+ * Die Wörterbuch-Schlüssel dieser Datei — **eigene Unions, ohne Import.** `konto.ts`
+ * hat heute NULL Importe, und das bleibt so.
+ *
+ * ⚠️ **Welche Folge bei welcher Wirkung gilt, bleibt hier** (`LOESCH_WIRKUNG`) —
+ * nur der Wortlaut ist umgezogen. Der Kopf dieser Datei sagt, warum: Ein Satz, der
+ * eine Löschwirkung verspricht, die die App nicht hat, ist schlimmer als keiner.
+ */
+type LoeschSchluessel =
+  | 'loeschfolgen.postsWeg'
+  | 'loeschfolgen.chatsWeg'
+  | 'loeschfolgen.postsBleiben'
+  | 'loeschfolgen.postsGeteilt'
+  | 'loeschfolgen.gruppeAufgeloest'
+  | 'loeschfolgen.gruppenAufgeloest'
+  | 'loeschfolgen.gruppeGehtAn'
+  | 'loeschfolgen.gruppenGehenAn'
+  | 'loeschfolgen.gruppeAllein'
+  | 'loeschfolgen.gruppenAllein'
+  | 'loeschfolgen.meldungenBleiben';
+
+export type LoeschSatz = { schluessel: LoeschSchluessel; werte?: Record<string, string> };
+
 export function loeschFolgen(
   gruppenAlsGruender: number,
   nachfolgerName: string | null,
   wirkung: LoeschWirkung = LOESCH_WIRKUNG,
-): string[] {
-  const folgen: string[] = [];
+): LoeschSatz[] {
+  const folgen: LoeschSatz[] = [];
 
   if (wirkung.inhalte === 'weg') {
     // Beide Hälften in EINEM Satz, weil sie zusammen die unangenehme Auskunft
     // ergeben: Es geht nicht nur um meine Sachen, es sagt fremde Termine ab.
-    folgen.push(
-      'Deine Posts verschwinden aus dem Feed — auch die, für die schon jemand ' +
-        'zugesagt hat. Diese Verabredungen sind damit abgesagt, ohne dass die anderen ' +
-        'erfahren, warum.',
-    );
-    folgen.push(
-      'Eure gemeinsamen Chats verschwinden mitsamt allen Nachrichten, auch bei den ' +
-        'anderen.',
-    );
+    folgen.push({ schluessel: 'loeschfolgen.postsWeg' });
+    folgen.push({ schluessel: 'loeschfolgen.chatsWeg' });
   }
   if (wirkung.inhalte === 'bleibt') {
-    folgen.push(
-      'Deine Posts und Chats bleiben stehen. Statt deines Namens steht dort ' +
-        '„Gelöschtes Konto" — die Nachrichten selbst kannst du aus fremden Verläufen ' +
-        'nicht herauslöschen.',
-    );
+    folgen.push({ schluessel: 'loeschfolgen.postsBleiben' });
   }
   if (wirkung.inhalte === 'geteilt') {
-    folgen.push(
-      'Posts, für die noch niemand zugesagt hat, verschwinden. Posts mit Zusagen ' +
-        'bleiben bis zu ihrem Ende stehen, damit die Verabredung hält.',
-    );
+    folgen.push({ schluessel: 'loeschfolgen.postsGeteilt' });
   }
 
   // Über Gruppen wird nur geredet, wenn es welche gibt. Ein Satz über eine Gruppe,
   // die man nicht hat, ist keine Beruhigung, sondern eine Frage mehr.
   if (gruppenAlsGruender > 0) {
-    const wort = gruppenAlsGruender === 1 ? 'Deine Gruppe' : 'Deine Gruppen';
+    // ⚠️ Einzahl und Mehrzahl sind je Satz ZWEI Schlüssel — „Deine Gruppe" lässt
+    // sich nicht als Bruchstück einsetzen (Falle im Register).
+    const eine = gruppenAlsGruender === 1;
     if (wirkung.gruppen === 'mit') {
-      folgen.push(`${wort} wird aufgelöst — auch für alle anderen darin.`);
+      folgen.push({ schluessel: eine ? 'loeschfolgen.gruppeAufgeloest' : 'loeschfolgen.gruppenAufgeloest' });
+    } else if (nachfolgerName) {
+      folgen.push({
+        schluessel: eine ? 'loeschfolgen.gruppeGehtAn' : 'loeschfolgen.gruppenGehenAn',
+        werte: { name: nachfolgerName },
+      });
     } else {
-      folgen.push(
-        nachfolgerName
-          ? `${wort} bleibt bestehen und geht an ${nachfolgerName} — wer am längsten ` +
-              'dabei ist, führt sie weiter.'
-          : `${wort} wird aufgelöst: Du bist allein darin.`,
-      );
+      folgen.push({ schluessel: eine ? 'loeschfolgen.gruppeAllein' : 'loeschfolgen.gruppenAllein' });
     }
   }
 
@@ -154,9 +165,7 @@ export function loeschFolgen(
   // Wer jemanden gemeldet hat, nimmt den Beleg NICHT mit — sonst hätte, wer gemeldet
   // wird, einen Weg, ihn verschwinden zu lassen (`reports.from_user_id` ist
   // `on delete set null`, nicht `cascade`).
-  folgen.push(
-    'Meldungen, die du geschrieben hast, bleiben bei uns liegen — ohne deinen Namen.',
-  );
+  folgen.push({ schluessel: 'loeschfolgen.meldungenBleiben' });
 
   return folgen;
 }
@@ -207,7 +216,7 @@ export const LOESCH_ABSCHLUSS: 'raus-mit-satz' | 'abschluss-bildschirm' | 'raus-
  * ein Bedauern an dieser Stelle ist die App, die sich wichtiger nimmt als der Mensch,
  * der gerade gegangen ist.
  */
-export const LOESCH_QUITTUNG = 'Dein Konto wurde gelöscht.';
+export const LOESCH_QUITTUNG = 'loeschfolgen.quittung' as const;
 
 /**
  * Das Profilbild geht VOR dem Konto — und das ist keine Reihenfolge, sondern eine

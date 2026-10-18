@@ -448,7 +448,7 @@ function GruppenAnfrageZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) {
         </View>
       ) : (
         <SsText variant="caption" color={colors.inkSoft}>
-          Ohne Nachricht angefragt.
+          {t('anfragen.ohneNachricht')}
         </SsText>
       )}
 
@@ -485,9 +485,9 @@ function GruppenAnfrageZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) {
 function EinladungenKopf() {
   return (
     <View style={styles.gruppenKopf}>
-      <SsText variant="heading">Du bist eingeladen</SsText>
+      <SsText variant="heading">{t('gruppenliste.duBistEingeladen')}</SsText>
       <SsText variant="caption" color={colors.inkSoft}>
-        Jemand aus einer Gruppe hat dich geholt. Nimmst du an, bist du sofort dabei.
+        {t('gruppenliste.ausGruppeGeholt')}
       </SsText>
     </View>
   );

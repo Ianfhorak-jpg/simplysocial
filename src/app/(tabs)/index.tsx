@@ -640,10 +640,9 @@ export default function FeedScreen() {
             // verspricht sie im Text (harte Regel 41) — hier steht keine darunter.
             // Der Ausweg ist deshalb der Rückweg zur Karte, nicht ein Filter.
             <View style={styles.leer}>
-              <SsText variant="heading">Hier ist alles durch</SsText>
+              <SsText variant="heading">{t('stapel.allesDurch')}</SsText>
               <SsText variant="caption" color={colors.inkSoft} style={styles.bezirkLeerText}>
-                In diesem Bezirk hast du dir alles angesehen. Auf der Karte ist
-                vielleicht nebenan noch etwas los.
+                {t('stapel.bezirkDurch')}
               </SsText>
               <SsButton
                 label={t('feed.zurueckKarte')}
@@ -1695,7 +1694,7 @@ function FilterBereich({
           `FilterGruppe` bringt `SsScrollReihe` mit (harte Regel 19) — sieben
           Pillen passen auf kein Handy nebeneinander, und eine Reihe, die
           umbricht, schiebt beim Tippen den ganzen Bereich auseinander. */}
-      <FilterGruppe titel="Kategorie">
+      <FilterGruppe titel={t('filterTitel.kategorie')}>
         <SsChip
           label={t('filter.alle')}
           selected={filter.kategorie === 'alle'}
@@ -1711,7 +1710,7 @@ function FilterBereich({
         ))}
       </FilterGruppe>
 
-      <FilterGruppe titel="Wann">
+      <FilterGruppe titel={t('filterTitel.wann')}>
         {WANN_ORDER.map((w) => (
           <SsChip
             key={w}
@@ -1743,7 +1742,7 @@ function FilterBereich({
           Zustand ohne Ausweg entsteht. Deshalb steht hier keine Auswahl, sondern
           eine RÜCKNAHME — und nur dann, wenn es etwas zurückzunehmen gibt. */}
       {filter.bezirk.kind !== 'alle' ? (
-        <FilterGruppe titel="Von der Karte" reihe={false}>
+        <FilterGruppe titel={t('filterTitel.vonDerKarte')} reihe={false}>
           <View style={styles.filterPillen}>
             <SsChip
               label={
@@ -1769,7 +1768,7 @@ function FilterBereich({
           Der Vorschlag beim Einschalten kommt aus dem eigenen Jahrgang. Das ist NICHT
           die verworfene Regel `'zu-mir'` aus `filter.ts` — die würde still
           mitfiltern; hier steht die Spanne sichtbar da und ist sofort verschiebbar. */}
-      <FilterGruppe titel="Jahrgang" reihe={false}>
+      <FilterGruppe titel={t('filterTitel.jahrgang')} reihe={false}>
         <View style={styles.filterPillen}>
           <SsChip
             label={FILTER_EGAL}

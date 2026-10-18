@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Modal, PanResponder, StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { SsButton, SsText } from '@/components/ui';
 import {
   zuschnittAnfang,
@@ -186,7 +187,7 @@ export function BildZuschneiden({ quelle, wartet, onAbbrechen, onUebernehmen }: 
     <Modal visible transparent={false} animationType="fade" onRequestClose={onAbbrechen}>
       <View style={styles.schirm}>
         <SsText variant="title" center>
-          Ausschnitt wählen
+          {t('zuschnitt.ausschnittWaehlen')}
         </SsText>
 
         <View
@@ -234,9 +235,9 @@ export function BildZuschneiden({ quelle, wartet, onAbbrechen, onUebernehmen }: 
         <View style={styles.knoepfe}>
           {/* Abbrechen steht links und ist ein Umriss: Es ist der Weg zurück, nicht
               die Absicht. Wer hier ist, wollte ein Bild setzen. */}
-          <SsButton label="Abbrechen" variant="ghost" onPress={onAbbrechen} disabled={wartet} style={styles.knopf} />
+          <SsButton label={t('gemein.abbrechen')} variant="ghost" onPress={onAbbrechen} disabled={wartet} style={styles.knopf} />
           <SsButton
-            label="Übernehmen"
+            label={t('zuschnitt.uebernehmen')}
             onPress={() => onUebernehmen(sichtRef.current)}
             wartet={wartet}
             style={styles.knopf}

@@ -57,7 +57,7 @@ import type { ActivityCategory, PostAlter, SkillLevel, VisibilityKind } from '@/
  * ── Seit Phase 12: zwei Felder statt zehn ─────────────────────────────────────
  * Ians Entscheidung vom 2026-09-01 (Phase 12), nachdem er den Prototyp am Handy
  * ausprobiert hat: Sichtbar sind **Kategorie und Titel**, mehr nicht. Alles andere
- * liegt hinter der Zeile „Mehr einstellen".
+ * liegt hinter der Zeile „{t('klein.mehrEinstellen')}".
  *
  * Das funktioniert nur, weil jedes versteckte Feld eine Voreinstellung hat, die für
  * sich allein einen gültigen Post ergibt (`STANDARD` unten). Wer nie aufklappt,
@@ -489,7 +489,7 @@ export default function CreateScreen() {
         }
       />
 
-      {/* AUSSERHALB der Vorschau: Ueber ihr steht „So sehen es die anderen" — und
+      {/* AUSSERHALB der Vorschau: Ueber ihr steht „{t('klein.soSehenEsDieAnderen')}" — und
           dass du dich doppelt verabredest, sehen die anderen gerade nicht. Der
           Hinweis gehoert zu dir, nicht zur Karte. */}
       {PRUEFT_BEIM_POSTEN ? <DoppelHinweis kollisionen={kollisionen} /> : null}

@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { SsAvatar, SsButton, SsCard, SsChip, SsIcon, SsIconText, SsKonfetti, SsScreen, SsText } from '@/components/ui';
 import { useChatZuPost } from '@/features/chat/hooks';
 import { usePost } from '@/features/posts/hooks';
@@ -86,7 +87,7 @@ export default function MatchScreen() {
         </View>
 
         <SsText variant="display" center>
-          Ihr seid verabredet
+          {t('chatraum.verabredetTitel')}
         </SsText>
 
         <SsText variant="body" center color={colors.inkSoft}>
@@ -113,7 +114,7 @@ export default function MatchScreen() {
             <SsButton
               variant="category"
               category={post.category}
-              label="Zum Chat"
+              label={t('postansicht.zumChat')}
               icon="sprechblase"
               block
               size="lg"
@@ -124,7 +125,7 @@ export default function MatchScreen() {
           ) : null}
           <SsButton
             variant={chat ? 'ghost' : 'primary'}
-            label="Alles klar"
+            label={t('match.allesKlar')}
             icon="daumen"
             block
             size="lg"
@@ -152,12 +153,12 @@ function NichtsZuFeiern() {
     <SsScreen contentStyle={styles.fehlerSeite}>
       <SsIcon name="funken" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
-        Hier gibt es gerade nichts zu feiern
+        {t('match.nichtsZuFeiern')}
       </SsText>
       <SsText variant="body" center color={colors.inkSoft}>
-        Dieser Match-Bildschirm gehört zu einer Bestätigung, die es nicht mehr gibt.
+        {t('match.bestaetigungWeg')}
       </SsText>
-      <SsButton label="Zu den Anfragen" onPress={() => router.replace('/requests')} />
+      <SsButton label={t('match.zuDenAnfragen')} onPress={() => router.replace('/requests')} />
     </SsScreen>
   );
 }

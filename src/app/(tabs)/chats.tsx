@@ -276,7 +276,7 @@ function ChatZeile({ eintrag, ichId }: { eintrag: ChatEintrag; ichId: string }) 
             </SsText>
           ) : (
             <SsText variant="body" numberOfLines={1} color={colors.inkSoft}>
-              Noch nichts geschrieben — fang an.
+              {t('klein.nochNichtsGeschrieben')}
             </SsText>
           )}
         </View>

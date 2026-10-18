@@ -213,6 +213,159 @@ export const en: Weiter<typeof de> = {
     austrittPostsOeffentlich: 'Your posts for this group become publicly visible.',
   },
 
+  tabs: {
+    start: 'Home',
+    chats: 'Chats',
+    profil: 'Profile',
+  },
+
+  stapel: {
+    // „Weg" ist der Wisch nach links. „Pass" ist das Wort, das englische Apps
+    // dafür nehmen — „Away" wäre eine Richtung, keine Entscheidung.
+    weg: 'Pass',
+    soFunktioniert: 'How the stack works',
+    nachLinks: "Swipe left if it's not for you.",
+    nachRechts: "Swipe right if you're in.",
+    probierAus:
+      'Try it on this card. Whoever posted it then decides who comes along — nothing happens until then.',
+    oderSchieben: 'Or just push the card aside.',
+    duBistDabei: "You're in",
+    einPlatzFrei: '1 spot left',
+    mehrerePlaetzeFrei: '{anzahl} spots left',
+    allesDurch: "That's everything",
+    bezirkDurch:
+      "You've seen everything in this district. There might be something going on next door — check the map.",
+    ganzeStadt: 'All of {stadt}',
+  },
+
+  filterTitel: {
+    kategorie: 'Category',
+    wann: 'When',
+    vonDerKarte: 'From the map',
+    // Gefiltert wird nach Jahrgang; die Überschrift sagt auf Englisch, was man
+    // damit tut — „Birth year" wäre richtig und im Filter unlesbar.
+    jahrgang: 'Age',
+    alterEgal: 'Any age',
+    fuerAlle: 'For everyone',
+  },
+
+  erstesKonto: {
+    wieHeisstDu: "What's your name?",
+    nameZuLang: '{max} characters at most.',
+    bezirkWaehlen: 'Pick your district.',
+    bezirkGrund: "We use it to sort what's going on near you.",
+    haekchenFehlt: 'Just tick the box and off we go.',
+    passwort: 'Password',
+  },
+
+  antwort: {
+    dazuschreiben: 'Add a short note (optional)',
+    schicken: 'Send',
+    dochNicht: 'Never mind',
+  },
+
+  zuschnitt: {
+    ausschnittWaehlen: 'Choose the crop',
+    uebernehmen: 'Use this',
+  },
+
+  match: {
+    allesKlar: 'Got it',
+    nichtsZuFeiern: 'Nothing to celebrate right now',
+    bestaetigungWeg:
+      "This match screen belongs to a confirmation that doesn't exist any more.",
+    zuDenAnfragen: 'Go to requests',
+  },
+
+  gruppenliste: {
+    inEinerGruppe: "You're in one group. You can post just for them.",
+    inMehrerenGruppen: "You're in {anzahl} groups. You can post just for them.",
+    wasIstEineGruppe:
+      'A group is a small circle in {stadt} you can post to directly.',
+    nochKeine: "There's no group here yet. Start the first one.",
+    niemandEinladbar:
+      "You can invite people you follow or who follow you. Right now that's nobody — follow someone and they'll show up here.",
+    gruppeLeer:
+      "Nothing right now. These posts also appear in the normal feed — here you just see them together.",
+    duBistEingeladen: "You're invited",
+    ausGruppeGeholt:
+      "Someone from a group brought you in. Accept and you're in right away.",
+  },
+
+  klein: {
+    nochNichtsGeschrieben: 'Nothing written yet — go ahead.',
+    dasVerschwindet: 'This goes away',
+    nochEinmalGefragt: "You'll be asked once more.",
+    soSehenEsDieAnderen: 'This is how others see it',
+    mehrEinstellen: 'More settings',
+    bezirkAntippen: 'Your district: {bezirk} {stadt}. Tap to change.',
+    stimmtNichts: 'Something not right here?',
+    eingabeLoeschen: 'Clear input',
+    bezirkGibtEsNicht: "That district doesn't exist in {stadt}.",
+    bezirkPlatzhalter: '1220',
+    interessen: 'Interests',
+    follower: 'Followers',
+    // Zustand des eigenen Profils: „wie vielen folge ich" — nicht „Follows".
+    folgt: 'Following',
+    treffen: 'Meet-ups',
+    netzFehler:
+      "We can't reach your activities right now. That's usually the network.",
+  },
+
+  chatGesperrt: {
+    niemandSchreiben: 'Nobody can write here any more',
+    blockierungDazwischen:
+      "There's a block between you. What you wrote stays readable.",
+  },
+
+  loeschfolgen: {
+    postsWeg:
+      "Your posts disappear from the feed — including the ones people already said yes to. Those plans are cancelled, and the others aren't told why.",
+    chatsWeg: 'Your shared chats disappear along with every message, for the others too.',
+    postsBleiben:
+      'Your posts and chats stay. Your name is replaced by "Deleted account" — the messages themselves can\'t be removed from other people\'s histories.',
+    postsGeteilt:
+      "Posts nobody has said yes to disappear. Posts with confirmations stay until they're over, so the plan holds.",
+    gruppeAufgeloest: 'Your group is dissolved — for everyone else in it too.',
+    gruppenAufgeloest: 'Your groups are dissolved — for everyone else in them too.',
+    gruppeGehtAn:
+      'Your group stays and passes to {name} — whoever has been in longest takes it on.',
+    gruppenGehenAn:
+      'Your groups stay and pass to {name} — whoever has been in longest takes them on.',
+    gruppeAllein: "Your group is dissolved: you're the only one in it.",
+    gruppenAllein: "Your groups are dissolved: you're the only one in them.",
+    meldungenBleiben: 'Reports you wrote stay with us — without your name.',
+    quittung: 'Your account has been deleted.',
+  },
+
+  ersteFragen: {
+    nameFehlt: 'Add your name.',
+    nameKurz: "That name's a bit short.",
+    nameLang: '{max} characters at most.',
+    bezirkFehlt: 'Pick your district.',
+    bezirkFalsch: "That's not a {stadt} district.",
+    jahrgangKeineZahl: 'Just the year, for example 2009.',
+    jahrgangSpanne: 'Between {min} and {max}.',
+  },
+
+  direkt: {
+    gegenseitig:
+      'You can message each other once you follow each other. So {name} has to follow you too.',
+    schonGetroffen:
+      "You can message each other once you've been at an activity together.",
+    verwaist: "From an activity that doesn't exist any more.",
+  },
+
+  laden: {
+    keineVerbindung: 'No connection',
+  },
+
+  prototyp: {
+    titel: 'This is a prototype',
+    text:
+      "All names, posts and chats are made up. There's no login — right now you're Ian. Reloading resets everything.",
+  },
+
   chat: {
     gruppen: 'Groups',
     nochKeinChat: 'No chats yet',

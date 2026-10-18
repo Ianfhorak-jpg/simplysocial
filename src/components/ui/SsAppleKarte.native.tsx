@@ -4,6 +4,7 @@ import MapView, { Marker, Polygon, PROVIDER_DEFAULT, type Region } from 'react-n
 
 import { SsText } from './SsText';
 import type { KartenAnker, SsKarteProps } from './karte-typen';
+import { t } from '@/i18n';
 import { KARTE_BREITE, KARTE_HOEHE, PROJEKTION } from '@/data/wien-bezirke';
 import {
   APPLE_KARTE_ART,
@@ -276,8 +277,11 @@ export function SsAppleKarte({
     .join(',');
   useEffect(() => {
     setAufnahme(true);
-    const t = setTimeout(() => setAufnahme(false), MARKER_AUFNAHME_MS);
-    return () => clearTimeout(t);
+    // ⚠️ `timer`, nicht `t`: Seit die Karte `t()` aus `@/i18n` benutzt, würde ein
+    // `const t` das importierte `t()` in diesem Block überdecken. `npm run
+    // pruef-sprache` hat es gemeldet — `tsc` sieht so etwas nicht.
+    const timer = setTimeout(() => setAufnahme(false), MARKER_AUFNAHME_MS);
+    return () => clearTimeout(timer);
   }, [zahlenSchluessel]);
 
   /** Steht die Karte noch auf ihrem Grundausschnitt „ganz Wien"? */
@@ -608,7 +612,7 @@ export function SsAppleKarte({
               karte.current?.animateToRegion(wienAusschnitt, UEBERGANG_MS);
             }}>
             <SsText variant="caption" color={colors.surface}>
-              Ganz Wien
+              {t('stapel.ganzeStadt', { stadt: t('marke.stadt') })}
             </SsText>
           </Pressable>
         ) : null}

@@ -129,9 +129,9 @@ export function alterAmDetail(alter: PostAlter, jetzt: Date = new Date()): strin
 }
 
 /** Beim Posten: „Für wen ist das?" */
-export const ALLE_LABEL = 'Für alle';
+export const ALLE_LABEL = 'filterTitel.fuerAlle' as const;
 /** Im Feed-Filter: der Verzicht des Suchenden auf eine Angabe. */
-export const FILTER_EGAL = 'Alter egal';
+export const FILTER_EGAL = 'filterTitel.alterEgal' as const;
 
 /**
  * Wie weit die vorgeschlagene Spanne um den eigenen Jahrgang reicht.

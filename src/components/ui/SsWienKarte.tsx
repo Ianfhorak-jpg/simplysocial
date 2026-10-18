@@ -3,6 +3,7 @@ import { Animated, PanResponder, Platform, Pressable, StyleSheet, View } from 'r
 import Svg, { G, Path, Text as SvgText } from 'react-native-svg';
 
 import { SsText } from './SsText';
+import { t } from '@/i18n';
 import { BEZIRKE, KARTE_BREITE, KARTE_HOEHE } from '@/data/wien-bezirke';
 import {
   KARTE_LEER,
@@ -634,7 +635,7 @@ export function SsWienKarte({
             setSicht({ zoom: 1, x: 0, y: 0 });
           }}>
           <SsText variant="caption" color={colors.surface}>
-            Ganz Wien
+            {t('stapel.ganzeStadt', { stadt: t('marke.stadt') })}
           </SsText>
         </Pressable>
       ) : null}

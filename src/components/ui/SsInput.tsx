@@ -14,6 +14,7 @@ import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
 
 import { colors, ecke, spacing, status, type } from '@/theme';
+import { t } from '@/i18n';
 import type { IconName } from '@/theme/icons';
 
 export interface SsInputProps {
@@ -215,7 +216,7 @@ export function SsInput({
           <Pressable
             onPress={onClear}
             accessibilityRole="button"
-            accessibilityLabel="Eingabe löschen"
+            accessibilityLabel={t('klein.eingabeLoeschen')}
             hitSlop={spacing.sm}
             style={styles.loeschen}>
             <SsIcon name="kreuz" size={16} color={colors.inkSoft} />

@@ -1125,6 +1125,8 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - „Importfrei" bedeutet bei zwei Regel-Dateien VERSCHIEDENES — je nachdem, ob der Prüfstand sie EINZELN übersetzt
 - Ein Wörterbuch-SCHLÜSSEL ungewickelt im JSX typecheckt sauber und zeigt `gruppenregel.privat`
 - Eine gelöschte Hilfsfunktion hinterlässt Kommentare, die auf sie verweisen — nach dem NAMEN suchen
+- Eine Ersetzung „erster Treffer" landet im KOMMENTAR — in Dateien mit langen Köpfen nach ZEILE ersetzen
+- Jeder Wächter mit einem deutschen SATZ als Anker geht beim Übersetzen rot — alle Prüfstände danach fahren
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

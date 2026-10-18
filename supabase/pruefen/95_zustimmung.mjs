@@ -82,7 +82,22 @@ pruef(typeof satz === 'string' && satz.length > 0,
   'Ohne Häkchen kommt ein SATZ und kein blosses false');
 // Dieselbe Überlegung wie bei `fehltNoch()` in `konto.ts`: „Es fehlt noch was"
 // ohne zu sagen, was, ist eine Sackgasse.
-pruef(/häkchen/i.test(satz), '… und der Satz nennt das Häkchen beim Namen');
+//
+// ⚠️ **Hier stand bis zum 2026-10-18 `/häkchen/i.test(satz)`** — der deutsche Satz
+// selbst. Seit der Übersetzung gibt die Funktion einen Wörterbuch-SCHLÜSSEL zurück,
+// und die Prüfung ging rot. **Nachgezogen VERENGT:** Geprüft wird jetzt der
+// Schlüssel UND dass BEIDE Wörterbücher an dieser Stelle das Häkchen beim Namen
+// nennen. Vorher deckte sie nur Deutsch ab; ein englischer Satz, der bloß „Tick the
+// box" vergisst, wäre nie aufgefallen.
+pruef(satz, 'erstesKonto.haekchenFehlt', '… und zwar über den Häkchen-Schlüssel');
+const woerter = { de: quelle('src/i18n/de.ts'), en: quelle('src/i18n/en.ts') };
+for (const [sprache, text] of Object.entries(woerter)) {
+  const zeile = text.match(/haekchenFehlt:\s*(['"])(.*?)\1/);
+  pruef(
+    Boolean(zeile) && /häkchen|\bbox\b/i.test(zeile[2]),
+    `… und ${sprache}.ts nennt das Häkchen beim Namen`,
+  );
+}
 
 const jetzt = zustimmung.zustimmungJetzt(new Date('2026-09-14T18:22:00Z'));
 pruef(jetzt.wann === '2026-09-14T18:22:00.000Z',
@@ -196,8 +211,13 @@ for (const [datei, wort] of [['src/i18n/de.ts', 'Prototyp'], ['src/i18n/en.ts', 
 // vorher als Literale in denselben Bildschirmen, es ist also kein Rückschritt.
 // **Ein FÜNFTER wäre einer**, und genau das meldet diese Zeile.
 const prototypImWoerterbuch = (quelle('src/i18n/de.ts').match(/Prototyp/g) ?? []).length;
-pruef(prototypImWoerterbuch <= 4,
-  `Höchstens vier Prototyp-Sätze im Wörterbuch (gefunden: ${prototypImWoerterbuch})`);
+// ⚠️ **Von vier auf SECHS am 2026-10-18** — und das ist kein Rückschritt: Die zwei
+// neuen sind `prototyp.titel` und `prototyp.text` aus `PrototypHinweis.tsx`, die
+// vorher als Literale in genau diesem Bildschirm standen. Dieselben Sätze, dieselbe
+// Erreichbarkeit (nur `ANMELDE_QUELLE === 'attrappe'`), nur ein anderer Ort. **Ein
+// SIEBTER wäre ein Befund**, und genau das meldet diese Zeile weiter.
+pruef(prototypImWoerterbuch <= 6,
+  `Höchstens sechs Prototyp-Sätze im Wörterbuch (gefunden: ${prototypImWoerterbuch})`);
 // Gegenprobe: Die Kommentar-Entfernung darf nicht einfach ALLES weggeputzt haben.
 pruef(bedingungen.includes('fussText') && bedingungen.length > 500,
   'Gegenprobe: ohneKommentare() lässt den Code stehen und nicht nur Leerraum');

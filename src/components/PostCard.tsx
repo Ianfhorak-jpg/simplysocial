@@ -156,7 +156,7 @@ export function PostCard({
           // sieht man im Vorbeiscrollen, ein anderes Wort nicht.
           meineAnfrage.status === 'accepted' ? (
             <SsIconText icon="funken" color={colors.ink} iconColor={palette.onSoft}>
-              Du bist dabei
+              {t('stapel.duBistDabei')}
             </SsIconText>
           ) : (
             <SsIconText icon="haken">Angefragt</SsIconText>
@@ -202,7 +202,9 @@ export function PostCard({
 /** "2 Plätze frei" · "1 Platz frei" · "Voll". Einzahl und Mehrzahl an einer Stelle. */
 function plaetzeText(frei: number, offen: boolean): string {
   if (!offen || frei === 0) return 'Voll';
-  return frei === 1 ? '1 Platz frei' : `${frei} Plätze frei`;
+  return frei === 1
+    ? t('stapel.einPlatzFrei')
+    : t('stapel.mehrerePlaetzeFrei', { anzahl: frei });
 }
 
 const styles = StyleSheet.create({

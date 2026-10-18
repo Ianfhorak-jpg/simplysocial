@@ -189,8 +189,7 @@ export default function GruppeScreen() {
                   <SsText variant="label">Wen willst du holen?</SsText>
                   {einladbare.length === 0 ? (
                     <SsText variant="caption" color={colors.inkSoft}>
-                      Du kannst Leute einladen, denen du folgst oder die dir folgen. Im
-                      Moment ist das niemand — folg jemandem, dann steht er hier.
+                      {t('gruppenliste.niemandEinladbar')}
                     </SsText>
                   ) : (
                     einladbare.map((eintrag) => (
@@ -227,8 +226,7 @@ export default function GruppeScreen() {
             <SsText variant="label">{t('gruppe.wasGeradeLaeuft')}</SsText>
             {posts.length === 0 ? (
               <SsText variant="caption" color={colors.inkSoft}>
-                Gerade nichts. Diese Posts stehen auch im normalen Feed — hier siehst
-                du sie nur beisammen.
+                {t('gruppenliste.gruppeLeer')}
               </SsText>
             ) : (
               posts.map((eintrag) => (

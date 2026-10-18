@@ -337,7 +337,7 @@ export default function EinstellungenScreen() {
         <Pressable
           onPress={() => setBezirkOffen((o) => !o)}
           accessibilityRole="button"
-          accessibilityLabel={`Dein Bezirk: ${ich.district} Wien. Zum Ändern antippen.`}
+          accessibilityLabel={t('klein.bezirkAntippen', { bezirk: ich.district, stadt: t('marke.stadt') })}
           style={({ pressed }) => [styles.zeile, pressed && styles.zeileGedrueckt]}>
           <View style={styles.zeileIcon}>
             <SsIcon name="pin" size={20} color={colors.ink} />
@@ -465,7 +465,7 @@ export default function EinstellungenScreen() {
 
       <View style={styles.block}>
         <SsText variant="label" color={colors.inkSoft}>
-          Rechtliches
+          {t('regeln.rechtliches')}
         </SsText>
         <Zeile
           icon="blatt"

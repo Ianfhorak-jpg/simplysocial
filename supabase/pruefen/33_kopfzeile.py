@@ -281,9 +281,20 @@ pruef('… und die Knopfreihe trägt den Abstand nicht mehr doppelt',
       'styles.knoepfe, { paddingBottom' not in wisch,
       'beide zusammen wären der Abstand zweimal, also rund 83 pt Luft zu viel')
 # Gegenprobe gegen den Wächter selbst.
-pruef('Gegenprobe: der Satz steht überhaupt noch da',
-      'Oder die Karte einfach zur Seite schieben.' in wisch,
-      'ohne ihn prüfen die zwei Zeilen darüber eine Fußnote, die es nicht gibt')
+#
+# ⚠️ **Hier stand bis zum 2026-10-18 der deutsche SATZ** („Oder die Karte einfach zur
+# Seite schieben."). Mit der Übersetzung ist er ins Wörterbuch gezogen, und die
+# Gegenprobe ging rot — zu Recht. **Nachgezogen VERENGT:** Statt einer Tatsache
+# werden jetzt zwei geprüft — die Fußnote holt ihren Text aus dem Wörterbuch, UND
+# der Schlüssel hat dort wirklich einen. Vorher hätte ein Tippfehler im Schlüssel
+# die Prüfung grün gelassen.
+pruef('Gegenprobe: die Fußnote steht überhaupt noch da',
+      "t('stapel.oderSchieben')" in wisch,
+      'ohne sie prüfen die zwei Zeilen darüber eine Fußnote, die es nicht gibt')
+_de = (WURZEL / 'src' / 'i18n' / 'de.ts').read_text(encoding='utf-8')
+pruef('… und der Schlüssel hat im Wörterbuch einen Text',
+      'oderSchieben:' in _de,
+      'ein Schlüssel ohne Eintrag zeigt dem Menschen den Schlüssel')
 
 pruef('`LeererFeed` steht NICHT über der Karte',
       'LeererFeed' not in vollbild,

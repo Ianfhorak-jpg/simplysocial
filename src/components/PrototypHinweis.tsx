@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { SsButton, SsIcon, SsText } from '@/components/ui';
 import { ANMELDE_QUELLE } from '@/features/auth/anmeldung';
 import { accent, colors, ecke, MAX_CONTENT_WIDTH, spacing } from '@/theme';
@@ -194,14 +195,13 @@ export function PrototypHinweis() {
             und genau danach soll es nicht aussehen (Fassung 2 in der Liste oben). */}
         <SsIcon name="kolben" size={44} color={accent.aufGrund} />
         <SsText variant="heading" center>
-          Das hier ist ein Prototyp
+          {t('prototyp.titel')}
         </SsText>
         <SsText variant="body" center color={colors.inkSoft}>
-          Alle Namen, Posts und Chats sind erfunden. Es gibt keinen Login — du bist
-          gerade Ian. Neuladen setzt alles zurück.
+          {t('prototyp.text')}
         </SsText>
         <SsButton
-          label="Verstanden"
+          label={t('gemein.verstanden')}
           block
           size="lg"
           onPress={() => {

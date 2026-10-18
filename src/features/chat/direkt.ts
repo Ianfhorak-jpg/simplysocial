@@ -160,14 +160,20 @@ export function darfSchreiben(ich: User, andere: User, schonGetroffen: boolean):
  *
  * `undefined` heißt: Es gibt keine Hürde, der Knopf steht da.
  */
-export function schreibHuerdeText(name: string): string | undefined {
+/** Die Schlüssel dieser Datei — eigener Union, ohne neuen Import. */
+export type SchreibHuerde = {
+  schluessel: 'direkt.gegenseitig' | 'direkt.schonGetroffen';
+  werte?: Record<string, string>;
+};
+
+export function schreibHuerdeText(name: string): SchreibHuerde | undefined {
   switch (SCHREIB_REGEL) {
     case 'jeder':
       return undefined;
     case 'gegenseitig':
-      return `Schreiben könnt ihr euch, sobald ihr einander folgt. ${name} muss dir also auch folgen.`;
+      return { schluessel: 'direkt.gegenseitig', werte: { name } };
     case 'schon-getroffen':
-      return `Schreiben könnt ihr euch, sobald ihr einmal gemeinsam bei einer Aktivität wart.`;
+      return { schluessel: 'direkt.schonGetroffen' };
   }
 }
 
@@ -201,7 +207,7 @@ export function istDirektChat(thread: ChatThread): boolean {
  * ⚠️ Text und damit Ians. Er steht als EINE Konstante da, damit ein anderer
  * Wortlaut ein Wort ist und keine Suche durch drei Dateien.
  */
-export const VERWAIST_TEXT = 'Aus einer Aktivität, die es nicht mehr gibt.';
+export const VERWAIST_TEXT = 'direkt.verwaist' as const;
 
 /**
  * Was oben im Chat steht, wenn die Aktivität dazu nicht mehr da ist.

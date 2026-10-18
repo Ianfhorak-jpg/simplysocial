@@ -211,6 +211,181 @@ export const de = {
     austrittPostsOeffentlich: 'Deine Posts für diese Gruppe werden öffentlich sichtbar.',
   },
 
+  /** Die Tab-Leiste und der Wischstapel. */
+  tabs: {
+    start: 'Start',
+    chats: 'Chats',
+    profil: 'Profil',
+  },
+
+  /** Der Wischstapel und seine Anleitungskarte. */
+  stapel: {
+    weg: 'Weg',
+    soFunktioniert: 'So funktioniert der Stapel',
+    nachLinks: 'Nach links, wenn es nichts für dich ist.',
+    nachRechts: 'Nach rechts, wenn du mitwillst.',
+    probierAus:
+      'Probier es gleich mit dieser Karte aus. Der Verfasser entscheidet danach, wer mitkommt — bis dahin passiert nichts.',
+    oderSchieben: 'Oder die Karte einfach zur Seite schieben.',
+    duBistDabei: 'Du bist dabei',
+    /** ⚠️ Vierter Mehrzahl-Fall — zwei Schlüssel. */
+    einPlatzFrei: '1 Platz frei',
+    mehrerePlaetzeFrei: '{anzahl} Plätze frei',
+    allesDurch: 'Hier ist alles durch',
+    bezirkDurch:
+      'In diesem Bezirk hast du dir alles angesehen. Auf der Karte ist vielleicht nebenan noch etwas los.',
+    ganzeStadt: 'Ganz {stadt}',
+  },
+
+  /** Die Filter-Überschriften über dem Feed. */
+  filterTitel: {
+    kategorie: 'Kategorie',
+    wann: 'Wann',
+    vonDerKarte: 'Von der Karte',
+    jahrgang: 'Jahrgang',
+    alterEgal: 'Alter egal',
+    fuerAlle: 'Für alle',
+  },
+
+  /** Das erste Konto und die Antwortleiste. */
+  erstesKonto: {
+    wieHeisstDu: 'Wie heißt du?',
+    nameZuLang: 'Höchstens {max} Zeichen.',
+    bezirkWaehlen: 'Wähl deinen Bezirk.',
+    bezirkGrund: 'Danach sortieren wir, was in deiner Nähe los ist.',
+    haekchenFehlt: 'Setz noch das Häkchen, dann geht es los.',
+    passwort: 'Passwort',
+  },
+
+  /** Die Antwortleiste unter einem Post. */
+  antwort: {
+    dazuschreiben: 'Kurz was dazuschreiben (optional)',
+    schicken: 'Schicken',
+    dochNicht: 'Doch nicht',
+  },
+
+  /** Der Bild-Zuschnitt. */
+  zuschnitt: {
+    ausschnittWaehlen: 'Ausschnitt wählen',
+    uebernehmen: 'Übernehmen',
+  },
+
+  /** Der Match-Bildschirm. */
+  match: {
+    allesKlar: 'Alles klar',
+    nichtsZuFeiern: 'Hier gibt es gerade nichts zu feiern',
+    bestaetigungWeg:
+      'Dieser Match-Bildschirm gehört zu einer Bestätigung, die es nicht mehr gibt.',
+    zuDenAnfragen: 'Zu den Anfragen',
+  },
+
+  /** Die Gruppen-Übersicht. */
+  gruppenliste: {
+    /** ⚠️ Fünfter Mehrzahl-Fall — zwei Schlüssel. */
+    inEinerGruppe: 'Du bist in einer Gruppe. Für sie kannst du beim Posten gezielt posten.',
+    inMehrerenGruppen:
+      'Du bist in {anzahl} Gruppen. Für sie kannst du beim Posten gezielt posten.',
+    wasIstEineGruppe:
+      'Eine Gruppe ist eine kleine Runde in {stadt}, für die du gezielt posten kannst.',
+    nochKeine: 'Hier gibt es noch keine Gruppe. Mach die erste auf.',
+    niemandEinladbar:
+      'Du kannst Leute einladen, denen du folgst oder die dir folgen. Im Moment ist das niemand — folg jemandem, dann steht er hier.',
+    gruppeLeer:
+      'Gerade nichts. Diese Posts stehen auch im normalen Feed — hier siehst du sie nur beisammen.',
+    duBistEingeladen: 'Du bist eingeladen',
+    ausGruppeGeholt:
+      'Jemand aus einer Gruppe hat dich geholt. Nimmst du an, bist du sofort dabei.',
+  },
+
+  /** Kleinteiliges, das an mehreren Stellen auftaucht. */
+  klein: {
+    nochNichtsGeschrieben: 'Noch nichts geschrieben — fang an.',
+    dasVerschwindet: 'Das verschwindet',
+    nochEinmalGefragt: 'Du wirst noch einmal gefragt.',
+    soSehenEsDieAnderen: 'So sehen es die anderen',
+    mehrEinstellen: 'Mehr einstellen',
+    bezirkAntippen: 'Dein Bezirk: {bezirk} {stadt}. Zum Ändern antippen.',
+    stimmtNichts: 'Stimmt hier etwas nicht?',
+    eingabeLoeschen: 'Eingabe löschen',
+    bezirkGibtEsNicht: 'Den Bezirk gibt es in {stadt} nicht.',
+    bezirkPlatzhalter: '1220',
+    interessen: 'Interessen',
+    follower: 'Follower',
+    folgt: 'Folgt',
+    treffen: 'Treffen',
+    netzFehler:
+      'Wir kommen gerade nicht an deine Aktivitäten. Das liegt meistens am Netz.',
+  },
+
+  /** Der Chat-Raum, wenn eine Blockierung dazwischensteht. */
+  chatGesperrt: {
+    niemandSchreiben: 'Hier kann niemand mehr schreiben',
+    blockierungDazwischen:
+      'Zwischen euch steht eine Blockierung. Was ihr geschrieben habt, bleibt lesbar.',
+  },
+
+  /**
+   * Konto löschen — der Wortlaut zu `features/safety/konto.ts`.
+   * **Welche Folge bei welcher Wirkung gilt, bleibt dort** (`LOESCH_WIRKUNG`).
+   *
+   * ⚠️ **Sechster Mehrzahl-Fall, und er steckt in DREI Sätzen:** „Deine Gruppe"
+   * gegen „Deine Gruppen". Deshalb je Satz zwei Schlüssel — ein eingesetztes
+   * Bruchstück wäre in keiner der beiden Sprachen richtig.
+   */
+  loeschfolgen: {
+    postsWeg:
+      'Deine Posts verschwinden aus dem Feed — auch die, für die schon jemand zugesagt hat. Diese Verabredungen sind damit abgesagt, ohne dass die anderen erfahren, warum.',
+    chatsWeg:
+      'Eure gemeinsamen Chats verschwinden mitsamt allen Nachrichten, auch bei den anderen.',
+    postsBleiben:
+      'Deine Posts und Chats bleiben stehen. Statt deines Namens steht dort „Gelöschtes Konto" — die Nachrichten selbst kannst du aus fremden Verläufen nicht herauslöschen.',
+    postsGeteilt:
+      'Posts, für die noch niemand zugesagt hat, verschwinden. Posts mit Zusagen bleiben bis zu ihrem Ende stehen, damit die Verabredung hält.',
+    gruppeAufgeloest: 'Deine Gruppe wird aufgelöst — auch für alle anderen darin.',
+    gruppenAufgeloest: 'Deine Gruppen werden aufgelöst — auch für alle anderen darin.',
+    gruppeGehtAn:
+      'Deine Gruppe bleibt bestehen und geht an {name} — wer am längsten dabei ist, führt sie weiter.',
+    gruppenGehenAn:
+      'Deine Gruppen bleiben bestehen und gehen an {name} — wer am längsten dabei ist, führt sie weiter.',
+    gruppeAllein: 'Deine Gruppe wird aufgelöst: Du bist allein darin.',
+    gruppenAllein: 'Deine Gruppen werden aufgelöst: Du bist allein darin.',
+    meldungenBleiben:
+      'Meldungen, die du geschrieben hast, bleiben bei uns liegen — ohne deinen Namen.',
+    quittung: 'Dein Konto wurde gelöscht.',
+  },
+
+  /** Die Fragen beim ersten Konto — Wortlaut zu `features/auth/konto.ts`. */
+  ersteFragen: {
+    nameFehlt: 'Schreib deinen Namen dazu.',
+    nameKurz: 'Der Name ist ein bisschen kurz.',
+    nameLang: 'Höchstens {max} Zeichen.',
+    bezirkFehlt: 'Wähl deinen Bezirk.',
+    bezirkFalsch: 'Das ist kein {stadt}er Bezirk.',
+    jahrgangKeineZahl: 'Nur die Jahreszahl, zum Beispiel 2009.',
+    jahrgangSpanne: 'Zwischen {min} und {max}.',
+  },
+
+  /** Direktchats — Wortlaut zu `features/chat/direkt.ts`. */
+  direkt: {
+    gegenseitig:
+      'Schreiben könnt ihr euch, sobald ihr einander folgt. {name} muss dir also auch folgen.',
+    schonGetroffen:
+      'Schreiben könnt ihr euch, sobald ihr einmal gemeinsam bei einer Aktivität wart.',
+    verwaist: 'Aus einer Aktivität, die es nicht mehr gibt.',
+  },
+
+  /** Wenn die Daten nicht kommen — Wortlaut zu `data/quelle.ts`. */
+  laden: {
+    keineVerbindung: 'Keine Verbindung',
+  },
+
+  /** Der Prototyp-Hinweis — nur im Browser (`ANMELDE_QUELLE = 'attrappe'`). */
+  prototyp: {
+    titel: 'Das hier ist ein Prototyp',
+    text:
+      'Alle Namen, Posts und Chats sind erfunden. Es gibt keinen Login — du bist gerade Ian. Neuladen setzt alles zurück.',
+  },
+
   /** Die Chat-Liste. */
   chat: {
     gruppen: 'Gruppen',

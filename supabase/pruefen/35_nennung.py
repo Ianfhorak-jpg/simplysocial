@@ -90,12 +90,25 @@ pruef('… und zeigen sie an',
       'ein Import, den niemand rendert, ist keine Nennung')
 
 # Und zwar im Rechtliches-Block, nicht irgendwo. Gemessen wird die REIHENFOLGE
-# im Text: Der Block beginnt bei „Rechtliches" und endet beim nächsten Block.
-m_block = re.search(r'Rechtliches\s*</SsText>(.*?)</View>', einst, re.S)
+# im Text: Der Block beginnt bei der Überschrift und endet beim nächsten Block.
+#
+# ⚠️ **Hier stand bis zum 2026-10-18 das Wort „Rechtliches" selbst.** Seit der
+# Übersetzung kommt die Überschrift aus dem Wörterbuch, und der Wächter fand den
+# Block nicht mehr — er meldete, Apples Nennung stehe am falschen Ort, obwohl sie
+# unverändert richtig stand. **Nachgezogen VERENGT:** gesucht wird der SCHLÜSSEL,
+# und zusätzlich geprüft, dass er in beiden Wörterbüchern einen Text hat. Ein
+# Tippfehler im Schlüssel hätte sonst eine Überschrift erzeugt, die keiner liest —
+# und die Prüfung wäre grün geblieben.
+m_block = re.search(r"t\('regeln\.rechtliches'\)\}\s*</SsText>(.*?)</View>", einst, re.S)
 pruef('… und zwar im Block „Rechtliches"',
       bool(m_block) and '{KARTE_QUELLE}' in m_block.group(1),
       'unter „Dein Konto" oder „Für die Entwicklung" sucht sie niemand — '
       'und „Für die Entwicklung" fliegt eines Tages raus')
+for _spr in ('de', 'en'):
+    _w = (WURZEL / 'src' / 'i18n' / f'{_spr}.ts').read_text(encoding='utf-8')
+    pruef(f'… und {_spr}.ts gibt der Überschrift einen Text',
+          re.search(r"rechtliches:\s*'[^']+'", _w) is not None,
+          'ein Schlüssel ohne Eintrag zeigt dem Menschen den Schlüssel')
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  3 · Sie steht NICHT mehr auf der Karte (Ians Entscheidung, 2026-09-20)

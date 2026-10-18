@@ -2,7 +2,7 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { t } from '@/i18n';
+import { t, tSatz } from '@/i18n';
 import { Profil } from '@/components/Profil';
 import { SsAvatar, SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { useWartetAuf } from '@/features/store';
@@ -138,7 +138,10 @@ export default function UserProfileScreen() {
               />
             ) : (
               <SsText variant="caption" color={colors.inkSoft} center>
-                {schreibHuerdeText(person.displayName)}
+                {(() => {
+                  const h = schreibHuerdeText(person.displayName);
+                  return h ? tSatz(h) : null;
+                })()}
               </SsText>
             )}
           </View>
@@ -180,7 +183,7 @@ export default function UserProfileScreen() {
             ) : (
               <>
                 <SsText variant="caption" color={colors.inkSoft} center>
-                  Stimmt hier etwas nicht?
+                  {t('klein.stimmtNichts')}
                 </SsText>
                 <View style={styles.reihe}>
                   <SsButton

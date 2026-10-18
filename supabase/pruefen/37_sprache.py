@@ -48,7 +48,7 @@ I18N = SRC / 'i18n'
 # erlaubtes Maß an Schlamperei. Wer sie hochsetzt, macht den Wächter wertlos:
 # Genau der Fehler, der ACTAs Build 1 zu Apple geschickt hat, würde dann grün
 # gemeldet. Sinkt sie, wird sie hier nachgezogen — das ist der Fortschritt.
-GRENZE = 144
+GRENZE = 115
 
 JA = NEIN = 0
 
@@ -282,7 +282,7 @@ PROPS = re.compile(
 )
 
 # ⚠️ Darf nur FALLEN — dieselbe Abmachung wie bei GRENZE.
-GRENZE_PROPS = 42
+GRENZE_PROPS = 21
 
 fest: list[str] = []
 for datei in sorted(SRC.rglob('*.tsx')):
@@ -459,9 +459,27 @@ for datei in sorted(SRC.rglob('*.ts*')):
     quelle = datei.read_text(encoding='utf-8')
     if not re.search(r'import \{[^}]*\bt\b[^}]*\} from \'@/i18n\'', quelle):
         continue
-    for muster in (r'\bconst t\b', r'\blet t\b', r'\(\s*t\s*\)\s*=>', r'catch \(\s*t\s*\)'):
-        for m in re.finditer(muster, quelle):
-            schatten.append(f'{datei.relative_to(WURZEL)}:{quelle[: m.start()].count(chr(10)) + 1}')
+
+    # ⚠️ **Kommentare raus, zeilenweise mit Zustand.** Der erste Anlauf suchte im
+    # GANZEN Dateitext — und meldete am 2026-10-18 die Zeile, in der ich erklärt
+    # habe, WARUM der Timer nicht `t` heißen darf. *Ein Wächter, der die eigene
+    # Begründung für den Verstoß hält, wird abgeschaltet statt gelesen* (FALLEN.md),
+    # und er stand hier einen Lauf lang genau so da.
+    im_block = False
+    for nr, roh in enumerate(quelle.splitlines(), 1):
+        blank = roh.strip()
+        if im_block:
+            if '*/' in roh:
+                im_block = False
+            continue
+        if '/*' in roh and '*/' not in roh:
+            im_block = True
+            continue
+        if blank.startswith(('*', '//', '/*')):
+            continue
+        for muster in (r'\bconst t\b', r'\blet t\b', r'\(\s*t\s*\)\s*=>', r'catch \(\s*t\s*\)'):
+            if re.search(muster, roh):
+                schatten.append(f'{datei.relative_to(WURZEL)}:{nr}')
 
 pruef('Kein `t` wird in einer Datei beschattet, die `t()` importiert',
       not schatten,

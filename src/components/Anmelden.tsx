@@ -422,7 +422,7 @@ function EmailWeg({
             Demo-Zugang für {email.trim()}
           </SsText>
           <SsInput
-            label="Passwort"
+            label={t('erstesKonto.passwort')}
             value={passwort}
             onChangeText={setPasswort}
             // Nicht getrimmt und nicht gefiltert — anders als beim Code eine Zeile

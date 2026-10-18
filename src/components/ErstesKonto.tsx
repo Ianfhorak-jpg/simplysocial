@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t, tSatz } from '@/i18n';
 import { Nutzungsbedingungen } from '@/components/Nutzungsbedingungen';
 import { SsBezirkFeld, SsButton, SsHaken, SsInput, SsText } from '@/components/ui';
 import { jahrgangMax, jahrgangMin } from '@/config/alter';
@@ -152,7 +153,7 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
               Lesen eine Zustimmung — wer hierher kam, wollte erst einmal nur
               nachsehen. */}
           <SsButton
-            label="Zurück"
+            label={t('gemein.zurueck')}
             block
             size="lg"
             variant="ghost"
@@ -178,11 +179,11 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
         </SsText>
 
         <SsInput
-          label="Wie heißt du?"
+          label={t('erstesKonto.wieHeisstDu')}
           value={name}
           onChangeText={setName}
           placeholder={texte.namePlatzhalter}
-          error={gezeigt ? maengel.name ?? undefined : undefined}
+          error={gezeigt && maengel.name ? tSatz(maengel.name) : undefined}
         />
         {/* Der abgeleitete @-Name steht unter dem Feld und nicht darin: Was man
             nicht ändern kann, gehört nicht in einen Rahmen, der zum Tippen einlädt. */}
@@ -201,8 +202,8 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
           wert={bezirk}
           setzen={setBezirk}
           label={texte.bezirkTitel}
-          hinweis={BEZIRK_GRUND}
-          fehler={gezeigt ? maengel.bezirk ?? undefined : undefined}
+          hinweis={t(BEZIRK_GRUND)}
+          fehler={gezeigt && maengel.bezirk ? tSatz(maengel.bezirk) : undefined}
         />
 
         {/* Der Hinweis steht UNTER dem Titel und nicht daneben — dasselbe Muster wie
@@ -220,7 +221,7 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
           placeholder={String(spanne.max)}
           keyboardType="number-pad"
           maxLength={4}
-          error={gezeigt ? maengel.jahrgang ?? undefined : undefined}
+          error={gezeigt && maengel.jahrgang ? tSatz(maengel.jahrgang) : undefined}
         />
 
         {/* Die vierte Sache auf diesem Bildschirm, und die einzige, die kein Feld
@@ -238,7 +239,7 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
           vor={HAKEN_TEXT.vor}
           link={HAKEN_TEXT.link}
           onLink={() => setLiestBedingungen(true)}
-          fehler={gezeigt ? maengel.zustimmung ?? undefined : undefined}
+          fehler={gezeigt && maengel.zustimmung ? t(maengel.zustimmung) : undefined}
         />
 
         {fehler ? (

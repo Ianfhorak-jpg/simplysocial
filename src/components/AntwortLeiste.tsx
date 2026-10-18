@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DoppelHinweis } from './DoppelHinweis';
 import { SsAvatar, SsButton, SsInput, SsText } from './ui';
 
+import { t } from '@/i18n';
 import type { FeedEintrag } from '@/features/posts/hooks';
 import { grussVorschlag } from '@/features/posts/wisch';
 import { useKollisionen } from '@/features/requests/hooks';
@@ -96,7 +97,7 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
         <Pressable
           onPress={onAbbrechen}
           accessibilityRole="button"
-          accessibilityLabel="Abbrechen"
+          accessibilityLabel={t('gemein.abbrechen')}
           style={styles.schleierFlaeche}
         />
       </Animated.View>
@@ -123,7 +124,7 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
         <SsInput
           value={text}
           onChangeText={setText}
-          placeholder="Kurz was dazuschreiben (optional)"
+          placeholder={t('antwort.dazuschreiben')}
           multiline
           // GERECHNET, nicht hingeschrieben: zwei Zeilen der Grundschrift. Ein
           // blankes `minHeight: 45` wäre beim nächsten Schriftwechsel falsch,
@@ -138,7 +139,7 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
         <SsButton
           variant="category"
           category={post.category}
-          label="Schicken"
+          label={t('antwort.schicken')}
           icon="hand"
           block
           size="lg"
@@ -166,7 +167,7 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
         </SsText>
 
         {/* 🔴 **Text statt Knopf** — Ians Entscheidung vom 2026-09-20.
-            Als Knopf in voller Breite war „Doch nicht" das zweitgrößte Element,
+            Als Knopf in voller Breite war „{t('antwort.dochNicht')}" das zweitgrößte Element,
             obwohl es schon zwei andere Wege hinaus gibt: danebentippen (der
             Schleier oben) und die Leiste nach unten schieben. Harte Regel 63:
             Ein Bildschirm zeigt, was für DIESE Entscheidung nötig ist — und die
@@ -180,7 +181,7 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
           onPress={onAbbrechen}
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel="Doch nicht"
+          accessibilityLabel={t('antwort.dochNicht')}
           style={styles.abbrechen}>
           <SsText variant="caption" center color={colors.inkSoft}>
             Doch nicht

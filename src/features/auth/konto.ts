@@ -110,28 +110,52 @@ export const NAME_MAX = 30;
  * UND falsch sein (ein Bezirk, den es nicht gibt; ein Jahrgang außerhalb der
  * Spanne). Ein `boolean` könnte das nicht unterscheiden.
  */
-export function fehltNoch(frage: ErsteFrage, wert: string, jetzt: Date = new Date()): string | null {
+/**
+ * Die Wörterbuch-Schlüssel dieser Datei — eigener Union, ohne neuen Import.
+ * `60_konto.mjs` prüft `typeof … === 'string'`, nicht den Wortlaut — ein Schlüssel
+ * hält ihn also grün. ⚠️ **Die Spannen bleiben hier** (`jahrgangMin`/`Max`,
+ * `NAME_MIN`/`MAX`); nur der Satz drumherum ist umgezogen.
+ */
+export type ErsteFrageFehler = {
+  schluessel:
+    | 'ersteFragen.nameFehlt'
+    | 'ersteFragen.nameKurz'
+    | 'ersteFragen.nameLang'
+    | 'ersteFragen.bezirkFehlt'
+    | 'ersteFragen.bezirkFalsch'
+    | 'ersteFragen.jahrgangKeineZahl'
+    | 'ersteFragen.jahrgangSpanne';
+  werte?: Record<string, number>;
+};
+
+export function fehltNoch(
+  frage: ErsteFrage,
+  wert: string,
+  jetzt: Date = new Date(),
+): ErsteFrageFehler | null {
   switch (frage) {
     case 'name': {
       const name = wert.trim();
-      if (name.length === 0) return 'Schreib deinen Namen dazu.';
-      if (name.length < NAME_MIN) return 'Der Name ist ein bisschen kurz.';
-      if (name.length > NAME_MAX) return `Höchstens ${NAME_MAX} Zeichen.`;
+      if (name.length === 0) return { schluessel: 'ersteFragen.nameFehlt' };
+      if (name.length < NAME_MIN) return { schluessel: 'ersteFragen.nameKurz' };
+      if (name.length > NAME_MAX)
+        return { schluessel: 'ersteFragen.nameLang', werte: { max: NAME_MAX } };
       return null;
     }
     case 'bezirk': {
-      if (wert.trim().length === 0) return 'Wähl deinen Bezirk.';
+      if (wert.trim().length === 0) return { schluessel: 'ersteFragen.bezirkFehlt' };
       // Nicht „vierstellig, fängt mit 1 an" — das ließe 1000 und 1240 durch.
-      if (!istWienerBezirk(wert)) return 'Das ist kein Wiener Bezirk.';
+      if (!istWienerBezirk(wert)) return { schluessel: 'ersteFragen.bezirkFalsch' };
       return null;
     }
     case 'jahrgang':
     default: {
       const jahr = Number(wert.trim());
-      if (!Number.isInteger(jahr)) return 'Nur die Jahreszahl, zum Beispiel 2009.';
+      if (!Number.isInteger(jahr)) return { schluessel: 'ersteFragen.jahrgangKeineZahl' };
       const min = jahrgangMin(jetzt);
       const max = jahrgangMax(jetzt);
-      if (jahr < min || jahr > max) return `Zwischen ${min} und ${max}.`;
+      if (jahr < min || jahr > max)
+        return { schluessel: 'ersteFragen.jahrgangSpanne', werte: { min, max } };
       return null;
     }
   }
@@ -229,4 +253,4 @@ export function kontoFolgen(): {
 }
 
 /** Warum der Bezirk gefragt wird — steht unter dem Feld, nicht im Screen getippt. */
-export const BEZIRK_GRUND = 'Danach sortieren wir, was in deiner Nähe los ist.';
+export const BEZIRK_GRUND = 'erstesKonto.bezirkGrund' as const;

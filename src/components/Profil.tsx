@@ -20,7 +20,7 @@ import { handleText } from '@/lib/handle';
  * ── Warum ein gemeinsamer Baustein und nicht zwei Screens ─────────────────────
  * Die beiden Screens unterscheiden sich in genau zwei Dingen: was oben in der Karte
  * als Aktion steht (Folgen-Knopf vs. nichts) und was ganz unten hängt. Alles andere —
- * Kopf, Zahlen, Interessen, Posts — ist identisch. Zweimal geschrieben würde es beim
+ * Kopf, Zahlen, {t('klein.interessen')}, Posts — ist identisch. Zweimal geschrieben würde es beim
  * ersten Umbau auseinanderlaufen, und dann sieht das eigene Profil anders aus als
  * das, was andere von einem sehen. Genau das darf nicht passieren: Man muss sich
  * darauf verlassen können, dass das eigene Profil zeigt, was Fremde sehen.
@@ -97,7 +97,7 @@ export function Profil({
         <View style={styles.zahlen}>
           <Zahl
             wert={person.followerIds.length}
-            wort="Follower"
+            wort={t('klein.follower')}
             onPress={() =>
               router.push({ pathname: '/user/[id]/follower', params: { id: person.id } })
             }
@@ -105,7 +105,7 @@ export function Profil({
           <View style={styles.zahlenTrenner} />
           <Zahl
             wert={person.followingIds.length}
-            wort="Folgt"
+            wort={t('klein.folgt')}
             onPress={() =>
               router.push({ pathname: '/user/[id]/following', params: { id: person.id } })
             }
@@ -125,7 +125,7 @@ export function Profil({
               wird, braucht es zwei Schlüssel wie `person.einPostFollower`.
               (`postText()` stand bis zum 2026-10-18 weiter unten und ist weg —
               seine zwei Sätze liegen jetzt als vier Schlüssel im Wörterbuch.) */}
-          <Zahl wert={person.treffenAnzahl} wort="Treffen" />
+          <Zahl wert={person.treffenAnzahl} wort={t('klein.treffen')} />
         </View>
 
         {aktion}
