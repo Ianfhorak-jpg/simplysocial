@@ -2201,3 +2201,26 @@
   Am 2026-10-18 habe ich `gruppe.ts` aus Vorsicht wie `anmeldung.ts` behandelt (eigene
   Union-Typen statt `import type`) — harmlos und einheitlich, aber es war **nicht
   nötig**, und das gehört dazugesagt statt als Notwendigkeit ausgegeben.
+- 🔴 **Ein Wörterbuch-SCHLÜSSEL, der ungewickelt im JSX landet, typecheckt sauber und
+  zeigt dem Menschen `gruppenregel.privat`.** Zweimal passiert: am 2026-10-17 bei
+  `standortFolgen()` (drei Stellen in `einstellungen.tsx`), am 2026-10-18 bei
+  `privatHinweis()` und `beitrittHuerdeText()` in `gruppe/[id].tsx`. **Beide Male nur
+  durch Nachsehen gefunden** — ein Schlüssel ist auch nur ein String, der Compiler hat
+  dazu nichts zu sagen. Seither bewacht `pruef-sprache` es, und **der Wächter war
+  dreimal falsch, bevor er stimmte:**
+  1. Er prüfte die AUFRUFSTELLE (`beitrittHuerdeText(...)`) — die ist fast immer
+     `const huerde = …` und harmlos. Der Fehler sitzt dort, wo die VARIABLE angezeigt
+     wird, eine ganz andere Zeile. **Die Gegenprobe blieb grün**, und nur sie hat es
+     verraten.
+  2. Er meldete `key={satz}` als Verstoß — ein React-`key` DARF der Schlüssel sein, er
+     landet nie auf dem Schirm.
+  3. Er zählte Zeilennummern auf dem Text OHNE Kommentare und lag damit zwei Zeilen
+     daneben (`:413` statt `:415`, dort stand `return (`). Ein richtiger Befund mit
+     falscher Nummer sieht wie ein Fehlalarm aus. Behebung: zeilenweise mit Zustand,
+     Nummer und Text aus DERSELBEN Zählung.
+- **Eine gelöschte Hilfsfunktion hinterlässt Kommentare, die auf sie verweisen.**
+  `postText()` in `Profil.tsx` fiel beim dritten Mehrzahl-Fall weg; zwölf Zeilen höher
+  stand weiter *„Kein Einzahl/Mehrzahl-Ternär wie bei `postText()` weiter unten"*. `tsc`
+  und `expo lint` sagen dazu nichts. Gefunden nur, weil ein `grep` nach dem Namen noch
+  einen Treffer hatte — **nach dem Löschen einer Funktion immer nach ihrem NAMEN
+  suchen, nicht nur nach ihren Aufrufen.**

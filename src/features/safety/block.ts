@@ -120,21 +120,39 @@ export const BLOCK_WIRKUNG: BlockWirkung = HART;
  * ihn stehen lässt, ist schlimmer als gar kein Satz — er ist ein Versprechen, das
  * die App nicht hält.
  */
-export function blockFolgen(wirkung: BlockWirkung = BLOCK_WIRKUNG): string[] {
-  const folgen = [
-    'Ihr seht die Posts des anderen nicht mehr.',
-    'Anfragen sind in beide Richtungen nicht mehr möglich.',
-  ];
+/**
+ * Die Wörterbuch-Schlüssel dieser Datei — **eigener Union, ohne Import.**
+ * `block.ts` hat heute NULL Importe, und das bleibt so: Dieselbe Vorsicht wie bei
+ * den anderen Regel-Dateien, geprüft wird am Aufruf über `tSatz()`.
+ *
+ * ⚠️ **Welcher Satz bei welcher Wirkung gilt, bleibt hier** (harte Regel 17) —
+ * `BLOCK_WIRKUNG` entscheidet, nicht das Wörterbuch. Der Kopf oben sagt, warum:
+ * Ein Satz, der eine Wirkung verspricht, die die App nicht hat, ist schlimmer als
+ * gar kein Satz.
+ */
+type BlockFolge =
+  | 'block.postsWeg'
+  | 'block.keineAnfragen'
+  | 'block.chatWeg'
+  | 'block.chatStillgelegt'
+  | 'block.chatBleibt'
+  | 'block.verabredungAbgesagt'
+  | 'block.verabredungBleibt'
+  | 'block.merktZusageWeg'
+  | 'block.merktNichts';
 
-  if (wirkung.chat === 'weg') folgen.push('Euer Chat verschwindet.');
+export function blockFolgen(wirkung: BlockWirkung = BLOCK_WIRKUNG): BlockFolge[] {
+  const folgen: BlockFolge[] = ['block.postsWeg', 'block.keineAnfragen'];
+
+  if (wirkung.chat === 'weg') folgen.push('block.chatWeg');
   if (wirkung.chat === 'stillgelegt')
-    folgen.push('Euer Chat bleibt lesbar, aber niemand kann mehr hineinschreiben.');
-  if (wirkung.chat === 'bleibt') folgen.push('Euer Chat bleibt, wie er ist.');
+    folgen.push('block.chatStillgelegt');
+  if (wirkung.chat === 'bleibt') folgen.push('block.chatBleibt');
 
   folgen.push(
     wirkung.verabredung === 'abgesagt'
-      ? 'Eine bestätigte Verabredung wird abgesagt.'
-      : 'Eine bestätigte Verabredung bleibt bestehen — absagen musst du selbst.',
+      ? 'block.verabredungAbgesagt'
+      : 'block.verabredungBleibt',
   );
 
   // Der wichtigste Satz zum Schluss, weil er die Angst wegnimmt, die Leute vom
@@ -146,8 +164,8 @@ export function blockFolgen(wirkung: BlockWirkung = BLOCK_WIRKUNG): string[] {
   // Lüge, die man nie bemerkt — man sieht ja nur die eigene Seite.
   folgen.push(
     wirkung.verabredung === 'abgesagt'
-      ? 'Dass du blockiert hast, erfährt die Person nicht — nur, dass die Zusage weg ist.'
-      : 'Die Person erfährt nichts davon.',
+      ? 'block.merktZusageWeg'
+      : 'block.merktNichts',
   );
 
   return folgen;

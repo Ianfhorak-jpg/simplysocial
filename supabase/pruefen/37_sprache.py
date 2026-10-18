@@ -48,7 +48,7 @@ I18N = SRC / 'i18n'
 # erlaubtes Maß an Schlamperei. Wer sie hochsetzt, macht den Wächter wertlos:
 # Genau der Fehler, der ACTAs Build 1 zu Apple geschickt hat, würde dann grün
 # gemeldet. Sinkt sie, wird sie hier nachgezogen — das ist der Fortschritt.
-GRENZE = 158
+GRENZE = 144
 
 JA = NEIN = 0
 
@@ -282,7 +282,7 @@ PROPS = re.compile(
 )
 
 # ⚠️ Darf nur FALLEN — dieselbe Abmachung wie bei GRENZE.
-GRENZE_PROPS = 53
+GRENZE_PROPS = 42
 
 fest: list[str] = []
 for datei in sorted(SRC.rglob('*.tsx')):
@@ -313,6 +313,102 @@ for ort in fest[:5]:
     print(f'     {ort}')
 if len(fest) > 5:
     print(f'     … und {len(fest) - 5} weitere')
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  2c · Ein Schlüssel, der ungewickelt im JSX landet
+# ══════════════════════════════════════════════════════════════════════════════
+print('')
+print('── Schlüssel, die ohne `t()` angezeigt würden ──')
+
+# 🔴 **Die Fehlerart, die KEIN Compiler fängt — und sie ist zweimal passiert.**
+# Die Regel-Dateien geben Wörterbuch-SCHLÜSSEL zurück statt Sätze (sie müssen
+# importfrei bleiben). Ein Schlüssel ist aber auch nur ein String:
+# `<SsText>{huerde}</SsText>` typecheckt sauber und zeigt dem Menschen
+# `gruppenregel.privat`.
+#
+#   · 2026-10-17, `standortFolgen()` → drei Stellen in `einstellungen.tsx`
+#   · 2026-10-18, `privatHinweis()` und `beitrittHuerdeText()` in `gruppe/[id].tsx`
+#
+# 🔴 **Der erste Anlauf dieses Wächters war selbst falsch** und ist an der
+# Gegenprobe aufgefallen: Er prüfte die AUFRUFSTELLE (`beitrittHuerdeText(...)`).
+# Die ist aber fast immer `const huerde = …` — harmlos. Der Fehler sitzt dort, wo
+# die VARIABLE angezeigt wird, eine ganz andere Zeile. *Ein Wächter, der eine
+# ÄHNLICHE Frage stellt, ist kein Wächter* — hier zum dritten Mal in dieser Datei,
+# und die ersten zwei Male hat es nur niemand gemerkt, weil der Code zufällig
+# richtig war.
+#
+# Gefragt wird jetzt: Welche Namen tragen einen Schlüssel — aus `const x = fn()`
+# oder aus `.map((x) => …)` — und wird jeder davon in `{…}` gewickelt angezeigt?
+SCHLUESSEL_QUELLEN = [
+    'beitrittHuerdeText', 'privatHinweis', 'blockFolgen', 'austrittFolgen',
+    'bildFolgen', 'bildHuerde', 'bildFehlerText', 'standortFolgen',
+    'mitgliederText', 'zusageText',
+]
+QUELLEN_RE = '|'.join(SCHLUESSEL_QUELLEN)
+
+ungewickelt: list[str] = []
+traeger_gesamt = 0
+for datei in sorted(SRC.rglob('*.tsx')):
+    if I18N in datei.parents:
+        continue
+
+    # ⚠️ **Zeilenweise mit Zustand, nicht per Regex über die ganze Datei.**
+    # Der erste Anlauf hat die Kommentare aus dem Gesamttext geschnitten und die
+    # Nummern darauf gezählt — Ergebnis: `gruppe/[id].tsx:413` statt `415`. Beim
+    # Nachsehen stand dort `return (`, und der richtige Befund sah nach einem
+    # Fehlalarm aus. *Eine dokumentierte ZAHL ohne ihre Messstelle ist nicht
+    # reproduzierbar* — hier: eine Zeilennummer muss aus DERSELBEN Zählung kommen
+    # wie der Text. Dieselbe Bauart wie die Prüfungen weiter oben in dieser Datei.
+    zeilen: list[tuple[int, str]] = []
+    im_block = False
+    for nr, roh in enumerate(datei.read_text(encoding='utf-8').splitlines(), 1):
+        blank = roh.strip()
+        if im_block:
+            if '*/' in roh:
+                im_block = False
+            continue
+        if '/*' in roh and '*/' not in roh:
+            im_block = True
+            continue
+        if blank.startswith(('*', '//', '/*')):
+            continue
+        zeilen.append((nr, roh))
+
+    ganz = '\n'.join(z for _, z in zeilen)
+    traeger: set[str] = set()
+    # `const huerde = beitrittHuerdeText(...)`
+    for m in re.finditer(rf'\b(?:const|let)\s+(\w+)\s*=\s*(?:{QUELLEN_RE})\(', ganz):
+        traeger.add(m.group(1))
+    # `blockFolgen().map((satz) => …)` — der Schleifenname trägt ihn
+    for m in re.finditer(rf'(?:{QUELLEN_RE})\([^)]*\)\s*\.map\(\s*\(?(\w+)', ganz):
+        traeger.add(m.group(1))
+    traeger_gesamt += len(traeger)
+
+    for name in sorted(traeger):
+        # Jede Anzeige `{name}` oder `{name.feld}` in JSX — ohne `t(` davor.
+        #
+        # ⚠️ **`key={…}` ist KEINE Anzeige** und wird übersprungen: Ein React-`key`
+        # darf und soll der Schlüssel sein (eindeutig und stabil), er landet nie
+        # auf dem Schirm. Der erste Anlauf hat vier solche Stellen gemeldet — alle
+        # vier richtig gebaut.
+        for nr, roh in zeilen:
+            for m in re.finditer(rf'(\w+=)?\{{\s*{name}(\.\w+)?\s*\}}', roh):
+                if m.group(1) in ('key=', 'accessibilityLabel='):
+                    continue
+                ungewickelt.append(
+                    f'{datei.relative_to(WURZEL)}:{nr}  {{{name}{m.group(2) or ""}}}')
+
+# Gegenprobe gegen sich selbst: Findet er überhaupt Träger? Bei 0 wäre die
+# Null oben wertlos (Falle: *eine Textsuche mit NULL Treffern beweist nichts*).
+pruef(f'Er findet überhaupt Schlüssel-Träger (gefunden: {traeger_gesamt})',
+      traeger_gesamt >= 5,
+      'findet er keine, meldet er den Rest grün, ohne etwas geprüft zu haben')
+pruef(f'Jeder Schlüssel-Träger wird gewickelt angezeigt ({len(ungewickelt)} offen)',
+      not ungewickelt,
+      'ein Schlüssel ohne `t()` typecheckt sauber und zeigt dem Menschen '
+      '`gruppenregel.privat` — kein Compiler fängt das')
+for ort in ungewickelt[:6]:
+    print(f'     {ort}')
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  3 · Modulweite Listen mit t() — sie frieren die Startsprache ein

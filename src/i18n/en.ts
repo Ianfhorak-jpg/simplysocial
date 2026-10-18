@@ -220,6 +220,51 @@ export const en: Weiter<typeof de> = {
       'Once someone confirms your request — or you confirm one — the chat shows up here. And if you follow each other, you can message directly: the button for that is on their profile.',
   },
 
+  person: {
+    // Zustand, nicht Knopf: Deutsch „Du folgst", Englisch „Following" —
+    // dasselbe Muster wie bei Instagram, und es liest sich als Zustand.
+    duFolgst: 'Following',
+    folgen: 'Follow',
+    nurFuerFollower: 'Posts that are followers-only.',
+    nachricht: 'Message',
+    jaBlockieren: 'Yes, block',
+    blockieren: 'Block',
+    blockierungAufheben: 'Unblock',
+    entblockenFolgen:
+      "You'll see each other's posts again. What the block took with it doesn't come back — who followed whom, your chat and cancelled plans would have to be redone.",
+    blockiertTitel: 'You have blocked this person',
+    gibtEsNicht: "This person doesn't exist",
+    kontoGeloescht: 'They may have deleted their account.',
+    // ⚠️ Vier Schlüssel für zwei Sätze — `is`/`are` lässt sich nicht einsetzen.
+    einPostFollower: '1 post is visible to followers only.',
+    mehrerePostsFollower: '{anzahl} posts are visible to followers only.',
+    einPostGruppe: '1 post is visible to one group only.',
+    mehrerePostsGruppe: '{anzahl} posts are visible to one group only.',
+  },
+
+  block: {
+    postsWeg: "You won't see each other's posts any more.",
+    keineAnfragen: 'Requests are no longer possible in either direction.',
+    chatWeg: 'Your chat disappears.',
+    chatStillgelegt: 'Your chat stays readable, but nobody can write in it any more.',
+    chatBleibt: 'Your chat stays as it is.',
+    verabredungAbgesagt: 'A confirmed plan gets cancelled.',
+    verabredungBleibt: 'A confirmed plan stays — you have to cancel it yourself.',
+    merktZusageWeg:
+      "The person isn't told that you blocked them — only that the confirmation is gone.",
+    merktNichts: "The person isn't told anything about it.",
+  },
+
+  chatraum: {
+    senden: 'Send',
+    verabredetTitel: "You're set",
+    nochNichtsGeschrieben:
+      'Nobody has written anything yet. A "Hi, still good for you?" is plenty.',
+    gibtEsNicht: "This chat doesn't exist",
+    treffenWeg: 'It may belong to a meet-up that no longer exists.',
+    zuDenChats: 'Go to chats',
+  },
+
   profil: {
     einstellungen: 'Settings',
     fuss: 'Blocked people · Terms of Use · Delete account',

@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { PostCard } from './PostCard';
 import { SsAvatar, SsCard, SsChip, SsIconText, SsText } from './ui';
 
+import { t } from '@/i18n';
 import { alterAmProfil } from '@/config/alter';
 import { useProfilPosts } from '@/features/posts/hooks';
 import { useCurrentUserId } from '@/features/auth/hooks';
@@ -117,8 +118,13 @@ export function Profil({
               Sie steht auf JEDEM Profil, auch auf fremden, und das ist der ganze
               Sinn: Ein Zähler, den nur man selbst sieht, ist keiner. Verraten wird
               dabei nichts über WEN oder WANN — nur, dass es stattgefunden hat. */}
-          {/* Kein Einzahl/Mehrzahl-Ternär wie bei `postText()` weiter unten:
-              „1 Treffen" und „7 Treffen" heißen beide „Treffen". */}
+          {/* Kein Einzahl/Mehrzahl-Unterschied: „1 Treffen" und „7 Treffen" heißen
+              im Deutschen beide „Treffen".
+              ⚠️ **Auf Englisch gilt das NICHT** — „1 meet-up" / „7 meet-ups". Dieses
+              `wort` ist das letzte, das noch fest hier steht; sobald es übersetzt
+              wird, braucht es zwei Schlüssel wie `person.einPostFollower`.
+              (`postText()` stand bis zum 2026-10-18 weiter unten und ist weg —
+              seine zwei Sätze liegen jetzt als vier Schlüssel im Wörterbuch.) */}
           <Zahl wert={person.treffenAnzahl} wort="Treffen" />
         </View>
 
@@ -168,7 +174,10 @@ export function Profil({
             dann) da, wenn die Liste darüber leer ist. */}
         {verborgen.follower > 0 ? (
           <SsIconText icon="schloss">
-            {`${postText(verborgen.follower)} nur für Follower sichtbar.`}
+            {t(
+              verborgen.follower === 1 ? 'person.einPostFollower' : 'person.mehrerePostsFollower',
+              { anzahl: verborgen.follower },
+            )}
           </SsIconText>
         ) : null}
 
@@ -179,7 +188,10 @@ export function Profil({
             geschlossene Gruppe zurückhält. */}
         {verborgen.gruppe > 0 ? (
           <SsIconText icon="personen">
-            {`${postText(verborgen.gruppe)} nur für eine Gruppe sichtbar.`}
+            {t(
+              verborgen.gruppe === 1 ? 'person.einPostGruppe' : 'person.mehrerePostsGruppe',
+              { anzahl: verborgen.gruppe },
+            )}
           </SsIconText>
         ) : null}
       </View>
@@ -242,9 +254,6 @@ function Zahl({ wert, wort, onPress }: { wert: number; wort: string; onPress?: (
 }
 
 /** „1 Post ist" / „3 Posts sind" — Einzahl und Mehrzahl an einer Stelle. */
-function postText(anzahl: number): string {
-  return anzahl === 1 ? '1 Post ist' : `${anzahl} Posts sind`;
-}
 
 const styles = StyleSheet.create({
   kopf: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },

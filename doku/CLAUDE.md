@@ -1123,6 +1123,8 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Mehrzahl geht NICHT mit einem Platzhalter im Satz — zwei Schlüssel, Verzweigung beim Aufruf
 - `BRAND.city` ist die TATSACHE, `marke.stadt` die ANZEIGE — und der frei gewordene Import meldet sich nur im Lint
 - „Importfrei" bedeutet bei zwei Regel-Dateien VERSCHIEDENES — je nachdem, ob der Prüfstand sie EINZELN übersetzt
+- Ein Wörterbuch-SCHLÜSSEL ungewickelt im JSX typecheckt sauber und zeigt `gruppenregel.privat`
+- Eine gelöschte Hilfsfunktion hinterlässt Kommentare, die auf sie verweisen — nach dem NAMEN suchen
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

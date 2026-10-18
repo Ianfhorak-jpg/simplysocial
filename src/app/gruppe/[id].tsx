@@ -148,7 +148,7 @@ export default function GruppeScreen() {
             wie bei `austrittFolgen()` weiter unten. Von INNEN ist „privat" eine
             Auskunft (deine Posts laufen enger), von AUSSEN eine Hürde; welcher der
             beiden Sätze fällt, entscheidet die Regel, nicht der Screen. */}
-        {privat && drin ? <SsIconText icon="schloss">{privat}</SsIconText> : null}
+        {privat && drin ? <SsIconText icon="schloss">{t(privat)}</SsIconText> : null}
 
         {/* ⚠️ Beim Durchklicken am 2026-09-05 gefunden, und nur dort zu finden: Bei
             einer PRIVATEN Gruppe, in der man nicht ist, stand hier „Aufgemacht von
@@ -412,7 +412,7 @@ function Aussenseite({
     const beendet = istAufgeloest(gruppe);
     return (
       <View style={styles.block}>
-        <SsIconText icon={beendet ? 'uhr' : 'schloss'}>{huerde}</SsIconText>
+        <SsIconText icon={beendet ? 'uhr' : 'schloss'}>{t(huerde)}</SsIconText>
         {beendet ? null : (
           <SsText variant="caption" color={colors.inkSoft}>
             {t('gruppe.bleibtZu')}

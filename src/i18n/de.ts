@@ -219,6 +219,62 @@ export const de = {
       'Sobald jemand deine Anfrage bestätigt — oder du eine bestätigst — steht der Chat dazu hier. Und wenn ihr einander folgt, kannst du direkt schreiben: der Knopf dafür steht auf dem Profil.',
   },
 
+  /** Fremde Profile. */
+  person: {
+    duFolgst: 'Du folgst',
+    folgen: 'Folgen',
+    nurFuerFollower: 'Posts, die nur für Follower sind.',
+    nachricht: 'Nachricht',
+    jaBlockieren: 'Ja, blockieren',
+    blockieren: 'Blockieren',
+    blockierungAufheben: 'Blockierung aufheben',
+    entblockenFolgen:
+      'Ihr seht dann wieder die Posts des anderen. Was der Block mitgenommen hat, kommt nicht zurück — wer wem gefolgt ist, euer Chat und abgesagte Zusagen müsstet ihr neu machen.',
+    blockiertTitel: 'Du hast diese Person blockiert',
+    gibtEsNicht: 'Diese Person gibt es nicht',
+    kontoGeloescht: 'Vielleicht hat sie ihr Konto gelöscht.',
+    /**
+     * ⚠️ **Vier Schlüssel für zwei Sätze, und das ist der dritte Mehrzahl-Fall.**
+     * Vorher stand `${postText(n)} nur für Follower sichtbar.` — ein Satz mit
+     * eingesetztem Bruchstück („1 Post ist" / „3 Posts sind"). Englisch beugt
+     * genauso (`is`/`are`), und ein geteilter Satz ist in keiner der beiden
+     * Sprachen zu retten.
+     */
+    einPostFollower: '1 Post ist nur für Follower sichtbar.',
+    mehrerePostsFollower: '{anzahl} Posts sind nur für Follower sichtbar.',
+    einPostGruppe: '1 Post ist nur für eine Gruppe sichtbar.',
+    mehrerePostsGruppe: '{anzahl} Posts sind nur für eine Gruppe sichtbar.',
+  },
+
+  /**
+   * Was ein Block anrichtet — der Wortlaut zu `features/safety/block.ts`
+   * (harte Regel 17). **Welcher Satz bei welcher Wirkung gilt, bleibt dort.**
+   */
+  block: {
+    postsWeg: 'Ihr seht die Posts des anderen nicht mehr.',
+    keineAnfragen: 'Anfragen sind in beide Richtungen nicht mehr möglich.',
+    chatWeg: 'Euer Chat verschwindet.',
+    chatStillgelegt: 'Euer Chat bleibt lesbar, aber niemand kann mehr hineinschreiben.',
+    chatBleibt: 'Euer Chat bleibt, wie er ist.',
+    verabredungAbgesagt: 'Eine bestätigte Verabredung wird abgesagt.',
+    verabredungBleibt:
+      'Eine bestätigte Verabredung bleibt bestehen — absagen musst du selbst.',
+    merktZusageWeg:
+      'Dass du blockiert hast, erfährt die Person nicht — nur, dass die Zusage weg ist.',
+    merktNichts: 'Die Person erfährt nichts davon.',
+  },
+
+  /** Der Chat-Bildschirm selbst. */
+  chatraum: {
+    senden: 'Senden',
+    verabredetTitel: 'Ihr seid verabredet',
+    nochNichtsGeschrieben:
+      'Noch hat niemand etwas geschrieben. Ein „Hi, passt es bei dir noch?" reicht völlig.',
+    gibtEsNicht: 'Diesen Chat gibt es nicht',
+    treffenWeg: 'Vielleicht gehört er zu einem Treffen, das es nicht mehr gibt.',
+    zuDenChats: 'Zu den Chats',
+  },
+
   /** Das eigene Profil. */
   profil: {
     einstellungen: 'Einstellungen',

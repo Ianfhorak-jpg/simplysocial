@@ -2,6 +2,7 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { Profil } from '@/components/Profil';
 import { SsAvatar, SsBack, SsButton, SsCard, SsIcon, SsScreen, SsText } from '@/components/ui';
 import { useWartetAuf } from '@/features/store';
@@ -82,7 +83,7 @@ export default function UserProfileScreen() {
               // behoben, und ein Dialog für etwas so Kleines erzieht dazu, Dialoge
               // wegzuklicken, ohne sie zu lesen.
               <SsButton
-                label="Du folgst"
+                label={t('person.duFolgst')}
                 icon="haken"
                 variant="ghost"
                 block
@@ -96,10 +97,10 @@ export default function UserProfileScreen() {
                     nimmt es die Textfarbe an — dasselbe Weiß wie die Beschriftung.
                     Und es steht dem Haken gegenüber, der beim Entfolgen dasteht:
                     zwei Zustände, zwei Zeichen, statt einem und keinem. */}
-                <SsButton label="Folgen" icon="plus" block onPress={() => void folgen(person.id)} />
+                <SsButton label={t('person.folgen')} icon="plus" block onPress={() => void folgen(person.id)} />
                 <SsText variant="caption" color={colors.inkSoft} center>
                   Dann steht {person.displayName} im Feed unter „Wem ich folge" — und du siehst
-                  Posts, die nur für Follower sind.
+                  {t('person.nurFuerFollower')}
                 </SsText>
               </>
             )}
@@ -114,7 +115,7 @@ export default function UserProfileScreen() {
                 aus der Regeldatei: Ändert Ian die Regel, ändert sich der Satz mit. */}
             {darfSchreiben ? (
               <SsButton
-                label="Nachricht"
+                label={t('person.nachricht')}
                 icon="sprechblase"
                 block
                 wartet={wartetChat}
@@ -156,13 +157,13 @@ export default function UserProfileScreen() {
                       schlimmer als gar kein Text. */}
                   {blockFolgen().map((satz) => (
                     <SsText key={satz} variant="body">
-                      · {satz}
+                      · {t(satz)}
                     </SsText>
                   ))}
                 </SsCard>
                 <SsButton
                   variant="danger"
-                  label="Ja, blockieren"
+                  label={t('person.jaBlockieren')}
                   block
                   wartet={wartetBlock}
                   onPress={() => {
@@ -174,7 +175,7 @@ export default function UserProfileScreen() {
                     void blockieren(person.id).then(() => setFragt(false));
                   }}
                 />
-                <SsButton label="Abbrechen" block onPress={() => setFragt(false)} />
+                <SsButton label={t('gemein.abbrechen')} block onPress={() => setFragt(false)} />
               </>
             ) : (
               <>
@@ -197,7 +198,7 @@ export default function UserProfileScreen() {
                   />
                   <SsButton
                     variant="danger"
-                    label="Blockieren"
+                    label={t('person.blockieren')}
                     icon="verboten"
                     style={styles.halb}
                     onPress={() => setFragt(true)}
@@ -248,21 +249,19 @@ function BlockiertesProfil({ person }: { person: User }) {
         </View>
 
         <SsText variant="bodyStrong" color={danger.onSoft}>
-          Du hast diese Person blockiert
+          {t('person.blockiertTitel')}
         </SsText>
         {blockFolgen().map((satz) => (
           <SsText key={satz} variant="body" color={colors.inkSoft}>
-            · {satz}
+            · {t(satz)}
           </SsText>
         ))}
       </SsCard>
 
       <View style={styles.fuss}>
-        <SsButton label="Blockierung aufheben" block onPress={() => void entblocken(person.id)} />
+        <SsButton label={t('person.blockierungAufheben')} block onPress={() => void entblocken(person.id)} />
         <SsText variant="caption" color={colors.inkSoft} center>
-          Ihr seht dann wieder die Posts des anderen. Was der Block mitgenommen hat,
-          kommt nicht zurück — wer wem gefolgt ist, euer Chat und abgesagte Zusagen
-          müsstet ihr neu machen.
+          {t('person.entblockenFolgen')}
         </SsText>
       </View>
     </SsScreen>
@@ -274,12 +273,12 @@ function NichtGefunden() {
     <SsScreen contentStyle={styles.fehlerSeite}>
       <SsIcon name="frage" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
-        Diese Person gibt es nicht
+        {t('person.gibtEsNicht')}
       </SsText>
       <SsText variant="body" center color={colors.inkSoft}>
-        Vielleicht hat sie ihr Konto gelöscht.
+        {t('person.kontoGeloescht')}
       </SsText>
-      <SsButton label="Zurück zum Feed" onPress={() => router.replace('/')} />
+      <SsButton label={t('melden.zurueckZumFeed')} onPress={() => router.replace('/')} />
     </SsScreen>
   );
 }

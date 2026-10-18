@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { SsAvatar, SsBack, SsButton, SsChip, SsIcon, SsIconText, SsInput, SsScreen, SsText } from '@/components/ui';
 import { useIstBlockiert } from '@/features/safety/hooks';
 import { herkunftText, istDirektChat } from '@/features/chat/direkt';
@@ -184,12 +185,12 @@ export default function ChatScreen() {
             <SsButton
               variant="category"
               category={post.category}
-              label="Senden"
+              label={t('chatraum.senden')}
               disabled={!entwurf.trim()}
               onPress={senden}
             />
           ) : (
-            <SsButton label="Senden" disabled={!entwurf.trim()} onPress={senden} />
+            <SsButton label={t('chatraum.senden')} disabled={!entwurf.trim()} onPress={senden} />
           )}
         </View>
       )}
@@ -359,10 +360,10 @@ function NochStill({ name, direkt }: { name: string; direkt: boolean }) {
     <View style={styles.still}>
       <SsIcon name="treffen" size={42} color={colors.inkSoft} />
       <SsText variant="heading" center>
-        Ihr seid verabredet
+        {t('chatraum.verabredetTitel')}
       </SsText>
       <SsText variant="body" center color={colors.inkSoft}>
-        Noch hat niemand etwas geschrieben. Ein „Hi, passt es bei dir noch?“ reicht völlig.
+        {t('chatraum.nochNichtsGeschrieben')}
       </SsText>
     </View>
   );
@@ -377,12 +378,12 @@ function KeinChat() {
     <SsScreen contentStyle={styles.fehlerSeite}>
       <SsIcon name="sprechblase" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
-        Diesen Chat gibt es nicht
+        {t('chatraum.gibtEsNicht')}
       </SsText>
       <SsText variant="body" center color={colors.inkSoft}>
-        Vielleicht gehört er zu einem Treffen, das es nicht mehr gibt.
+        {t('chatraum.treffenWeg')}
       </SsText>
-      <SsButton label="Zu den Chats" onPress={() => router.replace('/chats')} />
+      <SsButton label={t('chatraum.zuDenChats')} onPress={() => router.replace('/chats')} />
     </SsScreen>
   );
 }
