@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { t, tSatz } from '@/i18n';
 import { PostCard } from '@/components/PostCard';
 import {
   SsAvatar,
@@ -103,11 +104,11 @@ export default function GruppeScreen() {
     return (
       <SsScreen contentStyle={styles.seite}>
         <SsBack />
-        <SsText variant="title">Diese Gruppe gibt es nicht mehr.</SsText>
+        <SsText variant="title">{t('gruppe.gibtEsNichtMehr')}</SsText>
         <SsText variant="caption" color={colors.inkSoft}>
-          Vielleicht hat sie der Gründer aufgelöst.
+          {t('gruppe.vielleichtAufgeloest')}
         </SsText>
-        <SsButton label="Zum Feed" block onPress={zurueckOderFeed} />
+        <SsButton label={t('feed.zumFeed')} block onPress={zurueckOderFeed} />
       </SsScreen>
     );
   }
@@ -140,7 +141,7 @@ export default function GruppeScreen() {
         {gruppe.description ? <SsText variant="body">{gruppe.description}</SsText> : null}
 
         <SsText variant="caption" color={colors.inkSoft}>
-          {mitgliederText(gruppe.memberIds.length)}   ·   {ortText(gruppe.district)}
+          {tSatz(mitgliederText(gruppe.memberIds.length))}   ·   {ortText(gruppe.district)}
         </SsText>
 
         {/* Der Satz kommt aus `gruppe.ts` und nicht von hier — dieselbe Trennung
@@ -200,11 +201,11 @@ export default function GruppeScreen() {
                       />
                     ))
                   )}
-                  <SsButton label="Fertig" block onPress={() => setLaedtEin(false)} />
+                  <SsButton label={t('gemein.fertig')} block onPress={() => setLaedtEin(false)} />
                 </>
               ) : (
                 <SsButton
-                  label="Leute einladen"
+                  label={t('gruppe.leuteEinladen')}
                   icon="personen"
                   block
                   onPress={() => setLaedtEin(true)}
@@ -214,7 +215,7 @@ export default function GruppeScreen() {
           ) : null}
 
           <SsButton
-            label="Für die Gruppe posten"
+            label={t('gruppe.fuerGruppePosten')}
             icon="plus"
             variant="category"
             category={gruppe.category}
@@ -223,7 +224,7 @@ export default function GruppeScreen() {
           />
 
           <View style={styles.block}>
-            <SsText variant="label">Was gerade läuft</SsText>
+            <SsText variant="label">{t('gruppe.wasGeradeLaeuft')}</SsText>
             {posts.length === 0 ? (
               <SsText variant="caption" color={colors.inkSoft}>
                 Gerade nichts. Diese Posts stehen auch im normalen Feed — hier siehst
@@ -253,14 +254,14 @@ export default function GruppeScreen() {
                     sich der Text mit. Ein Screen, der etwas anderes verspricht, als
                     die Regel tut, ist schlimmer als gar kein Text. */}
                 {austrittFolgen(gruppe, ich.id, erbe?.displayName).map((satz) => (
-                  <SsText key={satz} variant="body">
-                    · {satz}
+                  <SsText key={satz.schluessel} variant="body">
+                    · {tSatz(satz)}
                   </SsText>
                 ))}
               </SsCard>
               <SsButton
                 variant="danger"
-                label="Ja, verlassen"
+                label={t('gruppe.jaVerlassen')}
                 block
                 wartet={wartetVerlassen}
                 onPress={() => {
@@ -272,10 +273,10 @@ export default function GruppeScreen() {
                   // richtig, also bleibt man hier stehen.
                 }}
               />
-              <SsButton label="Abbrechen" block onPress={() => setFragt(false)} />
+              <SsButton label={t('gemein.abbrechen')} block onPress={() => setFragt(false)} />
             </View>
           ) : (
-            <SsButton label="Gruppe verlassen" icon="verboten" block onPress={() => setFragt(true)} />
+            <SsButton label={t('gruppe.gruppeVerlassen')} icon="verboten" block onPress={() => setFragt(true)} />
           )}
         </>
       ) : (
@@ -299,7 +300,7 @@ export default function GruppeScreen() {
           Satz, der etwas verspricht, was die Regel nicht tut (harte Regel 32). */}
       {meine && gruppe.offen ? (
         <SsButton
-          label="Anfragen ansehen"
+          label={t('gruppe.anfragenAnsehen')}
           icon="hand"
           variant="ghost"
           block
@@ -346,7 +347,7 @@ function Aussenseite({
   if (blockiert) {
     return (
       <SsText variant="caption" color={colors.inkSoft} center>
-        Zwischen dir und dem Gründer dieser Gruppe steht eine Blockierung.
+        {t('gruppe.blockiertZumGruender')}
       </SsText>
     );
   }
@@ -368,10 +369,10 @@ function Aussenseite({
               // wird eingeladen. Der Satz sagt, was mit der Anfrage passiert —
               // sonst sucht man sie hinterher im Anfragen-Tab.
               'Du hattest hier auch angefragt. Nimmst du an, erledigt sich das damit.'
-            : 'Nimm an, dann bist du sofort dabei — der Gründer muss nichts mehr bestätigen.'}
+            : t('gruppe.einladungSofortDabei')}
         </SsText>
         <SsButton
-          label="Annehmen"
+          label={t('anfragen.annehmen')}
           icon="haken"
           variant="category"
           category={gruppe.category}
@@ -380,7 +381,7 @@ function Aussenseite({
           wartet={wartetEinladung}
           onPress={() => void einladungAnnehmen(einladungId)}
         />
-        <SsButton label="Nein danke" block onPress={() => void einladungAblehnen(einladungId)} />
+        <SsButton label={t('anfragen.neinDanke')} block onPress={() => void einladungAblehnen(einladungId)} />
       </View>
     );
   }
@@ -388,11 +389,11 @@ function Aussenseite({
   if (angefragt) {
     return (
       <View style={styles.block}>
-        <SsIconText icon="uhr">Anfrage geschickt · der Gründer muss noch bestätigen</SsIconText>
+        <SsIconText icon="uhr">{t('gruppe.anfrageGeschicktGruender')}</SsIconText>
         <SsText variant="caption" color={colors.inkSoft}>
-          Solange siehst du noch nicht, was in der Gruppe läuft.
+          {t('gruppe.solangeNichtSichtbar')}
         </SsText>
-        <SsButton label="Anfrage zurückziehen" block onPress={() => void beitrittZuruecknehmen(gruppe.id)} />
+        <SsButton label={t('gruppe.anfrageZurueckziehen')} block onPress={() => void beitrittZuruecknehmen(gruppe.id)} />
       </View>
     );
   }
@@ -414,7 +415,7 @@ function Aussenseite({
         <SsIconText icon={beendet ? 'uhr' : 'schloss'}>{huerde}</SsIconText>
         {beendet ? null : (
           <SsText variant="caption" color={colors.inkSoft}>
-            Was hier läuft und wer dabei ist, bleibt zu.
+            {t('gruppe.bleibtZu')}
           </SsText>
         )}
       </View>
@@ -424,20 +425,19 @@ function Aussenseite({
   return (
     <View style={styles.block}>
       <SsText variant="caption" color={colors.inkSoft}>
-        Was in dieser Gruppe läuft, siehst du erst als Mitglied. Frag an — der Gründer
-        bestätigt, dann bist du dabei.
+        {t('gruppe.erstAlsMitglied')}
       </SsText>
       <SsInput
-        label="Kurz dazuschreiben"
+        label={t('gruppe.kurzDazuschreiben')}
         hint="freiwillig"
         value={nachricht}
         onChangeText={setNachricht}
-        placeholder="Servus! Würd gern dazukommen."
+        placeholder={t('gruppe.dazuschreibenPlatzhalter')}
         multiline
         maxLength={160}
       />
       <SsButton
-        label="Beitritt anfragen"
+        label={t('gruppe.beitrittAnfragen')}
         icon="hand"
         variant="category"
         category={gruppe.category}
@@ -475,7 +475,7 @@ function EinladbarZeile({ eintrag, gruppe }: { eintrag: EinladbarEintrag; gruppe
 
         {zustand === 'einladbar' ? (
           <SsButton
-            label="Einladen"
+            label={t('gruppe.einladen')}
             variant="category"
             category={gruppe.category}
             onPress={() => void einladen(gruppe.id, person.id)}
@@ -508,7 +508,7 @@ function MitgliedZeile({ person, gruppe, ichId }: { person: User; gruppe: Group;
         <SsText variant="body" style={styles.name} numberOfLines={1}>
           {binIch ? 'Du' : person.displayName}
         </SsText>
-        {istGruender(gruppe, person.id) ? <SsIconText icon="fahne">Gründer</SsIconText> : null}
+        {istGruender(gruppe, person.id) ? <SsIconText icon="fahne">{t('gruppe.gruender')}</SsIconText> : null}
       </View>
     </SsCard>
   );

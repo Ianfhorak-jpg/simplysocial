@@ -13,6 +13,7 @@ import {
   SsSegment,
   SsText,
 } from '@/components/ui';
+import { t, tSatz } from '@/i18n';
 import { useWartetAuf } from '@/features/store';
 import { kategorieVorschlag, mitgliederText, NEUE_GRUPPE_OFFEN } from '@/features/groups/gruppe';
 import { gruppeErstellen } from '@/features/groups/hooks';
@@ -104,8 +105,7 @@ export default function GruppeNeuScreen() {
             aussen anfragen läuft weiter über den Gründer, aber einladen darf jedes
             Mitglied (Ians Entscheidung 26). Der Satz sagt jetzt beides — sonst
             verspricht der Screen eine Kontrolle, die es nicht mehr gibt. */}
-        Du bist danach der Gründer. Anfragen von aussen bestätigst du; einladen darf
-        später jeder, der drin ist.
+        {t('gruppe.duBistGruender')}
       </SsText>
 
       <SsCard category={kategorie}>
@@ -117,7 +117,7 @@ export default function GruppeNeuScreen() {
           </SsText>
         ) : null}
         <SsText variant="caption" color={colors.inkSoft}>
-          {mitgliederText(1)}   ·   {ortText(istWienerBezirk(bezirk) ? bezirk.trim() : null)}
+          {tSatz(mitgliederText(1))}   ·   {ortText(istWienerBezirk(bezirk) ? bezirk.trim() : null)}
         </SsText>
         {/* Harte Regel 18 gilt auch hier: Die Vorschau ist die Stelle, an der man
             sieht, was eingestellt IST. Ein Schloss, das nur im Formular steht, wäre
@@ -126,8 +126,8 @@ export default function GruppeNeuScreen() {
       </SsCard>
 
       <SsInput
-        label="Name"
-        placeholder="Marswiese Tennis"
+        label={t('gruppe.name')}
+        placeholder={t('gruppe.namePlatzhalter')}
         value={name}
         onChangeText={setName}
         maxLength={40}
@@ -144,21 +144,21 @@ export default function GruppeNeuScreen() {
       </View>
 
       <SsInput
-        label="Beschreibung"
+        label={t('gruppe.beschreibung')}
         hint="freiwillig"
         value={beschreibung}
         onChangeText={setBeschreibung}
-        placeholder="Wir spielen meistens am Wochenende."
+        placeholder={t('gruppe.beschreibungPlatzhalter')}
         multiline
         maxLength={160}
       />
 
       <SsInput
-        label="Bezirk"
+        label={t('erstellen.bezirk')}
         hint="freiwillig"
         value={bezirk}
         onChangeText={setBezirk}
-        placeholder="1070"
+        placeholder={t('erstellen.bezirkPlatzhalter')}
         keyboardType="number-pad"
         maxLength={4}
         error={zeigen('bezirk')}
@@ -189,13 +189,13 @@ export default function GruppeNeuScreen() {
         />
         <SsText variant="caption" color={colors.inkSoft}>
           {offen
-            ? 'Die Gruppe steht in der Liste. Wer hinein will, fragt an — du bestätigst.'
-            : 'Die Gruppe steht in keiner Liste. Hinein kommt nur, wen jemand von drinnen einlädt.'}
+            ? t('gruppe.offenHinweis')
+            : t('gruppe.privatHinweisNeu')}
         </SsText>
       </View>
 
       <SsButton
-        label="Gruppe erstellen"
+        label={t('gruppe.gruppeErstellen')}
         icon="personen"
         block
         size="lg"

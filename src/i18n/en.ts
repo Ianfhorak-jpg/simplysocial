@@ -151,6 +151,68 @@ export const en: Weiter<typeof de> = {
     imFeedWasDabei: "There's bound to be something in the feed.",
   },
 
+  gruppe: {
+    gibtEsNichtMehr: 'This group is gone.',
+    // „Gründer" durchgehend „founder" — nicht „owner" oder „admin": Er hat sie
+    // gegründet, und das ist in diesem Modell seine einzige Sonderstellung.
+    vielleichtAufgeloest: 'The founder may have dissolved it.',
+    leuteEinladen: 'Invite people',
+    fuerGruppePosten: 'Post for the group',
+    wasGeradeLaeuft: "What's on right now",
+    jaVerlassen: 'Yes, leave',
+    gruppeVerlassen: 'Leave group',
+    anfragenAnsehen: 'View requests',
+    blockiertZumGruender: "There's a block between you and this group's founder.",
+    einladungSofortDabei:
+      "Accept and you're in right away — the founder doesn't have to confirm anything.",
+    anfrageGeschicktGruender: 'Request sent · the founder still has to confirm',
+    solangeNichtSichtbar: "Until then you can't see what's on in the group.",
+    anfrageZurueckziehen: 'Withdraw request',
+    bleibtZu: "What's on here and who's in stays closed.",
+    erstAlsMitglied:
+      "You'll see what's on in this group once you're a member. Ask to join — the founder confirms and you're in.",
+    kurzDazuschreiben: 'Add a short note',
+    // „Servus" ist wienerisch und hat kein englisches Gegenstück, das so klingt.
+    // „Hi" ist der Ton, den ein englischsprachiger Wiener hier schreiben würde.
+    dazuschreibenPlatzhalter: "Hi! I'd like to join.",
+    beitrittAnfragen: 'Ask to join',
+    einladen: 'Invite',
+    gruender: 'Founder',
+    duBistGruender:
+      "You'll be the founder. You confirm requests from outside; later, anyone inside can invite.",
+    name: 'Name',
+    // Ein Ortsname in Wien bleibt, wie er heisst — wie die Donauinsel.
+    namePlatzhalter: 'Marswiese Tennis',
+    beschreibung: 'Description',
+    beschreibungPlatzhalter: 'We usually play at weekends.',
+    offenHinweis: 'The group is listed. Anyone who wants in asks — you confirm.',
+    privatHinweisNeu:
+      "The group isn't listed. The only way in is an invite from someone inside.",
+    gruppeErstellen: 'Create group',
+    einMitglied: '1 member',
+    mehrereMitglieder: '{anzahl} members',
+  },
+
+  gruppenregel: {
+    hatAufgehoert:
+      'This group is gone. It dissolved when the last person left.',
+    privat: 'This group is private. The only way in is an invite from someone inside.',
+    nurEinladung: 'The only way into this group is an invite from someone inside.',
+    privatKurz: 'Private — only people who are invited get in.',
+    austrittPostsWeg: 'You\'ll no longer see posts from "{gruppe}".',
+    austrittNurNeueAnfrage: 'The only way back is a new request.',
+    austrittAufgeloest: 'The group is dissolved for everyone — the other members too.',
+    austrittWeitergabe:
+      'The group passes to {name} — whoever has been in longest takes it on.',
+    austrittAllein: "You're the only one in the group, so it will be dissolved.",
+    austrittBleibtOhneGruender:
+      'The group stays, but nobody can confirm new members any more.',
+    austrittPostsBleiben: 'Your posts for this group carry on as normal.',
+    austrittPostsWegGeloescht:
+      'Your posts for this group are deleted — including meet-ups people agreed to.',
+    austrittPostsOeffentlich: 'Your posts for this group become publicly visible.',
+  },
+
   chat: {
     gruppen: 'Groups',
     nochKeinChat: 'No chats yet',

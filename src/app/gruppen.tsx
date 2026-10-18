@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 
+import { tSatz } from '@/i18n';
 import { SsBack, SsButton, SsCard, SsChip, SsIconText, SsScreen, SsText } from '@/components/ui';
 import { BRAND } from '@/config/brand';
 import { mitgliederText } from '@/features/groups/gruppe';
@@ -97,7 +98,7 @@ function GruppenZeile({ eintrag }: { eintrag: GruppenEintrag }) {
         {/* Die Mitgliederzahl steht auch bei Gruppen, in denen man nicht ist — WER
             drin ist, dagegen nicht (`useMitglieder`). Ohne die Zahl könnte man
             nicht entscheiden, ob sich eine Anfrage lohnt. */}
-        {mitgliederText(gruppe.memberIds.length)}   ·   {ortText(gruppe.district)}
+        {tSatz(mitgliederText(gruppe.memberIds.length))}   ·   {ortText(gruppe.district)}
       </SsText>
     </SsCard>
   );

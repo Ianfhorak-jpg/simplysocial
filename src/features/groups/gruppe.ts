@@ -370,20 +370,51 @@ export function inGruppenListe(gruppe: Group, userId: string): boolean {
  * `blockFolgen()` in `safety/block.ts` und `schreibHuerdeText()` in `chat/direkt.ts`:
  * Ändert Ian die Regel, ändert sich der Satz mit. `undefined` heißt „keine Hürde".
  */
-export function beitrittHuerdeText(gruppe: Group): string | undefined {
+/**
+ * Die Wörterbuch-Schlüssel dieser Datei — **eigene Unions, ohne Import.**
+ *
+ * 🔴 `supabase/pruefen/40_uebersetzung.mjs` lädt diese Datei in blankem Node
+ * (`gruppe.mjs`) und holt sich daraus `istAufgeloest`, `istGruender`,
+ * `istMitglied`, `inGruppenListe`. Ein `import` von `@/i18n` — auch ein
+ * `import type` — würde das erschlagen; die Datei bleibt importfrei, und die
+ * Schlüssel prüft `t(...)` am Aufruf.
+ *
+ * ⚠️ **Die REGELN bleiben hier.** Welcher Satz bei welcher Lage gilt
+ * (`BEITRITT`, `GRUENDER_AUSTRITT`, `gruppe.offen`) ist harte Regel 32 und
+ * wandert nicht ins Wörterbuch — nur der Wortlaut.
+ */
+type GruppenHuerde =
+  | 'gruppenregel.hatAufgehoert'
+  | 'gruppenregel.privat'
+  | 'gruppenregel.nurEinladung';
+type GruppenFolge =
+  | 'gruppenregel.austrittPostsWeg'
+  | 'gruppenregel.austrittNurNeueAnfrage'
+  | 'gruppenregel.austrittAufgeloest'
+  | 'gruppenregel.austrittWeitergabe'
+  | 'gruppenregel.austrittAllein'
+  | 'gruppenregel.austrittBleibtOhneGruender'
+  | 'gruppenregel.austrittPostsBleiben'
+  | 'gruppenregel.austrittPostsWegGeloescht'
+  | 'gruppenregel.austrittPostsOeffentlich';
+
+/** Ein Satz, der noch Werte braucht — wie `BildText` in `social/bild.ts`. */
+export type GruppenSatz = { schluessel: GruppenFolge; werte?: Record<string, string> };
+
+export function beitrittHuerdeText(gruppe: Group): GruppenHuerde | undefined {
   // Dieselbe Reihenfolge wie in `darfBeitreten()`, damit die beiden nie
   // auseinanderlaufen können — deshalb steht das Aufgelöstsein auch hier zuerst.
   if (istAufgeloest(gruppe)) return GRUPPE_HAT_AUFGEHOERT;
   // Phase 18a: Erst die Gruppe, dann die App-Regel.
   if (!gruppe.offen) {
-    return 'Diese Gruppe ist privat. Hinein kommt man nur, wenn jemand von drinnen dich einlädt.';
+    return 'gruppenregel.privat';
   }
   switch (BEITRITT) {
     case 'offen':
     case 'anfrage':
       return undefined;
     case 'einladung':
-      return 'In diese Gruppe kommt man nur, wenn jemand von drinnen dich einlädt.';
+      return 'gruppenregel.nurEinladung';
   }
 }
 
@@ -396,9 +427,9 @@ export function beitrittHuerdeText(gruppe: Group): string | undefined {
  * Gruppe von innen aus wie jede andere, und niemand wüsste, dass sein Beitrag hier
  * enger läuft als sonst.
  */
-export function privatHinweis(gruppe: Group): string | undefined {
+export function privatHinweis(gruppe: Group): 'gruppenregel.privatKurz' | undefined {
   if (gruppe.offen) return undefined;
-  return 'Privat — hier kommt nur hinein, wer eingeladen wird.';
+  return 'gruppenregel.privatKurz';
 }
 
 /**
@@ -409,16 +440,20 @@ export function privatHinweis(gruppe: Group): string | undefined {
  * zurückholen kann — hinein kommt man danach nur über eine neue Anfrage und die
  * Bestätigung von jemand anderem.
  */
-export function austrittFolgen(gruppe: Group, ichId: string, nachfolgerName?: string): string[] {
-  const folgen = [
-    `Du siehst die Posts von „${gruppe.name}" nicht mehr.`,
-    'Zurück kommst du nur über eine neue Anfrage.',
+export function austrittFolgen(
+  gruppe: Group,
+  ichId: string,
+  nachfolgerName?: string,
+): GruppenSatz[] {
+  const folgen: GruppenSatz[] = [
+    { schluessel: 'gruppenregel.austrittPostsWeg', werte: { gruppe: gruppe.name } },
+    { schluessel: 'gruppenregel.austrittNurNeueAnfrage' },
   ];
 
   if (istGruender(gruppe, ichId)) {
     switch (GRUENDER_AUSTRITT) {
       case 'nur-aufloesen':
-        folgen.push('Die Gruppe wird für alle aufgelöst — auch für die anderen Mitglieder.');
+        folgen.push({ schluessel: 'gruppenregel.austrittAufgeloest' });
         break;
       case 'weitergeben':
         // Ohne Nachfolger heißt „weitergeben" auflösen — siehe `nachfolgerId()`.
@@ -426,25 +461,25 @@ export function austrittFolgen(gruppe: Group, ichId: string, nachfolgerName?: st
         // überrascht, dass seine Gruppe weg ist.
         folgen.push(
           nachfolgerName
-            ? `Die Gruppe geht an ${nachfolgerName} — wer am längsten dabei ist, führt sie weiter.`
-            : 'Du bist allein in der Gruppe: Sie wird damit aufgelöst.',
+            ? { schluessel: 'gruppenregel.austrittWeitergabe', werte: { name: nachfolgerName } }
+            : { schluessel: 'gruppenregel.austrittAllein' },
         );
         break;
       case 'gruppe-bleibt':
-        folgen.push('Die Gruppe bleibt bestehen, aber niemand kann mehr Beitritte bestätigen.');
+        folgen.push({ schluessel: 'gruppenregel.austrittBleibtOhneGruender' });
         break;
     }
   }
 
   switch (AUSTRITT_WIRKUNG) {
     case 'posts-bleiben':
-      folgen.push('Deine Posts für diese Gruppe laufen normal weiter.');
+      folgen.push({ schluessel: 'gruppenregel.austrittPostsBleiben' });
       break;
     case 'posts-weg':
-      folgen.push('Deine Posts für diese Gruppe werden gelöscht — auch zugesagte Treffen.');
+      folgen.push({ schluessel: 'gruppenregel.austrittPostsWegGeloescht' });
       break;
     case 'posts-oeffentlich':
-      folgen.push('Deine Posts für diese Gruppe werden öffentlich sichtbar.');
+      folgen.push({ schluessel: 'gruppenregel.austrittPostsOeffentlich' });
       break;
   }
 
@@ -540,12 +575,18 @@ export const GRUPPE_UNBEKANNT = 'einer Gruppe';
  * ein 404 dort wie ein Fehler der App aussähe. Was fehlt, ist der Weg HINEIN: kein
  * Anfragen-Knopf, keine Mitgliederliste, kein Gründer.
  */
-export const GRUPPE_HAT_AUFGEHOERT =
-  'Diese Gruppe gibt es nicht mehr. Sie hat sich aufgelöst, als die letzte Person sie verlassen hat.';
+export const GRUPPE_HAT_AUFGEHOERT = 'gruppenregel.hatAufgehoert' as const;
 
 /** Wie viele Mitglieder — Einzahl und Mehrzahl an einer Stelle. */
-export function mitgliederText(anzahl: number): string {
-  return anzahl === 1 ? '1 Mitglied' : `${anzahl} Mitglieder`;
+export function mitgliederText(
+  anzahl: number,
+): { schluessel: 'gruppe.einMitglied' | 'gruppe.mehrereMitglieder'; werte: { anzahl: number } } {
+  // ⚠️ Einzahl und Mehrzahl sind ZWEI Schlüssel — ein Satz mit eingesetztem
+  // Wort ist in keiner der beiden Sprachen richtig (Falle im Register).
+  return {
+    schluessel: anzahl === 1 ? 'gruppe.einMitglied' : 'gruppe.mehrereMitglieder',
+    werte: { anzahl },
+  };
 }
 
 /**

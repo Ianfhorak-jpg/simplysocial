@@ -2190,3 +2190,14 @@
   ⚠️ **Nebenwirkung, die `expo lint` gemeldet hat:** `create.tsx` brauchte `BRAND`
   danach nicht mehr — die Zahl stieg von 88 auf 89, und das war der einzige Hinweis.
   *Jede ANDERE Lint-Zahl ist ein Befund*, auch eine, die nur um eins steigt.
+- 🔴 **„Importfrei" bedeutet bei zwei Regel-Dateien VERSCHIEDENES — je nachdem, wie der
+  Prüfstand sie übersetzt.** `features/auth/anmeldung.ts` wird von `96_anbieter.sh`
+  **einzeln** in einen Wegwerf-Ordner kopiert und mit eigener `tsconfig.json` übersetzt,
+  die den `@/`-Kurznamen nicht kennt: Dort ist **jeder** Import tödlich, auch ein
+  `import type`. `features/groups/gruppe.ts` dagegen wird von `aufbauen.sh` als Teil des
+  **ganzen Baums** übersetzt (`js/features/groups/gruppe.mjs`), und sie trägt seit immer
+  ein `import type { Group } from '@/types/models'` — dort lösen die Kurznamen auf.
+  ⚠️ **Wer „importfrei" als eine Regel liest, ist entweder zu streng oder zu lässig.**
+  Am 2026-10-18 habe ich `gruppe.ts` aus Vorsicht wie `anmeldung.ts` behandelt (eigene
+  Union-Typen statt `import type`) — harmlos und einheitlich, aber es war **nicht
+  nötig**, und das gehört dazugesagt statt als Notwendigkeit ausgegeben.

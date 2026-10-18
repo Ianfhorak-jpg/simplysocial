@@ -146,6 +146,71 @@ export const de = {
     imFeedWasDabei: 'Im Feed ist bestimmt was dabei.',
   },
 
+  /** Gruppen — Ansicht, Gründen, Beitritt. */
+  gruppe: {
+    gibtEsNichtMehr: 'Diese Gruppe gibt es nicht mehr.',
+    vielleichtAufgeloest: 'Vielleicht hat sie der Gründer aufgelöst.',
+    leuteEinladen: 'Leute einladen',
+    fuerGruppePosten: 'Für die Gruppe posten',
+    wasGeradeLaeuft: 'Was gerade läuft',
+    jaVerlassen: 'Ja, verlassen',
+    gruppeVerlassen: 'Gruppe verlassen',
+    anfragenAnsehen: 'Anfragen ansehen',
+    blockiertZumGruender: 'Zwischen dir und dem Gründer dieser Gruppe steht eine Blockierung.',
+    einladungSofortDabei:
+      'Nimm an, dann bist du sofort dabei — der Gründer muss nichts mehr bestätigen.',
+    anfrageGeschicktGruender: 'Anfrage geschickt · der Gründer muss noch bestätigen',
+    solangeNichtSichtbar: 'Solange siehst du noch nicht, was in der Gruppe läuft.',
+    anfrageZurueckziehen: 'Anfrage zurückziehen',
+    bleibtZu: 'Was hier läuft und wer dabei ist, bleibt zu.',
+    erstAlsMitglied:
+      'Was in dieser Gruppe läuft, siehst du erst als Mitglied. Frag an — der Gründer bestätigt, dann bist du dabei.',
+    kurzDazuschreiben: 'Kurz dazuschreiben',
+    dazuschreibenPlatzhalter: 'Servus! Würd gern dazukommen.',
+    beitrittAnfragen: 'Beitritt anfragen',
+    einladen: 'Einladen',
+    gruender: 'Gründer',
+    duBistGruender:
+      'Du bist danach der Gründer. Anfragen von aussen bestätigst du; einladen darf später jeder, der drin ist.',
+    name: 'Name',
+    namePlatzhalter: 'Marswiese Tennis',
+    beschreibung: 'Beschreibung',
+    beschreibungPlatzhalter: 'Wir spielen meistens am Wochenende.',
+    offenHinweis: 'Die Gruppe steht in der Liste. Wer hinein will, fragt an — du bestätigst.',
+    privatHinweisNeu:
+      'Die Gruppe steht in keiner Liste. Hinein kommt nur, wen jemand von drinnen einlädt.',
+    gruppeErstellen: 'Gruppe erstellen',
+    /** ⚠️ Einzahl und Mehrzahl sind ZWEI Schlüssel (`mitgliederText`). */
+    einMitglied: '1 Mitglied',
+    mehrereMitglieder: '{anzahl} Mitglieder',
+  },
+
+  /**
+   * Was eine Gruppe erlaubt und was ein Austritt anrichtet — der Wortlaut zu
+   * `features/groups/gruppe.ts` (harte Regel 32). **Die Regeln selbst bleiben dort**,
+   * hier stehen nur die Sätze.
+   */
+  gruppenregel: {
+    hatAufgehoert:
+      'Diese Gruppe gibt es nicht mehr. Sie hat sich aufgelöst, als die letzte Person sie verlassen hat.',
+    privat:
+      'Diese Gruppe ist privat. Hinein kommt man nur, wenn jemand von drinnen dich einlädt.',
+    nurEinladung: 'In diese Gruppe kommt man nur, wenn jemand von drinnen dich einlädt.',
+    privatKurz: 'Privat — hier kommt nur hinein, wer eingeladen wird.',
+    austrittPostsWeg: 'Du siehst die Posts von „{gruppe}" nicht mehr.',
+    austrittNurNeueAnfrage: 'Zurück kommst du nur über eine neue Anfrage.',
+    austrittAufgeloest: 'Die Gruppe wird für alle aufgelöst — auch für die anderen Mitglieder.',
+    austrittWeitergabe:
+      'Die Gruppe geht an {name} — wer am längsten dabei ist, führt sie weiter.',
+    austrittAllein: 'Du bist allein in der Gruppe: Sie wird damit aufgelöst.',
+    austrittBleibtOhneGruender:
+      'Die Gruppe bleibt bestehen, aber niemand kann mehr Beitritte bestätigen.',
+    austrittPostsBleiben: 'Deine Posts für diese Gruppe laufen normal weiter.',
+    austrittPostsWegGeloescht:
+      'Deine Posts für diese Gruppe werden gelöscht — auch zugesagte Treffen.',
+    austrittPostsOeffentlich: 'Deine Posts für diese Gruppe werden öffentlich sichtbar.',
+  },
+
   /** Die Chat-Liste. */
   chat: {
     gruppen: 'Gruppen',

@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, SectionList, StyleSheet, View } from 'react-native';
 
-import { t } from '@/i18n';
+import { t, tSatz } from '@/i18n';
 import { SsAvatar, SsButton, SsCard, SsChip, SsIcon, SsIconText, SsScreen, SsSegment, SsText } from '@/components/ui';
 import { getState, useWartetAuf } from '@/features/store';
 import { mitgliederText } from '@/features/groups/gruppe';
@@ -401,7 +401,7 @@ function GruppeKopf({ gruppe }: { gruppe: Group }) {
       <View style={styles.gruppenZeile}>
         <SsChip category={gruppe.category} />
         <SsText variant="caption" color={colors.inkSoft}>
-          {mitgliederText(gruppe.memberIds.length)}
+          {tSatz(mitgliederText(gruppe.memberIds.length))}
         </SsText>
       </View>
       <SsText variant="heading" numberOfLines={1}>
@@ -520,7 +520,7 @@ function EinladungZeile({ eintrag }: { eintrag: EinladungEintrag }) {
         <View style={styles.gruppenZeile}>
           <SsChip category={gruppe.category} />
           <SsText variant="caption" color={colors.inkSoft}>
-            {mitgliederText(gruppe.memberIds.length)}
+            {tSatz(mitgliederText(gruppe.memberIds.length))}
           </SsText>
         </View>
         <SsText variant="heading" numberOfLines={1}>
@@ -577,7 +577,7 @@ function GesendeteGruppenZeile({ eintrag }: { eintrag: GruppenAnfrageEintrag }) 
         </SsIconText>
       </View>
       <SsText variant="caption" color={colors.inkSoft}>
-        Gruppe von {person.displayName} · {mitgliederText(gruppe.memberIds.length)}
+        Gruppe von {person.displayName} · {tSatz(mitgliederText(gruppe.memberIds.length))}
       </SsText>
       {anfrage.message ? (
         <SsText variant="caption" color={colors.inkSoft} numberOfLines={2}>

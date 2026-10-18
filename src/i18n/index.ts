@@ -180,6 +180,29 @@ export function t(schluessel: TSchluessel, werte?: Platzhalter): string {
   return einsetzen(treffer ?? schluessel, werte);
 }
 
+/**
+ * Ein Satz, den eine Regel-Datei als SCHLÜSSEL samt Werten zurückgegeben hat.
+ *
+ * ── Warum es diesen Helfer gibt ──────────────────────────────────────────────
+ * Die Regel-Dateien dieses Projekts (`features/social/bild.ts`,
+ * `features/groups/gruppe.ts`, `features/safety/meldung.ts`,
+ * `features/posts/standort.ts`) müssen **importfrei** bleiben — mehrere
+ * Prüfstände laden sie in blankem Node oder übersetzen sie einzeln ohne den
+ * `@/`-Kurznamen. Sie können `t()` deshalb nicht selbst aufrufen und geben
+ * stattdessen `{ schluessel, werte }` heraus. **Das Muster kam am 2026-10-18 zum
+ * vierten Mal**, und viermal `t(x.schluessel, x.werte)` von Hand ist dreimal die
+ * Gelegenheit, die Werte zu vergessen.
+ *
+ * ⚠️ `werte` ist optional, weil die meisten Sätze keine brauchen — und ein
+ * fehlendes `werte` ist dann kein Fehler, sondern der Normalfall.
+ */
+export function tSatz(satz: {
+  schluessel: TSchluessel;
+  werte?: Platzhalter;
+}): string {
+  return t(satz.schluessel, satz.werte);
+}
+
 // ── Gerätesprache und die gemerkte Wahl ──────────────────────────────────────
 
 /**
