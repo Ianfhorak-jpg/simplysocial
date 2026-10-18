@@ -48,7 +48,7 @@ I18N = SRC / 'i18n'
 # erlaubtes Maß an Schlamperei. Wer sie hochsetzt, macht den Wächter wertlos:
 # Genau der Fehler, der ACTAs Build 1 zu Apple geschickt hat, würde dann grün
 # gemeldet. Sinkt sie, wird sie hier nachgezogen — das ist der Fortschritt.
-GRENZE = 215
+GRENZE = 186
 
 JA = NEIN = 0
 
@@ -180,6 +180,19 @@ if m_brand and m_de:
           m_brand.group(1) == m_de.group(1),
           f'brand.ts: {m_brand.group(1)[:40]!r} · de.ts: {m_de.group(1)[:40]!r}')
 
+# Dasselbe für den STADTNAMEN, und aus demselben Grund. `BRAND.city` ist die
+# Tatsache (die App ist für Wien), `marke.stadt` die Anzeige davon — auf Englisch
+# „Vienna" (Ians Wörterliste). **Laufen die deutschen Fassungen auseinander, steht
+# in einem Satz eine andere Stadt als im anderen.**
+m_city = re.search(r"city:\s*'([^']+)'", brand)
+m_stadt = re.search(r"marke:\s*\{.*?stadt:\s*'([^']+)'", de_text, re.S)
+pruef('`brand.ts` nennt eine Stadt', m_city is not None)
+pruef('`de.ts` nennt sie unter `marke.stadt`', m_stadt is not None)
+if m_city and m_stadt:
+    pruef('… und beide sind gleich',
+          m_city.group(1) == m_stadt.group(1),
+          f'brand.ts: {m_city.group(1)!r} · de.ts: {m_stadt.group(1)!r}')
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  2 · Deutsche Literale außerhalb von i18n/ — ACTAs teurer Fehler
 # ══════════════════════════════════════════════════════════════════════════════
@@ -269,7 +282,7 @@ PROPS = re.compile(
 )
 
 # ⚠️ Darf nur FALLEN — dieselbe Abmachung wie bei GRENZE.
-GRENZE_PROPS = 96
+GRENZE_PROPS = 75
 
 fest: list[str] = []
 for datei in sorted(SRC.rglob('*.tsx')):

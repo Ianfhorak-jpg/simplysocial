@@ -39,6 +39,16 @@ export const de = {
    */
   marke: {
     claim: 'Finde Leute, die jetzt Lust haben.',
+    /**
+     * Der STADTNAME, wie er dasteht.
+     *
+     * ⚠️ **Nicht `BRAND.city` im Text benutzen.** `BRAND.city` ist die Tatsache
+     * (die App ist für Wien); dieser Schlüssel ist die ANZEIGE davon, und auf
+     * Englisch heißt die Stadt „Vienna" (Ians Wörterliste vom 2026-10-17).
+     * Dieselbe Trennung wie beim Claim — und `pruef-sprache` hält die deutsche
+     * Fassung gleich mit `BRAND.city`.
+     */
+    stadt: 'Wien',
   },
 
   /** Wörter, die überall vorkommen. */
@@ -179,10 +189,99 @@ export const de = {
     hochladenUnerwartet: 'Das Hochladen ist an etwas Unerwartetem gescheitert. Sag Ian Bescheid.',
   },
 
+  /** Eine Aktivität einstellen — der Kern-Ablauf der App. */
+  erstellen: {
+    kategorieFehler: 'Wähle aus, worum es geht.',
+    titelFehler: 'Ein paar Wörter, damit man weiß, was los ist.',
+    sichtFehler: 'Wähle die Gruppe aus, für die der Post gedacht ist.',
+    worumGehtEs: 'Worum geht es?',
+    titel: 'Titel',
+    titelPlatzhalter: 'Tennis spielen',
+    wann: 'Wann?',
+    zeitPlatzhalter: '18:30',
+    bezirk: 'Bezirk',
+    bezirkFreiwillig: 'freiwillig — leer heißt „irgendwo in {stadt}"',
+    bezirkPflicht: 'nur die Postleitzahl',
+    bezirkPlatzhalter: '1070',
+    wieViele: 'Wie viele können mitkommen?',
+    duZaehlstNicht: 'du selbst zählst nicht mit',
+    koennen: 'Können',
+    niemandAbgehaengt: 'damit sich niemand abgehängt fühlt',
+    fuerWen: 'Für wen ist das?',
+    niemandFehlAmPlatz: 'damit niemand fehl am Platz ist',
+    jahrgangHinweis:
+      'Dein Post ist trotzdem für alle sichtbar. Der Jahrgang sagt nur, an wen er sich richtet — und andere können danach filtern.',
+    treffpunkt: 'Treffpunkt',
+    treffpunktPlatzhalter: 'Beim Eingang der Sportanlage',
+    nochWas: 'Noch was dazu?',
+    nochWasPlatzhalter: 'Hab zwei Schläger dabei, Bälle auch.',
+    werSollSehen: 'Wer soll es sehen?',
+    gruppeSpaeter: 'Sobald du in einer Gruppe bist, kannst du hier auch nur für sie posten.',
+    wieLange: 'Wie lange sichtbar?',
+    vorschauLeer: 'Sobald du unten eine Kategorie wählst, siehst du hier deine Karte.',
+    obenInVorschau: 'Zeit, Bezirk, Plätze — oben in der Vorschau',
+    bezirkFehlt: 'In welchem Bezirk?',
+    bezirkFalsch: 'Ein {stadt}er Bezirk zwischen 1010 und 1230.',
+    zeitFehlt: 'Wann geht es los?',
+    zeitFalsch: 'Eine Uhrzeit wie 18:30.',
+    zeitVorbei: 'Das ist schon vorbei.',
+    sichtFollower: 'Follower',
+    sichtNurFollower: 'Nur meine Follower',
+    sichtGruppe: 'Gruppe',
+    sichtAlleText: 'Jeder in {stadt} sieht deinen Post im Feed.',
+    sichtFollowerText: 'Nur wer dir folgt, sieht ihn — das sind gerade {anzahl} Leute.',
+    sichtGruppeText:
+      'Nur die Leute in „{gruppe}" sehen ihn. Im Feed steht er bei ihnen wie jeder andere Post.',
+  },
+
+  /**
+   * Wie lange ein Post sichtbar bleibt. Gehört `features/posts/lifecycle.ts` —
+   * **die RECHENREGEL bleibt dort**, hier steht nur der Wortlaut.
+   */
+  sichtdauer: {
+    startTitel: 'Bis es losgeht',
+    startText: 'Für Sachen, bei denen man pünktlich sein muss — Kino, Zug, Konzert.',
+    tagesendeTitel: 'Bis Tagesende',
+    tagesendeText: 'Der Normalfall. Wer knapp zu spät dran ist, kann trotzdem noch dazukommen.',
+    morgenTitel: 'Einen Tag länger',
+    morgenText:
+      'Für Offenes ohne feste Uhrzeit — „bin den ganzen Nachmittag am Donaukanal".',
+  },
+
   /** Eine Aktivität einstellen und bestätigt werden. */
   post: {
     posterBestaetigt: 'Der Poster hat dich bestätigt',
     bezirkFrage: 'In welchem Bezirk bist du unterwegs?',
+  },
+
+  /** Die Post-Ansicht — der Bildschirm, auf dem „Bin dabei" gedrückt wird. */
+  postansicht: {
+    blockiertTitel: 'Hier geht nichts',
+    blockiertText:
+      'Zwischen dir und dem Verfasser dieses Posts steht eine Blockierung. Blockierungen, die du selbst gesetzt hast, findest du in den Einstellungen.',
+    deinPostTitel: 'Das ist dein Post',
+    niemandAngefragt:
+      'Noch hat niemand angefragt. Sobald jemand mitmachen will, siehst du es im Anfragen-Tab.',
+    /** ⚠️ Einzahl und Mehrzahl sind ZWEI Schlüssel — kein Satz mit eingesetztem Verb. */
+    einerWillMit: '{anzahl} Person will mitmachen. Bestätigen kannst du im Anfragen-Tab.',
+    mehrereWollenMit: '{anzahl} Leute wollen mitmachen. Bestätigen kannst du im Anfragen-Tab.',
+    verabredetTitel: 'Ihr seid verabredet',
+    verabredetText: '{name} hat bestätigt. Alles Weitere macht ihr im Chat aus.',
+    zumChat: 'Zum Chat',
+    diesmalNichtTitel: 'Diesmal nicht',
+    diesmalNichtText: '{name} hat abgesagt. Im Feed ist bestimmt was anderes.',
+    anfrageGeschicktTitel: 'Anfrage geschickt',
+    anfrageGeschicktText:
+      '{name} muss noch bestätigen. Sobald das passiert, geht der Chat auf.',
+    anfrageZuruecknehmen: 'Anfrage zurücknehmen',
+    schonVoll: 'Schon voll',
+    treffpunktOffen: 'Machen wir im Chat aus',
+    fuerWen: 'Für wen',
+    plaetze: 'Plätze',
+    alleVergeben: 'Alle {gesamt} vergeben',
+    sichtbarFuer: 'Sichtbar für',
+    gibtEsNichtMehr: 'Diesen Post gibt es nicht mehr',
+    abgelaufenOderGeloescht: 'Vielleicht ist er abgelaufen oder wurde gelöscht.',
   },
 
   /** Anfragen — jemand will mitkommen. */

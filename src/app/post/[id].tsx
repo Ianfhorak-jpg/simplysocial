@@ -167,17 +167,22 @@ export default function PostDetailScreen() {
           // ein Block verbergen soll. Derselbe Satz für beide Richtungen.
           <Hinweis
             icon="verboten"
-            titel="Hier geht nichts"
-            text="Zwischen dir und dem Verfasser dieses Posts steht eine Blockierung. Blockierungen, die du selbst gesetzt hast, findest du in den Einstellungen."
+            titel={t('postansicht.blockiertTitel')}
+            text={t('postansicht.blockiertText')}
           />
         ) : istMeiner ? (
           <Hinweis
             icon="stift"
-            titel="Das ist dein Post"
+            titel={t('postansicht.deinPostTitel')}
             text={
               anfragenAufDiesen.length === 0
-                ? 'Noch hat niemand angefragt. Sobald jemand mitmachen will, siehst du es im Anfragen-Tab.'
-                : `${anfragenAufDiesen.length} ${anfragenAufDiesen.length === 1 ? 'Person will' : 'Leute wollen'} mitmachen. Bestätigen kannst du im Anfragen-Tab.`
+                ? t('postansicht.niemandAngefragt')
+                : t(
+                    anfragenAufDiesen.length === 1
+                      ? 'postansicht.einerWillMit'
+                      : 'postansicht.mehrereWollenMit',
+                    { anzahl: anfragenAufDiesen.length },
+                  )
             }
           />
         ) : meineAnfrage ? (
@@ -189,8 +194,8 @@ export default function PostDetailScreen() {
               <>
                 <Hinweis
                   icon="funken"
-                  titel="Ihr seid verabredet"
-                  text={`${author.displayName} hat bestätigt. Alles Weitere macht ihr im Chat aus.`}
+                  titel={t('postansicht.verabredetTitel')}
+                  text={t('postansicht.verabredetText', { name: author.displayName })}
                 />
                 {/* Seit Phase 5 ein echter Weg statt eines Hinweises. Der Knopf steht
                     nur da, wenn der Faden wirklich existiert — er zeigt nie auf einen
@@ -199,7 +204,7 @@ export default function PostDetailScreen() {
                   <SsButton
                     variant="category"
                     category={post.category}
-                    label="Zum Chat"
+                    label={t('postansicht.zumChat')}
                     icon="sprechblase"
                     block
                     onPress={() => router.push({ pathname: '/chat/[id]', params: { id: chat.id } })}
@@ -209,14 +214,14 @@ export default function PostDetailScreen() {
             ) : meineAnfrage.status === 'declined' ? (
               <Hinweis
                 icon="kreuzKreis"
-                titel="Diesmal nicht"
-                text={`${author.displayName} hat abgesagt. Im Feed ist bestimmt was anderes.`}
+                titel={t('postansicht.diesmalNichtTitel')}
+                text={t('postansicht.diesmalNichtText', { name: author.displayName })}
               />
             ) : (
               <Hinweis
                 icon="hakenKreis"
-                titel="Anfrage geschickt"
-                text={`${author.displayName} muss noch bestätigen. Sobald das passiert, geht der Chat auf.`}
+                titel={t('postansicht.anfrageGeschicktTitel')}
+                text={t('postansicht.anfrageGeschicktText', { name: author.displayName })}
               />
             )}
             {meineAnfrage.message ? (
@@ -227,14 +232,14 @@ export default function PostDetailScreen() {
             {meineAnfrage.status === 'pending' ? (
               <SsButton
                 variant="ghost"
-                label="Anfrage zurücknehmen"
+                label={t('postansicht.anfrageZuruecknehmen')}
                 block
                 onPress={() => void anfrageZuruecknehmen(post.id)}
               />
             ) : null}
           </>
         ) : !offen ? (
-          <SsButton label="Schon voll" block size="lg" disabled />
+          <SsButton label={t('postansicht.schonVoll')} block size="lg" disabled />
         ) : (
           <>
             <SsInput
@@ -249,7 +254,7 @@ export default function PostDetailScreen() {
                 werden, bevor man tippt, und den Weg trotzdem offen lassen. */}
             <DoppelHinweis kollisionen={kollisionen} />
             <SsButton
-              label="Bin dabei"
+              label={t('feed.binDabei')}
               icon="hand"
               block
               size="lg"
@@ -290,12 +295,12 @@ export default function PostDetailScreen() {
           <SsCard>
             <Zeile
               icon="fahne"
-              label="Treffpunkt"
-              wert={post.meetingPoint ?? 'Machen wir im Chat aus'}
+              label={t('erstellen.treffpunkt')}
+              wert={post.meetingPoint ?? t('postansicht.treffpunktOffen')}
               leise={!post.meetingPoint}
             />
             <Trenner />
-            <Zeile icon="ziel" label="Können" wert={t(LEVEL_LABELS[post.level])} />
+            <Zeile icon="ziel" label={t('erstellen.koennen')} wert={t(LEVEL_LABELS[post.level])} />
             {/* Nur, wenn der Verfasser wirklich eingeschränkt hat. Eine Zeile „Für wen:
                 Für alle" wäre an jedem zweiten Post eine Zeile, die nichts sagt — und
                 genau dadurch übersieht man sie dort, wo sie etwas sagt. Dieselbe Regel
@@ -303,21 +308,25 @@ export default function PostDetailScreen() {
             {post.alter.kind !== 'egal' ? (
               <>
                 <Trenner />
-                <Zeile icon="person" label="Für wen" wert={alterAmDetail(post.alter)} />
+                <Zeile icon="person" label={t('postansicht.fuerWen')} wert={alterAmDetail(post.alter)} />
               </>
             ) : null}
             <Trenner />
             <Zeile
               icon="personen"
-              label="Plätze"
-              wert={frei > 0 ? `${frei} von ${post.spotsTotal} frei` : `Alle ${post.spotsTotal} vergeben`}
+              label={t('postansicht.plaetze')}
+              wert={
+                frei > 0
+                  ? t('anfragen.freiVon', { frei, gesamt: post.spotsTotal })
+                  : t('postansicht.alleVergeben', { gesamt: post.spotsTotal })
+              }
             />
             {sichtText ? (
               <>
                 <Trenner />
                 <Zeile
                   icon={post.visibility.kind === 'group' ? 'personen' : 'schloss'}
-                  label="Sichtbar für"
+                  label={t('postansicht.sichtbarFuer')}
                   wert={sichtText}
                 />
               </>
@@ -416,12 +425,12 @@ function NichtGefunden() {
     <SsScreen contentStyle={styles.fehlerSeite}>
       <SsIcon name="frage" size={52} color={colors.inkSoft} />
       <SsText variant="heading" center>
-        Diesen Post gibt es nicht mehr
+        {t('postansicht.gibtEsNichtMehr')}
       </SsText>
       <SsText variant="body" center color={colors.inkSoft}>
-        Vielleicht ist er abgelaufen oder wurde gelöscht.
+        {t('postansicht.abgelaufenOderGeloescht')}
       </SsText>
-      <SsButton label="Zurück zum Feed" onPress={() => router.replace('/')} />
+      <SsButton label={t('melden.zurueckZumFeed')} onPress={() => router.replace('/')} />
     </SsScreen>
   );
 }

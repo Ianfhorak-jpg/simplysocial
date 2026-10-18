@@ -41,6 +41,9 @@ export const en: Weiter<typeof de> = {
     // Apple-Prüfer liest, deshalb steht hier etwas statt einer Lücke — aber er
     // gehört vorgelegt (wie der Leitsatz in `i18n/WOERTER.md`).
     claim: 'Find people who are up for it right now.',
+    // Ians Wörterliste vom 2026-10-17: die Stadt heisst auf Englisch „Vienna".
+    // ⚠️ Das ist die ANZEIGE, nicht `BRAND.city` — das bleibt die Tatsache „Wien".
+    stadt: 'Vienna',
   },
 
   gemein: {
@@ -185,10 +188,99 @@ export const en: Weiter<typeof de> = {
     hochladenUnerwartet: 'The upload failed unexpectedly. Please let Ian know.',
   },
 
+  erstellen: {
+    kategorieFehler: "Pick what it's about.",
+    titelFehler: "A few words so people know what's up.",
+    sichtFehler: 'Pick the group this post is for.',
+    worumGehtEs: "What's it about?",
+    titel: 'Title',
+    titelPlatzhalter: 'Playing tennis',
+    wann: 'When?',
+    zeitPlatzhalter: '18:30',
+    bezirk: 'District',
+    bezirkFreiwillig: 'optional — empty means "somewhere in {stadt}"',
+    bezirkPflicht: 'postcode only',
+    bezirkPlatzhalter: '1070',
+    wieViele: 'How many can come along?',
+    duZaehlstNicht: "you don't count yourself",
+    // „Können" ist hier das Niveau, nicht die Fähigkeit zu kommen.
+    koennen: 'Skill level',
+    niemandAbgehaengt: 'so nobody feels left behind',
+    fuerWen: "Who's it for?",
+    niemandFehlAmPlatz: 'so nobody feels out of place',
+    jahrgangHinweis:
+      "Your post stays visible to everyone. The age range only says who it's aimed at — and others can filter by it.",
+    treffpunkt: 'Meeting point',
+    treffpunktPlatzhalter: 'At the entrance to the sports ground',
+    nochWas: 'Anything to add?',
+    nochWasPlatzhalter: "I've got two rackets, balls too.",
+    werSollSehen: 'Who should see it?',
+    gruppeSpaeter: "Once you're in a group, you can post just for them here.",
+    wieLange: 'Visible for how long?',
+    vorschauLeer: 'Pick a category below and your card shows up here.',
+    obenInVorschau: 'Time, district, spots — in the preview above',
+    bezirkFehlt: 'Which district?',
+    // Im Deutschen „ein Wiener Bezirk", im Englischen „a Vienna district" —
+    // deshalb steht der Platzhalter hier VOR dem Wort und nicht daran geklebt.
+    bezirkFalsch: 'A {stadt} district between 1010 and 1230.',
+    zeitFehlt: 'When does it start?',
+    zeitFalsch: 'A time like 18:30.',
+    zeitVorbei: "That's already passed.",
+    sichtFollower: 'Followers',
+    sichtNurFollower: 'Only my followers',
+    sichtGruppe: 'Group',
+    sichtAlleText: 'Everyone in {stadt} sees your post in the feed.',
+    sichtFollowerText: "Only people who follow you see it — that's {anzahl} people right now.",
+    sichtGruppeText:
+      'Only the people in "{gruppe}" see it. It shows in their feed like any other post.',
+  },
+
+  sichtdauer: {
+    startTitel: 'Until it starts',
+    startText: 'For things you have to be on time for — cinema, trains, concerts.',
+    tagesendeTitel: 'Until end of day',
+    tagesendeText: 'The normal case. Anyone running a little late can still join.',
+    morgenTitel: 'One more day',
+    // Der Donaukanal behält seinen Namen — ein Ort in Wien hat keinen englischen.
+    morgenText:
+      'For open-ended things with no fixed time — "I\'m at the Donaukanal all afternoon".',
+  },
+
   post: {
     // „host", nicht „poster" — ein `poster` ist auf Englisch ein Plakat.
     posterBestaetigt: 'The host confirmed you',
     bezirkFrage: 'Which district are you in?',
+  },
+
+  postansicht: {
+    blockiertTitel: 'Nothing doing here',
+    blockiertText:
+      "There's a block between you and whoever posted this. Blocks you set yourself are in Settings.",
+    deinPostTitel: 'This is your post',
+    niemandAngefragt:
+      "Nobody has asked yet. As soon as someone wants in, you'll see it in the Requests tab.",
+    // ⚠️ Zwei Schlüssel, nicht ein Satz mit eingesetztem Verb: Englisch beugt
+    // „person/people" UND „wants/want", Deutsch „Person will/Leute wollen" —
+    // ein gemeinsamer Satz mit Platzhalter geht in keiner der beiden Sprachen.
+    einerWillMit: '{anzahl} person wants in. You can confirm in the Requests tab.',
+    mehrereWollenMit: '{anzahl} people want in. You can confirm in the Requests tab.',
+    verabredetTitel: "You're set",
+    verabredetText: '{name} confirmed. Sort out the rest in the chat.',
+    zumChat: 'Go to chat',
+    diesmalNichtTitel: 'Not this time',
+    diesmalNichtText: "{name} said no. There's bound to be something else in the feed.",
+    anfrageGeschicktTitel: 'Request sent',
+    anfrageGeschicktText:
+      '{name} still has to confirm. As soon as that happens, the chat opens.',
+    anfrageZuruecknehmen: 'Withdraw request',
+    schonVoll: 'Already full',
+    treffpunktOffen: "We'll sort it out in the chat",
+    fuerWen: 'Who for',
+    plaetze: 'Spots',
+    alleVergeben: 'All {gesamt} taken',
+    sichtbarFuer: 'Visible to',
+    gibtEsNichtMehr: 'This post is gone',
+    abgelaufenOderGeloescht: 'It may have expired or been deleted.',
   },
 
   anfrage: {

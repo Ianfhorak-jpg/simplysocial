@@ -2175,3 +2175,18 @@
   Union, aber in keinem der beiden Wörterbücher. **`tsc` hat es am AUFRUF gemeldet**
   (`t(grund.erklaerung)` nimmt nur einen `TSchluessel`), nicht an der Definition — die
   Sicherheit liegt bei diesem Muster eine Datei weiter, und genau dort greift sie auch.
+- **Mehrzahl geht NICHT mit einem Platzhalter im Satz.** In `post/[id].tsx` stand
+  `${n} ${n === 1 ? 'Person will' : 'Leute wollen'} mitmachen` — im Deutschen beugt sich
+  Substantiv UND Verb, im Englischen genauso (`person wants` / `people want`). Ein
+  gemeinsamer Satz mit eingesetztem Teilstück ist in **keiner** der beiden Sprachen
+  richtig. Lösung: **zwei Schlüssel** (`einerWillMit`, `mehrereWollenMit`) und die
+  Verzweigung beim Aufruf. Wer hier einen Schlüssel spart, baut einen Satz, der in einer
+  der Sprachen immer falsch ist.
+- **Ein `{stadt}` statt `BRAND.city` ist nötig, sobald eine zweite Sprache dazukommt —
+  aber `BRAND.city` bleibt die TATSACHE.** „Wien" heißt auf Englisch „Vienna" (Ians
+  Wörterliste). `BRAND.city` ist die Angabe, für welche Stadt die App gebaut ist;
+  `marke.stadt` ist die ANZEIGE davon. Dieselbe Trennung wie beim Claim, und
+  `pruef-sprache` hält die deutschen Fassungen gleich (Gegenprobe rot gesehen).
+  ⚠️ **Nebenwirkung, die `expo lint` gemeldet hat:** `create.tsx` brauchte `BRAND`
+  danach nicht mehr — die Zahl stieg von 88 auf 89, und das war der einzige Hinweis.
+  *Jede ANDERE Lint-Zahl ist ein Befund*, auch eine, die nur um eins steigt.

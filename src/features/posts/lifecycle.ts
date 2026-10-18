@@ -40,9 +40,9 @@ export const SICHTDAUER_STANDARD: Sichtdauer = 'tagesende';
 
 export interface SichtdauerMeta {
   wert: Sichtdauer;
-  label: string;
+  label: SichtdauerTitel;
   /** Was das bedeutet, in einem Halbsatz — für den Erstellen-Screen. */
-  erklaerung: string;
+  erklaerung: SichtdauerText;
 }
 
 /**
@@ -52,21 +52,39 @@ export interface SichtdauerMeta {
  * sichtbar sein" ist keine Frage, die sich jemand beim Posten stellt. Drei Pillen
  * beantworten sie, ohne sie zu stellen.
  */
+/**
+ * Die Wörterbuch-Schlüssel der Sichtdauern — **eigene Unions, ohne Import.**
+ *
+ * 🔴 `SICHTDAUERN` unten ist eine MODULWEITE Konstante: ein `t()` darin hielte für
+ * immer die Sprache beim App-Start (dieselbe Falle wie `CATEGORIES`).
+ * ⚠️ **Die RECHENREGEL bleibt hier** — `ablaufZeitpunkt()` darunter rechnet auf den
+ * Kalendertag, und nur der Wortlaut ist ins Wörterbuch gezogen. Wandert die Regel
+ * mit, verspricht der Text eines Tages etwas, das die Rechnung nicht tut.
+ */
+type SichtdauerTitel =
+  | 'sichtdauer.startTitel'
+  | 'sichtdauer.tagesendeTitel'
+  | 'sichtdauer.morgenTitel';
+type SichtdauerText =
+  | 'sichtdauer.startText'
+  | 'sichtdauer.tagesendeText'
+  | 'sichtdauer.morgenText';
+
 export const SICHTDAUERN: readonly SichtdauerMeta[] = [
   {
     wert: 'start',
-    label: 'Bis es losgeht',
-    erklaerung: 'Für Sachen, bei denen man pünktlich sein muss — Kino, Zug, Konzert.',
+    label: 'sichtdauer.startTitel',
+    erklaerung: 'sichtdauer.startText',
   },
   {
     wert: 'tagesende',
-    label: 'Bis Tagesende',
-    erklaerung: 'Der Normalfall. Wer knapp zu spät dran ist, kann trotzdem noch dazukommen.',
+    label: 'sichtdauer.tagesendeTitel',
+    erklaerung: 'sichtdauer.tagesendeText',
   },
   {
     wert: 'morgen',
-    label: 'Einen Tag länger',
-    erklaerung: 'Für Offenes ohne feste Uhrzeit — „bin den ganzen Nachmittag am Donaukanal".',
+    label: 'sichtdauer.morgenTitel',
+    erklaerung: 'sichtdauer.morgenText',
   },
 ];
 

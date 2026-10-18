@@ -22,7 +22,6 @@ import {
   SsSegment,
   SsText,
 } from '@/components/ui';
-import { BRAND } from '@/config/brand';
 import { ALLE_LABEL, jahrgangMax, jahrgangMin, spanneUmJahrgang } from '@/config/alter';
 import { LEVEL_LABELS } from '@/config/categories';
 import { useWartetAuf } from '@/features/store';
@@ -253,9 +252,9 @@ const SYMBOL_BREITE = 22;
  */
 function bezirkFehler(roh: string): string {
   if (roh.trim() === '') {
-    return BEZIRK_FREIWILLIG ? '' : 'In welchem Bezirk?';
+    return BEZIRK_FREIWILLIG ? '' : t('erstellen.bezirkFehlt');
   }
-  return istWienerBezirk(roh) ? '' : 'Ein Wiener Bezirk zwischen 1010 und 1230.';
+  return istWienerBezirk(roh) ? '' : t('erstellen.bezirkFalsch', { stadt: t('marke.stadt') });
 }
 
 /** Wie weit im Voraus man posten kann: heute plus sechs Tage. */
@@ -324,11 +323,11 @@ export default function CreateScreen() {
   const kollisionen = useKollisionen(startsAt ?? undefined);
 
   const fehler: Record<Feldname, string> = {
-    kategorie: kategorie ? '' : 'Wähle aus, worum es geht.',
-    titel: titelSauber.length >= 3 ? '' : 'Ein paar Wörter, damit man weiß, was los ist.',
+    kategorie: kategorie ? '' : t('erstellen.kategorieFehler'),
+    titel: titelSauber.length >= 3 ? '' : t('erstellen.titelFehler'),
     bezirk: bezirkFehler(bezirk),
     zeit: zeitFehler(zeitRoh, startsAt),
-    sicht: sichtbarkeit === null ? 'Wähle die Gruppe aus, für die der Post gedacht ist.' : '',
+    sicht: sichtbarkeit === null ? t('erstellen.sichtFehler') : '',
   };
   const allesOk = Object.values(fehler).every((f) => f === '');
 
@@ -500,7 +499,7 @@ export default function CreateScreen() {
           wohin es springen soll (`FEHLER_ANTWORT`). Sie bekommen absichtlich KEIN
           `style` — der Abstand kommt weiter vom `gap` des Scroll-Inhalts. */}
       <View onLayout={(e) => merkePosition('kategorie', false, e)}>
-        <Feld titel="Worum geht es?" fehler={zeigen('kategorie')}>
+        <Feld titel={t('erstellen.worumGehtEs')} fehler={zeigen('kategorie')}>
           <View style={styles.pillen}>
             {CATEGORY_ORDER.map((k) => (
               <SsChip
@@ -516,8 +515,8 @@ export default function CreateScreen() {
 
       <View onLayout={(e) => merkePosition('titel', false, e)}>
         <SsInput
-          label="Titel"
-          placeholder="Tennis spielen"
+          label={t('erstellen.titel')}
+          placeholder={t('erstellen.titelPlatzhalter')}
           value={titel}
           onChangeText={setTitel}
           maxLength={60}
@@ -534,7 +533,7 @@ export default function CreateScreen() {
             mehrBereichY.current = e.nativeEvent.layout.y;
           }}>
           <View onLayout={(e) => merkePosition('zeit', true, e)}>
-            <Feld titel="Wann?">
+            <Feld titel={t('erstellen.wann')}>
               <View style={styles.pillen}>
                 {Array.from({ length: TAGE_VORAUS }, (_, i) => (
                   <SsChip
@@ -548,7 +547,7 @@ export default function CreateScreen() {
               <SsInput
                 value={zeitRoh}
                 onChangeText={setZeitRoh}
-                placeholder="18:30"
+                placeholder={t('erstellen.zeitPlatzhalter')}
                 keyboardType="numbers-and-punctuation"
                 maxLength={5}
                 suffix="Uhr"
@@ -560,13 +559,15 @@ export default function CreateScreen() {
 
           <View onLayout={(e) => merkePosition('bezirk', true, e)}>
             <SsInput
-              label="Bezirk"
+              label={t('erstellen.bezirk')}
               hint={
-                BEZIRK_FREIWILLIG ? 'freiwillig — leer heißt „irgendwo in Wien“' : 'nur die Postleitzahl'
+                BEZIRK_FREIWILLIG
+                  ? t('erstellen.bezirkFreiwillig', { stadt: t('marke.stadt') })
+                  : t('erstellen.bezirkPflicht')
               }
               value={bezirk}
               onChangeText={setBezirk}
-              placeholder="1070"
+              placeholder={t('erstellen.bezirkPlatzhalter')}
               keyboardType="number-pad"
               maxLength={4}
               suffix="Wien"
@@ -574,11 +575,11 @@ export default function CreateScreen() {
             />
           </View>
 
-          <Feld titel="Wie viele können mitkommen?" hinweis="du selbst zählst nicht mit">
+          <Feld titel={t('erstellen.wieViele')} hinweis={t('erstellen.duZaehlstNicht')}>
             <Zaehler wert={plaetze} setzen={setPlaetze} />
           </Feld>
 
-          <Feld titel="Können" hinweis="damit sich niemand abgehängt fühlt">
+          <Feld titel={t('erstellen.koennen')} hinweis={t('erstellen.niemandAbgehaengt')}>
             <View style={styles.pillen}>
               {LEVELS.map((l) => (
                 <SsChip
@@ -595,7 +596,7 @@ export default function CreateScreen() {
               Ians Entscheidung 17. Es ist derselbe Baustein wie im Feed-Filter, und
               das ist Absicht: Wer hier eine Spanne einstellt und dort danach sucht,
               soll nicht zweimal etwas anderes bedienen. */}
-          <Feld titel="Für wen ist das?" hinweis="damit niemand fehl am Platz ist">
+          <Feld titel={t('erstellen.fuerWen')} hinweis={t('erstellen.niemandFehlAmPlatz')}>
             <View style={styles.pillen}>
               <SsChip
                 label={ALLE_LABEL}
@@ -603,7 +604,7 @@ export default function CreateScreen() {
                 onPress={() => setAlter({ kind: 'egal' })}
               />
               <SsChip
-                label="Bestimmte Jahrgänge"
+                label={t('filter.bestimmteJahrgaenge')}
                 selected={alter.kind === 'spanne'}
                 onPress={() => setAlter({ kind: 'spanne', ...spanneUmJahrgang(ich.jahrgang) })}
               />
@@ -625,28 +626,27 @@ export default function CreateScreen() {
                   }
                 />
                 <SsText variant="caption" color={colors.inkSoft}>
-                  Dein Post ist trotzdem für alle sichtbar. Der Jahrgang sagt nur, an
-                  wen er sich richtet — und andere können danach filtern.
+                  {t('erstellen.jahrgangHinweis')}
                 </SsText>
               </>
             ) : null}
           </Feld>
 
           <SsInput
-            label="Treffpunkt"
+            label={t('erstellen.treffpunkt')}
             hint="freiwillig"
             value={treffpunkt}
             onChangeText={setTreffpunkt}
-            placeholder="Beim Eingang der Sportanlage"
+            placeholder={t('erstellen.treffpunktPlatzhalter')}
             maxLength={80}
           />
 
           <SsInput
-            label="Noch was dazu?"
+            label={t('erstellen.nochWas')}
             hint="freiwillig"
             value={notiz}
             onChangeText={setNotiz}
-            placeholder="Hab zwei Schläger dabei, Bälle auch."
+            placeholder={t('erstellen.nochWasPlatzhalter')}
             multiline
             maxLength={200}
           />
@@ -656,7 +656,7 @@ export default function CreateScreen() {
               sondern eine Sackgasse (dieselbe Überlegung wie bei den Bezirks-Pillen
               im Feed, die nur zeigen, wo wirklich etwas los ist). */}
           <View onLayout={(e) => merkePosition('sicht', true, e)}>
-          <Feld titel="Wer soll es sehen?" fehler={zeigen('sicht')}>
+          <Feld titel={t('erstellen.werSollSehen')} fehler={zeigen('sicht')}>
             <SsSegment<VisibilityKind>
               value={sichtArt}
               onChange={(art) => {
@@ -670,13 +670,13 @@ export default function CreateScreen() {
               options={
                 meineGruppen.length > 0
                   ? [
-                      { wert: 'public', label: 'Alle' },
-                      { wert: 'followers', label: 'Follower' },
-                      { wert: 'group', label: 'Gruppe' },
+                      { wert: 'public', label: t('filter.alle') },
+                      { wert: 'followers', label: t('erstellen.sichtFollower') },
+                      { wert: 'group', label: t('erstellen.sichtGruppe') },
                     ]
                   : [
-                      { wert: 'public', label: 'Alle' },
-                      { wert: 'followers', label: 'Nur meine Follower' },
+                      { wert: 'public', label: t('filter.alle') },
+                      { wert: 'followers', label: t('erstellen.sichtNurFollower') },
                     ]
               }
             />
@@ -703,27 +703,30 @@ export default function CreateScreen() {
               // auf einen anderen Screen gelockt werden — der halb getippte Post
               // wäre weg. Der Weg zu den Gruppen steht am Profil.
               <SsText variant="caption" color={colors.inkSoft}>
-                Sobald du in einer Gruppe bist, kannst du hier auch nur für sie posten.
+                {t('erstellen.gruppeSpaeter')}
               </SsText>
             ) : null}
           </Feld>
           </View>
 
           <Feld
-            titel="Wie lange sichtbar?"
+            titel={t('erstellen.wieLange')}
             hinweis={laeuftAb ? `bis ${startText(laeuftAb)}` : undefined}>
             <View style={styles.pillen}>
               {SICHTDAUERN.map((d) => (
                 <SsChip
                   key={d.wert}
-                  label={d.label}
+                  label={t(d.label)}
                   selected={sichtdauer === d.wert}
                   onPress={() => setSichtdauer(d.wert)}
                 />
               ))}
             </View>
             <SsText variant="caption" color={colors.inkSoft}>
-              {SICHTDAUERN.find((d) => d.wert === sichtdauer)?.erklaerung}
+              {(() => {
+                const d = SICHTDAUERN.find((x) => x.wert === sichtdauer);
+                return d ? t(d.erklaerung) : null;
+              })()}
             </SsText>
           </Feld>
         </View>
@@ -736,7 +739,7 @@ export default function CreateScreen() {
           </SsText>
         ) : null}
         <SsButton
-          label="Posten"
+          label={t('feed.posten')}
           icon="stift"
           block
           size="lg"
@@ -771,7 +774,7 @@ function Vorschau({ eintrag }: { eintrag: FeedEintrag | null }) {
       ) : (
         <View style={styles.vorschauLeer}>
           <SsText variant="caption" color={colors.inkSoft} center>
-            Sobald du unten eine Kategorie wählst, siehst du hier deine Karte.
+            {t('erstellen.vorschauLeer')}
           </SsText>
         </View>
       )}
@@ -808,7 +811,7 @@ function MehrEinstellen({ offen, umschalten }: { offen: boolean; umschalten: () 
       </View>
       {offen ? null : (
         <SsText variant="caption" color={colors.inkSoft} style={styles.mehrUnter}>
-          Zeit, Bezirk, Plätze — oben in der Vorschau
+          {t('erstellen.obenInVorschau')}
         </SsText>
       )}
     </Pressable>
@@ -947,9 +950,9 @@ function fehlerSatz(fehler: Record<Feldname, string>): string {
 }
 
 function zeitFehler(roh: string, startsAt: string | null): string {
-  if (roh.trim() === '') return 'Wann geht es los?';
-  if (startsAt === null) return 'Eine Uhrzeit wie 18:30.';
-  if (new Date(startsAt).getTime() <= Date.now()) return 'Das ist schon vorbei.';
+  if (roh.trim() === '') return t('erstellen.zeitFehlt');
+  if (startsAt === null) return t('erstellen.zeitFalsch');
+  if (new Date(startsAt).getTime() <= Date.now()) return t('erstellen.zeitVorbei');
   return '';
 }
 
@@ -962,13 +965,13 @@ function zeitFehler(roh: string, startsAt: string | null): string {
 function sichtErklaerung(art: VisibilityKind, follower: number, gruppe: string | null): string {
   switch (art) {
     case 'public':
-      return `Jeder in ${BRAND.city} sieht deinen Post im Feed.`;
+      return t('erstellen.sichtAlleText', { stadt: t('marke.stadt') });
     case 'followers':
-      return `Nur wer dir folgt, sieht ihn — das sind gerade ${follower} Leute.`;
+      return t('erstellen.sichtFollowerText', { anzahl: follower });
     case 'group':
       return gruppe
-        ? `Nur die Leute in „${gruppe}" sehen ihn. Im Feed steht er bei ihnen wie jeder andere Post.`
-        : 'Wähle noch aus, für welche Gruppe der Post gedacht ist.';
+        ? t('erstellen.sichtGruppeText', { gruppe })
+        : t('erstellen.sichtFehler');
   }
 }
 

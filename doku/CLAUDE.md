@@ -1120,6 +1120,8 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - `CATEGORIES`/`LEVEL_LABELS` sind modulweite Konstanten — ein `t()` darin friert die Startsprache EIN
 - Ein Wächter, der eine Apple-Zusage trägt, geht beim Übersetzen rot — und wird dann VERENGT, nicht nachgezogen
 - Ein eigener Union-Typ für Schlüssel ist eine Zusage, die man einlösen muss — `tsc` meldet es am AUFRUF
+- Mehrzahl geht NICHT mit einem Platzhalter im Satz — zwei Schlüssel, Verzweigung beim Aufruf
+- `BRAND.city` ist die TATSACHE, `marke.stadt` die ANZEIGE — und der frei gewordene Import meldet sich nur im Lint
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)
