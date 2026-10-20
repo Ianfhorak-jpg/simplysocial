@@ -2294,3 +2294,15 @@
   Wörterbuch. Vor dem Löschen zweimal geprüft: kein Vorkommen im Code **und** kein
   fester Satz desselben Wortlauts in einem Bildschirm (sonst wäre es ACTAs Fehler in
   der anderen Richtung).
+- 🔴 **Ein Häkchen, das ZWEI Fragen trägt, wird unerreichbar, sobald die zweite strenger
+  ist als die erste.** `asc einreichbereit` prüfte unter „Build an der Version" beides:
+  ob ein Build an der Version hängt (**Apples** Anforderung) und ob er den Code von
+  heute trägt (**unsere**). Am 2026-10-20 hängte Ian Build 5 an, danach fielen zehn
+  tote Wörterbuch-Schlüssel — und die Liste meldete weiter ✗ und „1 offene Punkte",
+  obwohl bei Apple alles stand. **Zwölf von zwölf waren damit nur noch durch einen
+  20-Minuten-Build erreichbar, der nichts geändert hätte.** Behebung: Gezählt wird nur,
+  was Apple verlangt; die Aktualität steht als ⚠️ unter der Liste, wie das
+  Privacy-Label mit seinem `?`. ⚠️ **Die Warnung darf nicht wegfallen** — derselbe
+  Wächter hat am 17.10. einen Build erwischt, der den roten Kasten noch trug. Die Lehre
+  ist nicht „der Wächter war zu streng", sondern: *Zwei Fragen, zwei Zeilen* — sonst
+  kann man die eine nicht beantworten, ohne die andere zu verletzen.

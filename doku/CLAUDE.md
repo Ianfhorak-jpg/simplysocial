@@ -103,6 +103,27 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 > | **Der Wächter kann die Lücke jetzt sehen** | `pruef-sprache` **24 → 26**: neue Messung „deutsche Sätze ohne Umlaut" (Funktionswörter, Grenze 1) und Abschnitt 2c liest auch Destrukturierungen. Beide mit Gegenprobe rot gesehen |
 > | `pruef-zuschnitt` **47 → 56** | VERENGT, nicht nachgezogen: Er liest die Sätze jetzt aus BEIDEN Wörterbüchern statt nur aus dem deutschen |
 >
+> ### 🟢 Nachtrag 2026-10-20, Teil 2: **12 von 12 — Build 5 hängt dran**
+>
+> Ian hat Build 5 gebaut und angehängt (mit `--trotzdem`, siehe unten). Bei Apple
+> gemessen: **0 offene Punkte.** Es bleibt das Privacy-Label, das über die API
+> nicht lesbar ist, und das Einreichen selbst.
+>
+> ⚠️ **`--trotzdem` war hier richtig, und das ist gemessen, nicht geschätzt:**
+> Zwischen Build und Quelltext lagen **genau 20 Zeilen, alle Löschungen** — die zehn
+> toten Schlüssel in beiden Sprachen. Kein Bildschirm las sie, also verhält sich
+> Build 5 Zeichen für Zeichen wie der Quelltext. Im Bündel liegen 20 Zeichenketten
+> zu viel; keine davon ist heikel (kein Paywall-Wort, kein Beta-Hinweis).
+>
+> 🔴 **Dabei repariert: `asc einreichbereit` stellte ZWEI Fragen in EINER Zeile.**
+> „Hängt ein Build dran" (Apples Anforderung) und „ist er aktuell" (unsere,
+> strengere) teilten sich ein Häkchen. Sobald Ian anhängte und danach eine Zeile
+> Code fiel, meldete die Liste weiter ✗ und „1 offene Punkte" — **zwölf von zwölf
+> waren unerreichbar, ohne neu zu bauen.** Jetzt zählt die Liste nur Apples
+> Anforderungen; die Aktualität steht als ⚠️ darunter, wie das Privacy-Label.
+> Sie verschwindet NICHT — genau dieser Wächter hat am 17.10. einen Build erwischt,
+> der den roten Kasten noch trug.
+>
 > ### Nachtrag 2026-10-20: zehn tote Schlüssel und ein Wächter dafür
 >
 > Build-Nummer steht an beiden Stellen auf **5** (`app.json` committet, `Info.plist`
@@ -1010,11 +1031,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 125. Was der App Store an TEXT zeigt, steht in `scripts/storetexte.md` — und jede ADRESSE darin wird angerufen, bevor sie zu Apple geht
 ## Fallen — Index
 
-> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 256 Stück, jede schon
+> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 257 Stück, jede schon
 > einmal einen Abend gekostet — die meisten stammen aus ACTA (`17_Tennis_Optimma`), der
 > Rest aus diesem Projekt. Hier steht nur der Titel; **die Diagnose steht im Volltext.**
 >
-> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-10-20: **256**; am
+> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-10-20: **257**; am
 > 2026-09-28 standen hier 213 bei 226 gezählten) — *eine Warnung mit einer ZAHL darin
 > veraltet genauso still wie das, wovor sie warnt.* Die Messstelle, damit die nächste
 > Zahl nicht wieder geraten wird:
@@ -1279,6 +1300,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - `pod install` stirbt an einer ASCII-8BIT-Umgebung, und die Meldung zeigt auf Unicode statt auf die Umgebung
 - Ein Ersetzungs-Helfer, der je DATEI schreibt, hinterlässt beim Abbruch die Hälfte
 - Ein Wörterbuch-Schlüssel, den KEIN Bildschirm liest, landet trotzdem im Bündel
+- Ein Häkchen, das ZWEI Fragen trägt, wird unerreichbar, sobald die zweite strenger ist
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

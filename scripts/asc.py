@@ -389,8 +389,20 @@ def einreichbereit(token, app):
             build_alt = True
             build_grund = (f"Build {b['attributes']['version']} hängt dran, ist aber "
                            f"VERALTET — {_datei} wurde danach geändert")
-    zeile('Build an der Version', bool(b) and not build_alt,
-          build_grund if build_alt else
+    # 🔴 **ZWEI Fragen, zwei Zeilen — seit dem 2026-10-20.** Vorher trug dieser
+    # Punkt beide: „hängt ein Build dran" (Apples Anforderung) und „ist er aktuell"
+    # (unsere, strengere). Das ging schief, sobald Ian den Build anhängte und danach
+    # eine Zeile Code fiel: Die Liste meldete weiter ✗ und „1 offene Punkte", obwohl
+    # Apple zufrieden war — **zwölf von zwölf waren damit unerreichbar**, ohne neu zu
+    # bauen. *Eine Meldung, die den eigenen Ablauf nicht kennt, ist keine Auskunft*
+    # (FALLEN.md).
+    #
+    # Gezählt wird jetzt nur, was APPLE verlangt. Die Aktualität steht als eigene
+    # Warnung darunter — sichtbar, aber nicht als Sperre, denn ob eine Änderung nach
+    # dem Build wirklich zählt, weiß nur ein Mensch. ⚠️ Sie darf NICHT verschwinden:
+    # Genau dieser Wächter hat am 17.10. einen Build erwischt, der den roten Kasten
+    # noch trug.
+    zeile('Build an der Version', bool(b),
           (f"Build {b['attributes']['version']}" if b else
            'KEINER — Einreichen gesperrt. Braucht einen NEUEN Build, nicht den alten'),
           '🧑 npm run testflight')
@@ -510,6 +522,15 @@ def einreichbereit(token, app):
           " Connect nachsehen")
     print("     Steht dort „Bearbeiten\" statt „Erste Schritte\", ist es ausgefüllt.")
     print("     [🧑 Die sieben Einträge stehen in _FUER_IAN/DATENSCHUTZ_ETIKETT.md]")
+
+    # Die Aktualitäts-Warnung steht NACH der Liste und zählt nicht mit — wie das
+    # Privacy-Label, und aus verwandtem Grund: Sie behauptet keinen Mangel bei Apple,
+    # sondern nennt eine Tatsache, die ein Mensch beurteilen muss.
+    if build_alt:
+        print(f"\n  ⚠️  {build_grund}")
+        print("     Apples Anforderung ist trotzdem erfüllt — ein Build hängt dran.")
+        print("     Ob die Änderung zählt, sagt der Diff: `git log` seit dem Upload.")
+        print("     [🧑 neu bauen mit `npm run testflight`, oder bewusst so lassen]")
 
     print(f"\n  ── {len(offen)} offene Punkte" + (f": {', '.join(offen)}" if offen else " — Felder vollständig"))
 
