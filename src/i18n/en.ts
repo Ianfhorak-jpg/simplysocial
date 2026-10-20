@@ -49,9 +49,7 @@ export const en: Weiter<typeof de> = {
   gemein: {
     abbrechen: 'Cancel',
     fertig: 'Done',
-    weiter: 'Next',
     zurueck: 'Back',
-    nochmal: 'Try again',
     verstanden: 'Got it',
     und: 'and',
   },
@@ -128,7 +126,6 @@ export const en: Weiter<typeof de> = {
   },
 
   feed: {
-    leerMitFilter: 'Nothing going on with this filter',
     binDabei: "I'm in",
     zurueckKarte: 'Back to the map',
     posten: 'Post',
@@ -305,8 +302,6 @@ export const en: Weiter<typeof de> = {
 
   erstesKonto: {
     wieHeisstDu: "What's your name?",
-    nameZuLang: '{max} characters at most.',
-    bezirkWaehlen: 'Pick your district.',
     bezirkGrund: "We use it to sort what's going on near you.",
     haekchenFehlt: 'Just tick the box and off we go.',
     passwort: 'Password',
@@ -616,8 +611,6 @@ export const en: Weiter<typeof de> = {
 
   post: {
     // „host", nicht „poster" — ein `poster` ist auf Englisch ein Plakat.
-    posterBestaetigt: 'The host confirmed you',
-    bezirkFrage: 'Which district are you in?',
   },
 
   postansicht: {
@@ -652,13 +645,10 @@ export const en: Weiter<typeof de> = {
   },
 
   anfrage: {
-    zuSpaet: 'Too late — the spot is gone',
   },
 
   konto: {
     // „meet-ups", nicht „meetings" — Letzteres klingt nach Büro.
-    treffenGezaehlt: 'Meet-ups that actually happened',
-    loeschenWarnung: "This can't be undone",
   },
 
   einstellungen: {

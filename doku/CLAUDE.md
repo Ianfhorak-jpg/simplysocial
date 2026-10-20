@@ -103,11 +103,34 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 > | **Der Wächter kann die Lücke jetzt sehen** | `pruef-sprache` **24 → 26**: neue Messung „deutsche Sätze ohne Umlaut" (Funktionswörter, Grenze 1) und Abschnitt 2c liest auch Destrukturierungen. Beide mit Gegenprobe rot gesehen |
 > | `pruef-zuschnitt` **47 → 56** | VERENGT, nicht nachgezogen: Er liest die Sätze jetzt aus BEIDEN Wörterbüchern statt nur aus dem deutschen |
 >
+> ### Nachtrag 2026-10-20: zehn tote Schlüssel und ein Wächter dafür
+>
+> Build-Nummer steht an beiden Stellen auf **5** (`app.json` committet, `Info.plist`
+> gesetzt — die ist git-ignoriert und taucht in keinem Diff auf).
+>
+> **Bei Apple gemessen: 11 von 12**, offen allein „Build an der Version". Das Werkzeug
+> nennt sogar den Grund selbst: *„Build 4 hängt dran, ist aber VERALTET —
+> `src/components/LadeSchirm.tsx` wurde danach geändert."*
+>
+> 🔴 **Zehn Schlüssel las kein Bildschirm** (`feed.leerMitFilter`,
+> `erstesKonto.nameZuLang`, `erstesKonto.bezirkWaehlen`, `post.posterBestaetigt`,
+> `post.bezirkFrage`, `anfrage.zuSpaet`, `konto.treffenGezaehlt`,
+> `konto.loeschenWarnung`, `gemein.weiter`, `gemein.nochmal`) — Reste der ersten
+> Runde. **Das ganze Wörterbuch landet im Bündel**, und bei ACTAs Prüfung hat Apple
+> genau so Paywall-Wörter gefunden, die kein Bildschirm las. Vor dem Löschen geprüft:
+> nirgends im Code, und auch nicht als fester Satz in einen Bildschirm abgeschrieben.
+> Wörterbuch **516 → 506**.
+>
+> Neu bewacht: `pruef-sprache` **26 → 28**, Abschnitt 1c („Schlüssel ohne
+> Fundstelle", Grenze 0, mit Gegenprobe rot gesehen). ⚠️ Er ist nur erlaubt, **weil es
+> keine zusammengesetzten Schlüssel gibt** — gemessen: kein `t(`-Backtick und kein
+> `as TSchluessel` in `src/`.
+>
 > ### Gemessen, alles grün
 >
 > ```
-> tsc sauber · expo lint 88 (unverändert) · Wörterbuch 516/516
-> pruef-sprache 26 · pruef-zuschnitt 56 · pruef-alter 35 · pruef-zustimmung 34
+> tsc sauber · expo lint 88 (unverändert) · Wörterbuch 506/506
+> pruef-sprache 28 · pruef-zuschnitt 56 · pruef-alter 35 · pruef-zustimmung 34
 > pruef-kopf 48 · pruef-nennung 15 · pruef-anbieter 48 · pruef-bildwahl 48
 > pruef-farben 79 · pruef-boden 13 · pruef-glas 33 · pruef-sitzung 29
 > pruef-demoregel 29 · pruef-plattform 5 · pruef-etikett 12 · pruef-programmfehler ✓
@@ -987,11 +1010,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 125. Was der App Store an TEXT zeigt, steht in `scripts/storetexte.md` — und jede ADRESSE darin wird angerufen, bevor sie zu Apple geht
 ## Fallen — Index
 
-> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 255 Stück, jede schon
+> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 256 Stück, jede schon
 > einmal einen Abend gekostet — die meisten stammen aus ACTA (`17_Tennis_Optimma`), der
 > Rest aus diesem Projekt. Hier steht nur der Titel; **die Diagnose steht im Volltext.**
 >
-> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-10-18: **255**; am
+> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-10-20: **256**; am
 > 2026-09-28 standen hier 213 bei 226 gezählten) — *eine Warnung mit einer ZAHL darin
 > veraltet genauso still wie das, wovor sie warnt.* Die Messstelle, damit die nächste
 > Zahl nicht wieder geraten wird:
@@ -1255,6 +1278,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Ein Wächter, der Schlüssel-Träger an `const x = fn()` erkennt, sieht eine DESTRUKTURIERUNG nicht
 - `pod install` stirbt an einer ASCII-8BIT-Umgebung, und die Meldung zeigt auf Unicode statt auf die Umgebung
 - Ein Ersetzungs-Helfer, der je DATEI schreibt, hinterlässt beim Abbruch die Hälfte
+- Ein Wörterbuch-Schlüssel, den KEIN Bildschirm liest, landet trotzdem im Bündel
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

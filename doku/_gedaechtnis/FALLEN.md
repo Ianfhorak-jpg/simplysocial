@@ -2282,3 +2282,15 @@
   zweite Anlauf fand seinen Anker dann nicht mehr und sah nach einem ganz anderen
   Fehler aus. Es ist dieselbe Falle wie *„`pathlib.write_text()` LEERT die Datei, bevor
   es scheitert"*, nur über mehrere Dateien: **Erst ALLE Treffer prüfen, dann schreiben.**
+- 🔴 **Ein Wörterbuch-Schlüssel, den KEIN Bildschirm liest, landet trotzdem im Bündel.**
+  Am 2026-10-20 waren es zehn Reste der ersten Übersetzungsrunde. Harmlos sind sie
+  nicht: Bei ACTAs Apple-Prüfung wurden **Paywall-Wörter im Bündel nachgewiesen**,
+  obwohl kein Bildschirm sie las — ein Wörterbuch wird ganz ausgeliefert. Die Prüfung
+  ist billig (jeder Punkt-Pfad muss irgendwo in `src/` als Zeichenkette vorkommen) und
+  steht als Abschnitt 1c in `37_sprache.py`. ⚠️ **Sie ist nur erlaubt, solange es keine
+  ZUSAMMENGESETZTEN Schlüssel gibt** — gemessen am selben Tag: kein `t(`-Backtick und
+  kein `as TSchluessel` in `src/`. Käme je ein ``t(`${bereich}.${x}`)`` dazu, meldet
+  der Abschnitt reihenweise Fehlalarme, und dann ist ER zu ändern, nicht das
+  Wörterbuch. Vor dem Löschen zweimal geprüft: kein Vorkommen im Code **und** kein
+  fester Satz desselben Wortlauts in einem Bildschirm (sonst wäre es ACTAs Fehler in
+  der anderen Richtung).

@@ -55,9 +55,7 @@ export const de = {
   gemein: {
     abbrechen: 'Abbrechen',
     fertig: 'Fertig',
-    weiter: 'Weiter',
     zurueck: 'Zurück',
-    nochmal: 'Nochmal versuchen',
     verstanden: 'Verstanden',
     /** Das Wort, das zwei Aufzählungsglieder verbindet. */
     und: 'und',
@@ -164,7 +162,6 @@ export const de = {
 
   /** Der Feed und der Wischstapel. */
   feed: {
-    leerMitFilter: 'Mit diesem Filter ist gerade nichts los',
     binDabei: 'Bin dabei',
     zurueckKarte: 'Zurück zur Karte',
     posten: 'Posten',
@@ -341,8 +338,6 @@ export const de = {
   /** Das erste Konto und die Antwortleiste. */
   erstesKonto: {
     wieHeisstDu: 'Wie heißt du?',
-    nameZuLang: 'Höchstens {max} Zeichen.',
-    bezirkWaehlen: 'Wähl deinen Bezirk.',
     bezirkGrund: 'Danach sortieren wir, was in deiner Nähe los ist.',
     haekchenFehlt: 'Setz noch das Häkchen, dann geht es los.',
     passwort: 'Passwort',
@@ -719,8 +714,6 @@ export const de = {
 
   /** Eine Aktivität einstellen und bestätigt werden. */
   post: {
-    posterBestaetigt: 'Der Poster hat dich bestätigt',
-    bezirkFrage: 'In welchem Bezirk bist du unterwegs?',
   },
 
   /** Die Post-Ansicht — der Bildschirm, auf dem „Bin dabei" gedrückt wird. */
@@ -755,13 +748,10 @@ export const de = {
 
   /** Anfragen — jemand will mitkommen. */
   anfrage: {
-    zuSpaet: 'Zu spät — der Platz ist weg',
   },
 
   /** Das eigene Konto. */
   konto: {
-    treffenGezaehlt: 'Treffen, die wirklich stattgefunden haben',
-    loeschenWarnung: 'Das lässt sich nicht zurückholen',
   },
 
   /** Einstellungen. */

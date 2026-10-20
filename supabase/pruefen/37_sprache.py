@@ -194,6 +194,61 @@ if m_city and m_stadt:
           f'brand.ts: {m_city.group(1)!r} · de.ts: {m_stadt.group(1)!r}')
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  1c · Schlüssel, die KEIN Bildschirm liest — sie landen trotzdem im Bündel
+# ══════════════════════════════════════════════════════════════════════════════
+print('')
+print('── Schlüssel ohne Fundstelle ──')
+
+# 🔴 **Die Lehre kommt aus ACTAs Apple-Prüfung, und sie steht im Kopf von `de.ts`:**
+# Dort wurden Paywall-Wörter IM BÜNDEL nachgewiesen, obwohl kein Bildschirm sie
+# las. **Ein Wörterbuch wird ganz ausgeliefert** — ein Schlüssel, den niemand
+# aufruft, ist kein harmloser Rest, sondern Text, den Apple findet und wir nicht
+# erklären können.
+#
+# Am 2026-10-20 waren es ZEHN: `feed.leerMitFilter`, `erstesKonto.nameZuLang`,
+# `erstesKonto.bezirkWaehlen`, `post.posterBestaetigt`, `post.bezirkFrage`,
+# `anfrage.zuSpaet`, `konto.treffenGezaehlt`, `konto.loeschenWarnung`,
+# `gemein.weiter`, `gemein.nochmal` — Reste der ersten Übersetzungsrunde. Keiner
+# stand irgendwo im Code, und keiner war als fester Satz in einen Bildschirm
+# abgeschrieben (beides geprüft, bevor sie weg sind).
+#
+# ⚠️ **Diese Prüfung ist nur deshalb erlaubt, weil es KEINE zusammengesetzten
+# Schlüssel gibt.** Gemessen am 2026-10-20: kein einziges `t(`-Backtick und kein
+# `as TSchluessel` in `src/`. Käme je ein `t(`${bereich}.${x}`)` dazu, meldete
+# dieser Abschnitt reihenweise Fehlalarme — dann ist ER zu ändern, nicht die
+# Schlüssel zu löschen.
+schluessel_pfade: list[str] = []
+bereich: str | None = None
+for zeile in de_text.splitlines():
+    kopf = re.match(r'^  (\w+): \{', zeile)
+    if kopf:
+        bereich = kopf.group(1)
+        continue
+    blatt = re.match(r'^    (\w+):', zeile)
+    if blatt and bereich:
+        schluessel_pfade.append(f'{bereich}.{blatt.group(1)}')
+
+code = '\n'.join(
+    d.read_text(encoding='utf-8')
+    for d in SRC.rglob('*.ts*')
+    if d.suffix in ('.ts', '.tsx') and I18N not in d.parents and d.parent != I18N
+)
+ohne = [k for k in schluessel_pfade if f"'{k}'" not in code and f'"{k}"' not in code]
+
+# Gegenprobe gegen sich selbst: Hat er die Pfade überhaupt gefunden?
+pruef(f'Er liest die Schlüssel-Pfade (gefunden: {len(schluessel_pfade)})',
+      len(schluessel_pfade) >= 100,
+      'findet er keine, meldet er den Rest grün, ohne etwas geprüft zu haben')
+pruef(f'Jeder Schlüssel wird irgendwo gelesen ({len(ohne)} ohne Fundstelle)',
+      not ohne,
+      'das ganze Wörterbuch landet im Bündel — ein Schlüssel, den kein Bildschirm '
+      'liest, ist Text, den Apple findet und niemand erklären kann')
+for k in ohne[:8]:
+    print(f'     {k}')
+if len(ohne) > 8:
+    print(f'     … und {len(ohne) - 8} weitere')
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  2 · Deutsche Literale außerhalb von i18n/ — ACTAs teurer Fehler
 # ══════════════════════════════════════════════════════════════════════════════
 print('')
