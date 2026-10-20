@@ -94,7 +94,15 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 > - `config/alter.ts` verlor die Anzeige-Funktionen → neu `lib/alter-anzeige.ts` (die Datei muss
 >   importfrei bleiben, drei Prüfstände laden sie in Node).
 >
-> ### 🔴 Stand um 18 Uhr: Build 6 hochgeladen, aber NICHT angehängt — und 13+ ist schiefgegangen
+> ### 🟢 Stand 18:30: Build 6 hängt an der Version, Override 13+ ist bei Apple
+>
+> `einreichbereit`: **0 offene Punkte**, Build 6 dran. Override `ageRatingOverrideV2 = THIRTEEN_PLUS`
+> zurückgelesen. Apples errechnete Stufe heißt `TWELVE_PLUS` (alte Namensliste, Brasilien „12“) —
+> unsere Prüfung kannte den Namen nicht und meldete einen Fehler, der keiner war; korrigiert
+> (`STUFEN_AB_13`). ⚠️ Dass das im Store als „13+“ steht, ist GEFOLGERT, nicht gesehen.
+> **Offen: Ian schaut in App Store Connect nach (Altersfreigabe) und klickt „Zur Prüfung hinzufügen“.**
+>
+> ### (Verlauf) Stand um 18 Uhr: Build 6 hochgeladen, aber NICHT angehängt — und 13+ ist schiefgegangen
 >
 > Ian hat die Befehle gefahren. `testflight` lief durch (Upload 17:57), `build-anhaengen` sah aber nur
 > Build 5 (Apple verarbeitet noch), und `altersfreigabe --wirklich` schrieb **`NINE_PLUS`** statt 13+ —

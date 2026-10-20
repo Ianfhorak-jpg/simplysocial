@@ -167,6 +167,16 @@ ALTERSFREIGABE = {
 # 2025 dazu und ist wider Erwarten ebenfalls Boolean (in ACTA wurden alle vier
 # Enum-Werte abgelehnt). Ein einzelnes unbekanntes Feld darf nicht den ganzen
 # Fragebogen verhindern, deshalb je Feld eine Kandidatenliste. Wunschantwort zuerst.
+# 🔴 **`appStoreAgeRating` spricht Apples ALTE Namensliste, auch wenn die Stufe neu ist.**
+# Am 2026-10-20 stand dort nach dem Override `THIRTEEN_PLUS` (am Formular zurückgelesen) die
+# errechnete Stufe `TWELVE_PLUS` — Apples neue Skala (4 · 9 · 13 · 16 · 18) hat im alten Feld keinen
+# Namen für 13, Brasilien zeigt dazu `TWELVE`. Die erste Fassung dieser Prüfung kannte nur
+# `THIRTEEN_PLUS` und meldete deshalb einen Fehler, der keiner war. Maßgeblich ist, dass der
+# OVERRIDE (V2) zurückgelesen `THIRTEEN_PLUS`/`SIXTEEN_PLUS` ist — das prüft `altersfreigabe`
+# getrennt gegen `ALTERSFREIGABE`. ⚠️ Dass `TWELVE_PLUS` im Store als „13+“ erscheint, ist
+# GEFOLGERT, nicht gesehen: App Store Connect → Allgemeine Informationen → Altersfreigabe zeigt es.
+STUFEN_AB_13 = ('TWELVE_PLUS', 'THIRTEEN_PLUS', 'SIXTEEN_PLUS', 'SEVENTEEN_PLUS', 'EIGHTEEN_PLUS')
+
 KANDIDATEN = {
     # 🔴 **Absichtlich NUR ein Wert.** Der Kandidat danach hieß `NINE_PLUS`, und der Fall trat
     # ein: Ein Fehler, der das Feld nur NENNT, schickte die Schleife zum nächsten Kandidaten —
@@ -536,7 +546,7 @@ def einreichbereit(token, app):
 
     stufe = hole(f"appInfos/{info['id']}", token)['data']['attributes'].get('appStoreAgeRating')
     print(f"\n  → Von Apple errechnete Altersstufe: {stufe or 'noch keine'}")
-    if stufe not in ('THIRTEEN_PLUS', 'SIXTEEN_PLUS'):
+    if stufe not in STUFEN_AB_13:
         print(f"  ⚠️  {stufe or 'keine'} — das ist UNTER 13+. Die App erlaubt ab 14; ein "
               "niedrigeres Etikett\n     beschriftet sie falsch. Zählt nicht als offener Punkt (Apple verlangt es nicht).\n"
               "     [🧑 npm run asc altersfreigabe -- --wirklich]")
@@ -687,7 +697,7 @@ def altersfreigabe(token, app):
 
     stufe = hole(f"appInfos/{info['id']}", token)['data']['attributes'].get('appStoreAgeRating')
     print(f"\n  → Von Apple errechnete Altersstufe: {stufe or 'noch keine'}")
-    if stufe not in ('THIRTEEN_PLUS', 'SIXTEEN_PLUS'):
+    if stufe not in STUFEN_AB_13:
         print("  ✗ Das ist UNTER 13+ — die App erlaubt ab 14. Der Override ist nicht angekommen.")
         sys.exit(1)
     if verfehlt:
