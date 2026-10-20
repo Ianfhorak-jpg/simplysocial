@@ -2306,3 +2306,33 @@
   Wächter hat am 17.10. einen Build erwischt, der den roten Kasten noch trug. Die Lehre
   ist nicht „der Wächter war zu streng", sondern: *Zwei Fragen, zwei Zeilen* — sonst
   kann man die eine nicht beantworten, ohne die andere zu verletzen.
+- 🔴 **Eine Annahme über Apples Rechnung, die nie gegen Apples AUSGABE gemessen wurde, trägt
+  einen Wächter, der sie bestätigt.** `ALTERSFREIGABE.md` und `pruef-alter` sagten seit dem
+  14.09.: *„Nutzerinhalte + Chat + Social Media = JA, **daraus FOLGT 13+**."* Der Wächter
+  prüfte brav, dass die drei auf `True` stehen — und war grün. Am 2026-10-20 zum ersten Mal
+  Apples `appStoreAgeRating` gelesen: **`FOUR_PLUS`**, in Brasilien `L`. Apple macht aus Chat
+  unter Fremden keine Altersgrenze. Eine App, in der man sich mit Unbekannten trifft, stand
+  als „ab 4" im Store. *Der Wächter bewachte die Eingabe, nicht das Ergebnis.* Behebung: ein
+  Override (`ageRatingOverrideV2 = THIRTEEN_PLUS`) und ein Häkchen, das ihn festhält.
+  `einreichbereit` zeigt die Stufe seit je an („→ Von Apple errechnete Altersstufe") — gelesen
+  hat sie niemand.
+- 🔴 **„Die Übersetzung ist abgeschlossen" stimmte zweimal nicht, und beide Male war es eine
+  grüne Zahl.** Am 2026-10-18 fehlten ~45 Sätze, am 2026-10-20 weitere ~40 — darunter die
+  Namen der Tab-Leiste („Anfragen"), der Filter („Wem ich folge"), der Titel des
+  Melde-Bildschirms („Post melden") und der Zurück-Knopf („Zurück"). Drei Messungen (Umlaute,
+  `label=`, Funktionswörter) fanden sie nicht; **die vierte findet sie ohne zu raten:** Steht
+  ein Text WÖRTLICH als Wert in `de.ts`, dann gibt es einen Schlüssel, und der Code umgeht
+  ihn (Abschnitt 2e in `37_sprache.py`, 0 Treffer, Gegenprobe rot gesehen). Gefunden wurde
+  der Anfang nicht von einem Wächter, sondern beim LESEN von `chat/[id].tsx`: ein
+  JSX-Textknoten mit `{…}` darin entgeht jedem Regex, der `{` ausschließt.
+- **Eine Anzeige-Funktion in einer `config/`-Datei, die ein Prüfstand in blankem Node lädt,
+  kann nicht übersetzt werden.** `config/alter.ts` hatte `alterAmProfil()` („Jahrgang 2011"),
+  `alterAmPost()` („Jg. …") und `spanneText()` („bis 2012") — alles deutsch, und `60_konto`,
+  `93_demoregel`, `95_zustimmung` laden die Datei. Ein `t()` darin zöge React hinein.
+  Lösung: die Zahlen und Grenzen bleiben, die WÖRTER wandern in `lib/alter-anzeige.ts`, die
+  kein Prüfstand lädt.
+- **Ein Ersetzungsskript mit deutschen Anführungszeichen in einem ASCII-Stringliteral stirbt
+  mit `SyntaxError: unterminated string literal`** — dreimal an einem Tag. Das typografische
+  „ öffnet, das schließende `"` ist ein ASCII-Zeichen und beendet den Python-String. Gut, wenn
+  das Skript atomar ist (es hat dann NICHTS geschrieben); schlecht, wenn man das nicht prüft.
+  Behebung: Dreifach-Anführungszeichen oder `„`.

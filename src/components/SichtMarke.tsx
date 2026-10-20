@@ -1,5 +1,5 @@
 import { useGruppenName } from '@/features/groups/hooks';
-import { GRUPPE_UNBEKANNT } from '@/features/groups/gruppe';
+import { t } from '@/i18n';
 import type { Visibility } from '@/types/models';
 
 import { SsIconText } from './ui';
@@ -33,11 +33,15 @@ export function SichtMarke({ visibility }: { visibility: Visibility }) {
     case 'public':
       return null;
     case 'followers':
-      return <SsIconText icon="schloss">Nur Follower</SsIconText>;
+      return <SsIconText icon="schloss">{t('sicht.nurFollower')}</SsIconText>;
     case 'group':
       // Ist die Gruppe weg (aufgelöst), steht trotzdem etwas da. Ein leerer Platz
       // sähe aus wie ein Fehler, und „irgendeiner Gruppe" ist die Wahrheit.
-      return <SsIconText icon="personen">{`Nur ${gruppenName ?? GRUPPE_UNBEKANNT}`}</SsIconText>;
+      return (
+        <SsIconText icon="personen">
+          {gruppenName ? t('sicht.nurGruppe', { gruppe: gruppenName }) : t('sicht.nurEineGruppe')}
+        </SsIconText>
+      );
   }
 }
 
@@ -62,8 +66,8 @@ export function useSichtText(
     case 'public':
       return null;
     case 'followers':
-      return istMeiner ? 'Nur deine Follower' : `Nur wer ${autorName} folgt`;
+      return istMeiner ? t('sicht.nurDeineFollower') : t('sicht.nurWerFolgt', { name: autorName });
     case 'group':
-      return `Nur ${gruppenName ?? GRUPPE_UNBEKANNT}`;
+      return gruppenName ? t('sicht.nurGruppe', { gruppe: gruppenName }) : t('sicht.nurEineGruppe');
   }
 }

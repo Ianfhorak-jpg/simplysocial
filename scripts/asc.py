@@ -133,10 +133,26 @@ ALTERSFREIGABE = {
     # sobald ein Paket dazukommt — das ist kein Fehlalarm, sondern die Frage.
     'advertising': False,
 
-    # ── Nicht anfassen ───────────────────────────────────────────────────────
-    # Freiwillig heraufsetzen: nein. Bei 17+ dürfte Ian seine eigene App nicht
-    # laden, und die Zielgruppe auch nicht.
+    # ── Der Override ─────────────────────────────────────────────────────────
+    # 🔴 **Seit dem 2026-10-20 steht hier 13+** (vorher `NONE`). Gemessen an Apples
+    # eigener Ausgabe: Mit `userGeneratedContent`, `messagingAndChat` UND
+    # `socialMedia` auf True rechnete Apple trotzdem `FOUR_PLUS` (in Brasilien sogar
+    # `L` = für alle). **Die Annahme „daraus FOLGT 13+", die `pruef-alter` und
+    # ALTERSFREIGABE.md trugen, stimmte nicht** — Apple macht aus Chat unter Fremden
+    # keine Altersgrenze. Ein 4+ bei einer App, in der man sich mit Unbekannten
+    # trifft, ist falsch beschriftet, und genau darauf verlassen sich Eltern, die
+    # am Kindergerät eine Grenze eingestellt haben.
+    #
+    # Warum 13+ und nicht mehr: Die Mindestgrenze der App ist 14 (`BRAND.legal.
+    # mindestalter`). 16+ würde 14- und 15-Jährige mit eingestellter Grenze
+    # aussperren, die wir ausdrücklich dabeihaben wollen; 18+ verbietet es Ian
+    # selbst (er ist 17) und fast allen Gründern. Eine Stufe höher ist ein Wort:
+    # `SIXTEEN_PLUS`.
+    #
+    # Zwei Felder, weil Apple beide führt: `ageRatingOverride` ist das alte (bleibt
+    # `NONE`), `ageRatingOverrideV2` das aktuelle. Beide stehen im Formular.
     'ageRatingOverride': 'NONE',
+    'ageRatingOverrideV2': 'THIRTEEN_PLUS',
 }
 
 # `kidsAgeBand` steht ABSICHTLICH nicht in der Tabelle oben und bleibt `null`: Das
@@ -150,6 +166,7 @@ ALTERSFREIGABE = {
 # Enum-Werte abgelehnt). Ein einzelnes unbekanntes Feld darf nicht den ganzen
 # Fragebogen verhindern, deshalb je Feld eine Kandidatenliste. Wunschantwort zuerst.
 KANDIDATEN = {
+    'ageRatingOverrideV2': ['THIRTEEN_PLUS', 'NINE_PLUS'],
     'ageAssurance': [False, 'NONE'],
     'socialMediaAgeRestricted': [False, 'NONE'],
     'parentalControls': [False, 'NONE'],
@@ -420,7 +437,7 @@ def einreichbereit(token, app):
               '🧑 _FUER_IAN/DEMO_ZUGANG.md')
 
     decl = hole(f"appInfos/{info['id']}/ageRatingDeclaration", token)['data']['attributes']
-    gesetzt = [f for f, w in decl.items() if w is not None and f != 'ageRatingOverride']
+    gesetzt = [f for f, w in decl.items() if w is not None and f not in ('ageRatingOverride', 'ageRatingOverrideV2')]
     zeile('Altersfreigabe', len(gesetzt) > 3,
           f"{len(gesetzt)} von {len(decl)} Feldern beantwortet" if gesetzt else 'komplett leer',
           '🧑 _FUER_IAN/ALTERSFREIGABE.md')

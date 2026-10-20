@@ -101,7 +101,7 @@ export default function MatchScreen() {
             {startOderSeit(post.startsAt)}   ·   {ortText(post.district)}
           </SsText>
           <SsIconText icon="fahne">
-            {post.meetingPoint ?? 'Treffpunkt macht ihr im Chat aus'}
+            {post.meetingPoint ?? t('match.treffpunktImChat')}
           </SsIconText>
         </SsCard>
 

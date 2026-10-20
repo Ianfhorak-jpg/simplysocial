@@ -4,7 +4,7 @@ import { SichtMarke } from './SichtMarke';
 import { SsAvatar, SsIconText, SsText } from './ui';
 
 import { t } from '@/i18n';
-import { alterAmPost } from '@/config/alter';
+import { alterAmPost } from '@/lib/alter-anzeige';
 import { CATEGORIES } from '@/config/categories';
 import { freiePlaetze, istOffen, type FeedEintrag } from '@/features/posts/hooks';
 import { useMeineAnfrage } from '@/features/requests/hooks';

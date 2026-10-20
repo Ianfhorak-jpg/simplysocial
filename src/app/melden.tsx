@@ -68,7 +68,7 @@ export default function MeldenScreen() {
     <SsScreen scroll keyboard contentStyle={styles.seite}>
       <SsBack />
 
-      <SsText variant="title">{MELDE_TITEL[targetType]}</SsText>
+      <SsText variant="title">{t(MELDE_TITEL[targetType])}</SsText>
 
       {/* Was gemeldet wird, steht oben — sonst weiß man nach zwei Klicks nicht mehr,
           worum es ging. Bei Posts mit Kategorie-Pille, weil sie den Post im Feed
@@ -120,7 +120,7 @@ export default function MeldenScreen() {
 
           <SsInput
             label={t('melden.nochEtwas')}
-            hint="Freiwillig"
+            hint={t('gemein.freiwillig')}
             value={notiz}
             onChangeText={setNotiz}
             placeholder={t('melden.wasGenau')}

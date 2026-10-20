@@ -292,7 +292,7 @@ export function laedtDanachNach(aktion: SchreibAktion): boolean {
  * der beim Drücken schmaler wird, sieht aus, als wäre etwas kaputtgegangen.
  * Deshalb ein kurzes Wort und kein Satz.
  */
-export const WARTE_TEXT = 'Moment …';
+export const WARTE_TEXT = 'gemein.moment' as const;
 
 /**
  * Ein Schreibvorgang, der nicht durchkam.

@@ -3,6 +3,7 @@ import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { SsGlas } from './SsGlas';
 import { SsIcon } from './SsIcon';
 
+import { t } from '@/i18n';
 import { zurueckOderFeed } from '@/lib/navigation';
 import { colors, DruckFlaeche, radius, spacing, useDruck } from '@/theme';
 
@@ -93,7 +94,7 @@ const PFEIL = 22;
  * an der der Rückweg ein anderer ist, und die sagt es ausdrücklich.
  */
 export function SsBack({
-  label = 'Zurück',
+  label = t('gemein.zurueck'),
   onPress,
   style,
 }: {

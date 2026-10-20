@@ -570,7 +570,7 @@ export default function CreateScreen() {
               placeholder={t('erstellen.bezirkPlatzhalter')}
               keyboardType="number-pad"
               maxLength={4}
-              suffix="Wien"
+              suffix={t('marke.stadt')}
               error={zeigen('bezirk')}
             />
           </View>
@@ -634,16 +634,22 @@ export default function CreateScreen() {
 
           <SsInput
             label={t('erstellen.treffpunkt')}
-            hint="freiwillig"
+            hint={t('gemein.freiwillig')}
             value={treffpunkt}
             onChangeText={setTreffpunkt}
             placeholder={t('erstellen.treffpunktPlatzhalter')}
             maxLength={80}
           />
+          {/* Der Hinweis steht UNTER dem Feld und nicht im `hint`: Der sitzt neben dem
+              Label und hat eine Zeile. Gemeint ist ein Satz, den man lesen soll, bevor man
+              tippt — ein Treffpunkt ist für alle sichtbar, die den Post sehen. */}
+          <SsText variant="caption" color={colors.inkSoft}>
+            {t('erstellen.treffpunktHinweis')}
+          </SsText>
 
           <SsInput
             label={t('erstellen.nochWas')}
-            hint="freiwillig"
+            hint={t('gemein.freiwillig')}
             value={notiz}
             onChangeText={setNotiz}
             placeholder={t('erstellen.nochWasPlatzhalter')}
@@ -764,7 +770,7 @@ function Vorschau({ eintrag }: { eintrag: FeedEintrag | null }) {
   return (
     <View style={styles.vorschau}>
       <SsText variant="caption" color={colors.inkSoft}>
-        So sehen es die anderen
+        {t('klein.soSehenEsDieAnderen')}
       </SsText>
       {eintrag ? (
         // `umgebung="karte"`: Die Vorschau steht allein auf der Seite und braucht
@@ -805,7 +811,7 @@ function MehrEinstellen({ offen, umschalten }: { offen: boolean; umschalten: () 
           <SsIcon name={MEHR_SYMBOL} size={18} color={colors.ink} />
         </View>
         <SsText variant="label" style={styles.mehrTitel}>
-          Mehr einstellen
+          {t('klein.mehrEinstellen')}
         </SsText>
         <SsIcon name={offen ? 'chevronUnten' : 'chevronRechts'} size={16} color={colors.inkSoft} />
       </View>

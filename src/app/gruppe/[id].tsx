@@ -431,7 +431,7 @@ function Aussenseite({
       </SsText>
       <SsInput
         label={t('gruppe.kurzDazuschreiben')}
-        hint="freiwillig"
+        hint={t('gemein.freiwillig')}
         value={nachricht}
         onChangeText={setNachricht}
         placeholder={t('gruppe.dazuschreibenPlatzhalter')}

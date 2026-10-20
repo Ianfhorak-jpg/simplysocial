@@ -94,7 +94,7 @@
  * das folgenlos — es gibt Ians Konto und das Demo-Konto —, aber es ist die Frage,
  * die beim ersten echten Nutzerkreis fällig wird, und sie gehört Ian.
  */
-export const FASSUNG = '2026-09-28-regeln-und-rechtliches';
+export const FASSUNG = '2026-10-20-mindestalter-14-und-minderjaehrige';
 
 /**
  * Die Fassung, wie sie einem MENSCHEN gezeigt wird — unter den Nutzungsbedingungen.
@@ -129,7 +129,9 @@ export interface Zustimmung {
  * **Zwei Teile**, weil der zweite antippbar ist und den Screen öffnet: Ein
  * Häkchen neben einem Text, den man nicht lesen KANN, ist keine Zustimmung.
  */
-export const HAKEN_TEXT = { vor: 'Ich akzeptiere die', link: 'Nutzungsbedingungen' } as const;
+// Schlüssel, keine Sätze — `ErstesKonto` wickelt beide in `t()`. Der Link ist dasselbe Wort
+// wie die Überschrift der Bedingungen (`regeln.titel`) und steht deshalb nicht zweimal da.
+export const HAKEN_TEXT = { vor: 'erstesKonto.akzeptiere', link: 'regeln.titel' } as const;
 
 /**
  * Darf das Konto angelegt werden?

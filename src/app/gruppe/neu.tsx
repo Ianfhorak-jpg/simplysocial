@@ -111,7 +111,7 @@ export default function GruppeNeuScreen() {
 
       <SsCard category={kategorie}>
         <SsChip category={kategorie} />
-        <SsText variant="heading">{nameSauber || 'Name der Gruppe'}</SsText>
+        <SsText variant="heading">{nameSauber || t('gruppe.namePreview')}</SsText>
         {beschreibung.trim() ? (
           <SsText variant="caption" color={colors.inkSoft} numberOfLines={2}>
             {beschreibung.trim()}
@@ -146,7 +146,7 @@ export default function GruppeNeuScreen() {
 
       <SsInput
         label={t('gruppe.beschreibung')}
-        hint="freiwillig"
+        hint={t('gemein.freiwillig')}
         value={beschreibung}
         onChangeText={setBeschreibung}
         placeholder={t('gruppe.beschreibungPlatzhalter')}
@@ -156,7 +156,7 @@ export default function GruppeNeuScreen() {
 
       <SsInput
         label={t('erstellen.bezirk')}
-        hint="freiwillig"
+        hint={t('gemein.freiwillig')}
         value={bezirk}
         onChangeText={setBezirk}
         placeholder={t('erstellen.bezirkPlatzhalter')}

@@ -113,7 +113,7 @@ export const MELDE_GRUENDE: Record<ReportTarget, MeldeGrund[]> = {
  * Steht hier und nicht im Screen, damit „Post" und „Person" an einer Stelle benannt
  * sind. Sonst heißt es an der einen Stelle „Beitrag" und an der anderen „Post".
  */
-export const MELDE_TITEL: Record<ReportTarget, string> = {
-  post: 'Post melden',
-  user: 'Person melden',
-};
+export const MELDE_TITEL = {
+  post: 'melden.postMelden',
+  user: 'melden.personMelden',
+} as const satisfies Record<ReportTarget, string>;

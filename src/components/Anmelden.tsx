@@ -437,7 +437,7 @@ function EmailWeg({
             onSubmitEditing={() => void demoPruefen()}
           />
           <SsButton
-            label={laeuft ? 'Einen Moment …' : 'Anmelden'}
+            label={laeuft ? t('anmelden.momentBitte') : t('anmelden.anmeldenKnopf')}
             block
             size="lg"
             disabled={laeuft || passwort.length === 0}

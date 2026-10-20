@@ -60,8 +60,9 @@ import { colors, status } from '@/theme';
  * wenigstens noch „da ist was" sagt.
  */
 function anfragenName(wartend: number) {
-  if (wartend === 0) return 'Anfragen';
-  return `Anfragen, ${wartend} ${wartend === 1 ? 'wartet' : 'warten'}`;
+  if (wartend === 0) return t('tabs.anfragen');
+  // Mehrzahl: zwei Schlüssel ("1 wartet" / "3 warten"), Verzweigung hier.
+  return wartend === 1 ? t('tabs.anfragenEine') : t('tabs.anfragenMehrere', { n: wartend });
 }
 
 export default function TabsLayoutNative() {
@@ -119,7 +120,7 @@ export default function TabsLayoutNative() {
         {/* Entscheidung 62: keine Wörter in der Kapsel. Das Label bleibt als
             Text erhalten (Screenreader, Fenstertitel) und wird nur nicht
             gezeichnet — anders als beim Weglassen, das ihm den Namen nähme. */}
-        <NativeTabs.Trigger.Label hidden>Start</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{t('tabs.start')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} />
       </NativeTabs.Trigger>
 
@@ -130,7 +131,7 @@ export default function TabsLayoutNative() {
         // und genau deshalb darf sie hier nicht fehlen: Wer die Leiste hört
         // statt sie zu sehen, bekommt sonst gar nichts.
         accessibilityLabel={anfragenName(wartend)}>
-        <NativeTabs.Trigger.Label hidden>Anfragen</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{t('tabs.anfragen')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'hand.raised', selected: 'hand.raised.fill' }} />
         {/* Ein PUNKT, keine Zahl — **Ians Entscheidung 94 vom 2026-09-19.**
 
@@ -172,12 +173,12 @@ export default function TabsLayoutNative() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="chats" accessibilityLabel={t('tabs.chats')}>
-        <NativeTabs.Trigger.Label hidden>Chats</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{t('tabs.chats')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'bubble.left', selected: 'bubble.left.fill' }} />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="profile" accessibilityLabel={t('tabs.profil')}>
-        <NativeTabs.Trigger.Label hidden>Profil</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{t('tabs.profil')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'person', selected: 'person.fill' }} />
       </NativeTabs.Trigger>
     </NativeTabs>

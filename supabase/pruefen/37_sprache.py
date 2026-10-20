@@ -48,7 +48,7 @@ I18N = SRC / 'i18n'
 # erlaubtes Maß an Schlamperei. Wer sie hochsetzt, macht den Wächter wertlos:
 # Genau der Fehler, der ACTAs Build 1 zu Apple geschickt hat, würde dann grün
 # gemeldet. Sinkt sie, wird sie hier nachgezogen — das ist der Fortschritt.
-GRENZE = 108
+GRENZE = 107
 
 JA = NEIN = 0
 
@@ -333,11 +333,14 @@ print('── Feste Texte in UI-Eigenschaften ──')
 # Die Umlaut-Suche findet deutsche Prosa zwischen JSX-Klammern, diese hier findet
 # jeden festen Text an einer Eigenschaft, die man liest.
 PROPS = re.compile(
-    r'\b(label|placeholder|title|accessibilityLabel|accessibilityHint)=(["\'])([^"\'\n]{2,})\2'
+    r'\b(label|placeholder|title|hint|accessibilityLabel|accessibilityHint)=(["\'])([^"\'\n]{2,})\2'
 )
 
 # ⚠️ Darf nur FALLEN — dieselbe Abmachung wie bei GRENZE.
-GRENZE_PROPS = 20
+# 20 → 23 am 2026-10-20, und zwar NICHT durch neue feste Texte: `hint=` kam in die Suche, und
+# die drei neuen Treffer stehen alle in `app/bausteine.tsx` (der Entwicklungsseite, bewusst
+# nicht übersetzt). Die sechs `hint="freiwillig"` in echten Bildschirmen sind dabei raus.
+GRENZE_PROPS = 23
 
 fest: list[str] = []
 for datei in sorted(SRC.rglob('*.tsx')):
@@ -505,6 +508,79 @@ pruef(f'Die Suche findet deutsche Sätze überhaupt (in mock.ts: {zeugen_treffer
       'eine Textsuche mit null Treffern beweist nichts — ohne diese Gegenprobe wäre '
       'eine kaputte Regex nicht von einer sauberen Oberfläche zu unterscheiden')
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  2e · Zeichenketten, die WÖRTLICH im deutschen Wörterbuch stehen
+# ══════════════════════════════════════════════════════════════════════════════
+print('')
+print('── Deutsche Wörterbuch-Texte, fest in den Code geschrieben ──')
+
+# 🔴 **Die vierte Messung, und die einzige ohne Raten.** Am 2026-10-20 standen in der
+# englischen Oberfläche noch rund 40 deutsche Texte — „Anfragen" an der Tab-Leiste,
+# „Wem ich folge" im Filter, „Post melden" als Titel des Melde-Bildschirms, „Zurück"
+# am Zurück-Knopf —, und KEINE der drei Messungen darüber hat sie gefunden: Die
+# Umlaut-Suche kennt „Anfragen" nicht, die Eigenschafts-Suche kennt `title:` nicht,
+# und die Funktionswörter-Suche braucht zwei Wörter pro Zeile.
+#
+# Diese Frage rät nicht: Steht ein Text WÖRTLICH in `de.ts`, dann gibt es für ihn
+# einen Schlüssel, und der Code umgeht ihn. Das ist genau ACTAs `DEIN COACH` — der
+# Schlüssel existierte, der Bildschirm tippte das Wort trotzdem selbst.
+#
+# ⚠️ **Eine kleine, BEGRÜNDETE Ausnahmeliste** statt einer Mindestlänge, die Fälle
+# verschluckt (`Start` und `Chats` sind kurz und genau die gesuchten):
+#   · `heute` / `morgen`  — Werte eines Unions (`WannFilter`), nie angezeigt
+#   · `Post`              — Typname in `store.ts` / `zeilen.ts`
+#   · `Wien`              — der Ortsname in `ortText()`/`bezirk.ts`: ein Eigenname,
+#                           der in beiden Sprachen so geschrieben wird
+#   · `1070` · `1220`     — Postleitzahlen in den Bezirksdaten
+GEDULDET = {'heute', 'morgen', 'Post', 'Wien', '1070', '1220',
+            'Tennis spielen', 'Marswiese Tennis'}   # die zwei: Beispiele in Typ-Kommentaren
+WOERTER_DE = set()
+for m in re.finditer(r"""^\s+\w+:\s*\n?\s*(['"`])(.+?)\1,\s*$""", de_text, re.M):
+    w = m.group(2).replace("\\'", "'")
+    if len(w) >= 4 and w not in GEDULDET:
+        WOERTER_DE.add(w)
+
+LIT_ALLE = re.compile(r"""(['"`])((?:[^'"`\\\n]|\\.)+?)\1""")
+NICHT_UEBERSETZT_2E = NICHT_UEBERSETZT | {pathlib.Path('data') / 'wien-bezirke.ts'}
+doppelt: list[str] = []
+for datei in sorted(SRC.rglob('*.ts*')):
+    if datei.suffix not in ('.ts', '.tsx'):
+        continue
+    rel = datei.relative_to(SRC)
+    if I18N in datei.parents or datei.parent == I18N or rel in NICHT_UEBERSETZT_2E:
+        continue
+    im_block = False
+    for nr, roh in enumerate(datei.read_text(encoding='utf-8').splitlines(), 1):
+        blank = roh.strip()
+        if im_block:
+            if '*/' in roh:
+                im_block = False
+            continue
+        if '/*' in roh and '*/' not in roh:
+            im_block = True
+            continue
+        if blank.startswith(('*', '//', '/*')):
+            continue
+        kandidaten = [m.group(2).replace("\\'", "'") for m in LIT_ALLE.finditer(roh)]
+        kandidaten.append(re.sub(r'\{[^}]*\}', '', blank).strip())   # JSX-Textknoten
+        for k in kandidaten:
+            if k in WOERTER_DE:
+                doppelt.append(f'{datei.relative_to(WURZEL)}:{nr}  {k[:50]}')
+                break
+
+# Gegenprobe gegen sich selbst: Hat er überhaupt Wörterbuch-Werte gelesen?
+pruef(f'Er liest die deutschen Wörterbuch-Werte (gefunden: {len(WOERTER_DE)})',
+      len(WOERTER_DE) >= 200,
+      'findet er keine, meldet er den Rest grün, ohne etwas geprüft zu haben')
+pruef(f'Kein Wörterbuch-Text steht fest im Code ({len(doppelt)} gefunden)',
+      not doppelt,
+      'der Schlüssel existiert, der Bildschirm tippt das Wort trotzdem selbst — '
+      'in der englischen Oberfläche steht dann ein deutsches Wort (ACTAs DEIN COACH)')
+for ort in doppelt[:8]:
+    print(f'     {ort}')
+if len(doppelt) > 8:
+    print(f'     … und {len(doppelt) - 8} weitere')
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  2c · Ein Schlüssel, der ungewickelt im JSX landet

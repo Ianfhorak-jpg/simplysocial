@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { t } from '@/i18n';
 import { useSichtText } from '@/components/SichtMarke';
 import { SsAvatar, SsBack, SsButton, SsCard, SsChip, SsIcon, SsInput, SsScreen, SsText } from '@/components/ui';
-import { alterAmDetail } from '@/config/alter';
+import { alterAmDetail } from '@/lib/alter-anzeige';
 import { LEVEL_LABELS } from '@/config/categories';
 import { useChatZuPost } from '@/features/chat/hooks';
 import { freiePlaetze, istOffen, usePost } from '@/features/posts/hooks';
@@ -226,7 +226,7 @@ export default function PostDetailScreen() {
             )}
             {meineAnfrage.message ? (
               <SsText variant="caption" color={colors.inkSoft} style={styles.echo}>
-                Du hast geschrieben: „{meineAnfrage.message}“
+                {t('postansicht.duHastGeschrieben', { text: meineAnfrage.message })}
               </SsText>
             ) : null}
             {meineAnfrage.status === 'pending' ? (
@@ -285,7 +285,7 @@ export default function PostDetailScreen() {
         accessibilityState={{ expanded: mehr }}
         style={({ pressed }) => [styles.mehrKnopf, pressed && styles.mehrGedrueckt]}>
         <SsText variant="label" color={colors.inkSoft}>
-          {mehr ? 'Weniger' : 'Mehr ansehen'}
+          {mehr ? t('postansicht.weniger') : t('postansicht.mehrAnsehen')}
         </SsText>
         <SsIcon name={mehr ? 'chevronUnten' : 'chevronRechts'} size={16} color={colors.inkSoft} />
       </Pressable>
@@ -296,8 +296,16 @@ export default function PostDetailScreen() {
             <Zeile
               icon="fahne"
               label={t('erstellen.treffpunkt')}
-              wert={post.meetingPoint ?? t('postansicht.treffpunktOffen')}
-              leise={!post.meetingPoint}
+              wert={
+                // 🔴 Den Treffpunkt sieht nur, wer dabei ist: der Host und wer
+                // bestätigt wurde. ⚠️ Das ist die ANZEIGE, nicht der Server — die Zeile
+                // `posts.meeting_point` liest jeder Angemeldete weiter über die
+                // Schnittstelle. Die echte Sperre wäre eine Server-Regel (offen).
+                !(istMeiner || meineAnfrage?.status === 'accepted') && post.meetingPoint
+                  ? t('postansicht.treffpunktNachBestaetigung')
+                  : (post.meetingPoint ?? t('postansicht.treffpunktOffen'))
+              }
+              leise={!post.meetingPoint || !(istMeiner || meineAnfrage?.status === 'accepted')}
             />
             <Trenner />
             <Zeile icon="ziel" label={t('erstellen.koennen')} wert={t(LEVEL_LABELS[post.level])} />
@@ -356,7 +364,7 @@ export default function PostDetailScreen() {
       {!istMeiner && !blockiert ? (
         <SsButton
           variant="ghost"
-          label={meldung ? 'Gemeldet' : 'Post melden'}
+          label={meldung ? t('postansicht.gemeldet') : t('melden.postMelden')}
           icon="fahne"
           disabled={Boolean(meldung)}
           style={styles.melden}

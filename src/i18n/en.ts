@@ -47,10 +47,12 @@ export const en: Weiter<typeof de> = {
   },
 
   gemein: {
+    moment: 'One sec …',
     abbrechen: 'Cancel',
     fertig: 'Done',
     zurueck: 'Back',
     verstanden: 'Got it',
+    freiwillig: 'optional',
     und: 'and',
   },
 
@@ -81,6 +83,7 @@ export const en: Weiter<typeof de> = {
   },
 
   anmelden: {
+    anmeldenKnopf: 'Sign in',
     momentBitte: 'One moment …',
     nurInApp: 'That only works in the phone app. Use email here.',
     wegNichtEingerichtet: "This way isn't set up right now. Use email.",
@@ -149,6 +152,11 @@ export const en: Weiter<typeof de> = {
   },
 
   filter: {
+    wemIchFolge: 'People I follow',
+    nurBezirk: 'Only {plz} {stadt}',
+    nurOhneBezirk: 'Only without a district',
+    wannEgal: 'Any time',
+    woche: 'This week',
     alle: 'All',
     // Gefiltert wird über eine Spanne von Jahrgängen. „Certain birth years" wäre
     // wörtlich und unverständlich; in einem Filter liest sich die Altersspanne.
@@ -195,6 +203,7 @@ export const en: Weiter<typeof de> = {
   },
 
   gruppe: {
+    namePreview: 'Group name',
     gibtEsNichtMehr: 'This group is gone.',
     // „Gründer" durchgehend „founder" — nicht „owner" oder „admin": Er hat sie
     // gegründet, und das ist in diesem Modell seine einzige Sonderstellung.
@@ -265,6 +274,9 @@ export const en: Weiter<typeof de> = {
   },
 
   tabs: {
+    anfragen: 'Requests',
+    anfragenEine: 'Requests, 1 waiting',
+    anfragenMehrere: 'Requests, {n} waiting',
     start: 'Home',
     chats: 'Chats',
     profil: 'Profile',
@@ -301,6 +313,8 @@ export const en: Weiter<typeof de> = {
   },
 
   erstesKonto: {
+    akzeptiere: 'I accept the',
+    deinHandle: 'Your name in the app: @{handle}',
     wieHeisstDu: "What's your name?",
     bezirkGrund: "We use it to sort what's going on near you.",
     haekchenFehlt: 'Just tick the box and off we go.',
@@ -329,6 +343,7 @@ export const en: Weiter<typeof de> = {
   },
 
   match: {
+    treffpunktImChat: 'You agree on the meeting point in the chat',
     allesKlar: 'Got it',
     nichtsZuFeiern: 'Nothing to celebrate right now',
     bestaetigungWeg:
@@ -452,6 +467,24 @@ export const en: Weiter<typeof de> = {
     undNochMehrere: '{satz} And {anzahl} other things around then.',
   },
 
+  jahrgang: {
+    bis: '{jahr} or earlier',
+    ab: '{jahr} or later',
+    kurz: 'Born {spanne}',
+    imDetail: 'Born {spanne}',
+    imProfil: 'Born {jahrgang}',
+    jahreAlt: '{alter} years old',
+    balkenLabel: 'Birth year {spanne}',
+  },
+
+  sicht: {
+    nurFollower: 'Followers only',
+    nurDeineFollower: 'Your followers only',
+    nurWerFolgt: 'Only people who follow {name}',
+    nurGruppe: 'Only {gruppe}',
+    nurEineGruppe: 'Only for a group',
+  },
+
   chat: {
     gruppen: 'Groups',
     nochKeinChat: 'No chats yet',
@@ -464,7 +497,7 @@ export const en: Weiter<typeof de> = {
     // dasselbe Muster wie bei Instagram, und es liest sich als Zustand.
     duFolgst: 'Following',
     folgen: 'Follow',
-    nurFuerFollower: 'Posts that are followers-only.',
+    folgenFolge: 'Then {name} shows up in your feed — and you see posts that are followers-only.',
     nachricht: 'Message',
     jaBlockieren: 'Yes, block',
     blockieren: 'Block',
@@ -495,6 +528,15 @@ export const en: Weiter<typeof de> = {
   },
 
   chatraum: {
+    vorbei: 'This meet-up is over. The chat disappears {wann}.',
+    ablaufHeute: 'today',
+    ablaufMorgen: 'tomorrow',
+    ablaufTage: 'in {tage} days',
+    schreibDem: 'Message {name}',
+    nochNichtsDirekt:
+      "Nothing here yet. {name} only sees this chat once you send your first message.",
+    sicherheit:
+      "The first time, meet somewhere public and tell someone where you are. Nobody is allowed to push you into anything — you can report and block at any time.",
     treffpunktOffen: 'Meeting point still open',
     senden: 'Send',
     verabredetTitel: "You're set",
@@ -543,6 +585,7 @@ export const en: Weiter<typeof de> = {
   },
 
   erstellen: {
+    treffpunktHinweis: 'Visible to everyone — pick a public place, not your home address.',
     kategorieFehler: "Pick what it's about.",
     titelFehler: "A few words so people know what's up.",
     sichtFehler: 'Pick the group this post is for.',
@@ -614,6 +657,11 @@ export const en: Weiter<typeof de> = {
   },
 
   postansicht: {
+    weniger: 'Less',
+    mehrAnsehen: 'Show more',
+    gemeldet: 'Reported',
+    duHastGeschrieben: 'You wrote: “{text}”',
+    treffpunktNachBestaetigung: "You'll see the meeting point once the host has confirmed you.",
     blockiertTitel: 'Nothing doing here',
     blockiertText:
       "There's a block between you and whoever posted this. Blocks you set yourself are in Settings.",
@@ -652,6 +700,8 @@ export const en: Weiter<typeof de> = {
   },
 
   einstellungen: {
+    anderesBild: 'Different picture',
+    bildAussuchen: 'Choose picture',
     spracheTitel: 'Language',
     // „photo", nicht „image": Es ist ein Profilbild von einem Menschen.
     deinBild: 'Your photo',
@@ -742,7 +792,7 @@ export const en: Weiter<typeof de> = {
     // ist kein runder Satz auf Englisch, aber eine Glättung wäre hier eine
     // inhaltliche Änderung.
     alter:
-      "You can join from age {alter}. In Austria, until your 14th birthday you need your parents' consent for your data to be processed — ask them before you create an account.",
+      "You have to be at least {alter} to join. If you're younger, you can't create an account. Anyone who harasses minors, or pushes them into something that has nothing to do with the shared activity, is removed right away — we report serious cases to the police.",
     regelbruch:
       "If you don't follow the rules above, your account can be removed. Every report is read by a human, {zusage}",
     datenschutzTitel: 'Privacy Policy',
@@ -764,6 +814,8 @@ export const en: Weiter<typeof de> = {
   },
 
   melden: {
+    postMelden: 'Report post',
+    personMelden: 'Report person',
     vonDir: "That's yours",
     gibtEsNicht: "That doesn't exist",
     eigenesNichtMelden: "You can't report your own posts or yourself.",
@@ -803,7 +855,8 @@ export const en: Weiter<typeof de> = {
     belaestigungTitel: 'Harassing me',
     belaestigungText: "Pressuring, insulting or won't stop messaging",
     unsicherTitel: 'I feel unsafe',
-    unsicherText: 'Behaviour that could get someone hurt',
+    unsicherText:
+      'Behaviour that could get someone hurt — for example an adult pressuring minors',
     anderesTitel: 'Something else',
     anderesText: "Doesn't fit any of the above",
   },

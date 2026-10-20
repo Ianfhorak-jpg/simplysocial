@@ -64,7 +64,67 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
 ---
 
-## 🔴 HIER GEHT ES WEITER — Stand 2026-10-18, abends
+## 🔴 HIER GEHT ES WEITER — Stand 2026-10-20, nachts
+
+> ## Betreiberschutz vor dem Einreichen — Build 6 ist nötig, Build 5 NICHT einreichen
+>
+> **Anlass:** Ian (17, ab morgen 3 Wochen im Ausland) will die App in den Store bringen und
+> fragte, ob sie gegen Missbrauch durch Erwachsene gegenüber Minderjährigen gesichert ist.
+> Ergebnis einer Bestandsaufnahme (Code, RLS-Regeln, Nutzungsbedingungen): **eine echte Lücke
+> und mehrere kleine.** Ian hat angewiesen, nur die kleinen zu bauen (mündlich im Chat; als Entscheidung noch NICHT in PLAN.md eingetragen).
+>
+> ### Gebaut (alles ohne Datenbankänderung, ein Build)
+>
+> | | |
+> |---|---|
+> | **Mindestalter 14** (war 13) | `BRAND.legal.mindestalter`; Bedingungen de/en; `FASSUNG` = `2026-10-20-mindestalter-14-und-minderjaehrige`; `landing/datenschutz.html` Fassung 1.1 |
+> | **Jahrgang am Profil als Band** | `JAHRGANG_ANZEIGE = 'band'` („14–17“) — **kehrt Entscheidung 30 um**, ein Wort |
+> | **Treffpunkt nur für Host + Bestätigte** | `post/[id].tsx`. ⚠️ nur die ANZEIGE — `posts.meeting_point` bleibt über die Schnittstelle für jeden Angemeldeten lesbar |
+> | Hinweise | beim Treffpunkt-Feld und oben in jedem Chat; Satz zu Minderjährigen in den Bedingungen; Meldetext „unsicher“ nennt Erwachsene/Minderjährige (`gefahr` = 24 h) |
+> | **Altersfreigabe 13+** | `ageRatingOverrideV2 = THIRTEEN_PLUS` in `asc.py`. **Bei Apple NOCH NICHT gesetzt** — schreibt in Ians Konto, er tippt `npm run asc altersfreigabe -- --wirklich` |
+> | Build-Nummer | **6** (`app.json` + `Info.plist`) |
+>
+> ### 🔴 Gemessen, nicht angenommen
+>
+> - **Apple rechnete `FOUR_PLUS`** (Brasilien: `L`) trotz Chat + Nutzerinhalten + Social Media.
+>   Die Annahme „daraus folgt 13+“ (Doku, `pruef-alter`) war falsch — Falle im Register.
+> - **~40 weitere deutsche Texte in der englischen Oberfläche**, u. a. Tab-Leiste, Filter,
+>   Melde-Titel, Zurück. `pruef-sprache` **28 → 30**: neuer Abschnitt 2e (Text steht WÖRTLICH in
+>   `de.ts` und trotzdem fest im Code — die einzige Messung ohne Raten), `hint=` in 2b.
+> - `config/alter.ts` verlor die Anzeige-Funktionen → neu `lib/alter-anzeige.ts` (die Datei muss
+>   importfrei bleiben, drei Prüfstände laden sie in Node).
+>
+> ### 🔴 NICHT gebaut — und es steht in `_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md`
+>
+> 1. **Trennung unter 18 / ab 18** (Server-Regeln auf Posts, Anfragen, Chats) — die wirksamste
+>    Maßnahme, aber Produktentscheidung (Reichweite) und Migration. **Ians Wort fehlt.**
+> 2. **Treffpunkt serverseitig sperren** (Sicht statt Spalte).
+> 3. **Eigener Meldegrund für Minderjährige** — `report_reason` ist ein Datenbank-Enum, braucht
+>    eine Migration, die VOR dem Build eingespielt sein müsste (sonst `22P02` beim Melden).
+> 4. **Server-Mindestalter** — ginge in `regel` (harte Regel 54), käme mit Migration 0013 und
+>    hätte nur gegen Umgehung der App gewirkt; gegen Lügen beim Jahrgang hilft nichts.
+>
+> ### Was Ian ans Gründerservice mitnimmt
+>
+> **Sein Apple-Entwicklerkonto läuft auf seinen Namen, er ist 17.** Ich *glaube*, Apple verlangt
+> Volljährigkeit — **nicht nachgesehen**. Falls ja, ist das die größte Gefahr für die
+> Sperrung des Kontos, und kein Code löst sie.
+>
+> ⚠️ **Die 24-Stunden-Zusage gilt auch, während Ian 3 Wochen weg ist.** Wer liest `npm run meldungen`?
+>
+> ### Gemessen, alles grün
+>
+> ```
+> tsc sauber · expo lint 87 (war 88; ein Fehler weniger durch das Aufräumen) · Wörterbuch 550/550
+> pruef-sprache 30 · pruef-alter 36 · pruef-zuschnitt 56 · pruef-zustimmung 34 · pruef-kopf 48
+> pruef-nennung 15 · pruef-anbieter 48 · pruef-bildwahl 48 · pruef-farben 79 · pruef-boden 13
+> pruef-glas 33 · pruef-sitzung 29 · pruef-demoregel 29 · pruef-plattform 5 · pruef-etikett 12
+> ```
+>
+> 📄 In Ians Sprache: [`_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md`](_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md)
+
+## Davor — Stand 2026-10-18, abends (Build 5 hing an der Version; jetzt überholt)
+
 
 > ## Die App spricht Englisch. Jetzt wirklich — und das ist eine Berichtigung.
 >
@@ -104,6 +164,9 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 > | `pruef-zuschnitt` **47 → 56** | VERENGT, nicht nachgezogen: Er liest die Sätze jetzt aus BEIDEN Wörterbüchern statt nur aus dem deutschen |
 >
 > ### 🟢 Nachtrag 2026-10-20, Teil 2: **12 von 12 — Build 5 hängt dran**
+>
+> **Privacy-Label: laut Ian ausgefüllt** (am 2026-10-20 genannt, **nicht gegengemessen** —
+> die API liefert es nicht). Offen ist damit nur noch „Zur Prüfung hinzufügen“.
 >
 > Ian hat Build 5 gebaut und angehängt (mit `--trotzdem`, siehe unten). Bei Apple
 > gemessen: **0 offene Punkte.** Es bleibt das Privacy-Label, das über die API
@@ -1031,11 +1094,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 125. Was der App Store an TEXT zeigt, steht in `scripts/storetexte.md` — und jede ADRESSE darin wird angerufen, bevor sie zu Apple geht
 ## Fallen — Index
 
-> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 257 Stück, jede schon
+> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 261 Stück, jede schon
 > einmal einen Abend gekostet — die meisten stammen aus ACTA (`17_Tennis_Optimma`), der
 > Rest aus diesem Projekt. Hier steht nur der Titel; **die Diagnose steht im Volltext.**
 >
-> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-10-20: **257**; am
+> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-10-20: **261**; am
 > 2026-09-28 standen hier 213 bei 226 gezählten) — *eine Warnung mit einer ZAHL darin
 > veraltet genauso still wie das, wovor sie warnt.* Die Messstelle, damit die nächste
 > Zahl nicht wieder geraten wird:
@@ -1301,6 +1364,10 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Ein Ersetzungs-Helfer, der je DATEI schreibt, hinterlässt beim Abbruch die Hälfte
 - Ein Wörterbuch-Schlüssel, den KEIN Bildschirm liest, landet trotzdem im Bündel
 - Ein Häkchen, das ZWEI Fragen trägt, wird unerreichbar, sobald die zweite strenger ist
+- Eine Annahme über Apples Rechnung, die nie gegen Apples AUSGABE gemessen wurde, trägt einen Wächter, der sie bestätigt
+- „Die Übersetzung ist abgeschlossen" stimmte zweimal nicht, und beide Male war es eine grüne Zahl
+- Eine Anzeige-Funktion in einer `config/`-Datei, die ein Prüfstand in blankem Node lädt, kann nicht übersetzt werden
+- Ein Ersetzungsskript mit deutschen Anführungszeichen in einem ASCII-Stringliteral stirbt mit `SyntaxError`
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

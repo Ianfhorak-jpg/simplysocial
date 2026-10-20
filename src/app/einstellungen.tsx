@@ -257,10 +257,10 @@ export default function EinstellungenScreen() {
                   variant="ghost"
                   label={
                     bildLaeuft
-                      ? WARTE_TEXT
+                      ? t(WARTE_TEXT)
                       : ich.photoUrl
-                        ? 'Anderes Bild'
-                        : 'Bild aussuchen'
+                        ? t('einstellungen.anderesBild')
+                        : t('einstellungen.bildAussuchen')
                   }
                   disabled={bildLaeuft}
                   onPress={bildAussuchen}

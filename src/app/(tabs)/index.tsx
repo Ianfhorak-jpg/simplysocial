@@ -1679,8 +1679,8 @@ function FilterBereich({
         value={filter.nurGefolgte}
         onChange={(wert) => setzen('nurGefolgte', wert)}
         options={[
-          { wert: false, label: 'Alle' },
-          { wert: true, label: 'Wem ich folge' },
+          { wert: false, label: t('filter.alle') },
+          { wert: true, label: t('filter.wemIchFolge') },
         ]}
       />
 
@@ -1712,7 +1712,7 @@ function FilterBereich({
         {WANN_ORDER.map((w) => (
           <SsChip
             key={w}
-            label={WANN_LABELS[w]}
+            label={t(WANN_LABELS[w])}
             selected={filter.wann === w}
             onPress={() => setzen('wann', w)}
           />
@@ -1745,8 +1745,8 @@ function FilterBereich({
             <SsChip
               label={
                 filter.bezirk.kind === 'einer'
-                  ? `Nur ${filter.bezirk.plz} Wien`
-                  : 'Nur ohne Bezirk'
+                  ? t('filter.nurBezirk', { plz: filter.bezirk.plz, stadt: t('marke.stadt') })
+                  : t('filter.nurOhneBezirk')
               }
               selected
               onPress={() => setzen('bezirk', BEZIRK_ALLE)}

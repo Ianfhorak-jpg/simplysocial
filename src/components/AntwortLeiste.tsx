@@ -184,7 +184,7 @@ export function AntwortLeiste({ eintrag, onAbbrechen, onSenden }: AntwortLeisteP
           accessibilityLabel={t('antwort.dochNicht')}
           style={styles.abbrechen}>
           <SsText variant="caption" center color={colors.inkSoft}>
-            Doch nicht
+            {t('antwort.dochNicht')}
           </SsText>
         </Pressable>
       </Animated.View>

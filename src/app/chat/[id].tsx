@@ -106,9 +106,13 @@ export default function ChatScreen() {
 
       {post && eintrag.zustand === 'vorbei' ? (
         <SsText variant="caption" center color={colors.inkSoft} style={styles.vorbei}>
-          Dieses Treffen ist vorbei. Der Chat verschwindet {ablaufText(post, new Date())}.
+          {t('chatraum.vorbei', { wann: ablaufText(post, new Date()) })}
         </SsText>
       ) : null}
+
+      <SsText variant="caption" center color={colors.inkSoft} style={styles.vorbei}>
+        {t('chatraum.sicherheit')}
+      </SsText>
 
       <FlatList
         ref={listeRef}
@@ -345,11 +349,10 @@ function NochStill({ name, direkt }: { name: string; direkt: boolean }) {
       <View style={styles.still}>
         <SsIcon name="sprechblase" size={42} color={colors.inkSoft} />
         <SsText variant="heading" center>
-          Schreib {name}
+          {t('chatraum.schreibDem', { name })}
         </SsText>
         <SsText variant="body" center color={colors.inkSoft}>
-          Noch steht hier nichts. Erst mit deiner ersten Nachricht sieht {name}, dass es
-          diesen Chat gibt.
+          {t('chatraum.nochNichtsDirekt', { name })}
         </SsText>
       </View>
     );
@@ -398,9 +401,9 @@ function KeinChat() {
  */
 function ablaufText(post: Post, jetzt: Date): string {
   const tage = nachklangTageUebrig(post, jetzt);
-  if (tage === 0) return 'heute';
-  if (tage === 1) return 'morgen';
-  return `in ${tage} Tagen`;
+  if (tage === 0) return t('chatraum.ablaufHeute');
+  if (tage === 1) return t('chatraum.ablaufMorgen');
+  return t('chatraum.ablaufTage', { tage });
 }
 
 // ── Verlauf in Zeilen übersetzen ─────────────────────────────────────────────

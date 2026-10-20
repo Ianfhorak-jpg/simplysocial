@@ -272,13 +272,23 @@ pruef('healthOrWellnessTopics steht auf False — wie im Dokument beantwortet',
 pruef('kidsAgeBand steht NICHT in der Tabelle — Kinder-Kategorie bleibt leer',
       'kidsAgeBand' not in TAB)
 
+# 🔴 **Der Override (seit 2026-10-20): 13+ — nicht weniger, nicht 18+.** Gemessen an Apples
+# eigener Ausgabe rechnete Apple bei Chat + nutzergenerierten Inhalten + Social Media
+# trotzdem `FOUR_PLUS`; die Annahme "daraus FOLGT 13+" (siehe oben) war falsch. Der Override
+# ist die einzige Stelle, an der die Altersfreigabe wirklich 13+ wird.
+#   · NICHT weniger: Die Mindestgrenze der App ist 14, ein 4+ beschriftet sie falsch.
+#   · NICHT 18+: Ian ist 17 und dürfte seine eigene App nicht laden.
+pruef('ageRatingOverrideV2 steht auf THIRTEEN_PLUS oder SIXTEEN_PLUS — nie NONE, nie 18+',
+      TAB.get('ageRatingOverrideV2') in ('THIRTEEN_PLUS', 'SIXTEEN_PLUS'),
+      f"steht auf {TAB.get('ageRatingOverrideV2')!r}")
+
 # Und die Inhaltsfragen sagen alle „keine". Gezaehlt statt aufgezaehlt: Eine Liste
 # von Namen merkt nicht, wenn eine Frage dazukommt (dieselbe Lehre wie bei den
 # Paketen in Abschnitt 2).
 inhalt = {f: w for f, w in TAB.items() if f not in (
     'userGeneratedContent', 'messagingAndChat', 'socialMedia',
     'socialMediaAgeRestricted', 'ageAssurance', 'parentalControls',
-    'ageRatingOverride')}
+    'ageRatingOverride', 'ageRatingOverrideV2')}
 laut = [f for f, w in inhalt.items() if w not in ('NONE', False)]
 pruef(f'Alle {len(inhalt)} Inhaltsfragen stehen auf „keine"', not laut,
       f'nicht auf keine: {laut}')

@@ -559,14 +559,6 @@ export function sichtbarkeitBauen(kind: VisibilityKind, gruppeId: string | null)
   }
 }
 
-/**
- * Wie eine Gruppe heißt, wenn man ihren Namen nicht kennt.
- *
- * Kommt vor: Ein Post zeigt seinen Gruppennamen, aber der Betrachter darf die Gruppe
- * gar nicht sehen — oder die Gruppe ist inzwischen aufgelöst. Ein leerer Platz sähe
- * dann nach einem Fehler aus.
- */
-export const GRUPPE_UNBEKANNT = 'einer Gruppe';
 
 /**
  * Was auf der Seite einer Gruppe steht, die aufgehört hat — Ians Entscheidung 41.

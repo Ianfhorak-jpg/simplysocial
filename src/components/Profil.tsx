@@ -6,7 +6,7 @@ import { PostCard } from './PostCard';
 import { SsAvatar, SsCard, SsChip, SsIconText, SsText } from './ui';
 
 import { t } from '@/i18n';
-import { alterAmProfil } from '@/config/alter';
+import { alterAmProfil } from '@/lib/alter-anzeige';
 import { useProfilPosts } from '@/features/posts/hooks';
 import { useCurrentUserId } from '@/features/auth/hooks';
 import { colors, ecke, spacing } from '@/theme';
@@ -87,7 +87,7 @@ export function Profil({
                 deshalb direkt geschrieben; nur ein Post darf ohne auskommen (harte
                 Regel 20). */}
             <SsText variant="caption" color={colors.inkSoft}>
-              {handleText(person.handle)} · {person.district} Wien · {alterAmProfil(person.jahrgang)}
+              {handleText(person.handle)} · {person.district} {t('marke.stadt')} · {alterAmProfil(person.jahrgang)}
             </SsText>
           </View>
         </View>
@@ -136,7 +136,7 @@ export function Profil({
       {person.interests.length > 0 ? (
         <View style={styles.block}>
           <SsText variant="label" color={colors.inkSoft}>
-            Interessen
+            {t('klein.interessen')}
           </SsText>
           <View style={styles.pillen}>
             {person.interests.map((k) => (

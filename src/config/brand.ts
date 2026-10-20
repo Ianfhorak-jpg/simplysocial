@@ -59,11 +59,19 @@ export const BRAND = {
     eulaUrl: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
 
     /**
-     * Ab wann man mitmachen darf. **13** ist keine Wahl, sondern folgt aus Apples
-     * Altersfreigabe (Phase 21.1). In Österreich braucht man bis zum vollendeten
-     * 14. Lebensjahr die Zustimmung der Eltern, damit Daten verarbeitet werden
-     * dürfen (§ 4 Abs. 4 DSG) — deshalb steht beides im Screen, nicht nur die 13.
+     * Ab wann man mitmachen darf. **Seit dem 2026-10-20 14** (vorher 13).
+     *
+     * 🔴 **Warum 14:** In Österreich braucht man bis zum vollendeten 14.
+     * Lebensjahr die Zustimmung der Eltern, damit Daten verarbeitet werden dürfen
+     * (§ 4 Abs. 4 DSG). Diese Zustimmung kann die App nicht belegen — „frag deine
+     * Eltern" war ein Satz ohne Prüfung. Ab 14 entfällt sie, und die Zahl stimmt mit
+     * dem Jahrgangs-Schieber überein (`MINDESTALTER = 14` in `config/alter.ts`):
+     * Vorher konnte ein 13-Jähriger seinen Jahrgang gar nicht eintragen, obwohl die
+     * Bedingungen ihn einluden. **Eine Zahl, drei Stellen, jetzt alle gleich.**
+     *
+     * Die Altersfreigabe bei Apple (13+) bleibt darunter: Sie ist die ALTERSGRENZE
+     * des Stores, 14 die der App — die engere gilt.
      */
-    mindestalter: 13,
+    mindestalter: 14,
   },
 } as const;

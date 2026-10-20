@@ -42,7 +42,7 @@ export function FolgeListeScreen({ userId, art }: { userId: string | undefined; 
     <SsScreen scrolltSelbst contentStyle={styles.seite}>
       <View style={styles.kopf}>
         <SsBack />
-        <SsText variant="title">{art === 'follower' ? 'Follower' : 'Folgt'}</SsText>
+        <SsText variant="title">{art === 'follower' ? t('klein.follower') : t('klein.folgt')}</SsText>
         {/* „Wer … folgt" gegen „Wem … folgt": Im Deutschen macht der Fall den
             Unterschied zwischen den beiden Listen deutlicher als jedes Wort, das man
             in die Überschrift schreiben könnte. */}

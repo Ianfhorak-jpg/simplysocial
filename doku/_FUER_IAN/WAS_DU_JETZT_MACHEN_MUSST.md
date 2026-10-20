@@ -1,5 +1,87 @@
 # 🚀 Was du jetzt machen musst — Weg in den App Store
 
+**Stand: 2026-10-20, abends · Build 6 ist nötig — und warum**
+
+> Du wolltest die App absichern, bevor du drei Wochen weg bist. Das ist passiert —
+> und dabei sind zwei Dinge ans Licht gekommen, die **vor** dem Einreichen stehen müssen.
+
+---
+
+## Die Reihenfolge (alles von deinem Mac, auch aus dem Ausland)
+
+```bash
+cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
+
+npm run testflight                           # 1 · Build 6 bauen, ~20 Min
+npm run asc build-anhaengen -- --wirklich    # 2 · dranhängen (ohne --trotzdem: es ist ein frischer Build)
+npm run asc altersfreigabe                   # 3 · Trockenlauf: muss "NONE → THIRTEEN_PLUS" zeigen
+npm run asc altersfreigabe -- --wirklich     # 4 · 13+ bei Apple setzen
+npm run asc einreichbereit                   # 5 · muss 0 offene Punkte zeigen
+```
+
+Dann in App Store Connect **„Zur Prüfung hinzufügen“**. Das Privacy-Label hast du schon.
+
+⚠️ **Build 5 nicht einreichen.** Er sagt noch „ab 13“, zeigt den Jahrgang auf das Jahr
+genau, und der Treffpunkt steht für alle sichtbar am Post.
+
+## Was in Build 6 anders ist
+
+| | |
+|---|---|
+| **Mindestalter 14** | war 13. Ab 14 braucht man in Österreich keine Zustimmung der Eltern für die Daten — die konnte die App ohnehin nie belegen. Passt jetzt zum Jahrgangs-Schieber (der fing schon bei 14 an: ein 13-Jähriger konnte seinen Jahrgang gar nicht eintragen) |
+| **Am Profil steht „14–17“** | statt „Jahrgang 2011“. Das kehrt deine Entscheidung 30 um — **ein Wort** in `config/alter.ts` (`JAHRGANG_ANZEIGE`), falls du es zurück willst |
+| **Treffpunkt** | sieht nur noch der Host und wer bestätigt wurde. ⚠️ Das ist die ANZEIGE, nicht der Server — siehe „Was noch offen ist“ |
+| **Hinweis beim Treffpunkt-Feld** | „Für alle sichtbar — nimm einen öffentlichen Ort, keine Adresse von zu Hause“ |
+| **Hinweis im Chat** | „Triff dich beim ersten Mal an einem öffentlichen Ort … Niemand darf dich zu etwas drängen“ |
+| **Nutzungsbedingungen** | neuer Satz: Wer Minderjährige belästigt, wird entfernt, schwere Fälle gehen an die Polizei. **Lies ihn — es ist eine Zusage in deinem Namen** |
+| **Melden** | „Ich fühle mich unsicher“ nennt jetzt ausdrücklich Erwachsene, die Minderjährige bedrängen (zählt als „gefährlich“ = 24 Stunden) |
+| **Altersfreigabe 13+** | war bei Apple **4+** (siehe unten) |
+| **Datenschutzseite** | ist schon aktualisiert und online („ab 14“, Fassung 1.1) |
+
+## Zwei Dinge, die ich gefunden habe
+
+**1. Die Altersfreigabe bei Apple war falsch beschriftet.** Wir haben „Chat“, „Nutzerinhalte“
+und „Soziale Netzwerke“ auf Ja gesetzt, und Apple hat trotzdem **4+** ausgerechnet. Eure
+Doku sagte „daraus folgt 13+“ — das stimmte nicht. Schritt 3/4 oben behebt es.
+
+**2. Die englische App war noch nicht so englisch wie behauptet.** Beim Durchsehen standen
+noch rund 40 deutsche Texte drin: „Anfragen“, „Wem ich folge“, „Post melden“, „Zurück“,
+„freiwillig“ … alle ersetzt, und die Prüfung findet so etwas jetzt selbst.
+
+## Wenn du weg bist — das Wichtigste
+
+**Wer liest die Meldungen?** In den Nutzungsbedingungen steht: gefährlich/Belästigung in
+**24 Stunden**. Das kannst du nur halten, wenn du jeden Tag nachsiehst:
+
+```bash
+cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial && npm run meldungen
+```
+
+Er zeigt das Dringendste oben. Einen Post entfernen:
+`npm run meldungen -- post-loeschen <post-id> --wirklich`, ein Konto:
+`npm run meldungen -- konto-loeschen <@name> --wirklich`.
+
+⚠️ **Frag, bevor du fliegst, ob du das unterwegs wirklich kannst** (Laptop, Internet).
+Wenn nicht: einer der Mitgründer braucht deinen Zugang, oder du reichst erst nach deiner
+Rückkehr ein. Eine Zusage, die man nicht hält, ist schlechter als eine vorsichtigere
+— und genau dieses Versprechen liest der Prüfer.
+
+## Was noch offen ist — und für das Gründerservice
+
+| | |
+|---|---|
+| 🔴 **Erwachsene und Minderjährige sind nicht getrennt** | Das größte, was bleibt. Ein Erwachsener sieht jedes Profil und kann bei jedem Post „Bin dabei“ tippen. Die Trennung (unter 18 / ab 18) ist die wirksamste Maßnahme, braucht aber eine Datenbankänderung und ist **deine Entscheidung**, weil sie die Reichweite kleiner macht |
+| 🔴 **Der Treffpunkt ist nur versteckt, nicht gesperrt** | Wer die Schnittstelle direkt ansprechen kann, liest ihn weiter. Echte Lösung: eine Server-Regel |
+| 🔴 **Dein Apple-Entwicklerkonto** | Läuft auf **deinen** Namen, und du bist 17. Ich glaube, Apple verlangt für das Programm die **Volljährigkeit** — **das habe ich nicht nachgesehen, sieh bei Apple nach.** Falls ja, könnte das Konto gesperrt werden, und das ist genau deine Sorge. Eine Lösung wäre, dass ein Elternteil das Konto führt. Bring das mit zum Gründerservice |
+| 🟡 **Haftung als Betreiber mit 17** | war schon offen, ist wichtiger geworden |
+| 🟡 **Kein „Melden“-Grund nur für Minderjährige** | würde eine Datenbankänderung brauchen. Bis dahin tragen „unsicher“ und „Belästigung“ das |
+| 🟡 **Konten sperren** | `konto-loeschen` löscht — wer dieselbe E-Mail neu anmeldet, ist wieder da. Es gibt keine Sperrliste |
+
+---
+
+# (Der Stand davor)
+
+
 **Stand: 2026-10-18 · die App spricht Englisch**
 
 > Am 17. und 18.10. ist die Übersetzung gebaut worden: Die ganze Oberfläche gibt es

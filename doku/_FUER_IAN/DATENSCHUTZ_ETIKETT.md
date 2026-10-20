@@ -14,9 +14,11 @@
 
 ## Die kurze Fassung
 
-SimplySocial sammelt **acht** Sorten Daten. Alle acht sind **mit dir verknüpft**
-(„Linked to You" — sie hängen an deinem Konto), alle acht dienen **nur der Funktion
-der App** („App Functionality").
+SimplySocial sammelt **neun** Sorten Daten, die in Apples Formular auf **sieben
+Kästchen** fallen (Jahrgang/Interessen, Zustimmung und Treffen-Zähler landen alle
+unter „Sonstige Datentypen"). Alle sind **mit dir verknüpft** („Linked to You" —
+sie hängen an deinem Konto), alle dienen **nur der Funktion der App** („App
+Functionality").
 
 **Nichts davon wird zum Tracking benutzt**, es gibt keine Werbung, keine Analyse und
 keinen Drittanbieter, der mitliest. Das ist keine Behauptung, sondern nachgezählt:
@@ -124,7 +126,7 @@ im Kopf der Migration.
 
 ---
 
-## 8. Sonstige Daten — die Zahl der Treffen
+### 9. Sonstige Daten → Die Zahl der Treffen
 
 **Gesammelt: ja · Verknüpft: ja · Tracking: nein · Zweck: App-Funktion**
 

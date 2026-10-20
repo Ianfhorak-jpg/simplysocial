@@ -4,6 +4,7 @@ import { SsIcon } from './SsIcon';
 import { SsText } from './SsText';
 
 import { WARTE_TEXT } from '@/data/schreiben';
+import { t } from '@/i18n';
 import { accent, categoryColors, colors, danger, KURVE, radius, spacing, useDruck } from '@/theme';
 import type { IconName } from '@/theme/icons';
 import type { ActivityCategory } from '@/types/models';
@@ -100,7 +101,7 @@ export function SsButton({
 }: SsButtonProps) {
   const druck = useDruck();
   const disabled = disabledRoh || wartet;
-  const beschriftung = wartet ? WARTE_TEXT : label;
+  const beschriftung = wartet ? t(WARTE_TEXT) : label;
 
   // `primary` und `category` sind gefüllt, `ghost` und `danger` sind Umrisse auf Weiß.
   const gefuellt = variant === 'primary' || variant === 'category';

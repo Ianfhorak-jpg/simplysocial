@@ -189,7 +189,7 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
             nicht ändern kann, gehört nicht in einen Rahmen, der zum Tippen einlädt. */}
         {name.trim().length > 0 ? (
           <SsText variant="caption" color={colors.inkSoft}>
-            Dein Name in der App: @{handleVorschlag(name)}
+            {t('erstesKonto.deinHandle', { handle: handleVorschlag(name) })}
           </SsText>
         ) : null}
 
@@ -236,8 +236,8 @@ export function ErstesKonto({ authId, name: vorschlag }: { authId: string; name?
         <SsHaken
           an={zugestimmt}
           setzen={setZugestimmt}
-          vor={HAKEN_TEXT.vor}
-          link={HAKEN_TEXT.link}
+          vor={t(HAKEN_TEXT.vor)}
+          link={t(HAKEN_TEXT.link)}
           onLink={() => setLiestBedingungen(true)}
           fehler={gezeigt && maengel.zustimmung ? t(maengel.zustimmung) : undefined}
         />

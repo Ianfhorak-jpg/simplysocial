@@ -53,10 +53,12 @@ export const de = {
 
   /** Wörter, die überall vorkommen. */
   gemein: {
+    moment: 'Moment …',
     abbrechen: 'Abbrechen',
     fertig: 'Fertig',
     zurueck: 'Zurück',
     verstanden: 'Verstanden',
+    freiwillig: 'freiwillig',
     /** Das Wort, das zwei Aufzählungsglieder verbindet. */
     und: 'und',
   },
@@ -121,6 +123,7 @@ export const de = {
    * einzige, der nicht durch `SsScreen` läuft, weil er selbst der Torwächter ist.
    */
   anmelden: {
+    anmeldenKnopf: 'Anmelden',
     momentBitte: 'Einen Moment …',
     /**
      * Die Fehlersätze der Anmeldung.
@@ -183,6 +186,11 @@ export const de = {
 
   /** Die Filter über dem Feed. */
   filter: {
+    wemIchFolge: 'Wem ich folge',
+    nurBezirk: 'Nur {plz} {stadt}',
+    nurOhneBezirk: 'Nur ohne Bezirk',
+    wannEgal: 'Wann egal',
+    woche: 'Diese Woche',
     alle: 'Alle',
     bestimmteJahrgaenge: 'Bestimmte Jahrgänge',
     alleZuruecksetzen: 'Alle Filter zurücksetzen',
@@ -228,6 +236,7 @@ export const de = {
 
   /** Gruppen — Ansicht, Gründen, Beitritt. */
   gruppe: {
+    namePreview: 'Name der Gruppe',
     gibtEsNichtMehr: 'Diese Gruppe gibt es nicht mehr.',
     vielleichtAufgeloest: 'Vielleicht hat sie der Gründer aufgelöst.',
     leuteEinladen: 'Leute einladen',
@@ -301,6 +310,9 @@ export const de = {
 
   /** Die Tab-Leiste und der Wischstapel. */
   tabs: {
+    anfragen: 'Anfragen',
+    anfragenEine: 'Anfragen, 1 wartet',
+    anfragenMehrere: 'Anfragen, {n} warten',
     start: 'Start',
     chats: 'Chats',
     profil: 'Profil',
@@ -337,7 +349,9 @@ export const de = {
 
   /** Das erste Konto und die Antwortleiste. */
   erstesKonto: {
+    akzeptiere: 'Ich akzeptiere die',
     wieHeisstDu: 'Wie heißt du?',
+    deinHandle: 'Dein Name in der App: @{handle}',
     bezirkGrund: 'Danach sortieren wir, was in deiner Nähe los ist.',
     haekchenFehlt: 'Setz noch das Häkchen, dann geht es los.',
     passwort: 'Passwort',
@@ -368,6 +382,7 @@ export const de = {
 
   /** Der Match-Bildschirm. */
   match: {
+    treffpunktImChat: 'Treffpunkt macht ihr im Chat aus',
     allesKlar: 'Alles klar',
     nichtsZuFeiern: 'Hier gibt es gerade nichts zu feiern',
     bestaetigungWeg:
@@ -529,6 +544,35 @@ export const de = {
     undNochMehrere: '{satz} Und noch {anzahl} Sachen um die Zeit.',
   },
 
+  /**
+   * Der Jahrgang in Worten. Die Zahlen stehen in `config/alter.ts`, die Logik in
+   * `lib/alter-anzeige.ts`.
+   *
+   * ⚠️ **`imProfil` und `jahreAlt` stehen nur noch da, weil `JAHRGANG_ANZEIGE` ein
+   * Rückweg ist** (Ians Entscheidung 30). Seit dem 2026-10-20 steht der Schalter auf
+   * `'band'`, und das ist sprachneutral — beide Texte liest also niemand, solange
+   * der Schalter dort bleibt. Sie fliegen NICHT raus, weil ein Rückweg ohne Wörter
+   * keiner wäre.
+   */
+  jahrgang: {
+    bis: '{jahr} oder früher',
+    ab: 'ab {jahr}',
+    kurz: 'Jg. {spanne}',
+    imDetail: 'Jahrgang {spanne}',
+    imProfil: 'Jahrgang {jahrgang}',
+    jahreAlt: '{alter} Jahre',
+    balkenLabel: 'Jahrgang {spanne}',
+  },
+
+  /** Wer einen Post sieht — die Marke am Post. */
+  sicht: {
+    nurFollower: 'Nur Follower',
+    nurDeineFollower: 'Nur deine Follower',
+    nurWerFolgt: 'Nur wer {name} folgt',
+    nurGruppe: 'Nur {gruppe}',
+    nurEineGruppe: 'Nur für eine Gruppe',
+  },
+
   /** Die Chat-Liste. */
   chat: {
     gruppen: 'Gruppen',
@@ -541,7 +585,8 @@ export const de = {
   person: {
     duFolgst: 'Du folgst',
     folgen: 'Folgen',
-    nurFuerFollower: 'Posts, die nur für Follower sind.',
+    folgenFolge:
+      'Dann steht {name} im Feed unter „Wem ich folge" — und du siehst Posts, die nur für Follower sind.',
     nachricht: 'Nachricht',
     jaBlockieren: 'Ja, blockieren',
     blockieren: 'Blockieren',
@@ -584,6 +629,15 @@ export const de = {
 
   /** Der Chat-Bildschirm selbst. */
   chatraum: {
+    vorbei: 'Dieses Treffen ist vorbei. Der Chat verschwindet {wann}.',
+    ablaufHeute: 'heute',
+    ablaufMorgen: 'morgen',
+    ablaufTage: 'in {tage} Tagen',
+    schreibDem: 'Schreib {name}',
+    nochNichtsDirekt:
+      'Noch steht hier nichts. Erst mit deiner ersten Nachricht sieht {name}, dass es diesen Chat gibt.',
+    sicherheit:
+      'Triff dich beim ersten Mal an einem öffentlichen Ort und sag jemandem, wo du bist. Niemand darf dich zu etwas drängen — melden und blockieren geht jederzeit.',
     treffpunktOffen: 'Treffpunkt noch offen',
     senden: 'Senden',
     verabredetTitel: 'Ihr seid verabredet',
@@ -638,6 +692,7 @@ export const de = {
 
   /** Eine Aktivität einstellen — der Kern-Ablauf der App. */
   erstellen: {
+    treffpunktHinweis: 'Für alle sichtbar — nimm einen öffentlichen Ort, keine Adresse von zu Hause.',
     kategorieFehler: 'Wähle aus, worum es geht.',
     titelFehler: 'Ein paar Wörter, damit man weiß, was los ist.',
     sichtFehler: 'Wähle die Gruppe aus, für die der Post gedacht ist.',
@@ -718,6 +773,11 @@ export const de = {
 
   /** Die Post-Ansicht — der Bildschirm, auf dem „Bin dabei" gedrückt wird. */
   postansicht: {
+    weniger: 'Weniger',
+    mehrAnsehen: 'Mehr ansehen',
+    gemeldet: 'Gemeldet',
+    duHastGeschrieben: 'Du hast geschrieben: „{text}“',
+    treffpunktNachBestaetigung: 'Den Treffpunkt siehst du, sobald der Host dich bestätigt hat.',
     blockiertTitel: 'Hier geht nichts',
     blockiertText:
       'Zwischen dir und dem Verfasser dieses Posts steht eine Blockierung. Blockierungen, die du selbst gesetzt hast, findest du in den Einstellungen.',
@@ -756,6 +816,8 @@ export const de = {
 
   /** Einstellungen. */
   einstellungen: {
+    anderesBild: 'Anderes Bild',
+    bildAussuchen: 'Bild aussuchen',
     spracheTitel: 'Sprache',
     deinBild: 'Dein Bild',
     bildEntfernen: 'Bild entfernen',
@@ -838,7 +900,7 @@ export const de = {
     betreiber:
       '{app} wird betrieben von {betreiber}, {stadt}. Bei Fragen, Beschwerden oder allem, was mit deinen Daten zu tun hat: {kontakt} — da antwortet ein Mensch.',
     alter:
-      'Mitmachen darfst du ab {alter}. In Österreich brauchst du bis zu deinem 14. Geburtstag die Zustimmung deiner Eltern, damit deine Daten verarbeitet werden dürfen — frag sie, bevor du ein Konto anlegst.',
+      'Mitmachen darfst du ab {alter}. Wer jünger ist, darf kein Konto anlegen. Wer Minderjährige belästigt oder zu etwas drängt, das nichts mit der gemeinsamen Aktivität zu tun hat, wird sofort entfernt — schwere Fälle melden wir der Polizei.',
     regelbruch:
       'Hältst du dich nicht an die Regeln oben, kann dein Konto entfernt werden. Jede Meldung wird von einem Menschen gelesen, {zusage}',
     datenschutzTitel: 'Datenschutzerklärung',
@@ -863,6 +925,8 @@ export const de = {
 
   /** Der Melde-Bildschirm. */
   melden: {
+    postMelden: 'Post melden',
+    personMelden: 'Person melden',
     vonDir: 'Das ist von dir',
     gibtEsNicht: 'Das gibt es nicht',
     eigenesNichtMelden: 'Eigene Posts und sich selbst kann man nicht melden.',
@@ -907,7 +971,8 @@ export const de = {
     belaestigungTitel: 'Belästigt mich',
     belaestigungText: 'Bedrängt, beleidigt oder hört nicht auf zu schreiben',
     unsicherTitel: 'Ich fühle mich unsicher',
-    unsicherText: 'Verhalten, bei dem jemand zu Schaden kommen könnte',
+    unsicherText:
+      'Verhalten, bei dem jemand zu Schaden kommen könnte — etwa ein Erwachsener, der Minderjährige bedrängt',
     anderesTitel: 'Etwas anderes',
     anderesText: 'Passt in keinen der Punkte oben',
   },

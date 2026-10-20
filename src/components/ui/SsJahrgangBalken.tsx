@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { SsText } from './SsText';
-import { spanneText } from '@/config/alter';
+import { spanneText } from '@/lib/alter-anzeige';
 import { accent, colors, radius, spacing } from '@/theme';
 
 export interface SsJahrgangBalkenProps {
@@ -193,7 +194,7 @@ export function SsJahrgangBalken({ von, bis, min, max, onChange }: SsJahrgangBal
         onLayout={messen}
         style={styles.schiene}
         accessibilityRole="adjustable"
-        accessibilityLabel={`Jahrgang ${spanneText(von, bis)}`}
+        accessibilityLabel={t('jahrgang.balkenLabel', { spanne: spanneText(von, bis) })}
         {...responder.panHandlers}>
         <View style={styles.gleis} />
         <View style={[styles.gewaehlt, { left: xVon, width: Math.max(xBis - xVon, 0) }]} />

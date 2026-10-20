@@ -3,6 +3,7 @@ import { StyleSheet, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SsGlas, SsIcon } from '@/components/ui';
+import { t } from '@/i18n';
 import {
   TAB_KAPSEL_HOEHE,
   TAB_KAPSEL_SEITE_KANTEN,
@@ -127,13 +128,17 @@ export default function TabsLayout() {
       }}>
       <Tabs.Screen
         name="index"
-        options={{ title: 'Start', tabBarAccessibilityLabel: 'Start', tabBarIcon: symbol('haus') }}
+        options={{
+          title: t('tabs.start'),
+          tabBarAccessibilityLabel: t('tabs.start'),
+          tabBarIcon: symbol('haus'),
+        }}
       />
       <Tabs.Screen
         name="requests"
         options={{
-          title: 'Anfragen',
-          tabBarAccessibilityLabel: 'Anfragen',
+          title: t('tabs.anfragen'),
+          tabBarAccessibilityLabel: t('tabs.anfragen'),
           tabBarIcon: symbol('hand'),
           // Die Zahl macht sichtbar, dass jemand wartet — das ist der Punkt, an dem
           // die App etwas von einem will, und der Grund, sie wieder aufzumachen.
@@ -144,16 +149,16 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="chats"
         options={{
-          title: 'Chats',
-          tabBarAccessibilityLabel: 'Chats',
+          title: t('tabs.chats'),
+          tabBarAccessibilityLabel: t('tabs.chats'),
           tabBarIcon: symbol('sprechblase'),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
-          tabBarAccessibilityLabel: 'Profil',
+          title: t('tabs.profil'),
+          tabBarAccessibilityLabel: t('tabs.profil'),
           tabBarIcon: symbol('person'),
         }}
       />

@@ -99,8 +99,7 @@ export default function UserProfileScreen() {
                     zwei Zustände, zwei Zeichen, statt einem und keinem. */}
                 <SsButton label={t('person.folgen')} icon="plus" block onPress={() => void folgen(person.id)} />
                 <SsText variant="caption" color={colors.inkSoft} center>
-                  Dann steht {person.displayName} im Feed unter „Wem ich folge" — und du siehst
-                  {t('person.nurFuerFollower')}
+                  {t('person.folgenFolge', { name: person.displayName })}
                 </SsText>
               </>
             )}
@@ -188,7 +187,7 @@ export default function UserProfileScreen() {
                 <View style={styles.reihe}>
                   <SsButton
                     variant="ghost"
-                    label={meldung ? 'Gemeldet' : 'Melden'}
+                    label={meldung ? t('postansicht.gemeldet') : t('melden.melden')}
                     icon="fahne"
                     disabled={Boolean(meldung)}
                     style={styles.halb}

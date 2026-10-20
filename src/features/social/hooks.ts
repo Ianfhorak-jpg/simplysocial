@@ -221,11 +221,6 @@ function mitOderOhne(ids: string[], id: string, an: boolean): string[] {
 /** Welche der beiden Listen ein Profil gerade zeigt. */
 export type FolgeListe = 'follower' | 'following';
 
-export const FOLGE_LISTE_TITEL: Record<FolgeListe, string> = {
-  follower: 'Follower',
-  following: 'Folgt',
-};
-
 /**
  * Die Follower- oder Folgt-Liste eines Nutzers, als ganze Nutzer statt als IDs.
  *

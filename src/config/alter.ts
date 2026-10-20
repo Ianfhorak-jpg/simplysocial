@@ -1,5 +1,3 @@
-import type { PostAlter } from '@/types/models';
-
 /**
  * Alles rund um den Jahrgang — die WÖRTER und die GRENZEN, nicht die Regeln.
  *
@@ -71,61 +69,18 @@ export function jahrgangMax(jetzt: Date = new Date()): number {
  * Bei einer App mit 16-Jährigen hängt das an PLAN.md, Abschnitt 8, Punkt 1. Die
  * Korrektur ist dieses eine Wort — deshalb steht es hier und nicht im Screen.
  */
-export const JAHRGANG_ANZEIGE: 'jahrgang' | 'alter' | 'band' = 'jahrgang';
+/**
+ * 🔴 **Seit dem 2026-10-20 steht hier `'band'`** — Ians Auftrag, die App „für den
+ * Anfang sicher" zu machen (Entscheidung 30 vom 2026-09-05 war `'jahrgang'`).
+ * Ein Fremder sieht am Profil jetzt „14–17" statt „Jahrgang 2011" und kann das Alter
+ * nicht mehr auf das Jahr genau ausrechnen. **Umkehren ist dieses eine Wort.**
+ * Die Wörter selbst stehen in `lib/alter-anzeige.ts`.
+ */
+export const JAHRGANG_ANZEIGE: 'jahrgang' | 'alter' | 'band' = 'band';
 
 /** Wie alt jemand mit diesem Jahrgang dieses Jahr WIRD. */
 export function alterAusJahrgang(jahrgang: number, jetzt: Date = new Date()): number {
   return jetztJahr(jetzt) - jahrgang;
-}
-
-/**
- * Was am Profil einer Person steht.
- *
- * Geht über `JAHRGANG_ANZEIGE`, damit Ians Entscheidung an EINER Stelle umkehrbar
- * bleibt. `'band'` rechnet die alten drei Bänder aus dem Jahrgang zurück — nicht als
- * Nostalgie, sondern damit die verworfene Möglichkeit ein echter Rückweg ist und
- * nicht bloß ein Kommentar.
- */
-export function alterAmProfil(jahrgang: number, jetzt: Date = new Date()): string {
-  if (JAHRGANG_ANZEIGE === 'jahrgang') return `Jahrgang ${jahrgang}`;
-  const alter = alterAusJahrgang(jahrgang, jetzt);
-  if (JAHRGANG_ANZEIGE === 'alter') return `${alter} Jahre`;
-  if (alter <= 17) return '14–17';
-  if (alter <= 25) return '18–25';
-  return '26+';
-}
-
-/**
- * Eine Jahrgangs-Spanne als Text: „2009–2012" · „ab 2009" · „2009".
- *
- * Halbgeviertstrich, kein Bindestrich — das ist die richtige Form für einen Bereich.
- * (Die alte Tabelle hatte dafür Wert und Beschriftung getrennt; hier fällt das weg,
- * weil eine Zahl keine Schreibweise hat.)
- */
-export function spanneText(vonJahrgang: number, bisJahrgang: number, jetzt: Date = new Date()): string {
-  if (vonJahrgang === bisJahrgang) return `${vonJahrgang}`;
-  if (vonJahrgang <= jahrgangMin(jetzt)) return `bis ${bisJahrgang}`;
-  if (bisJahrgang >= jahrgangMax(jetzt)) return `ab ${vonJahrgang}`;
-  return `${vonJahrgang}–${bisJahrgang}`;
-}
-
-/**
- * Was an einer Post-KARTE steht — oder nichts.
- *
- * `null` bei `egal`, und das ist der Sinn der Funktion: Ein Post „für alle" ist der
- * Normalfall, und der Normalfall braucht keine Beschriftung. Stünde an jeder zweiten
- * Karte „Für alle", wäre die Angabe dort, wo sie wirklich etwas sagt, nicht mehr zu
- * sehen — sie ginge im eigenen Rauschen unter.
- */
-export function alterAmPost(alter: PostAlter, jetzt: Date = new Date()): string | null {
-  if (alter.kind === 'egal') return null;
-  return `Jg. ${spanneText(alter.vonJahrgang, alter.bisJahrgang, jetzt)}`;
-}
-
-/** Was im DETAIL steht, wo Platz für einen ganzen Satz ist. */
-export function alterAmDetail(alter: PostAlter, jetzt: Date = new Date()): string {
-  if (alter.kind === 'egal') return ALLE_LABEL;
-  return `Jahrgang ${spanneText(alter.vonJahrgang, alter.bisJahrgang, jetzt)}`;
 }
 
 /** Beim Posten: „Für wen ist das?" */

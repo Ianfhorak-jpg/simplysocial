@@ -42,12 +42,16 @@ import type { Post, PostAlter } from '@/types/models';
  */
 export type WannFilter = 'egal' | 'heute' | 'morgen' | 'woche';
 
-export const WANN_LABELS: Record<WannFilter, string> = {
-  egal: 'Wann egal',
-  heute: 'Heute',
-  morgen: 'Morgen',
-  woche: 'Diese Woche',
-};
+/**
+ * SCHLÜSSEL, keine Wörter — übersetzt wird beim Zeichnen (`t(WANN_LABELS[w])`).
+ * Eine modulweite Tabelle mit fertigen Wörtern fröre die Startsprache ein.
+ */
+export const WANN_LABELS = {
+  egal: 'filter.wannEgal',
+  heute: 'zeit.heute',
+  morgen: 'zeit.morgen',
+  woche: 'filter.woche',
+} as const satisfies Record<WannFilter, string>;
 
 export const WANN_ORDER: readonly WannFilter[] = ['egal', 'heute', 'morgen', 'woche'];
 

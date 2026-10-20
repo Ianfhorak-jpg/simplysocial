@@ -51,6 +51,34 @@ Die Antworten stehen unten alle.
 
 ---
 
+## 🔴 Nachgetragen am 2026-10-20: die Altersfreigabe wird jetzt AUF 13+ GESETZT
+
+**Hier stand: „Ergebnis 13+ — keine Wahl, sondern Feststellung." Das stimmte nicht.**
+Bei Apple nachgemessen: Obwohl *Nutzerinhalte*, *Nachrichten und Chat* und *Soziale
+Netzwerke* alle auf **Ja** stehen, hat Apple **4+** ausgerechnet (in Brasilien sogar
+„für alle"). Apple macht aus „man chattet mit Fremden" keine Altersgrenze.
+
+Das ist nicht harmlos: Ein 4+ bei einer App, in der man sich mit Unbekannten trifft,
+ist falsch beschriftet — und genau darauf verlassen sich Eltern, die am Handy ihres
+Kindes eine Grenze eingestellt haben.
+
+**Deshalb gibt es jetzt einen Override:** `ageRatingOverrideV2` = `THIRTEEN_PLUS`.
+Du schickst ihn mit dem Befehl, den es schon gibt:
+
+```bash
+cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
+npm run asc altersfreigabe                 # Trockenlauf: zeigt NUR "NONE → THIRTEEN_PLUS"
+npm run asc altersfreigabe -- --wirklich   # schickt es
+npm run asc einreichbereit                 # zeigt danach 13+ statt FOUR_PLUS
+```
+
+**Warum 13+ und nicht mehr:** Die Mindestgrenze der App ist 14. **16+** würde 14- und
+15-Jährige mit eingestellter Grenze aussperren, die ihr dabeihaben wollt. **18+** geht
+nicht — du bist 17 und dürftest deine eigene App nicht laden. Eine Stufe höher wäre ein
+Wort in `scripts/asc.py` (`SIXTEEN_PLUS`).
+
+---
+
 ## Die Antworten
 
 ### Teil 1 — die drei, auf die es ankommt

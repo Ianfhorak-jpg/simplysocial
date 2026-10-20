@@ -41,7 +41,10 @@ import { colors } from '@/theme';
  * anzeigt, bewacht `npm run pruef-nennung`.** Solange sie auf der Karte stand,
  * trug die Karte selbst diese Sicherung — dieser Wächter ist ihr Ersatz.
  */
-export const KARTE_QUELLE = 'Bezirksgrenzen: Stadt Wien (data.wien.gv.at), CC BY 4.0';
+// Sprachneutral mit Absicht: Die Nennung ist der amtliche Wortlaut der Stadt Wien („Stadt Wien –
+// data.wien.gv.at") plus Lizenz. Ein deutsches Wort davor ("Bezirksgrenzen:") stand in der
+// englischen Oberfläche, und CC BY verlangt es nicht.
+export const KARTE_QUELLE = 'Stadt Wien – data.wien.gv.at, CC BY 4.0';
 
 // ── Wie eingefärbt wird ──────────────────────────────────────────────────────
 
