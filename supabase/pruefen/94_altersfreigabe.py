@@ -282,6 +282,21 @@ pruef('ageRatingOverrideV2 steht auf THIRTEEN_PLUS oder SIXTEEN_PLUS — nie NON
       TAB.get('ageRatingOverrideV2') in ('THIRTEEN_PLUS', 'SIXTEEN_PLUS'),
       f"steht auf {TAB.get('ageRatingOverrideV2')!r}")
 
+# 🔴 **Zwei Fehler vom 2026-10-20, beide in diesem Feld, beide jetzt festgehalten.**
+# Ian hat den Fragebogen geschickt, Apple hat `NINE_PLUS` geschrieben (nicht 13+), und das
+# Werkzeug meldete "✓ Geschrieben":
+#   1. Es schickte `ageRatingOverride` UND `ageRatingOverrideV2` — Apple lehnt das ab (409
+#      `AGE_RATING_OVERRIDE_V1_AND_V2_NOT_ALLOWED`). Das alte Feld darf NICHT in der Tabelle stehen.
+#   2. Der Fehlertext nennt beide Felder; die Schleife hielt V2 fuer schuldig und nahm den
+#      naechsten Kandidaten — `NINE_PLUS`. Ein Ausweichwert, der WENIGER schuetzt als der
+#      gewollte, ist ein stiller Absturz nach unten.
+pruef('`ageRatingOverride` (das alte Feld) steht NICHT in der Tabelle — Apple lehnt V1 + V2 zusammen ab',
+      'ageRatingOverride' not in TAB)
+_KAND = tabelle_aus(ASC, 'KANDIDATEN') or {}
+pruef('Fuer `ageRatingOverrideV2` gibt es keinen schwaecheren Ausweichwert',
+      all(w in ('THIRTEEN_PLUS', 'SIXTEEN_PLUS') for w in _KAND.get('ageRatingOverrideV2', [])),
+      f"Kandidaten: {_KAND.get('ageRatingOverrideV2')!r}")
+
 # Und die Inhaltsfragen sagen alle „keine". Gezaehlt statt aufgezaehlt: Eine Liste
 # von Namen merkt nicht, wenn eine Frage dazukommt (dieselbe Lehre wie bei den
 # Paketen in Abschnitt 2).

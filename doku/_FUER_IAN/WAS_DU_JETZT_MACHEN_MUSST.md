@@ -12,12 +12,19 @@
 ```bash
 cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
 
-npm run testflight                           # 1 · Build 6 bauen, ~20 Min
-npm run asc build-anhaengen -- --wirklich    # 2 · dranhängen (ohne --trotzdem: es ist ein frischer Build)
-npm run asc altersfreigabe                   # 3 · Trockenlauf: muss "NONE → THIRTEEN_PLUS" zeigen
-npm run asc altersfreigabe -- --wirklich     # 4 · 13+ bei Apple setzen
-npm run asc einreichbereit                   # 5 · muss 0 offene Punkte zeigen
+npm run testflight                           # 1 · Build 6 bauen und hochladen, ~20 Min
+npm run asc builds                           # 2 · WARTEN, bis dort "Build 6 · VALID" steht (5–30 Min nach dem Upload)
+npm run asc build-anhaengen -- --wirklich    # 3 · dranhängen (ohne --trotzdem: es ist ein frischer Build)
+npm run asc altersfreigabe                   # 4 · Trockenlauf: muss "→ 'THIRTEEN_PLUS'" zeigen
+npm run asc altersfreigabe -- --wirklich     # 5 · 13+ bei Apple setzen
+npm run asc einreichbereit                   # 6 · Build 6 dran, Stufe 13+, 0 offene Punkte
 ```
+
+> ⚠️ **Stand 2026-10-20, abends:** Build 6 ist hochgeladen, Apple verarbeitet ihn noch. Schritt 3
+> lief zu früh (er sah nur Build 5). Und die Altersfreigabe steht gerade auf **9+** statt 13+
+> — das war ein Fehler im Werkzeug (siehe `FALLEN.md`), nicht bei dir; er ist repariert. Schritt 4
+> muss jetzt `NINE_PLUS → THIRTEEN_PLUS` zeigen. Zeigt Schritt 5 einen Fehler, schick ihn mir:
+> Apples Wortlaut steht dann dabei.
 
 Dann in App Store Connect **„Zur Prüfung hinzufügen“**. Das Privacy-Label hast du schon.
 

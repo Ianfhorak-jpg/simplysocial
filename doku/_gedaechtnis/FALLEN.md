@@ -2336,3 +2336,16 @@
   „ öffnet, das schließende `"` ist ein ASCII-Zeichen und beendet den Python-String. Gut, wenn
   das Skript atomar ist (es hat dann NICHTS geschrieben); schlecht, wenn man das nicht prüft.
   Behebung: Dreifach-Anführungszeichen oder `„`.
+- 🔴 **Ein Ausweichwert, der WENIGER schützt als der gewollte, ist ein stiller Absturz nach
+  unten — und ein Rücklesen gegen die geänderte Tabelle bestätigt ihn.** Am 2026-10-20 sollte
+  `ageRatingOverrideV2 = THIRTEEN_PLUS` bei Apple gesetzt werden. Das Werkzeug schickte zusätzlich
+  das alte `ageRatingOverride`; Apple antwortete 409 (`AGE_RATING_OVERRIDE_V1_AND_V2_NOT_ALLOWED`,
+  der Text nennt BEIDE Felder); die Schleife hielt V2 für schuldig, nahm den nächsten Kandidaten
+  (`NINE_PLUS`, von mir selbst als „Ausweichwert" eingetragen) und meldete **„✓ Geschrieben: 25
+  Felder, zurückgelesen"** — verglichen mit der Tabelle, die die Schleife selbst geändert hatte.
+  Dahinter stand sogar „(Erwartet: 13+)", aber als bloßer Text. Ian bekam 9+ statt 13+. Behoben:
+  (1) V1 steht nicht mehr in der Tabelle, (2) V2 hat nur noch EINEN Kandidaten, (3) das Rücklesen
+  vergleicht gegen `ALTERSFREIGABE`, nicht gegen `felder`, und eine Stufe unter 13+ beendet den
+  Lauf mit Fehler, (4) `pruef-alter` hält 1 und 2 fest (38, beide Gegenproben rot gesehen).
+  *Dieselbe Bauart wie der Wächter, der „1 offene Punkte" meldete:* eine Prüfung, die gegen das
+  eigene, schon veränderte Ergebnis vergleicht, kann nicht rot werden.

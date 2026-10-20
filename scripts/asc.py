@@ -149,9 +149,11 @@ ALTERSFREIGABE = {
     # selbst (er ist 17) und fast allen Gründern. Eine Stufe höher ist ein Wort:
     # `SIXTEEN_PLUS`.
     #
-    # Zwei Felder, weil Apple beide führt: `ageRatingOverride` ist das alte (bleibt
-    # `NONE`), `ageRatingOverrideV2` das aktuelle. Beide stehen im Formular.
-    'ageRatingOverride': 'NONE',
+    # 🔴 **NUR das V2-Feld, nie das alte `ageRatingOverride`.** Apple lehnt beides
+    # zusammen ab (409 `AGE_RATING_OVERRIDE_V1_AND_V2_NOT_ALLOWED`: „The attribute
+    # 'ageRatingOverride' cannot be set when 'ageRatingOverrideV2' is set"). Der erste
+    # Lauf am 2026-10-20 hat genau das geschickt, den Fehler falsch gedeutet — und
+    # still `NINE_PLUS` geschrieben (siehe `KANDIDATEN`). Apple spiegelt V2 selbst in V1.
     'ageRatingOverrideV2': 'THIRTEEN_PLUS',
 }
 
@@ -166,7 +168,11 @@ ALTERSFREIGABE = {
 # Enum-Werte abgelehnt). Ein einzelnes unbekanntes Feld darf nicht den ganzen
 # Fragebogen verhindern, deshalb je Feld eine Kandidatenliste. Wunschantwort zuerst.
 KANDIDATEN = {
-    'ageRatingOverrideV2': ['THIRTEEN_PLUS', 'NINE_PLUS'],
+    # 🔴 **Absichtlich NUR ein Wert.** Der Kandidat danach hieß `NINE_PLUS`, und der Fall trat
+    # ein: Ein Fehler, der das Feld nur NENNT, schickte die Schleife zum nächsten Kandidaten —
+    # und Ian bekam 9+ statt 13+, mit „✓ Geschrieben“. Ein Ausweichwert, der WENIGER schützt
+    # als der gewollte, ist kein Ausweichwert, sondern ein stiller Absturz nach unten.
+    'ageRatingOverrideV2': ['THIRTEEN_PLUS'],
     'ageAssurance': [False, 'NONE'],
     'socialMediaAgeRestricted': [False, 'NONE'],
     'parentalControls': [False, 'NONE'],
@@ -530,6 +536,10 @@ def einreichbereit(token, app):
 
     stufe = hole(f"appInfos/{info['id']}", token)['data']['attributes'].get('appStoreAgeRating')
     print(f"\n  → Von Apple errechnete Altersstufe: {stufe or 'noch keine'}")
+    if stufe not in ('THIRTEEN_PLUS', 'SIXTEEN_PLUS'):
+        print(f"  ⚠️  {stufe or 'keine'} — das ist UNTER 13+. Die App erlaubt ab 14; ein "
+              "niedrigeres Etikett\n     beschriftet sie falsch. Zählt nicht als offener Punkt (Apple verlangt es nicht).\n"
+              "     [🧑 npm run asc altersfreigabe -- --wirklich]")
 
     # Kein ✗, sondern ?: Ein Haken oder Kreuz behauptet Wissen. Das Privacy-Label
     # ist über die API weder schreib- NOCH lesbar — in ACTA am 2026-09-13 an neun
@@ -656,7 +666,17 @@ def altersfreigabe(token, app):
     nach = hole(f"appInfos/{info['id']}/ageRatingDeclaration", token)['data']['attributes']
     abweichung = [f for f, soll in felder.items() if nach.get(f) != soll]
     rest_leer = [f for f, w in nach.items() if w is None]
-    print(f"✓ Geschrieben: {len(felder)} Felder, zurückgelesen.")
+    # 🔴 Gegen die ABSICHT prüfen (`ALTERSFREIGABE`), nicht gegen `felder`: Die Schleife
+    # oben tauscht Werte aus und nimmt Felder heraus. Wer das Ergebnis gegen die geänderte
+    # Tabelle prüft, bekommt immer „gleich“ — so wurde am 2026-10-20 aus 13+ still 9+.
+    verfehlt = [f for f in ('ageRatingOverrideV2',)
+                if f in ALTERSFREIGABE and nach.get(f) != ALTERSFREIGABE[f]]
+    if verfehlt:
+        print("\n✗ NICHT, WIE GEWOLLT: "
+              + ', '.join(f"{f} steht bei Apple auf {nach.get(f)!r}, gewollt {ALTERSFREIGABE[f]!r}"
+                          for f in verfehlt))
+    else:
+        print(f"✓ Geschrieben: {len(felder)} Felder, zurückgelesen.")
     if abweichung:
         print("  ⚠️ Anders da als geschickt:",
               ', '.join(f"{f}={nach.get(f)!r} (soll {felder[f]!r})" for f in abweichung))
@@ -667,7 +687,11 @@ def altersfreigabe(token, app):
 
     stufe = hole(f"appInfos/{info['id']}", token)['data']['attributes'].get('appStoreAgeRating')
     print(f"\n  → Von Apple errechnete Altersstufe: {stufe or 'noch keine'}")
-    print("     (Erwartet: 13+ — sie FOLGT aus Feed · Chat · Social Media.)")
+    if stufe not in ('THIRTEEN_PLUS', 'SIXTEEN_PLUS'):
+        print("  ✗ Das ist UNTER 13+ — die App erlaubt ab 14. Der Override ist nicht angekommen.")
+        sys.exit(1)
+    if verfehlt:
+        sys.exit(1)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -94,6 +94,15 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 > - `config/alter.ts` verlor die Anzeige-Funktionen → neu `lib/alter-anzeige.ts` (die Datei muss
 >   importfrei bleiben, drei Prüfstände laden sie in Node).
 >
+> ### 🔴 Stand um 18 Uhr: Build 6 hochgeladen, aber NICHT angehängt — und 13+ ist schiefgegangen
+>
+> Ian hat die Befehle gefahren. `testflight` lief durch (Upload 17:57), `build-anhaengen` sah aber nur
+> Build 5 (Apple verarbeitet noch), und `altersfreigabe --wirklich` schrieb **`NINE_PLUS`** statt 13+ —
+> mit „✓ Geschrieben“. **Mein Fehler** (V1+V2 zugleich geschickt, Ausweichwert `NINE_PLUS`), repariert,
+> Falle im Register. Bei Apple steht gerade: Build 5 an der Version (veraltet, NICHT einreichen), Stufe 9+.
+> **Offen:** `asc builds` bis Build 6 VALID → `build-anhaengen` → `altersfreigabe -- --wirklich` (muss
+> `NINE_PLUS → THIRTEEN_PLUS` zeigen).
+>
 > ### 🔴 NICHT gebaut — und es steht in `_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md`
 >
 > 1. **Trennung unter 18 / ab 18** (Server-Regeln auf Posts, Anfragen, Chats) — die wirksamste
@@ -1094,11 +1103,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 125. Was der App Store an TEXT zeigt, steht in `scripts/storetexte.md` — und jede ADRESSE darin wird angerufen, bevor sie zu Apple geht
 ## Fallen — Index
 
-> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 261 Stück, jede schon
+> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 262 Stück, jede schon
 > einmal einen Abend gekostet — die meisten stammen aus ACTA (`17_Tennis_Optimma`), der
 > Rest aus diesem Projekt. Hier steht nur der Titel; **die Diagnose steht im Volltext.**
 >
-> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-10-20: **261**; am
+> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-10-20: **262**; am
 > 2026-09-28 standen hier 213 bei 226 gezählten) — *eine Warnung mit einer ZAHL darin
 > veraltet genauso still wie das, wovor sie warnt.* Die Messstelle, damit die nächste
 > Zahl nicht wieder geraten wird:
@@ -1368,6 +1377,7 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - „Die Übersetzung ist abgeschlossen" stimmte zweimal nicht, und beide Male war es eine grüne Zahl
 - Eine Anzeige-Funktion in einer `config/`-Datei, die ein Prüfstand in blankem Node lädt, kann nicht übersetzt werden
 - Ein Ersetzungsskript mit deutschen Anführungszeichen in einem ASCII-Stringliteral stirbt mit `SyntaxError`
+- Ein Ausweichwert, der WENIGER schützt als der gewollte, ist ein stiller Absturz nach unten
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)
