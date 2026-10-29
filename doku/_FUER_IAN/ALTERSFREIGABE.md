@@ -125,7 +125,7 @@ Alle folgenden Fragen haben drei Möglichkeiten (*Keine · Selten/mild · Häufi
 | Gesundheits- und Wellness-Themen | **NEIN** ← *siehe die Frage an dich unten* |
 | Gewinnspiele / Wettbewerbe | **NEIN** |
 | Uneingeschränkter Webzugriff | **NEIN** — im ganzen Quellcode steht **kein einziges** `openURL`, `Linking` oder `WebBrowser`. Das einzige Browserfenster ist Googles Anmeldeseite über `expo-auth-session`, und das ist eine feste Adresse, kein freier Webzugang |
-| Werbung | **NEIN** — unter **32** Abhängigkeiten ist **kein** Werbe-, Analyse- oder Absturzbericht-Paket. Dieselbe Zählung trägt schon das Datenschutz-Etikett. ⚠️ Am 2026-10-18 kam **eines** dazu: `expo-localization`. Es liest die Sprache, die am iPhone eingestellt ist, damit die App sie übernimmt — **es schickt nichts irgendwohin** und ist weder Werbung noch Messung. Am Datenschutz-Etikett ändert sich dadurch nichts |
+| Werbung | **NEIN** — unter **33** Abhängigkeiten ist **kein** Werbe-, Analyse- oder Absturzbericht-Paket. Dieselbe Zählung trägt schon das Datenschutz-Etikett. ⚠️ Am 2026-10-18 kam **eines** dazu: `expo-localization`. Es liest die Sprache, die am iPhone eingestellt ist, damit die App sie übernimmt — **es schickt nichts irgendwohin** und ist weder Werbung noch Messung. Am Datenschutz-Etikett ändert sich dadurch nichts. Am 2026-10-23 kam **ein weiteres** dazu: `expo-build-properties` — ein reines BUILD-Plugin (schaltet beim Neuerzeugen des iOS-Projekts die Szenen-Unterstützung ein, die iOS 27 verlangt). Kein nativer Code, kein Netzwerkaufruf, nichts, was in der App läuft — nachgesehen, nicht angenommen. Am Datenschutz-Etikett ändert sich auch dadurch nichts |
 
 ### Teil 4 — nicht anfassen
 

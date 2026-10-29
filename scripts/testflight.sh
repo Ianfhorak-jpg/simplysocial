@@ -74,6 +74,30 @@ if [ "$QUELLE" != "supabase" ]; then
 fi
 echo "✓ ANMELDE_QUELLE = supabase"
 
+# 🔴 Das Szenen-Manifest. iOS 27 beendet jede App ohne UIScene-Lebenszyklus beim START
+# (SIGTRAP, `___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption`) — das war
+# die Ablehnung vom 2026-10-21 (Guideline 2.1(a), Build 6, iPad). Das Manifest steckt im
+# wegwerfbaren ios/-Ordner; `expo prebuild` lässt es weg, sobald `enableSceneSupport` aus
+# der app.json fehlt. Ein Build ohne dieses Häkchen kostet 20 Minuten UND einen
+# Review-Durchlauf bei Apple — deshalb steht die Prüfung VOR dem Bauen.
+PLIST="$PROJEKT/ios/SimplySocial/Info.plist"
+SZENE="$(/usr/libexec/PlistBuddy -c "Print :UIApplicationSceneManifest:UISceneConfigurations:UIWindowSceneSessionRoleApplication:0:UISceneDelegateClassName" "$PLIST" 2>/dev/null || true)"
+if [ -z "$SZENE" ]; then
+  echo "✗ In ios/SimplySocial/Info.plist fehlt das Szenen-Manifest (UIApplicationSceneManifest)."
+  echo "  Mit diesem Stand stürzt die App auf iOS 27 beim Start ab — Apple lehnt sie ab."
+  echo "  Ursache: Das iOS-Projekt wurde ohne die Szenen-Unterstützung erzeugt."
+  echo "  Behebung: in app.json muss  [\"expo-build-properties\", {\"ios\": {\"enableSceneSupport\": true}}]"
+  echo "  unter plugins stehen, danach:  npx expo prebuild --platform ios --no-install"
+  echo "  und  (cd ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install)"
+  exit 1
+fi
+echo "✓ Szenen-Manifest da ($SZENE)"
+# Apples Datenschutz-Manifest der App selbst. Es kommt aus app.json (`ios.privacyManifests`)
+# und fehlte nach dem Neuerzeugen am 2026-10-23 zunächst — still, ohne Fehlermeldung.
+[ -f "$PROJEKT/ios/SimplySocial/PrivacyInfo.xcprivacy" ] || {
+  echo "✗ ios/SimplySocial/PrivacyInfo.xcprivacy fehlt (kommt aus app.json → ios.privacyManifests)."; exit 1; }
+echo "✓ Datenschutz-Manifest da"
+
 BUILDNR="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$PROJEKT/ios/SimplySocial/Info.plist")"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PROJEKT/ios/SimplySocial/Info.plist")"
 echo "✓ Version $VERSION, Build $BUILDNR"

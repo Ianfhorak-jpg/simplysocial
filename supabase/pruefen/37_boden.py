@@ -136,6 +136,60 @@ with tempfile.TemporaryDirectory() as tmp:
           re.search(r'if \(!scroll && !scrolltSelbst\)', altc) is None)
     pruef('… und ein nackter `View` ebenfalls', '<ScrollView' not in altc)
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  iOS 27: der UIScene-Lebenszyklus — Apples Ablehnung vom 2026-10-21 (2.1(a))
+# ══════════════════════════════════════════════════════════════════════════════
+print('')
+print('── iOS 27: Szenen-Lebenszyklus und was am wegwerfbaren ios/-Ordner hängt ──')
+
+# 🔴 **Build 6 stürzte bei Apple beim Start ab** (iPad Air 11", iPadOS 27.0.1,
+# `EXC_BREAKPOINT`/SIGTRAP in `___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption`).
+# Es war KEIN JavaScript-Fehler: iOS 27 beendet jede App ohne Szenen-Lebenszyklus, die mit dem
+# iOS-27-SDK gebaut wurde — auf JEDEM Gerät mit iOS 27, nicht nur auf dem iPad. Auf iOS 26 (Ians
+# iPhone) ist es nur eine Warnung im Log, deshalb hat es nie jemand gesehen.
+#
+# Der Bauplan steht in `app.json`, weil `ios/` git-ignoriert ist und `expo prebuild` es jedes
+# Mal NEU erzeugt (selbst ohne `--clean`: „Cleared ios code"). Alles, was nur im ios/-Ordner
+# stand, ist dabei weg — auch die Team-ID und `PrivacyInfo.xcprivacy`.
+import json
+APP = json.loads((WURZEL / 'app.json').read_text(encoding='utf-8'))['expo']
+PAKET = json.loads((WURZEL / 'package.json').read_text(encoding='utf-8'))
+
+def plugin(name):
+    for p in APP.get('plugins', []):
+        if (p if isinstance(p, str) else p[0]) == name:
+            return {} if isinstance(p, str) else (p[1] if len(p) > 1 else {})
+    return None
+
+bp = plugin('expo-build-properties')
+pruef('`expo-build-properties` steht unter plugins', bp is not None,
+      'ohne das Plugin erzeugt `expo prebuild` kein Szenen-Manifest — iOS 27 beendet die App beim Start')
+pruef('… mit `ios.enableSceneSupport: true`',
+      bool(bp) and (bp.get('ios') or {}).get('enableSceneSupport') is True,
+      'Expo SDK 57 hat das als Opt-in; ab SDK 58 ist es Standard und das Häkchen entfällt')
+
+# Expo selbst: SDK 57 kann mit Xcode 27 erst ab 57.0.23 bauen (Maintainer, expo/expo#46664).
+m = re.search(r'(\d+)\.(\d+)\.(\d+)', PAKET['dependencies'].get('expo', ''))
+ver = tuple(int(x) for x in m.groups()) if m else (0, 0, 0)
+pruef(f'`expo` ist mindestens 57.0.23 (steht: {PAKET["dependencies"].get("expo")})',
+      ver >= (57, 0, 23) or ver[0] >= 58,
+      'vorher fehlt die Laufzeit-Unterstützung (EXExpoAppSceneDelegate)')
+
+# Was früher im ios/-Ordner von Hand stand und beim Neuerzeugen verschwand:
+pruef('`ios.appleTeamId` ist gesetzt (sonst fehlt DEVELOPMENT_TEAM nach jedem prebuild)',
+      bool(APP['ios'].get('appleTeamId')))
+pm = APP['ios'].get('privacyManifests') or {}
+sorten = {t.get('NSPrivacyAccessedAPIType') for t in pm.get('NSPrivacyAccessedAPITypes', [])}
+pruef('Das Datenschutz-Manifest steht in `ios.privacyManifests` (3 Zugriffsgründe, wie Build 6)',
+      sorten >= {'NSPrivacyAccessedAPICategoryFileTimestamp',
+                 'NSPrivacyAccessedAPICategoryUserDefaults',
+                 'NSPrivacyAccessedAPICategorySystemBootTime'} and pm.get('NSPrivacyTracking') is False,
+      f'steht: {sorted(x for x in sorten if x)}')
+
+# Die Gegenprobe ist KEINE Zeile in dieser Datei, sondern ein Lauf: `enableSceneSupport` in app.json auf
+# false stellen und diesen Prüfstand fahren — er wird rot (am 2026-10-23 gesehen).
+
 print('')
 print(f'  {JA} Häkchen, {NEIN} Kreuze')
 sys.exit(1 if NEIN else 0)
