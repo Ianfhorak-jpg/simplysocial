@@ -417,6 +417,7 @@ def einreichbereit(token, app):
                 _m = _d.stat().st_mtime
                 if _m > _zeit:
                     _zeit, _datei = _m, _d
+        _zeit, _datei = konfig_aenderung(_zeit, _datei)
         _quelle = _dt.datetime.fromtimestamp(_zeit, _dt.timezone.utc)
         if _quelle > _hoch:
             build_alt = True
@@ -563,6 +564,13 @@ def einreichbereit(token, app):
     # Die Aktualitäts-Warnung steht NACH der Liste und zählt nicht mit — wie das
     # Privacy-Label, und aus verwandtem Grund: Sie behauptet keinen Mangel bei Apple,
     # sondern nennt eine Tatsache, die ein Mensch beurteilen muss.
+    _gewollt = gewollter_build()
+    if b and _gewollt is not None and int(b['attributes']['version']) != _gewollt:
+        print(f"\n  \U0001F6D1 NICHT EINREICHEN: An der Version hängt Build {b['attributes']['version']}, "
+              f"gebaut werden sollte Build {_gewollt} (app.json).")
+        print("     Die Häkchen oben sagen nur, dass Felder gefüllt sind — nicht, dass es der richtige Build ist.")
+        print("     [\U0001F9D1 npm run asc builds  → warten, bis Build "
+              f"{_gewollt} VALID ist → npm run asc build-anhaengen -- --wirklich]")
     if build_alt:
         print(f"\n  ⚠️  {build_grund}")
         print("     Apples Anforderung ist trotzdem erfüllt — ein Build hängt dran.")
@@ -1064,6 +1072,39 @@ def url_lebt(url, timeout=20):
         return False, f"nicht erreichbar: {e}"
 
 
+def gewollter_build():
+    """Die Build-Nummer, die in `app.json` steht — die, die Ian gebaut haben WILL.
+
+    🔴 Am 2026-10-30 hing nach dem Upload von Build 7 weiter Build 6 an der Version, und
+    `build-anhaengen` meldete „hängt an der Version und ist aktuell": Build 7 wurde bei
+    Apple noch verarbeitet, und der Aktualitäts-Wächter schaute nur auf `src/`. Dass
+    `app.json` neuer war als Build 6, sah er nicht — und Build 6 ist der, der bei Apple
+    beim Start abstürzte. Die Nummer in `app.json` ist die Absicht; der Rest sind
+    Mutmaßungen über Zeitstempel.
+    """
+    import json as _j, pathlib as _p
+    try:
+        n = _j.loads(_p.Path('app.json').read_text(encoding='utf-8'))['expo']['ios']['buildNumber']
+        return int(n)
+    except (OSError, KeyError, ValueError, TypeError):
+        return None
+
+
+def konfig_aenderung(zeit, datei):
+    """Die jüngste Änderung an der BUILD-KONFIGURATION, falls sie jünger ist als `zeit`.
+
+    Ein Aktualitäts-Wächter, der nur `src/` kennt, merkt eine geänderte Konfiguration nicht
+    (Falle im Register) — aber `app.json` und `package.json` entscheiden, was gebaut wird:
+    Plugins, Modulversionen, Datenschutz-Manifest.
+    """
+    import pathlib as _p
+    for name in ('app.json', 'package.json', 'app.config.js'):
+        p = _p.Path(name)
+        if p.is_file() and p.stat().st_mtime > zeit:
+            zeit, datei = p.stat().st_mtime, p
+    return zeit, datei
+
+
 def build_anhaengen(token, app, wirklich):
     """Hängt den neuesten Build an die offene Version — mit dem Wächter, der zählt.
 
@@ -1126,6 +1167,26 @@ def build_anhaengen(token, app, wirklich):
     # `Nutzungsbedingungen.tsx` entfernt — der angehängte Build war ab da veraltet,
     # und das Werkzeug meldete „Nichts zu tun". *Ein Wächter, der bei „nichts zu
     # tun" aufhört, ist keiner.*
+    # 🔴 Zuerst die Frage, die eine Zeitstempel-Rechnung nie stellt: Ist der Build, den Ian
+    # GEBAUT HAT (Nummer aus app.json), überhaupt bei Apple — und fertig verarbeitet?
+    gewollt = gewollter_build()
+    if gewollt is not None and (nr(neuster) < gewollt or
+                                (nr(neuster) == gewollt and na.get('processingState') != 'VALID')):
+        if nr(neuster) < gewollt:
+            print(f"✗ Build {gewollt} (so steht es in app.json) ist noch NICHT bei Apple.")
+            print(f"  Der neuste dort ist Build {na['version']}.")
+            print("  Entweder läuft der Upload noch, oder `npm run testflight` ist nicht durchgelaufen.")
+        else:
+            print(f"✗ Build {gewollt} liegt bei Apple, wird aber noch verarbeitet "
+                  f"({na.get('processingState')}).")
+        print("  Apple braucht dafür 5 bis 30 Minuten nach dem Upload.")
+        print("  Prüfen:  npm run asc builds   — erst anhängen, wenn dort \"Build "
+              f"{gewollt} · VALID\" steht.")
+        if dran and nr({'attributes': dran['attributes']}) < gewollt:
+            print(f"\n  ⚠️  Bis dahin hängt Build {dran['attributes']['version']} an der Version — "
+                  "NICHT einreichen.")
+        sys.exit(1)
+
     hoch = datetime.datetime.fromisoformat(na['uploadedDate'].replace('Z', '+00:00'))
     neuste_datei, neuste_zeit = None, 0.0
     for d in pathlib.Path('src').rglob('*'):
@@ -1133,6 +1194,7 @@ def build_anhaengen(token, app, wirklich):
             m = d.stat().st_mtime
             if m > neuste_zeit:
                 neuste_zeit, neuste_datei = m, d
+    neuste_zeit, neuste_datei = konfig_aenderung(neuste_zeit, neuste_datei)
     quelle = datetime.datetime.fromtimestamp(neuste_zeit, datetime.timezone.utc)
     veraltet = quelle > hoch
 

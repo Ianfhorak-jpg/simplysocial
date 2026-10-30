@@ -64,7 +64,64 @@ Deploy mit umgelegtem Schalter bricht ab, bevor irgendetwas gebaut wird.
 
 ---
 
-## 🔴 HIER GEHT ES WEITER — Stand 2026-10-20, nachts
+## 🔴 HIER GEHT ES WEITER — Stand 2026-10-29
+
+> ## Apple hat Build 6 ABGELEHNT: Absturz beim Start (Guideline 2.1(a)) — Build 7 ist gebaut-fertig, nicht hochgeladen
+>
+> **Was passiert ist:** Am 2026-10-21 startete Apples Prüfer Build 6 auf einem iPad Air 11" (iPadOS 27.0.1),
+> die App stürzte ab (`EXC_BREAKPOINT`/SIGTRAP, `___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption`).
+> Version 1.0 steht bei Apple auf `REJECTED`. **Kein JavaScript-Fehler, nicht iPad-spezifisch:** iOS 27 beendet jede
+> App ohne UIScene-Lebenszyklus, die mit dem iOS-27-SDK gebaut wurde — und gebaut hat Xcode 27. Auf Ians iPhone
+> (iOS 26.6) ist es nur eine Warnung, deshalb hat es nie jemand gesehen.
+>
+> **Behebung (committet, `9bab152`):** Expo 57.0.18 -> 57.0.31, die übrigen Module angeglichen, neu
+> `expo-build-properties` mit `ios.enableSceneSupport: true`, Build-Nummer **7**. Das iOS-Projekt ist neu erzeugt
+> und `pod install` gelaufen — der Ordner liegt FERTIG auf Ians Mac.
+>
+> **Auf einem iOS-27.0-iPad-Simulator belegt (Rot und Grün):** Dieselbe App ohne Szenen-Manifest wird per
+> SIGTRAP(5) beendet — genau Apples Signal. Mit Manifest läuft sie, der Anmelde-Bildschirm steht (Texte wörtlich
+> gegen `de.ts` abgeglichen; Simulator auf `de-AT`, App zeigt Deutsch — die Spracherkennung läuft damit erstmals
+> nachweislich). Das Bild hat `auge` beschrieben, die Texte habe ich selbst geprüft.
+>
+> ### Was beim Neuerzeugen von `ios/` fast verloren ging (und jetzt in `app.json` steht)
+>
+> | | |
+> |---|---|
+> | Team-ID | war eine handgeschriebene Zeile in `project.pbxproj` -> `ios.appleTeamId` |
+> | `PrivacyInfo.xcprivacy` | fehlte danach, **ohne Fehlermeldung**; Inhalt aus dem archivierten Build 6 gerettet -> `ios.privacyManifests` (3 Zugriffsgründe, kein Tracking) |
+> | `CODE_SIGN_STYLE = Automatic` | muss von Hand nach (nur `geraet-bauen.sh` liest sie) — steht schon wieder drin |
+>
+> ### Wächter
+>
+> - `testflight.sh` prüft VOR dem 20-Minuten-Build: Szenen-Manifest und Datenschutz-Manifest im erzeugten `ios/`
+> - `pruef-boden` **13 -> 18** (Plugin, Schalter, `expo >= 57.0.23`, Team-ID, Datenschutz-Manifest in `app.json`);
+>   Gegenprobe mit umgelegtem Schalter rot gesehen
+> - `pruef-alter` bleibt bei 38: Abhängigkeiten **33**, `expo-build-properties` ist ein reines Build-Plugin
+>   (kein nativer Code, kein Netzwerk — nachgesehen), am Datenschutz-Etikett ändert sich nichts
+>
+> ### Gemessen, grün
+>
+> ```
+> tsc sauber · expo lint 87 (unverändert) · pruef-boden 18 · pruef-alter 38 · pruef-sprache 30
+> pruef-zustimmung 34 · pruef-kopf 48 · pruef-nennung 15 · pruef-etikett 12 · pruef-plattform 5
+> pruef-farben 79 · pruef-glas 33 · pruef-anbieter 48 · pruef-bildwahl 48 · pruef-sitzung 29 · pruef-demoregel 29
+> ```
+>
+> ### Offen — gehört Ian (die Befehle stehen in `_FUER_IAN/WAS_DU_JETZT_MACHEN_MUSST.md`)
+>
+> 1. `npm run testflight` (Build 7) -> `npm run asc builds` bis VALID -> `build-anhaengen` -> `einreichbereit`
+> 2. **Empfohlen vor dem Einreichen:** Build 7 über TestFlight auf dem iPhone starten und sich anmelden
+>    (Apple, Google, E-Mail-Code). Das ist die einzige Lücke im Beleg: die Weiterleitung von Anmelde-Links läuft jetzt
+>    über den Szenen-Delegate, und **das ist auf keinem Gerät gesehen**.
+> 3. In App Store Connect die Version erneut zur Prüfung einreichen.
+>
+> ### Davor, unverändert offen
+>
+> Die Trennung unter 18 / ab 18, der serverseitig gesperrte Treffpunkt, das Apple-Entwicklerkonto auf einen
+> 17-Jährigen und **wer `npm run meldungen` liest, während Ian weg ist** — Einzelheiten im Block darunter.
+
+## Davor — Stand 2026-10-20, nachts (Build 6; bei Apple abgelehnt)
+
 
 > ## Betreiberschutz vor dem Einreichen — Build 6 ist nötig, Build 5 NICHT einreichen
 >
@@ -1111,11 +1168,11 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 125. Was der App Store an TEXT zeigt, steht in `scripts/storetexte.md` — und jede ADRESSE darin wird angerufen, bevor sie zu Apple geht
 ## Fallen — Index
 
-> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 262 Stück, jede schon
+> **Volltext: [`_gedaechtnis/FALLEN.md`](_gedaechtnis/FALLEN.md).** 268 Stück, jede schon
 > einmal einen Abend gekostet — die meisten stammen aus ACTA (`17_Tennis_Optimma`), der
 > Rest aus diesem Projekt. Hier steht nur der Titel; **die Diagnose steht im Volltext.**
 >
-> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-10-20: **262**; am
+> 🔴 **Die Zahl ist gemessen, nicht fortgeschrieben** (2026-10-30: **268**; am
 > 2026-09-28 standen hier 213 bei 226 gezählten) — *eine Warnung mit einer ZAHL darin
 > veraltet genauso still wie das, wovor sie warnt.* Die Messstelle, damit die nächste
 > Zahl nicht wieder geraten wird:
@@ -1386,6 +1443,12 @@ git add -A && git commit && git push   # ← die Sicherung. Der Deploy ist keine
 - Eine Anzeige-Funktion in einer `config/`-Datei, die ein Prüfstand in blankem Node lädt, kann nicht übersetzt werden
 - Ein Ersetzungsskript mit deutschen Anführungszeichen in einem ASCII-Stringliteral stirbt mit `SyntaxError`
 - Ein Ausweichwert, der WENIGER schützt als der gewollte, ist ein stiller Absturz nach unten
+- Eine App kann auf dem neuesten Betriebssystem beim START sterben, und das merkt man auf dem Gerät mit dem älteren nie
+- `expo prebuild` ERZEUGT `ios/` jedes Mal neu, auch ohne `--clean` — was nur dort stand, ist weg
+- Eine Sicherung in `/tmp` kann leer sein, obwohl die Ordner noch da sind
+- `timeout` gibt es auf macOS nicht, und ein hängender `xcrun simctl list` sieht aus wie ein hängender Befehl
+- Ein Befehl direkt nach dem Upload sieht den neuen Build noch nicht — und ein Aktualitäts-Wächter, der nur `src/` kennt, sagt „aktuell" zum ALTEN
+- Ein Passwort, das ins TERMINAL statt in einen Dialog getippt wird, steht danach im Klartext im Verlauf
 ---
 
 ## Was Apple verlangt (Guideline 1.2, User-Generated Content)

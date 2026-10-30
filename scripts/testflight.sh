@@ -248,7 +248,9 @@ echo "── Schritt 4: Archivieren (dauert einige Minuten) ──"
 # Skript, das nach dem Mac-Passwort fragt, ist schlechter als ein Dialog, den Apple
 # selbst zeigt. Deshalb steht hier eine Erklärung statt einer Automatik.
 echo "   ⚠️ Wenn macOS nach dem Schlüssel „dist\" fragt: „Immer erlauben\" wählen."
-echo "      (Das ist dieser Build. Passwort = dein Mac-Anmeldepasswort.)"
+echo "      (Das ist dieser Build.)"
+echo "      🔒 Das ist ein FENSTER von macOS (es kann hinter anderen Fenstern liegen). Das Passwort"
+echo "         gehört in DIESES FENSTER — NIE ins Terminal: Was du hier tippst, steht danach im Klartext da."
 PROTOKOLL="$BAUPLATZ/archive-$(date +%Y%m%d-%H%M%S).log"
 mkdir -p "$BAUPLATZ"
 ARCHIV="$BAUPLATZ/SimplySocial.xcarchive"

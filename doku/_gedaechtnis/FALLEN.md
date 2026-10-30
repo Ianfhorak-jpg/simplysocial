@@ -2349,3 +2349,49 @@
   Lauf mit Fehler, (4) `pruef-alter` hält 1 und 2 fest (38, beide Gegenproben rot gesehen).
   *Dieselbe Bauart wie der Wächter, der „1 offene Punkte" meldete:* eine Prüfung, die gegen das
   eigene, schon veränderte Ergebnis vergleicht, kann nicht rot werden.
+- 🔴 **Eine App kann auf dem neuesten Betriebssystem beim START sterben, und das merkt man auf
+  dem Gerät mit dem älteren nie.** Apple lehnte Build 6 am 2026-10-21 ab (Guideline 2.1(a)): Absturz
+  beim Start auf einem iPad Air 11" mit iPadOS 27.0.1, `EXC_BREAKPOINT`/SIGTRAP in
+  `___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption`. Es war KEIN JavaScript-Fehler und
+  nicht iPad-spezifisch: iOS 27 beendet jede App ohne UIScene-Lebenszyklus, die mit dem iOS-27-SDK
+  gebaut wurde. Auf iOS 26 (Ians iPhone, 26.6) ist es eine Log-Warnung. Gebaut hatte Xcode 27 —
+  gestartet wurde nie eine Fassung auf iOS 27. **Behebung:** Expo >= 57.0.23 + `expo-build-properties`
+  mit `ios.enableSceneSupport: true` (expo/expo#46664). **Beleg auf dem Mac:** iOS-27.0-Simulator
+  (`xcodebuild -downloadPlatform iOS`, ~8 GB) — dieselbe App OHNE `UIApplicationSceneManifest` wird
+  per SIGTRAP(5) beendet, MIT Manifest läuft sie. Das Rot ist der Beweis; ohne es wäre das Grün
+  nichts wert (der Simulator könnte die Regel gar nicht durchsetzen).
+- 🔴 **`expo prebuild` ERZEUGT `ios/` jedes Mal neu — auch ohne `--clean` („Cleared ios code")**, und
+  alles, was nur dort stand, ist weg: die handgeschriebene Team-ID in `project.pbxproj` und
+  `PrivacyInfo.xcprivacy` (Letzteres kam aus dem alten Template, nicht aus einem Plugin — `withPrivacyInfo`
+  schreibt die Datei nur bei gesetztem `ios.privacyManifests`). Ohne Fehlermeldung. Den alten Inhalt
+  gab es nur noch im archivierten Build (`SimplySocial.xcarchive/Products/Applications/SimplySocial.app/`).
+  Seither steht beides in `app.json` (`ios.appleTeamId`, `ios.privacyManifests`), und
+  `testflight.sh` prüft VOR dem 20-Minuten-Build, dass Szenen- und Datenschutz-Manifest im erzeugten
+  Ordner liegen. `CODE_SIGN_STYLE = Automatic` muss weiter von Hand nach (nur `geraet-bauen.sh` liest sie).
+- **Eine Sicherung in `/tmp` kann leer sein, obwohl die Ordner noch da sind.** macOS räumt dort Dateien auf
+  und lässt die Verzeichnisse stehen: `ls` zeigte `SimplySocial  SimplySocial.xcodeproj`, `find` darin
+  nichts. Ein Vergleich „vorher/nachher" gegen so eine Sicherung zeigt „alles neu". Sicherungen gehören
+  nicht in `/tmp` (auch nicht in den Scratchpad, wenn sie Tage halten müssen), und vor dem Verlassen
+  darauf prüft man Dateien, nicht Ordnernamen.
+- **`timeout` gibt es auf macOS nicht, und ein hängender `xcrun simctl list` sieht aus wie ein hängender
+  Befehl.** `simctl` blockiert, solange CoreSimulator nicht antwortet — in einen Hintergrundlauf mit
+  Logdatei legen und die Datei lesen, statt zu warten. Dieselbe Familie wie `timeout` in der Fallenliste.
+- 🔴 **Ein Befehl, der direkt nach dem Upload läuft, sieht den neuen Build noch nicht — und ein
+  Aktualitäts-Wächter, der nur `src/` kennt, sagt dann „aktuell" zum ALTEN.** Am 2026-10-30 lud Ian
+  Build 7 hoch (die Reparatur für den iOS-27-Absturz), startete danach sofort `asc builds` und
+  `build-anhaengen` — Apple verarbeitete noch. `build-anhaengen` meldete *„✓ Build 6 hängt an der
+  Version und ist aktuell"*, `einreichbereit` zeigte „0 offene Punkte". **Build 6 ist der Build, der bei
+  Apple beim Start abstürzte.** Zwei Ursachen, beide schon im Register: (1) der Wächter verglich nur
+  `src/`, die Reparatur steckte aber in `app.json`/`package.json` (*„Ein Aktualitäts-Wächter, der nur die
+  QUELLE kennt, merkt eine geänderte BUILD-KONFIGURATION nicht"* — zum zweiten Mal); (2) niemand fragte
+  die einfachste Frage: Die Nummer in `app.json` (7) ist die ABSICHT, an der Version hängt 6.
+  Behoben: `gewollter_build()` liest die Nummer, `build-anhaengen` verweigert mit Exit 1, solange sie
+  nicht VALID bei Apple liegt (und sagt, dass bis dahin der alte Build hängt), `konfig_aenderung()` zählt
+  `app.json`/`package.json` als Änderung, `einreichbereit` warnt laut „NICHT EINREICHEN". Gegenprobe mit
+  gewolltem Build 8 gesehen (verweigert). ⚠️ **Wer `app.json` für so eine Gegenprobe ändert, stellt den
+  ZEITSTEMPEL mit zurück** (`touch -t`) — er ist selbst Teil der Prüfung.
+- **Ein Passwort, das ins TERMINAL statt in einen Dialog getippt wird, steht danach im Klartext im
+  Verlauf — und in jedem Chat, in den man ihn einfügt.** `testflight.sh` warnt: *„Wenn macOS nach dem
+  Schlüssel „dist" fragt …"* — das ist ein FENSTER von macOS, kein Eingabefeld im Terminal. Am 2026-10-30
+  stand die Zeile im eingefügten Terminalverlauf. Das Skript sagt jetzt ausdrücklich, WOHIN das Passwort
+  gehört. Wer so etwas sieht, wiederholt es nicht und rät zum Ändern.

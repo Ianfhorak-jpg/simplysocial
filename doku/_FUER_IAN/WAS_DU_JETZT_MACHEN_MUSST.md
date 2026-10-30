@@ -1,5 +1,56 @@
 # 🚀 Was du jetzt machen musst — Weg in den App Store
 
+**Stand: 2026-10-29 · Apple hat Build 6 abgelehnt — Build 7 ist die Reparatur**
+
+> **Kurz:** Apple konnte die App nicht prüfen, weil sie beim Öffnen abstürzt (iPad, iOS 27). Das ist **kein Fehler
+> in deinem Code**, sondern ein neues Apple-Muss, das Expo erst mit einer neuen Version erfüllt. Die Reparatur ist
+> gebaut, auf einem iOS-27-iPad im Simulator **nachgestellt und behoben** (Rot: Absturz wie bei Apple · Grün: läuft).
+> Es fehlt nur noch der Build, und den baust du.
+
+## Die Reihenfolge (von deinem Mac, auch aus dem Ausland)
+
+```bash
+cd ~/Desktop/C.C.Projekts_Ian/33_SimplySocial/simplysocial
+
+npm run testflight                           # 1 · Build 7 bauen und hochladen, ~20 Min
+npm run asc builds                           # 2 · WARTEN, bis "Build 7 · VALID" dasteht (5–30 Min nach dem Upload)
+npm run asc build-anhaengen -- --wirklich    # 3 · dranhängen (ohne --trotzdem)
+npm run asc einreichbereit                   # 4 · Build 7 dran, 0 offene Punkte
+```
+
+Die Altersfreigabe (13+), das Privacy-Label und alles andere bleibt, wie es ist — daran musst du nichts ändern.
+
+**Schlägt Schritt 1 sofort mit einem roten ✗ fehl:** Das ist gewollt. `testflight.sh` prüft jetzt VOR den 20 Minuten,
+ob das Szenen-Manifest im Projekt steht. Schick mir die Meldung.
+
+## Empfohlen, bevor du einreichst (2 Minuten, aber die einzige Lücke)
+
+Öffne **Build 7 über TestFlight auf deinem iPhone** und melde dich einmal an (Apple, Google oder E-Mail-Code).
+Auf dem Simulator läuft der Start. Die Weiterleitung von Anmelde-Links läuft aber jetzt über einen neuen Weg
+(Szenen-Delegate) — und **das habe ich auf keinem echten Gerät gesehen.** Ein zweiter Review-Durchlauf kostet
+Tage; die zwei Minuten sparen sie vielleicht.
+
+## Dann: erneut einreichen
+
+App Store Connect → SimplySocial → Version 1.0 (steht auf „Abgelehnt“) → prüfen, dass **Build 7** hängt →
+**„Erneut zur Prüfung einreichen“** (die Beschriftung kann abweichen). Wenn Apple ein Textfeld anbietet, reicht
+ein Satz: *„Fixed the launch crash on iOS 27 by adopting the UIScene lifecycle (Expo SDK 57.0.31, enableSceneSupport).“*
+
+## Was in Build 7 anders ist (nur das Nötige)
+
+| | |
+|---|---|
+| Expo 57.0.18 → 57.0.31 | die Version, ab der Expo mit Xcode 27 baut; die übrigen Module sind angeglichen |
+| neu: `expo-build-properties` | schaltet beim Bauen die Szenen-Unterstützung ein — reines Bau-Werkzeug, läuft nicht in der App, sammelt nichts |
+| Build-Nummer 7 | |
+| Deine Team-ID und das Datenschutz-Manifest | standen nur im wegwerfbaren `ios/`-Ordner und wären beim Neuerzeugen verschwunden — stehen jetzt in `app.json` |
+
+Gegenüber Build 6 hat sich im App-Code **nichts** geändert.
+
+---
+
+# (Der Stand davor — Build 6, jetzt überholt)
+
 **Stand: 2026-10-20, abends · Build 6 ist nötig — und warum**
 
 > Du wolltest die App absichern, bevor du drei Wochen weg bist. Das ist passiert —
